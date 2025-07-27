@@ -27,6 +27,7 @@ export default function Discover({ user }: DiscoverProps) {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [showUsers, setShowUsers] = useState(false);
   
   const { data: posts = [], isLoading, refetch } = useQuery<Post[]>({
     queryKey: searchQuery ? ['/api/posts/search', searchQuery, selectedCategory] : ['/api/posts'],
@@ -48,6 +49,7 @@ export default function Discover({ user }: DiscoverProps) {
   });
 
   const handleSearch = () => {
+    setShowUsers(true);
     refetch();
   };
 
@@ -134,7 +136,7 @@ export default function Discover({ user }: DiscoverProps) {
 
       {/* Full Screen Map */}
       <div className="flex-1 overflow-hidden">
-        <UsersMap />
+        <UsersMap showUsers={showUsers} />
       </div>
     </div>
   );

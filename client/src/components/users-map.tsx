@@ -44,16 +44,21 @@ const getRankAbbreviation = (rank: string): string => {
   return rank; // Return original if no match found
 };
 
-export default function UsersMap() {
+interface UsersMapProps {
+  showUsers?: boolean;
+}
+
+export default function UsersMap({ showUsers = false }: UsersMapProps) {
   const [bounds, setBounds] = useState<LatLngBounds | null>(null);
 
   const { data: users = [], isLoading } = useQuery<MapUser[]>({
     queryKey: ['/api/users/map'],
-    staleTime: 60000, // 1 minute
+    staleTime: 60000, // 1 minute,
+    enabled: showUsers, // Only fetch when showUsers is true
   });
 
   useEffect(() => {
-    if (users.length > 0) {
+    if (showUsers && users.length > 0) {
       // Calculate bounds to fit all users
       const latitudes = users.map(u => parseFloat(u.latitude));
       const longitudes = users.map(u => parseFloat(u.longitude));
@@ -71,8 +76,10 @@ export default function UsersMap() {
         [minLat - latPadding, minLng - lngPadding],
         [maxLat + latPadding, maxLng + lngPadding]
       ));
+    } else {
+      setBounds(null);
     }
-  }, [users]);
+  }, [users, showUsers]);
 
   const createCustomIcon = (user: MapUser) => {
     const rankEmoji = user.rank?.toLowerCase().includes('captain') ? '👨‍✈️' : 
@@ -138,7 +145,7 @@ export default function UsersMap() {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
         />
         
-        {users.map((user) => (
+        {showUsers && users.map((user) => (
           <Marker
             key={user.id}
             position={[parseFloat(user.latitude), parseFloat(user.longitude)]}
