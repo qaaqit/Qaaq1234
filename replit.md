@@ -12,7 +12,7 @@ Primary focus: "Koi Hai?" (Who's there?) discovery - helping sailors find who's 
 Map display: Full screen with light grey theme initially, becomes colorful when user searches
 Map behavior: Shows empty grey map on load, displays pins only when "Koi Hai?" button is pressed
 Proximity feature: Shows nearest 10 users when searching without text input
-Sample data: Includes seed users in major maritime cities when QAAQ user data unavailable
+User data: Connected to QAAQ admin database with 12 authentic maritime users including sailors with ship details and local guides in major ports
 Future features: CPSS (Country/Port/Suburb/Service) tree breadcrumb for maritime meetups and local tours
 
 ## System Architecture
@@ -29,7 +29,7 @@ Future features: CPSS (Country/Port/Suburb/Service) tree breadcrumb for maritime
 - **Runtime**: Node.js with Express.js
 - **Language**: TypeScript with ES modules
 - **Database**: PostgreSQL with Drizzle ORM
-- **Database Provider**: Neon Database (@neondatabase/serverless)
+- **Database Provider**: QAAQ Admin Database (replaced Neon Database on January 27, 2025)
 - **Authentication**: JWT-based with email verification
 - **Email Service**: Gmail SMTP via nodemailer (switched from SendGrid per user request)
 - **Session Management**: Express sessions with PostgreSQL storage
@@ -94,7 +94,7 @@ Future features: CPSS (Country/Port/Suburb/Service) tree breadcrumb for maritime
 ## External Dependencies
 
 ### Core Infrastructure
-- **Neon Database**: Serverless PostgreSQL hosting
+- **QAAQ Admin Database**: PostgreSQL database with authentic maritime user data (12 users including sailors and local guides)
 - **SendGrid**: Email delivery service for verification
 - **Replit**: Development and deployment platform
 
