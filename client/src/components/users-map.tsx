@@ -129,22 +129,6 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
     });
   };
 
-  if (isLoading) {
-    return (
-      <div className="w-full h-screen bg-gray-100 flex items-center justify-center">
-        <div className="text-gray-500">Loading map...</div>
-      </div>
-    );
-  }
-
-  if (users.length === 0) {
-    return (
-      <div className="w-full h-screen bg-gray-100 flex items-center justify-center">
-        <div className="text-gray-500">No users with location data available</div>
-      </div>
-    );
-  }
-
   // Default center (world view)
   const defaultCenter: [number, number] = [20, 0];
   const defaultZoom = 2;
@@ -162,7 +146,7 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
         />
         
-        {showUsers && users.map((user) => (
+        {showUsers && !isLoading && users.map((user) => (
           <Marker
             key={user.id}
             position={[parseFloat(user.latitude), parseFloat(user.longitude)]}
