@@ -301,6 +301,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         rank: user.rank,
         shipName: user.shipName,
         imoNumber: user.imoNumber,
+        port: user.port,
+        visitWindow: user.visitWindow,
         city: user.city,
         country: user.country,
         latitude: user.latitude,
