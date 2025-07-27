@@ -11,6 +11,8 @@ interface MapUser {
   rank: string | null;
   shipName: string | null;
   imoNumber: string | null;
+  port: string | null;
+  visitWindow: string | null;
   city: string | null;
   country: string | null;
   latitude: string;
@@ -155,9 +157,14 @@ export default function UsersMap() {
                     )}
                   </p>
                 )}
-                {user.city && user.country && (
+                {user.port && (
                   <p className="text-sm text-gray-600">
-                    📍 {user.city}, {user.country}
+                    📍 {user.port}
+                    {user.visitWindow && (
+                      <span className="ml-2 text-green-600">
+                        ({user.visitWindow})
+                      </span>
+                    )}
                   </p>
                 )}
               </div>

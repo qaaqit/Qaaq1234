@@ -13,6 +13,8 @@ export const users = pgTable("users", {
   rank: text("rank"), // e.g., 'Captain', 'Chief Engineer', 'Officer', 'Crew'
   shipName: text("ship_name"), // Current ship name
   imoNumber: text("imo_number"), // International Maritime Organization number
+  port: text("port"), // Current or next port
+  visitWindow: text("visit_window"), // Planned visit time window (e.g., "28 to 30 Jul25")
   city: text("city"),
   country: text("country"),
   latitude: text("latitude"),
