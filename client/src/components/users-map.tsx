@@ -148,10 +148,9 @@ export default function UsersMap() {
                 {user.rank && (
                   <p className="text-sm text-gray-600">
                     {getRankAbbreviation(user.rank)}
-                    {(user.shipName || user.imoNumber) && (
-                      <span className="ml-2 text-blue-600">
-                        {user.shipName && `${user.shipName}`}
-                        {user.imoNumber && ` (IMO: ${user.imoNumber})`}
+                    {user.shipName && (
+                      <span className="ml-2 text-blue-600 italic">
+                        {user.shipName.replace(/^(MV|MT)\s+/, '')}
                       </span>
                     )}
                   </p>
