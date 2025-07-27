@@ -59,6 +59,19 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
     queryKey: shouldUseNearby ? ['/api/users/nearby'] : ['/api/users/map'],
     staleTime: 60000, // 1 minute
     enabled: showUsers, // Only fetch when showUsers is true
+    queryFn: async () => {
+      const token = localStorage.getItem('qaaq_token');
+      const endpoint = shouldUseNearby ? '/api/users/nearby' : '/api/users/map';
+      const headers: HeadersInit = {};
+      
+      if (token && shouldUseNearby) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await fetch(endpoint, { headers });
+      if (!response.ok) throw new Error('Failed to fetch users');
+      return response.json();
+    }
   });
 
   useEffect(() => {
