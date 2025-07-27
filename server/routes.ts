@@ -43,8 +43,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "User already exists with this email" });
       }
 
+      // Set password based on city name (QAAQ standard)
+      const userWithPassword = {
+        ...userData,
+        password: userData.city ? userData.city.toLowerCase() : 'default'
+      };
+
       // Create user
-      const user = await storage.createUser(userData);
+      const user = await storage.createUser(userWithPassword);
       
       // Generate JWT token for immediate access
       const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '30d' });

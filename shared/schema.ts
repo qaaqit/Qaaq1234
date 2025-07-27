@@ -94,6 +94,10 @@ export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
   userType: true,
   nickname: true,
+  city: true,
+  country: true,
+  latitude: true,
+  longitude: true,
 });
 
 export const insertPostSchema = createInsertSchema(posts).pick({
