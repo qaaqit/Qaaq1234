@@ -95,7 +95,7 @@ export default function Discover({ user }: DiscoverProps) {
               </div>
               <div>
                 <h1 className="text-2xl font-bold">QaaqConnect</h1>
-                <p className="text-sm text-white/80">Welcome, {user.fullName.split(' ')[0]}!</p>
+                <p className="text-sm text-white/80">Welcome{user.fullName && !user.fullName.startsWith('+') ? `, ${user.fullName.split(' ')[0]}` : ''}!</p>
               </div>
             </div>
             <div className="flex items-center space-x-2">
