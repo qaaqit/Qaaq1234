@@ -107,7 +107,7 @@ export default function UsersMap() {
 
   if (isLoading) {
     return (
-      <div className="w-full h-96 bg-gray-100 rounded-lg flex items-center justify-center">
+      <div className="w-full h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-gray-500">Loading map...</div>
       </div>
     );
@@ -115,7 +115,7 @@ export default function UsersMap() {
 
   if (users.length === 0) {
     return (
-      <div className="w-full h-96 bg-gray-100 rounded-lg flex items-center justify-center">
+      <div className="w-full h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-gray-500">No users with location data available</div>
       </div>
     );
@@ -126,7 +126,7 @@ export default function UsersMap() {
   const defaultZoom = 2;
 
   return (
-    <div className="w-full h-96 rounded-lg overflow-hidden maritime-shadow">
+    <div className="w-full h-screen overflow-hidden">
       <MapContainer
         center={defaultCenter}
         zoom={defaultZoom}

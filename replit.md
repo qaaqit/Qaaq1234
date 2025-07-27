@@ -8,6 +8,9 @@ QaaqConnect is a modern full-stack web application that connects sailors with lo
 
 Preferred communication style: Simple, everyday language.
 Username field label: "USER NAME (This may be ur country code +91 & whatsapp number )"
+Primary focus: "Koi Hai?" (Who's there?) discovery - helping sailors find who's nearby in ports
+Map display: Full screen for maximum visibility of user locations
+Future features: CPSS (Country/Port/Suburb/Service) tree breadcrumb for maritime meetups and local tours
 
 ## System Architecture
 
