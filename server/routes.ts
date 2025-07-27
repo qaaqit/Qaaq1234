@@ -289,6 +289,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get users with location data for map
+  app.get("/api/users/map", async (req, res) => {
+    try {
+      const users = await storage.getUsersWithLocation();
+      // Only return necessary data for the map
+      const mapUsers = users.map(user => ({
+        id: user.id,
+        fullName: user.fullName,
+        userType: user.userType,
+        rank: user.rank,
+        city: user.city,
+        country: user.country,
+        latitude: user.latitude,
+        longitude: user.longitude
+      }));
+      res.json(mapUsers);
+    } catch (error) {
+      console.error('Get map users error:', error);
+      res.status(500).json({ message: "Failed to get users for map" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

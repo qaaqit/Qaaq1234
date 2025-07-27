@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import DiscoveryCard from "@/components/discovery-card";
+import UsersMap from "@/components/users-map";
 import { type User } from "@/lib/auth";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -158,6 +159,12 @@ export default function Discover({ user }: DiscoverProps) {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Users Map */}
+      <div className="px-4 mb-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">QAAQ Users Worldwide</h2>
+        <UsersMap />
       </div>
 
       {/* Posts Grid */}

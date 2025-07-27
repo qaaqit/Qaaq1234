@@ -1,6 +1,6 @@
-import { users, posts, likes, verificationCodes, type User, type InsertUser, type Post, type InsertPost, type VerificationCode } from "@shared/schema";
+import { users, posts, likes, verificationCodes, type User, type InsertUser, type Post, type InsertPost, type VerificationCode, type Like } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, ilike, or } from "drizzle-orm";
+import { eq, desc, and, ilike, or, sql, isNotNull } from "drizzle-orm";
 
 export interface IStorage {
   // User management
@@ -9,6 +9,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUserVerification(userId: string, isVerified: boolean): Promise<void>;
   incrementLoginCount(userId: string): Promise<void>;
+  getUsersWithLocation(): Promise<User[]>;
   
   // Verification codes
   createVerificationCode(userId: string, code: string, expiresAt: Date): Promise<VerificationCode>;
@@ -66,6 +67,18 @@ export class DatabaseStorage implements IStorage {
         lastLogin: new Date()
       })
       .where(eq(users.id, userId));
+  }
+
+  async getUsersWithLocation(): Promise<User[]> {
+    return await db
+      .select()
+      .from(users)
+      .where(
+        and(
+          isNotNull(users.latitude),
+          isNotNull(users.longitude)
+        )
+      );
   }
 
   async createVerificationCode(userId: string, code: string, expiresAt: Date): Promise<VerificationCode> {

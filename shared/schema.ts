@@ -10,6 +10,11 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   userType: text("user_type").notNull(), // 'sailor' or 'local'
   nickname: text("nickname"),
+  rank: text("rank"), // e.g., 'Captain', 'Chief Engineer', 'Officer', 'Crew'
+  city: text("city"),
+  country: text("country"),
+  latitude: text("latitude"),
+  longitude: text("longitude"),
   isVerified: boolean("is_verified").default(false),
   loginCount: integer("login_count").default(0),
   lastLogin: timestamp("last_login"),
