@@ -11,6 +11,8 @@ export const users = pgTable("users", {
   userType: text("user_type").notNull(), // 'sailor' or 'local'
   nickname: text("nickname"),
   rank: text("rank"), // e.g., 'Captain', 'Chief Engineer', 'Officer', 'Crew'
+  shipName: text("ship_name"), // Current ship name
+  imoNumber: text("imo_number"), // International Maritime Organization number
   city: text("city"),
   country: text("country"),
   latitude: text("latitude"),

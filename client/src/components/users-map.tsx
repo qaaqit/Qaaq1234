@@ -9,6 +9,8 @@ interface MapUser {
   fullName: string;
   userType: string;
   rank: string | null;
+  shipName: string | null;
+  imoNumber: string | null;
   city: string | null;
   country: string | null;
   latitude: string;
@@ -144,7 +146,15 @@ export default function UsersMap() {
               <div className="p-2">
                 <h3 className="font-bold text-gray-900">{user.fullName}</h3>
                 {user.rank && (
-                  <p className="text-sm text-gray-600">{getRankAbbreviation(user.rank)}</p>
+                  <p className="text-sm text-gray-600">
+                    {getRankAbbreviation(user.rank)}
+                    {(user.shipName || user.imoNumber) && (
+                      <span className="ml-2 text-blue-600">
+                        {user.shipName && `${user.shipName}`}
+                        {user.imoNumber && ` (IMO: ${user.imoNumber})`}
+                      </span>
+                    )}
+                  </p>
                 )}
                 {user.city && user.country && (
                   <p className="text-sm text-gray-600">
