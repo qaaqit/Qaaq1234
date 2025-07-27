@@ -2,7 +2,7 @@
 
 ## Overview
 
-QaaqConnect is a modern full-stack web application that connects sailors with locals to facilitate authentic port city experiences. The platform enables users to discover local recommendations, join maritime meetups, and share experiences through a social posting system.
+QaaqConnect is a location-based maritime discovery platform focused on "Koi Hai?" (Who's there?) functionality. The app helps sailors find nearby maritime professionals and locals through an interactive world map. Features include email-verified registration, proximity-based user discovery, and real-time location mapping with ship details and port visit windows.
 
 ## User Preferences
 
@@ -56,12 +56,13 @@ Future features: CPSS (Country/Port/Suburb/Service) tree breadcrumb for maritime
 - Author display options (full name, nickname, anonymous)
 
 ### Discovery System
-- Real-time post feed with pagination
-- Search functionality across post content and locations
-- Category-based filtering
-- Mobile-first responsive design
-- Interactive map showing QAAQ users worldwide with rank abbreviations
+- Interactive world map with light grey theme (CartoDB tiles)
+- Map loads empty initially, shows pins only when "Koi Hai?" is pressed
+- Proximity-based discovery showing nearest 10 users without search text
+- Real-time user location mapping with maritime rank abbreviations
+- Ship information display (name, port, visit windows) without IMO numbers
 - Map pins color-coded by user type (navy for sailors, teal for locals)
+- Authentication-required proximity search with Haversine distance calculation
 
 ### UI/UX Design
 - Maritime-themed color palette (navy blue, ocean teal, duck yellow)
