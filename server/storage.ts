@@ -42,25 +42,44 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByIdAndPassword(userId: string, password: string): Promise<User | undefined> {
-    // First try to find user by ID
-    const [potentialUser] = await db.select().from(users).where(
-      or(
-        eq(users.id, userId), 
-        eq(users.fullName, userId), 
-        eq(users.email, userId)
-      )
-    );
+    // Use raw SQL to handle column name mismatch
+    const result = await db.execute(sql`
+      SELECT * FROM users 
+      WHERE (id = ${userId} OR full_name = ${userId} OR email = ${userId})
+    `);
 
-    if (!potentialUser) return undefined;
+    if (result.rows.length === 0) return undefined;
+    
+    const potentialUser = result.rows[0] as any;
 
     // Liberal password policy for first 2 logins OR if city matches (case insensitive)
     const isValidPassword = 
-      (potentialUser.loginCount && potentialUser.loginCount < 2) || // Liberal policy for first 2 logins
+      (potentialUser.login_count && potentialUser.login_count < 2) || // Liberal policy for first 2 logins
       potentialUser.password === password ||
       potentialUser.password === password.toLowerCase() ||
       (potentialUser.city && potentialUser.city.toLowerCase() === password.toLowerCase());
 
-    return isValidPassword ? potentialUser : undefined;
+    return isValidPassword ? {
+      id: potentialUser.id,
+      fullName: potentialUser.full_name,
+      email: potentialUser.email,
+      password: potentialUser.password,
+      userType: potentialUser.user_type,
+      nickname: potentialUser.nickname,
+      rank: potentialUser.rank,
+      shipName: potentialUser.ship_name,
+      imoNumber: potentialUser.imo_number,
+      port: potentialUser.port,
+      visitWindow: potentialUser.visit_window,
+      city: potentialUser.city,
+      country: potentialUser.country,
+      latitude: potentialUser.latitude,
+      longitude: potentialUser.longitude,
+      isVerified: potentialUser.is_verified,
+      loginCount: potentialUser.login_count,
+      lastLogin: potentialUser.last_login,
+      createdAt: potentialUser.created_at,
+    } as User : undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
