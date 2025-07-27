@@ -315,6 +315,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get nearest users based on user's location
+  app.get("/api/users/nearby", authenticateToken, async (req, res) => {
+    try {
+      const userId = req.userId!;
+      const currentUser = await storage.getUser(parseInt(userId));
+      
+      if (!currentUser || !currentUser.latitude || !currentUser.longitude) {
+        return res.status(400).json({ message: "User location not available" });
+      }
+
+      const allUsers = await storage.getUsersWithLocation();
+      const otherUsers = allUsers.filter(user => user.id !== currentUser.id);
+      
+      // Calculate distance using Haversine formula
+      const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+        const R = 6371; // Earth's radius in kilometers
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+      };
+
+      const userLat = parseFloat(currentUser.latitude!);
+      const userLon = parseFloat(currentUser.longitude!);
+
+      // Calculate distances and sort by nearest
+      const usersWithDistance = otherUsers.map(user => ({
+        ...user,
+        distance: calculateDistance(userLat, userLon, parseFloat(user.latitude!), parseFloat(user.longitude!))
+      })).sort((a, b) => a.distance - b.distance);
+
+      // Return nearest 10 users
+      const nearestUsers = usersWithDistance.slice(0, 10).map(user => ({
+        id: user.id,
+        fullName: user.fullName,
+        userType: user.userType,
+        rank: user.rank,
+        shipName: user.shipName,
+        imoNumber: user.imoNumber,
+        port: user.port,
+        visitWindow: user.visitWindow,
+        city: user.city,
+        country: user.country,
+        latitude: user.latitude,
+        longitude: user.longitude,
+        distance: user.distance
+      }));
+
+      res.json(nearestUsers);
+    } catch (error) {
+      console.error('Get nearby users error:', error);
+      res.status(500).json({ message: "Failed to get nearby users" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

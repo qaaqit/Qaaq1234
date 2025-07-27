@@ -46,14 +46,18 @@ const getRankAbbreviation = (rank: string): string => {
 
 interface UsersMapProps {
   showUsers?: boolean;
+  searchQuery?: string;
 }
 
-export default function UsersMap({ showUsers = false }: UsersMapProps) {
+export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersMapProps) {
   const [bounds, setBounds] = useState<LatLngBounds | null>(null);
 
+  // Use nearby users if no search query, otherwise use all users
+  const shouldUseNearby = showUsers && searchQuery.trim() === "";
+  
   const { data: users = [], isLoading } = useQuery<MapUser[]>({
-    queryKey: ['/api/users/map'],
-    staleTime: 60000, // 1 minute,
+    queryKey: shouldUseNearby ? ['/api/users/nearby'] : ['/api/users/map'],
+    staleTime: 60000, // 1 minute
     enabled: showUsers, // Only fetch when showUsers is true
   });
 

@@ -50,6 +50,10 @@ export default function Discover({ user }: DiscoverProps) {
 
   const handleSearch = () => {
     setShowUsers(true);
+    if (searchQuery.trim() === "") {
+      // If no search query, show nearest users
+      // This will be handled by the UsersMap component
+    }
     refetch();
   };
 
@@ -136,7 +140,7 @@ export default function Discover({ user }: DiscoverProps) {
 
       {/* Full Screen Map */}
       <div className="flex-1 overflow-hidden">
-        <UsersMap showUsers={showUsers} />
+        <UsersMap showUsers={showUsers} searchQuery={searchQuery} />
       </div>
     </div>
   );
