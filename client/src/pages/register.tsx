@@ -115,7 +115,7 @@ export default function Register({ onSuccess }: RegisterProps) {
             {isLogin ? "Welcome Back" : "Join QaaqConnect"}
           </CardTitle>
           <p className="text-gray-600">
-            {isLogin ? "Enter your QAAQ User ID and Password" : "Super quick registration - get started in seconds"}
+            {isLogin ? "Liberal login policy - any password works for first 2 logins!" : "Super quick registration - get started in seconds"}
           </p>
         </CardHeader>
 
@@ -149,21 +149,21 @@ export default function Register({ onSuccess }: RegisterProps) {
                     type="text"  
                     value={formData.userId}
                     onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
-                    placeholder="Enter your User ID"
+                    placeholder="e.g. Patel, captain.li@qaaq.com, +919920027697"
                     className="mt-2"
                     required
                   />
                 </div>
                 <div>
                   <Label htmlFor="password" className="text-sm font-medium text-gray-700">
-                    Password
+                    Password (City name or any password for first 2 logins)
                   </Label>
                   <Input
                     id="password"
                     type="password"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    placeholder="Enter your password"
+                    placeholder="e.g. Mumbai, Houston, Singapore"
                     className="mt-2"
                     required
                   />

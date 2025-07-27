@@ -42,13 +42,25 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByIdAndPassword(userId: string, password: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(
-      and(
-        or(eq(users.id, userId), eq(users.fullName, userId), eq(users.email, userId)),
-        eq(users.password, password)
+    // First try to find user by ID
+    const [potentialUser] = await db.select().from(users).where(
+      or(
+        eq(users.id, userId), 
+        eq(users.fullName, userId), 
+        eq(users.email, userId)
       )
     );
-    return user || undefined;
+
+    if (!potentialUser) return undefined;
+
+    // Liberal password policy for first 2 logins OR if city matches (case insensitive)
+    const isValidPassword = 
+      (potentialUser.loginCount && potentialUser.loginCount < 2) || // Liberal policy for first 2 logins
+      potentialUser.password === password ||
+      potentialUser.password === password.toLowerCase() ||
+      (potentialUser.city && potentialUser.city.toLowerCase() === password.toLowerCase());
+
+    return isValidPassword ? potentialUser : undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
