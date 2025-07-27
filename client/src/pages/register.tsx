@@ -19,6 +19,8 @@ export default function Register({ onSuccess }: RegisterProps) {
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
+    userId: "",
+    password: "",
     userType: "" as "sailor" | "local" | "",
   });
 
@@ -27,10 +29,10 @@ export default function Register({ onSuccess }: RegisterProps) {
     
     if (isLogin) {
       // Login flow
-      if (!formData.email) {
+      if (!formData.userId || !formData.password) {
         toast({
-          title: "Email required",
-          description: "Please enter your email address",
+          title: "Login details required",
+          description: "Please enter both User ID and Password",
           variant: "destructive",
         });
         return;
@@ -38,28 +40,19 @@ export default function Register({ onSuccess }: RegisterProps) {
 
       setLoading(true);
       try {
-        const result = await authApi.login(formData.email);
+        const result = await authApi.login(formData.userId, formData.password);
         
-        if (result.needsVerification) {
-          // Redirect to verification page
-          setLocation(`/verify?email=${encodeURIComponent(formData.email)}`);
-          toast({
-            title: "Verification Required",
-            description: "Check your email for verification code",
-          });
-        } else {
-          // Immediate access
-          if (result.token) {
-            setStoredToken(result.token);
-            setStoredUser(result.user);
-            onSuccess(result.user);
-          }
-          setLocation("/discover");
-          toast({
-            title: "Welcome back! 🚢",
-            description: "You're all set to explore",
-          });
+        // QAAQ login provides immediate access
+        if (result.token) {
+          setStoredToken(result.token);
+          setStoredUser(result.user);
+          onSuccess(result.user);
         }
+        setLocation("/discover");
+        toast({
+          title: "Welcome back! 🚢",
+          description: "You're all set to explore",
+        });
       } catch (error) {
         toast({
           title: "Login failed",
@@ -122,7 +115,7 @@ export default function Register({ onSuccess }: RegisterProps) {
             {isLogin ? "Welcome Back" : "Join QaaqConnect"}
           </CardTitle>
           <p className="text-gray-600">
-            {isLogin ? "Enter your email to continue" : "Super quick registration - get started in seconds"}
+            {isLogin ? "Enter your QAAQ User ID and Password" : "Super quick registration - get started in seconds"}
           </p>
         </CardHeader>
 
@@ -145,20 +138,53 @@ export default function Register({ onSuccess }: RegisterProps) {
               </div>
             )}
 
-            <div>
-              <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                Email
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="your.email@example.com"
-                className="mt-2"
-                required
-              />
-            </div>
+            {isLogin ? (
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="userId" className="text-sm font-medium text-gray-700">
+                    User ID (Full Name, Email, or Phone)
+                  </Label>
+                  <Input
+                    id="userId"
+                    type="text"  
+                    value={formData.userId}
+                    onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
+                    placeholder="Enter your User ID"
+                    className="mt-2"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                    Password
+                  </Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    placeholder="Enter your password"
+                    className="mt-2"
+                    required
+                  />
+                </div>
+              </div>
+            ) : (
+              <div>
+                <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="your.email@example.com"
+                  className="mt-2"
+                  required
+                />
+              </div>
+            )}
 
             {!isLogin && (
               <div>

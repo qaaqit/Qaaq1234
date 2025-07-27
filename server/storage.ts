@@ -6,6 +6,7 @@ export interface IStorage {
   // User management
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByIdAndPassword(userId: string, password: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUserVerification(userId: string, isVerified: boolean): Promise<void>;
   incrementLoginCount(userId: string): Promise<void>;
@@ -37,6 +38,16 @@ export class DatabaseStorage implements IStorage {
 
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
+  }
+
+  async getUserByIdAndPassword(userId: string, password: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(
+      and(
+        or(eq(users.id, userId), eq(users.fullName, userId), eq(users.email, userId)),
+        eq(users.password, password)
+      )
+    );
     return user || undefined;
   }
 

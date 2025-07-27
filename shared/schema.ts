@@ -8,6 +8,7 @@ export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   fullName: text("full_name").notNull(),
   email: text("email").notNull().unique(),
+  password: text("password"), // Password for QAAQ login
   userType: text("user_type").notNull(), // 'sailor' or 'local'
   nickname: text("nickname"),
   rank: text("rank"), // e.g., 'Captain', 'Chief Engineer', 'Officer', 'Crew'
@@ -108,7 +109,8 @@ export const verifyCodeSchema = z.object({
 });
 
 export const loginSchema = z.object({
-  email: z.string().email(),
+  userId: z.string().min(1, "User ID is required"),
+  password: z.string().min(1, "Password is required"),
 });
 
 // Types

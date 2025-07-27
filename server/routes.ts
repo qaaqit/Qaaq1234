@@ -67,51 +67,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Login existing user
+  // Login existing QAAQ user with User ID and Password
   app.post("/api/login", async (req, res) => {
     try {
-      const { email } = loginSchema.parse(req.body);
+      const { userId, password } = loginSchema.parse(req.body);
       
-      const user = await storage.getUserByEmail(email);
+      const user = await storage.getUserByIdAndPassword(userId, password);
       if (!user) {
-        return res.status(404).json({ message: "User not found" });
+        return res.status(401).json({ message: "Invalid User ID or Password" });
       }
 
       await storage.incrementLoginCount(user.id);
       
-      // If user is verified or this is their first login, provide immediate access
-      if (user.isVerified || user.loginCount === 0) {
-        const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '30d' });
-        
-        res.json({
-          user: {
-            id: user.id,
-            fullName: user.fullName,
-            email: user.email,
-            userType: user.userType,
-            isVerified: user.isVerified,
-            loginCount: user.loginCount + 1
-          },
-          token,
-          needsVerification: false
-        });
-      } else {
-        // Second login requires verification
-        const code = generateVerificationCode();
-        const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-        
-        await storage.createVerificationCode(user.id, code, expiresAt);
-        await sendVerificationEmail(user.email, code);
-        
-        res.json({
-          user: {
-            id: user.id,
-            email: user.email
-          },
-          needsVerification: true,
-          message: "Verification code sent to your email"
-        });
-      }
+      // Generate JWT token for authenticated user
+      const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '30d' });
+      
+      res.json({
+        user: {
+          id: user.id,
+          fullName: user.fullName,
+          email: user.email,
+          userType: user.userType,
+          nickname: user.nickname,
+          rank: user.rank,
+          shipName: user.shipName,
+          port: user.port,
+          visitWindow: user.visitWindow,
+          city: user.city,
+          country: user.country,
+          latitude: user.latitude,
+          longitude: user.longitude,
+          isVerified: user.isVerified,
+          loginCount: user.loginCount + 1
+        },
+        token,
+        needsVerification: false
+      });
     } catch (error) {
       console.error('Login error:', error);
       res.status(400).json({ message: "Login failed", error: error.message });

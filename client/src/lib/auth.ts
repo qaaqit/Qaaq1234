@@ -28,8 +28,8 @@ export const authApi = {
     return await response.json();
   },
 
-  login: async (email: string): Promise<AuthResponse> => {
-    const response = await apiRequest('POST', '/api/login', { email });
+  login: async (userId: string, password: string): Promise<AuthResponse> => {
+    const response = await apiRequest('POST', '/api/login', { userId, password });
     return await response.json();
   },
 
