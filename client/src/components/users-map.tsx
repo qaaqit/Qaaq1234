@@ -129,15 +129,9 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
     });
   };
 
-  // Center on user's location if available, otherwise Mumbai as default
-  const getUserCenter = (): [number, number] => {
-    // You can get user's location from localStorage or props in the future
-    // For now, defaulting to Mumbai coordinates
-    return [19.0760, 72.8777]; // Mumbai coordinates
-  };
-  
-  const defaultCenter = getUserCenter();
-  const defaultZoom = 10; // Closer zoom for city view
+  // Default center (world view)
+  const defaultCenter: [number, number] = [20, 0];
+  const defaultZoom = 2;
 
   return (
     <div className="w-full h-full overflow-hidden bg-gray-100">
