@@ -15,6 +15,31 @@ interface MapUser {
   longitude: string;
 }
 
+const getRankAbbreviation = (rank: string): string => {
+  const abbreviations: { [key: string]: string } = {
+    'captain': 'CAPT',
+    'chief engineer': 'CE',
+    'chief officer': 'CO',
+    'first officer': 'FO',
+    'second engineer': '2E',
+    'second officer': '2O',
+    'third engineer': '3E',
+    'third officer': '3O',
+    'bosun': 'BSN',
+    'officer': 'OFF',
+    'engineer': 'ENG',
+    'crew': 'CREW'
+  };
+  
+  const lowerRank = rank.toLowerCase();
+  for (const [key, value] of Object.entries(abbreviations)) {
+    if (lowerRank.includes(key)) {
+      return value;
+    }
+  }
+  return rank; // Return original if no match found
+};
+
 export default function UsersMap() {
   const [bounds, setBounds] = useState<LatLngBounds | null>(null);
 
@@ -119,11 +144,8 @@ export default function UsersMap() {
               <div className="p-2">
                 <h3 className="font-bold text-gray-900">{user.fullName}</h3>
                 {user.rank && (
-                  <p className="text-sm text-gray-600">Rank: {user.rank}</p>
+                  <p className="text-sm text-gray-600">{getRankAbbreviation(user.rank)}</p>
                 )}
-                <p className="text-sm text-gray-600">
-                  Type: {user.userType === 'sailor' ? '🚢 Sailor' : '🏠 Local'}
-                </p>
                 {user.city && user.country && (
                   <p className="text-sm text-gray-600">
                     📍 {user.city}, {user.country}

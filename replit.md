@@ -54,6 +54,8 @@ Username field label: "USER NAME (This may be ur country code +91 & whatsapp num
 - Search functionality across post content and locations
 - Category-based filtering
 - Mobile-first responsive design
+- Interactive map showing QAAQ users worldwide with rank abbreviations
+- Map pins color-coded by user type (navy for sailors, teal for locals)
 
 ### UI/UX Design
 - Maritime-themed color palette (navy blue, ocean teal, duck yellow)

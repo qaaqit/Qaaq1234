@@ -3,7 +3,7 @@ import { users } from "@shared/schema";
 
 const sampleUsers = [
   {
-    fullName: "Captain James Miller",
+    fullName: "James Miller",
     email: "captain.miller@qaaq.com",
     userType: "sailor" as const,
     rank: "Captain",
@@ -15,7 +15,7 @@ const sampleUsers = [
     loginCount: 5
   },
   {
-    fullName: "Chief Engineer Sarah Chen",
+    fullName: "Sarah Chen",
     email: "chief.chen@qaaq.com",
     userType: "sailor" as const,
     rank: "Chief Engineer",
@@ -27,7 +27,7 @@ const sampleUsers = [
     loginCount: 3
   },
   {
-    fullName: "Officer Marco Rodriguez",
+    fullName: "Marco Rodriguez",
     email: "officer.rodriguez@qaaq.com",
     userType: "sailor" as const,
     rank: "First Officer",
@@ -39,7 +39,7 @@ const sampleUsers = [
     loginCount: 2
   },
   {
-    fullName: "Bosun Ahmed Hassan",
+    fullName: "Ahmed Hassan",
     email: "bosun.hassan@qaaq.com",
     userType: "sailor" as const,
     rank: "Bosun",
@@ -75,7 +75,7 @@ const sampleUsers = [
     loginCount: 1
   },
   {
-    fullName: "Captain Li Wei",
+    fullName: "Li Wei",
     email: "captain.li@qaaq.com",
     userType: "sailor" as const,
     rank: "Captain",
@@ -87,7 +87,7 @@ const sampleUsers = [
     loginCount: 6
   },
   {
-    fullName: "Chief Officer Olsen",
+    fullName: "Olsen",
     email: "chief.olsen@qaaq.com",
     userType: "sailor" as const,
     rank: "Chief Officer",
@@ -99,7 +99,7 @@ const sampleUsers = [
     loginCount: 3
   },
   {
-    fullName: "Engineer Patel",
+    fullName: "Patel",
     email: "engineer.patel@qaaq.com",
     userType: "sailor" as const,
     rank: "Second Engineer",
@@ -111,7 +111,7 @@ const sampleUsers = [
     loginCount: 2
   },
   {
-    fullName: "Local Guide Yuki",
+    fullName: "Yuki",
     email: "yuki.guide@local.com",
     userType: "local" as const,
     rank: null,
