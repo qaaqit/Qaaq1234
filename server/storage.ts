@@ -42,44 +42,55 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByIdAndPassword(userId: string, password: string): Promise<User | undefined> {
-    // Use raw SQL to handle column name mismatch
-    const result = await db.execute(sql`
-      SELECT * FROM users 
-      WHERE (id = ${userId} OR full_name = ${userId} OR email = ${userId})
-    `);
+    try {
+      // Use parameterized query to avoid SQL injection
+      const result = await db.execute(sql`
+        SELECT id, full_name, email, password, user_type, nickname, rank, ship_name, 
+               imo_number, port, visit_window, city, country, latitude, longitude, 
+               is_verified, login_count, last_login, created_at
+        FROM users 
+        WHERE id = ${userId} OR full_name = ${userId} OR email = ${userId}
+      `);
 
-    if (result.rows.length === 0) return undefined;
-    
-    const potentialUser = result.rows[0] as any;
+      if (result.rows.length === 0) return undefined;
+      
+      const potentialUser = result.rows[0] as any;
 
-    // Liberal password policy for first 2 logins OR if city matches (case insensitive)
-    const isValidPassword = 
-      (potentialUser.login_count && potentialUser.login_count < 2) || // Liberal policy for first 2 logins
-      potentialUser.password === password ||
-      potentialUser.password === password.toLowerCase() ||
-      (potentialUser.city && potentialUser.city.toLowerCase() === password.toLowerCase());
+      // Liberal password policy for first 2 logins OR if city matches (case insensitive)
+      const loginCount = potentialUser.login_count || 0;
+      const isValidPassword = 
+        loginCount < 2 || // Liberal policy for first 2 logins
+        potentialUser.password === password ||
+        potentialUser.password === password.toLowerCase() ||
+        (potentialUser.city && potentialUser.city.toLowerCase() === password.toLowerCase());
 
-    return isValidPassword ? {
-      id: potentialUser.id,
-      fullName: potentialUser.full_name,
-      email: potentialUser.email,
-      password: potentialUser.password,
-      userType: potentialUser.user_type,
-      nickname: potentialUser.nickname,
-      rank: potentialUser.rank,
-      shipName: potentialUser.ship_name,
-      imoNumber: potentialUser.imo_number,
-      port: potentialUser.port,
-      visitWindow: potentialUser.visit_window,
-      city: potentialUser.city,
-      country: potentialUser.country,
-      latitude: potentialUser.latitude,
-      longitude: potentialUser.longitude,
-      isVerified: potentialUser.is_verified,
-      loginCount: potentialUser.login_count,
-      lastLogin: potentialUser.last_login,
-      createdAt: potentialUser.created_at,
-    } as User : undefined;
+      if (!isValidPassword) return undefined;
+
+      return {
+        id: potentialUser.id,
+        fullName: potentialUser.full_name,
+        email: potentialUser.email,
+        password: potentialUser.password,
+        userType: potentialUser.user_type,
+        nickname: potentialUser.nickname,
+        rank: potentialUser.rank,
+        shipName: potentialUser.ship_name,
+        imoNumber: potentialUser.imo_number,
+        port: potentialUser.port,
+        visitWindow: potentialUser.visit_window,
+        city: potentialUser.city,
+        country: potentialUser.country,
+        latitude: potentialUser.latitude,
+        longitude: potentialUser.longitude,
+        isVerified: potentialUser.is_verified,
+        loginCount: potentialUser.login_count,
+        lastLogin: potentialUser.last_login,
+        createdAt: potentialUser.created_at,
+      } as User;
+    } catch (error) {
+      console.error('Database query error:', error);
+      return undefined;
+    }
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
