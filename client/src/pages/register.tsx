@@ -174,20 +174,46 @@ export default function Register({ onSuccess }: RegisterProps) {
                 </div>
               </div>
             ) : (
-              <div>
-                <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                  Email
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="your.email@example.com"
-                  className="mt-2"
-                  required
-                />
-              </div>
+              <>
+                <div>
+                  <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                    Email
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="your.email@example.com"
+                    className="mt-2"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="userType" className="text-sm font-medium text-gray-700">
+                    Are you a sailor or local maritime professional?
+                  </Label>
+                  <div className="mt-2 relative">
+                    <select
+                      id="userType"
+                      value={formData.userType}
+                      onChange={(e) => setFormData({ ...formData, userType: e.target.value as "sailor" | "local" })}
+                      className="w-full bg-gray-100 bg-opacity-50 backdrop-blur-sm border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ocean-teal focus:border-transparent appearance-none"
+                      required
+                    >
+                      <option value="">Select your role...</option>
+                      <option value="sailor">🚢 Sailor (working on ships)</option>
+                      <option value="local">🏠 Local (port agent, supplier, etc.)</option>
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                      <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </>
             )}
 
 
