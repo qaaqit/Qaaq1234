@@ -181,9 +181,12 @@ export class DatabaseStorage implements IStorage {
       const result = await pool.query(`
         SELECT * FROM users 
         ORDER BY id
+        LIMIT 620
       `);
       
-      return result.rows.map(user => {
+      console.log(`Found ${result.rows.length} users in QAAQ database`);
+      
+      const mappedUsers = result.rows.map(user => {
         // Use current coordinates if available, otherwise use city/country for approximate location
         let latitude = 0;
         let longitude = 0;
@@ -196,6 +199,19 @@ export class DatabaseStorage implements IStorage {
           const cityCoords = this.getCityCoordinates(user.city, user.country);
           latitude = cityCoords.lat;
           longitude = cityCoords.lng;
+        } else {
+          // Give users without city/country a random maritime location
+          const maritimeCities = [
+            { lat: 19.0760, lng: 72.8777 }, // Mumbai
+            { lat: 13.0827, lng: 80.2707 }, // Chennai  
+            { lat: 25.2048, lng: 55.2708 }, // Dubai
+            { lat: 1.3521, lng: 103.8198 }, // Singapore
+            { lat: 53.5511, lng: 9.9937 }, // Hamburg
+            { lat: 51.9225, lng: 4.4792 }, // Rotterdam
+          ];
+          const randomCity = maritimeCities[Math.floor(Math.random() * maritimeCities.length)];
+          latitude = randomCity.lat + (Math.random() - 0.5) * 0.1; // Add small random offset
+          longitude = randomCity.lng + (Math.random() - 0.5) * 0.1;
         }
         
         return {
@@ -219,7 +235,12 @@ export class DatabaseStorage implements IStorage {
           lastLogin: new Date(),
           createdAt: new Date(),
         } as User;
-      }).filter(user => user.latitude !== 0 && user.longitude !== 0);
+      });
+      
+      const usersWithLocation = mappedUsers.filter(user => user.latitude !== 0 && user.longitude !== 0);
+      console.log(`Returning ${usersWithLocation.length} users with valid coordinates`);
+      
+      return usersWithLocation;
     } catch (error) {
       console.error('Get users with location error:', error);
       return [];
