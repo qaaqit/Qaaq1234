@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import QaaqStore from "./qaaq-store";
+import SuburbUsersDisplay from "./suburb-users-display";
 
 interface CPSSItem {
   id: string;
@@ -687,16 +688,25 @@ export default function CPSSNavigator({ onServiceSelect }: CPSSNavigatorProps) {
 
       {/* Qaaq Store Display */}
       {breadcrumb.length > 0 && breadcrumb[breadcrumb.length - 1].id === 'qaaq-store' && (
-        <QaaqStore
-          location={`${breadcrumb[breadcrumb.length - 3]?.name || 'Port'}`}
-          suburb={breadcrumb[breadcrumb.length - 2]?.name || 'Suburb'}
-          port={breadcrumb[breadcrumb.length - 3]?.name || 'Port'}
-          country={breadcrumb[0]?.name || 'Country'}
-          userShipSchedule={{
-            arrivalDate: "2025-02-15",
-            departureDate: "2025-02-18"
-          }}
-        />
+        <div className="space-y-6">
+          <QaaqStore
+            location={`${breadcrumb[breadcrumb.length - 3]?.name || 'Port'}`}
+            suburb={breadcrumb[breadcrumb.length - 2]?.name || 'Suburb'}
+            port={breadcrumb[breadcrumb.length - 3]?.name || 'Port'}
+            country={breadcrumb[0]?.name || 'Country'}
+            userShipSchedule={{
+              arrivalDate: "2025-02-15",
+              departureDate: "2025-02-18"
+            }}
+          />
+          
+          {/* User Cards Below Qaaq Store */}
+          <SuburbUsersDisplay 
+            suburb={(breadcrumb[breadcrumb.length - 2]?.name || 'Suburb')}
+            port={(breadcrumb[breadcrumb.length - 3]?.name || 'Port')}
+            country={(breadcrumb[0]?.name || 'Country')}
+          />
+        </div>
       )}
 
       {/* Edit Dialog */}

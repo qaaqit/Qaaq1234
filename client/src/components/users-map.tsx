@@ -67,8 +67,8 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
   useEffect(() => {
     if (showUsers && users.length > 0) {
       // Calculate bounds to fit all users
-      const latitudes = users.map(u => parseFloat(u.latitude));
-      const longitudes = users.map(u => parseFloat(u.longitude));
+      const latitudes = users.map(u => u.latitude);
+      const longitudes = users.map(u => u.longitude);
       
       const minLat = Math.min(...latitudes);
       const maxLat = Math.max(...latitudes);
@@ -133,7 +133,7 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
         {showUsers && !isLoading && users.map((user) => (
           <Marker
             key={user.id}
-            position={[parseFloat(user.latitude), parseFloat(user.longitude)]}
+            position={[user.latitude, user.longitude]}
             icon={createCustomIcon(user)}
           >
             <Popup>

@@ -59,10 +59,7 @@ export default function Discover({ user }: DiscoverProps) {
 
   const handleSearch = () => {
     setShowUsers(true);
-    if (searchQuery.trim() === "") {
-      // If no search query, show nearest users
-      // This will be handled by the UsersMap component
-    }
+    // Always show users when "Koi Hai?" is clicked, regardless of search query
     refetch();
   };
 
