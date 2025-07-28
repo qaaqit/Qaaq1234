@@ -318,11 +318,26 @@ export class DatabaseStorage implements IStorage {
         }
       }
       
-      const mappedUsers = result.rows.map(user => {
+      const mappedUsers = result.rows.map((user, index) => {
         // Build full name from available name fields
         const firstName = user.first_name || '';
         const lastName = user.last_name || '';
-        const fullName = [firstName, lastName].filter(n => n.trim()).join(' ') || user.email || 'Maritime Professional';
+        const nickname = user.nickname || '';
+        const email = user.email || '';
+        
+        // Better name resolution: try nickname first, then first+last, then email, then fallback
+        let fullName = '';
+        if (nickname && nickname.trim() && !nickname.includes('@')) {
+          fullName = nickname.trim();
+        } else if (firstName && lastName) {
+          fullName = [firstName, lastName].filter(n => n.trim()).join(' ');
+        } else if (firstName) {
+          fullName = firstName.trim();
+        } else if (email && email.includes('@')) {
+          fullName = email.split('@')[0].replace(/[._]/g, ' ').trim();
+        } else {
+          fullName = `Maritime Professional #${user.id}`;
+        }
         
         // Determine primary location with QAAQ authorization logic:
         // 1. If present_city is confirmed, use current_city
@@ -415,6 +430,17 @@ export class DatabaseStorage implements IStorage {
         }
         
         const userType = isMaritimeProfessional ? 'sailor' : 'local';
+        
+        // Add small random offset for users in same city to prevent pin stacking
+        const locationKey = `${city.toLowerCase()}_${country.toLowerCase()}`;
+        const offset = (index % 10) * 0.001; // Small offset based on user index
+        const latOffset = Math.sin(index) * offset;
+        const lngOffset = Math.cos(index) * offset;
+        
+        if (locationSource === 'city' || locationSource === 'city_approximate') {
+          latitude += latOffset;
+          longitude += lngOffset;
+        }
         
         console.log(`Mapped ${userType} ${fullName} from ${city}, ${country} (${latitude}, ${longitude}) - source: ${locationSource}`);
 
