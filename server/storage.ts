@@ -238,8 +238,9 @@ export class DatabaseStorage implements IStorage {
         if (availableColumns.includes('current_country')) selectFields.push('current_country');
         if (availableColumns.includes('permanent_city')) selectFields.push('permanent_city');
         if (availableColumns.includes('permanent_country')) selectFields.push('permanent_country');
-        if (availableColumns.includes('maritime_rank')) selectFields.push('maritime_rank');
-        if (availableColumns.includes('last_ship')) selectFields.push('last_ship');
+        if (availableColumns.includes('rank')) selectFields.push('rank');
+        if (availableColumns.includes('ship_name')) selectFields.push('ship_name');
+        if (availableColumns.includes('full_name')) selectFields.push('full_name');
         if (availableColumns.includes('whatsapp_number')) selectFields.push('whatsapp_number');
         if (availableColumns.includes('last_login_at')) selectFields.push('last_login_at');
         if (availableColumns.includes('created_at')) selectFields.push('created_at');
@@ -255,8 +256,15 @@ export class DatabaseStorage implements IStorage {
         console.log('Querying maritime professional database with fields:', selectFields);
         console.log('Available columns include city field:', availableColumns.includes('city'));
         
+        // Ensure we always include the essential fields we need
+        const essentialFields = ['id', 'full_name', 'email', 'rank', 'ship_name', 'city'];
+        const combinedFields = selectFields.concat(essentialFields);
+        const finalFields = combinedFields.filter((field, index) => combinedFields.indexOf(field) === index);
+        
+        console.log('Final query fields:', finalFields);
+        
         result = await pool.query(`
-          SELECT ${selectFields.join(', ')}
+          SELECT ${finalFields.join(', ')}
           FROM users 
           WHERE (current_city IS NOT NULL AND current_city != '') 
              OR (permanent_city IS NOT NULL AND permanent_city != '')
@@ -326,6 +334,11 @@ export class DatabaseStorage implements IStorage {
         const rank = user.rank || '';
         const shipName = user.ship_name || '';
         const userCity = user.city || '';
+        
+        // Debug logging for specific users with rank data
+        if (rank || shipName) {
+          console.log(`DEBUG: User ${user.full_name} has rank="${rank}" shipName="${shipName}"`);
+        }
         
         let fullName = '';
         
