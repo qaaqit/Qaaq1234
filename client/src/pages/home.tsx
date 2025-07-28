@@ -15,6 +15,7 @@ export default function Home({ onSuccess }: HomeProps) {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
   const [formData, setFormData] = useState({
     userId: "",
     password: "",
@@ -69,80 +70,98 @@ export default function Home({ onSuccess }: HomeProps) {
 
       {/* Translucent Login Box - Centered over map */}
       <div className="absolute inset-0 z-20 flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-white/80 backdrop-blur-lg border border-white/30 shadow-2xl rounded-xl relative p-6">
-          {/* Chevron in top-right corner */}
-          <div className="absolute top-4 right-4 text-gray-400">
-            <i className="fas fa-chevron-down text-sm"></i>
-          </div>
+        <div className={`w-full max-w-md bg-white/80 backdrop-blur-lg border border-white/30 shadow-2xl rounded-xl relative transition-all duration-300 ${
+          isMinimized ? 'p-4 max-h-20' : 'p-6'
+        }`}>
+          {/* Chevron toggle button in top-right corner */}
+          <button
+            onClick={() => setIsMinimized(!isMinimized)}
+            className="absolute top-3 right-3 w-8 h-8 bg-white/50 hover:bg-white/70 rounded-full flex items-center justify-center text-gray-600 hover:text-gray-800 transition-all duration-200 shadow-sm z-30"
+          >
+            <i className={`fas ${isMinimized ? 'fa-chevron-down' : 'fa-chevron-up'} text-sm`}></i>
+          </button>
           
           {/* Header */}
-          <div className="text-center mb-6">
-            <div className="w-12 h-12 bg-ocean-teal/20 rounded-full flex items-center justify-center mx-auto mb-3">
-              <i className="fas fa-anchor text-xl text-ocean-teal"></i>
+          <div className={`text-center transition-all duration-300 ${isMinimized ? 'mb-0' : 'mb-6'}`}>
+            <div className={`w-12 h-12 bg-ocean-teal/20 rounded-full flex items-center justify-center mx-auto transition-all duration-300 ${
+              isMinimized ? 'mb-0 w-8 h-8' : 'mb-3'
+            }`}>
+              <i className={`fas fa-anchor text-ocean-teal transition-all duration-300 ${isMinimized ? 'text-sm' : 'text-xl'}`}></i>
             </div>
-            <h1 className="text-2xl font-bold text-navy-blue">QaaqConnect</h1>
-            <p className="text-gray-600 text-sm">Maritime Community Login</p>
+            {!isMinimized && (
+              <>
+                <h1 className="text-2xl font-bold text-navy-blue">QaaqConnect</h1>
+                <p className="text-gray-600 text-sm">Maritime Community Login</p>
+              </>
+            )}
+            {isMinimized && (
+              <h1 className="text-lg font-bold text-navy-blue">QaaqConnect</h1>
+            )}
           </div>
 
           {/* Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="userId" className="text-sm font-medium text-gray-700">
-                USER NAME (This may be ur country code +91 & whatsapp number )
-              </Label>
-              <Input
-                id="userId"
-                type="text"
-                value={formData.userId}
-                onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
-                placeholder="Enter your name, email, or phone number"
-                className="bg-white/90 border-gray-200 focus:border-ocean-teal focus:bg-white"
-                disabled={loading}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium text-gray-700">
-                Password
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder="Enter your password"
-                className="bg-white/90 border-gray-200 focus:border-ocean-teal focus:bg-white"
-                disabled={loading}
-              />
-            </div>
-            
-            <Button 
-              type="submit" 
-              className="w-full bg-ocean-teal hover:bg-cyan-600 text-white font-semibold py-2"
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <i className="fas fa-spinner fa-spin mr-2"></i>
-                  Logging in...
-                </>
-              ) : (
-                <>
-                  <i className="fas fa-sign-in-alt mr-2"></i>
-                  Login to QaaqConnect
-                </>
-              )}
-            </Button>
-          </form>
-          
-          {/* Demo Password Info */}
-          <div className="mt-6 pt-4 border-t border-gray-200/50">
-            <p className="text-center text-sm text-gray-600">
-              <span className="inline-block bg-duck-yellow/20 text-duck-yellow px-2 py-1 rounded text-xs font-medium">
-                Demo Password: 1234koihai
-              </span>
-            </p>
-          </div>
+          {!isMinimized && (
+            <>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="userId" className="text-sm font-medium text-gray-700">
+                    USER NAME (This may be ur country code +91 & whatsapp number )
+                  </Label>
+                  <Input
+                    id="userId"
+                    type="text"
+                    value={formData.userId}
+                    onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
+                    placeholder="Enter your name, email, or phone number"
+                    className="bg-white/90 border-gray-200 focus:border-ocean-teal focus:bg-white"
+                    disabled={loading}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                    Password
+                  </Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    placeholder="Enter your password"
+                    className="bg-white/90 border-gray-200 focus:border-ocean-teal focus:bg-white"
+                    disabled={loading}
+                  />
+                </div>
+                
+                <Button 
+                  type="submit" 
+                  className="w-full bg-ocean-teal hover:bg-cyan-600 text-white font-semibold py-2"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <i className="fas fa-spinner fa-spin mr-2"></i>
+                      Logging in...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-sign-in-alt mr-2"></i>
+                      Login to QaaqConnect
+                    </>
+                  )}
+                </Button>
+              </form>
+              
+              {/* Demo Password Info */}
+              <div className="mt-6 pt-4 border-t border-gray-200/50">
+                <p className="text-center text-sm text-gray-600">
+                  <span className="inline-block bg-duck-yellow/20 text-duck-yellow px-2 py-1 rounded text-xs font-medium">
+                    Demo Password: 1234koihai
+                  </span>
+                </p>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
