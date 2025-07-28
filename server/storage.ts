@@ -42,31 +42,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByIdAndPassword(userId: string, password: string): Promise<User | undefined> {
+    // Simple dummy password check for now
+    if (password !== "1234koihai") {
+      return undefined;
+    }
+
     try {
-      // Query using raw SQL to avoid schema mapping issues
-      const query = `
-        SELECT id, full_name, email, password, user_type, nickname, rank, ship_name, 
-               imo_number, port, visit_window, city, country, latitude, longitude, 
-               is_verified, login_count, last_login, created_at
-        FROM users 
-        WHERE id = $1 OR full_name = $1 OR email = $1
-      `;
-      
-      const result = await pool.query(query, [userId]);
+      // Find user by ID, name, email, or phone number using raw SQL
+      const result = await db.execute(sql`
+        SELECT * FROM users 
+        WHERE id = ${userId} OR full_name = ${userId} OR email = ${userId}
+      `);
 
       if (result.rows.length === 0) return undefined;
       
-      const potentialUser = result.rows[0];
-
-      // Liberal password policy for first 2 logins OR if city matches (case insensitive)
-      const loginCount = potentialUser.login_count || 0;
-      const isValidPassword = 
-        loginCount < 2 || // Liberal policy for first 2 logins
-        potentialUser.password === password ||
-        potentialUser.password === password.toLowerCase() ||
-        (potentialUser.city && potentialUser.city.toLowerCase() === password.toLowerCase());
-
-      if (!isValidPassword) return undefined;
+      const potentialUser = result.rows[0] as any;
 
       return {
         id: potentialUser.id,

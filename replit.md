@@ -43,9 +43,9 @@ Future features: CPSS (Country/Port/Suburb/Service) tree breadcrumb for maritime
 ## Key Components
 
 ### Authentication System
-- QAAQ User ID and Password authentication with liberal policy
-- User ID accepts: Full Name, Email, or Phone Number
-- Password system: City name (case insensitive) as default, but liberal policy allows ANY password for first 2 logins
+- QAAQ User ID and Password authentication with dummy password system
+- User ID accepts: Full Name, Email, or Phone Number from QAAQ admin database
+- Password system: Simple dummy password "1234koihai" for all users (temporary solution)
 - JWT tokens for session management with 30-day expiration
 - User type distinction (sailor vs local) for personalized experiences
 - Chrome password manager compatibility - users typically save credentials after first login
