@@ -58,17 +58,55 @@ export default function Home({ onSuccess }: HomeProps) {
 
   return (
     <div className="min-h-screen relative">
-      {/* Background - could be map or simple gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-100 to-slate-200"></div>
-      {/* Translucent login box */}
+      {/* Background content - similar to QAAQ.app */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-slate-100">
+        <div className="container mx-auto px-4 py-8 opacity-30">
+          <div className="text-center mb-12">
+            <h1 className="text-6xl font-bold text-navy mb-4">QaaqConnect</h1>
+            <p className="text-xl text-gray-700 mb-8">Maritime Community Platform</p>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              Connect sailors with locals for authentic port city experiences. 
+              Discover hidden gems, join maritime meetups, and explore like a local.
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            <div className="text-center p-6">
+              <div className="w-16 h-16 bg-navy/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <i className="fas fa-map-marked-alt text-2xl text-navy"></i>
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Port Discovery</h3>
+              <p className="text-gray-600">Find locals and experiences in any port city worldwide.</p>
+            </div>
+            
+            <div className="text-center p-6">
+              <div className="w-16 h-16 bg-ocean-teal/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <i className="fas fa-users text-2xl text-ocean-teal"></i>
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Maritime Community</h3>
+              <p className="text-gray-600">Connect with fellow seafarers and professionals.</p>
+            </div>
+            
+            <div className="text-center p-6">
+              <div className="w-16 h-16 bg-yellow-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <i className="fas fa-anchor text-2xl text-yellow-600"></i>
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Local Experiences</h3>
+              <p className="text-gray-600">Authentic port city experiences with local guides.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Translucent login box - QAAQ.app style */}
       <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
-        <div className="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg p-8 w-full max-w-md">
+        <div className="bg-white/90 backdrop-blur-md border border-white/20 rounded-xl shadow-2xl p-8 w-full max-w-md">
           <div className="text-center mb-6">
             <div className="w-16 h-16 bg-gradient-to-br from-navy to-ocean-teal rounded-2xl flex items-center justify-center mx-auto mb-4">
               <i className="fas fa-anchor text-2xl text-white"></i>
             </div>
-            <h1 className="text-2xl font-bold text-navy mb-2">QaaqConnect</h1>
-            <p className="text-gray-600">Maritime Community Platform</p>
+            <h2 className="text-xl font-bold text-gray-800 mb-1">Welcome to QaaqConnect</h2>
+            <p className="text-sm text-gray-600">Marine Engineering Knowledge Hub</p>
           </div>
           
           <form onSubmit={handleSubmit} className="space-y-4">
