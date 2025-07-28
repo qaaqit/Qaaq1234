@@ -9,8 +9,10 @@ import DiscoveryCard from "@/components/discovery-card";
 import UsersMap from "@/components/users-map";
 import WhatsAppBotControl from "@/components/whatsapp-bot-control";
 import CPSSNavigator from "@/components/cpss-navigator";
+import { useLocation } from "@/hooks/useLocation";
 import { type User } from "@/lib/auth";
 import { apiRequest } from "@/lib/queryClient";
+import { MapPin, Navigation, Ship } from "lucide-react";
 
 interface Post {
   id: string;

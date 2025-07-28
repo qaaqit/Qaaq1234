@@ -12,6 +12,7 @@ export interface IStorage {
   updateUserVerification(userId: string, isVerified: boolean): Promise<void>;
   incrementLoginCount(userId: string): Promise<void>;
   getUsersWithLocation(): Promise<User[]>;
+  updateUserLocation(userId: string, latitude: number, longitude: number, source: 'device' | 'ship' | 'city'): Promise<void>;
   
   // Verification codes
   createVerificationCode(userId: string, code: string, expiresAt: Date): Promise<VerificationCode>;
@@ -200,17 +201,68 @@ export class DatabaseStorage implements IStorage {
       // Use real QAAQ users with location data from current_city and permanent_city fields
       console.log('Fetching QAAQ users with location data for map and WhatsApp bot');
       
-      // Get QAAQ users with location data including real ship information  
-      const result = await pool.query(`
-        SELECT id, full_name, email, rank, ship_name, imo_number,
-               city, country, latitude, longitude, port, visit_window,
-               last_login, created_at, user_type, nickname
-        FROM users 
-        WHERE (city IS NOT NULL AND city != '') 
-           AND (latitude IS NOT NULL AND longitude IS NOT NULL)
-        ORDER BY last_login DESC NULLS LAST
-        LIMIT 100
-      `);
+      // Start with most basic query and work up - find what columns actually exist
+      let result;
+      
+      console.log('Testing basic connection to users table...');
+      try {
+        // Ultra-minimal test query to see if table exists
+        result = await pool.query('SELECT id FROM users LIMIT 1');
+        console.log('Users table exists, found', result.rows.length, 'rows');
+        
+        // Try to get all column names
+        const columnsResult = await pool.query(`
+          SELECT column_name 
+          FROM information_schema.columns 
+          WHERE table_name = 'users' 
+          ORDER BY ordinal_position
+        `);
+        const availableColumns = columnsResult.rows.map(row => row.column_name);
+        console.log('Available columns in users table:', availableColumns);
+        
+        // This is a maritime professional database - adapt to actual schema
+        const hasLocation = availableColumns.includes('current_city') || availableColumns.includes('permanent_city');
+        const hasEmail = availableColumns.includes('email');
+        
+        if (!hasLocation) {
+          console.log('No location data found, cannot proceed');
+          return [];
+        }
+        
+        // Select key fields that exist in this schema
+        let selectFields = ['id'];
+        if (hasEmail) selectFields.push('email');
+        if (availableColumns.includes('first_name')) selectFields.push('first_name');
+        if (availableColumns.includes('last_name')) selectFields.push('last_name');
+        if (availableColumns.includes('current_city')) selectFields.push('current_city');
+        if (availableColumns.includes('current_country')) selectFields.push('current_country');
+        if (availableColumns.includes('permanent_city')) selectFields.push('permanent_city');
+        if (availableColumns.includes('permanent_country')) selectFields.push('permanent_country');
+        if (availableColumns.includes('maritime_rank')) selectFields.push('maritime_rank');
+        if (availableColumns.includes('last_ship')) selectFields.push('last_ship');
+        if (availableColumns.includes('whatsapp_number')) selectFields.push('whatsapp_number');
+        if (availableColumns.includes('last_login_at')) selectFields.push('last_login_at');
+        if (availableColumns.includes('created_at')) selectFields.push('created_at');
+        if (availableColumns.includes('ship_types')) selectFields.push('ship_types');
+        if (availableColumns.includes('experience_level')) selectFields.push('experience_level');
+        if (availableColumns.includes('imo_number')) selectFields.push('imo_number');
+        if (availableColumns.includes('seafarer_id')) selectFields.push('seafarer_id');
+        
+        console.log('Querying maritime professional database with fields:', selectFields);
+        
+        result = await pool.query(`
+          SELECT ${selectFields.join(', ')}
+          FROM users 
+          WHERE (current_city IS NOT NULL AND current_city != '') 
+             OR (permanent_city IS NOT NULL AND permanent_city != '')
+          ORDER BY last_login_at DESC NULLS LAST
+          LIMIT 100
+        `);
+        
+      } catch (error) {
+        console.error('Failed to query users table:', error.message);
+        return [];
+      }
       
       console.log(`Found ${result.rows.length} QAAQ users with location data`);
       
@@ -259,62 +311,80 @@ export class DatabaseStorage implements IStorage {
       }
       
       const mappedUsers = result.rows.map(user => {
-        let latitude = user.latitude || 0;
-        let longitude = user.longitude || 0;
-        let city = user.city || '';
-        let country = user.country || '';
-        let locationSource = 'city'; // 'city' or 'ship'
+        // Build full name from available name fields
+        const firstName = user.first_name || '';
+        const lastName = user.last_name || '';
+        const fullName = [firstName, lastName].filter(n => n.trim()).join(' ') || user.email || 'Maritime Professional';
         
-        // First, check if this is a sailor with ship position available
-        const hasShipData = user.imo_number || user.ship_name;
-        if (hasShipData) {
+        // Determine primary location (prefer current over permanent)
+        let city = user.current_city || user.permanent_city || 'Unknown City';
+        let country = user.current_country || user.permanent_country || 'Unknown Country';
+        
+        // Priority order for location: 1) Ship IMO tracking 2) Device GPS 3) City mapping
+        let latitude = 0;
+        let longitude = 0;
+        let locationSource = 'city';
+        
+        // 1. First check if this is a sailor with IMO number for real-time ship tracking
+        const imoNumber = user.imo_number || user.seafarer_id;
+        if (imoNumber && isMaritimeProfessional) {
           const shipPosition = shipPositions.get(user.id);
           if (shipPosition) {
             latitude = shipPosition.latitude;
             longitude = shipPosition.longitude;
-            city = shipPosition.port || user.ship_name || 'At Sea';
-            country = 'Maritime';
+            city = shipPosition.port || city;
             locationSource = 'ship';
-            console.log(`Using ship position for sailor ${user.full_name} on ${user.ship_name}${user.imo_number ? ` (IMO: ${user.imo_number})` : ''}`);
+            console.log(`Using IMO-based ship position for ${fullName}: ${latitude}, ${longitude} at ${city}`);
           }
         }
         
-        // Use database coordinates if no ship position found
-        if (locationSource === 'city' && user.latitude && user.longitude) {
-          latitude = user.latitude;
-          longitude = user.longitude;
-          city = user.city || 'Unknown City';
-          country = user.country || 'Unknown Country';
-        }
-
-        // Skip users without any location data
+        // 2. Fall back to device GPS if available (would be updated via API)
+        // This would be populated by mobile app or browser geolocation
+        
+        // 3. Final fallback: derive from city name using coordinate mapping
         if (latitude === 0 && longitude === 0) {
-          console.log(`Skipping user ${user.full_name} - no location data available`);
+          const coordinates = this.getCityCoordinates(city.toLowerCase(), country.toLowerCase());
+          latitude = coordinates.lat;
+          longitude = coordinates.lng;
+          if (latitude !== 0 || longitude !== 0) {
+            locationSource = 'city';
+          }
+        }
+        
+        // If no coordinates found, skip this user
+        if (latitude === 0 && longitude === 0) {
+          console.log(`Skipping user ${fullName} from ${city} - no coordinates available`);
           return null;
         }
+        
+        // Determine user type - sailors typically have maritime_rank and last_ship
+        const isMaritimeProfessional = user.maritime_rank || user.last_ship || user.ship_types;
+        const userType = isMaritimeProfessional ? 'sailor' : 'local';
+        
+        console.log(`Mapped ${userType} ${fullName} from ${city}, ${country} (${latitude}, ${longitude}) - source: ${locationSource}`);
 
         return {
           id: user.id,
-          fullName: user.full_name || user.nickname || user.email || 'Maritime User',
+          fullName,
           email: user.email || '',
           password: '',
-          userType: user.user_type || (hasShipData ? 'sailor' : 'local'),
+          userType,
           isAdmin: false, // Set admin status based on phone/email in frontend
-          nickname: user.nickname || user.full_name || 'Maritime User',
-          rank: user.rank || '',
-          shipName: user.ship_name || '',
-          imoNumber: user.imo_number || '',
-          port: user.port || city,
-          visitWindow: user.visit_window || (locationSource === 'ship' ? 'Currently at sea' : 'Available for connection'),
+          nickname: firstName || fullName,
+          rank: user.maritime_rank || '',
+          shipName: user.last_ship || '',
+          imoNumber: '', // Not available in this schema
+          port: city,
+          visitWindow: 'Available for connection',
           city,
           country,
           latitude,
           longitude,
           isVerified: true,
           loginCount: 1,
-          lastLogin: user.last_login || new Date(),
+          lastLogin: user.last_login_at || user.created_at || new Date(),
           createdAt: user.created_at || new Date(),
-          whatsappNumber: ''
+          whatsappNumber: user.whatsapp_number || ''
         } as User & { whatsappNumber: string };
       }).filter(user => user !== null);
 
@@ -323,6 +393,31 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error('Get users with location error:', error);
       return [];
+    }
+  }
+
+  async updateUserLocation(userId: string, latitude: number, longitude: number, source: 'device' | 'ship' | 'city'): Promise<void> {
+    try {
+      if (source === 'device') {
+        // Update device location in the database
+        await pool.query(`
+          UPDATE users 
+          SET device_latitude = $1, device_longitude = $2, location_source = $3, location_updated_at = NOW()
+          WHERE id = $4
+        `, [latitude, longitude, source, userId]);
+        console.log(`Updated device location for user ${userId}: ${latitude}, ${longitude}`);
+      } else {
+        // Update primary location coordinates
+        await pool.query(`
+          UPDATE users 
+          SET latitude = $1, longitude = $2, location_source = $3, location_updated_at = NOW()
+          WHERE id = $4
+        `, [latitude, longitude, source, userId]);
+        console.log(`Updated ${source} location for user ${userId}: ${latitude}, ${longitude}`);
+      }
+    } catch (error) {
+      console.error(`Error updating ${source} location for user ${userId}:`, error);
+      throw error;
     }
   }
 

@@ -314,6 +314,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update user's device location (GPS from mobile/browser)
+  app.post("/api/users/location/device", async (req, res) => {
+    try {
+      const { userId, latitude, longitude } = req.body;
+      
+      if (!userId || !latitude || !longitude) {
+        return res.status(400).json({ message: "Missing required fields: userId, latitude, longitude" });
+      }
+
+      // Validate coordinates
+      if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+        return res.status(400).json({ message: "Invalid coordinates" });
+      }
+
+      await storage.updateUserLocation(userId, latitude, longitude, 'device');
+      res.json({ message: "Device location updated successfully" });
+    } catch (error) {
+      console.error("Error updating device location:", error);
+      res.status(500).json({ message: "Failed to update device location" });
+    }
+  });
+
+  // Update user's ship location (IMO-based tracking)
+  app.post("/api/users/location/ship", async (req, res) => {
+    try {
+      const { userId, imoNumber, shipName } = req.body;
+      
+      if (!userId || (!imoNumber && !shipName)) {
+        return res.status(400).json({ message: "Missing required fields: userId and (imoNumber or shipName)" });
+      }
+
+      // Get ship location using IMO or ship name
+      const shipLocationService = await import('./ship-location');
+      const service = new shipLocationService.default();
+      
+      const identifier = imoNumber || shipName;
+      const position = await service.getShipPosition(identifier);
+      
+      if (position) {
+        await storage.updateUserLocation(userId, position.latitude, position.longitude, 'ship');
+        res.json({ 
+          message: "Ship location updated successfully",
+          position: {
+            latitude: position.latitude,
+            longitude: position.longitude,
+            port: position.port
+          }
+        });
+      } else {
+        res.status(404).json({ message: "Ship position not found" });
+      }
+    } catch (error) {
+      console.error("Error updating ship location:", error);
+      res.status(500).json({ message: "Failed to update ship location" });
+    }
+  });
+
   // Get nearest users based on user's location
   app.get("/api/users/nearby", authenticateToken, async (req, res) => {
     try {

@@ -21,6 +21,10 @@ export const users = pgTable("users", {
   country: text("country"),
   latitude: real("latitude"),
   longitude: real("longitude"),
+  deviceLatitude: real("device_latitude"), // Current device GPS location
+  deviceLongitude: real("device_longitude"), // Current device GPS location
+  locationSource: text("location_source").default("city"), // 'device', 'ship', 'city'
+  locationUpdatedAt: timestamp("location_updated_at"),
   isVerified: boolean("is_verified").default(false),
   loginCount: integer("login_count").default(0),
   lastLogin: timestamp("last_login"),
