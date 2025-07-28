@@ -294,28 +294,31 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
             icon={createCustomIcon(user)}
           >
             <Popup>
-              <div className="p-2">
-                <h3 className="font-bold text-gray-900">
+              <div className="p-2 min-w-[200px]">
+                <h3 className="font-bold text-gray-900 mb-2">
                   {user.fullName}
-                  {user.rank && (
-                    <span className="ml-2 text-sm font-normal text-gray-600">
-                      ({getRankAbbreviation(user.rank)})
-                    </span>
-                  )}
                 </h3>
-                {user.shipName && (
-                  <p className="text-sm text-blue-600 italic">
-                    {user.shipName.replace(/^(MV|MT)\s+/, '')}
+                {/* Current City */}
+                {user.city && (
+                  <p className="text-sm text-gray-700">
+                    <span className="font-medium">Current City:</span> {user.city}
                   </p>
                 )}
-                {user.port && (
-                  <p className="text-sm text-gray-600">
-                    📍 {user.port}
+                {/* Maritime Rank */}
+                {user.rank && (
+                  <p className="text-sm text-gray-700">
+                    <span className="font-medium">Maritime Rank:</span> {user.rank} ({getRankAbbreviation(user.rank)})
+                  </p>
+                )}
+                {/* Last Ship */}
+                {user.shipName && (
+                  <p className="text-sm text-gray-700">
+                    <span className="font-medium">Last Ship:</span> {user.shipName}
                   </p>
                 )}
                 {/* Show distance from user if user location available */}
                 {userLocation && (
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 mt-2 pt-2 border-t">
                     {calculateDistance(
                       userLocation.lat, userLocation.lng,
                       user.latitude, user.longitude
