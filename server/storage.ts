@@ -55,9 +55,9 @@ export class DatabaseStorage implements IStorage {
       const testResult = await pool.query('SELECT COUNT(*) as user_count FROM users');
       console.log('Total users in database:', testResult.rows[0].user_count);
       
-      // Now try to find our specific user
+      // Simple SELECT with only basic columns to test
       const result = await pool.query(
-        'SELECT * FROM users WHERE id = $1 OR full_name = $1 OR email = $1 LIMIT 1',
+        'SELECT id, full_name, email FROM users WHERE id = $1 OR full_name = $1 OR email = $1 LIMIT 1',
         [userId]
       );
 
@@ -71,26 +71,27 @@ export class DatabaseStorage implements IStorage {
       const potentialUser = result.rows[0];
       console.log('Found user:', potentialUser.full_name, potentialUser.email);
 
+      // Return minimal user object for now
       return {
         id: potentialUser.id,
         fullName: potentialUser.full_name,
-        email: potentialUser.email,
-        password: potentialUser.password,
-        userType: potentialUser.user_type,
-        nickname: potentialUser.nickname,
-        rank: potentialUser.rank,
-        shipName: potentialUser.ship_name,
-        imoNumber: potentialUser.imo_number,
-        port: potentialUser.port,
-        visitWindow: potentialUser.visit_window,
-        city: potentialUser.city,
-        country: potentialUser.country,
-        latitude: potentialUser.latitude,
-        longitude: potentialUser.longitude,
-        isVerified: potentialUser.is_verified,
-        loginCount: potentialUser.login_count,
-        lastLogin: potentialUser.last_login,
-        createdAt: potentialUser.created_at,
+        email: potentialUser.email || '',
+        password: '',
+        userType: 'sailor',
+        nickname: '',
+        rank: '',
+        shipName: '',
+        imoNumber: '',
+        port: '',
+        visitWindow: '',
+        city: '',
+        country: '',
+        latitude: 0,
+        longitude: 0,
+        isVerified: true,
+        loginCount: 1,
+        lastLogin: new Date(),
+        createdAt: new Date(),
       } as User;
     } catch (error) {
       console.error('Database query error:', error);
