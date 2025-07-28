@@ -238,8 +238,8 @@ export class DatabaseStorage implements IStorage {
         if (availableColumns.includes('current_country')) selectFields.push('current_country');
         if (availableColumns.includes('permanent_city')) selectFields.push('permanent_city');
         if (availableColumns.includes('permanent_country')) selectFields.push('permanent_country');
-        if (availableColumns.includes('maritime_rank')) selectFields.push('maritime_rank');
-        if (availableColumns.includes('last_ship')) selectFields.push('last_ship');
+        if (availableColumns.includes('rank')) selectFields.push('rank');
+        if (availableColumns.includes('ship_name')) selectFields.push('ship_name');
         if (availableColumns.includes('last_company')) selectFields.push('last_company');
         if (availableColumns.includes('whatsapp_number')) selectFields.push('whatsapp_number');
         if (availableColumns.includes('last_login_at')) selectFields.push('last_login_at');
@@ -257,7 +257,7 @@ export class DatabaseStorage implements IStorage {
         console.log('Available columns include city field:', availableColumns.includes('city'));
         
         // Ensure we always include the essential fields we need - but only if they exist
-        const essentialFields = ['id', 'first_name', 'last_name', 'email', 'maritime_rank', 'last_ship', 'last_company', 'city'];
+        const essentialFields = ['id', 'first_name', 'last_name', 'email', 'rank', 'ship_name', 'last_company', 'city'];
         const validEssentialFields = essentialFields.filter(field => availableColumns.includes(field));
         const combinedFields = selectFields.concat(validEssentialFields);
         const finalFields = combinedFields.filter((field, index) => combinedFields.indexOf(field) === index);
@@ -332,8 +332,8 @@ export class DatabaseStorage implements IStorage {
         const firstName = user.first_name || '';
         const lastName = user.last_name || '';
         const email = user.email || '';
-        const rank = user.maritime_rank || '';
-        const shipName = user.last_ship || '';
+        const rank = user.rank || '';
+        const shipName = user.ship_name || '';
         const company = user.last_company || '';
         const userCity = user.city || '';
         
