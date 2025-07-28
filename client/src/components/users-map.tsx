@@ -80,9 +80,9 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
     }
   });
 
-  // Get user's current location
+  // Get user's current location (always, not just when showUsers is true)
   useEffect(() => {
-    if (showUsers && user?.id) {
+    if (user?.id) {
       // Try to get user's location from browser geolocation
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
@@ -106,7 +106,7 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
         );
       }
     }
-  }, [showUsers, user?.id, users]);
+  }, [user?.id, users]);
 
   // Smart zoom logic: center on user with expanding radius to show at least 9 pins
   useEffect(() => {
@@ -186,9 +186,9 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
     });
   };
 
-  // Default center (world view)
-  const defaultCenter: [number, number] = [20, 0];
-  const defaultZoom = 2;
+  // Use user location as default center, fallback to world view
+  const defaultCenter: [number, number] = userLocation ? [userLocation.lat, userLocation.lng] : [20, 0];
+  const defaultZoom = userLocation ? 9 : 2; // Zoom level 9 shows roughly 50km radius
 
   return (
     <div className="w-full h-full overflow-hidden bg-gray-100">
@@ -196,15 +196,16 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
         center={defaultCenter}
         zoom={defaultZoom}
         className="w-full h-full"
-        bounds={bounds || undefined}
+        key={userLocation ? `${userLocation.lat}-${userLocation.lng}` : 'world'} // Force re-render when user location changes
+        bounds={showUsers && bounds ? bounds : undefined}
       >
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
         />
         
-        {/* Show radius circle around user's location */}
-        {showUsers && userLocation && (
+        {/* Show radius circle around user's location (always visible when user location is available) */}
+        {userLocation && (
           <Circle
             center={[userLocation.lat, userLocation.lng]}
             radius={mapRadius * 1000} // Convert km to meters
@@ -216,8 +217,8 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
           />
         )}
         
-        {/* Show user's current location pin */}
-        {showUsers && userLocation && (
+        {/* Show user's current location pin (always visible when user location is available) */}
+        {userLocation && (
           <Marker
             position={[userLocation.lat, userLocation.lng]}
             icon={divIcon({
