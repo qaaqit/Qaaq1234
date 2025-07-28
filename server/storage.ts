@@ -1,5 +1,5 @@
 import { users, posts, likes, verificationCodes, type User, type InsertUser, type Post, type InsertPost, type VerificationCode, type Like } from "@shared/schema";
-import { db } from "./db";
+import { db, pool } from "./db";
 import { eq, desc, and, ilike, or, sql, isNotNull } from "drizzle-orm";
 
 export interface IStorage {
@@ -48,15 +48,20 @@ export class DatabaseStorage implements IStorage {
     }
 
     try {
-      // Find user by ID, name, email, or phone number using raw SQL
-      const result = await db.execute(sql`
-        SELECT * FROM users 
-        WHERE id = ${userId} OR full_name = ${userId} OR email = ${userId}
-      `);
+      // Use direct pool query to avoid Drizzle column mapping issues
+      const query = `
+        SELECT id, full_name, email, password, user_type, nickname, rank, ship_name, 
+               imo_number, port, visit_window, city, country, latitude, longitude, 
+               is_verified, login_count, last_login, created_at
+        FROM users 
+        WHERE id = $1 OR full_name = $1 OR email = $1
+      `;
+      
+      const result = await pool.query(query, [userId]);
 
       if (result.rows.length === 0) return undefined;
       
-      const potentialUser = result.rows[0] as any;
+      const potentialUser = result.rows[0];
 
       return {
         id: potentialUser.id,
