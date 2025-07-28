@@ -140,13 +140,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async incrementLoginCount(userId: string): Promise<void> {
-    await db
-      .update(users)
-      .set({ 
-        loginCount: sql`${users.loginCount} + 1`,
-        lastLogin: new Date()
-      })
-      .where(eq(users.id, userId));
+    // Skip login count increment for now since the QAAQ admin database 
+    // doesn't have the same schema structure
+    console.log('Skipping login count increment for user:', userId);
   }
 
   async getUsersWithLocation(): Promise<User[]> {
