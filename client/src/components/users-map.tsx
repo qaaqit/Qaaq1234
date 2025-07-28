@@ -272,11 +272,6 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
                 {user.port && (
                   <p className="text-sm text-gray-600">
                     📍 {user.port}
-                    {user.visitWindow && (
-                      <span className="ml-2 text-green-600">
-                        ({user.visitWindow})
-                      </span>
-                    )}
                   </p>
                 )}
                 {/* Show distance from user if user location available */}

@@ -71,7 +71,7 @@ export class DatabaseStorage implements IStorage {
         shipName: user.current_ship_name || user.vessel_name || user.ship_name || '',
         imoNumber: user.current_ship_imo || user.imo_number || '',
         port: user.current_city || user.permanent_city || user.city || '',
-        visitWindow: 'Available for connection',
+        visitWindow: '',
         city: user.current_city || user.permanent_city || user.city || '',
         country: user.current_country || user.permanent_country || '',
         latitude: parseFloat(user.latitude) || 0,
@@ -473,7 +473,7 @@ export class DatabaseStorage implements IStorage {
           shipName: shipName,
           imoNumber: '', // Not available in this schema
           port: city,
-          visitWindow: 'Available for connection',
+          visitWindow: '',
           city,
           country,
           latitude,
