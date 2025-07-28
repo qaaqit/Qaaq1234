@@ -329,7 +329,8 @@ export class DatabaseStorage implements IStorage {
         
         let fullName = '';
         
-        // Priority 1: Use full_name if available and not generic
+        // Show user ID directly - no descriptive text or "AVAILABLE FOR CONNECTION"
+        // Priority 1: Use full_name if available (this contains user ID like +919029010070 or name like "Patel")
         if (fullNameField && fullNameField.trim() && !fullNameField.includes('Marine Professional')) {
           fullName = fullNameField.trim();
         }
@@ -337,7 +338,7 @@ export class DatabaseStorage implements IStorage {
         else if (nickname && nickname.trim() && !nickname.includes('@') && nickname !== 'Marine Professional') {
           fullName = nickname.trim();
         }
-        // Priority 3: Extract name from email
+        // Priority 3: Extract name from email prefix
         else if (email && email.includes('@')) {
           const emailName = email.split('@')[0].replace(/[._\d]/g, ' ').trim();
           if (emailName.length > 2 && !emailName.toLowerCase().includes('marine')) {
@@ -347,22 +348,9 @@ export class DatabaseStorage implements IStorage {
           }
         }
         
-        // Priority 4: Create unique identifier using rank, ship, and location
+        // Priority 4: If no meaningful name found, just use last 6 characters of user ID
         if (!fullName || fullName === 'Marine Professional') {
-          if (rank && shipName) {
-            fullName = `${rank} from ${shipName.replace(/^(MV|MT)\s+/i, '')}`;
-          } else if (rank && userCity && userCity !== 'Unknown') {
-            fullName = `${rank} from ${userCity}`;
-          } else if (shipName) {
-            fullName = `Officer from ${shipName.replace(/^(MV|MT)\s+/i, '')}`;
-          } else if (rank) {
-            fullName = `${rank} Officer`;
-          } else if (userCity && userCity !== 'Unknown' && userCity.length > 2 && !userCity.match(/^\d+$/)) {
-            fullName = `Seafarer from ${userCity}`;
-          } else {
-            // Use user ID as last resort for uniqueness
-            fullName = `Seafarer ${user.id.toString().slice(-4)}`;
-          }
+          fullName = user.id.toString().slice(-6);
         }
         
         // Determine primary location with QAAQ authorization logic:
