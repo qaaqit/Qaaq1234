@@ -258,15 +258,17 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
           >
             <Popup>
               <div className="p-2">
-                <h3 className="font-bold text-gray-900">{user.fullName}</h3>
-                {user.rank && (
-                  <p className="text-sm text-gray-600">
-                    {getRankAbbreviation(user.rank)}
-                    {user.shipName && (
-                      <span className="ml-2 text-blue-600 italic">
-                        {user.shipName.replace(/^(MV|MT)\s+/, '')}
-                      </span>
-                    )}
+                <h3 className="font-bold text-gray-900">
+                  {user.fullName}
+                  {user.rank && (
+                    <span className="ml-2 text-sm font-normal text-gray-600">
+                      ({getRankAbbreviation(user.rank)})
+                    </span>
+                  )}
+                </h3>
+                {user.shipName && (
+                  <p className="text-sm text-blue-600 italic">
+                    {user.shipName.replace(/^(MV|MT)\s+/, '')}
                   </p>
                 )}
                 {user.port && (
