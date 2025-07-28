@@ -72,11 +72,7 @@ export default function Home({ onSuccess }: HomeProps) {
       {/* Translucent Login Box - Always positioned at top */}
       <div className={`absolute z-20 top-4 right-4 left-4 flex justify-center transition-all duration-500`}>
         <div 
-          className={`bg-white/80 backdrop-blur-lg border border-white/30 shadow-2xl rounded-xl relative transition-all duration-500 ${
-            isMinimized 
-              ? 'p-3 max-h-16 w-full max-w-xs' 
-              : 'p-6 w-full max-w-md'
-          }`}
+          className="backdrop-blur-lg border border-white/30 shadow-2xl rounded-xl relative transition-all duration-500 p-6 w-full max-w-md bg-[#f5e9e900]"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Chevron toggle button in top-right corner */}
