@@ -59,7 +59,10 @@ export default function Home({ onSuccess }: HomeProps) {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div 
+      className="min-h-screen relative overflow-hidden cursor-pointer"
+      onClick={() => setIsMinimized(false)}
+    >
       {/* Full Screen Map Background */}
       <div className="absolute inset-0 z-0">
         <UsersMap showUsers={false} searchQuery="" />
@@ -70,15 +73,21 @@ export default function Home({ onSuccess }: HomeProps) {
 
       {/* Translucent Login Box - Centered over map */}
       <div className="absolute inset-0 z-20 flex items-center justify-center p-4">
-        <div className={`w-full max-w-md bg-white/80 backdrop-blur-lg border border-white/30 shadow-2xl rounded-xl relative transition-all duration-300 ${
-          isMinimized ? 'p-4 max-h-20' : 'p-6'
-        }`}>
+        <div 
+          className={`w-full max-w-md bg-white/80 backdrop-blur-lg border border-white/30 shadow-2xl rounded-xl relative transition-all duration-300 ${
+            isMinimized ? 'p-4 max-h-20' : 'p-6'
+          }`}
+          onClick={(e) => e.stopPropagation()}
+        >
           {/* Chevron toggle button in top-right corner */}
           <button
-            onClick={() => setIsMinimized(!isMinimized)}
-            className="absolute top-3 right-3 w-8 h-8 bg-white/50 hover:bg-white/70 rounded-full flex items-center justify-center text-gray-600 hover:text-gray-800 transition-all duration-200 shadow-sm z-30"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsMinimized(!isMinimized);
+            }}
+            className="absolute top-3 right-3 w-8 h-8 bg-white/70 hover:bg-white/90 rounded-full flex items-center justify-center text-ocean-teal hover:text-cyan-600 transition-all duration-200 shadow-sm z-30 border border-ocean-teal/20"
           >
-            <i className={`fas ${isMinimized ? 'fa-chevron-down' : 'fa-chevron-up'} text-sm`}></i>
+            <i className={`fas ${isMinimized ? 'fa-chevron-down' : 'fa-chevron-up'} text-sm font-bold`}></i>
           </button>
           
           {/* Header */}
