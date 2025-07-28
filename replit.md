@@ -2,7 +2,7 @@
 
 ## Overview
 
-QaaqConnect is a location-based maritime discovery platform focused on "Koi Hai?" (Who's there?) functionality. The app helps sailors find nearby maritime professionals and locals through an interactive world map. Features include email-verified registration, proximity-based user discovery, and real-time location mapping with ship details and port visit windows.
+QaaqConnect is a location-based maritime discovery platform focused on "Koi Hai?" (Who's there?) functionality with CPSS (Country/Port/Suburb/Service) navigation system. The app helps sailors find nearby maritime professionals through an interactive world map and provides SEMM-like social discovery for maritime meetups, local tours, port dining, and cultural experiences. Features include email-verified registration, proximity-based user discovery, real-time location mapping, and hierarchical CPSS navigation with endless scroll, like/share functionality, and card carousels.
 
 ## User Preferences
 
@@ -13,7 +13,9 @@ Map display: Full screen with light grey theme initially, becomes colorful when 
 Map behavior: Shows empty grey map on load, displays pins only when "Koi Hai?" button is pressed
 Proximity feature: Shows nearest 10 users when searching without text input
 User data: Connected to QAAQ admin database with 12 authentic maritime users including sailors with ship details and local guides in major ports
-Future features: CPSS (Country/Port/Suburb/Service) tree breadcrumb for maritime meetups and local tours
+CPSS Navigation: Implemented hierarchical Country→Port→Suburb→Service structure with SEMM-like content cards
+CPSS Features: Endless scroll, like/share functions, card carousels, breadcrumb navigation
+CPSS Content: Maritime meetups, local tours, port dining, shore shopping, cultural experiences
 Admin shield location: Keep admin shield in header top right corner (not in bottom navigation)
 Header visibility: Show white header only for admin users, regular users should not see the header
 
@@ -58,6 +60,15 @@ Header visibility: Show white header only for admin users, regular users should 
 - Location tagging for geographic relevance
 - Like/unlike functionality with real-time count updates
 - Author display options (full name, nickname, anonymous)
+
+### CPSS Navigation System
+- **Hierarchical Structure**: Country → Port → Suburb → Service navigation
+- **SEMM-like Interface**: Cards with author profiles, ranks, ship details, timestamps
+- **Social Interactions**: Like/heart button, share functionality, comment/reply options
+- **Endless Scroll**: Infinite loading with intersection observer for performance
+- **Content Categories**: Maritime Meetups, Local Tours, Port Dining, Shore Shopping, Cultural Experiences
+- **Breadcrumb Navigation**: Easy navigation back through hierarchy levels
+- **Card Carousels**: Smooth content browsing with loading indicators
 
 ### Discovery System
 - Interactive world map with light grey theme (CartoDB tiles)

@@ -2,11 +2,13 @@ import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import DiscoveryCard from "@/components/discovery-card";
 import UsersMap from "@/components/users-map";
 import WhatsAppBotControl from "@/components/whatsapp-bot-control";
+import CPSSNavigator from "@/components/cpss-navigator";
 import { type User } from "@/lib/auth";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -159,26 +161,45 @@ export default function Discover({ user }: DiscoverProps) {
         </div>
       </div>
 
-      {/* Full Screen Map */}
-      <div className="flex-1 overflow-hidden relative">
-        <UsersMap showUsers={showUsers} searchQuery={searchQuery} />
-        
-        {/* WhatsApp Bot Control Panel */}
-        {showWhatsAppPanel && (
-          <div className="absolute top-4 right-4 z-50">
-            <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-1">
-              <WhatsAppBotControl />
-              <Button
-                onClick={() => setShowWhatsAppPanel(false)}
-                variant="ghost"
-                size="sm"
-                className="absolute -top-2 -right-2 bg-white hover:bg-gray-50 rounded-full w-6 h-6 p-0 shadow-md"
-              >
-                ×
-              </Button>
-            </div>
-          </div>
-        )}
+      {/* Main Content Area with Tabs */}
+      <div className="flex-1 overflow-hidden">
+        <Tabs defaultValue="koihai" className="h-full flex flex-col">
+          <TabsList className="mx-4 mt-2 mb-4 grid w-auto grid-cols-2">
+            <TabsTrigger value="koihai" className="flex items-center space-x-2">
+              <i className="fas fa-users"></i>
+              <span>Koi Hai?</span>
+            </TabsTrigger>
+            <TabsTrigger value="cpss" className="flex items-center space-x-2">
+              <i className="fas fa-map-marked-alt"></i>
+              <span>CPSS Navigator</span>
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="koihai" className="flex-1 overflow-hidden relative m-0">
+            <UsersMap showUsers={showUsers} searchQuery={searchQuery} />
+            
+            {/* WhatsApp Bot Control Panel */}
+            {showWhatsAppPanel && (
+              <div className="absolute top-4 right-4 z-50">
+                <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-1">
+                  <WhatsAppBotControl />
+                  <Button
+                    onClick={() => setShowWhatsAppPanel(false)}
+                    variant="ghost"
+                    size="sm"
+                    className="absolute -top-2 -right-2 bg-white hover:bg-gray-50 rounded-full w-6 h-6 p-0 shadow-md"
+                  >
+                    ×
+                  </Button>
+                </div>
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="cpss" className="flex-1 overflow-auto m-0 p-4">
+            <CPSSNavigator />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
