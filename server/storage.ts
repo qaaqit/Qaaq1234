@@ -238,8 +238,9 @@ export class DatabaseStorage implements IStorage {
         if (availableColumns.includes('current_country')) selectFields.push('current_country');
         if (availableColumns.includes('permanent_city')) selectFields.push('permanent_city');
         if (availableColumns.includes('permanent_country')) selectFields.push('permanent_country');
-        if (availableColumns.includes('rank')) selectFields.push('rank');
-        if (availableColumns.includes('ship_name')) selectFields.push('ship_name');
+        // Skip adding maritime_rank to selectFields, we'll handle it separately with CASE
+        if (availableColumns.includes('last_ship')) selectFields.push('last_ship');
+        if (availableColumns.includes('last_company')) selectFields.push('last_company');
 
         if (availableColumns.includes('whatsapp_number')) selectFields.push('whatsapp_number');
         if (availableColumns.includes('last_login_at')) selectFields.push('last_login_at');
@@ -254,25 +255,27 @@ export class DatabaseStorage implements IStorage {
         if (availableColumns.includes('city')) selectFields.push('city'); // Direct city field
         
         console.log('Querying maritime professional database with fields:', selectFields);
-        console.log('Available columns include city field:', availableColumns.includes('city'));
+        console.log('Available columns include maritime_rank and last_ship:', availableColumns.includes('maritime_rank'), availableColumns.includes('last_ship'));
         
         // Ensure we always include the essential fields we need - but only if they exist
-        const essentialFields = ['id', 'first_name', 'last_name', 'email', 'rank', 'ship_name', 'city'];
+        // Remove maritime_rank from the query to avoid ENUM errors
+        const essentialFields = ['id', 'first_name', 'last_name', 'email', 'last_ship', 'city', 'last_company'];
         const validEssentialFields = essentialFields.filter(field => availableColumns.includes(field));
         const combinedFields = selectFields.concat(validEssentialFields);
-        const finalFields = combinedFields.filter((field, index) => combinedFields.indexOf(field) === index);
+        // Remove maritime_rank if it exists to avoid ENUM errors
+        const finalFields = combinedFields.filter((field, index) => combinedFields.indexOf(field) === index && field !== 'maritime_rank');
+        console.log('Final fields to select:', finalFields);
         
         console.log('Final query fields:', finalFields);
         
         result = await pool.query(`
-          SELECT ${finalFields.join(', ')}
+          SELECT ${finalFields.join(', ')}${availableColumns.includes('maritime_rank') ? ', CASE WHEN maritime_rank IS NULL THEN \'\' ELSE maritime_rank::text END as maritime_rank' : ''}
           FROM users 
-          WHERE (current_city IS NOT NULL AND current_city != '') 
-             OR (permanent_city IS NOT NULL AND permanent_city != '')
-             OR (city IS NOT NULL AND city != '')
-             OR (payment_method IS NOT NULL AND payment_method != '')
-             OR (last_login_location IS NOT NULL AND last_login_location != '')
-          ORDER BY last_login_at DESC NULLS LAST
+          WHERE id IS NOT NULL
+          ORDER BY 
+            CASE WHEN maritime_rank IS NOT NULL THEN 0 ELSE 1 END,
+            CASE WHEN last_ship IS NOT NULL THEN 0 ELSE 1 END,
+            last_login_at DESC NULLS LAST
           LIMIT 100
         `);
         
@@ -290,12 +293,12 @@ export class DatabaseStorage implements IStorage {
       const sailorsWithShips = result.rows
         .filter(user => 
           (user.imo_number && user.imo_number.trim() !== '') ||
-          (user.ship_name && user.ship_name.trim() !== '')
+          (user.last_ship && user.last_ship.trim() !== '')
         )
         .map(user => ({ 
           id: user.id, 
           imo: user.imo_number || '',
-          shipName: user.ship_name || '',
+          shipName: user.last_ship || '',
           fullName: user.full_name || user.nickname || user.email || 'Maritime User'
         }));
       
@@ -332,13 +335,15 @@ export class DatabaseStorage implements IStorage {
         const firstName = user.first_name || '';
         const lastName = user.last_name || '';
         const email = user.email || '';
-        const rank = user.rank || '';
-        const shipName = user.ship_name || '';
+        // Get rank from the CASE statement result
+        const rank = user.maritime_rank || '';
+        const shipName = user.last_ship || '';
+        const company = user.last_company || '';
         const userCity = user.city || '';
         
-        // Debug logging for specific users with rank data
-        if (rank || shipName) {
-          console.log(`DEBUG: User ${firstName} ${lastName} has rank="${rank}" shipName="${shipName}" city="${userCity}"`);
+        // Debug logging for users with ship data
+        if (shipName || company) {
+          console.log(`Found sailor: ${firstName} ${lastName} - ship="${shipName}" company="${company}" city="${userCity}"`);
         }
         
         let fullName = '';
@@ -410,7 +415,7 @@ export class DatabaseStorage implements IStorage {
         let locationSource = 'city';
         
         // Determine user type - sailors typically have rank and ship_name
-        const isMaritimeProfessional = rank || shipName;
+        const isMaritimeProfessional = (rank && rank !== '') || (shipName && shipName !== '');
         
         // 1. First check if this is a sailor with IMO number for real-time ship tracking
         const imoNumber = user.imo_number;
@@ -489,6 +494,7 @@ export class DatabaseStorage implements IStorage {
           nickname: fullName,
           rank: rank,
           shipName: shipName,
+          company, // Add company field
           imoNumber: '', // Not available in this schema
           port: city,
           visitWindow: '',
@@ -501,7 +507,7 @@ export class DatabaseStorage implements IStorage {
           lastLogin: user.last_login_at || user.created_at || new Date(),
           createdAt: user.created_at || new Date(),
           whatsappNumber: user.whatsapp_number || ''
-        } as User & { whatsappNumber: string };
+        } as User & { whatsappNumber: string; company?: string };
       }).filter(user => user !== null);
 
       console.log(`Returning ${mappedUsers.length} QAAQ users with coordinates for map and WhatsApp bot`);

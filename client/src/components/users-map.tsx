@@ -298,20 +298,20 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
                 <h3 className="font-bold text-gray-900 mb-2">
                   {user.fullName}
                 </h3>
-                {/* Current City */}
-                {user.city && (
+                {/* Last Company */}
+                {(user as any).company && (user as any).company !== '' && (
                   <p className="text-sm text-gray-700">
-                    <span className="font-medium">Current City:</span> {user.city}
+                    <span className="font-medium">Last Company:</span> {(user as any).company}
                   </p>
                 )}
                 {/* Maritime Rank */}
-                {user.rank && (
+                {user.rank && user.rank !== '' && (
                   <p className="text-sm text-gray-700">
-                    <span className="font-medium">Maritime Rank:</span> {user.rank} ({getRankAbbreviation(user.rank)})
+                    <span className="font-medium">Rank:</span> {getRankAbbreviation(user.rank)}
                   </p>
                 )}
                 {/* Last Ship */}
-                {user.shipName && (
+                {user.shipName && user.shipName !== '' && (
                   <p className="text-sm text-gray-700">
                     <span className="font-medium">Last Ship:</span> {user.shipName}
                   </p>
