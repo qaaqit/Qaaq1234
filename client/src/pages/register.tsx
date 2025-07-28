@@ -115,7 +115,7 @@ export default function Register({ onSuccess }: RegisterProps) {
             {isLogin ? "Welcome Back" : "Join QaaqConnect"}
           </CardTitle>
           <p className="text-gray-600">
-            {isLogin ? "Liberal login policy - any password works for first 2 logins!" : "Super quick registration - get started in seconds"}
+            {isLogin ? "Connect with maritime professionals worldwide" : "Super quick registration - get started in seconds"}
           </p>
         </CardHeader>
 
@@ -142,7 +142,7 @@ export default function Register({ onSuccess }: RegisterProps) {
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="userId" className="text-sm font-medium text-gray-700">
-                    User ID (Full Name, Email, or Phone)
+                    USER NAME (This may be ur country code +91 & whatsapp number )
                   </Label>
                   <Input
                     id="userId"
@@ -156,17 +156,21 @@ export default function Register({ onSuccess }: RegisterProps) {
                 </div>
                 <div>
                   <Label htmlFor="password" className="text-sm font-medium text-gray-700">
-                    Password (City name or any password for first 2 logins)
+                    Password
                   </Label>
                   <Input
                     id="password"
                     type="password"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    placeholder="e.g. Mumbai, Houston, Singapore"
+                    placeholder="Enter your password"
                     className="mt-2"
                     required
                   />
+                </div>
+                <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
+                  <p><strong>New users:</strong> Default password is <code className="bg-blue-100 px-1 rounded">1234koihai</code></p>
+                  <p className="text-xs mt-1">You'll need to change this at your 3rd login.</p>
                 </div>
               </div>
             ) : (
@@ -186,41 +190,7 @@ export default function Register({ onSuccess }: RegisterProps) {
               </div>
             )}
 
-            {!isLogin && (
-              <div>
-                <Label className="text-sm font-medium text-gray-700 mb-4 block">
-                  I'm a:
-                </Label>
-                <div className="grid grid-cols-2 gap-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => selectUserType("sailor")}
-                    className={`h-auto p-4 flex flex-col items-center space-y-2 ${
-                      formData.userType === "sailor"
-                        ? "border-navy bg-navy/5 text-navy"
-                        : "border-gray-200 hover:border-navy hover:bg-navy/5"
-                    }`}
-                  >
-                    <i className="fas fa-ship text-2xl"></i>
-                    <span className="font-medium">Sailor 🚢</span>
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => selectUserType("local")}
-                    className={`h-auto p-4 flex flex-col items-center space-y-2 ${
-                      formData.userType === "local"
-                        ? "border-ocean-teal bg-ocean-teal/5 text-ocean-teal"
-                        : "border-gray-200 hover:border-ocean-teal hover:bg-ocean-teal/5"
-                    }`}
-                  >
-                    <i className="fas fa-home text-2xl"></i>
-                    <span className="font-medium">Local 🏠</span>
-                  </Button>
-                </div>
-              </div>
-            )}
+
 
             <Button
               type="submit"
