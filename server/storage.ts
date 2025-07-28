@@ -48,20 +48,28 @@ export class DatabaseStorage implements IStorage {
     }
 
     try {
-      // Use direct pool query to avoid Drizzle column mapping issues
-      const query = `
-        SELECT id, full_name, email, password, user_type, nickname, rank, ship_name, 
-               imo_number, port, visit_window, city, country, latitude, longitude, 
-               is_verified, login_count, last_login, created_at
-        FROM users 
-        WHERE id = $1 OR full_name = $1 OR email = $1
-      `;
+      // Simple direct query for testing
+      console.log('Attempting to find user:', userId);
       
-      const result = await pool.query(query, [userId]);
+      // First, let's test if we can connect at all
+      const testResult = await pool.query('SELECT COUNT(*) as user_count FROM users');
+      console.log('Total users in database:', testResult.rows[0].user_count);
+      
+      // Now try to find our specific user
+      const result = await pool.query(
+        'SELECT * FROM users WHERE id = $1 OR full_name = $1 OR email = $1 LIMIT 1',
+        [userId]
+      );
 
-      if (result.rows.length === 0) return undefined;
+      console.log('Query result rows:', result.rows.length);
+      
+      if (result.rows.length === 0) {
+        console.log('No user found for:', userId);
+        return undefined;
+      }
       
       const potentialUser = result.rows[0];
+      console.log('Found user:', potentialUser.full_name, potentialUser.email);
 
       return {
         id: potentialUser.id,
