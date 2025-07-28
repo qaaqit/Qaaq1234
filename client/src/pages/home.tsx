@@ -82,7 +82,7 @@ export default function Home({ onSuccess }: HomeProps) {
                 type="text"  
                 value={formData.userId}
                 onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
-                placeholder="e.g. Patel, captain.li@qaaq.com, +919920027697"
+                placeholder="e.g. Patel, captain.li@qaaq.com, +91 9800898008"
                 className="mt-2"
                 required
               />
