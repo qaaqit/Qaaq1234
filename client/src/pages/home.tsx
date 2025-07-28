@@ -60,7 +60,6 @@ export default function Home({ onSuccess }: HomeProps) {
     <div className="min-h-screen relative">
       {/* Background - could be map or simple gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-100 to-slate-200"></div>
-      
       {/* Translucent login box */}
       <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
         <div className="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg p-8 w-full max-w-md">
@@ -105,7 +104,7 @@ export default function Home({ onSuccess }: HomeProps) {
 
             <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
               <p><strong>New users:</strong> Default password is <code className="bg-blue-100 px-1 rounded">1234koihai</code></p>
-              <p className="text-xs mt-1">You'll need to change this at your 3rd login.</p>
+              <p className="text-xs mt-1">You'll need to change this after your 1st login.</p>
             </div>
             
             <Button 
