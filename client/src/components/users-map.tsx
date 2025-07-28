@@ -23,28 +23,33 @@ interface MapUser {
 const getRankAbbreviation = (rank: string): string => {
   const abbreviations: { [key: string]: string } = {
     'captain': 'CAPT',
-    'chief_engineer': 'CE',
     'chief engineer': 'CE',
-    'chief_officer': 'CO',
     'chief officer': 'CO',
-    'first_officer': 'FO',
-    'first officer': 'FO',
-    'second_engineer': '2E',
+    'first engineer': '1E',
+    'first officer': '1O',
     'second engineer': '2E',
-    'second_officer': '2O',
     'second officer': '2O',
-    'third_engineer': '3E',
     'third engineer': '3E',
-    'third_officer': '3O',
     'third officer': '3O',
+    'fourth engineer': '4E',
+    'fourth officer': '4O',
     'bosun': 'BSN',
+    'able seaman': 'AB',
+    'ordinary seaman': 'OS',
+    'oiler': 'OLR',
+    'wiper': 'WPR',
+    'cook': 'CK',
+    'steward': 'STW',
+    'radio officer': 'RO',
+    'electrician': 'ELE',
+    'fitter': 'FIT',
     'officer': 'OFF',
     'engineer': 'ENG',
-    'crew': 'CREW',
-    'other': 'OTHER'
+    'crew': 'CREW'
   };
   
-  const lowerRank = rank.toLowerCase();
+  const lowerRank = rank.toLowerCase().trim();
+  
   // Direct match first
   if (abbreviations[lowerRank]) {
     return abbreviations[lowerRank];
@@ -56,6 +61,24 @@ const getRankAbbreviation = (rank: string): string => {
       return value;
     }
   }
+  
+  // If no match, try to extract key parts and abbreviate
+  if (lowerRank.includes('engineer')) {
+    if (lowerRank.includes('chief')) return 'CE';
+    if (lowerRank.includes('second') || lowerRank.includes('2nd')) return '2E';
+    if (lowerRank.includes('third') || lowerRank.includes('3rd')) return '3E';
+    if (lowerRank.includes('fourth') || lowerRank.includes('4th')) return '4E';
+    return 'ENG';
+  }
+  
+  if (lowerRank.includes('officer')) {
+    if (lowerRank.includes('chief')) return 'CO';
+    if (lowerRank.includes('first') || lowerRank.includes('1st')) return '1O';
+    if (lowerRank.includes('second') || lowerRank.includes('2nd')) return '2O';
+    if (lowerRank.includes('third') || lowerRank.includes('3rd')) return '3O';
+    return 'OFF';
+  }
+  
   return rank.toUpperCase(); // Return original in uppercase if no match found
 };
 
