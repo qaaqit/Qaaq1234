@@ -177,41 +177,121 @@ export class DatabaseStorage implements IStorage {
 
   async getUsersWithLocation(): Promise<User[]> {
     try {
-      // Use direct pool query with QAAQ schema
+      // Get all 620 users from QAAQ database, using city coordinates as fallback
       const result = await pool.query(`
         SELECT * FROM users 
-        WHERE current_latitude IS NOT NULL 
-        AND current_longitude IS NOT NULL 
-        AND current_latitude != 0 
-        AND current_longitude != 0
-        LIMIT 100
+        ORDER BY id
       `);
       
-      return result.rows.map(user => ({
-        id: user.id,
-        fullName: user.first_name || user.email || 'Maritime User',
-        email: user.email || '',
-        password: '',
-        userType: 'sailor',
-        nickname: user.nickname || '',
-        rank: user.maritime_rank || '',
-        shipName: user.ship_name || '',
-        imoNumber: user.imo_number || '',
-        port: user.port || '',
-        visitWindow: user.visit_window || '',
-        city: user.city || '',
-        country: user.country || '',
-        latitude: parseFloat(user.current_latitude) || 0,
-        longitude: parseFloat(user.current_longitude) || 0,
-        isVerified: true,
-        loginCount: 1,
-        lastLogin: new Date(),
-        createdAt: new Date(),
-      } as User));
+      return result.rows.map(user => {
+        // Use current coordinates if available, otherwise use city/country for approximate location
+        let latitude = 0;
+        let longitude = 0;
+        
+        if (user.current_latitude && user.current_longitude) {
+          latitude = parseFloat(user.current_latitude);
+          longitude = parseFloat(user.current_longitude);
+        } else if (user.city && user.country) {
+          // Approximate coordinates for major maritime cities
+          const cityCoords = this.getCityCoordinates(user.city, user.country);
+          latitude = cityCoords.lat;
+          longitude = cityCoords.lng;
+        }
+        
+        return {
+          id: user.id,
+          fullName: user.first_name || user.email || 'Maritime User',
+          email: user.email || '',
+          password: '',
+          userType: 'sailor',
+          nickname: user.nickname || '',
+          rank: user.maritime_rank || '',
+          shipName: user.ship_name || '',
+          imoNumber: user.imo_number || '',
+          port: user.port || '',
+          visitWindow: user.visit_window || '',
+          city: user.city || '',
+          country: user.country || '',
+          latitude,
+          longitude,
+          isVerified: true,
+          loginCount: 1,
+          lastLogin: new Date(),
+          createdAt: new Date(),
+        } as User;
+      }).filter(user => user.latitude !== 0 && user.longitude !== 0);
     } catch (error) {
       console.error('Get users with location error:', error);
       return [];
     }
+  }
+
+  private getCityCoordinates(city: string, country: string): { lat: number; lng: number } {
+    // Major maritime cities and ports coordinates
+    const cityCoords: { [key: string]: { lat: number; lng: number } } = {
+      // India
+      'mumbai': { lat: 19.0760, lng: 72.8777 },
+      'chennai': { lat: 13.0827, lng: 80.2707 },
+      'kolkata': { lat: 22.5726, lng: 88.3639 },
+      'kochi': { lat: 9.9312, lng: 76.2673 },
+      'delhi': { lat: 28.6139, lng: 77.2090 },
+      'bangalore': { lat: 12.9716, lng: 77.5946 },
+      'hyderabad': { lat: 17.3850, lng: 78.4867 },
+      'pune': { lat: 18.5204, lng: 73.8567 },
+      'ahmedabad': { lat: 23.0225, lng: 72.5714 },
+      
+      // UAE
+      'dubai': { lat: 25.2048, lng: 55.2708 },
+      'abu dhabi': { lat: 24.4539, lng: 54.3773 },
+      'sharjah': { lat: 25.3463, lng: 55.4209 },
+      
+      // Singapore
+      'singapore': { lat: 1.3521, lng: 103.8198 },
+      
+      // Major ports worldwide
+      'hamburg': { lat: 53.5511, lng: 9.9937 },
+      'rotterdam': { lat: 51.9225, lng: 4.4792 },
+      'antwerp': { lat: 51.2194, lng: 4.4025 },
+      'shanghai': { lat: 31.2304, lng: 121.4737 },
+      'hong kong': { lat: 22.3193, lng: 114.1694 },
+      'los angeles': { lat: 34.0522, lng: -118.2437 },
+      'long beach': { lat: 33.7701, lng: -118.1937 },
+      'new york': { lat: 40.7128, lng: -74.0060 },
+      'london': { lat: 51.5074, lng: -0.1278 },
+      'tokyo': { lat: 35.6762, lng: 139.6503 },
+      'osaka': { lat: 34.6937, lng: 135.5023 },
+      'busan': { lat: 35.1796, lng: 129.0756 },
+    };
+    
+    const searchKey = city.toLowerCase();
+    
+    // Check direct city match first
+    if (cityCoords[searchKey]) {
+      return cityCoords[searchKey];
+    }
+    
+    // Check if city contains known port names
+    for (const [knownCity, coords] of Object.entries(cityCoords)) {
+      if (searchKey.includes(knownCity) || knownCity.includes(searchKey)) {
+        return coords;
+      }
+    }
+    
+    // Default coordinates for unknown cities (approximate center of maritime activity)
+    const countryDefaults: { [key: string]: { lat: number; lng: number } } = {
+      'india': { lat: 20.5937, lng: 78.9629 },
+      'uae': { lat: 24.4539, lng: 54.3773 },
+      'singapore': { lat: 1.3521, lng: 103.8198 },
+      'germany': { lat: 53.5511, lng: 9.9937 },
+      'netherlands': { lat: 51.9225, lng: 4.4792 },
+      'china': { lat: 31.2304, lng: 121.4737 },
+      'usa': { lat: 34.0522, lng: -118.2437 },
+      'uk': { lat: 51.5074, lng: -0.1278 },
+      'japan': { lat: 35.6762, lng: 139.6503 },
+      'south korea': { lat: 35.1796, lng: 129.0756 },
+    };
+    
+    return countryDefaults[country.toLowerCase()] || { lat: 0, lng: 0 };
   }
 
   async createVerificationCode(userId: string, code: string, expiresAt: Date): Promise<VerificationCode> {

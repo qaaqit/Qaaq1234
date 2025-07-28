@@ -15,8 +15,8 @@ interface MapUser {
   visitWindow: string | null;
   city: string | null;
   country: string | null;
-  latitude: string;
-  longitude: string;
+  latitude: number;
+  longitude: number;
 }
 
 const getRankAbbreviation = (rank: string): string => {
@@ -52,23 +52,13 @@ interface UsersMapProps {
 export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersMapProps) {
   const [bounds, setBounds] = useState<LatLngBounds | null>(null);
 
-  // Use nearby users if no search query, otherwise use all users
-  const shouldUseNearby = showUsers && searchQuery.trim() === "";
-  
+  // Always show all users from QAAQ database when "Koi Hai?" is clicked
   const { data: users = [], isLoading } = useQuery<MapUser[]>({
-    queryKey: shouldUseNearby ? ['/api/users/nearby'] : ['/api/users/map'],
+    queryKey: ['/api/users/map'],
     staleTime: 60000, // 1 minute
     enabled: showUsers, // Only fetch when showUsers is true
     queryFn: async () => {
-      const token = localStorage.getItem('qaaq_token');
-      const endpoint = shouldUseNearby ? '/api/users/nearby' : '/api/users/map';
-      const headers: HeadersInit = {};
-      
-      if (token && shouldUseNearby) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-      
-      const response = await fetch(endpoint, { headers });
+      const response = await fetch('/api/users/map');
       if (!response.ok) throw new Error('Failed to fetch users');
       return response.json();
     }
