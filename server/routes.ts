@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { storage } from "./storage";
 import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema } from "@shared/schema";
 import { sendVerificationEmail } from "./services/email";
+import { pool } from "./db";
 
 const JWT_SECRET = process.env.JWT_SECRET || 'qaaq-connect-secret-key';
 
@@ -367,6 +368,122 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Get nearby users error:', error);
       res.status(500).json({ message: "Failed to get nearby users" });
+    }
+  });
+
+  // Admin middleware
+  const isAdmin = async (req: any, res: any, next: any) => {
+    try {
+      const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user || !user.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      next();
+    } catch (error) {
+      console.error("Admin check error:", error);
+      res.status(500).json({ message: "Server error" });
+    }
+  };
+
+  // Admin Routes
+  app.get('/api/admin/stats', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      const result = await pool.query(`
+        SELECT 
+          COUNT(*) as total_users,
+          COUNT(CASE WHEN user_type = 'sailor' THEN 1 END) as sailors,
+          COUNT(CASE WHEN user_type = 'local' THEN 1 END) as locals,
+          COUNT(CASE WHEN is_verified = true THEN 1 END) as verified_users,
+          COUNT(CASE WHEN last_login_at > NOW() - INTERVAL '30 days' THEN 1 END) as active_users,
+          SUM(login_count) as total_logins
+        FROM users
+      `);
+
+      const stats = result.rows[0];
+      res.json({
+        totalUsers: parseInt(stats.total_users),
+        sailors: parseInt(stats.sailors),
+        locals: parseInt(stats.locals),
+        verifiedUsers: parseInt(stats.verified_users),
+        activeUsers: parseInt(stats.active_users),
+        totalLogins: parseInt(stats.total_logins) || 0
+      });
+    } catch (error) {
+      console.error("Error fetching admin stats:", error);
+      res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
+  app.get('/api/admin/users', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      const result = await pool.query(`
+        SELECT id, full_name, nickname, email, user_type, is_admin, maritime_rank,
+               current_ship_name, vessel_name, ship_name, last_ship, imo_number, current_ship_imo,
+               current_city, current_country, permanent_city, permanent_country, city,
+               is_verified, login_count, last_login_at, created_at, whatsapp_number
+        FROM users 
+        ORDER BY created_at DESC
+      `);
+
+      const users = result.rows.map(user => ({
+        id: user.id,
+        fullName: user.full_name || user.nickname || user.email,
+        email: user.email,
+        userType: user.user_type,
+        isAdmin: user.is_admin || false,
+        rank: user.maritime_rank,
+        shipName: user.current_ship_name || user.vessel_name || user.ship_name || user.last_ship,
+        imoNumber: user.imo_number || user.current_ship_imo,
+        city: user.current_city || user.permanent_city || user.city,
+        country: user.current_country || user.permanent_country,
+        isVerified: user.is_verified || false,
+        loginCount: user.login_count || 0,
+        lastLogin: user.last_login_at,
+        whatsappNumber: user.whatsapp_number
+      }));
+
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching admin users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.patch('/api/admin/users/:userId/admin', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const { isAdmin: newIsAdmin } = req.body;
+
+      await pool.query(`
+        UPDATE users SET is_admin = $1 WHERE id = $2
+      `, [newIsAdmin, userId]);
+
+      res.json({ message: "User admin status updated successfully" });
+    } catch (error) {
+      console.error("Error updating user admin status:", error);
+      res.status(500).json({ message: "Failed to update user admin status" });
+    }
+  });
+
+  app.patch('/api/admin/users/:userId/verify', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const { isVerified } = req.body;
+
+      await pool.query(`
+        UPDATE users SET is_verified = $1 WHERE id = $2
+      `, [isVerified, userId]);
+
+      res.json({ message: "User verification status updated successfully" });
+    } catch (error) {
+      console.error("Error updating user verification:", error);
+      res.status(500).json({ message: "Failed to update user verification" });
     }
   });
 

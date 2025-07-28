@@ -5,6 +5,7 @@ export interface User {
   fullName: string;
   email: string;
   userType: 'sailor' | 'local';
+  isAdmin?: boolean;
   nickname?: string;
   isVerified: boolean;
   loginCount: number;

@@ -10,6 +10,7 @@ import Register from "@/pages/register";
 import Verify from "@/pages/verify";
 import Discover from "@/pages/discover";
 import Post from "@/pages/post";
+import Admin from "@/pages/admin";
 import NotFound from "@/pages/not-found";
 import BottomNav from "@/components/bottom-nav";
 
@@ -50,6 +51,7 @@ function Router() {
         <Route path="/verify" component={() => <Verify onSuccess={setUser} />} />
         <Route path="/discover" component={() => user ? <Discover user={user} /> : <Home />} />
         <Route path="/post" component={() => user ? <Post user={user} /> : <Home />} />
+        <Route path="/admin" component={() => user ? <Admin /> : <Home />} />
         <Route component={NotFound} />
       </Switch>
       

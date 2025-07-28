@@ -198,7 +198,7 @@ export class DatabaseStorage implements IStorage {
       const result = await pool.query(`
         SELECT id, full_name, nickname, email, maritime_rank, last_ship, whatsapp_number,
                current_city, current_country, permanent_city, permanent_country, 
-               city, last_login_at, created_at,
+               city, last_login_at, created_at, is_admin,
                current_ship_imo, current_ship_name, imo_number, vessel_name, ship_name
         FROM users 
         WHERE (current_city IS NOT NULL AND current_city != '') 
@@ -320,6 +320,7 @@ export class DatabaseStorage implements IStorage {
           email: user.email || '',
           password: '',
           userType: hasShipData ? 'sailor' : 'local',
+          isAdmin: user.is_admin || false,
           nickname: user.nickname || user.full_name?.split(' ')[0] || '',
           rank: user.maritime_rank || '',
           shipName: user.current_ship_name || user.vessel_name || user.ship_name || user.last_ship || '',

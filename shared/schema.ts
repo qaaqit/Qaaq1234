@@ -10,6 +10,7 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   password: text("password"), // Password for QAAQ login
   userType: text("user_type").notNull(), // 'sailor' or 'local'
+  isAdmin: boolean("is_admin").default(false), // Admin role flag
   nickname: text("nickname"),
   rank: text("rank"), // e.g., 'Captain', 'Chief Engineer', 'Officer', 'Crew'
   shipName: text("ship_name"), // Current ship name
