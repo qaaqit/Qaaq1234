@@ -145,7 +145,7 @@ export default function Discover({ user }: DiscoverProps) {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-12 pr-4 py-3 text-lg border-gray-200 focus:border-ocean-teal"
-                placeholder="Search port cities, sailors, or locations..."
+                placeholder="ek, do, teen, char..."
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               />
             </div>

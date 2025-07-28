@@ -194,12 +194,12 @@ export class DatabaseStorage implements IStorage {
       // Use real QAAQ users with location data from current_city and permanent_city fields
       console.log('Fetching QAAQ users with location data for map and WhatsApp bot');
       
-      // Get QAAQ users with location data including real ship information
+      // Get QAAQ users with location data including real ship information  
       const result = await pool.query(`
-        SELECT id, first_name, last_name, email, maritime_rank, last_ship, whatsapp_number,
+        SELECT id, full_name, nickname, email, maritime_rank, last_ship, whatsapp_number,
                current_city, current_country, permanent_city, permanent_country, 
                city, last_login_at, created_at,
-               current_ship_imo, current_ship_name, imo_number, vessel_name
+               current_ship_imo, current_ship_name, imo_number, vessel_name, ship_name
         FROM users 
         WHERE (current_city IS NOT NULL AND current_city != '') 
            OR (permanent_city IS NOT NULL AND permanent_city != '')
@@ -220,13 +220,14 @@ export class DatabaseStorage implements IStorage {
           (user.imo_number && user.imo_number.trim() !== '') ||
           (user.current_ship_name && user.current_ship_name.trim() !== '') ||
           (user.vessel_name && user.vessel_name.trim() !== '') ||
+          (user.ship_name && user.ship_name.trim() !== '') ||
           (user.last_ship && user.last_ship.trim() !== '')
         )
         .map(user => ({ 
           id: user.id, 
           imo: user.current_ship_imo || user.imo_number || '',
-          shipName: user.current_ship_name || user.vessel_name || user.last_ship || '',
-          fullName: `${user.first_name || ''} ${user.last_name || ''}`.trim()
+          shipName: user.current_ship_name || user.vessel_name || user.ship_name || user.last_ship || '',
+          fullName: user.full_name || user.nickname || 'Maritime User'
         }));
       
       console.log(`Found ${sailorsWithShips.length} sailors with ship data for position tracking`);
@@ -265,18 +266,18 @@ export class DatabaseStorage implements IStorage {
         let locationSource = 'city'; // 'city' or 'ship'
         
         // First, check if this is a sailor with ship position available
-        const hasShipData = user.current_ship_imo || user.imo_number || user.current_ship_name || user.vessel_name || user.last_ship;
+        const hasShipData = user.current_ship_imo || user.imo_number || user.current_ship_name || user.vessel_name || user.ship_name || user.last_ship;
         if (hasShipData) {
           const shipPosition = shipPositions.get(user.id);
           if (shipPosition) {
             latitude = shipPosition.latitude;
             longitude = shipPosition.longitude;
-            city = shipPosition.port || user.current_ship_name || user.vessel_name || user.last_ship || 'At Sea';
+            city = shipPosition.port || user.current_ship_name || user.vessel_name || user.ship_name || user.last_ship || 'At Sea';
             country = 'Maritime';
             locationSource = 'ship';
-            const shipName = user.current_ship_name || user.vessel_name || user.last_ship;
+            const shipName = user.current_ship_name || user.vessel_name || user.ship_name || user.last_ship;
             const imoDisplay = user.current_ship_imo || user.imo_number;
-            console.log(`Using ship position for sailor ${user.first_name} ${user.last_name} on ${shipName}${imoDisplay ? ` (IMO: ${imoDisplay})` : ''}`);
+            console.log(`Using ship position for sailor ${user.full_name} on ${shipName}${imoDisplay ? ` (IMO: ${imoDisplay})` : ''}`);
           }
         }
         
@@ -303,25 +304,25 @@ export class DatabaseStorage implements IStorage {
             longitude = coords.lng;
           } else {
             // Skip users without any location data
-            console.log(`Skipping user ${user.first_name} ${user.last_name} - no location data available`);
+            console.log(`Skipping user ${user.full_name} - no location data available`);
             return null;
           }
         }
 
         // Ensure we have valid coordinates
         if (latitude === 0 && longitude === 0) {
-          console.log(`Warning: User ${user.first_name} ${user.last_name} has zero coordinates`);
+          console.log(`Warning: User ${user.full_name} has zero coordinates`);
         }
 
         return {
           id: user.id,
-          fullName: `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email || 'Maritime User',
+          fullName: user.full_name || user.nickname || user.email || 'Maritime User',
           email: user.email || '',
           password: '',
           userType: hasShipData ? 'sailor' : 'local',
-          nickname: user.first_name || '',
+          nickname: user.nickname || user.full_name?.split(' ')[0] || '',
           rank: user.maritime_rank || '',
-          shipName: user.current_ship_name || user.vessel_name || user.last_ship || '',
+          shipName: user.current_ship_name || user.vessel_name || user.ship_name || user.last_ship || '',
           imoNumber: user.current_ship_imo || user.imo_number || '',
           port: city,
           visitWindow: locationSource === 'ship' ? 'Currently at sea' : 'Available for connection',
