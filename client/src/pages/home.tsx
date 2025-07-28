@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { authApi, setStoredToken, setStoredUser, type User } from "@/lib/auth";
+import UsersMap from "@/components/users-map";
 
 interface HomeProps {
   onSuccess?: (user: User) => void;
@@ -57,75 +58,50 @@ export default function Home({ onSuccess }: HomeProps) {
   };
 
   return (
-    <div className="min-h-screen relative">
-      {/* Background content - similar to QAAQ.app */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-slate-100">
-        <div className="container mx-auto px-4 py-8 opacity-30">
-          <div className="text-center mb-12">
-            <h1 className="text-6xl font-bold text-navy mb-4">QaaqConnect</h1>
-            <p className="text-xl text-gray-700 mb-8">Maritime Community Platform</p>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              Connect sailors with locals for authentic port city experiences. 
-              Discover hidden gems, join maritime meetups, and explore like a local.
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            <div className="text-center p-6">
-              <div className="w-16 h-16 bg-navy/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <i className="fas fa-map-marked-alt text-2xl text-navy"></i>
-              </div>
-              <h3 className="text-xl font-semibold mb-3">Port Discovery</h3>
-              <p className="text-gray-600">Find locals and experiences in any port city worldwide.</p>
-            </div>
-            
-            <div className="text-center p-6">
-              <div className="w-16 h-16 bg-ocean-teal/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <i className="fas fa-users text-2xl text-ocean-teal"></i>
-              </div>
-              <h3 className="text-xl font-semibold mb-3">Maritime Community</h3>
-              <p className="text-gray-600">Connect with fellow seafarers and professionals.</p>
-            </div>
-            
-            <div className="text-center p-6">
-              <div className="w-16 h-16 bg-yellow-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <i className="fas fa-anchor text-2xl text-yellow-600"></i>
-              </div>
-              <h3 className="text-xl font-semibold mb-3">Local Experiences</h3>
-              <p className="text-gray-600">Authentic port city experiences with local guides.</p>
-            </div>
-          </div>
-        </div>
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Full Screen Map Background */}
+      <div className="absolute inset-0 z-0">
+        <UsersMap showUsers={false} searchQuery="" />
       </div>
-      
-      {/* Translucent login box - QAAQ.app style */}
-      <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
-        <div className="bg-white/90 backdrop-blur-md border border-white/20 rounded-xl shadow-2xl p-8 w-full max-w-md">
-          <div className="text-center mb-6">
-            <div className="w-16 h-16 bg-gradient-to-br from-navy to-ocean-teal rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <i className="fas fa-anchor text-2xl text-white"></i>
-            </div>
-            <h2 className="text-xl font-bold text-gray-800 mb-1">Welcome to QaaqConnect</h2>
-            <p className="text-sm text-gray-600">Marine Engineering Knowledge Hub</p>
+
+      {/* Overlay for better contrast */}
+      <div className="absolute inset-0 z-10 bg-black/20"></div>
+
+      {/* Translucent Login Box - Centered over map */}
+      <div className="absolute inset-0 z-20 flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-white/80 backdrop-blur-lg border border-white/30 shadow-2xl rounded-xl relative p-6">
+          {/* Chevron in top-right corner */}
+          <div className="absolute top-4 right-4 text-gray-400">
+            <i className="fas fa-chevron-down text-sm"></i>
           </div>
           
+          {/* Header */}
+          <div className="text-center mb-6">
+            <div className="w-12 h-12 bg-ocean-teal/20 rounded-full flex items-center justify-center mx-auto mb-3">
+              <i className="fas fa-anchor text-xl text-ocean-teal"></i>
+            </div>
+            <h1 className="text-2xl font-bold text-navy-blue">QaaqConnect</h1>
+            <p className="text-gray-600 text-sm">Maritime Community Login</p>
+          </div>
+
+          {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="userId" className="text-sm font-medium text-gray-700">
                 USER NAME (This may be ur country code +91 & whatsapp number )
               </Label>
               <Input
                 id="userId"
-                type="text"  
+                type="text"
                 value={formData.userId}
                 onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
-                placeholder="e.g. Patel, captain.li@qaaq.com, +91 9800898008"
-                className="mt-2"
-                required
+                placeholder="Enter your name, email, or phone number"
+                className="bg-white/90 border-gray-200 focus:border-ocean-teal focus:bg-white"
+                disabled={loading}
               />
             </div>
             
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="password" className="text-sm font-medium text-gray-700">
                 Password
               </Label>
@@ -135,34 +111,38 @@ export default function Home({ onSuccess }: HomeProps) {
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 placeholder="Enter your password"
-                className="mt-2"
-                required
+                className="bg-white/90 border-gray-200 focus:border-ocean-teal focus:bg-white"
+                disabled={loading}
               />
-            </div>
-
-            <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
-              <p><strong>New users:</strong> Default password is <code className="bg-blue-100 px-1 rounded">1234koihai</code></p>
-              <p className="text-xs mt-1">You'll need to change this after your 1st login.</p>
             </div>
             
             <Button 
               type="submit" 
-              className="w-full bg-navy hover:bg-navy/90 text-white"
+              className="w-full bg-ocean-teal hover:bg-cyan-600 text-white font-semibold py-2"
               disabled={loading}
             >
               {loading ? (
                 <>
-                  <i className="fas fa-spinner animate-spin mr-2"></i>
+                  <i className="fas fa-spinner fa-spin mr-2"></i>
                   Logging in...
                 </>
               ) : (
                 <>
                   <i className="fas fa-sign-in-alt mr-2"></i>
-                  Login
+                  Login to QaaqConnect
                 </>
               )}
             </Button>
           </form>
+          
+          {/* Demo Password Info */}
+          <div className="mt-6 pt-4 border-t border-gray-200/50">
+            <p className="text-center text-sm text-gray-600">
+              <span className="inline-block bg-duck-yellow/20 text-duck-yellow px-2 py-1 rounded text-xs font-medium">
+                Demo Password: 1234koihai
+              </span>
+            </p>
+          </div>
         </div>
       </div>
     </div>
