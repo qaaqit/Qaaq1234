@@ -35,6 +35,9 @@ export default function Discover({ user }: DiscoverProps) {
   const [showUsers, setShowUsers] = useState(false);
   const [showWhatsAppPanel, setShowWhatsAppPanel] = useState(false);
   
+  // Location functionality for enhanced user discovery
+  const { location, error: locationError, isLoading: locationLoading, requestDeviceLocation, updateShipLocation } = useLocation();
+  
   const { data: posts = [], isLoading, refetch } = useQuery<Post[]>({
     queryKey: searchQuery ? ['/api/posts/search', searchQuery, selectedCategory] : ['/api/posts'],
     queryFn: async () => {
@@ -138,8 +141,68 @@ export default function Discover({ user }: DiscoverProps) {
         </div>
       </header>
 
-      {/* Search Bar */}
+      {/* Search and Location Controls */}
       <div className="px-4 py-4 bg-white border-b border-gray-200 flex-shrink-0">
+        {/* Location Controls Row */}
+        <div className="flex flex-wrap gap-3 mb-4">
+          {/* Device Location Button */}
+          <Button 
+            onClick={() => requestDeviceLocation(user.id)}
+            disabled={locationLoading}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg shadow-md flex items-center gap-2"
+          >
+            <Navigation className="w-4 h-4" />
+            {locationLoading ? 'Getting Location...' : 'Update My Location'}
+          </Button>
+
+          {/* Ship Location Button (for sailors) */}
+          {user.userType === 'sailor' && (
+            <Button 
+              onClick={() => {
+                // Example: update ship location using user's IMO or ship name
+                const imoNumber = (user as any).imoNumber || (user as any).seafarerId;
+                const shipName = (user as any).shipName || (user as any).lastShip;
+                if (imoNumber || shipName) {
+                  updateShipLocation(user.id, imoNumber, shipName);
+                }
+              }}
+              disabled={locationLoading}
+              className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg shadow-md flex items-center gap-2"
+            >
+              <Ship className="w-4 h-4" />
+              Track My Ship
+            </Button>
+          )}
+        </div>
+
+        {/* Location Status Display */}
+        {location && (
+          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+            <div className="flex items-center gap-2 text-green-700">
+              <MapPin className="w-4 h-4" />
+              <span className="font-medium">Location Updated</span>
+            </div>
+            <div className="text-sm text-green-600 mt-1">
+              Source: {location.source} • Coordinates: {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}
+              {location.accuracy && <span> • Accuracy: {Math.round(location.accuracy)}m</span>}
+            </div>
+          </div>
+        )}
+
+        {/* Location Error Display */}
+        {locationError && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-center gap-2 text-red-700">
+              <MapPin className="w-4 h-4" />
+              <span className="font-medium">Location Error</span>
+            </div>
+            <div className="text-sm text-red-600 mt-1">
+              {locationError.message}
+            </div>
+          </div>
+        )}
+
+        {/* Search Row */}
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">
@@ -156,9 +219,10 @@ export default function Discover({ user }: DiscoverProps) {
           </div>
           <Button 
             onClick={handleSearch}
-            className="bg-ocean-teal hover:bg-cyan-600 text-white px-8 py-3 text-lg font-bold"
+            className="bg-ocean-teal hover:bg-cyan-600 text-white px-8 py-3 text-lg font-bold flex items-center gap-2"
           >
-            <i className="fas fa-users mr-2"></i>Koi Hai?
+            <MapPin className="w-5 h-5" />
+            🌊 Koi Hai? (Who's there?)
           </Button>
         </div>
       </div>

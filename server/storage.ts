@@ -247,6 +247,7 @@ export class DatabaseStorage implements IStorage {
         if (availableColumns.includes('experience_level')) selectFields.push('experience_level');
         if (availableColumns.includes('imo_number')) selectFields.push('imo_number');
         if (availableColumns.includes('seafarer_id')) selectFields.push('seafarer_id');
+        if (availableColumns.includes('password')) selectFields.push('password'); // For QAAQ auth city extraction
         
         console.log('Querying maritime professional database with fields:', selectFields);
         
@@ -260,7 +261,7 @@ export class DatabaseStorage implements IStorage {
         `);
         
       } catch (error) {
-        console.error('Failed to query users table:', error.message);
+        console.error('Failed to query users table:', (error as Error).message);
         return [];
       }
       
@@ -316,14 +317,27 @@ export class DatabaseStorage implements IStorage {
         const lastName = user.last_name || '';
         const fullName = [firstName, lastName].filter(n => n.trim()).join(' ') || user.email || 'Maritime Professional';
         
-        // Determine primary location (prefer current over permanent)
+        // Determine primary location with QAAQ authorization logic:
+        // 1. If present_city is confirmed, use current_city
+        // 2. Otherwise, derive from password field (temporary city storage during auth)
+        // 3. Fall back to permanent city as last resort
         let city = user.current_city || user.permanent_city || 'Unknown City';
         let country = user.current_country || user.permanent_country || 'Unknown Country';
+        
+        // For QAAQ authorization flow: use password field as city if current_city not set
+        // This handles users who entered City name as password but haven't confirmed present city
+        if (!user.current_city && user.password) {
+          city = user.password; // Password temporarily stores city name during QAAQ auth
+          console.log(`Using password field as city for ${fullName}: ${city} (awaiting present city confirmation)`);
+        }
         
         // Priority order for location: 1) Ship IMO tracking 2) Device GPS 3) City mapping
         let latitude = 0;
         let longitude = 0;
         let locationSource = 'city';
+        
+        // Determine user type - sailors typically have maritime_rank and last_ship
+        const isMaritimeProfessional = user.maritime_rank || user.last_ship || user.ship_types;
         
         // 1. First check if this is a sailor with IMO number for real-time ship tracking
         const imoNumber = user.imo_number || user.seafarer_id;
@@ -357,8 +371,6 @@ export class DatabaseStorage implements IStorage {
           return null;
         }
         
-        // Determine user type - sailors typically have maritime_rank and last_ship
-        const isMaritimeProfessional = user.maritime_rank || user.last_ship || user.ship_types;
         const userType = isMaritimeProfessional ? 'sailor' : 'local';
         
         console.log(`Mapped ${userType} ${fullName} from ${city}, ${country} (${latitude}, ${longitude}) - source: ${locationSource}`);
@@ -391,7 +403,7 @@ export class DatabaseStorage implements IStorage {
       console.log(`Returning ${mappedUsers.length} QAAQ users with coordinates for map and WhatsApp bot`);
       return mappedUsers;
     } catch (error) {
-      console.error('Get users with location error:', error);
+      console.error('Get users with location error:', error as Error);
       return [];
     }
   }
@@ -416,7 +428,7 @@ export class DatabaseStorage implements IStorage {
         console.log(`Updated ${source} location for user ${userId}: ${latitude}, ${longitude}`);
       }
     } catch (error) {
-      console.error(`Error updating ${source} location for user ${userId}:`, error);
+      console.error(`Error updating ${source} location for user ${userId}:`, error as Error);
       throw error;
     }
   }

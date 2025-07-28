@@ -150,6 +150,16 @@ Header visibility: Show white header only for admin users, regular users should 
 
 ## Recent Changes
 
+### Enhanced Location System for Maritime Discovery (January 28, 2025)
+- **QAAQ Authorization Integration**: Updated location system to use password field as temporary city storage during QAAQ authorization flow
+- **Multi-source Location**: Implemented priority-based location derivation: 1) Ship IMO tracking 2) Device GPS 3) City mapping 4) Password field fallback
+- **Device Location API**: Added `/api/users/location/device` endpoint for real-time GPS coordinate updates from mobile/browser
+- **Ship Location API**: Added `/api/users/location/ship` endpoint for IMO-based vessel position tracking
+- **Enhanced Schema**: Added `deviceLatitude`, `deviceLongitude`, `locationSource`, and `locationUpdatedAt` fields to support multi-source positioning
+- **Location Hooks**: Created `useLocation` React hook with GPS permission handling, device location updates, and ship tracking functionality
+- **UI Integration**: Added location control buttons to discover page with real-time status display and error handling
+- **WhatsApp Auth Flow**: Integrated WhatsApp number as User ID and City name as password for QAAQ authorization process
+
 ### Admin CPSS Management System (January 28, 2025)
 - **Admin Controls**: Added reorder, edit, and delete functionality for all CPSS list items
 - **Preferential Listing**: Admin users (+919029010070 & mushy.piyush@gmail.com) can move items up/down for priority ranking
