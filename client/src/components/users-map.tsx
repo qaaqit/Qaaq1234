@@ -89,33 +89,27 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
   }, [users, showUsers]);
 
   const createCustomIcon = (user: MapUser) => {
-    const rankEmoji = user.rank?.toLowerCase().includes('captain') ? '👨‍✈️' : 
-                      user.rank?.toLowerCase().includes('chief') ? '👷' :
-                      user.rank?.toLowerCase().includes('officer') ? '👮' : '⚓';
-    
-    const bgColor = user.userType === 'sailor' ? '#1e3a8a' : '#0891b2';
+    const color = user.userType === 'sailor' ? '#1e3a8a' : '#0891b2'; // navy blue for sailors, ocean teal for locals
     
     return divIcon({
       html: `
         <div style="
-          background: ${bgColor};
-          color: white;
-          border-radius: 50%;
-          width: 40px;
-          height: 40px;
+          width: 32px;
+          height: 32px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 20px;
-          border: 3px solid white;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+          color: ${color};
+          font-size: 24px;
+          text-shadow: 1px 1px 2px rgba(255,255,255,0.9), -1px -1px 2px rgba(255,255,255,0.9);
+          filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
         ">
-          ${rankEmoji}
+          ⚓
         </div>
       `,
-      className: 'custom-marker',
-      iconSize: [40, 40],
-      iconAnchor: [20, 20],
+      className: 'custom-anchor-marker',
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
     });
   };
 
