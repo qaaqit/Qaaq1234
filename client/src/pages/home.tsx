@@ -67,10 +67,8 @@ export default function Home({ onSuccess }: HomeProps) {
       <div className="absolute inset-0 z-0">
         <UsersMap showUsers={false} searchQuery="" />
       </div>
-
       {/* Overlay for better contrast */}
       <div className="absolute inset-0 z-10 bg-black/20"></div>
-
       {/* Translucent Login Box - Always positioned at top */}
       <div className={`absolute z-20 top-4 right-4 left-4 flex justify-center transition-all duration-500`}>
         <div 
@@ -87,9 +85,7 @@ export default function Home({ onSuccess }: HomeProps) {
               e.stopPropagation();
               setIsMinimized(!isMinimized);
             }}
-            className={`absolute right-3 bg-white/70 hover:bg-white/90 rounded-full flex items-center justify-center text-ocean-teal hover:text-cyan-600 transition-all duration-200 shadow-sm z-30 border border-ocean-teal/20 ${
-              isMinimized ? 'top-2 w-6 h-6' : 'top-3 w-8 h-8'
-            }`}
+            className="absolute right-3 hover:bg-white/90 rounded-full flex items-center justify-center hover:text-cyan-600 transition-all duration-200 shadow-sm z-30 border border-ocean-teal/20 top-3 w-8 h-8 bg-[#afb3b5] text-[#1e53a6]"
           >
             <i className={`fas ${isMinimized ? 'fa-chevron-down' : 'fa-chevron-up'} font-bold ${
               isMinimized ? 'text-xs' : 'text-sm'
