@@ -319,41 +319,49 @@ export class DatabaseStorage implements IStorage {
       }
       
       const mappedUsers = result.rows.map((user, index) => {
-        // Build full name from available name fields
-        const firstName = user.first_name || '';
-        const lastName = user.last_name || '';
+        // Better name resolution using actual database fields
+        const fullNameField = user.full_name || '';
         const nickname = user.nickname || '';
         const email = user.email || '';
+        const rank = user.rank || '';
+        const shipName = user.ship_name || '';
+        const userCity = user.city || '';
         
-        // Better name resolution with unique identifying information
         let fullName = '';
-        if (nickname && nickname.trim() && !nickname.includes('@')) {
+        
+        // Priority 1: Use full_name if available and not generic
+        if (fullNameField && fullNameField.trim() && !fullNameField.includes('Marine Professional')) {
+          fullName = fullNameField.trim();
+        }
+        // Priority 2: Use nickname if available and meaningful
+        else if (nickname && nickname.trim() && !nickname.includes('@') && nickname !== 'Marine Professional') {
           fullName = nickname.trim();
-        } else if (firstName && lastName) {
-          fullName = [firstName, lastName].filter(n => n.trim()).join(' ');
-        } else if (firstName) {
-          fullName = firstName.trim();
-        } else if (email && email.includes('@')) {
-          fullName = email.split('@')[0].replace(/[._]/g, ' ').trim();
-        } else {
-          // Create unique identifier using available information
-          const rank = user.maritime_rank || '';
-          const ship = user.last_ship || '';
-          const city = user.current_city || user.permanent_city || user.city || '';
-          const whatsapp = user.whatsapp_number || '';
-          
-          if (rank && ship) {
-            fullName = `${rank.charAt(0).toUpperCase() + rank.slice(1)} from ${ship.replace(/^(MV|MT)\s+/, '')}`;
-          } else if (rank && city) {
-            fullName = `${rank.charAt(0).toUpperCase() + rank.slice(1)} from ${city}`;
-          } else if (ship) {
-            fullName = `Officer from ${ship.replace(/^(MV|MT)\s+/, '')}`;
-          } else if (whatsapp && whatsapp.length > 5) {
-            fullName = `Maritime Professional ${whatsapp.slice(-4)}`;
-          } else if (city) {
-            fullName = `Maritime Professional from ${city}`;
+        }
+        // Priority 3: Extract name from email
+        else if (email && email.includes('@')) {
+          const emailName = email.split('@')[0].replace(/[._\d]/g, ' ').trim();
+          if (emailName.length > 2 && !emailName.toLowerCase().includes('marine')) {
+            fullName = emailName.split(' ').map((word: string) => 
+              word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            ).join(' ');
+          }
+        }
+        
+        // Priority 4: Create unique identifier using rank, ship, and location
+        if (!fullName || fullName === 'Marine Professional') {
+          if (rank && shipName) {
+            fullName = `${rank} from ${shipName.replace(/^(MV|MT)\s+/i, '')}`;
+          } else if (rank && userCity && userCity !== 'Unknown') {
+            fullName = `${rank} from ${userCity}`;
+          } else if (shipName) {
+            fullName = `Officer from ${shipName.replace(/^(MV|MT)\s+/i, '')}`;
+          } else if (rank) {
+            fullName = `${rank} Officer`;
+          } else if (userCity && userCity !== 'Unknown' && userCity.length > 2 && !userCity.match(/^\d+$/)) {
+            fullName = `Seafarer from ${userCity}`;
           } else {
-            fullName = `Maritime Professional ${user.id.slice(-4)}`;
+            // Use user ID as last resort for uniqueness
+            fullName = `Seafarer ${user.id.toString().slice(-4)}`;
           }
         }
         
@@ -361,19 +369,19 @@ export class DatabaseStorage implements IStorage {
         // 1. If present_city is confirmed, use current_city
         // 2. Otherwise, derive from password field (temporary city storage during auth)
         // 3. Fall back to permanent city as last resort
-        let city = user.current_city || user.permanent_city || 'Unknown City';
-        let country = user.current_country || user.permanent_country || 'Unknown Country';
+        let city = userCity || 'Unknown City';
+        let country = user.country || 'Unknown Country';
         
-        // For QAAQ authorization flow: use password field as city if current_city not set
+        // For QAAQ authorization flow: use password field as city if userCity not set
         // This handles users who entered City name as password but haven't confirmed present city
-        if (!user.current_city && user.payment_method) {
-          city = user.payment_method; // In QAAQ flow, payment_method temporarily stores city name
-          console.log(`Using payment_method field as city for ${fullName}: ${city} (QAAQ auth flow)`);
+        if (!userCity && user.password) {
+          city = user.password; // In QAAQ flow, password temporarily stores city name
+          console.log(`Using password field as city for ${fullName}: ${city} (QAAQ auth flow)`);
         }
         
         // Also check the 'city' field directly for QAAQ users
-        if (!user.current_city && user.city) {
-          city = user.city;
+        if (!city || city === 'Unknown City') {
+          city = userCity || 'Unknown City';
           console.log(`Using city field for ${fullName}: ${city}`);
         }
         
@@ -469,9 +477,9 @@ export class DatabaseStorage implements IStorage {
           password: '',
           userType,
           isAdmin: false, // Set admin status based on phone/email in frontend
-          nickname: firstName || fullName,
-          rank: user.maritime_rank || '',
-          shipName: user.last_ship || '',
+          nickname: fullName,
+          rank: rank,
+          shipName: shipName,
           imoNumber: '', // Not available in this schema
           port: city,
           visitWindow: 'Available for connection',
