@@ -23,26 +23,40 @@ interface MapUser {
 const getRankAbbreviation = (rank: string): string => {
   const abbreviations: { [key: string]: string } = {
     'captain': 'CAPT',
+    'chief_engineer': 'CE',
     'chief engineer': 'CE',
+    'chief_officer': 'CO',
     'chief officer': 'CO',
+    'first_officer': 'FO',
     'first officer': 'FO',
+    'second_engineer': '2E',
     'second engineer': '2E',
+    'second_officer': '2O',
     'second officer': '2O',
+    'third_engineer': '3E',
     'third engineer': '3E',
+    'third_officer': '3O',
     'third officer': '3O',
     'bosun': 'BSN',
     'officer': 'OFF',
     'engineer': 'ENG',
-    'crew': 'CREW'
+    'crew': 'CREW',
+    'other': 'OTHER'
   };
   
   const lowerRank = rank.toLowerCase();
+  // Direct match first
+  if (abbreviations[lowerRank]) {
+    return abbreviations[lowerRank];
+  }
+  
+  // Partial match fallback
   for (const [key, value] of Object.entries(abbreviations)) {
     if (lowerRank.includes(key)) {
       return value;
     }
   }
-  return rank; // Return original if no match found
+  return rank.toUpperCase(); // Return original in uppercase if no match found
 };
 
 interface UsersMapProps {

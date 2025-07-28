@@ -238,9 +238,9 @@ export class DatabaseStorage implements IStorage {
         if (availableColumns.includes('current_country')) selectFields.push('current_country');
         if (availableColumns.includes('permanent_city')) selectFields.push('permanent_city');
         if (availableColumns.includes('permanent_country')) selectFields.push('permanent_country');
-        if (availableColumns.includes('rank')) selectFields.push('rank');
-        if (availableColumns.includes('ship_name')) selectFields.push('ship_name');
-        if (availableColumns.includes('full_name')) selectFields.push('full_name');
+        if (availableColumns.includes('maritime_rank')) selectFields.push('maritime_rank');
+        if (availableColumns.includes('last_ship')) selectFields.push('last_ship');
+        if (availableColumns.includes('last_company')) selectFields.push('last_company');
         if (availableColumns.includes('whatsapp_number')) selectFields.push('whatsapp_number');
         if (availableColumns.includes('last_login_at')) selectFields.push('last_login_at');
         if (availableColumns.includes('created_at')) selectFields.push('created_at');
@@ -256,9 +256,10 @@ export class DatabaseStorage implements IStorage {
         console.log('Querying maritime professional database with fields:', selectFields);
         console.log('Available columns include city field:', availableColumns.includes('city'));
         
-        // Ensure we always include the essential fields we need
-        const essentialFields = ['id', 'full_name', 'email', 'rank', 'ship_name', 'city'];
-        const combinedFields = selectFields.concat(essentialFields);
+        // Ensure we always include the essential fields we need - but only if they exist
+        const essentialFields = ['id', 'first_name', 'last_name', 'email', 'maritime_rank', 'last_ship', 'last_company', 'city'];
+        const validEssentialFields = essentialFields.filter(field => availableColumns.includes(field));
+        const combinedFields = selectFields.concat(validEssentialFields);
         const finalFields = combinedFields.filter((field, index) => combinedFields.indexOf(field) === index);
         
         console.log('Final query fields:', finalFields);
@@ -328,30 +329,35 @@ export class DatabaseStorage implements IStorage {
       
       const mappedUsers = result.rows.map((user, index) => {
         // Better name resolution using actual database fields
-        const fullNameField = user.full_name || '';
-        const nickname = user.nickname || '';
+        const firstName = user.first_name || '';
+        const lastName = user.last_name || '';
         const email = user.email || '';
-        const rank = user.rank || '';
-        const shipName = user.ship_name || '';
+        const rank = user.maritime_rank || '';
+        const shipName = user.last_ship || '';
+        const company = user.last_company || '';
         const userCity = user.city || '';
         
         // Debug logging for specific users with rank data
         if (rank || shipName) {
-          console.log(`DEBUG: User ${user.full_name} has rank="${rank}" shipName="${shipName}"`);
+          console.log(`DEBUG: User ${firstName} ${lastName} has rank="${rank}" shipName="${shipName}" company="${company}"`);
         }
         
         let fullName = '';
         
         // Show user ID directly - no descriptive text or "AVAILABLE FOR CONNECTION"
-        // Priority 1: Use full_name if available (this contains user ID like +919029010070 or name like "Patel")
-        if (fullNameField && fullNameField.trim() && !fullNameField.includes('Marine Professional')) {
-          fullName = fullNameField.trim();
+        // Priority 1: Use first_name + last_name if available
+        if (firstName && lastName) {
+          fullName = `${firstName} ${lastName}`.trim();
         }
-        // Priority 2: Use nickname if available and meaningful
-        else if (nickname && nickname.trim() && !nickname.includes('@') && nickname !== 'Marine Professional') {
-          fullName = nickname.trim();
+        // Priority 2: Use first name only if available
+        else if (firstName && firstName.trim()) {
+          fullName = firstName.trim();
         }
-        // Priority 3: Extract name from email prefix
+        // Priority 3: Use last name only if available
+        else if (lastName && lastName.trim()) {
+          fullName = lastName.trim();
+        }
+        // Priority 4: Extract name from email prefix
         else if (email && email.includes('@')) {
           const emailName = email.split('@')[0].replace(/[._\d]/g, ' ').trim();
           if (emailName.length > 2 && !emailName.toLowerCase().includes('marine')) {
@@ -361,7 +367,7 @@ export class DatabaseStorage implements IStorage {
           }
         }
         
-        // Priority 4: If no meaningful name found, just use last 6 characters of user ID
+        // Priority 5: If no meaningful name found, just use last 6 characters of user ID
         if (!fullName || fullName === 'Marine Professional') {
           fullName = user.id.toString().slice(-6);
         }
