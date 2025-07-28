@@ -33,8 +33,38 @@ export interface IStorage {
 
 export class DatabaseStorage implements IStorage {
   async getUser(id: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user || undefined;
+    try {
+      // Use direct pool query to avoid column mapping issues
+      const result = await pool.query('SELECT * FROM users WHERE id = $1 LIMIT 1', [id]);
+      
+      if (result.rows.length === 0) return undefined;
+      
+      const user = result.rows[0];
+      return {
+        id: user.id,
+        fullName: user.first_name || user.email || 'Maritime User',
+        email: user.email || '',
+        password: '',
+        userType: 'sailor',
+        nickname: user.nickname || '',
+        rank: user.maritime_rank || '',
+        shipName: user.ship_name || '',
+        imoNumber: user.imo_number || '',
+        port: user.port || '',
+        visitWindow: user.visit_window || '',
+        city: user.city || '',
+        country: user.country || '',
+        latitude: user.current_latitude || 0,
+        longitude: user.current_longitude || 0,
+        isVerified: true,
+        loginCount: 1,
+        lastLogin: new Date(),
+        createdAt: new Date(),
+      } as User;
+    } catch (error) {
+      console.error('Get user error:', error);
+      return undefined;
+    }
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
@@ -146,15 +176,42 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUsersWithLocation(): Promise<User[]> {
-    return await db
-      .select()
-      .from(users)
-      .where(
-        and(
-          isNotNull(users.latitude),
-          isNotNull(users.longitude)
-        )
-      );
+    try {
+      // Use direct pool query with QAAQ schema
+      const result = await pool.query(`
+        SELECT * FROM users 
+        WHERE current_latitude IS NOT NULL 
+        AND current_longitude IS NOT NULL 
+        AND current_latitude != 0 
+        AND current_longitude != 0
+        LIMIT 100
+      `);
+      
+      return result.rows.map(user => ({
+        id: user.id,
+        fullName: user.first_name || user.email || 'Maritime User',
+        email: user.email || '',
+        password: '',
+        userType: 'sailor',
+        nickname: user.nickname || '',
+        rank: user.maritime_rank || '',
+        shipName: user.ship_name || '',
+        imoNumber: user.imo_number || '',
+        port: user.port || '',
+        visitWindow: user.visit_window || '',
+        city: user.city || '',
+        country: user.country || '',
+        latitude: parseFloat(user.current_latitude) || 0,
+        longitude: parseFloat(user.current_longitude) || 0,
+        isVerified: true,
+        loginCount: 1,
+        lastLogin: new Date(),
+        createdAt: new Date(),
+      } as User));
+    } catch (error) {
+      console.error('Get users with location error:', error);
+      return [];
+    }
   }
 
   async createVerificationCode(userId: string, code: string, expiresAt: Date): Promise<VerificationCode> {
