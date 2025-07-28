@@ -1,7 +1,12 @@
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
+import type { User } from "@/lib/auth";
 
-export default function BottomNav() {
+interface BottomNavProps {
+  user: User;
+}
+
+export default function BottomNav({ user }: BottomNavProps) {
   const [location, setLocation] = useLocation();
 
   const navItems = [
@@ -12,29 +17,17 @@ export default function BottomNav() {
       active: location === "/" || location === "/discover"
     },
     { 
-      path: "/map", 
-      icon: "fas fa-map", 
-      label: "Map",
-      active: location === "/map"
-    },
-    { 
       path: "/post", 
       icon: "fas fa-plus-circle", 
       label: "Post",
       active: location === "/post"
     },
-    { 
-      path: "/community", 
-      icon: "fas fa-users", 
-      label: "Community",
-      active: location === "/community"
-    },
-    { 
-      path: "/profile", 
-      icon: "fas fa-user", 
-      label: "Profile",
-      active: location === "/profile"
-    },
+    ...(user.isAdmin ? [{
+      path: "/admin",
+      icon: "fas fa-shield-alt",
+      label: "Admin", 
+      active: location === "/admin"
+    }] : [])
   ];
 
   return (

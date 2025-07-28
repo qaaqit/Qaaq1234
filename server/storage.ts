@@ -54,25 +54,30 @@ export class DatabaseStorage implements IStorage {
       if (result.rows.length === 0) return undefined;
       
       const user = result.rows[0];
+      const fullName = user.first_name && user.last_name 
+        ? `${user.first_name} ${user.last_name}`.trim()
+        : user.nickname || user.email || 'Maritime User';
+      
       return {
         id: user.id,
-        fullName: user.full_name || user.email || 'Maritime User',
+        fullName: fullName,
         email: user.email || '',
         password: '',
-        userType: user.ship_name ? 'sailor' : 'local',
+        userType: (user.current_ship_name || user.vessel_name || user.ship_name) ? 'sailor' : 'local',
+        isAdmin: user.is_admin || false,
         nickname: user.nickname || '',
-        rank: user.rank || '',
-        shipName: user.ship_name || '',
-        imoNumber: user.imo_number || '',
-        port: user.port || '',
-        visitWindow: user.visit_window || '',
-        city: user.city || '',
-        country: user.country || '',
+        rank: user.maritime_rank || '',
+        shipName: user.current_ship_name || user.vessel_name || user.ship_name || '',
+        imoNumber: user.current_ship_imo || user.imo_number || '',
+        port: user.current_city || user.permanent_city || user.city || '',
+        visitWindow: 'Available for connection',
+        city: user.current_city || user.permanent_city || user.city || '',
+        country: user.current_country || user.permanent_country || '',
         latitude: parseFloat(user.latitude) || 0,
         longitude: parseFloat(user.longitude) || 0,
         isVerified: user.is_verified || true,
         loginCount: user.login_count || 1,
-        lastLogin: user.last_login || new Date(),
+        lastLogin: user.last_login_at || new Date(),
         createdAt: user.created_at || new Date(),
       } as User;
     } catch (error) {
@@ -98,66 +103,24 @@ export class DatabaseStorage implements IStorage {
       // Run database test first
       await testDatabaseConnection();
       
-      // Try simplest possible query
-      console.log('Attempting basic user lookup...');
-      const result = await pool.query('SELECT id, email FROM users WHERE email = $1 LIMIT 1', [userId]);
-      
+      // Try to find user by email, full_name, or phone pattern
+      console.log('Attempting user lookup for:', userId);
+      // Use pool directly - it should be configured with QAAQ_ADMIN_DATABASE_URL
+      const result = await pool.query(`
+        SELECT id, email FROM users 
+        WHERE email = $1
+        LIMIT 1
+      `, [userId]);
       if (result.rows.length === 0) {
-        console.log('No user found for email:', userId);
-        // Try phone lookup in email field (since phone numbers might be stored there)
-        const phoneResult = await pool.query('SELECT id, email FROM users WHERE email LIKE $1 LIMIT 1', [`%${userId}%`]);
-        if (phoneResult.rows.length === 0) {
-          return undefined;
-        }
-        console.log('Found user by phone pattern');
-        const user = phoneResult.rows[0];
-        return {
-          id: user.id,
-          fullName: userId,
-          email: user.email,
-          password: '',
-          userType: 'sailor',
-          nickname: '',
-          rank: '',
-          shipName: '',
-          imoNumber: '',
-          port: '',
-          visitWindow: '',
-          city: '',
-          country: '',
-          latitude: 0,
-          longitude: 0,
-          isVerified: true,
-          loginCount: 1,
-          lastLogin: new Date(),
-          createdAt: new Date(),
-        } as User;
+        console.log('No user found for:', userId);
+        return undefined;
       }
       
       const user = result.rows[0];
-      console.log('Found user by email:', user.email);
+      console.log('Found user:', user.email || user.full_name);
       
-      return {
-        id: user.id,
-        fullName: user.email,
-        email: user.email,
-        password: '',
-        userType: 'sailor',
-        nickname: '',
-        rank: '',
-        shipName: '',
-        imoNumber: '',
-        port: '',
-        visitWindow: '',
-        city: '',
-        country: '',
-        latitude: 0,
-        longitude: 0,
-        isVerified: true,
-        loginCount: 1,
-        lastLogin: new Date(),
-        createdAt: new Date(),
-      } as User;
+      // Get full user details
+      return await this.getUser(user.id);
     } catch (error) {
       console.error('Database query error:', error);
       return undefined;
@@ -196,7 +159,7 @@ export class DatabaseStorage implements IStorage {
       
       // Get QAAQ users with location data including real ship information  
       const result = await pool.query(`
-        SELECT id, full_name, nickname, email, maritime_rank, last_ship, whatsapp_number,
+        SELECT id, first_name, last_name, nickname, email, maritime_rank, last_ship, whatsapp_number,
                current_city, current_country, permanent_city, permanent_country, 
                city, last_login_at, created_at, is_admin,
                current_ship_imo, current_ship_name, imo_number, vessel_name, ship_name
@@ -227,7 +190,9 @@ export class DatabaseStorage implements IStorage {
           id: user.id, 
           imo: user.current_ship_imo || user.imo_number || '',
           shipName: user.current_ship_name || user.vessel_name || user.ship_name || user.last_ship || '',
-          fullName: user.full_name || user.nickname || 'Maritime User'
+          fullName: (user.first_name && user.last_name) 
+            ? `${user.first_name} ${user.last_name}`.trim()
+            : user.nickname || 'Maritime User'
         }));
       
       console.log(`Found ${sailorsWithShips.length} sailors with ship data for position tracking`);
@@ -304,19 +269,27 @@ export class DatabaseStorage implements IStorage {
             longitude = coords.lng;
           } else {
             // Skip users without any location data
-            console.log(`Skipping user ${user.full_name} - no location data available`);
+            const userName = (user.first_name && user.last_name) 
+              ? `${user.first_name} ${user.last_name}`.trim()
+              : user.nickname || user.email || 'Maritime User';
+            console.log(`Skipping user ${userName} - no location data available`);
             return null;
           }
         }
 
         // Ensure we have valid coordinates
         if (latitude === 0 && longitude === 0) {
-          console.log(`Warning: User ${user.full_name} has zero coordinates`);
+          const userName = (user.first_name && user.last_name) 
+            ? `${user.first_name} ${user.last_name}`.trim()
+            : user.nickname || user.email || 'Maritime User';
+          console.log(`Warning: User ${userName} has zero coordinates`);
         }
 
         return {
           id: user.id,
-          fullName: user.full_name || user.nickname || user.email || 'Maritime User',
+          fullName: (user.first_name && user.last_name) 
+            ? `${user.first_name} ${user.last_name}`.trim()
+            : user.nickname || user.email || 'Maritime User',
           email: user.email || '',
           password: '',
           userType: hasShipData ? 'sailor' : 'local',

@@ -55,7 +55,7 @@ function Router() {
         <Route component={NotFound} />
       </Switch>
       
-      {user && <BottomNav />}
+      {user && <BottomNav user={user} />}
     </div>
   );
 }

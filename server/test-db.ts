@@ -2,7 +2,7 @@ import { Pool } from '@neondatabase/serverless';
 
 // Direct test of database connection
 const testPool = new Pool({ 
-  connectionString: process.env.QAAQ_ADMIN_DATABASE_URL 
+  connectionString: process.env.QAAQ_ADMIN_DATABASE_URL || process.env.DATABASE_URL
 });
 
 export async function testDatabaseConnection() {
