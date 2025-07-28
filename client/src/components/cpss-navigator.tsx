@@ -3,6 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAuth } from "@/hooks/useAuth";
+import QaaqStore from "./qaaq-store";
 
 interface CPSSItem {
   id: string;
@@ -113,6 +119,14 @@ const cpssData: CPSSLevel[] = [
                 icon: '🍽️',
                 description: 'Authentic local restaurants',
                 items: generateSampleItems('Port Dining', 'Mumbai Colaba')
+              },
+              {
+                id: 'qaaq-store',
+                name: 'Qaaq Store',
+                type: 'service',
+                icon: '🏪',
+                description: 'Pre-order supplies for ship delivery',
+                items: []
               }
             ]
           }
@@ -153,6 +167,14 @@ const cpssData: CPSSLevel[] = [
                 icon: '🍽️',
                 description: 'Multi-cuisine restaurants',
                 items: generateSampleItems('Port Dining', 'Dubai Deira')
+              },
+              {
+                id: 'qaaq-store',
+                name: 'Qaaq Store',
+                type: 'service',
+                icon: '🏪',
+                description: 'Pre-order supplies for ship delivery',
+                items: []
               }
             ]
           }
@@ -174,7 +196,18 @@ export default function CPSSNavigator({ onServiceSelect }: CPSSNavigatorProps) {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [editingItem, setEditingItem] = useState<CPSSItem | null>(null);
+  const [editForm, setEditForm] = useState({
+    title: '',
+    content: '',
+    author: '',
+    authorRank: '',
+    authorShip: '',
+    category: '',
+    tags: ''
+  });
   const { toast } = useToast();
+  const { user } = useAuth();
   const observerRef = useRef<IntersectionObserver>();
   const lastItemRef = useRef<HTMLDivElement>(null);
 
@@ -284,6 +317,98 @@ export default function CPSSNavigator({ onServiceSelect }: CPSSNavigatorProps) {
     toast({
       title: "Shared!",
       description: "Content copied to clipboard",
+    });
+  };
+
+  // Admin functions
+  const handleEditItem = (item: CPSSItem) => {
+    setEditingItem(item);
+    setEditForm({
+      title: item.title,
+      content: item.content,
+      author: item.author,
+      authorRank: item.authorRank || '',
+      authorShip: item.authorShip || '',
+      category: item.category,
+      tags: item.tags.join(', ')
+    });
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingItem) return;
+
+    const updatedItem = {
+      ...editingItem,
+      title: editForm.title,
+      content: editForm.content,
+      author: editForm.author,
+      authorRank: editForm.authorRank || undefined,
+      authorShip: editForm.authorShip || undefined,
+      category: editForm.category,
+      tags: editForm.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
+    };
+
+    setDisplayedItems(prev => prev.map(item => 
+      item.id === editingItem.id ? updatedItem : item
+    ));
+    setCurrentItems(prev => prev.map(item => 
+      item.id === editingItem.id ? updatedItem : item
+    ));
+
+    setEditingItem(null);
+    toast({
+      title: "Item Updated",
+      description: "Content has been updated successfully",
+    });
+  };
+
+  const handleDeleteItem = (itemId: string) => {
+    setDisplayedItems(prev => prev.filter(item => item.id !== itemId));
+    setCurrentItems(prev => prev.filter(item => item.id !== itemId));
+    
+    toast({
+      title: "Item Deleted",
+      description: "Content has been removed",
+    });
+  };
+
+  const handleMoveUp = (itemId: string) => {
+    const moveItemUp = (items: CPSSItem[]) => {
+      const index = items.findIndex(item => item.id === itemId);
+      if (index > 0) {
+        const newItems = [...items];
+        [newItems[index - 1], newItems[index]] = [newItems[index], newItems[index - 1]];
+        return newItems;
+      }
+      return items;
+    };
+
+    setDisplayedItems(moveItemUp);
+    setCurrentItems(moveItemUp);
+    
+    toast({
+      title: "Item Moved Up",
+      description: "Item priority increased",
+    });
+  };
+
+  const handleMoveDown = (itemId: string) => {
+    const moveItemDown = (items: CPSSItem[]) => {
+      const index = items.findIndex(item => item.id === itemId);
+      if (index < items.length - 1) {
+        const newItems = [...items];
+        [newItems[index], newItems[index + 1]] = [newItems[index + 1], newItems[index]];
+        return newItems;
+      }
+      return items;
+    };
+
+    setDisplayedItems(moveItemDown);
+    setCurrentItems(moveItemDown);
+    
+    toast({
+      title: "Item Moved Down",
+      description: "Item priority decreased",
     });
   };
 
@@ -476,13 +601,57 @@ export default function CPSSNavigator({ onServiceSelect }: CPSSNavigatorProps) {
                     </Button>
                   </div>
                   
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-gray-600 hover:text-navy"
-                  >
-                    <i className="fas fa-bookmark"></i>
-                  </Button>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-gray-600 hover:text-navy"
+                    >
+                      <i className="fas fa-bookmark"></i>
+                    </Button>
+                    
+                    {/* Admin Controls */}
+                    {user?.isAdmin && (
+                      <div className="flex items-center space-x-1 ml-4 pl-4 border-l border-gray-200">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleMoveUp(item.id)}
+                          className="text-gray-500 hover:text-green-600 p-1"
+                          title="Move Up"
+                        >
+                          <i className="fas fa-arrow-up text-xs"></i>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleMoveDown(item.id)}
+                          className="text-gray-500 hover:text-blue-600 p-1"
+                          title="Move Down"
+                        >
+                          <i className="fas fa-arrow-down text-xs"></i>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditItem(item)}
+                          className="text-gray-500 hover:text-yellow-600 p-1"
+                          title="Edit"
+                        >
+                          <i className="fas fa-edit text-xs"></i>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteItem(item.id)}
+                          className="text-gray-500 hover:text-red-600 p-1"
+                          title="Delete"
+                        >
+                          <i className="fas fa-trash text-xs"></i>
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -515,6 +684,110 @@ export default function CPSSNavigator({ onServiceSelect }: CPSSNavigatorProps) {
           <p>No content available</p>
         </div>
       )}
+
+      {/* Qaaq Store Display */}
+      {breadcrumb.length > 0 && breadcrumb[breadcrumb.length - 1].id === 'qaaq-store' && (
+        <QaaqStore
+          location={`${breadcrumb[breadcrumb.length - 3]?.name || 'Port'}`}
+          suburb={breadcrumb[breadcrumb.length - 2]?.name || 'Suburb'}
+          port={breadcrumb[breadcrumb.length - 3]?.name || 'Port'}
+          country={breadcrumb[0]?.name || 'Country'}
+          userShipSchedule={{
+            arrivalDate: "2025-02-15",
+            departureDate: "2025-02-18"
+          }}
+        />
+      )}
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editingItem} onOpenChange={() => setEditingItem(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit CPSS Item</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">Title</label>
+              <Input
+                value={editForm.title}
+                onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
+                placeholder="Item title"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">Content</label>
+              <Textarea
+                value={editForm.content}
+                onChange={(e) => setEditForm(prev => ({ ...prev, content: e.target.value }))}
+                placeholder="Item content"
+                rows={4}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">Author</label>
+                <Input
+                  value={editForm.author}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, author: e.target.value }))}
+                  placeholder="Author name"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">Author Rank</label>
+                <Input
+                  value={editForm.authorRank}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, authorRank: e.target.value }))}
+                  placeholder="Captain, Officer, etc."
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">Ship Name</label>
+                <Input
+                  value={editForm.authorShip}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, authorShip: e.target.value }))}
+                  placeholder="Ship name"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">Category</label>
+                <Select
+                  value={editForm.category}
+                  onValueChange={(value) => setEditForm(prev => ({ ...prev, category: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Maritime Meetups">Maritime Meetups</SelectItem>
+                    <SelectItem value="Local Tours">Local Tours</SelectItem>
+                    <SelectItem value="Port Dining">Port Dining</SelectItem>
+                    <SelectItem value="Shore Shopping">Shore Shopping</SelectItem>
+                    <SelectItem value="Cultural Experience">Cultural Experience</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">Tags (comma separated)</label>
+              <Input
+                value={editForm.tags}
+                onChange={(e) => setEditForm(prev => ({ ...prev, tags: e.target.value }))}
+                placeholder="tag1, tag2, tag3"
+              />
+            </div>
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button variant="outline" onClick={() => setEditingItem(null)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSaveEdit} className="bg-navy hover:bg-navy/90">
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

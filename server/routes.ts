@@ -498,6 +498,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ==== QAAQ STORE API ENDPOINTS ====
+  
+  // Create Razorpay order for Qaaq Store
+  app.post('/api/qaaq-store/create-order', authenticateToken, async (req, res) => {
+    try {
+      const { items, totalAmount, currency, deliveryLocation, shipSchedule, storeLocation } = req.body;
+      const userId = req.userId;
+
+      // Mock Razorpay integration (replace with actual Razorpay when keys are provided)
+      const mockOrderId = `order_${Date.now()}`;
+      
+      // In production, you would create a real Razorpay order here:
+      // const Razorpay = require('razorpay');
+      // const razorpay = new Razorpay({
+      //   key_id: process.env.RAZORPAY_KEY_ID,
+      //   key_secret: process.env.RAZORPAY_KEY_SECRET,
+      // });
+      // 
+      // const order = await razorpay.orders.create({
+      //   amount: totalAmount * 100, // Convert to paise
+      //   currency: currency,
+      //   receipt: `qaaq_${userId}_${Date.now()}`,
+      //   payment_capture: 1
+      // });
+
+      // Log order for store processing
+      console.log('New Qaaq Store Order:', {
+        userId,
+        orderId: mockOrderId,
+        items: items.map((item: any) => ({ name: item.name, quantity: item.quantity, price: item.price })),
+        totalAmount,
+        deliveryLocation,
+        shipSchedule,
+        storeLocation,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json({
+        razorpayOrderId: mockOrderId,
+        amount: totalAmount * 100, // In paise for Razorpay
+        currency: currency,
+        message: "Order created successfully. Store will prepare items for delivery."
+      });
+
+    } catch (error) {
+      console.error('Qaaq Store order creation error:', error);
+      res.status(500).json({ message: "Failed to create order" });
+    }
+  });
+
+  // Get user's Qaaq Store orders
+  app.get('/api/qaaq-store/orders', authenticateToken, async (req, res) => {
+    try {
+      const userId = req.userId;
+      
+      // Mock orders data (in production, fetch from database)
+      const mockOrders = [
+        {
+          id: `order_${Date.now() - 86400000}`,
+          items: [
+            { name: "Maritime Safety Kit", quantity: 1, price: 2500 },
+            { name: "Local SIM Card & Data Plan", quantity: 2, price: 800 }
+          ],
+          totalAmount: 4100,
+          status: "preparing",
+          deliveryLocation: "Mumbai Port, India",
+          storeLocation: "Colaba",
+          shipArrival: "2025-02-15",
+          createdAt: new Date(Date.now() - 86400000).toISOString()
+        }
+      ];
+
+      res.json(mockOrders);
+    } catch (error) {
+      console.error('Get Qaaq Store orders error:', error);
+      res.status(500).json({ message: "Failed to get orders" });
+    }
+  });
+
+  // Update order status (for store management)
+  app.patch('/api/qaaq-store/orders/:orderId/status', authenticateToken, async (req, res) => {
+    try {
+      const { orderId } = req.params;
+      const { status } = req.body;
+      
+      // In production, update database with new status
+      console.log(`Order ${orderId} status updated to: ${status}`);
+      
+      res.json({ message: "Order status updated successfully" });
+    } catch (error) {
+      console.error('Update order status error:', error);
+      res.status(500).json({ message: "Failed to update order status" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

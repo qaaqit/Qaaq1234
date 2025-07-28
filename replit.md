@@ -148,4 +148,14 @@ Header visibility: Show white header only for admin users, regular users should 
 - Connection pooling for serverless environment
 - Environment-based configuration
 
+## Recent Changes
+
+### Admin CPSS Management System (January 28, 2025)
+- **Admin Controls**: Added reorder, edit, and delete functionality for all CPSS list items
+- **Preferential Listing**: Admin users (+919029010070 & mushy.piyush@gmail.com) can move items up/down for priority ranking
+- **Content Management**: Comprehensive edit dialog for title, content, author details, category, and tags
+- **Admin Authentication**: Enhanced useAuth hook to identify admin users based on phone/email
+- **Visual Admin Controls**: Dedicated admin button section with move, edit, and delete icons
+- **Real-time Updates**: Immediate UI updates for all admin actions with toast notifications
+
 The application follows modern web development patterns with emphasis on type safety, performance, and user experience. The maritime theme and social features are designed to foster genuine connections between sailors and local communities worldwide.
