@@ -248,6 +248,8 @@ export class DatabaseStorage implements IStorage {
         if (availableColumns.includes('imo_number')) selectFields.push('imo_number');
         if (availableColumns.includes('seafarer_id')) selectFields.push('seafarer_id');
         if (availableColumns.includes('password')) selectFields.push('password'); // For QAAQ auth city extraction
+        if (availableColumns.includes('last_login_location')) selectFields.push('last_login_location'); // Enhanced location data
+        if (availableColumns.includes('payment_method')) selectFields.push('payment_method'); // QAAQ city storage
         
         console.log('Querying maritime professional database with fields:', selectFields);
         
@@ -326,9 +328,22 @@ export class DatabaseStorage implements IStorage {
         
         // For QAAQ authorization flow: use password field as city if current_city not set
         // This handles users who entered City name as password but haven't confirmed present city
-        if (!user.current_city && user.password) {
-          city = user.password; // Password temporarily stores city name during QAAQ auth
-          console.log(`Using password field as city for ${fullName}: ${city} (awaiting present city confirmation)`);
+        if (!user.current_city && user.payment_method) {
+          city = user.payment_method; // In QAAQ flow, payment_method temporarily stores city name
+          console.log(`Using payment_method field as city for ${fullName}: ${city} (QAAQ auth flow)`);
+        }
+        
+        // Check for enhanced location data in last_login_location field
+        let enhancedLocation = null;
+        if (user.last_login_location && user.last_login_location.includes(':')) {
+          const [source, coords] = user.last_login_location.split(':');
+          if (coords && coords.includes(',')) {
+            const [lat, lng] = coords.split(',');
+            if (!isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng))) {
+              enhancedLocation = { source, lat: parseFloat(lat), lng: parseFloat(lng) };
+              console.log(`Found enhanced location for ${fullName}: ${source} location at ${lat}, ${lng}`);
+            }
+          }
         }
         
         // Priority order for location: 1) Ship IMO tracking 2) Device GPS 3) City mapping
@@ -354,6 +369,13 @@ export class DatabaseStorage implements IStorage {
         
         // 2. Fall back to device GPS if available (would be updated via API)
         // This would be populated by mobile app or browser geolocation
+        
+        // 2. Check for enhanced location data first
+        if (enhancedLocation) {
+          latitude = enhancedLocation.lat;
+          longitude = enhancedLocation.lng;
+          locationSource = enhancedLocation.source;
+        }
         
         // 3. Final fallback: derive from city name using coordinate mapping
         if (latitude === 0 && longitude === 0) {
@@ -410,23 +432,17 @@ export class DatabaseStorage implements IStorage {
 
   async updateUserLocation(userId: string, latitude: number, longitude: number, source: 'device' | 'ship' | 'city'): Promise<void> {
     try {
-      if (source === 'device') {
-        // Update device location in the database
-        await pool.query(`
-          UPDATE users 
-          SET device_latitude = $1, device_longitude = $2, location_source = $3, location_updated_at = NOW()
-          WHERE id = $4
-        `, [latitude, longitude, source, userId]);
-        console.log(`Updated device location for user ${userId}: ${latitude}, ${longitude}`);
-      } else {
-        // Update primary location coordinates
-        await pool.query(`
-          UPDATE users 
-          SET latitude = $1, longitude = $2, location_source = $3, location_updated_at = NOW()
-          WHERE id = $4
-        `, [latitude, longitude, source, userId]);
-        console.log(`Updated ${source} location for user ${userId}: ${latitude}, ${longitude}`);
-      }
+      // Update location using available QAAQ database columns
+      // Use last_login_location to store location source and last_login_at for timestamp
+      const locationInfo = `${source}:${latitude},${longitude}`;
+      
+      await pool.query(`
+        UPDATE users 
+        SET last_login_location = $1, last_login_at = NOW()
+        WHERE id = $2
+      `, [locationInfo, userId]);
+      
+      console.log(`Updated ${source} location for user ${userId}: ${latitude}, ${longitude} (stored in last_login_location)`);
     } catch (error) {
       console.error(`Error updating ${source} location for user ${userId}:`, error as Error);
       throw error;
