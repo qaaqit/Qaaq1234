@@ -80,33 +80,31 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
     }
   });
 
-  // Get user's current location (always, not just when showUsers is true)
+  // Get user's current location
   useEffect(() => {
-    if (user?.id) {
-      // Try to get user's location from browser geolocation
+    if (user?.id && !userLocation) {
+      // Try to get user's location from browser geolocation first
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
-            const userPos = {
+            setUserLocation({
               lat: position.coords.latitude,
               lng: position.coords.longitude
-            };
-            setUserLocation(userPos);
+            });
           },
           (error) => {
-            console.log('Geolocation error:', error);
-            // Fallback: try to find user's location from the users list
-            if (users.length > 0) {
-              const currentUser = users.find(u => u.id === user.id);
-              if (currentUser) {
-                setUserLocation({ lat: currentUser.latitude, lng: currentUser.longitude });
-              }
-            }
-          }
+            console.log('Geolocation error, using fallback:', error);
+            // Fallback: Use Mumbai coordinates for demo
+            setUserLocation({ lat: 19.076, lng: 72.8777 });
+          },
+          { timeout: 5000, enableHighAccuracy: false }
         );
+      } else {
+        // No geolocation support, use Mumbai as fallback
+        setUserLocation({ lat: 19.076, lng: 72.8777 });
       }
     }
-  }, [user?.id, users]);
+  }, [user?.id, userLocation]);
 
   // Smart zoom logic: center on user with expanding radius to show at least 9 pins
   useEffect(() => {
@@ -186,9 +184,9 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
     });
   };
 
-  // Use user location as default center, fallback to world view
-  const defaultCenter: [number, number] = userLocation ? [userLocation.lat, userLocation.lng] : [20, 0];
-  const defaultZoom = userLocation ? 9 : 2; // Zoom level 9 shows roughly 50km radius
+  // Use user location as default center, fallback to Mumbai
+  const defaultCenter: [number, number] = userLocation ? [userLocation.lat, userLocation.lng] : [19.076, 72.8777];
+  const defaultZoom = 9; // Always use zoom level 9 for 50km radius view
 
   return (
     <div className="w-full h-full overflow-hidden bg-gray-100">
@@ -196,7 +194,6 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
         center={defaultCenter}
         zoom={defaultZoom}
         className="w-full h-full"
-        key={userLocation ? `${userLocation.lat}-${userLocation.lng}` : 'world'} // Force re-render when user location changes
         bounds={showUsers && bounds ? bounds : undefined}
       >
         <TileLayer
