@@ -157,5 +157,6 @@ Header visibility: Show white header only for admin users, regular users should 
 - **Admin Authentication**: Enhanced useAuth hook to identify admin users based on phone/email
 - **Visual Admin Controls**: Dedicated admin button section with move, edit, and delete icons
 - **Real-time Updates**: Immediate UI updates for all admin actions with toast notifications
+- **Admin Navigation**: Added back arrow button to navigate from admin panel to home page
 
 The application follows modern web development patterns with emphasis on type safety, performance, and user experience. The maritime theme and social features are designed to foster genuine connections between sailors and local communities worldwide.

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useLocation } from "wouter";
 
 interface AdminUser {
   id: string;
@@ -36,6 +37,7 @@ interface AdminStats {
 export default function AdminPanel() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
 
   // Fetch admin stats
@@ -120,12 +122,23 @@ export default function AdminPanel() {
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                <i className="fas fa-shield-alt text-ocean-teal mr-3"></i>
-                QaaqConnect Admin Panel
-              </h1>
-              <p className="text-gray-600 mt-1">Manage users and system settings</p>
+            <div className="flex items-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setLocation("/")}
+                className="mr-4 text-gray-600 hover:text-navy"
+              >
+                <i className="fas fa-arrow-left mr-2"></i>
+                Back to Home
+              </Button>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">
+                  <i className="fas fa-shield-alt text-ocean-teal mr-3"></i>
+                  QaaqConnect Admin Panel
+                </h1>
+                <p className="text-gray-600 mt-1">Manage users and system settings</p>
+              </div>
             </div>
             <Badge variant="outline" className="bg-ocean-teal text-white border-ocean-teal">
               <i className="fas fa-user-crown mr-1"></i>
