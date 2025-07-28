@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import DiscoveryCard from "@/components/discovery-card";
 import UsersMap from "@/components/users-map";
+import WhatsAppBotControl from "@/components/whatsapp-bot-control";
 import { type User } from "@/lib/auth";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -28,6 +29,7 @@ export default function Discover({ user }: DiscoverProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [showUsers, setShowUsers] = useState(false);
+  const [showWhatsAppPanel, setShowWhatsAppPanel] = useState(false);
   
   const { data: posts = [], isLoading, refetch } = useQuery<Post[]>({
     queryKey: searchQuery ? ['/api/posts/search', searchQuery, selectedCategory] : ['/api/posts'],
@@ -109,6 +111,14 @@ export default function Discover({ user }: DiscoverProps) {
                 {user.userType === 'sailor' ? '🚢' : '🏠'} {user.userType}
               </span>
               <Button
+                onClick={() => setShowWhatsAppPanel(!showWhatsAppPanel)}
+                variant="outline"
+                size="sm"
+                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+              >
+                <i className="fab fa-whatsapp mr-2"></i>Bot
+              </Button>
+              <Button
                 onClick={() => {
                   localStorage.removeItem('qaaq_token');
                   window.location.href = '/';
@@ -150,8 +160,25 @@ export default function Discover({ user }: DiscoverProps) {
       </div>
 
       {/* Full Screen Map */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden relative">
         <UsersMap showUsers={showUsers} searchQuery={searchQuery} />
+        
+        {/* WhatsApp Bot Control Panel */}
+        {showWhatsAppPanel && (
+          <div className="absolute top-4 right-4 z-50">
+            <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-1">
+              <WhatsAppBotControl />
+              <Button
+                onClick={() => setShowWhatsAppPanel(false)}
+                variant="ghost"
+                size="sm"
+                className="absolute -top-2 -right-2 bg-white hover:bg-gray-50 rounded-full w-6 h-6 p-0 shadow-md"
+              >
+                ×
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

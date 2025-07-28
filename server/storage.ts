@@ -177,140 +177,78 @@ export class DatabaseStorage implements IStorage {
 
   async getUsersWithLocation(): Promise<User[]> {
     try {
-      // Since the main QAAQ database doesn't have location data for the 621 users,
-      // we'll use our sample maritime users to demonstrate the map functionality
-      console.log('Using sample maritime users with location data for map demonstration');
+      // Use real QAAQ users with location data from current_city and permanent_city fields
+      console.log('Fetching QAAQ users with location data for map and WhatsApp bot');
       
-      const sampleUsers = [
-        {
-          id: "sample-1",
-          fullName: "James Miller",
-          email: "captain.miller@qaaq.com",
-          userType: "sailor" as const,
-          rank: "Captain",
-          shipName: "MV Singapore Star",
-          city: "Singapore",
-          country: "Singapore",
-          latitude: 1.3521,
-          longitude: 103.8198,
-          port: "Singapore Port"
-        },
-        {
-          id: "sample-2", 
-          fullName: "Sarah Chen",
-          email: "chief.chen@qaaq.com",
-          userType: "sailor" as const,
-          rank: "Chief Engineer",
-          shipName: "MV Rotterdam Express",
-          city: "Rotterdam",
-          country: "Netherlands", 
-          latitude: 51.9225,
-          longitude: 4.47917,
-          port: "Port of Rotterdam"
-        },
-        {
-          id: "sample-3",
-          fullName: "Ahmed Hassan", 
-          email: "bosun.hassan@qaaq.com",
-          userType: "sailor" as const,
-          rank: "Bosun",
-          shipName: "MV Dubai Pearl",
-          city: "Dubai",
-          country: "UAE",
-          latitude: 25.2048,
-          longitude: 55.2708,
-          port: "Jebel Ali Port"
-        },
-        {
-          id: "sample-4",
-          fullName: "Li Wei",
-          email: "captain.li@qaaq.com", 
-          userType: "sailor" as const,
-          rank: "Captain",
-          shipName: "MV Shanghai Dragon",
-          city: "Shanghai",
-          country: "China",
-          latitude: 31.2304,
-          longitude: 121.4737,
-          port: "Port of Shanghai"
-        },
-        {
-          id: "sample-5",
-          fullName: "Maria Santos",
-          email: "maria.santos@local.com",
-          userType: "local" as const,
-          rank: "",
-          shipName: "",
-          city: "Santos",
-          country: "Brazil",
-          latitude: -23.9618,
-          longitude: -46.3322,
-          port: "Port of Santos"
-        },
-        {
-          id: "sample-6",
-          fullName: "Rajesh Patel",
-          email: "engineer.patel@qaaq.com",
-          userType: "sailor" as const,
-          rank: "Second Engineer", 
-          shipName: "MV Mumbai Queen",
-          city: "Mumbai",
-          country: "India",
-          latitude: 19.0760,
-          longitude: 72.8777,
-          port: "JNPT Mumbai"
-        },
-        {
-          id: "sample-7",
-          fullName: "Hans Olsen",
-          email: "chief.olsen@qaaq.com",
-          userType: "sailor" as const,
-          rank: "Chief Officer",
-          shipName: "MV Hamburg Trader", 
-          city: "Hamburg",
-          country: "Germany",
-          latitude: 53.5511,
-          longitude: 9.9937,
-          port: "Port of Hamburg"
-        },
-        {
-          id: "sample-8",
-          fullName: "Yuki Tanaka",
-          email: "yuki.guide@local.com",
-          userType: "local" as const,
-          rank: "",
-          shipName: "",
-          city: "Yokohama", 
-          country: "Japan",
-          latitude: 35.4437,
-          longitude: 139.6380,
-          port: "Port of Yokohama"
+      // Get QAAQ users with location data
+      const result = await pool.query(`
+        SELECT id, first_name, last_name, email, maritime_rank, last_ship, whatsapp_number,
+               current_city, current_country, permanent_city, permanent_country, 
+               city, last_login_at, created_at
+        FROM users 
+        WHERE (current_city IS NOT NULL AND current_city != '') 
+           OR (permanent_city IS NOT NULL AND permanent_city != '')
+           OR (city IS NOT NULL AND city != '')
+        ORDER BY last_login_at DESC NULLS LAST
+        LIMIT 100
+      `);
+      
+      console.log(`Found ${result.rows.length} QAAQ users with location data`);
+      
+      const mappedUsers = result.rows.map(user => {
+        let latitude = 0;
+        let longitude = 0;
+        let city = '';
+        let country = '';
+        
+        // Prioritize current location over permanent location
+        if (user.current_city && user.current_country) {
+          city = user.current_city;
+          country = user.current_country;
+          const coords = this.getCityCoordinates(city, country);
+          latitude = coords.lat;
+          longitude = coords.lng;
+        } else if (user.permanent_city && user.permanent_country) {
+          city = user.permanent_city;
+          country = user.permanent_country;
+          const coords = this.getCityCoordinates(city, country);
+          latitude = coords.lat;
+          longitude = coords.lng;
+        } else if (user.city) {
+          city = user.city;
+          country = 'Unknown';
+          const coords = this.getCityCoordinates(city, country);
+          latitude = coords.lat;
+          longitude = coords.lng;
+        } else {
+          return null; // Skip users without location data
         }
-      ];
 
-      const mappedUsers = sampleUsers.map(user => ({
-        id: user.id,
-        fullName: user.fullName,
-        email: user.email,
-        password: '',
-        userType: user.userType,
-        nickname: user.fullName.split(' ')[0],
-        rank: user.rank,
-        shipName: user.shipName,
-        imoNumber: '',
-        port: user.port,
-        visitWindow: 'Next 7 days',
-        city: user.city,
-        country: user.country,
-        latitude: user.latitude,
-        longitude: user.longitude,
-        isVerified: true,
-        loginCount: 1,
-        lastLogin: new Date(),
-        createdAt: new Date(),
-      } as User));
+        return {
+          id: user.id,
+          fullName: `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email || 'Maritime User',
+          email: user.email || '',
+          password: '',
+          userType: user.last_ship ? 'sailor' : 'local',
+          nickname: user.first_name || '',
+          rank: user.maritime_rank || '',
+          shipName: user.last_ship || '',
+          imoNumber: '',
+          port: city,
+          visitWindow: 'Available for connection',
+          city,
+          country,
+          latitude,
+          longitude,
+          isVerified: true,
+          loginCount: 1,
+          lastLogin: user.last_login_at || new Date(),
+          createdAt: user.created_at || new Date(),
+          whatsappNumber: user.whatsapp_number || ''
+        } as User & { whatsappNumber: string };
+      }).filter(user => user !== null);
 
-      console.log(`Returning ${mappedUsers.length} sample maritime users with coordinates`);
+      console.log(`Returning ${mappedUsers.length} QAAQ users with coordinates for map and WhatsApp bot`);
       return mappedUsers;
     } catch (error) {
       console.error('Get users with location error:', error);

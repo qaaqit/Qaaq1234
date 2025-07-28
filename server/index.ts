@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import QoiGPTBot from "./whatsapp-bot";
 
 const app = express();
 app.use(express.json());
@@ -36,8 +37,48 @@ app.use((req, res, next) => {
   next();
 });
 
+let whatsappBot: QoiGPTBot | null = null;
+
 (async () => {
   const server = await registerRoutes(app);
+
+  // Add WhatsApp bot endpoints
+  app.get("/api/whatsapp-status", (req, res) => {
+    res.json({
+      connected: whatsappBot?.isConnected() || false,
+      status: whatsappBot?.isConnected() ? 'Connected' : 'Disconnected'
+    });
+  });
+
+  app.post("/api/whatsapp-start", async (req, res) => {
+    try {
+      if (!whatsappBot) {
+        whatsappBot = new QoiGPTBot();
+        await whatsappBot.start();
+        res.json({ message: 'WhatsApp bot starting... Check console for QR code.' });
+      } else {
+        res.json({ message: 'WhatsApp bot is already running.' });
+      }
+    } catch (error) {
+      console.error('Failed to start WhatsApp bot:', error);
+      res.status(500).json({ error: 'Failed to start WhatsApp bot' });
+    }
+  });
+
+  app.post("/api/whatsapp-stop", async (req, res) => {
+    try {
+      if (whatsappBot) {
+        await whatsappBot.stop();
+        whatsappBot = null;
+        res.json({ message: 'WhatsApp bot stopped.' });
+      } else {
+        res.json({ message: 'WhatsApp bot is not running.' });
+      }
+    } catch (error) {
+      console.error('Failed to stop WhatsApp bot:', error);
+      res.status(500).json({ error: 'Failed to stop WhatsApp bot' });
+    }
+  });
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -67,5 +108,15 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+    console.log(`📱 WhatsApp Bot API available at /api/whatsapp-start`);
+  });
+
+  // Handle graceful shutdown
+  process.on('SIGINT', async () => {
+    console.log('\n🛑 Shutting down server...');
+    if (whatsappBot) {
+      await whatsappBot.stop();
+    }
+    process.exit(0);
   });
 })();
