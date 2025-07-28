@@ -71,12 +71,8 @@ export default function Home({ onSuccess }: HomeProps) {
       {/* Overlay for better contrast */}
       <div className="absolute inset-0 z-10 bg-black/20"></div>
 
-      {/* Translucent Login Box - Positioned based on minimized state */}
-      <div className={`absolute z-20 transition-all duration-500 ${
-        isMinimized 
-          ? 'top-4 right-4 left-4 flex justify-center' 
-          : 'inset-0 flex items-center justify-center p-4'
-      }`}>
+      {/* Translucent Login Box - Always positioned at top */}
+      <div className={`absolute z-20 top-4 right-4 left-4 flex justify-center transition-all duration-500`}>
         <div 
           className={`bg-white/80 backdrop-blur-lg border border-white/30 shadow-2xl rounded-xl relative transition-all duration-500 ${
             isMinimized 
