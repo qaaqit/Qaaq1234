@@ -42,24 +42,24 @@ export class DatabaseStorage implements IStorage {
       const user = result.rows[0];
       return {
         id: user.id,
-        fullName: user.first_name || user.email || 'Maritime User',
+        fullName: user.full_name || user.email || 'Maritime User',
         email: user.email || '',
         password: '',
-        userType: 'sailor',
+        userType: user.ship_name ? 'sailor' : 'local',
         nickname: user.nickname || '',
-        rank: user.maritime_rank || '',
+        rank: user.rank || '',
         shipName: user.ship_name || '',
         imoNumber: user.imo_number || '',
         port: user.port || '',
         visitWindow: user.visit_window || '',
         city: user.city || '',
         country: user.country || '',
-        latitude: user.current_latitude || 0,
-        longitude: user.current_longitude || 0,
-        isVerified: true,
-        loginCount: 1,
-        lastLogin: new Date(),
-        createdAt: new Date(),
+        latitude: parseFloat(user.latitude) || 0,
+        longitude: parseFloat(user.longitude) || 0,
+        isVerified: user.is_verified || true,
+        loginCount: user.login_count || 1,
+        lastLogin: user.last_login || new Date(),
+        createdAt: user.created_at || new Date(),
       } as User;
     } catch (error) {
       console.error('Get user error:', error);
@@ -187,41 +187,32 @@ export class DatabaseStorage implements IStorage {
       console.log(`Found ${result.rows.length} users in QAAQ database`);
       
       const mappedUsers = result.rows.map(user => {
-        // Use current coordinates if available, otherwise use city/country for approximate location
+        // Use actual coordinates from database (users can be on ships or in home cities)
         let latitude = 0;
         let longitude = 0;
         
-        if (user.current_latitude && user.current_longitude) {
-          latitude = parseFloat(user.current_latitude);
-          longitude = parseFloat(user.current_longitude);
+        if (user.latitude && user.longitude && user.latitude !== '' && user.longitude !== '') {
+          // Use stored coordinates - these represent actual user locations (ship or home)
+          latitude = parseFloat(user.latitude);
+          longitude = parseFloat(user.longitude);
         } else if (user.city && user.country) {
-          // Approximate coordinates for major maritime cities
+          // Fallback to city coordinates for users without specific coordinates
           const cityCoords = this.getCityCoordinates(user.city, user.country);
           latitude = cityCoords.lat;
           longitude = cityCoords.lng;
         } else {
-          // Give users without city/country a random maritime location
-          const maritimeCities = [
-            { lat: 19.0760, lng: 72.8777 }, // Mumbai
-            { lat: 13.0827, lng: 80.2707 }, // Chennai  
-            { lat: 25.2048, lng: 55.2708 }, // Dubai
-            { lat: 1.3521, lng: 103.8198 }, // Singapore
-            { lat: 53.5511, lng: 9.9937 }, // Hamburg
-            { lat: 51.9225, lng: 4.4792 }, // Rotterdam
-          ];
-          const randomCity = maritimeCities[Math.floor(Math.random() * maritimeCities.length)];
-          latitude = randomCity.lat + (Math.random() - 0.5) * 0.1; // Add small random offset
-          longitude = randomCity.lng + (Math.random() - 0.5) * 0.1;
+          // For users without any location data, skip them (don't show on map)
+          return null;
         }
         
         return {
           id: user.id,
-          fullName: user.first_name || user.email || 'Maritime User',
+          fullName: user.full_name || user.email || 'Maritime User',
           email: user.email || '',
           password: '',
-          userType: 'sailor',
+          userType: user.ship_name ? 'sailor' : 'local', // Determine type based on ship presence
           nickname: user.nickname || '',
-          rank: user.maritime_rank || '',
+          rank: user.rank || '',
           shipName: user.ship_name || '',
           imoNumber: user.imo_number || '',
           port: user.port || '',
@@ -230,12 +221,12 @@ export class DatabaseStorage implements IStorage {
           country: user.country || '',
           latitude,
           longitude,
-          isVerified: true,
-          loginCount: 1,
-          lastLogin: new Date(),
-          createdAt: new Date(),
+          isVerified: user.is_verified || true,
+          loginCount: user.login_count || 1,
+          lastLogin: user.last_login || new Date(),
+          createdAt: user.created_at || new Date(),
         } as User;
-      });
+      }).filter(user => user !== null); // Remove users without location data
       
       const usersWithLocation = mappedUsers.filter(user => user.latitude !== 0 && user.longitude !== 0);
       console.log(`Returning ${usersWithLocation.length} users with valid coordinates`);

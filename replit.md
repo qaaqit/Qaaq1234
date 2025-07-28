@@ -61,7 +61,10 @@ Future features: CPSS (Country/Port/Suburb/Service) tree breadcrumb for maritime
 - Interactive world map with light grey theme (CartoDB tiles)
 - Map loads empty initially, shows pins only when "Koi Hai?" is pressed
 - Proximity-based discovery showing nearest 10 users without search text
-- Real-time user location mapping with maritime rank abbreviations
+- **Accurate Location Display**: Shows users' actual locations from QAAQ database coordinates
+  - Sailors: Displayed at their ship's current location or port
+  - Locals: Displayed at their home city location
+  - Automatic user type detection based on ship assignment
 - Ship information display (name, port, visit windows) without IMO numbers
 - Map pins color-coded by user type (navy for sailors, teal for locals)
 - Authentication-required proximity search with Haversine distance calculation
