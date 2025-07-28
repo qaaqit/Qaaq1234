@@ -457,13 +457,16 @@ export class DatabaseStorage implements IStorage {
         
         const userType = isMaritimeProfessional ? 'sailor' : 'local';
         
-        // Add small random offset for users in same city to prevent pin stacking
-        const locationKey = `${city.toLowerCase()}_${country.toLowerCase()}`;
-        const offset = (index % 10) * 0.001; // Small offset based on user index
-        const latOffset = Math.sin(index) * offset;
-        const lngOffset = Math.cos(index) * offset;
-        
+        // Scatter users randomly across city area to prevent clustering
         if (locationSource === 'city' || locationSource === 'city_approximate') {
+          // Create larger scatter radius based on city size (roughly 5-15km radius for major cities)
+          const scatterRadius = 0.1; // Roughly 10km in degrees
+          const angle = (index * 37) % 360 * (Math.PI / 180); // Use index for consistent but spread angles
+          const distance = (0.02 + (index % 7) * 0.02); // Vary distance from 2km to 14km
+          
+          const latOffset = Math.sin(angle) * distance;
+          const lngOffset = Math.cos(angle) * distance;
+          
           latitude += latOffset;
           longitude += lngOffset;
         }
