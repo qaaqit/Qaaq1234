@@ -14,6 +14,7 @@ Map behavior: Shows empty grey map on load, displays pins only when "Koi Hai?" b
 Proximity feature: Shows nearest 10 users when searching without text input
 User data: Connected to QAAQ admin database with 12 authentic maritime users including sailors with ship details and local guides in major ports
 Future features: CPSS (Country/Port/Suburb/Service) tree breadcrumb for maritime meetups and local tours
+Admin shield location: Keep admin shield in header top right corner (not in bottom navigation)
 
 ## System Architecture
 

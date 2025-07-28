@@ -13,6 +13,7 @@ import Post from "@/pages/post";
 import Admin from "@/pages/admin";
 import NotFound from "@/pages/not-found";
 import BottomNav from "@/components/bottom-nav";
+import Header from "@/components/header";
 
 import { getStoredToken, getStoredUser, type User } from "@/lib/auth";
 
@@ -45,15 +46,19 @@ function Router() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <Switch>
-        <Route path="/" component={() => user ? <Discover user={user} /> : <Home onSuccess={setUser} />} />
-        <Route path="/register" component={() => <Register onSuccess={setUser} />} />
-        <Route path="/verify" component={() => <Verify onSuccess={setUser} />} />
-        <Route path="/discover" component={() => user ? <Discover user={user} /> : <Home />} />
-        <Route path="/post" component={() => user ? <Post user={user} /> : <Home />} />
-        <Route path="/admin" component={() => user ? <Admin /> : <Home />} />
-        <Route component={NotFound} />
-      </Switch>
+      {user && <Header user={user} />}
+      
+      <div className={user ? "pt-16 pb-16" : ""}>
+        <Switch>
+          <Route path="/" component={() => user ? <Discover user={user} /> : <Home onSuccess={setUser} />} />
+          <Route path="/register" component={() => <Register onSuccess={setUser} />} />
+          <Route path="/verify" component={() => <Verify onSuccess={setUser} />} />
+          <Route path="/discover" component={() => user ? <Discover user={user} /> : <Home />} />
+          <Route path="/post" component={() => user ? <Post user={user} /> : <Home />} />
+          <Route path="/admin" component={() => user ? <Admin /> : <Home />} />
+          <Route component={NotFound} />
+        </Switch>
+      </div>
       
       {user && <BottomNav user={user} />}
     </div>

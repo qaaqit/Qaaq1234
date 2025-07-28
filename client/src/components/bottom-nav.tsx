@@ -21,13 +21,7 @@ export default function BottomNav({ user }: BottomNavProps) {
       icon: "fas fa-plus-circle", 
       label: "Post",
       active: location === "/post"
-    },
-    ...(user.isAdmin ? [{
-      path: "/admin",
-      icon: "fas fa-shield-alt",
-      label: "Admin", 
-      active: location === "/admin"
-    }] : [])
+    }
   ];
 
   return (
