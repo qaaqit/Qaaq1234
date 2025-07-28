@@ -104,10 +104,21 @@ export default function Discover({ user }: DiscoverProps) {
                 <p className="text-sm text-white/80">Welcome{user.fullName && !user.fullName.startsWith('+') ? `, ${user.fullName.split(' ')[0]}` : ''}!</p>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-4">
               <span className="text-sm text-white/80">
                 {user.userType === 'sailor' ? '🚢' : '🏠'} {user.userType}
               </span>
+              <Button
+                onClick={() => {
+                  localStorage.removeItem('qaaq_token');
+                  window.location.href = '/';
+                }}
+                variant="outline"
+                size="sm"
+                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+              >
+                <i className="fas fa-sign-out-alt mr-2"></i>Logout
+              </Button>
             </div>
           </div>
         </div>

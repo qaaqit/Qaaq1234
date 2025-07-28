@@ -199,12 +199,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPosts(limit = 20, offset = 0): Promise<Post[]> {
-    return await db
-      .select()
-      .from(posts)
-      .orderBy(desc(posts.createdAt))
-      .limit(limit)
-      .offset(offset);
+    // QAAQ admin database doesn't have posts table yet
+    console.log('Posts table not available in QAAQ admin database');
+    return [];
   }
 
   async searchPosts(query: string, location?: string, category?: string): Promise<Post[]> {
