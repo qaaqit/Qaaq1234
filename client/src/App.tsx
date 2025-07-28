@@ -46,9 +46,9 @@ function Router() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {user && <Header user={user} />}
+      {user?.isAdmin && <Header user={user} />}
       
-      <div className={user ? "pt-16 pb-16" : ""}>
+      <div className={user?.isAdmin ? "pt-16 pb-16" : user ? "pb-16" : ""}>
         <Switch>
           <Route path="/" component={() => user ? <Discover user={user} /> : <Home onSuccess={setUser} />} />
           <Route path="/register" component={() => <Register onSuccess={setUser} />} />
