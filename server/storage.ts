@@ -202,15 +202,13 @@ export class DatabaseStorage implements IStorage {
       
       // Get QAAQ users with location data including real ship information  
       const result = await pool.query(`
-        SELECT id, first_name, last_name, nickname, email, maritime_rank, last_ship, whatsapp_number,
-               current_city, current_country, permanent_city, permanent_country, 
-               city, last_login_at, created_at, is_admin,
-               current_ship_imo, current_ship_name, imo_number, vessel_name, ship_name
+        SELECT id, full_name, email, rank, ship_name, imo_number,
+               city, country, latitude, longitude, port, visit_window,
+               last_login, created_at, user_type, nickname
         FROM users 
-        WHERE (current_city IS NOT NULL AND current_city != '') 
-           OR (permanent_city IS NOT NULL AND permanent_city != '')
-           OR (city IS NOT NULL AND city != '')
-        ORDER BY last_login_at DESC NULLS LAST
+        WHERE (city IS NOT NULL AND city != '') 
+           AND (latitude IS NOT NULL AND longitude IS NOT NULL)
+        ORDER BY last_login DESC NULLS LAST
         LIMIT 100
       `);
       
@@ -219,23 +217,17 @@ export class DatabaseStorage implements IStorage {
       // Get ship location service for IMO-based positioning
       const shipLocationService = await this.getShipLocationService();
       
-      // Collect sailors with ship data (IMO numbers, current ships, or vessel names)
+      // Collect sailors with ship data (IMO numbers and ship names)
       const sailorsWithShips = result.rows
         .filter(user => 
-          (user.current_ship_imo && user.current_ship_imo.trim() !== '') ||
           (user.imo_number && user.imo_number.trim() !== '') ||
-          (user.current_ship_name && user.current_ship_name.trim() !== '') ||
-          (user.vessel_name && user.vessel_name.trim() !== '') ||
-          (user.ship_name && user.ship_name.trim() !== '') ||
-          (user.last_ship && user.last_ship.trim() !== '')
+          (user.ship_name && user.ship_name.trim() !== '')
         )
         .map(user => ({ 
           id: user.id, 
-          imo: user.current_ship_imo || user.imo_number || '',
-          shipName: user.current_ship_name || user.vessel_name || user.ship_name || user.last_ship || '',
-          fullName: (user.first_name && user.last_name) 
-            ? `${user.first_name} ${user.last_name}`.trim()
-            : user.nickname || 'Maritime User'
+          imo: user.imo_number || '',
+          shipName: user.ship_name || '',
+          fullName: user.full_name || user.nickname || user.email || 'Maritime User'
         }));
       
       console.log(`Found ${sailorsWithShips.length} sailors with ship data for position tracking`);
@@ -267,91 +259,62 @@ export class DatabaseStorage implements IStorage {
       }
       
       const mappedUsers = result.rows.map(user => {
-        let latitude = 0;
-        let longitude = 0;
-        let city = '';
-        let country = '';
+        let latitude = user.latitude || 0;
+        let longitude = user.longitude || 0;
+        let city = user.city || '';
+        let country = user.country || '';
         let locationSource = 'city'; // 'city' or 'ship'
         
         // First, check if this is a sailor with ship position available
-        const hasShipData = user.current_ship_imo || user.imo_number || user.current_ship_name || user.vessel_name || user.ship_name || user.last_ship;
+        const hasShipData = user.imo_number || user.ship_name;
         if (hasShipData) {
           const shipPosition = shipPositions.get(user.id);
           if (shipPosition) {
             latitude = shipPosition.latitude;
             longitude = shipPosition.longitude;
-            city = shipPosition.port || user.current_ship_name || user.vessel_name || user.ship_name || user.last_ship || 'At Sea';
+            city = shipPosition.port || user.ship_name || 'At Sea';
             country = 'Maritime';
             locationSource = 'ship';
-            const shipName = user.current_ship_name || user.vessel_name || user.ship_name || user.last_ship;
-            const imoDisplay = user.current_ship_imo || user.imo_number;
-            console.log(`Using ship position for sailor ${user.full_name} on ${shipName}${imoDisplay ? ` (IMO: ${imoDisplay})` : ''}`);
+            console.log(`Using ship position for sailor ${user.full_name} on ${user.ship_name}${user.imo_number ? ` (IMO: ${user.imo_number})` : ''}`);
           }
         }
         
-        // If no ship position found, fall back to city-based location
-        if (locationSource === 'city') {
-          // Prioritize current location over permanent location
-          if (user.current_city && user.current_country) {
-            city = user.current_city;
-            country = user.current_country;
-            const coords = this.getCityCoordinates(city, country);
-            latitude = coords.lat;
-            longitude = coords.lng;
-          } else if (user.permanent_city && user.permanent_country) {
-            city = user.permanent_city;
-            country = user.permanent_country;
-            const coords = this.getCityCoordinates(city, country);
-            latitude = coords.lat;
-            longitude = coords.lng;
-          } else if (user.city) {
-            city = user.city;
-            country = 'Unknown';
-            const coords = this.getCityCoordinates(city, country);
-            latitude = coords.lat;
-            longitude = coords.lng;
-          } else {
-            // Skip users without any location data
-            const userName = (user.first_name && user.last_name) 
-              ? `${user.first_name} ${user.last_name}`.trim()
-              : user.nickname || user.email || 'Maritime User';
-            console.log(`Skipping user ${userName} - no location data available`);
-            return null;
-          }
+        // Use database coordinates if no ship position found
+        if (locationSource === 'city' && user.latitude && user.longitude) {
+          latitude = user.latitude;
+          longitude = user.longitude;
+          city = user.city || 'Unknown City';
+          country = user.country || 'Unknown Country';
         }
 
-        // Ensure we have valid coordinates
+        // Skip users without any location data
         if (latitude === 0 && longitude === 0) {
-          const userName = (user.first_name && user.last_name) 
-            ? `${user.first_name} ${user.last_name}`.trim()
-            : user.nickname || user.email || 'Maritime User';
-          console.log(`Warning: User ${userName} has zero coordinates`);
+          console.log(`Skipping user ${user.full_name} - no location data available`);
+          return null;
         }
 
         return {
           id: user.id,
-          fullName: (user.first_name && user.last_name) 
-            ? `${user.first_name} ${user.last_name}`.trim()
-            : user.nickname || user.email || 'Maritime User',
+          fullName: user.full_name || user.nickname || user.email || 'Maritime User',
           email: user.email || '',
           password: '',
-          userType: hasShipData ? 'sailor' : 'local',
-          isAdmin: user.is_admin || false,
-          nickname: user.nickname || user.full_name?.split(' ')[0] || '',
-          rank: user.maritime_rank || '',
-          shipName: user.current_ship_name || user.vessel_name || user.ship_name || user.last_ship || '',
-          imoNumber: user.current_ship_imo || user.imo_number || '',
-          port: city,
-          visitWindow: locationSource === 'ship' ? 'Currently at sea' : 'Available for connection',
+          userType: user.user_type || (hasShipData ? 'sailor' : 'local'),
+          isAdmin: false, // Set admin status based on phone/email in frontend
+          nickname: user.nickname || user.full_name || 'Maritime User',
+          rank: user.rank || '',
+          shipName: user.ship_name || '',
+          imoNumber: user.imo_number || '',
+          port: user.port || city,
+          visitWindow: user.visit_window || (locationSource === 'ship' ? 'Currently at sea' : 'Available for connection'),
           city,
           country,
           latitude,
           longitude,
           isVerified: true,
           loginCount: 1,
-          lastLogin: user.last_login_at || new Date(),
+          lastLogin: user.last_login || new Date(),
           createdAt: user.created_at || new Date(),
-          whatsappNumber: user.whatsapp_number || ''
+          whatsappNumber: ''
         } as User & { whatsappNumber: string };
       }).filter(user => user !== null);
 
