@@ -250,14 +250,19 @@ export class DatabaseStorage implements IStorage {
         if (availableColumns.includes('password')) selectFields.push('password'); // For QAAQ auth city extraction
         if (availableColumns.includes('last_login_location')) selectFields.push('last_login_location'); // Enhanced location data
         if (availableColumns.includes('payment_method')) selectFields.push('payment_method'); // QAAQ city storage
+        if (availableColumns.includes('city')) selectFields.push('city'); // Direct city field
         
         console.log('Querying maritime professional database with fields:', selectFields);
+        console.log('Available columns include city field:', availableColumns.includes('city'));
         
         result = await pool.query(`
           SELECT ${selectFields.join(', ')}
           FROM users 
           WHERE (current_city IS NOT NULL AND current_city != '') 
              OR (permanent_city IS NOT NULL AND permanent_city != '')
+             OR (city IS NOT NULL AND city != '')
+             OR (payment_method IS NOT NULL AND payment_method != '')
+             OR (last_login_location IS NOT NULL AND last_login_location != '')
           ORDER BY last_login_at DESC NULLS LAST
           LIMIT 100
         `);
@@ -333,6 +338,12 @@ export class DatabaseStorage implements IStorage {
           console.log(`Using payment_method field as city for ${fullName}: ${city} (QAAQ auth flow)`);
         }
         
+        // Also check the 'city' field directly for QAAQ users
+        if (!user.current_city && user.city) {
+          city = user.city;
+          console.log(`Using city field for ${fullName}: ${city}`);
+        }
+        
         // Check for enhanced location data in last_login_location field
         let enhancedLocation = null;
         if (user.last_login_location && user.last_login_location.includes(':')) {
@@ -384,13 +395,23 @@ export class DatabaseStorage implements IStorage {
           longitude = coordinates.lng;
           if (latitude !== 0 || longitude !== 0) {
             locationSource = 'city';
+            console.log(`Mapped city coordinates for ${fullName}: ${city} -> ${latitude}, ${longitude}`);
           }
         }
         
-        // If no coordinates found, skip this user
-        if (latitude === 0 && longitude === 0) {
-          console.log(`Skipping user ${fullName} from ${city} - no coordinates available`);
+        // Include users even without precise coordinates if they have city info
+        if (latitude === 0 && longitude === 0 && city === 'Unknown City') {
+          console.log(`Skipping user ${fullName} - no location information available`);
           return null;
+        }
+        
+        // For users with city but no coordinates, use approximate coordinates
+        if (latitude === 0 && longitude === 0 && city !== 'Unknown City') {
+          const coordinates = this.getCityCoordinates(city.toLowerCase(), country.toLowerCase());
+          latitude = coordinates.lat;
+          longitude = coordinates.lng;
+          locationSource = 'city_approximate';
+          console.log(`Using approximate coordinates for ${fullName} in ${city}: ${latitude}, ${longitude}`);
         }
         
         const userType = isMaritimeProfessional ? 'sailor' : 'local';
