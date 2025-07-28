@@ -12,7 +12,7 @@ Primary focus: "Koi Hai?" (Who's there?) discovery - helping sailors find who's 
 Map display: Full screen with light grey theme initially, becomes colorful when user searches
 Map behavior: Shows empty grey map on load, displays pins only when "Koi Hai?" button is pressed
 Proximity feature: Shows nearest 10 users when searching without text input
-User data: Connected to QAAQ admin database with 12 authentic maritime users including sailors with ship details and local guides in major ports
+User data: Connected to QAAQ admin database with test/seed data - actual authentic maritime users to be confirmed
 CPSS Navigation: Implemented hierarchical Country→Port→Suburb→Service structure with SEMM-like content cards
 CPSS Features: Endless scroll, like/share functions, card carousels, breadcrumb navigation
 CPSS Content: Maritime meetups, local tours, port dining, shore shopping, cultural experiences
