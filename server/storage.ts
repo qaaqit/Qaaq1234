@@ -325,7 +325,7 @@ export class DatabaseStorage implements IStorage {
         const nickname = user.nickname || '';
         const email = user.email || '';
         
-        // Better name resolution: try nickname first, then first+last, then email, then fallback
+        // Better name resolution with unique identifying information
         let fullName = '';
         if (nickname && nickname.trim() && !nickname.includes('@')) {
           fullName = nickname.trim();
@@ -336,7 +336,25 @@ export class DatabaseStorage implements IStorage {
         } else if (email && email.includes('@')) {
           fullName = email.split('@')[0].replace(/[._]/g, ' ').trim();
         } else {
-          fullName = `Maritime Professional #${user.id}`;
+          // Create unique identifier using available information
+          const rank = user.maritime_rank || '';
+          const ship = user.last_ship || '';
+          const city = user.current_city || user.permanent_city || user.city || '';
+          const whatsapp = user.whatsapp_number || '';
+          
+          if (rank && ship) {
+            fullName = `${rank.charAt(0).toUpperCase() + rank.slice(1)} from ${ship.replace(/^(MV|MT)\s+/, '')}`;
+          } else if (rank && city) {
+            fullName = `${rank.charAt(0).toUpperCase() + rank.slice(1)} from ${city}`;
+          } else if (ship) {
+            fullName = `Officer from ${ship.replace(/^(MV|MT)\s+/, '')}`;
+          } else if (whatsapp && whatsapp.length > 5) {
+            fullName = `Maritime Professional ${whatsapp.slice(-4)}`;
+          } else if (city) {
+            fullName = `Maritime Professional from ${city}`;
+          } else {
+            fullName = `Maritime Professional ${user.id.slice(-4)}`;
+          }
         }
         
         // Determine primary location with QAAQ authorization logic:
