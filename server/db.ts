@@ -5,11 +5,8 @@ import * as schema from "@shared/schema";
 
 neonConfig.webSocketConstructor = ws;
 
-if (!process.env.QAAQ_ADMIN_DATABASE_URL) {
-  throw new Error(
-    "QAAQ_ADMIN_DATABASE_URL must be set. Did you forget to provision the QAAQ admin database?",
-  );
-}
+// Connect to QAAQ Parent Database with real maritime users
+const QAAQ_PARENT_DB_URL = "postgresql://neondb_owner:npg_rTOn7VZkYAb3@ep-autumn-hat-a27gd1cd.eu-central-1.aws.neon.tech/neondb?sslmode=require";
 
-export const pool = new Pool({ connectionString: process.env.QAAQ_ADMIN_DATABASE_URL });
+export const pool = new Pool({ connectionString: QAAQ_PARENT_DB_URL });
 export const db = drizzle({ client: pool, schema });
