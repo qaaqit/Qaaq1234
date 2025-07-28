@@ -1,6 +1,7 @@
 import { users, posts, likes, verificationCodes, type User, type InsertUser, type Post, type InsertPost, type VerificationCode, type Like } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, desc, and, ilike, or, sql, isNotNull } from "drizzle-orm";
+import { testDatabaseConnection } from "./test-db";
 
 export interface IStorage {
   // User management
@@ -48,34 +49,54 @@ export class DatabaseStorage implements IStorage {
     }
 
     try {
-      // Simple direct query for testing
-      console.log('Attempting to find user:', userId);
+      console.log('Starting authentication for:', userId);
       
-      // First, let's test if we can connect at all
-      const testResult = await pool.query('SELECT COUNT(*) as user_count FROM users');
-      console.log('Total users in database:', testResult.rows[0].user_count);
+      // Run database test first
+      await testDatabaseConnection();
       
-      // Simple SELECT with only basic columns to test
-      const result = await pool.query(
-        'SELECT id, full_name, email FROM users WHERE id = $1 OR full_name = $1 OR email = $1 LIMIT 1',
-        [userId]
-      );
-
-      console.log('Query result rows:', result.rows.length);
+      // Try simplest possible query
+      console.log('Attempting basic user lookup...');
+      const result = await pool.query('SELECT id, email FROM users WHERE email = $1 LIMIT 1', [userId]);
       
       if (result.rows.length === 0) {
-        console.log('No user found for:', userId);
-        return undefined;
+        console.log('No user found for email:', userId);
+        // Try phone lookup in email field (since phone numbers might be stored there)
+        const phoneResult = await pool.query('SELECT id, email FROM users WHERE email LIKE $1 LIMIT 1', [`%${userId}%`]);
+        if (phoneResult.rows.length === 0) {
+          return undefined;
+        }
+        console.log('Found user by phone pattern');
+        const user = phoneResult.rows[0];
+        return {
+          id: user.id,
+          fullName: userId,
+          email: user.email,
+          password: '',
+          userType: 'sailor',
+          nickname: '',
+          rank: '',
+          shipName: '',
+          imoNumber: '',
+          port: '',
+          visitWindow: '',
+          city: '',
+          country: '',
+          latitude: 0,
+          longitude: 0,
+          isVerified: true,
+          loginCount: 1,
+          lastLogin: new Date(),
+          createdAt: new Date(),
+        } as User;
       }
       
-      const potentialUser = result.rows[0];
-      console.log('Found user:', potentialUser.full_name, potentialUser.email);
-
-      // Return minimal user object for now
+      const user = result.rows[0];
+      console.log('Found user by email:', user.email);
+      
       return {
-        id: potentialUser.id,
-        fullName: potentialUser.full_name,
-        email: potentialUser.email || '',
+        id: user.id,
+        fullName: user.email,
+        email: user.email,
         password: '',
         userType: 'sailor',
         nickname: '',
