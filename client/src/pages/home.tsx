@@ -71,11 +71,17 @@ export default function Home({ onSuccess }: HomeProps) {
       {/* Overlay for better contrast */}
       <div className="absolute inset-0 z-10 bg-black/20"></div>
 
-      {/* Translucent Login Box - Centered over map */}
-      <div className="absolute inset-0 z-20 flex items-center justify-center p-4">
+      {/* Translucent Login Box - Positioned based on minimized state */}
+      <div className={`absolute z-20 transition-all duration-500 ${
+        isMinimized 
+          ? 'top-4 right-4 left-4 flex justify-center' 
+          : 'inset-0 flex items-center justify-center p-4'
+      }`}>
         <div 
-          className={`w-full max-w-md bg-white/80 backdrop-blur-lg border border-white/30 shadow-2xl rounded-xl relative transition-all duration-300 ${
-            isMinimized ? 'p-4 max-h-20' : 'p-6'
+          className={`bg-white/80 backdrop-blur-lg border border-white/30 shadow-2xl rounded-xl relative transition-all duration-500 ${
+            isMinimized 
+              ? 'p-3 max-h-16 w-full max-w-xs' 
+              : 'p-6 w-full max-w-md'
           }`}
           onClick={(e) => e.stopPropagation()}
         >
@@ -85,17 +91,27 @@ export default function Home({ onSuccess }: HomeProps) {
               e.stopPropagation();
               setIsMinimized(!isMinimized);
             }}
-            className="absolute top-3 right-3 w-8 h-8 bg-white/70 hover:bg-white/90 rounded-full flex items-center justify-center text-ocean-teal hover:text-cyan-600 transition-all duration-200 shadow-sm z-30 border border-ocean-teal/20"
+            className={`absolute right-3 bg-white/70 hover:bg-white/90 rounded-full flex items-center justify-center text-ocean-teal hover:text-cyan-600 transition-all duration-200 shadow-sm z-30 border border-ocean-teal/20 ${
+              isMinimized ? 'top-2 w-6 h-6' : 'top-3 w-8 h-8'
+            }`}
           >
-            <i className={`fas ${isMinimized ? 'fa-chevron-down' : 'fa-chevron-up'} text-sm font-bold`}></i>
+            <i className={`fas ${isMinimized ? 'fa-chevron-down' : 'fa-chevron-up'} font-bold ${
+              isMinimized ? 'text-xs' : 'text-sm'
+            }`}></i>
           </button>
           
           {/* Header */}
-          <div className={`text-center transition-all duration-300 ${isMinimized ? 'mb-0' : 'mb-6'}`}>
-            <div className={`w-12 h-12 bg-ocean-teal/20 rounded-full flex items-center justify-center mx-auto transition-all duration-300 ${
-              isMinimized ? 'mb-0 w-8 h-8' : 'mb-3'
+          <div className={`transition-all duration-500 ${
+            isMinimized ? 'flex items-center space-x-3 mb-0' : 'text-center mb-6'
+          }`}>
+            <div className={`bg-ocean-teal/20 rounded-full flex items-center justify-center transition-all duration-500 ${
+              isMinimized 
+                ? 'w-8 h-8 flex-shrink-0' 
+                : 'w-12 h-12 mx-auto mb-3'
             }`}>
-              <i className={`fas fa-anchor text-ocean-teal transition-all duration-300 ${isMinimized ? 'text-sm' : 'text-xl'}`}></i>
+              <i className={`fas fa-anchor text-ocean-teal transition-all duration-500 ${
+                isMinimized ? 'text-sm' : 'text-xl'
+              }`}></i>
             </div>
             {!isMinimized && (
               <>
@@ -104,7 +120,10 @@ export default function Home({ onSuccess }: HomeProps) {
               </>
             )}
             {isMinimized && (
-              <h1 className="text-lg font-bold text-navy-blue">QaaqConnect</h1>
+              <div className="flex-grow">
+                <h1 className="text-sm font-bold text-navy-blue">QaaqConnect</h1>
+                <p className="text-xs text-gray-500">Click to login</p>
+              </div>
             )}
           </div>
 
