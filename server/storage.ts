@@ -403,11 +403,11 @@ export class DatabaseStorage implements IStorage {
         let longitude = 0;
         let locationSource = 'city';
         
-        // Determine user type - sailors typically have maritime_rank and last_ship
-        const isMaritimeProfessional = user.maritime_rank || user.last_ship || user.ship_types;
+        // Determine user type - sailors typically have rank and ship_name
+        const isMaritimeProfessional = rank || shipName;
         
         // 1. First check if this is a sailor with IMO number for real-time ship tracking
-        const imoNumber = user.imo_number || user.seafarer_id;
+        const imoNumber = user.imo_number;
         if (imoNumber && isMaritimeProfessional) {
           const shipPosition = shipPositions.get(user.id);
           if (shipPosition) {
