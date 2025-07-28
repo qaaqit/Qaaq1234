@@ -45,7 +45,7 @@ function Router() {
   return (
     <div className="min-h-screen bg-slate-50">
       <Switch>
-        <Route path="/" component={() => user ? <Discover user={user} /> : <Home />} />
+        <Route path="/" component={() => user ? <Discover user={user} /> : <Home onSuccess={setUser} />} />
         <Route path="/register" component={() => <Register onSuccess={setUser} />} />
         <Route path="/verify" component={() => <Verify onSuccess={setUser} />} />
         <Route path="/discover" component={() => user ? <Discover user={user} /> : <Home />} />
