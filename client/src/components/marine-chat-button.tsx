@@ -5,6 +5,7 @@ import { MessageCircle, Send } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 
 interface MarineChatButtonProps {
   receiverId: string;
@@ -24,6 +25,7 @@ export default function MarineChatButton({
   const [isConnecting, setIsConnecting] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [location, setLocation] = useLocation();
 
   const connectMutation = useMutation({
     mutationFn: async () => {
@@ -37,6 +39,10 @@ export default function MarineChatButton({
         className: "maritime-toast"
       });
       queryClient.invalidateQueries({ queryKey: ['/api/chat/connections'] });
+      // Navigate to QChat page after sending connection request
+      setTimeout(() => {
+        setLocation('/qhf');
+      }, 500);
     },
     onError: (error: any) => {
       toast({
