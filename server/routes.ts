@@ -332,7 +332,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         city: user.city,
         country: user.country,
         latitude: user.latitude,
-        longitude: user.longitude
+        longitude: user.longitude,
+        questionCount: user.questionCount
       }));
       res.json(mapUsers);
     } catch (error) {
@@ -492,7 +493,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         country: user.country,
         latitude: user.latitude,
         longitude: user.longitude,
-        distance: user.distance
+        distance: user.distance,
+        questionCount: user.questionCount
       }));
 
       res.json(nearestUsers);

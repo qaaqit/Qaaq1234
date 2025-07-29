@@ -331,9 +331,9 @@ export default function DMPage() {
                             <h4 className="font-semibold text-gray-900 truncate">{userProfile.fullName}</h4>
                             {userProfile.rank && (
                               <p className="text-sm text-gray-600 truncate">
-                                {userProfile.rank} {userProfile.questionCount !== undefined && userProfile.answerCount !== undefined && 
+                                {userProfile.rank} {userProfile.questionCount !== undefined && 
                                   <span className="text-xs text-blue-600 font-medium">
-                                    {userProfile.questionCount}Q{userProfile.answerCount}A
+                                    {userProfile.questionCount}Q
                                   </span>
                                 }
                               </p>

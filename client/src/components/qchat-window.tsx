@@ -136,9 +136,9 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
                 <div className="flex items-center space-x-2">
                   {otherUser?.rank && (
                     <Badge className="bg-white/20 text-white text-xs px-2 py-0.5">
-                      {otherUser.rank} {otherUser.questionCount !== undefined && otherUser.answerCount !== undefined && 
+                      {otherUser.rank} {otherUser.questionCount !== undefined && 
                         <span className="ml-1">
-                          {otherUser.questionCount}Q{otherUser.answerCount}A
+                          {otherUser.questionCount}Q
                         </span>
                       }
                     </Badge>

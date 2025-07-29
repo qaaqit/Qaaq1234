@@ -657,9 +657,9 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
                   </div>
                   <div className="text-xs text-gray-600 truncate">
                     {user.rank ? getRankAbbreviation(user.rank) : 'Maritime Professional'}
-                    {user.questionCount !== undefined && user.answerCount !== undefined && 
+                    {user.questionCount !== undefined && 
                       <span className="text-blue-600 font-medium ml-1">
-                        {user.questionCount}Q{user.answerCount}A
+                        {user.questionCount}Q
                       </span>
                     }
                   </div>
