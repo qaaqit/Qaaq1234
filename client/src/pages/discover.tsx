@@ -277,7 +277,8 @@ export default function Discover({ user }: DiscoverProps) {
             {mapType === 'google' ? (
               <div className="w-full h-full">
                 <GoogleMaps 
-                  users={[]} // Will be populated via query
+                  showUsers={showUsers}
+                  searchQuery={searchQuery}
                   center={{ lat: 19.076, lng: 72.8977 }}
                 />
               </div>

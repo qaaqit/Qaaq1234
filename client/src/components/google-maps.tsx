@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Navigation, Satellite, Map } from 'lucide-react';
@@ -17,7 +18,8 @@ interface GoogleMapsUser {
 }
 
 interface GoogleMapsProps {
-  users: GoogleMapsUser[];
+  showUsers?: boolean;
+  searchQuery?: string;
   center?: { lat: number; lng: number };
   onUserClick?: (user: GoogleMapsUser) => void;
 }
@@ -49,7 +51,7 @@ const getRankAbbreviation = (rank: string): string => {
   return abbreviations[rank?.toLowerCase()] || 'OTHER';
 };
 
-export default function GoogleMaps({ users, center, onUserClick }: GoogleMapsProps) {
+export default function GoogleMaps({ showUsers = false, searchQuery = '', center, onUserClick }: GoogleMapsProps) {
   const { user } = useAuth();
   const [map, setMap] = useState<any>(null);
   const [mapType, setMapType] = useState<'roadmap' | 'satellite' | 'hybrid'>('roadmap');
@@ -59,7 +61,28 @@ export default function GoogleMaps({ users, center, onUserClick }: GoogleMapsPro
   const markersRef = useRef<any[]>([]);
 
   // Check if user is premium (admin users for now)
-  const isPremiumUser = user?.email === 'mushy.piyush@gmail.com' || user?.id === '+919029010070' || user?.whatsappNumber === '+919029010070';
+  const isPremiumUser = user?.email === 'mushy.piyush@gmail.com' || user?.id === '+919029010070' || (user as any)?.whatsappNumber === '+919029010070';
+
+  // Fetch nearby users when showUsers is true
+  const { data: users = [], isLoading: usersLoading } = useQuery({
+    queryKey: ['/api/users/nearby', searchQuery],
+    queryFn: async () => {
+      if (!showUsers) return [];
+      
+      const params = new URLSearchParams();
+      if (searchQuery) params.set('q', searchQuery);
+      
+      const response = await fetch(`/api/users/nearby?${params}`);
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Authentication required');
+        }
+        throw new Error('Failed to fetch nearby users');
+      }
+      return response.json();
+    },
+    enabled: showUsers && isPremiumUser
+  });
 
   useEffect(() => {
     if (!isPremiumUser) return;
@@ -72,7 +95,7 @@ export default function GoogleMaps({ users, center, onUserClick }: GoogleMapsPro
       }
 
       const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'demo_key'}&callback=initMap`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&callback=initMap&libraries=geometry`;
       script.async = true;
       script.defer = true;
       
@@ -86,7 +109,7 @@ export default function GoogleMaps({ users, center, onUserClick }: GoogleMapsPro
       const defaultCenter = center || { lat: 19.076, lng: 72.8777 }; // Mumbai default
       
       const mapInstance = new window.google.maps.Map(mapRef.current, {
-        zoom: 8,
+        zoom: showUsers ? 10 : 3,
         center: defaultCenter,
         mapTypeId: mapType,
         styles: [
@@ -99,12 +122,18 @@ export default function GoogleMaps({ users, center, onUserClick }: GoogleMapsPro
             featureType: 'landscape',
             elementType: 'geometry',
             stylers: [{ color: '#f8fafc' }] // Light background
+          },
+          {
+            featureType: 'poi.business',
+            elementType: 'labels',
+            stylers: [{ visibility: 'on' }] // Show ports and maritime businesses
           }
         ],
         mapTypeControl: true,
         streetViewControl: true,
         fullscreenControl: true,
-        zoomControl: true
+        zoomControl: true,
+        gestureHandling: 'greedy'
       });
 
       setMap(mapInstance);
@@ -142,7 +171,7 @@ export default function GoogleMaps({ users, center, onUserClick }: GoogleMapsPro
     };
 
     loadGoogleMaps();
-  }, [isPremiumUser, center, mapType]);
+  }, [isPremiumUser, center, mapType, showUsers]);
 
   useEffect(() => {
     if (!map || !isLoaded) return;
@@ -152,7 +181,7 @@ export default function GoogleMaps({ users, center, onUserClick }: GoogleMapsPro
     markersRef.current = [];
 
     // Add user markers
-    users.forEach(user => {
+    users.forEach((user: any) => {
       const marker = new window.google.maps.Marker({
         position: { lat: user.latitude, lng: user.longitude },
         map: map,
@@ -203,6 +232,15 @@ export default function GoogleMaps({ users, center, onUserClick }: GoogleMapsPro
 
       markersRef.current.push(marker);
     });
+
+    // Auto-fit bounds if we have users
+    if (users.length > 0) {
+      const bounds = new window.google.maps.LatLngBounds();
+      users.forEach((user: any) => {
+        bounds.extend(new window.google.maps.LatLng(user.latitude, user.longitude));
+      });
+      map.fitBounds(bounds);
+    }
   }, [map, users, isLoaded, onUserClick]);
 
   const changeMapType = (type: 'roadmap' | 'satellite' | 'hybrid') => {
@@ -241,6 +279,18 @@ export default function GoogleMaps({ users, center, onUserClick }: GoogleMapsPro
           <MapPin className="w-12 h-12 text-red-400 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-red-700 mb-2">Google Maps API Key Required</h3>
           <p className="text-red-600">Please add VITE_GOOGLE_MAPS_API_KEY to environment variables.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (usersLoading && showUsers) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 bg-blue-50 rounded-lg">
+        <div className="text-center p-6">
+          <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <h3 className="text-lg font-semibold text-blue-700 mb-2">Loading Premium Map</h3>
+          <p className="text-blue-600">Fetching maritime users and enhanced map features...</p>
         </div>
       </div>
     );
