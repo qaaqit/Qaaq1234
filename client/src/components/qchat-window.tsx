@@ -27,12 +27,17 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const otherUser = connection?.sender?.id === user?.id ? connection.receiver : connection?.sender;
+  const otherUser = connection?.sender?.id === user?.id ? connection?.receiver : connection?.sender;
 
   // Get messages for this connection
-  const { data: messages = [], isLoading } = useQuery({
+  const { data: messages = [], isLoading } = useQuery<ChatMessage[]>({
     queryKey: ['/api/chat/messages', connection?.id],
-    queryFn: () => connection?.id ? apiRequest(`/api/chat/messages/${connection.id}`) : [],
+    queryFn: async () => {
+      if (!connection?.id) return [];
+      const response = await fetch(`/api/chat/messages/${connection.id}`);
+      if (!response.ok) throw new Error('Failed to fetch messages');
+      return response.json();
+    },
     enabled: !!connection?.id && isOpen,
     refetchInterval: 2000, // Poll for new messages every 2 seconds
   });
@@ -40,10 +45,13 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (messageText: string) => {
-      return await apiRequest('/api/chat/message', {
+      const response = await fetch('/api/chat/message', {
         method: 'POST',
-        body: { connectionId: connection?.id, message: messageText }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ connectionId: connection?.id, message: messageText })
       });
+      if (!response.ok) throw new Error('Failed to send message');
+      return response.json();
     },
     onSuccess: () => {
       setMessage("");
@@ -54,9 +62,12 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
   // Accept connection mutation
   const acceptMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest(`/api/chat/accept/${connection?.id}`, {
-        method: 'POST'
+      const response = await fetch(`/api/chat/accept/${connection?.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
       });
+      if (!response.ok) throw new Error('Failed to accept connection');
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/chat/connections'] });
@@ -213,7 +224,7 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
                         <p className="text-sm leading-relaxed">{msg.message}</p>
                         <div className={`flex items-center justify-end mt-1 space-x-1 ${isOwn ? 'text-blue-100' : 'text-gray-500'}`}>
                           <span className="text-xs">
-                            {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}
+                            {msg.createdAt ? formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true }) : 'just now'}
                           </span>
                           {getMessageStatus(msg)}
                         </div>
