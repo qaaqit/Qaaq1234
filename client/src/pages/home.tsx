@@ -105,20 +105,19 @@ export default function Home({ onSuccess }: HomeProps) {
               <>
                 <h1 className="text-2xl font-bold text-navy-blue">QaaqConnect</h1>
                 <p className="text-gray-600 text-sm">Maritime Community Login</p>
-                <div className="mt-2 text-center">
-                  <p className="text-xs text-gray-500">
+                <div className="mt-3 text-center bg-white/80 rounded-lg p-2 border border-ocean-teal/20">
+                  <p className="text-sm text-gray-700 font-medium">
                     Parent app: 
                     <a 
                       href="https://www.qaaqit.com" 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="text-ocean-teal hover:text-cyan-600 ml-1 underline font-medium"
+                      className="text-ocean-teal hover:text-cyan-600 ml-1 underline font-bold"
                     >
                       www.qaaqit.com
                     </a>
-                    <br/>
-                    <span className="text-gray-400">for Maritime Questions</span>
                   </p>
+                  <p className="text-xs text-gray-500 mt-1">for Maritime Questions</p>
                 </div>
               </>
             )}
