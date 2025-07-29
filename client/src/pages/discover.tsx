@@ -13,7 +13,7 @@ import CPSSNavigator from "@/components/cpss-navigator";
 import { useLocation } from "@/hooks/useLocation";
 import { type User } from "@/lib/auth";
 import { apiRequest } from "@/lib/queryClient";
-import { MapPin, Navigation, Ship, Satellite } from "lucide-react";
+import { MapPin, Navigation, Ship, Satellite, Crown } from "lucide-react";
 
 interface Post {
   id: string;
@@ -36,6 +36,7 @@ export default function Discover({ user }: DiscoverProps) {
   const [showUsers, setShowUsers] = useState(false);
   const [showWhatsAppPanel, setShowWhatsAppPanel] = useState(false);
   const [mapType, setMapType] = useState<'leaflet' | 'google'>('leaflet');
+  const [isPremiumMode, setIsPremiumMode] = useState(false);
   
   // Location functionality for enhanced user discovery
   const { location, error: locationError, isLoading: locationLoading, requestDeviceLocation, updateShipLocation } = useLocation();
@@ -205,15 +206,42 @@ export default function Discover({ user }: DiscoverProps) {
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">
-              <i className="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+              {/* Premium Crown Toggle */}
+              <Button
+                onClick={() => {
+                  setIsPremiumMode(!isPremiumMode);
+                  setMapType(isPremiumMode ? 'leaflet' : 'google');
+                }}
+                variant={isPremiumMode ? 'default' : 'outline'}
+                size="sm"
+                className={`absolute left-2 top-1/2 transform -translate-y-1/2 z-10 h-8 w-8 p-0 rounded-full ${
+                  isPremiumMode 
+                    ? 'bg-yellow-500 hover:bg-yellow-600 text-white border-yellow-500' 
+                    : 'bg-white hover:bg-yellow-50 text-yellow-600 border-yellow-300'
+                }`}
+                title={isPremiumMode ? 'Premium Mode Active' : 'Activate Premium Mode'}
+              >
+                <Crown className="w-4 h-4" />
+              </Button>
+              
+              <i className="fas fa-search absolute left-12 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
               <Input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-12 pr-4 py-3 text-lg border-gray-200 focus:border-ocean-teal"
+                className="pl-20 pr-4 py-3 text-lg border-gray-200 focus:border-ocean-teal"
                 placeholder="ek, do, teen, char..."
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               />
+              
+              {/* Premium Mode Indicator */}
+              {isPremiumMode && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <Badge className="bg-yellow-500 text-white text-xs">
+                    Premium
+                  </Badge>
+                </div>
+              )}
             </div>
           </div>
           <Button 
@@ -241,40 +269,38 @@ export default function Discover({ user }: DiscoverProps) {
           </TabsList>
           
           <TabsContent value="koihai" className="flex-1 overflow-hidden relative m-0">
-            {/* Map Type Toggle for Premium Users */}
+            {/* Admin WhatsApp Toggle (only for admin users) */}
             {user.isAdmin && (
-              <div className="absolute top-4 left-4 z-10 bg-white rounded-lg shadow-lg p-2 space-y-2">
-                <Button
-                  size="sm"
-                  onClick={() => setMapType('leaflet')}
-                  variant={mapType === 'leaflet' ? 'default' : 'outline'}
-                  className="w-full justify-start text-xs"
-                >
-                  <MapPin className="w-3 h-3 mr-1" />
-                  Standard
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => setMapType('google')}
-                  variant={mapType === 'google' ? 'default' : 'outline'}
-                  className="w-full justify-start text-xs bg-yellow-500 hover:bg-yellow-600 text-white"
-                >
-                  <Satellite className="w-3 h-3 mr-1" />
-                  🌟 Premium
-                </Button>
+              <div className="absolute top-4 left-4 z-10">
                 <Button
                   size="sm"
                   onClick={() => setShowWhatsAppPanel(!showWhatsAppPanel)}
-                  className="w-full justify-start text-xs bg-green-600 hover:bg-green-700 text-white"
+                  className="bg-green-600 hover:bg-green-700 text-white rounded-full w-10 h-10 p-0"
+                  title="WhatsApp Bot Controls"
                 >
-                  <i className="fab fa-whatsapp w-3 h-3 mr-1"></i>
-                  WhatsApp
+                  <i className="fab fa-whatsapp"></i>
                 </Button>
               </div>
             )}
 
+            {/* Premium Mode Notice */}
+            {isPremiumMode && !user.isAdmin && (
+              <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 bg-yellow-50 border border-yellow-200 rounded-lg p-4 shadow-lg max-w-sm">
+                <div className="text-center">
+                  <Crown className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
+                  <h3 className="font-semibold text-yellow-800 mb-2">Premium Features</h3>
+                  <p className="text-sm text-yellow-700 mb-3">
+                    Unlock Google Maps with satellite view, enhanced navigation, and premium maritime features.
+                  </p>
+                  <Button className="bg-yellow-500 hover:bg-yellow-600 text-white text-sm">
+                    Upgrade to Premium
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {/* Render appropriate map based on selection */}
-            {mapType === 'google' ? (
+            {isPremiumMode && user.isAdmin ? (
               <div className="w-full h-full">
                 <GoogleMaps 
                   showUsers={showUsers}
@@ -287,7 +313,7 @@ export default function Discover({ user }: DiscoverProps) {
             )}
             
             {/* WhatsApp Bot Control Panel */}
-            {showWhatsAppPanel && (
+            {showWhatsAppPanel && user.isAdmin && (
               <div className="absolute top-4 right-4 z-50">
                 <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-1">
                   <WhatsAppBotControl />

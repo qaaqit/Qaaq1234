@@ -18,6 +18,7 @@ CPSS Features: Endless scroll, like/share functions, card carousels, breadcrumb 
 CPSS Content: Maritime meetups, local tours, port dining, shore shopping, cultural experiences
 Admin shield location: Keep admin shield in header top right corner (not in bottom navigation)
 Header visibility: Show white header only for admin users, regular users should not see the header
+Premium mode: Crown icon in search box toggles premium Google Maps features, requires premium plan for non-admin users
 
 ## System Architecture
 
