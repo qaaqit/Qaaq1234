@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
@@ -39,6 +40,7 @@ export default function AdminPanel() {
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState("metrics");
 
   // Fetch admin stats
   const { data: stats, isLoading: statsLoading } = useQuery<AdminStats>({
@@ -61,10 +63,7 @@ export default function AdminPanel() {
   // Mutation to update user admin status
   const toggleAdminMutation = useMutation({
     mutationFn: async ({ userId, isAdmin }: { userId: string; isAdmin: boolean }) => {
-      await apiRequest(`/api/admin/users/${userId}/admin`, {
-        method: "PATCH",
-        body: { isAdmin },
-      });
+      await apiRequest(`/api/admin/users/${userId}/admin`, "PATCH", { isAdmin });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
@@ -85,10 +84,7 @@ export default function AdminPanel() {
   // Mutation to verify user
   const verifyUserMutation = useMutation({
     mutationFn: async ({ userId, isVerified }: { userId: string; isVerified: boolean }) => {
-      await apiRequest(`/api/admin/users/${userId}/verify`, {
-        method: "PATCH",
-        body: { isVerified },
-      });
+      await apiRequest(`/api/admin/users/${userId}/verify`, "PATCH", { isVerified });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
@@ -148,9 +144,30 @@ export default function AdminPanel() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
-        {/* Stats Dashboard */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+      <div className="max-w-7xl mx-auto p-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="metrics">
+              <i className="fas fa-chart-line mr-2"></i>
+              Metrics
+            </TabsTrigger>
+            <TabsTrigger value="qbot">
+              <i className="fas fa-robot mr-2"></i>
+              QBOT Rules
+            </TabsTrigger>
+            <TabsTrigger value="qoi">
+              <i className="fas fa-comments mr-2"></i>
+              QOI GPT Rules
+            </TabsTrigger>
+            <TabsTrigger value="users">
+              <i className="fas fa-users mr-2"></i>
+              User Management
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Metrics Tab */}
+          <TabsContent value="metrics" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">Total Users</CardTitle>
@@ -204,55 +221,148 @@ export default function AdminPanel() {
               <div className="text-2xl font-bold text-orange-600">{stats?.totalLogins || 0}</div>
             </CardContent>
           </Card>
-        </div>
+            </div>
+          </TabsContent>
 
-        {/* QBOT & QOI GPT Rules */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* QBOT Rules */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center text-blue-600">
-                <i className="fas fa-robot mr-2"></i>
-                QBOT Rules & Guidelines
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-blue-800 mb-2">Core QBOT Functions</h3>
-                <ul className="text-sm text-blue-700 space-y-1">
-                  <li>• Maritime professional networking assistance</li>
-                  <li>• Location-based user discovery ("Koi Hai?" functionality)</li>
-                  <li>• WhatsApp integration for direct communication</li>
-                  <li>• QAAQ Store service recommendations</li>
-                  <li>• Port and ship information queries</li>
-                </ul>
-              </div>
-              
-              <div className="bg-yellow-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-yellow-800 mb-2">Response Guidelines</h3>
-                <ul className="text-sm text-yellow-700 space-y-1">
-                  <li>• Use simple, everyday maritime language</li>
-                  <li>• Prioritize safety and professional standards</li>
-                  <li>• Provide authentic QAAQ database information only</li>
-                  <li>• Direct users to appropriate maritime services</li>
-                  <li>• Maintain confidentiality of user locations</li>
-                </ul>
-              </div>
+          {/* QBOT Rules Tab */}
+          <TabsContent value="qbot" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* QBOT Overview Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center text-blue-600">
+                    <i className="fas fa-robot mr-2"></i>
+                    QBOT Maritime Assistant
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-blue-800 mb-2">Core Functions</h3>
+                    <ul className="text-sm text-blue-700 space-y-1">
+                      <li>• Maritime professional networking</li>
+                      <li>• "Koi Hai?" location discovery</li>
+                      <li>• WhatsApp direct communication</li>
+                      <li>• QAAQ Store recommendations</li>
+                      <li>• Port and ship information</li>
+                    </ul>
+                  </div>
+                  
+                  <div className="bg-yellow-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-yellow-800 mb-2">Response Standards</h3>
+                    <ul className="text-sm text-yellow-700 space-y-1">
+                      <li>• Simple maritime language</li>
+                      <li>• Safety prioritization</li>
+                      <li>• Authentic QAAQ data only</li>
+                      <li>• Location confidentiality</li>
+                      <li>• Response time &lt;3 seconds</li>
+                    </ul>
+                  </div>
 
-              <div className="bg-red-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-red-800 mb-2">Restricted Actions</h3>
-                <ul className="text-sm text-red-700 space-y-1">
-                  <li>• No sharing of personal contact details</li>
-                  <li>• No financial or legal advice</li>
-                  <li>• No ship position tracking for security</li>
-                  <li>• No access to confidential maritime data</li>
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
+                  <div className="bg-red-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-red-800 mb-2">Restrictions</h3>
+                    <ul className="text-sm text-red-700 space-y-1">
+                      <li>• No personal contact sharing</li>
+                      <li>• No financial/legal advice</li>
+                      <li>• No ship position tracking</li>
+                      <li>• No confidential data access</li>
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
 
-          {/* QOI GPT Rules */}
-          <Card>
+              {/* 25-Step Flowchart Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center text-indigo-600">
+                    <i className="fas fa-sitemap mr-2"></i>
+                    25-Step Operational Flowchart
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 max-h-[600px] overflow-y-auto">
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <h4 className="font-semibold text-gray-800 mb-2">Initial Contact (Steps 1-5)</h4>
+                    <ul className="text-xs text-gray-700 space-y-1">
+                      <li><span className="font-medium">Step 1:</span> User sends WhatsApp message</li>
+                      <li><span className="font-medium">Step 2:</span> Authentication check → QAAQ database</li>
+                      <li><span className="font-medium">Step 3:</span> New user onboarding if needed</li>
+                      <li><span className="font-medium">Step 4:</span> Personalized greeting with rank/ship</li>
+                      <li><span className="font-medium">Step 5:</span> Message classification (Technical/Location/Store/Chat/Emergency)</li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-blue-50 p-3 rounded-lg">
+                    <h4 className="font-semibold text-blue-800 mb-2">Technical Questions (Steps 6-9)</h4>
+                    <ul className="text-xs text-blue-700 space-y-1">
+                      <li><span className="font-medium">Step 6:</span> Maritime industry related? → YES/NO</li>
+                      <li><span className="font-medium">Step 7:</span> Can QBOT answer? → Direct response</li>
+                      <li><span className="font-medium">Step 8:</span> Complex? → QOI GPT handoff</li>
+                      <li><span className="font-medium">Step 9:</span> Fallback → Connect to human experts</li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-green-50 p-3 rounded-lg">
+                    <h4 className="font-semibold text-green-800 mb-2">Location Services (Steps 10-13)</h4>
+                    <ul className="text-xs text-green-700 space-y-1">
+                      <li><span className="font-medium">Step 10:</span> "Koi Hai?" query detection</li>
+                      <li><span className="font-medium">Step 11:</span> Proximity search (50km→500km)</li>
+                      <li><span className="font-medium">Step 12:</span> Port/Ship information request</li>
+                      <li><span className="font-medium">Step 13:</span> Location privacy check</li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-purple-50 p-3 rounded-lg">
+                    <h4 className="font-semibold text-purple-800 mb-2">QAAQ Store (Steps 14-17)</h4>
+                    <ul className="text-xs text-purple-700 space-y-1">
+                      <li><span className="font-medium">Step 14:</span> Store inquiry identification</li>
+                      <li><span className="font-medium">Step 15:</span> Category selection (Equipment/Services)</li>
+                      <li><span className="font-medium">Step 16:</span> Product recommendations (Top 5)</li>
+                      <li><span className="font-medium">Step 17:</span> Order processing → Team contact</li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-orange-50 p-3 rounded-lg">
+                    <h4 className="font-semibold text-orange-800 mb-2">General Chat (Steps 18-21)</h4>
+                    <ul className="text-xs text-orange-700 space-y-1">
+                      <li><span className="font-medium">Step 18:</span> Non-technical chat detection</li>
+                      <li><span className="font-medium">Step 19:</span> Maritime topics → Engage</li>
+                      <li><span className="font-medium">Step 20:</span> Off-topic → Polite redirect</li>
+                      <li><span className="font-medium">Step 21:</span> Conversation closure → "Fair winds!"</li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-red-50 p-3 rounded-lg">
+                    <h4 className="font-semibold text-red-800 mb-2">Emergency & Health (Steps 22-25)</h4>
+                    <ul className="text-xs text-red-700 space-y-1">
+                      <li><span className="font-medium">Step 22:</span> Emergency detection protocol</li>
+                      <li><span className="font-medium">Step 23:</span> Immediate response → Authorities</li>
+                      <li><span className="font-medium">Step 24:</span> 24-hour follow-up check</li>
+                      <li><span className="font-medium">Step 25:</span> System health check (Hourly)</li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-indigo-50 p-3 rounded-lg">
+                    <h4 className="font-semibold text-indigo-800 mb-2">Decision Flow Visual</h4>
+                    <pre className="text-xs text-indigo-700 overflow-x-auto">
+START → Step 1 → Step 2 → Step 3/4
+         ↓
+      Step 5 (Classification)
+         ├→ Technical → 6→7→8→9
+         ├→ Location → 10→11/12→13
+         ├→ Store → 14→15→16→17
+         ├→ Chat → 18→19/20→21
+         └→ Emergency → 22→23→24
+                            ↓
+                        Step 25 (24x7)
+                    </pre>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* QOI GPT Rules Tab */}
+          <TabsContent value="qoi" className="space-y-6">
+            <Card>
             <CardHeader>
               <CardTitle className="flex items-center text-green-600">
                 <i className="fas fa-comments mr-2"></i>
@@ -293,10 +403,11 @@ export default function AdminPanel() {
               </div>
             </CardContent>
           </Card>
-        </div>
+          </TabsContent>
 
-        {/* User Management */}
-        <Card>
+          {/* User Management Tab */}
+          <TabsContent value="users" className="space-y-6">
+            <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
               <i className="fas fa-users mr-2"></i>
@@ -435,7 +546,9 @@ export default function AdminPanel() {
               </table>
             </div>
           </CardContent>
-        </Card>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
