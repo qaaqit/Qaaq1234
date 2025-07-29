@@ -27,10 +27,7 @@ export default function MarineChatButton({
 
   const connectMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest('/api/chat/connect', {
-        method: 'POST',
-        body: { receiverId }
-      });
+      return await apiRequest('/api/chat/connect', 'POST', { receiverId });
     },
     onSuccess: () => {
       toast({
@@ -76,7 +73,7 @@ export default function MarineChatButton({
   };
 
   const marineTheme = variant === "marine" 
-    ? "bg-gradient-to-r from-navy to-blue-800 hover:from-blue-800 hover:to-navy text-white border-blue-900" 
+    ? "bg-gradient-to-r from-green-600 to-green-800 hover:from-green-700 hover:to-green-600 text-white border-green-900" 
     : "bg-gradient-to-r from-ocean-teal to-cyan-600 hover:from-cyan-600 hover:to-ocean-teal text-white border-cyan-700";
 
   return (
@@ -107,7 +104,7 @@ export default function MarineChatButton({
         )}
         
         <span className="hidden sm:inline">
-          {isConnecting || connectMutation.isPending ? "Connecting..." : "QChat"}
+          {isConnecting || connectMutation.isPending ? "Connecting..." : "WhatsApp"}
         </span>
         
         {receiverRank && size !== "sm" && (
