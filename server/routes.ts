@@ -402,36 +402,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/users/nearby", authenticateToken, async (req, res) => {
     try {
       const userId = req.userId!;
+      console.log('Nearby users API called for userId:', userId);
       
       // Get user data (this will check local database first, then QAAQ)
       const currentUser = await storage.getUser(userId);
+      console.log('Retrieved user from storage:', !!currentUser);
       
       console.log('Debug user data:', {
         id: currentUser?.id,
+        fullName: currentUser?.fullName,
+        city: currentUser?.city,
+        country: currentUser?.country,
         deviceLat: currentUser?.deviceLatitude,
         deviceLon: currentUser?.deviceLongitude,
         lat: currentUser?.latitude,
         lon: currentUser?.longitude
       });
       
-      // Try multiple sources for user location: device location, main lat/lon
+      // Priority order: device location -> Present City coordinates
       let userLat: number | null = null;
       let userLon: number | null = null;
+      let locationSource = 'unknown';
       
+      // First priority: Device location for precise positioning
       if (currentUser?.deviceLatitude && currentUser?.deviceLongitude && 
           currentUser.deviceLatitude !== 0 && currentUser.deviceLongitude !== 0) {
         userLat = parseFloat(currentUser.deviceLatitude.toString());
         userLon = parseFloat(currentUser.deviceLongitude.toString());
+        locationSource = 'device';
         console.log('Using device location:', userLat, userLon);
-      } else if (currentUser?.latitude && currentUser?.longitude && 
-                 currentUser.latitude !== 0 && currentUser.longitude !== 0) {
+      } 
+      // Second priority: Present City coordinates from QAAQ database
+      else if (currentUser?.latitude && currentUser?.longitude && 
+               currentUser.latitude !== 0 && currentUser.longitude !== 0) {
         userLat = parseFloat(currentUser.latitude.toString());
         userLon = parseFloat(currentUser.longitude.toString());
-        console.log('Using main location:', userLat, userLon);
+        locationSource = 'city';
+        console.log('Using Present City location:', userLat, userLon, 'for city:', currentUser.city);
       }
       
       if (!currentUser || !userLat || !userLon) {
-        console.log('No valid location found');
+        console.log('No valid location found - user:', !!currentUser, 'lat:', userLat, 'lon:', userLon);
         return res.status(400).json({ message: "User location not available" });
       }
 

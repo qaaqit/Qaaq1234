@@ -60,49 +60,89 @@ export class DatabaseStorage implements IStorage {
   }
   async getUser(id: string): Promise<User | undefined> {
     try {
-      // First check local PostgreSQL users table for device location data
-      const localUserResult = await db.select().from(users).where(eq(users.id, id)).limit(1);
-      if (localUserResult.length > 0) {
-        console.log('Found user in local database with device location');
-        return localUserResult[0];
-      }
-      
-      // Use direct pool query to check QAAQ admin database
+      console.log(`Getting user data for ID: ${id}`);
+      // Get user from QAAQ admin database (primary source)
       const result = await pool.query('SELECT * FROM users WHERE id = $1 LIMIT 1', [id]);
       
-      if (result.rows.length === 0) return undefined;
+      console.log(`Database query result: ${result.rows.length} rows found`);
+      if (result.rows.length === 0) {
+        console.log(`No user found with ID: ${id}`);
+        return undefined;
+      }
       
       const user = result.rows[0];
-      const fullName = user.first_name && user.last_name 
-        ? `${user.first_name} ${user.last_name}`.trim()
-        : user.nickname || user.email || 'Maritime User';
-      
-      return {
+      console.log(`Raw user data:`, {
         id: user.id,
-        fullName: fullName,
+        full_name: user.full_name,
+        city: user.city,
+        latitude: user.latitude,
+        longitude: user.longitude
+      });
+      
+      // Get Mumbai coordinates as default for empty city
+      const defaultCoords = this.getCityCoordinates(user.city || 'mumbai', user.country || 'india');
+      
+      // Create user object with Present City coordinates as base location
+      const userObj = {
+        id: user.id,
+        fullName: user.full_name || user.nickname || user.email || 'Maritime User',
         email: user.email || '',
         password: '',
-        userType: (user.current_ship_name || user.vessel_name || user.ship_name) ? 'sailor' : 'local',
-        isAdmin: user.is_admin || user.is_platform_admin || (user.email === "mushy.piyush@gmail.com") || false,
+        userType: user.user_type || (user.ship_name ? 'sailor' : 'local'),
+        isAdmin: user.is_admin || (user.email === "mushy.piyush@gmail.com") || false,
         nickname: user.nickname || '',
-        rank: user.maritime_rank || '',
-        shipName: user.current_ship_name || user.vessel_name || user.ship_name || '',
-        imoNumber: user.current_ship_imo || user.imo_number || '',
-        port: user.current_city || user.permanent_city || user.city || '',
-        visitWindow: '',
-        city: user.current_city || user.permanent_city || user.city || '',
-        country: user.current_country || user.permanent_country || '',
-        latitude: parseFloat(user.latitude) || 0,
-        longitude: parseFloat(user.longitude) || 0,
+        rank: user.rank || '',
+        shipName: user.ship_name || '',
+        imoNumber: user.imo_number || '',
+        port: user.port || user.city || '',
+        visitWindow: user.visit_window || '',
+        city: user.city || 'Mumbai',
+        country: user.country || 'India',
+        // Use Present City coordinates if available, otherwise default coordinates
+        latitude: parseFloat(user.latitude) || defaultCoords.lat,
+        longitude: parseFloat(user.longitude) || defaultCoords.lng,
+        // Enhanced with device location if available
+        deviceLatitude: parseFloat(user.device_latitude) || null,
+        deviceLongitude: parseFloat(user.device_longitude) || null,
+        locationSource: user.location_source || 'city',
+        locationUpdatedAt: user.location_updated_at || new Date(),
         isVerified: user.is_verified || true,
         loginCount: user.login_count || 1,
-        lastLogin: user.last_login_at || new Date(),
+        lastLogin: user.last_login || new Date(),
         createdAt: user.created_at || new Date(),
       } as User;
+      
+      console.log(`User ${id} final location: city=${userObj.city}, lat=${userObj.latitude}, lng=${userObj.longitude}, deviceLat=${userObj.deviceLatitude}`);
+      return userObj;
     } catch (error) {
       console.error('Get user error:', error);
       return undefined;
     }
+  }
+
+  // Helper method to get coordinates for major maritime cities
+  private getCityCoordinates(city: string, country: string): { lat: number, lng: number } {
+    const cityCoords: { [key: string]: { lat: number, lng: number } } = {
+      'mumbai': { lat: 19.0760, lng: 72.8777 },
+      'singapore': { lat: 1.3521, lng: 103.8198 },
+      'rotterdam': { lat: 51.9244, lng: 4.4777 },
+      'hamburg': { lat: 53.5511, lng: 9.9937 },
+      'dubai': { lat: 25.2048, lng: 55.2708 },
+      'shanghai': { lat: 31.2304, lng: 121.4737 },
+      'antwerp': { lat: 51.2194, lng: 4.4025 },
+      'los angeles': { lat: 34.0522, lng: -118.2437 },
+      'new york': { lat: 40.7128, lng: -74.0060 },
+      'london': { lat: 51.5074, lng: -0.1278 },
+      'hong kong': { lat: 22.3193, lng: 114.1694 },
+      'tokyo': { lat: 35.6762, lng: 139.6503 },
+      'panama city': { lat: 8.9824, lng: -79.5199 },
+      'santos': { lat: -23.9668, lng: -46.3336 },
+      // Default coordinates for unknown cities (Mumbai as maritime hub)
+      'default': { lat: 19.0760, lng: 72.8777 }
+    };
+    
+    const cityKey = (city || '').toLowerCase();
+    return cityCoords[cityKey] || cityCoords['default'];
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
@@ -119,8 +159,47 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log('Liberal authentication for:', userId);
       
-      // For admin users, create a special admin user profile
+      // For admin users, get from database to ensure Present City data is available
       if (userId === "mushy.piyush@gmail.com" || userId === "+919029010070") {
+        try {
+          // Use direct database query to avoid recursion
+          const result = await pool.query('SELECT * FROM users WHERE id = $1 LIMIT 1', ["5791e66f-9cc1-4be4-bd4b-7fc1bd2e258e"]);
+          if (result.rows.length > 0) {
+            const user = result.rows[0];
+            const adminUser = {
+              id: user.id,
+              fullName: user.full_name || user.nickname || user.email || 'Admin User',
+              email: user.email || 'mushy.piyush@gmail.com',
+              password: '',
+              userType: user.user_type || 'sailor',
+              isAdmin: true,
+              nickname: user.nickname || 'Admin',
+              rank: user.rank || 'Administrator',
+              shipName: user.ship_name || '',
+              imoNumber: user.imo_number || '',
+              port: user.port || user.city || '',
+              visitWindow: user.visit_window || '',
+              city: user.city || '',
+              country: user.country || '',
+              latitude: parseFloat(user.latitude) || this.getCityCoordinates(user.city || 'mumbai', user.country || 'india').lat,
+              longitude: parseFloat(user.longitude) || this.getCityCoordinates(user.city || 'mumbai', user.country || 'india').lng,
+              deviceLatitude: parseFloat(user.device_latitude) || null,
+              deviceLongitude: parseFloat(user.device_longitude) || null,
+              locationSource: user.location_source || 'city',
+              locationUpdatedAt: user.location_updated_at || new Date(),
+              isVerified: user.is_verified || true,
+              loginCount: user.login_count || 1,
+              lastLogin: user.last_login || new Date(),
+              createdAt: user.created_at || new Date(),
+            } as User;
+            console.log('Loaded admin user from database:', adminUser.city, adminUser.latitude, adminUser.longitude);
+            return adminUser;
+          }
+        } catch (error) {
+          console.log('Failed to load admin user from database, using fallback:', error);
+        }
+        
+        // Fallback admin profile if database lookup fails
         return {
           id: "5791e66f-9cc1-4be4-bd4b-7fc1bd2e258e",
           fullName: "Admin User",
@@ -134,10 +213,10 @@ export class DatabaseStorage implements IStorage {
           imoNumber: '',
           port: '',
           visitWindow: '',
-          city: '',
-          country: '',
-          latitude: 0,
-          longitude: 0,
+          city: 'Mumbai',
+          country: 'India',
+          latitude: 19.0760,
+          longitude: 72.8777,
           isVerified: true,
           loginCount: 1,
           lastLogin: new Date(),
