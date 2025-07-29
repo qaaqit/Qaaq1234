@@ -17,7 +17,7 @@ export default function BottomNav({ user }: BottomNavProps) {
       active: location === "/" || location === "/discover"
     },
     { 
-      path: "/qhf", 
+      path: "/dm", 
       icon: "fas fa-comments", 
       label: "QChat",
       active: location === "/qhf" || location === "/dm" || location === "/chat"

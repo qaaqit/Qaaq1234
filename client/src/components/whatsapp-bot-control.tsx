@@ -96,10 +96,10 @@ export default function WhatsAppBotControl() {
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2">
           <MessageCircle className="h-5 w-5 text-green-600" />
-          Qoi GPT WhatsApp Bot
+          Discover Bot Assistant
         </CardTitle>
         <CardDescription>
-          Connect users via WhatsApp to find nearby sailors with \koihai command
+          Help users discover nearby maritime professionals via WhatsApp
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -141,7 +141,7 @@ export default function WhatsAppBotControl() {
               <Smartphone className="h-4 w-4 text-green-600 mt-0.5" />
               <div className="text-xs text-green-800 dark:text-green-200">
                 <p className="font-medium">Bot is active!</p>
-                <p>Users can send <code>\koihai</code> to find nearby sailors</p>
+                <p>Users can discover maritime professionals nearby</p>
               </div>
             </div>
           </div>
@@ -152,7 +152,7 @@ export default function WhatsAppBotControl() {
             <p><strong>How to connect:</strong></p>
             <p>1. Click "Start Bot"</p>
             <p>2. Scan QR code in server console with WhatsApp</p>
-            <p>3. Bot will be ready to receive \koihai commands</p>
+            <p>3. Bot will help users discover maritime professionals</p>
           </div>
         )}
       </CardContent>

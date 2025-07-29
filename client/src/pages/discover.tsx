@@ -134,32 +134,22 @@ export default function Discover({ user }: DiscoverProps) {
                 variant="outline"
                 size="sm"
                 className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                title="Discover Bot - Maritime Assistant"
               >
-                <i className="fab fa-whatsapp mr-2"></i>Bot
+                <i className="fab fa-whatsapp mr-2"></i>Discover
               </Button>
-              <div className="flex flex-col space-y-2">
-                <Button
-                  onClick={() => {
-                    localStorage.removeItem('qaaq_token');
-                    localStorage.removeItem('qaaq_user');
-                    window.location.href = '/';
-                  }}
-                  variant="outline"
-                  size="sm"
-                  className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-                >
-                  <i className="fas fa-sign-out-alt mr-2"></i>Logout
-                </Button>
-                <Button
-                  onClick={() => setLocation('/dm')}
-                  variant="outline"
-                  size="sm"
-                  className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-                  title="QHF - Quick Chat"
-                >
-                  <i className="fas fa-phone mr-2"></i>QHF
-                </Button>
-              </div>
+              <Button
+                onClick={() => {
+                  localStorage.removeItem('qaaq_token');
+                  localStorage.removeItem('qaaq_user');
+                  window.location.href = '/';
+                }}
+                variant="outline"
+                size="sm"
+                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+              >
+                <i className="fas fa-sign-out-alt mr-2"></i>Logout
+              </Button>
             </div>
           </div>
         </div>
@@ -203,7 +193,7 @@ export default function Discover({ user }: DiscoverProps) {
           <div className="absolute top-16 right-4 z-50 max-w-sm">
             <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 border">
               <div className="flex justify-between items-center mb-2">
-                <h3 className="font-semibold text-gray-800">WhatsApp Bot Control</h3>
+                <h3 className="font-semibold text-gray-800">Discover Bot Control</h3>
                 <Button
                   onClick={() => setShowWhatsAppPanel(false)}
                   variant="ghost"
