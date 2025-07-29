@@ -371,6 +371,15 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
 
   return (
     <div className="relative w-full h-full">
+      {/* Location Coordinates Overlay */}
+      {userLocation && (
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 bg-black/40 backdrop-blur-sm px-3 py-2 rounded-lg">
+          <div className="text-white font-mono text-sm">
+            {userLocation.lat.toFixed(6)}, {userLocation.lng.toFixed(6)}
+          </div>
+        </div>
+      )}
+      
       {/* Map Controls - Bottom Left with Transparent Icons */}
       <div className="absolute bottom-4 left-4 z-10 flex flex-col space-y-2">
         <div className="flex space-x-1">

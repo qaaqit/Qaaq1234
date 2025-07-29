@@ -244,7 +244,16 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
   const defaultZoom = 9; // Always use zoom level 9 for 50km radius view
 
   return (
-    <div className="w-full h-full overflow-hidden bg-gray-100">
+    <div className="w-full h-full overflow-hidden bg-gray-100 relative">
+      {/* Location Coordinates Overlay */}
+      {userLocation && (
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-[1000] bg-black/40 backdrop-blur-sm px-3 py-2 rounded-lg">
+          <div className="text-white font-mono text-sm">
+            {userLocation.lat.toFixed(6)}, {userLocation.lng.toFixed(6)}
+          </div>
+        </div>
+      )}
+      
       <MapContainer
         center={defaultCenter}
         zoom={defaultZoom}
