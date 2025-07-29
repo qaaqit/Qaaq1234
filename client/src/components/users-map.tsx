@@ -11,6 +11,7 @@ interface MapUser {
   userType: string;
   rank: string | null;
   shipName: string | null;
+  company?: string | null;  // Add company field
   imoNumber: string | null;
   port: string | null;
   visitWindow: string | null;
@@ -22,6 +23,22 @@ interface MapUser {
 
 const getRankAbbreviation = (rank: string): string => {
   const abbreviations: { [key: string]: string } = {
+    // Handle database enum values (with underscores)
+    'chief_engineer': 'CE',
+    'second_engineer': '2E',
+    'third_engineer': '3E',
+    'fourth_engineer': '4E',
+    'junior_engineer': 'JE',
+    'engine_cadet': 'E/C',
+    'deck_cadet': 'D/C',
+    'electrical_engineer': 'ETO',
+    'master': 'CAPT',
+    'chief_officer': 'C/O',
+    'second_officer': '2/O',
+    'third_officer': '3/O',
+    'trainee': 'TRN',
+    'other': 'OTHER',
+    // Handle space-separated values
     'captain': 'CAPT',
     'chief engineer': 'CE',
     'chief officer': 'CO',
@@ -299,9 +316,9 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
                   {user.fullName}
                 </h3>
                 {/* Last Company */}
-                {(user as any).company && (user as any).company !== '' && (
+                {user.company && user.company !== '' && (
                   <p className="text-sm text-gray-700">
-                    <span className="font-medium">Last Company:</span> {(user as any).company}
+                    <span className="font-medium">Last Company:</span> {user.company}
                   </p>
                 )}
                 {/* Maritime Rank */}
