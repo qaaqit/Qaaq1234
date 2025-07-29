@@ -19,6 +19,7 @@ CPSS Content: Maritime meetups, local tours, port dining, shore shopping, cultur
 Admin shield location: Keep admin shield in header top right corner (not in bottom navigation)
 Header visibility: Show white header only for admin users, regular users should not see the header
 Premium mode: Crown icon in search box toggles premium Google Maps features, requires premium plan for non-admin users
+WhatsApp Bot: Moved from map overlay to header button next to logout for cleaner map interface
 
 ## System Architecture
 

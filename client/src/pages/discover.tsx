@@ -269,20 +269,6 @@ export default function Discover({ user }: DiscoverProps) {
           </TabsList>
           
           <TabsContent value="koihai" className="flex-1 overflow-hidden relative m-0">
-            {/* Admin WhatsApp Toggle (only for admin users) */}
-            {user.isAdmin && (
-              <div className="absolute top-4 left-4 z-10">
-                <Button
-                  size="sm"
-                  onClick={() => setShowWhatsAppPanel(!showWhatsAppPanel)}
-                  className="bg-green-600 hover:bg-green-700 text-white rounded-full w-10 h-10 p-0"
-                  title="WhatsApp Bot Controls"
-                >
-                  <i className="fab fa-whatsapp"></i>
-                </Button>
-              </div>
-            )}
-
             {/* Premium Mode Notice */}
             {isPremiumMode && !user.isAdmin && (
               <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 bg-yellow-50 border border-yellow-200 rounded-lg p-4 shadow-lg max-w-sm">
@@ -312,19 +298,22 @@ export default function Discover({ user }: DiscoverProps) {
               <UsersMap showUsers={showUsers} searchQuery={searchQuery} />
             )}
             
-            {/* WhatsApp Bot Control Panel */}
+            {/* WhatsApp Bot Control Panel - positioned outside map */}
             {showWhatsAppPanel && user.isAdmin && (
-              <div className="absolute top-4 right-4 z-50">
-                <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-1">
+              <div className="absolute top-16 right-4 z-50 max-w-sm">
+                <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 border">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-semibold text-gray-800">WhatsApp Bot Control</h3>
+                    <Button
+                      onClick={() => setShowWhatsAppPanel(false)}
+                      variant="ghost"
+                      size="sm"
+                      className="p-1 h-6 w-6"
+                    >
+                      ×
+                    </Button>
+                  </div>
                   <WhatsAppBotControl />
-                  <Button
-                    onClick={() => setShowWhatsAppPanel(false)}
-                    variant="ghost"
-                    size="sm"
-                    className="absolute -top-2 -right-2 bg-white hover:bg-gray-50 rounded-full w-6 h-6 p-0 shadow-md"
-                  >
-                    ×
-                  </Button>
                 </div>
               </div>
             )}
