@@ -93,21 +93,27 @@ export default function Post({ user }: PostProps) {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
-      {/* Header with Home Logo */}
-      <header className="gradient-bg text-white px-4 py-6">
-        <div className="flex items-center justify-between">
-          <button 
-            onClick={() => setLocation('/')}
-            className="flex items-center space-x-3 hover:bg-white/10 rounded-lg p-2 transition-colors"
-          >
-            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-              <i className="fas fa-anchor text-xl text-white"></i>
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">QaaqConnect</h1>
-              <p className="text-sm text-white/80">Share your experience</p>
-            </div>
-          </button>
+      {/* Header with Home Logo - Same as Discover Page */}
+      <header className="gradient-bg text-white px-4 py-6 relative">
+        <div className="absolute inset-0 opacity-10">
+          <div className="w-full h-full bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Cpath%20d%3D%22M20%2050h60m-50-20h40m-30%2040h20%22%20stroke%3D%22white%22%20stroke-width%3D%221%22%20fill%3D%22none%22%2F%3E%3C%2Fsvg%3E')] bg-[length:50px_50px]"></div>
+        </div>
+        
+        <div className="relative z-10">
+          <div className="flex items-center justify-between">
+            <button 
+              onClick={() => setLocation('/')}
+              className="flex items-center space-x-3 hover:bg-white/10 rounded-lg p-2 transition-colors"
+            >
+              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                <i className="fas fa-anchor text-xl text-white"></i>
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold">QaaqConnect</h1>
+                <p className="text-sm text-white/80">Share your experience</p>
+              </div>
+            </button>
+          </div>
         </div>
       </header>
 
