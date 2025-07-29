@@ -7,12 +7,13 @@ import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import DiscoveryCard from "@/components/discovery-card";
 import UsersMap from "@/components/users-map";
+import GoogleMaps from "@/components/google-maps";
 import WhatsAppBotControl from "@/components/whatsapp-bot-control";
 import CPSSNavigator from "@/components/cpss-navigator";
 import { useLocation } from "@/hooks/useLocation";
 import { type User } from "@/lib/auth";
 import { apiRequest } from "@/lib/queryClient";
-import { MapPin, Navigation, Ship } from "lucide-react";
+import { MapPin, Navigation, Ship, Satellite } from "lucide-react";
 
 interface Post {
   id: string;
@@ -34,6 +35,7 @@ export default function Discover({ user }: DiscoverProps) {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [showUsers, setShowUsers] = useState(false);
   const [showWhatsAppPanel, setShowWhatsAppPanel] = useState(false);
+  const [mapType, setMapType] = useState<'leaflet' | 'google'>('leaflet');
   
   // Location functionality for enhanced user discovery
   const { location, error: locationError, isLoading: locationLoading, requestDeviceLocation, updateShipLocation } = useLocation();
@@ -239,7 +241,49 @@ export default function Discover({ user }: DiscoverProps) {
           </TabsList>
           
           <TabsContent value="koihai" className="flex-1 overflow-hidden relative m-0">
-            <UsersMap showUsers={showUsers} searchQuery={searchQuery} />
+            {/* Map Type Toggle for Premium Users */}
+            {user.isAdmin && (
+              <div className="absolute top-4 left-4 z-10 bg-white rounded-lg shadow-lg p-2 space-y-2">
+                <Button
+                  size="sm"
+                  onClick={() => setMapType('leaflet')}
+                  variant={mapType === 'leaflet' ? 'default' : 'outline'}
+                  className="w-full justify-start text-xs"
+                >
+                  <MapPin className="w-3 h-3 mr-1" />
+                  Standard
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => setMapType('google')}
+                  variant={mapType === 'google' ? 'default' : 'outline'}
+                  className="w-full justify-start text-xs bg-yellow-500 hover:bg-yellow-600 text-white"
+                >
+                  <Satellite className="w-3 h-3 mr-1" />
+                  🌟 Premium
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => setShowWhatsAppPanel(!showWhatsAppPanel)}
+                  className="w-full justify-start text-xs bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <i className="fab fa-whatsapp w-3 h-3 mr-1"></i>
+                  WhatsApp
+                </Button>
+              </div>
+            )}
+
+            {/* Render appropriate map based on selection */}
+            {mapType === 'google' ? (
+              <div className="w-full h-full">
+                <GoogleMaps 
+                  users={[]} // Will be populated via query
+                  center={{ lat: 19.076, lng: 72.8977 }}
+                />
+              </div>
+            ) : (
+              <UsersMap showUsers={showUsers} searchQuery={searchQuery} />
+            )}
             
             {/* WhatsApp Bot Control Panel */}
             {showWhatsAppPanel && (
