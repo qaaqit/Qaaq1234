@@ -298,51 +298,60 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
 
   return (
     <div className="relative w-full h-full">
-      {/* Map Controls */}
-      <div className="absolute top-4 right-4 z-10 bg-white rounded-lg shadow-lg p-2 space-y-2">
-        <div className="flex flex-col space-y-1">
+      {/* Map Controls - Bottom Left with Transparent Icons */}
+      <div className="absolute bottom-4 left-4 z-10 flex flex-col space-y-2">
+        <div className="flex space-x-1">
           <Button
             size="sm"
-            variant={mapType === 'roadmap' ? 'default' : 'outline'}
+            variant="ghost"
             onClick={() => changeMapType('roadmap')}
-            className="w-full justify-start text-xs"
+            className={`w-10 h-10 p-0 rounded-lg backdrop-blur-sm border transition-all ${
+              mapType === 'roadmap' 
+                ? 'bg-white/90 border-blue-500 shadow-lg' 
+                : 'bg-white/60 border-white/40 hover:bg-white/80'
+            }`}
+            title="Road Map"
           >
-            <Map className="w-3 h-3 mr-1" />
-            Road
+            <Map className="w-4 h-4 text-gray-700" />
           </Button>
           <Button
             size="sm"
-            variant={mapType === 'satellite' ? 'default' : 'outline'}
+            variant="ghost"
             onClick={() => changeMapType('satellite')}
-            className="w-full justify-start text-xs"
+            className={`w-10 h-10 p-0 rounded-lg backdrop-blur-sm border transition-all ${
+              mapType === 'satellite' 
+                ? 'bg-white/90 border-blue-500 shadow-lg' 
+                : 'bg-white/60 border-white/40 hover:bg-white/80'
+            }`}
+            title="Satellite View"
           >
-            <Satellite className="w-3 h-3 mr-1" />
-            Satellite
+            <Satellite className="w-4 h-4 text-gray-700" />
           </Button>
           <Button
             size="sm"
-            variant={mapType === 'hybrid' ? 'default' : 'outline'}
+            variant="ghost"
             onClick={() => changeMapType('hybrid')}
-            className="w-full justify-start text-xs"
+            className={`w-10 h-10 p-0 rounded-lg backdrop-blur-sm border transition-all ${
+              mapType === 'hybrid' 
+                ? 'bg-white/90 border-blue-500 shadow-lg' 
+                : 'bg-white/60 border-white/40 hover:bg-white/80'
+            }`}
+            title="Hybrid View"
           >
-            <MapPin className="w-3 h-3 mr-1" />
-            Hybrid
+            <MapPin className="w-4 h-4 text-gray-700" />
           </Button>
         </div>
         
         {userLocation && (
-          <>
-            <hr className="border-gray-200" />
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={centerOnUser}
-              className="w-full justify-start text-xs"
-            >
-              <Navigation className="w-3 h-3 mr-1" />
-              My Location
-            </Button>
-          </>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={centerOnUser}
+            className="w-10 h-10 p-0 rounded-lg bg-white/60 backdrop-blur-sm border border-white/40 hover:bg-white/80 transition-all"
+            title="Center on My Location"
+          >
+            <Navigation className="w-4 h-4 text-blue-600" />
+          </Button>
         )}
       </div>
 

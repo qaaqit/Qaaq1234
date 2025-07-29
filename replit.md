@@ -20,6 +20,7 @@ Admin shield location: Keep admin shield in header top right corner (not in bott
 Header visibility: Show white header only for admin users, regular users should not see the header
 Premium mode: Crown icon in search box toggles premium Google Maps features, requires premium plan for non-admin users
 WhatsApp Bot: Moved from map overlay to header button next to logout for cleaner map interface
+Google Maps Controls: Transparent icon-only buttons positioned in bottom-left corner (Road/Satellite/Hybrid view toggles)
 
 ## System Architecture
 
