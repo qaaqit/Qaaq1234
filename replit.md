@@ -2,7 +2,7 @@
 
 ## Overview
 
-QaaqConnect is a location-based maritime discovery platform focused on "Koi Hai?" (Who's there?) functionality with CPSS (Country/Port/Suburb/Service) navigation system. The app helps sailors find nearby maritime professionals through an interactive world map and provides SEMM-like social discovery for maritime meetups, local tours, port dining, and cultural experiences. Features include email-verified registration, proximity-based user discovery, real-time location mapping, and hierarchical CPSS navigation with endless scroll, like/share functionality, and card carousels.
+QaaqConnect is a minimalistic location-based maritime discovery platform focused on "Koi Hai?" (Who's there?) functionality and QAAQ Store services. The app helps sailors find nearby maritime professionals through an interactive world map and provides essential services through the integrated QAAQ Store. Key features include proximity-based user discovery, real-time location mapping, WhatsApp integration for direct communication, and a curated marketplace for maritime essentials. The platform maintains a clean, focused approach with plans to expand features in future versions.
 
 ## User Preferences
 
@@ -153,17 +153,15 @@ Google Maps Controls: Transparent icon-only buttons positioned in bottom-left co
 
 ## Recent Changes
 
-### QChat System Implementation (January 29, 2025)
-- **Marine Chat Button**: Added chat initiation button to all user cards with maritime-themed styling
-- **QChat Window Component**: Built WhatsApp-like chat interface with marine bluish theme and real-time messaging
-- **Chat Backend**: Implemented complete chat system with connection requests, message sending, and status tracking
-- **Database Schema**: Added chat_connections and chat_messages tables for persistent chat storage
-- **Authentication Integration**: Connected chat system with JWT authentication and user profiles
-- **TypeScript Resolution**: Fixed all compilation errors and plugin runtime issues for stable operation
-- **API Endpoints**: Created REST APIs for /api/chat/connect, /api/chat/messages, /api/chat/accept
-- **Status**: Core functionality implemented, minor unhandled promise rejections to resolve later
-- **UI Cleanup**: Removed "Track My Ship" and "Update My Location" buttons per user request for cleaner interface
-- **Automatic Location**: Implemented auto-location updates based on device permissions (5-minute intervals)
+### Minimalistic App Focus (January 29, 2025)
+- **Simplified Architecture**: Removed maritime events management system to maintain focus on core features
+- **QAAQ Store Integration**: Kept full QAAQ Store functionality for maritime professionals to order essentials
+- **WhatsApp Events Integration**: Replaced internal chat with WhatsApp direct link for event coordination (+905363694997)
+- **"Koi Hai?" Discovery**: Maintained proximity-based user discovery as primary feature
+- **Database Cleanup**: Removed maritime_events and event_attendees tables from schema
+- **UI Streamlined**: Updated bottom navigation to show WhatsApp Events instead of internal QChat
+- **Focus Areas**: App now concentrates on two main features: location-based discovery and store services
+- **Future Planning**: Maritime events and advanced chat features reserved for next version
 - **Search Migration**: Moved search functionality from discover page to CPSS Navigator for focused "Koi Hai?" discovery
 - **Global CPSS Expansion**: Added 10 countries and ports based on authentic QAAQ user locations (Brazil, China, Germany, India, Japan, Netherlands, Panama, Singapore, UAE, USA)
 

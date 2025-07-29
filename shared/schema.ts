@@ -78,36 +78,7 @@ export const chatMessages = pgTable("chat_messages", {
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 
-export const maritimeEvents = pgTable("maritime_events", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  organizerId: varchar("organizer_id").notNull(),
-  title: text("title").notNull(),
-  description: text("description").notNull(),
-  eventType: text("event_type").notNull(), // 'meetup', 'tour', 'dining', 'cultural'
-  location: text("location").notNull(),
-  city: text("city").notNull(),
-  country: text("country").notNull(),
-  latitude: real("latitude"),
-  longitude: real("longitude"),
-  startTime: timestamp("start_time").notNull(),
-  endTime: timestamp("end_time").notNull(),
-  maxAttendees: integer("max_attendees"),
-  currentAttendees: integer("current_attendees").default(0),
-  status: text("status").notNull().default("upcoming"), // 'upcoming', 'ongoing', 'completed', 'cancelled'
-  isPublic: boolean("is_public").default(true),
-  contactInfo: text("contact_info"),
-  requirements: text("requirements"), // Any special requirements
-  createdAt: timestamp("created_at").default(sql`now()`),
-  updatedAt: timestamp("updated_at").default(sql`now()`),
-});
 
-export const eventAttendees = pgTable("event_attendees", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  eventId: varchar("event_id").notNull(),
-  userId: varchar("user_id").notNull(),
-  status: text("status").notNull().default("registered"), // 'registered', 'attended', 'no_show'
-  registeredAt: timestamp("registered_at").default(sql`now()`),
-});
 
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
@@ -117,8 +88,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   sentConnections: many(chatConnections, { relationName: 'sentConnections' }),
   receivedConnections: many(chatConnections, { relationName: 'receivedConnections' }),
   sentMessages: many(chatMessages, { relationName: 'sentMessages' }),
-  organizedEvents: many(maritimeEvents),
-  eventAttendees: many(eventAttendees),
+
 }));
 
 export const postsRelations = relations(posts, ({ one, many }) => ({
@@ -173,24 +143,7 @@ export const chatMessagesRelations = relations(chatMessages, ({ one }) => ({
   }),
 }));
 
-export const maritimeEventsRelations = relations(maritimeEvents, ({ one, many }) => ({
-  organizer: one(users, {
-    fields: [maritimeEvents.organizerId],
-    references: [users.id],
-  }),
-  attendees: many(eventAttendees),
-}));
 
-export const eventAttendeesRelations = relations(eventAttendees, ({ one }) => ({
-  event: one(maritimeEvents, {
-    fields: [eventAttendees.eventId],
-    references: [maritimeEvents.id],
-  }),
-  user: one(users, {
-    fields: [eventAttendees.userId],
-    references: [users.id],
-  }),
-}));
 
 // Schemas
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -230,25 +183,7 @@ export const insertChatMessageSchema = createInsertSchema(chatMessages).pick({
   message: true,
 });
 
-export const insertMaritimeEventSchema = createInsertSchema(maritimeEvents).pick({
-  title: true,
-  description: true,
-  eventType: true,
-  location: true,
-  city: true,
-  country: true,
-  latitude: true,
-  longitude: true,
-  startTime: true,
-  endTime: true,
-  maxAttendees: true,
-  contactInfo: true,
-  requirements: true,
-});
 
-export const insertEventAttendeeSchema = createInsertSchema(eventAttendees).pick({
-  eventId: true,
-});
 
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -259,9 +194,7 @@ export type VerificationCode = typeof verificationCodes.$inferSelect;
 export type Like = typeof likes.$inferSelect;
 export type ChatConnection = typeof chatConnections.$inferSelect;
 export type ChatMessage = typeof chatMessages.$inferSelect;
-export type MaritimeEvent = typeof maritimeEvents.$inferSelect;
-export type EventAttendee = typeof eventAttendees.$inferSelect;
+
 export type InsertChatConnection = z.infer<typeof insertChatConnectionSchema>;
-export type InsertMaritimeEvent = z.infer<typeof insertMaritimeEventSchema>;
-export type InsertEventAttendee = z.infer<typeof insertEventAttendeeSchema>;
+
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;

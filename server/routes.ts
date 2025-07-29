@@ -2,7 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import jwt from 'jsonwebtoken';
 import { storage } from "./storage";
-import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, insertChatConnectionSchema, insertChatMessageSchema, insertMaritimeEventSchema, insertEventAttendeeSchema } from "@shared/schema";
+import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, insertChatConnectionSchema, insertChatMessageSchema } from "@shared/schema";
 import { sendVerificationEmail } from "./services/email";
 import { pool } from "./db";
 
@@ -740,86 +740,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Maritime Events API Routes
-  app.get('/api/events', async (req, res) => {
-    try {
-      const { city, country, eventType, status = 'upcoming' } = req.query;
-      const events = await storage.getMaritimeEvents({ 
-        city: city as string, 
-        country: country as string, 
-        eventType: eventType as string, 
-        status: status as string 
-      });
-      res.json(events);
-    } catch (error) {
-      console.error('Get events error:', error);
-      res.status(500).json({ message: "Failed to get events" });
-    }
-  });
-
-  app.post('/api/events', authenticateToken, async (req, res) => {
-    try {
-      const eventData = insertMaritimeEventSchema.parse(req.body);
-      const organizerId = req.userId!;
-      
-      const event = await storage.createMaritimeEvent({ ...eventData, organizerId });
-      res.json(event);
-    } catch (error) {
-      console.error('Create event error:', error);
-      res.status(500).json({ message: "Failed to create event" });
-    }
-  });
-
-  app.get('/api/events/:eventId', async (req, res) => {
-    try {
-      const { eventId } = req.params;
-      const event = await storage.getMaritimeEvent(eventId);
-      if (!event) {
-        return res.status(404).json({ message: "Event not found" });
-      }
-      res.json(event);
-    } catch (error) {
-      console.error('Get event error:', error);
-      res.status(500).json({ message: "Failed to get event" });
-    }
-  });
-
-  app.post('/api/events/:eventId/register', authenticateToken, async (req, res) => {
-    try {
-      const { eventId } = req.params;
-      const userId = req.userId!;
-      
-      const registration = await storage.registerForEvent(eventId, userId);
-      res.json(registration);
-    } catch (error) {
-      console.error('Event registration error:', error);
-      res.status(500).json({ message: "Failed to register for event" });
-    }
-  });
-
-  app.delete('/api/events/:eventId/register', authenticateToken, async (req, res) => {
-    try {
-      const { eventId } = req.params;
-      const userId = req.userId!;
-      
-      await storage.unregisterFromEvent(eventId, userId);
-      res.json({ message: "Successfully unregistered from event" });
-    } catch (error) {
-      console.error('Event unregistration error:', error);
-      res.status(500).json({ message: "Failed to unregister from event" });
-    }
-  });
-
-  app.get('/api/events/:eventId/attendees', authenticateToken, async (req, res) => {
-    try {
-      const { eventId } = req.params;
-      const attendees = await storage.getEventAttendees(eventId);
-      res.json(attendees);
-    } catch (error) {
-      console.error('Get event attendees error:', error);
-      res.status(500).json({ message: "Failed to get event attendees" });
-    }
-  });
 
   const httpServer = createServer(app);
   return httpServer;
