@@ -177,6 +177,16 @@ Google Maps Controls: Transparent icon-only buttons positioned in bottom-left co
 - **Real-time Location**: Integrated device location tracking with Google Maps for enhanced positioning
 - **Loading States**: Added loading indicators and error handling for premium map features
 
+### QChat DM Page Implementation (January 29, 2025)
+- **Comprehensive DM Interface**: Created dedicated DM page with existing chat cards followed by user cards sorted by distance
+- **Distance-Based Discovery**: Implemented `/api/users/nearby` endpoint with Haversine distance calculation for accurate user proximity
+- **Chat Management**: Organized chat interface with active conversations, pending requests, sent requests, and new user discovery
+- **Interactive User Cards**: Maritime-themed user cards with distance display, ship information, rank, and location details
+- **Search Functionality**: Real-time search across user names, ranks, ship names, and locations
+- **Connection Management**: Full chat connection workflow with request sending, acceptance, and messaging
+- **Navigation Update**: Updated bottom navigation to make QChat the primary chat interface
+- **Mobile-First Design**: Responsive cards layout with maritime color coding and professional styling
+
 ### Enhanced Location System for Maritime Discovery (January 28, 2025)
 - **QAAQ Authorization Integration**: Updated location system to use password field as temporary city storage during QAAQ authorization flow
 - **Multi-source Location**: Implemented priority-based location derivation: 1) Ship IMO tracking 2) Device GPS 3) City mapping 4) Password field fallback

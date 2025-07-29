@@ -40,6 +40,20 @@ const generateVerificationCode = (): string => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
+// Calculate distance between two coordinates using Haversine formula
+const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+  const R = 6371; // Radius of the Earth in kilometers
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const distance = R * c; // Distance in kilometers
+  return distance;
+};
+
 export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register new user
@@ -737,6 +751,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Get messages error:', error);
       res.status(500).json({ message: "Failed to get messages" });
+    }
+  });
+
+  // Get nearby users for DM discovery with distance calculation
+  app.get('/api/users/nearby', authenticateToken, async (req, res) => {
+    try {
+      const currentUser = await storage.getUser(req.userId!);
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const allUsers = await storage.getUsersWithLocation();
+      
+      // Calculate distance for each user and filter out current user
+      const usersWithDistance = allUsers
+        .filter(user => user.id !== currentUser.id)
+        .map(user => {
+          const distance = calculateDistance(
+            currentUser.latitude || 0,
+            currentUser.longitude || 0,
+            user.latitude || 0,
+            user.longitude || 0
+          );
+          return { ...user, distance };
+        })
+        .sort((a, b) => a.distance - b.distance);
+
+      res.json(usersWithDistance);
+    } catch (error) {
+      console.error('Get nearby users error:', error);
+      res.status(500).json({ message: "Failed to get nearby users" });
     }
   });
 

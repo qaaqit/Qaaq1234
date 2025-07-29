@@ -27,10 +27,7 @@ export default function MarineChatButton({
 
   const connectMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest('/api/chat/connect', {
-        method: 'POST',
-        body: { receiverId }
-      });
+      return await apiRequest('/api/chat/connect', 'POST', { receiverId });
     },
     onSuccess: () => {
       toast({
