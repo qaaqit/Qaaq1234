@@ -155,24 +155,7 @@ export default function Discover({ user }: DiscoverProps) {
             {locationLoading ? 'Getting Location...' : 'Update My Location'}
           </Button>
 
-          {/* Ship Location Button (for sailors) */}
-          {user.userType === 'sailor' && (
-            <Button 
-              onClick={() => {
-                // Example: update ship location using user's IMO or ship name
-                const imoNumber = (user as any).imoNumber || (user as any).seafarerId;
-                const shipName = (user as any).shipName || (user as any).lastShip;
-                if (imoNumber || shipName) {
-                  updateShipLocation(user.id, imoNumber, shipName);
-                }
-              }}
-              disabled={locationLoading}
-              className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg shadow-md flex items-center gap-2"
-            >
-              <Ship className="w-4 h-4" />
-              Track My Ship
-            </Button>
-          )}
+
         </div>
 
         {/* Location Status Display */}

@@ -162,6 +162,7 @@ Google Maps Controls: Transparent icon-only buttons positioned in bottom-left co
 - **TypeScript Resolution**: Fixed all compilation errors and plugin runtime issues for stable operation
 - **API Endpoints**: Created REST APIs for /api/chat/connect, /api/chat/messages, /api/chat/accept
 - **Status**: Core functionality implemented, minor unhandled promise rejections to resolve later
+- **UI Cleanup**: Removed "Track My Ship" button per user request for cleaner interface
 
 ### Premium Google Maps Integration (January 29, 2025)
 - **Google Maps API Integration**: Implemented premium Google Maps features for admin/premium QAAQ users
