@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, integer, boolean, jsonb, real } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, integer, boolean, jsonb, real, uuid } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -79,6 +79,19 @@ export const chatMessages = pgTable("chat_messages", {
   message: text("message").notNull(),
   isRead: boolean("is_read").default(false),
   createdAt: timestamp("created_at").default(sql`now()`),
+});
+
+// Bot Rules Documentation Table
+export const botRules = pgTable("bot_rules", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 255 }).notNull().unique(),
+  version: varchar("version", { length: 50 }).notNull(),
+  content: text("content").notNull(),
+  category: varchar("category", { length: 100 }).notNull(), // 'QBOT', 'QOI_GPT', 'GENERAL'
+  status: varchar("status", { length: 50 }).default('active'), // 'active', 'archived', 'draft'
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`),
+  createdBy: varchar("created_by").references(() => users.id),
 });
 
 
@@ -195,6 +208,9 @@ export const insertChatMessageSchema = createInsertSchema(chatMessages).pick({
   message: true,
 });
 
+export const insertBotRuleSchema = createInsertSchema(botRules)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+
 
 
 // Types
@@ -210,3 +226,6 @@ export type ChatMessage = typeof chatMessages.$inferSelect;
 export type InsertChatConnection = z.infer<typeof insertChatConnectionSchema>;
 
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
+
+export type InsertBotRule = z.infer<typeof insertBotRuleSchema>;
+export type BotRule = typeof botRules.$inferSelect;
