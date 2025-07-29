@@ -36,10 +36,16 @@ Google Maps Controls: Transparent icon-only buttons positioned in bottom-left co
 - **Runtime**: Node.js with Express.js
 - **Language**: TypeScript with ES modules
 - **Database**: PostgreSQL with Drizzle ORM
-- **Database Provider**: QAAQ Admin Database (replaced Neon Database on January 27, 2025)
+- **Database Provider**: Shared QAAQ Admin Database (serves both QAAQ and QaaqConnect)
 - **Authentication**: JWT-based with email verification
 - **Email Service**: Gmail SMTP via nodemailer (switched from SendGrid per user request)
 - **Session Management**: Express sessions with PostgreSQL storage
+
+### Bot Integration Architecture
+- **QBOT**: WhatsApp bot for maritime networking assistance, location discovery, and QAAQ Store services
+- **QOI GPT**: WhatsApp bot for Q&A functionality, professional experience sharing, and maritime guidance
+- **Shared Service**: Both bots serve QAAQ, QaaqConnect, and other Replit apps through unified WhatsApp interface
+- **Database Access**: Direct access to shared QAAQ database for consistent user data across all platforms
 
 ### Database Design
 - **Users Table**: Stores user profiles with sailor/local distinction, verification status, and login tracking
@@ -115,9 +121,10 @@ Google Maps Controls: Transparent icon-only buttons positioned in bottom-left co
 ## External Dependencies
 
 ### Core Infrastructure
-- **QAAQ Admin Database**: PostgreSQL database with authentic maritime user data (12 users including sailors and local guides)
-- **SendGrid**: Email delivery service for verification
-- **Replit**: Development and deployment platform
+- **Shared QAAQ Database**: PostgreSQL database serving both QAAQ and QaaqConnect with authentic maritime user data
+- **WhatsApp Bot Services**: QBOT and QOI GPT providing unified bot services across multiple Replit apps
+- **Gmail SMTP**: Email delivery service for verification
+- **Replit**: Development and deployment platform for all integrated apps
 
 ### UI and Styling
 - **Radix UI**: Accessible component primitives
