@@ -296,7 +296,7 @@ export default function DMPage() {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2 text-navy">
               <Navigation size={20} />
-              <span>Discover Professionals ({filteredUsers.length})</span>
+              <span>Top Q Professionals ({filteredUsers.length})</span>
             </CardTitle>
           </CardHeader>
           <CardContent>

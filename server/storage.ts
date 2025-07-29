@@ -62,14 +62,7 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log(`Getting user data for ID: ${id}`);
       
-      // First check main database (where seeded maritime users are stored)
-      const localUser = await db.select().from(users).where(eq(users.id, id)).limit(1);
-      if (localUser.length > 0) {
-        console.log(`Found user in main database (seeded data): ${localUser[0].fullName}`);
-        return localUser[0];
-      }
-      
-      // Fallback to QAAQ admin database for legacy users
+      // Use raw SQL query to avoid Drizzle schema mismatch issues
       const result = await pool.query('SELECT * FROM users WHERE id = $1 LIMIT 1', [id]);
       console.log(`QAAQ database query result: ${result.rows.length} rows found`);
       

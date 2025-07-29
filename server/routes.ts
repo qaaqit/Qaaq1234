@@ -399,110 +399,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get nearest users based on user's location  
-  app.get("/api/users/nearby", authenticateToken, async (req, res) => {
-    try {
-      const userId = req.userId!;
-      console.log('Nearby users API called for userId:', userId);
-      
-      // Get user data (this will check local database first, then QAAQ)
-      const currentUser = await storage.getUser(userId);
-      console.log('Retrieved user from storage:', !!currentUser);
-      
-      console.log('Debug user data:', {
-        id: currentUser?.id,
-        fullName: currentUser?.fullName,
-        city: currentUser?.city,
-        country: currentUser?.country,
-        deviceLat: currentUser?.deviceLatitude,
-        deviceLon: currentUser?.deviceLongitude,
-        lat: currentUser?.latitude,
-        lon: currentUser?.longitude
-      });
-      
-      // Priority order: device location -> Present City coordinates
-      let userLat: number | null = null;
-      let userLon: number | null = null;
-      let locationSource = 'unknown';
-      
-      // First priority: Device location for precise positioning
-      if (currentUser?.deviceLatitude && currentUser?.deviceLongitude && 
-          currentUser.deviceLatitude !== 0 && currentUser.deviceLongitude !== 0) {
-        userLat = parseFloat(currentUser.deviceLatitude.toString());
-        userLon = parseFloat(currentUser.deviceLongitude.toString());
-        locationSource = 'device';
-        console.log('Using device location:', userLat, userLon);
-      } 
-      // Second priority: Present City coordinates from seeded maritime data
-      else if (currentUser?.latitude && currentUser?.longitude && 
-               currentUser.latitude !== 0 && currentUser.longitude !== 0) {
-        userLat = parseFloat(currentUser.latitude.toString());
-        userLon = parseFloat(currentUser.longitude.toString());
-        locationSource = 'city';
-        console.log('Using Present City location:', userLat, userLon, 'for', currentUser.city, currentUser.country);
-      }
-      
-      if (!currentUser || !userLat || !userLon) {
-        console.log('No valid location found - user:', !!currentUser, 'lat:', userLat, 'lon:', userLon);
-        return res.status(400).json({ message: "User location not available" });
-      }
 
-      const allUsers = await storage.getUsersWithLocation();
-      const otherUsers = allUsers.filter(user => user.id !== currentUser.id);
-      
-      // Calculate distance using Haversine formula
-      const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-        const R = 6371; // Earth's radius in kilometers
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLon = (lon2 - lon1) * Math.PI / 180;
-        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                  Math.sin(dLon/2) * Math.sin(dLon/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        return R * c;
-      };
-
-      // Calculate distances and sort by nearest
-      const usersWithDistance = otherUsers.map(user => {
-        // Get user coordinates from available sources
-        let lat = user.latitude || user.deviceLatitude;
-        let lon = user.longitude || user.deviceLongitude;
-        
-        if (!lat || !lon) {
-          // Return very far distance if no location available
-          return { ...user, distance: 999999 };
-        }
-        
-        return {
-          ...user,
-          distance: calculateDistance(userLat!, userLon!, parseFloat(lat.toString()), parseFloat(lon.toString()))
-        };
-      }).sort((a, b) => a.distance - b.distance);
-
-      // Return nearest 10 users
-      const nearestUsers = usersWithDistance.slice(0, 10).map(user => ({
-        id: user.id,
-        fullName: user.fullName,
-        userType: user.userType,
-        rank: user.rank,
-        shipName: user.shipName,
-        imoNumber: user.imoNumber,
-        port: user.port,
-        visitWindow: user.visitWindow,
-        city: user.city,
-        country: user.country,
-        latitude: user.latitude,
-        longitude: user.longitude,
-        distance: user.distance,
-        questionCount: user.questionCount
-      }));
-
-      res.json(nearestUsers);
-    } catch (error) {
-      console.error('Get nearby users error:', error);
-      res.status(500).json({ message: "Failed to get nearby users" });
-    }
-  });
 
   // Admin middleware
   const isAdmin = async (req: any, res: any, next: any) => {
@@ -804,38 +701,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get nearby users for DM discovery with distance calculation
-  app.get('/api/users/nearby', authenticateToken, async (req, res) => {
+  // Get top 9 users by question count for DM discovery
+  app.get('/api/users/nearby', async (req, res) => {
     try {
-      const currentUser = await storage.getUser(req.userId!);
-      if (!currentUser) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      // Check if user has location (use default coordinates if not set)
-      const userLat = currentUser.latitude || 19.153681878658244; // Default Mumbai coordinates
-      const userLon = currentUser.longitude || 72.83274841;
-
-      const allUsers = await storage.getUsersWithLocation();
+      console.log('Getting top Q users for DM discovery');
       
-      // Calculate distance for each user and filter out current user
-      const usersWithDistance = allUsers
-        .filter(user => user.id !== currentUser.id)
+      const allUsers = await storage.getUsersWithLocation();
+      console.log(`Found ${allUsers.length} users with location data`);
+      
+      // Sort by question count in descending order, take top 9, and add distance placeholder
+      const topQuestionUsers = allUsers
+        .sort((a, b) => (b.questionCount || 0) - (a.questionCount || 0))
+        .slice(0, 9)
         .map(user => {
-          const distance = calculateDistance(
-            currentUser.latitude || 0,
-            currentUser.longitude || 0,
-            user.latitude || 0,
-            user.longitude || 0
-          );
-          return { ...user, distance };
-        })
-        .sort((a, b) => a.distance - b.distance);
+          console.log(`User: ${user.fullName}, Q: ${user.questionCount || 0}`);
+          return { ...user, distance: 0 }; // Distance not relevant for Q-based sorting
+        });
 
-      res.json(usersWithDistance);
+      console.log(`Returning ${topQuestionUsers.length} top Q users`);
+      res.json(topQuestionUsers);
     } catch (error) {
-      console.error('Get nearby users error:', error);
-      res.status(500).json({ message: "Failed to get nearby users" });
+      console.error('Get top question users error:', error);
+      res.status(500).json({ message: "Failed to get top question users" });
     }
   });
 
