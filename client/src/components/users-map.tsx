@@ -278,24 +278,23 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
           />
         )}
         
-        {/* Scanning radar animation on the radius circle */}
+        {/* Scanning radar animation overlaid on user's location */}
         {userLocation && (
           <Marker
             position={[userLocation.lat, userLocation.lng]}
             icon={divIcon({
               html: `
                 <div style="
-                  width: 300px;
-                  height: 300px;
+                  width: 0px;
+                  height: 0px;
                   position: relative;
                   pointer-events: none;
-                  transform: translate(-50%, -50%);
                 ">
-                  <!-- Rotating scan line -->
+                  <!-- Rotating scan line from user center -->
                   <div style="
                     position: absolute;
-                    top: 150px;
-                    left: 150px;
+                    top: 0px;
+                    left: 0px;
                     width: 2px;
                     height: 120px;
                     background: linear-gradient(to bottom, rgba(8,145,178,0.8), transparent);
@@ -307,9 +306,8 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
                   <!-- Counter display -->
                   <div style="
                     position: absolute;
-                    top: 10px;
-                    left: 50%;
-                    transform: translateX(-50%);
+                    top: -40px;
+                    left: -20px;
                     background: rgba(8,145,178,0.9);
                     color: white;
                     padding: 4px 8px;
@@ -322,9 +320,8 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
                   <!-- Koi Hai text -->
                   <div style="
                     position: absolute;
-                    bottom: 10px;
-                    left: 50%;
-                    transform: translateX(-50%);
+                    top: 130px;
+                    left: -25px;
                     color: rgba(128,128,128,0.7);
                     font-size: 10px;
                     font-weight: bold;
@@ -361,8 +358,8 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
                 </div>
               `,
               className: 'radar-animation',
-              iconSize: [300, 300],
-              iconAnchor: [150, 150],
+              iconSize: [0, 0],
+              iconAnchor: [0, 0],
             })}
           />
         )}
