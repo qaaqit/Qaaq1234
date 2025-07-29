@@ -381,8 +381,11 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
                   border-radius: 50%;
                   color: white;
                   font-size: 20px;
+                  cursor: pointer;
                   box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-                ">
+                " 
+                title="Press to see Who's there?"
+                onclick="window.location.href = window.location.href.includes('#') ? window.location.href : window.location.href + '#koi-hai'">
                   📍
                 </div>
               `,
@@ -400,37 +403,7 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
           </Marker>
         )}
         
-        {/* Koi Hai Button - Positioned over the red pin */}
-        {userLocation && (
-          <Marker
-            position={[userLocation.lat, userLocation.lng]}
-            icon={divIcon({
-              html: `
-                <div style="
-                  width: 40px;
-                  height: 40px;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  background: #ef4444;
-                  border: 3px solid white;
-                  border-radius: 50%;
-                  color: white;
-                  font-size: 20px;
-                  cursor: pointer;
-                  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-                " 
-                title="Press to see Who's there?"
-                onclick="window.location.href = window.location.href.includes('#') ? window.location.href : window.location.href + '#koi-hai'">
-                  📍
-                </div>
-              `,
-              className: 'koi-hai-button',
-              iconSize: [60, 60],
-              iconAnchor: [30, 30], // Centered on the user pin position
-            })}
-          />
-        )}
+
         
         {showUsers && !isLoading && users.map((user) => (
           <Marker
