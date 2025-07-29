@@ -166,14 +166,7 @@ export default function Home({ onSuccess }: HomeProps) {
                 </Button>
               </form>
               
-              {/* Demo Password Info */}
-              <div className="mt-6 pt-4 border-t border-gray-200/50">
-                <p className="text-center text-sm text-gray-600">
-                  <span className="inline-block bg-duck-yellow/20 text-duck-yellow px-2 py-1 rounded text-xs font-medium">
-                    Demo Password: 1234koihai
-                  </span>
-                </p>
-              </div>
+              
             </>
           )}
         </div>
