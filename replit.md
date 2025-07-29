@@ -159,7 +159,7 @@ Google Maps Controls: Transparent icon-only buttons positioned in bottom-left co
 - **User Discovery on Google Maps**: Integrated nearby user fetching and display on premium Google Maps
 - **Map Type Toggle**: Added UI controls to switch between standard Leaflet maps and premium Google Maps
 - **Maritime-themed Styling**: Applied navy blue water styling and maritime-focused map customization
-- **Auto-fit Bounds**: Automatically adjusts map view to show all discovered users
+- **Smart Zoom Logic**: Implemented same intelligent zoom rule as regular map - centers on user location with expanding radius (50km → 500km) until at least 9 users are shown
 - **Premium User Detection**: Enhanced user authentication to identify premium users (admin accounts)
 - **Interactive Markers**: Custom markers with user info windows, WhatsApp connect buttons, and maritime rank display
 - **Real-time Location**: Integrated device location tracking with Google Maps for enhanced positioning

@@ -76,25 +76,16 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
   // Check if user is premium (admin users for now)
   const isPremiumUser = user?.email === 'mushy.piyush@gmail.com' || user?.id === '+919029010070' || (user as any)?.whatsappNumber === '+919029010070';
 
-  // Fetch nearby users when showUsers is true
-  const { data: users = [], isLoading: usersLoading } = useQuery({
-    queryKey: ['/api/users/nearby', searchQuery],
+  // Always show all users from QAAQ database when "Koi Hai?" is clicked (same as regular map)
+  const { data: users = [], isLoading: usersLoading } = useQuery<GoogleMapsUser[]>({
+    queryKey: ['/api/users/map'],
+    staleTime: 60000, // 1 minute
+    enabled: showUsers && isPremiumUser, // Only fetch when showUsers is true and user is premium
     queryFn: async () => {
-      if (!showUsers) return [];
-      
-      const params = new URLSearchParams();
-      if (searchQuery) params.set('q', searchQuery);
-      
-      const response = await fetch(`/api/users/nearby?${params}`);
-      if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error('Authentication required');
-        }
-        throw new Error('Failed to fetch nearby users');
-      }
+      const response = await fetch('/api/users/map');
+      if (!response.ok) throw new Error('Failed to fetch users');
       return response.json();
-    },
-    enabled: showUsers && isPremiumUser
+    }
   });
 
   useEffect(() => {
@@ -193,8 +184,17 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
     markersRef.current.forEach(marker => marker.setMap(null));
     markersRef.current = [];
 
-    // Add user markers
-    users.forEach((user: any) => {
+    // Filter out users with invalid coordinates (0,0) or very close to 0,0
+    const validUsers = users.filter((u: any) => 
+      u.latitude && u.longitude && 
+      Math.abs(u.latitude) > 0.1 && Math.abs(u.longitude) > 0.1
+    );
+
+    console.log(`Google Maps: Found ${users.length} total users, ${validUsers.length} with valid coordinates`);
+    console.log('User location:', userLocation);
+
+    // Add user markers (only for valid coordinates)
+    validUsers.forEach((user: any) => {
       const marker = new window.google.maps.Marker({
         position: { lat: user.latitude, lng: user.longitude },
         map: map,
@@ -247,13 +247,13 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
     });
 
     // Smart zoom logic: center on user with expanding radius to show at least 9 pins
-    if (showUsers && users.length > 0 && userLocation) {
+    if (showUsers && validUsers.length > 0 && userLocation) {
       let currentRadius = 50; // Start with 50km
       let nearbyUsers = [];
       
       // Keep expanding radius until we have at least 9 users or reach 500km max
       while (nearbyUsers.length < 9 && currentRadius <= 500) {
-        nearbyUsers = users.filter((u: any) => {
+        nearbyUsers = validUsers.filter((u: any) => {
           const distance = calculateDistance(
             userLocation.lat, userLocation.lng,
             u.latitude, u.longitude
@@ -266,6 +266,7 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
         }
       }
       
+      console.log(`Google Maps: Using radius ${currentRadius}km, found ${nearbyUsers.length} nearby users`);
       setMapRadius(currentRadius);
       
       // Set bounds to show the radius circle
@@ -278,10 +279,11 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
       );
       
       map.fitBounds(bounds);
-    } else if (showUsers && users.length > 0 && !userLocation) {
-      // Fallback: show all users if no user location available
+    } else if (showUsers && validUsers.length > 0 && !userLocation) {
+      console.log('Google Maps: No user location, showing all valid users');
+      // Fallback: show all valid users if no user location available
       const bounds = new window.google.maps.LatLngBounds();
-      users.forEach((user: any) => {
+      validUsers.forEach((user: any) => {
         bounds.extend(new window.google.maps.LatLng(user.latitude, user.longitude));
       });
       
