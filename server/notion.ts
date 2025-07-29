@@ -83,11 +83,14 @@ export async function findDatabaseByTitle(title: string) {
  */
 export async function getQuestionCounts(): Promise<Map<string, number>> {
     try {
-        console.log('Attempting to fetch Q&A data from Notion...');
+        console.log('Attempting to fetch Q&A data from QAAQ Maritime Users database...');
         
-        // Query the main page directly to see if it contains a database
+        // Use the correct database ID for QAAQ Maritime Users
+        const QAAQ_USERS_DB_ID = '23e533fe-2f81-8147-85e6-ede63f27b0f5';
+        
         const response = await notion.databases.query({
-            database_id: NOTION_PAGE_ID,
+            database_id: QAAQ_USERS_DB_ID,
+            page_size: 100,
         });
 
         const questionCounts = new Map<string, number>();
@@ -95,35 +98,31 @@ export async function getQuestionCounts(): Promise<Map<string, number>> {
         response.results.forEach((page: any) => {
             const properties = page.properties;
             
-            // Extract name from various possible property names
+            // Extract name from Name property
             let userName = '';
             if (properties.Name?.title?.[0]?.plain_text) {
                 userName = properties.Name.title[0].plain_text;
-            } else if (properties.Title?.title?.[0]?.plain_text) {
-                userName = properties.Title.title[0].plain_text;
-            } else if (properties.name?.title?.[0]?.plain_text) {
-                userName = properties.name.title[0].plain_text;
             }
 
-            // Extract question count from various possible property names
+            // Extract question count from QuestionCount property
             let questionCount = 0;
             if (properties.QuestionCount?.number !== undefined) {
                 questionCount = properties.QuestionCount.number;
-            } else if (properties['Question Count']?.number !== undefined) {
-                questionCount = properties['Question Count'].number;
-            } else if (properties.questioncount?.number !== undefined) {
-                questionCount = properties.questioncount.number;
-            } else if (properties['#']?.number !== undefined) {
-                questionCount = properties['#'].number;
+            }
+
+            // Also extract maritime rank for better matching
+            let maritimeRank = '';
+            if (properties.MaritimeRank?.select?.name) {
+                maritimeRank = properties.MaritimeRank.select.name;
             }
 
             if (userName && questionCount >= 0) {
                 questionCounts.set(userName, questionCount);
-                console.log(`Loaded Q&A data: ${userName} -> ${questionCount} questions`);
+                console.log(`Loaded Q&A data: ${userName} (${maritimeRank}) -> ${questionCount} questions`);
             }
         });
 
-        console.log(`Successfully loaded ${questionCounts.size} user question counts from Notion`);
+        console.log(`Successfully loaded ${questionCounts.size} user question counts from QAAQ Maritime Users database`);
         return questionCounts;
 
     } catch (error) {
