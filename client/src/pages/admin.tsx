@@ -206,6 +206,95 @@ export default function AdminPanel() {
           </Card>
         </div>
 
+        {/* QBOT & QOI GPT Rules */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* QBOT Rules */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center text-blue-600">
+                <i className="fas fa-robot mr-2"></i>
+                QBOT Rules & Guidelines
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-blue-800 mb-2">Core QBOT Functions</h3>
+                <ul className="text-sm text-blue-700 space-y-1">
+                  <li>• Maritime professional networking assistance</li>
+                  <li>• Location-based user discovery ("Koi Hai?" functionality)</li>
+                  <li>• WhatsApp integration for direct communication</li>
+                  <li>• QAAQ Store service recommendations</li>
+                  <li>• Port and ship information queries</li>
+                </ul>
+              </div>
+              
+              <div className="bg-yellow-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-yellow-800 mb-2">Response Guidelines</h3>
+                <ul className="text-sm text-yellow-700 space-y-1">
+                  <li>• Use simple, everyday maritime language</li>
+                  <li>• Prioritize safety and professional standards</li>
+                  <li>• Provide authentic QAAQ database information only</li>
+                  <li>• Direct users to appropriate maritime services</li>
+                  <li>• Maintain confidentiality of user locations</li>
+                </ul>
+              </div>
+
+              <div className="bg-red-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-red-800 mb-2">Restricted Actions</h3>
+                <ul className="text-sm text-red-700 space-y-1">
+                  <li>• No sharing of personal contact details</li>
+                  <li>• No financial or legal advice</li>
+                  <li>• No ship position tracking for security</li>
+                  <li>• No access to confidential maritime data</li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* QOI GPT Rules */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center text-green-600">
+                <i className="fas fa-comments mr-2"></i>
+                QOI GPT Rules & Guidelines
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="bg-green-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-green-800 mb-2">Q&A Functionality</h3>
+                <ul className="text-sm text-green-700 space-y-1">
+                  <li>• Maritime industry question answering</li>
+                  <li>• Professional experience sharing</li>
+                  <li>• Port services and local guidance</li>
+                  <li>• Ship operations and regulations</li>
+                  <li>• Career development advice</li>
+                </ul>
+              </div>
+              
+              <div className="bg-purple-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-purple-800 mb-2">Engagement Standards</h3>
+                <ul className="text-sm text-purple-700 space-y-1">
+                  <li>• Track question and answer counts (XQ YA format)</li>
+                  <li>• Encourage professional networking</li>
+                  <li>• Promote knowledge sharing culture</li>
+                  <li>• Maintain maritime industry focus</li>
+                  <li>• Support career development discussions</li>
+                </ul>
+              </div>
+
+              <div className="bg-orange-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-orange-800 mb-2">Content Moderation</h3>
+                <ul className="text-sm text-orange-700 space-y-1">
+                  <li>• Ensure professional maritime discussions</li>
+                  <li>• Filter non-maritime related content</li>
+                  <li>• Maintain respectful communication</li>
+                  <li>• Protect user privacy and safety</li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* User Management */}
         <Card>
           <CardHeader>
