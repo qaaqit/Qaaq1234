@@ -177,6 +177,76 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
     loadGoogleMaps();
   }, [isPremiumUser, center, mapType, showUsers]);
 
+  // Separate effect for smart zoom when userLocation changes
+  useEffect(() => {
+    if (!map || !isLoaded || !showUsers) return;
+
+    const validUsers = users.filter((u: any) => 
+      u.latitude && u.longitude && 
+      Math.abs(u.latitude) > 0.1 && Math.abs(u.longitude) > 0.1
+    );
+
+    console.log(`Google Maps Smart Zoom: User location changed to:`, userLocation);
+    console.log(`Google Maps Smart Zoom: ${validUsers.length} valid users available`);
+
+    // Smart zoom logic: center on user with expanding radius to show at least 9 pins
+    if (validUsers.length > 0 && userLocation) {
+      let currentRadius = 50; // Start with 50km
+      let nearbyUsers = [];
+      
+      // Keep expanding radius until we have at least 9 users or reach 500km max
+      while (nearbyUsers.length < 9 && currentRadius <= 500) {
+        nearbyUsers = validUsers.filter((u: any) => {
+          const distance = calculateDistance(
+            userLocation.lat, userLocation.lng,
+            u.latitude, u.longitude
+          );
+          return distance <= currentRadius;
+        });
+        
+        if (nearbyUsers.length < 9) {
+          currentRadius += 25; // Expand by 25km increments
+        }
+      }
+      
+      console.log(`Google Maps Smart Zoom: Using radius ${currentRadius}km, found ${nearbyUsers.length} nearby users`);
+      setMapRadius(currentRadius);
+      
+      // Set bounds to show the radius circle
+      const latDelta = currentRadius / 111; // Rough km to degrees conversion
+      const lngDelta = currentRadius / (111 * Math.cos(userLocation.lat * Math.PI / 180));
+      
+      const bounds = new window.google.maps.LatLngBounds(
+        new window.google.maps.LatLng(userLocation.lat - latDelta, userLocation.lng - lngDelta),
+        new window.google.maps.LatLng(userLocation.lat + latDelta, userLocation.lng + lngDelta)
+      );
+      
+      map.fitBounds(bounds);
+    } else if (validUsers.length > 0 && !userLocation) {
+      console.log('Google Maps Smart Zoom: No user location, showing all valid users');
+      // Fallback: show all valid users if no user location available
+      const bounds = new window.google.maps.LatLngBounds();
+      validUsers.forEach((user: any) => {
+        bounds.extend(new window.google.maps.LatLng(user.latitude, user.longitude));
+      });
+      
+      // Add padding around the bounds
+      const center = bounds.getCenter();
+      const ne = bounds.getNorthEast();
+      const sw = bounds.getSouthWest();
+      
+      const latPadding = (ne.lat() - sw.lat()) * 0.1;
+      const lngPadding = (ne.lng() - sw.lng()) * 0.1;
+      
+      const paddedBounds = new window.google.maps.LatLngBounds(
+        new window.google.maps.LatLng(sw.lat() - latPadding, sw.lng() - lngPadding),
+        new window.google.maps.LatLng(ne.lat() + latPadding, ne.lng() + lngPadding)
+      );
+      
+      map.fitBounds(paddedBounds);
+    }
+  }, [map, isLoaded, showUsers, userLocation, users]);
+
   useEffect(() => {
     if (!map || !isLoaded) return;
 
@@ -190,8 +260,7 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
       Math.abs(u.latitude) > 0.1 && Math.abs(u.longitude) > 0.1
     );
 
-    console.log(`Google Maps: Found ${users.length} total users, ${validUsers.length} with valid coordinates`);
-    console.log('User location:', userLocation);
+    console.log(`Google Maps Markers: Found ${users.length} total users, ${validUsers.length} with valid coordinates`);
 
     // Add user markers (only for valid coordinates)
     validUsers.forEach((user: any) => {
@@ -245,64 +314,7 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
 
       markersRef.current.push(marker);
     });
-
-    // Smart zoom logic: center on user with expanding radius to show at least 9 pins
-    if (showUsers && validUsers.length > 0 && userLocation) {
-      let currentRadius = 50; // Start with 50km
-      let nearbyUsers = [];
-      
-      // Keep expanding radius until we have at least 9 users or reach 500km max
-      while (nearbyUsers.length < 9 && currentRadius <= 500) {
-        nearbyUsers = validUsers.filter((u: any) => {
-          const distance = calculateDistance(
-            userLocation.lat, userLocation.lng,
-            u.latitude, u.longitude
-          );
-          return distance <= currentRadius;
-        });
-        
-        if (nearbyUsers.length < 9) {
-          currentRadius += 25; // Expand by 25km increments
-        }
-      }
-      
-      console.log(`Google Maps: Using radius ${currentRadius}km, found ${nearbyUsers.length} nearby users`);
-      setMapRadius(currentRadius);
-      
-      // Set bounds to show the radius circle
-      const latDelta = currentRadius / 111; // Rough km to degrees conversion
-      const lngDelta = currentRadius / (111 * Math.cos(userLocation.lat * Math.PI / 180));
-      
-      const bounds = new window.google.maps.LatLngBounds(
-        new window.google.maps.LatLng(userLocation.lat - latDelta, userLocation.lng - lngDelta),
-        new window.google.maps.LatLng(userLocation.lat + latDelta, userLocation.lng + lngDelta)
-      );
-      
-      map.fitBounds(bounds);
-    } else if (showUsers && validUsers.length > 0 && !userLocation) {
-      console.log('Google Maps: No user location, showing all valid users');
-      // Fallback: show all valid users if no user location available
-      const bounds = new window.google.maps.LatLngBounds();
-      validUsers.forEach((user: any) => {
-        bounds.extend(new window.google.maps.LatLng(user.latitude, user.longitude));
-      });
-      
-      // Add padding around the bounds
-      const center = bounds.getCenter();
-      const ne = bounds.getNorthEast();
-      const sw = bounds.getSouthWest();
-      
-      const latPadding = (ne.lat() - sw.lat()) * 0.1;
-      const lngPadding = (ne.lng() - sw.lng()) * 0.1;
-      
-      const paddedBounds = new window.google.maps.LatLngBounds(
-        new window.google.maps.LatLng(sw.lat() - latPadding, sw.lng() - lngPadding),
-        new window.google.maps.LatLng(ne.lat() + latPadding, ne.lng() + lngPadding)
-      );
-      
-      map.fitBounds(paddedBounds);
-    }
-  }, [map, users, isLoaded, onUserClick, userLocation, showUsers]);
+  }, [map, users, isLoaded, onUserClick]);
 
   const changeMapType = (type: 'roadmap' | 'satellite' | 'hybrid') => {
     setMapType(type);
