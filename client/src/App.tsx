@@ -12,6 +12,7 @@ import Discover from "@/pages/discover";
 import Post from "@/pages/post";
 import Admin from "@/pages/admin";
 import ChatPage from "@/pages/chat";
+import EventsPage from "@/pages/events";
 import NotFound from "@/pages/not-found";
 import BottomNav from "@/components/bottom-nav";
 import Header from "@/components/header";
@@ -58,6 +59,7 @@ function Router() {
           <Route path="/post" component={() => user ? <Post user={user} /> : <Home />} />
           <Route path="/chat" component={() => user ? <ChatPage /> : <Home />} />
           <Route path="/admin" component={() => user ? <Admin /> : <Home />} />
+          <Route path="/events" component={() => user ? <EventsPage /> : <Home />} />
           <Route component={NotFound} />
         </Switch>
       </div>

@@ -1,4 +1,4 @@
-import { users, posts, likes, verificationCodes, chatConnections, chatMessages, type User, type InsertUser, type Post, type InsertPost, type VerificationCode, type Like, type ChatConnection, type ChatMessage, type InsertChatConnection, type InsertChatMessage } from "@shared/schema";
+import { users, posts, likes, verificationCodes, chatConnections, chatMessages, maritimeEvents, eventAttendees, type User, type InsertUser, type Post, type InsertPost, type VerificationCode, type Like, type ChatConnection, type ChatMessage, type InsertChatConnection, type InsertChatMessage, type MaritimeEvent, type EventAttendee, type InsertMaritimeEvent, type InsertEventAttendee } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, desc, and, ilike, or, sql, isNotNull } from "drizzle-orm";
 import { testDatabaseConnection } from "./test-db";
@@ -40,6 +40,14 @@ export interface IStorage {
   sendMessage(connectionId: string, senderId: string, message: string): Promise<ChatMessage>;
   getChatMessages(connectionId: string): Promise<ChatMessage[]>;
   markMessagesAsRead(connectionId: string, userId: string): Promise<void>;
+  
+  // Maritime Events
+  getMaritimeEvents(filters?: { city?: string; country?: string; eventType?: string; status?: string }): Promise<MaritimeEvent[]>;
+  createMaritimeEvent(event: InsertMaritimeEvent & { organizerId: string }): Promise<MaritimeEvent>;
+  getMaritimeEvent(eventId: string): Promise<MaritimeEvent | undefined>;
+  registerForEvent(eventId: string, userId: string): Promise<EventAttendee>;
+  unregisterFromEvent(eventId: string, userId: string): Promise<void>;
+  getEventAttendees(eventId: string): Promise<EventAttendee[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -811,6 +819,114 @@ export class DatabaseStorage implements IStorage {
           sql`${chatMessages.senderId} != ${userId}`
         )
       );
+  }
+
+  // Maritime Events Methods
+  async getMaritimeEvents(filters?: { city?: string; country?: string; eventType?: string; status?: string }): Promise<MaritimeEvent[]> {
+    let query = db.select().from(maritimeEvents);
+    
+    if (filters) {
+      const conditions = [];
+      if (filters.city) conditions.push(eq(maritimeEvents.city, filters.city));
+      if (filters.country) conditions.push(eq(maritimeEvents.country, filters.country));
+      if (filters.eventType) conditions.push(eq(maritimeEvents.eventType, filters.eventType));
+      if (filters.status) conditions.push(eq(maritimeEvents.status, filters.status));
+      
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions));
+      }
+    }
+    
+    return await query.orderBy(desc(maritimeEvents.startTime));
+  }
+
+  async createMaritimeEvent(event: InsertMaritimeEvent & { organizerId: string }): Promise<MaritimeEvent> {
+    const [newEvent] = await db
+      .insert(maritimeEvents)
+      .values(event)
+      .returning();
+    return newEvent;
+  }
+
+  async getMaritimeEvent(eventId: string): Promise<MaritimeEvent | undefined> {
+    const [event] = await db
+      .select()
+      .from(maritimeEvents)
+      .where(eq(maritimeEvents.id, eventId))
+      .limit(1);
+    return event;
+  }
+
+  async registerForEvent(eventId: string, userId: string): Promise<EventAttendee> {
+    // Check if already registered
+    const existing = await db
+      .select()
+      .from(eventAttendees)
+      .where(and(eq(eventAttendees.eventId, eventId), eq(eventAttendees.userId, userId)))
+      .limit(1);
+    
+    if (existing.length > 0) {
+      throw new Error("Already registered for this event");
+    }
+
+    // Check event capacity
+    const event = await this.getMaritimeEvent(eventId);
+    if (!event) {
+      throw new Error("Event not found");
+    }
+
+    if (event.maxAttendees) {
+      const currentAttendees = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(eventAttendees)
+        .where(eq(eventAttendees.eventId, eventId));
+      
+      if (currentAttendees[0].count >= event.maxAttendees) {
+        throw new Error("Event is full");
+      }
+    }
+
+    const [registration] = await db
+      .insert(eventAttendees)
+      .values({ eventId, userId })
+      .returning();
+    
+    // Update current attendees count
+    await db
+      .update(maritimeEvents)
+      .set({ 
+        currentAttendees: sql`${maritimeEvents.currentAttendees} + 1`,
+        updatedAt: sql`now()` 
+      })
+      .where(eq(maritimeEvents.id, eventId));
+
+    return registration;
+  }
+
+  async unregisterFromEvent(eventId: string, userId: string): Promise<void> {
+    const deleted = await db
+      .delete(eventAttendees)
+      .where(and(eq(eventAttendees.eventId, eventId), eq(eventAttendees.userId, userId)))
+      .returning();
+    
+    if (deleted.length > 0) {
+      // Update current attendees count
+      await db
+        .update(maritimeEvents)
+        .set({ 
+          currentAttendees: sql`${maritimeEvents.currentAttendees} - 1`,
+          updatedAt: sql`now()` 
+        })
+        .where(eq(maritimeEvents.id, eventId));
+    }
+  }
+
+  async getEventAttendees(eventId: string): Promise<EventAttendee[]> {
+    return await db
+      .select()
+      .from(eventAttendees)
+      .where(eq(eventAttendees.eventId, eventId))
+      .orderBy(eventAttendees.registeredAt);
   }
 }
 
