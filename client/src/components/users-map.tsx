@@ -313,18 +313,12 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
             <Popup>
               <div className="p-2 min-w-[200px]">
                 <h3 className="font-bold text-gray-900 mb-2">
-                  {user.fullName}
+                  {user.fullName} {user.rank && user.rank !== '' && `(${getRankAbbreviation(user.rank)})`}
                 </h3>
                 {/* Last Company */}
                 {user.company && user.company !== '' && (
                   <p className="text-sm text-gray-700">
                     <span className="font-medium">Last Company:</span> {user.company}
-                  </p>
-                )}
-                {/* Maritime Rank */}
-                {user.rank && user.rank !== '' && (
-                  <p className="text-sm text-gray-700">
-                    <span className="font-medium">Rank:</span> {getRankAbbreviation(user.rank)}
                   </p>
                 )}
                 {/* Last Ship */}

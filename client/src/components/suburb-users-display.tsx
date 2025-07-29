@@ -156,14 +156,10 @@ export default function SuburbUsersDisplay({ suburb, port, country }: SuburbUser
                     )}
                   </div>
                   <div>
-                    <h4 className="font-semibold text-navy">{user.fullName}</h4>
+                    <h4 className="font-semibold text-navy">
+                      {user.fullName} {user.rank && `(${getRankAbbreviation(user.rank)})`}
+                    </h4>
                     <div className="flex items-center space-x-2 text-sm text-gray-600">
-                      {user.rank && (
-                        <>
-                          <span>{getRankAbbreviation(user.rank)}</span>
-                          <span>•</span>
-                        </>
-                      )}
                       <Badge variant="outline" className={
                         user.userType === 'sailor' ? 'border-navy text-navy' : 'border-teal-600 text-teal-600'
                       }>
