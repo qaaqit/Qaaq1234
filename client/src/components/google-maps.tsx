@@ -279,8 +279,7 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
                     
                     <!-- 1234 Animation Container -->
                     <g id="animation-container" style="display: none;">
-                      <!-- 1234 Counter -->
-                      <text x="20" y="15" text-anchor="middle" fill="#ef4444" font-size="8" font-weight="bold" font-family="monospace" id="counter-text">1</text>
+
                       
                       <!-- Koi Hai Circle -->
                       <text x="20" y="25" text-anchor="middle" fill="rgba(239,68,68,0.8)" font-size="4" font-weight="bold" id="koihai-text" style="opacity: 0;">Koi Hai...</text>
@@ -296,14 +295,8 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
                           if (container) {
                             container.style.display = 'block';
                             
-                            // 1234 Counter Animation
-                            let count = 1;
-                            const counterInterval = setInterval(() => {
-                              counter.textContent = count;
-                              count++;
-                              if (count > 4) {
-                                clearInterval(counterInterval);
-                                counter.style.opacity = '0';
+                            // Start Koi Hai animation directly
+                            setTimeout(() => {
                                 
                                 // Start Koi Hai animation
                                 let opacity = 0;
@@ -323,8 +316,6 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
                                     koihai.style.opacity = '0';
                                   }
                                 }, 100);
-                              }
-                            }, 500);
                           }
                         }
                       ]]>
@@ -349,12 +340,7 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
                 icon: {
                   url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
                     <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <!-- 1234 Animation -->
-                      <text x="40" y="30" text-anchor="middle" fill="#ef4444" font-size="16" font-weight="bold" font-family="monospace" id="counter-text">
-                        1
-                        <animate attributeName="opacity" values="0;1;1;0" dur="2s" fill="freeze"/>
-                        <animateTransform attributeName="transform" type="scale" values="0.5;1.2;1.2;0.5" dur="2s" fill="freeze"/>
-                      </text>
+
                       
                       <!-- Koi Hai Growing Circle -->
                       <text x="40" y="50" text-anchor="middle" fill="rgba(239,68,68,0.8)" font-size="8" font-weight="bold" id="koihai-text">
@@ -364,17 +350,7 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
                         <animate attributeName="font-size" values="8;8;12;16;20;24" dur="4s" begin="2s" fill="freeze"/>
                       </text>
                       
-                      <script>
-                        setTimeout(() => {
-                          let count = 1;
-                          const counter = document.getElementById('counter-text');
-                          const interval = setInterval(() => {
-                            if (counter) counter.textContent = count;
-                            count++;
-                            if (count > 4) clearInterval(interval);
-                          }, 500);
-                        }, 100);
-                      </script>
+
                     </svg>
                   `),
                   scaledSize: new window.google.maps.Size(80, 80),

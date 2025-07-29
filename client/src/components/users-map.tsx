@@ -323,19 +323,7 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
                     animation: radarScan 4s linear infinite;
                   "></div>
                   
-                  <!-- Counter display -->
-                  <div style="
-                    position: absolute;
-                    top: -40px;
-                    left: -20px;
-                    background: rgba(8,145,178,0.9);
-                    color: white;
-                    padding: 4px 8px;
-                    border-radius: 12px;
-                    font-size: 12px;
-                    font-weight: bold;
-                    font-family: monospace;
-                  " class="radar-counter">1</div>
+
                   
                   <!-- Koi Hai text -->
                   <div style="
@@ -361,20 +349,6 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
                       88%, 100% { opacity: 1; }
                     }
                   </style>
-                  
-                  <script>
-                    (function() {
-                      const counter = document.querySelector('.radar-counter');
-                      if (counter && !counter.dataset.initialized) {
-                        counter.dataset.initialized = 'true';
-                        let count = 1;
-                        setInterval(() => {
-                          count = count >= 4 ? 1 : count + 1;
-                          counter.textContent = count;
-                        }, 2000);
-                      }
-                    })();
-                  </script>
                 </div>
               `,
               className: 'radar-animation',
