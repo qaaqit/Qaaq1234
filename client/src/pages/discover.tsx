@@ -31,7 +31,7 @@ interface DiscoverProps {
 
 export default function Discover({ user }: DiscoverProps) {
   const { toast } = useToast();
-  const [searchQuery, setSearchQuery] = useState("");
+
   const [selectedCategory, setSelectedCategory] = useState("");
   const [showUsers, setShowUsers] = useState(false);
   const [showWhatsAppPanel, setShowWhatsAppPanel] = useState(false);
@@ -42,21 +42,11 @@ export default function Discover({ user }: DiscoverProps) {
   const { location, error: locationError, isLoading: locationLoading, requestDeviceLocation, updateShipLocation } = useLocation(user?.id, true);
   
   const { data: posts = [], isLoading, refetch } = useQuery<Post[]>({
-    queryKey: searchQuery ? ['/api/posts/search', searchQuery, selectedCategory] : ['/api/posts'],
+    queryKey: ['/api/posts'],
     queryFn: async () => {
-      if (searchQuery) {
-        const params = new URLSearchParams({
-          q: searchQuery,
-          ...(selectedCategory && { category: selectedCategory })
-        });
-        const response = await fetch(`/api/posts/search?${params}`);
-        if (!response.ok) throw new Error('Search failed');
-        return response.json();
-      } else {
-        const response = await fetch('/api/posts');
-        if (!response.ok) throw new Error('Failed to load posts');
-        return response.json();
-      }
+      const response = await fetch('/api/posts');
+      if (!response.ok) throw new Error('Failed to load posts');
+      return response.json();
     }
   });
 
@@ -172,48 +162,26 @@ export default function Discover({ user }: DiscoverProps) {
           </div>
         )}
 
-        {/* Search Row */}
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              {/* Premium Crown Toggle */}
-              <Button
-                onClick={() => {
-                  setIsPremiumMode(!isPremiumMode);
-                  setMapType(isPremiumMode ? 'leaflet' : 'google');
-                }}
-                variant={isPremiumMode ? 'default' : 'outline'}
-                size="sm"
-                className={`absolute left-2 top-1/2 transform -translate-y-1/2 z-10 h-8 w-8 p-0 rounded-full ${
-                  isPremiumMode 
-                    ? 'bg-yellow-500 hover:bg-yellow-600 text-white border-yellow-500' 
-                    : 'bg-white hover:bg-yellow-50 text-yellow-600 border-yellow-300'
-                }`}
-                title={isPremiumMode ? 'Premium Mode Active' : 'Activate Premium Mode'}
-              >
-                <Crown className="w-4 h-4" />
-              </Button>
-              
-              <i className="fas fa-search absolute left-12 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-              <Input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-20 pr-4 py-3 text-lg border-gray-200 focus:border-ocean-teal"
-                placeholder="ek, do, teen, char..."
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-              />
-              
-              {/* Premium Mode Indicator */}
-              {isPremiumMode && (
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                  <Badge className="bg-yellow-500 text-white text-xs">
-                    Premium
-                  </Badge>
-                </div>
-              )}
-            </div>
-          </div>
+        {/* Direct Koi Hai Discovery */}
+        <div className="flex flex-col md:flex-row gap-4 items-center justify-center">
+          {/* Premium Crown Toggle */}
+          <Button
+            onClick={() => {
+              setIsPremiumMode(!isPremiumMode);
+              setMapType(isPremiumMode ? 'leaflet' : 'google');
+            }}
+            variant={isPremiumMode ? 'default' : 'outline'}
+            size="sm"
+            className={`h-10 w-10 p-0 rounded-full ${
+              isPremiumMode 
+                ? 'bg-yellow-500 hover:bg-yellow-600 text-white border-yellow-500' 
+                : 'bg-white hover:bg-yellow-50 text-yellow-600 border-yellow-300'
+            }`}
+            title={isPremiumMode ? 'Premium Mode Active' : 'Activate Premium Mode'}
+          >
+            <Crown className="w-5 h-5" />
+          </Button>
+
           <Button 
             onClick={handleSearch}
             className="bg-ocean-teal hover:bg-cyan-600 text-white px-8 py-3 text-lg font-bold flex items-center gap-2"
@@ -221,6 +189,13 @@ export default function Discover({ user }: DiscoverProps) {
             <MapPin className="w-5 h-5" />
             🌊 Koi Hai? (Who's there?)
           </Button>
+
+          {/* Premium Mode Indicator */}
+          {isPremiumMode && (
+            <Badge className="bg-yellow-500 text-white text-sm px-3 py-1">
+              Premium Mode
+            </Badge>
+          )}
         </div>
       </div>
 
@@ -260,12 +235,12 @@ export default function Discover({ user }: DiscoverProps) {
               <div className="w-full h-full">
                 <GoogleMaps 
                   showUsers={showUsers}
-                  searchQuery={searchQuery}
+                  searchQuery=""
                   center={{ lat: 19.076, lng: 72.8977 }}
                 />
               </div>
             ) : (
-              <UsersMap showUsers={showUsers} searchQuery={searchQuery} />
+              <UsersMap showUsers={showUsers} searchQuery="" />
             )}
             
             {/* WhatsApp Bot Control Panel - positioned outside map */}

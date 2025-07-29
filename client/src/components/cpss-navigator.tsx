@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
+import { Search } from "lucide-react";
 import QaaqStore from "./qaaq-store";
 import SuburbUsersDisplay from "./suburb-users-display";
 
@@ -197,6 +198,8 @@ export default function CPSSNavigator({ onServiceSelect }: CPSSNavigatorProps) {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<CPSSItem[]>([]);
   const [editingItem, setEditingItem] = useState<CPSSItem | null>(null);
   const [editForm, setEditForm] = useState({
     title: '',
@@ -445,11 +448,99 @@ export default function CPSSNavigator({ onServiceSelect }: CPSSNavigatorProps) {
     }
   };
 
+  // Search functionality
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    // Search through all items in the CPSS structure
+    const allItems: CPSSItem[] = [];
+    const collectItems = (levels: CPSSLevel[]) => {
+      levels.forEach(level => {
+        if (level.items) {
+          allItems.push(...level.items);
+        }
+        if (level.children) {
+          collectItems(level.children);
+        }
+      });
+    };
+    collectItems(cpssData);
+
+    // Filter items based on search query
+    const filtered = allItems.filter(item =>
+      item.title.toLowerCase().includes(query.toLowerCase()) ||
+      item.content.toLowerCase().includes(query.toLowerCase()) ||
+      item.author.toLowerCase().includes(query.toLowerCase()) ||
+      item.location.toLowerCase().includes(query.toLowerCase()) ||
+      item.category.toLowerCase().includes(query.toLowerCase()) ||
+      item.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase()))
+    );
+
+    setSearchResults(filtered);
+  };
+
   return (
     <div className="space-y-4">
-      {/* Breadcrumb Navigation */}
-      {breadcrumb.length > 0 && (
-        <div className="flex items-center space-x-2 text-sm">
+      {/* Search Bar */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+        <Input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => handleSearch(e.target.value)}
+          className="pl-10 pr-4 py-3 text-lg border-gray-200 focus:border-ocean-teal"
+          placeholder="Search maritime services, locations, events..."
+        />
+      </div>
+
+      {/* Search Results */}
+      {searchQuery && searchResults.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-lg font-semibold text-navy">Search Results ({searchResults.length})</h3>
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {searchResults.map((item) => (
+              <Card key={item.id} className="hover:shadow-md transition-shadow border border-gray-200">
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <Badge className={getLevelColor('service')}>{item.category}</Badge>
+                        <span className="text-sm text-gray-500">{item.location}</span>
+                      </div>
+                      <h4 className="font-semibold text-navy mb-1">{item.title}</h4>
+                      <p className="text-gray-600 text-sm mb-2">{item.content}</p>
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <span>{item.author} {item.authorRank && `• ${item.authorRank}`}</span>
+                        <span>{formatTimeAgo(item.createdAt)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Show "No results" message */}
+      {searchQuery && searchResults.length === 0 && (
+        <div className="text-center py-8 text-gray-500">
+          <Search className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+          <p>No results found for "{searchQuery}"</p>
+          <p className="text-sm mt-1">Try different keywords or browse by location</p>
+        </div>
+      )}
+
+      {/* Only show navigation when not searching */}
+      {!searchQuery && (
+        <>
+          {/* Breadcrumb Navigation */}
+          {breadcrumb.length > 0 && (
+            <div className="flex items-center space-x-2 text-sm">
           <Button
             variant="ghost"
             size="sm"
@@ -471,8 +562,8 @@ export default function CPSSNavigator({ onServiceSelect }: CPSSNavigatorProps) {
               </Button>
             </div>
           ))}
-        </div>
-      )}
+            </div>
+          )}
 
       {/* Current Level Title */}
       <h3 className="text-lg font-semibold text-navy">{getLevelTitle()}</h3>
@@ -798,6 +889,8 @@ export default function CPSSNavigator({ onServiceSelect }: CPSSNavigatorProps) {
           </div>
         </DialogContent>
       </Dialog>
+        </>
+      )}
     </div>
   );
 }
