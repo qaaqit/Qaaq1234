@@ -105,7 +105,7 @@ export default function Post({ user }: PostProps) {
             </div>
             <div>
               <h1 className="text-2xl font-bold">QaaqConnect</h1>
-              <p className="text-sm text-white/80">Share your maritime experience</p>
+              <p className="text-sm text-white/80">Share your experience</p>
             </div>
           </button>
         </div>

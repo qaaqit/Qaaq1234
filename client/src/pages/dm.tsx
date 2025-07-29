@@ -161,7 +161,7 @@ export default function DMPage() {
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold">QaaqConnect</h1>
-                  <p className="text-sm text-white/80">QChat - Connect with maritime professionals</p>
+                  <p className="text-sm text-white/80">Connect with maritime professionals</p>
                 </div>
               </button>
             </div>
