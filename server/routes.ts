@@ -837,6 +837,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bot Documentation Routes
+  app.get("/api/bot-documentation/:key", async (req, res) => {
+    try {
+      const { key } = req.params;
+      const result = await pool.query(
+        'SELECT * FROM bot_documentation WHERE doc_key = $1',
+        [key]
+      );
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: "Documentation not found" });
+      }
+      
+      res.json(result.rows[0]);
+    } catch (error) {
+      console.error("Error fetching bot documentation:", error);
+      res.status(500).json({ error: "Failed to fetch bot documentation" });
+    }
+  });
+
+  app.get("/api/bot-documentation", async (req, res) => {
+    try {
+      const result = await pool.query(
+        'SELECT doc_key, doc_type, created_at, updated_at FROM bot_documentation ORDER BY created_at DESC'
+      );
+      res.json(result.rows);
+    } catch (error) {
+      console.error("Error listing bot documentation:", error);
+      res.status(500).json({ error: "Failed to list bot documentation" });
+    }
+  });
+
 
   const httpServer = createServer(app);
   return httpServer;

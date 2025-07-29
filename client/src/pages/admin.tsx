@@ -41,6 +41,8 @@ export default function AdminPanel() {
   const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("metrics");
+  const [qbotRules, setQbotRules] = useState<string>("");
+  const [loadingRules, setLoadingRules] = useState(false);
 
   // Fetch admin stats
   const { data: stats, isLoading: statsLoading } = useQuery<AdminStats>({
@@ -51,6 +53,27 @@ export default function AdminPanel() {
   const { data: users, isLoading: usersLoading } = useQuery<AdminUser[]>({
     queryKey: ["/api/admin/users"],
   });
+
+  // Fetch QBOT rules from database
+  useEffect(() => {
+    if (activeTab === 'qbot' && !qbotRules) {
+      setLoadingRules(true);
+      fetch('/api/bot-documentation/QBOTRULESV1')
+        .then(res => res.json())
+        .then(data => {
+          if (data.doc_value) {
+            setQbotRules(data.doc_value);
+          } else {
+            setQbotRules('Failed to load QBOT rules from database.');
+          }
+        })
+        .catch(err => {
+          console.error('Failed to load QBOT rules:', err);
+          setQbotRules('Error loading QBOT rules. Please check database connection.');
+        })
+        .finally(() => setLoadingRules(false));
+    }
+  }, [activeTab, qbotRules]);
 
   // Filter users based on search
   const filteredUsers = users?.filter(user =>
@@ -358,6 +381,34 @@ START → Step 1 → Step 2 → Step 3/4
                 </CardContent>
               </Card>
             </div>
+
+            {/* QBOT Rules Content */}
+            <Card className="col-span-full">
+              <CardHeader>
+                <CardTitle className="flex items-center text-navy">
+                  <i className="fas fa-file-alt mr-2"></i>
+                  QBOT Rules Documentation (From Database)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loadingRules ? (
+                  <div className="flex items-center justify-center py-8">
+                    <i className="fas fa-spinner fa-spin text-2xl text-ocean-teal mr-2"></i>
+                    <span>Loading rules from database...</span>
+                  </div>
+                ) : (
+                  <div className="prose prose-sm max-w-none">
+                    <pre className="whitespace-pre-wrap bg-gray-50 p-4 rounded-lg text-xs overflow-auto max-h-[600px]">
+                      {qbotRules || 'No rules loaded yet.'}
+                    </pre>
+                    <div className="mt-4 text-sm text-gray-600">
+                      <i className="fas fa-database mr-1"></i>
+                      Rules loaded from shared QAAQ database (bot_documentation table)
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* QOI GPT Rules Tab */}

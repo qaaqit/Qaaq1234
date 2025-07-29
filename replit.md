@@ -46,6 +46,7 @@ Google Maps Controls: Transparent icon-only buttons positioned in bottom-left co
 - **QOI GPT**: WhatsApp bot for Q&A functionality, professional experience sharing, and maritime guidance
 - **Shared Service**: Both bots serve QAAQ, QaaqConnect, and other Replit apps through unified WhatsApp interface
 - **Database Access**: Direct access to shared QAAQ database for consistent user data across all platforms
+- **Bot Documentation Storage**: Bot rules and documentation stored in bot_documentation table, accessible by all sister apps via simple key-value queries
 
 ### Database Design
 - **Users Table**: Stores user profiles with sailor/local distinction, verification status, and login tracking
@@ -159,6 +160,14 @@ Google Maps Controls: Transparent icon-only buttons positioned in bottom-left co
 - Environment-based configuration
 
 ## Recent Changes
+
+### Bot Rules Database Storage (January 29, 2025)
+- **QBOT Rules Storage**: Successfully stored QBOTRULESV1.md in shared QAAQ database using bot_documentation table
+- **Cross-App Accessibility**: All sister apps can now access bot rules via SQL query: `SELECT doc_value FROM bot_documentation WHERE doc_key = 'QBOTRULESV1'`
+- **Database Architecture**: Created simple key-value bot_documentation table for storing bot documentation and rules
+- **Admin Panel Integration**: Updated admin panel to fetch and display QBOT rules dynamically from database instead of static files
+- **API Endpoints**: Added `/api/bot-documentation/:key` and `/api/bot-documentation` endpoints for accessing bot rules
+- **Real-time Updates**: Sister apps can freely read, update, and share bot documentation in real-time through the shared database
 
 ### Navigation Streamlining & Q&A Integration (January 29, 2025)  
 - **Bottom Navigation Reduction**: Reduced to 2 tabs for regular users (Ch13 DM, Ch16 Broadcast) and 3 tabs for admin users (+ Admin Panel)
