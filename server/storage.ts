@@ -2,6 +2,7 @@ import { users, posts, likes, verificationCodes, chatConnections, chatMessages, 
 import { db, pool } from "./db";
 import { eq, desc, and, ilike, or, sql, isNotNull } from "drizzle-orm";
 import { testDatabaseConnection } from "./test-db";
+import { getQuestionCounts } from "./notion";
 
 export interface IStorage {
   // User management
@@ -120,6 +121,37 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error('Get user error:', error);
       return undefined;
+    }
+  }
+
+  // Question count tracking from Notion database
+  private questionCountsCache: Map<string, number> | null = null;
+  
+  private async getQuestionCountForUser(fullName: string, rank: string): Promise<number> {
+    try {
+      // Load question counts from Notion if not cached
+      if (!this.questionCountsCache) {
+        this.questionCountsCache = await getQuestionCounts();
+      }
+      
+      // Try exact name match first
+      if (this.questionCountsCache.has(fullName)) {
+        return this.questionCountsCache.get(fullName)!;
+      }
+      
+      // Try partial name matching
+      for (const [notionName, count] of this.questionCountsCache.entries()) {
+        if (notionName.toLowerCase().includes(fullName.toLowerCase()) || 
+            fullName.toLowerCase().includes(notionName.toLowerCase())) {
+          return count;
+        }
+      }
+      
+      // Default to 0 if no match found
+      return 0;
+    } catch (error) {
+      console.error('Error getting question count for user:', error);
+      return 0;
     }
   }
 
@@ -430,7 +462,7 @@ export class DatabaseStorage implements IStorage {
         }
       }
       
-      const mappedUsers = result.rows.map((user, index) => {
+      const mappedUsers = await Promise.all(result.rows.map(async (user, index) => {
         // Better name resolution using actual database fields
         const firstName = user.first_name || '';
         const lastName = user.last_name || '';
@@ -584,16 +616,8 @@ export class DatabaseStorage implements IStorage {
         
         console.log(`Mapped ${userType} ${fullName} from ${city}, ${country} (${latitude}, ${longitude}) - source: ${locationSource}`);
 
-        // Simulate question counts based on user data - this would come from QAAQ admin panel Q&A system
-        const getQuestionCount = (userName: string, userRank: string) => {
-          // Simulate realistic Q&A metrics based on user patterns
-          const nameHash = userName.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
-          const baseCount = nameHash % 25; // 0-24 base range
-          const rankBonus = userRank ? userRank.length % 10 : 0; // Rank-based bonus
-          return Math.max(1, baseCount + rankBonus); // Ensure minimum 1 question
-        };
-
-        const questionCount = getQuestionCount(fullName, rank);
+        // Get real question count from Notion database
+        const questionCount = await this.getQuestionCountForUser(fullName, rank);
 
         return {
           id: user.id,
@@ -621,7 +645,7 @@ export class DatabaseStorage implements IStorage {
           questionCount: questionCount,
           answerCount: 0 // Not used in current UI
         } as User & { whatsappNumber: string; company?: string };
-      }).filter(user => user !== null);
+      })).filter(user => user !== null);
 
       console.log(`Returning ${mappedUsers.length} QAAQ users with coordinates for map and WhatsApp bot`);
       return mappedUsers;
