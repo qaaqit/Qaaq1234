@@ -118,6 +118,8 @@ export class DatabaseStorage implements IStorage {
         loginCount: user.login_count || 1,
         lastLogin: user.last_login || new Date(),
         createdAt: user.created_at || new Date(),
+        questionCount: user.question_count || 0,
+        answerCount: user.answer_count || 0,
       } as User;
       
       console.log(`User ${id} final location: city=${userObj.city}, lat=${userObj.latitude}, lng=${userObj.longitude}, deviceLat=${userObj.deviceLatitude}`);
