@@ -245,7 +245,7 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
                     <text x="100" y="17" text-anchor="middle" fill="white" font-size="10" font-weight="bold" id="gmaps-counter">1</text>
                     
                     <!-- Koi Hai text at bottom -->
-                    <text x="100" y="190" text-anchor="middle" fill="rgba(128,128,128,0.7)" font-size="10" font-weight="bold" class="koihai-text">Koi Hai...</text>
+                    <text x="100" y="190" text-anchor="middle" fill="rgba(128,128,128,0.7)" font-size="10" font-weight="bold" font-family="Arial Rounded MT Bold, Helvetica Rounded, Arial, sans-serif" class="koihai-text">Koi Hai...</text>
                     
                     <script type="text/javascript">
                       <![CDATA[
@@ -284,7 +284,7 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
 
                       
                       <!-- Koi Hai Circle -->
-                      <text x="20" y="25" text-anchor="middle" fill="rgba(239,68,68,0.8)" font-size="4" font-weight="bold" id="koihai-text" style="opacity: 0;">Koi Hai...</text>
+                      <text x="20" y="25" text-anchor="middle" fill="rgba(239,68,68,0.8)" font-size="4" font-weight="bold" font-family="Arial Rounded MT Bold, Helvetica Rounded, Arial, sans-serif" id="koihai-text" style="opacity: 0;">Koi Hai...</text>
                     </g>
                     
                     <script type="application/ecmascript">
@@ -311,13 +311,13 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
                                     koihai.style.opacity = opacity;
                                     koihai.style.fontSize = fontSize + 'px';
                                     koihai.style.transform = 'scale(' + scale + ')';
-                                    scale += 0.1;
-                                    fontSize += 0.5;
+                                    scale += 0.15;
+                                    fontSize += 0.8;
                                   } else {
                                     clearInterval(koihaiInterval);
                                     koihai.style.opacity = '0';
                                   }
-                                }, 100);
+                                }, 50);
                           }
                         }
                       ]]>

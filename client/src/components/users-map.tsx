@@ -438,8 +438,9 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
                       color: rgba(239, 68, 68, 0.8);
                       font-size: 8px;
                       font-weight: bold;
+                      font-family: 'Arial Rounded MT Bold', 'Helvetica Rounded', Arial, sans-serif;
                       text-align: center;
-                      animation: koihaiGrow 4s ease-out 2s forwards;
+                      animation: koihaiGrow 2s ease-out 1s forwards;
                       animation-delay: 2s;
                       opacity: 0;
                     ">Koi Hai...</div>
@@ -463,26 +464,31 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
                         opacity: 0; 
                         transform: translate(-50%, -50%) scale(0.5);
                         font-size: 8px;
+                        font-family: 'Arial Rounded MT Bold', 'Helvetica Rounded', Arial, sans-serif;
                       }
-                      20% { 
+                      15% { 
                         opacity: 1; 
                         transform: translate(-50%, -50%) scale(1);
                         font-size: 10px;
+                        font-family: 'Arial Rounded MT Bold', 'Helvetica Rounded', Arial, sans-serif;
                       }
-                      60% { 
+                      40% { 
                         opacity: 0.8; 
                         transform: translate(-50%, -50%) scale(2);
                         font-size: 16px;
+                        font-family: 'Arial Rounded MT Bold', 'Helvetica Rounded', Arial, sans-serif;
                       }
-                      80% { 
-                        opacity: 0.4; 
+                      70% { 
+                        opacity: 0.5; 
                         transform: translate(-50%, -50%) scale(3);
                         font-size: 20px;
+                        font-family: 'Arial Rounded MT Bold', 'Helvetica Rounded', Arial, sans-serif;
                       }
                       100% { 
                         opacity: 0; 
                         transform: translate(-50%, -50%) scale(4);
                         font-size: 24px;
+                        font-family: 'Arial Rounded MT Bold', 'Helvetica Rounded', Arial, sans-serif;
                       }
                     }
                     
