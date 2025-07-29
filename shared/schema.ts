@@ -9,6 +9,7 @@ export const users = pgTable("users", {
   fullName: text("full_name").notNull(),
   email: text("email").notNull().unique(),
   password: text("password"), // Password for QAAQ login
+  needsPasswordChange: boolean("needs_password_change").default(true), // Force password change on third login
   userType: text("user_type").notNull(), // 'sailor' or 'local'
   isAdmin: boolean("is_admin").default(false), // Admin role flag
   nickname: text("nickname"),
@@ -172,6 +173,15 @@ export const verifyCodeSchema = z.object({
 export const loginSchema = z.object({
   userId: z.string().min(1, "User ID is required"),
   password: z.string().min(1, "Password is required"),
+});
+
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Current password is required"),
+  newPassword: z.string().min(6, "New password must be at least 6 characters"),
+});
+
+export const forgotPasswordSchema = z.object({
+  userId: z.string().min(1, "User ID is required"),
 });
 
 export const insertChatConnectionSchema = createInsertSchema(chatConnections).pick({

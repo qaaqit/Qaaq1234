@@ -135,9 +135,7 @@ export default function Home({ onSuccess }: HomeProps) {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm font-medium text-gray-700">
-                    Password
-                  </Label>
+                  <Label htmlFor="password" className="text-sm font-medium text-gray-700">Password (This may be ur city example mumbai)</Label>
                   <Input
                     id="password"
                     type="password"
