@@ -145,143 +145,58 @@ export default function Discover({ user }: DiscoverProps) {
         </div>
       </header>
 
-      {/* Search and Location Controls */}
-      <div className="px-4 py-4 bg-white border-b border-gray-200 flex-shrink-0">
 
 
-        {/* Location Status Display */}
-        {location && (
-          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-            <div className="flex items-center gap-2 text-green-700">
-              <MapPin className="w-4 h-4" />
-              <span className="font-medium">Location Updated</span>
-            </div>
-            <div className="text-sm text-green-600 mt-1">
-              Source: {location.source} • Coordinates: {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}
-              {location.accuracy && <span> • Accuracy: {Math.round(location.accuracy)}m</span>}
-            </div>
-          </div>
-        )}
-
-        {/* Location Error Display */}
-        {locationError && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-center gap-2 text-red-700">
-              <MapPin className="w-4 h-4" />
-              <span className="font-medium">Location Error</span>
-            </div>
-            <div className="text-sm text-red-600 mt-1">
-              {locationError.message}
+      {/* Main Content Area - Full Screen Map */}
+      <div className="flex-1 overflow-hidden relative">
+        {/* Premium Mode Notice */}
+        {isPremiumMode && !user.isAdmin && (
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 bg-yellow-50 border border-yellow-200 rounded-lg p-4 shadow-lg max-w-sm">
+            <div className="text-center">
+              <Crown className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
+              <h3 className="font-semibold text-yellow-800 mb-2">Premium Features</h3>
+              <p className="text-sm text-yellow-700 mb-3">
+                Unlock Google Maps with satellite view, enhanced navigation, and premium maritime features.
+              </p>
+              <Button className="bg-yellow-500 hover:bg-yellow-600 text-white text-sm">
+                Upgrade to Premium
+              </Button>
             </div>
           </div>
         )}
 
-        {/* Direct Koi Hai Discovery */}
-        <div className="flex flex-col md:flex-row gap-4 items-center justify-center">
-          {/* Premium Crown Toggle */}
-          <Button
-            onClick={() => {
-              setIsPremiumMode(!isPremiumMode);
-              setMapType(isPremiumMode ? 'leaflet' : 'google');
-            }}
-            variant={isPremiumMode ? 'default' : 'outline'}
-            size="sm"
-            className={`h-10 w-10 p-0 rounded-full ${
-              isPremiumMode 
-                ? 'bg-yellow-500 hover:bg-yellow-600 text-white border-yellow-500' 
-                : 'bg-white hover:bg-yellow-50 text-yellow-600 border-yellow-300'
-            }`}
-            title={isPremiumMode ? 'Premium Mode Active' : 'Activate Premium Mode'}
-          >
-            <Crown className="w-5 h-5" />
-          </Button>
-
-          <Button 
-            onClick={handleSearch}
-            className="bg-ocean-teal hover:bg-cyan-600 text-white px-8 py-3 text-lg font-bold flex items-center gap-2"
-          >
-            <MapPin className="w-5 h-5" />
-            🌊 Koi Hai? (Who's there?)
-          </Button>
-
-          {/* Premium Mode Indicator */}
-          {isPremiumMode && (
-            <Badge className="bg-yellow-500 text-white text-sm px-3 py-1">
-              Premium Mode
-            </Badge>
-          )}
-        </div>
-      </div>
-
-      {/* Main Content Area with Tabs */}
-      <div className="flex-1 overflow-hidden">
-        <Tabs defaultValue="koihai" className="h-full flex flex-col">
-          <TabsList className="mx-4 mt-2 mb-4 grid w-auto grid-cols-2">
-            <TabsTrigger value="koihai" className="flex items-center space-x-2">
-              <i className="fas fa-users"></i>
-              <span>Koi Hai?</span>
-            </TabsTrigger>
-            <TabsTrigger value="cpss" className="flex items-center space-x-2">
-              <i className="fas fa-map-marked-alt"></i>
-              <span>CPSS Navigator</span>
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="koihai" className="flex-1 overflow-hidden relative m-0">
-            {/* Premium Mode Notice */}
-            {isPremiumMode && !user.isAdmin && (
-              <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 bg-yellow-50 border border-yellow-200 rounded-lg p-4 shadow-lg max-w-sm">
-                <div className="text-center">
-                  <Crown className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
-                  <h3 className="font-semibold text-yellow-800 mb-2">Premium Features</h3>
-                  <p className="text-sm text-yellow-700 mb-3">
-                    Unlock Google Maps with satellite view, enhanced navigation, and premium maritime features.
-                  </p>
-                  <Button className="bg-yellow-500 hover:bg-yellow-600 text-white text-sm">
-                    Upgrade to Premium
-                  </Button>
-                </div>
+        {/* Render appropriate map based on selection */}
+        {isPremiumMode && user.isAdmin ? (
+          <div className="w-full h-full">
+            <GoogleMaps 
+              showUsers={showUsers}
+              searchQuery=""
+              center={{ lat: 19.076, lng: 72.8977 }}
+            />
+          </div>
+        ) : (
+          <UsersMap showUsers={showUsers} searchQuery="" />
+        )}
+        
+        {/* WhatsApp Bot Control Panel - positioned outside map */}
+        {showWhatsAppPanel && user.isAdmin && (
+          <div className="absolute top-16 right-4 z-50 max-w-sm">
+            <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 border">
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="font-semibold text-gray-800">WhatsApp Bot Control</h3>
+                <Button
+                  onClick={() => setShowWhatsAppPanel(false)}
+                  variant="ghost"
+                  size="sm"
+                  className="p-1 h-6 w-6"
+                >
+                  ×
+                </Button>
               </div>
-            )}
-
-            {/* Render appropriate map based on selection */}
-            {isPremiumMode && user.isAdmin ? (
-              <div className="w-full h-full">
-                <GoogleMaps 
-                  showUsers={showUsers}
-                  searchQuery=""
-                  center={{ lat: 19.076, lng: 72.8977 }}
-                />
-              </div>
-            ) : (
-              <UsersMap showUsers={showUsers} searchQuery="" />
-            )}
-            
-            {/* WhatsApp Bot Control Panel - positioned outside map */}
-            {showWhatsAppPanel && user.isAdmin && (
-              <div className="absolute top-16 right-4 z-50 max-w-sm">
-                <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 border">
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className="font-semibold text-gray-800">WhatsApp Bot Control</h3>
-                    <Button
-                      onClick={() => setShowWhatsAppPanel(false)}
-                      variant="ghost"
-                      size="sm"
-                      className="p-1 h-6 w-6"
-                    >
-                      ×
-                    </Button>
-                  </div>
-                  <WhatsAppBotControl />
-                </div>
-              </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="cpss" className="flex-1 overflow-auto m-0 p-4">
-            <CPSSNavigator />
-          </TabsContent>
-        </Tabs>
+              <WhatsAppBotControl />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
