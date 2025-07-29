@@ -24,6 +24,18 @@ interface GoogleMapsProps {
   onUserClick?: (user: GoogleMapsUser) => void;
 }
 
+// Calculate distance between two coordinates using Haversine formula
+const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+  const R = 6371; // Earth's radius in kilometers
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+};
+
 declare global {
   interface Window {
     google: any;
@@ -57,6 +69,7 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
   const [mapType, setMapType] = useState<'roadmap' | 'satellite' | 'hybrid'>('roadmap');
   const [isLoaded, setIsLoaded] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [mapRadius, setMapRadius] = useState<number>(50); // Initial 50km radius
   const mapRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<any[]>([]);
 
@@ -109,7 +122,7 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
       const defaultCenter = center || { lat: 19.076, lng: 72.8777 }; // Mumbai default
       
       const mapInstance = new window.google.maps.Map(mapRef.current, {
-        zoom: showUsers ? 10 : 3,
+        zoom: showUsers ? 9 : 3, // Use zoom level 9 for 50km radius view like regular map
         center: defaultCenter,
         mapTypeId: mapType,
         styles: [
@@ -233,15 +246,61 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
       markersRef.current.push(marker);
     });
 
-    // Auto-fit bounds if we have users
-    if (users.length > 0) {
+    // Smart zoom logic: center on user with expanding radius to show at least 9 pins
+    if (showUsers && users.length > 0 && userLocation) {
+      let currentRadius = 50; // Start with 50km
+      let nearbyUsers = [];
+      
+      // Keep expanding radius until we have at least 9 users or reach 500km max
+      while (nearbyUsers.length < 9 && currentRadius <= 500) {
+        nearbyUsers = users.filter((u: any) => {
+          const distance = calculateDistance(
+            userLocation.lat, userLocation.lng,
+            u.latitude, u.longitude
+          );
+          return distance <= currentRadius;
+        });
+        
+        if (nearbyUsers.length < 9) {
+          currentRadius += 25; // Expand by 25km increments
+        }
+      }
+      
+      setMapRadius(currentRadius);
+      
+      // Set bounds to show the radius circle
+      const latDelta = currentRadius / 111; // Rough km to degrees conversion
+      const lngDelta = currentRadius / (111 * Math.cos(userLocation.lat * Math.PI / 180));
+      
+      const bounds = new window.google.maps.LatLngBounds(
+        new window.google.maps.LatLng(userLocation.lat - latDelta, userLocation.lng - lngDelta),
+        new window.google.maps.LatLng(userLocation.lat + latDelta, userLocation.lng + lngDelta)
+      );
+      
+      map.fitBounds(bounds);
+    } else if (showUsers && users.length > 0 && !userLocation) {
+      // Fallback: show all users if no user location available
       const bounds = new window.google.maps.LatLngBounds();
       users.forEach((user: any) => {
         bounds.extend(new window.google.maps.LatLng(user.latitude, user.longitude));
       });
-      map.fitBounds(bounds);
+      
+      // Add padding around the bounds
+      const center = bounds.getCenter();
+      const ne = bounds.getNorthEast();
+      const sw = bounds.getSouthWest();
+      
+      const latPadding = (ne.lat() - sw.lat()) * 0.1;
+      const lngPadding = (ne.lng() - sw.lng()) * 0.1;
+      
+      const paddedBounds = new window.google.maps.LatLngBounds(
+        new window.google.maps.LatLng(sw.lat() - latPadding, sw.lng() - lngPadding),
+        new window.google.maps.LatLng(ne.lat() + latPadding, ne.lng() + lngPadding)
+      );
+      
+      map.fitBounds(paddedBounds);
     }
-  }, [map, users, isLoaded, onUserClick]);
+  }, [map, users, isLoaded, onUserClick, userLocation, showUsers]);
 
   const changeMapType = (type: 'roadmap' | 'satellite' | 'hybrid') => {
     setMapType(type);
