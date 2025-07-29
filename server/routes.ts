@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import jwt from 'jsonwebtoken';
 import { storage } from "./storage";
@@ -6,10 +6,19 @@ import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, inse
 import { sendVerificationEmail } from "./services/email";
 import { pool } from "./db";
 
+// Extend Express Request type
+declare global {
+  namespace Express {
+    interface Request {
+      userId?: string;
+    }
+  }
+}
+
 const JWT_SECRET = process.env.JWT_SECRET || 'qaaq-connect-secret-key';
 
 // Middleware to authenticate JWT token
-const authenticateToken = async (req: any, res: any, next: any) => {
+const authenticateToken = async (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
@@ -21,7 +30,7 @@ const authenticateToken = async (req: any, res: any, next: any) => {
     const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
     req.userId = decoded.userId;
     next();
-  } catch (error) {
+  } catch (error: unknown) {
     res.status(403).json({ message: 'Invalid token' });
   }
 };
@@ -68,9 +77,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         token,
         needsVerification: false // First login doesn't need verification
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Registration error:', error);
-      res.status(400).json({ message: "Registration failed", error: error.message });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(400).json({ message: "Registration failed", error: errorMessage });
     }
   });
 
@@ -106,14 +116,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           latitude: user.latitude,
           longitude: user.longitude,
           isVerified: user.isVerified,
-          loginCount: user.loginCount + 1
+          loginCount: (user.loginCount || 0) + 1
         },
         token,
         needsVerification: false
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Login error:', error);
-      res.status(400).json({ message: "Login failed", error: error.message });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(400).json({ message: "Login failed", error: errorMessage });
     }
   });
 
@@ -155,16 +166,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         token,
         message: "Email verified successfully"
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Verification error:', error);
-      res.status(400).json({ message: "Verification failed", error: error.message });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(400).json({ message: "Verification failed", error: errorMessage });
     }
   });
 
   // Get current user profile
   app.get("/api/profile", authenticateToken, async (req, res) => {
     try {
-      const user = await storage.getUser(req.userId);
+      const user = await storage.getUser(req.userId!);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -178,7 +190,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isVerified: user.isVerified,
         loginCount: user.loginCount
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Profile error:', error);
       res.status(500).json({ message: "Failed to get profile" });
     }
@@ -188,7 +200,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/posts", authenticateToken, async (req, res) => {
     try {
       const postData = insertPostSchema.parse(req.body);
-      const user = await storage.getUser(req.userId);
+      const user = await storage.getUser(req.userId!);
       
       if (!user) {
         return res.status(404).json({ message: "User not found" });
@@ -214,9 +226,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       res.json(post);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Post creation error:', error);
-      res.status(400).json({ message: "Failed to create post", error: error.message });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(400).json({ message: "Failed to create post", error: errorMessage });
     }
   });
 
@@ -257,7 +270,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/posts/:postId/like", authenticateToken, async (req, res) => {
     try {
       const { postId } = req.params;
-      const userId = req.userId;
+      const userId = req.userId!;
 
       const existingLike = await storage.getUserLike(userId, postId);
       
@@ -278,7 +291,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/posts/:postId/liked", authenticateToken, async (req, res) => {
     try {
       const { postId } = req.params;
-      const userId = req.userId;
+      const userId = req.userId!;
 
       const like = await storage.getUserLike(userId, postId);
       res.json({ liked: !!like });
@@ -375,7 +388,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/users/nearby", authenticateToken, async (req, res) => {
     try {
       const userId = req.userId!;
-      const currentUser = await storage.getUser(parseInt(userId));
+      const currentUser = await storage.getUser(userId);
       
       if (!currentUser || !currentUser.latitude || !currentUser.longitude) {
         return res.status(400).json({ message: "User location not available" });
@@ -396,13 +409,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return R * c;
       };
 
-      const userLat = parseFloat(currentUser.latitude!);
-      const userLon = parseFloat(currentUser.longitude!);
+      const userLat = parseFloat(currentUser.latitude!.toString());
+      const userLon = parseFloat(currentUser.longitude!.toString());
 
       // Calculate distances and sort by nearest
       const usersWithDistance = otherUsers.map(user => ({
         ...user,
-        distance: calculateDistance(userLat, userLon, parseFloat(user.latitude!), parseFloat(user.longitude!))
+        distance: calculateDistance(userLat, userLon, parseFloat(user.latitude!.toString()), parseFloat(user.longitude!.toString()))
       })).sort((a, b) => a.distance - b.distance);
 
       // Return nearest 10 users
@@ -654,7 +667,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/chat/connect', authenticateToken, async (req, res) => {
     try {
       const { receiverId } = insertChatConnectionSchema.parse(req.body);
-      const senderId = req.userId;
+      const senderId = req.userId!;
 
       // Check if connection already exists
       const existing = await storage.getChatConnection(senderId, receiverId);
@@ -694,7 +707,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/chat/connections', authenticateToken, async (req, res) => {
     try {
-      const connections = await storage.getUserChatConnections(req.userId);
+      const connections = await storage.getUserChatConnections(req.userId!);
       res.json(connections);
     } catch (error) {
       console.error('Get chat connections error:', error);
@@ -705,7 +718,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/chat/message', authenticateToken, async (req, res) => {
     try {
       const { connectionId, message } = insertChatMessageSchema.parse(req.body);
-      const senderId = req.userId;
+      const senderId = req.userId!;
 
       const chatMessage = await storage.sendMessage(connectionId, senderId, message);
       res.json(chatMessage);
@@ -719,7 +732,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { connectionId } = req.params;
       const messages = await storage.getChatMessages(connectionId);
-      await storage.markMessagesAsRead(connectionId, req.userId);
+      await storage.markMessagesAsRead(connectionId, req.userId!);
       res.json(messages);
     } catch (error) {
       console.error('Get messages error:', error);
