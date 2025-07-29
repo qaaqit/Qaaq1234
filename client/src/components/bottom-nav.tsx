@@ -11,12 +11,6 @@ export default function BottomNav({ user }: BottomNavProps) {
 
   const baseNavItems = [
     { 
-      path: "/", 
-      icon: "fas fa-compass", 
-      label: "Discover",
-      active: location === "/" || location === "/discover"
-    },
-    { 
       path: "/dm", 
       icon: "fas fa-comments", 
       label: "QChat",

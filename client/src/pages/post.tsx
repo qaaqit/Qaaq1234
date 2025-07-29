@@ -55,7 +55,7 @@ export default function Post({ user }: PostProps) {
         description: "Your experience has been shared with the community",
       });
       
-      setLocation("/discover");
+      setLocation("/");
     } catch (error) {
       toast({
         title: "Failed to post",
@@ -93,27 +93,21 @@ export default function Post({ user }: PostProps) {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
-      {/* Header */}
+      {/* Header with Home Logo */}
       <header className="gradient-bg text-white px-4 py-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setLocation("/discover")}
-              className="text-white hover:bg-white/20"
-            >
-              <i className="fas fa-arrow-left mr-2"></i>Back
-            </Button>
-          </div>
-          <div className="flex items-center space-x-3">
+          <button 
+            onClick={() => setLocation('/')}
+            className="flex items-center space-x-3 hover:bg-white/10 rounded-lg p-2 transition-colors"
+          >
             <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
               <i className="fas fa-anchor text-xl text-white"></i>
             </div>
             <div>
-              <h1 className="text-xl font-bold">Share Experience</h1>
+              <h1 className="text-2xl font-bold">QaaqConnect</h1>
+              <p className="text-sm text-white/80">Share your maritime experience</p>
             </div>
-          </div>
+          </button>
         </div>
       </header>
 

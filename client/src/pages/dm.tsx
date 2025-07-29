@@ -9,6 +9,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 import { formatDistanceToNow } from "date-fns";
 import QChatWindow from "@/components/qchat-window";
 import type { ChatConnection, User as UserType } from "@shared/schema";
@@ -29,6 +30,7 @@ export default function DMPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
 
   // Fetch user's chat connections
   const { data: connections = [], isLoading: connectionsLoading } = useQuery<ExtendedChatConnection[]>({
@@ -146,16 +148,24 @@ export default function DMPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-blue-50 p-6">
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* Page Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center space-x-3 mb-4">
-            <div className="p-3 bg-gradient-to-r from-navy to-blue-800 rounded-full">
-              <MessageCircle className="text-white" size={24} />
+        {/* Header with Home Logo */}
+        <div className="bg-gradient-to-r from-navy to-blue-800 text-white rounded-xl shadow-lg mb-6">
+          <div className="px-4 py-4">
+            <div className="flex items-center justify-between">
+              <button 
+                onClick={() => setLocation('/')}
+                className="flex items-center space-x-3 hover:bg-white/10 rounded-lg p-2 transition-colors"
+              >
+                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                  <i className="fas fa-anchor text-xl text-white"></i>
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold">QaaqConnect</h1>
+                  <p className="text-sm text-white/80">QChat - Connect with maritime professionals</p>
+                </div>
+              </button>
             </div>
-            <h1 className="text-3xl font-bold text-navy">QChat DM</h1>
-            <Anchor className="text-ocean-teal" size={24} />
           </div>
-          <p className="text-gray-600">Connect with maritime professionals worldwide</p>
         </div>
 
         {/* Search Bar */}
