@@ -11,6 +11,7 @@ import GoogleMaps from "@/components/google-maps";
 import WhatsAppBotControl from "@/components/whatsapp-bot-control";
 import CPSSNavigator from "@/components/cpss-navigator";
 import { useLocation } from "@/hooks/useLocation";
+import { useLocation as useWouterLocation } from "wouter";
 import { type User } from "@/lib/auth";
 import { apiRequest } from "@/lib/queryClient";
 import { MapPin, Navigation, Ship, Satellite, Crown } from "lucide-react";
@@ -31,6 +32,7 @@ interface DiscoverProps {
 
 export default function Discover({ user }: DiscoverProps) {
   const { toast } = useToast();
+  const [, setLocation] = useWouterLocation();
 
   const [selectedCategory, setSelectedCategory] = useState("");
   const [showUsers, setShowUsers] = useState(false);
@@ -115,17 +117,29 @@ export default function Discover({ user }: DiscoverProps) {
               >
                 <i className="fab fa-whatsapp mr-2"></i>Bot
               </Button>
-              <Button
-                onClick={() => {
-                  localStorage.removeItem('qaaq_token');
-                  window.location.href = '/';
-                }}
-                variant="outline"
-                size="sm"
-                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-              >
-                <i className="fas fa-sign-out-alt mr-2"></i>Logout
-              </Button>
+              <div className="flex flex-col space-y-2">
+                <Button
+                  onClick={() => {
+                    localStorage.removeItem('qaaq_token');
+                    localStorage.removeItem('qaaq_user');
+                    window.location.href = '/';
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                >
+                  <i className="fas fa-sign-out-alt mr-2"></i>Logout
+                </Button>
+                <Button
+                  onClick={() => setLocation('/dm')}
+                  variant="outline"
+                  size="sm"
+                  className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                  title="QHF - Quick Chat"
+                >
+                  <i className="fas fa-phone mr-2"></i>QHF
+                </Button>
+              </div>
             </div>
           </div>
         </div>
