@@ -345,7 +345,9 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
                     radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.3) 2px, transparent 2px),
                     radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
                   background-size: 12px 12px, 8px 8px;
-                " onclick="window.location.href = window.location.href.includes('#') ? window.location.href : window.location.href + '#koi-hai'">
+                " 
+                title="Press to see Who's there?"
+                onclick="window.location.href = window.location.href.includes('#') ? window.location.href : window.location.href + '#koi-hai'">
                   <div style="
                     display: flex;
                     flex-direction: column;

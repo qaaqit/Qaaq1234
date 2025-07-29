@@ -173,7 +173,7 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
             const koiHaiButton = new window.google.maps.Marker({
               position: userPos, // Directly over user pin
               map: mapInstance,
-              title: 'Koi Hai? - Find nearby users',
+              title: 'Press to see "Who\'s there?"',
               icon: {
                 url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
                   <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
