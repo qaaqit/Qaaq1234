@@ -4,6 +4,7 @@ import { LatLngBounds, divIcon } from 'leaflet';
 import { useQuery } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/useAuth';
+import MarineChatButton from './marine-chat-button';
 
 interface MapUser {
   id: string;
@@ -336,6 +337,17 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
                     ).toFixed(1)}km away
                   </p>
                 )}
+                
+                {/* Marine Chat Button */}
+                <div className="mt-3 pt-2 border-t">
+                  <MarineChatButton
+                    receiverId={user.id}
+                    receiverName={user.fullName}
+                    receiverRank={user.rank || undefined}
+                    size="sm"
+                    variant="marine"
+                  />
+                </div>
               </div>
             </Popup>
           </Marker>
