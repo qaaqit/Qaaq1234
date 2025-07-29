@@ -81,6 +81,174 @@ const generateSampleItems = (category: string, location: string): CPSSItem[] => 
 
 const cpssData: CPSSLevel[] = [
   {
+    id: 'brazil',
+    name: 'Brazil',
+    type: 'country',
+    icon: '🇧🇷',
+    children: [
+      {
+        id: 'santos-port',
+        name: 'Santos Port',
+        type: 'port',
+        icon: '⚓',
+        children: [
+          {
+            id: 'centro',
+            name: 'Centro',
+            type: 'suburb',
+            icon: '🏙️',
+            children: [
+              {
+                id: 'maritime-meetup',
+                name: 'Maritime Meetups',
+                type: 'service',
+                icon: '🤝',
+                description: 'Connect with South American seafarers',
+                items: generateSampleItems('Maritime Meetups', 'Santos Centro')
+              },
+              {
+                id: 'local-tours',
+                name: 'Local Tours',
+                type: 'service',
+                icon: '🗺️',
+                description: 'Explore Santos and São Paulo region',
+                items: generateSampleItems('Local Tours', 'Santos Centro')
+              },
+              {
+                id: 'port-dining',
+                name: 'Port Dining',
+                type: 'service',
+                icon: '🍽️',
+                description: 'Brazilian cuisine and seafood',
+                items: generateSampleItems('Port Dining', 'Santos Centro')
+              },
+              {
+                id: 'qaaq-store',
+                name: 'Qaaq Store',
+                type: 'service',
+                icon: '🏪',
+                description: 'Pre-order supplies for ship delivery',
+                items: []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'china',
+    name: 'China',
+    type: 'country',
+    icon: '🇨🇳',
+    children: [
+      {
+        id: 'shanghai-port',
+        name: 'Shanghai Port',
+        type: 'port',
+        icon: '⚓',
+        children: [
+          {
+            id: 'pudong',
+            name: 'Pudong',
+            type: 'suburb',
+            icon: '🏙️',
+            children: [
+              {
+                id: 'maritime-meetup',
+                name: 'Maritime Meetups',
+                type: 'service',
+                icon: '🤝',
+                description: 'International maritime community',
+                items: generateSampleItems('Maritime Meetups', 'Shanghai Pudong')
+              },
+              {
+                id: 'local-tours',
+                name: 'Local Tours',
+                type: 'service',
+                icon: '🗺️',
+                description: 'Shanghai sightseeing and culture',
+                items: generateSampleItems('Local Tours', 'Shanghai Pudong')
+              },
+              {
+                id: 'port-dining',
+                name: 'Port Dining',
+                type: 'service',
+                icon: '🍽️',
+                description: 'Chinese cuisine and international options',
+                items: generateSampleItems('Port Dining', 'Shanghai Pudong')
+              },
+              {
+                id: 'qaaq-store',
+                name: 'Qaaq Store',
+                type: 'service',
+                icon: '🏪',
+                description: 'Pre-order supplies for ship delivery',
+                items: []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'germany',
+    name: 'Germany',
+    type: 'country',
+    icon: '🇩🇪',
+    children: [
+      {
+        id: 'hamburg-port',
+        name: 'Hamburg Port',
+        type: 'port',
+        icon: '⚓',
+        children: [
+          {
+            id: 'altona',
+            name: 'Altona',
+            type: 'suburb',
+            icon: '🏙️',
+            children: [
+              {
+                id: 'maritime-meetup',
+                name: 'Maritime Meetups',
+                type: 'service',
+                icon: '🤝',
+                description: 'European maritime professionals',
+                items: generateSampleItems('Maritime Meetups', 'Hamburg Altona')
+              },
+              {
+                id: 'local-tours',
+                name: 'Local Tours',
+                type: 'service',
+                icon: '🗺️',
+                description: 'Hamburg and Northern Germany tours',
+                items: generateSampleItems('Local Tours', 'Hamburg Altona')
+              },
+              {
+                id: 'port-dining',
+                name: 'Port Dining',
+                type: 'service',
+                icon: '🍽️',
+                description: 'German cuisine and harbor restaurants',
+                items: generateSampleItems('Port Dining', 'Hamburg Altona')
+              },
+              {
+                id: 'qaaq-store',
+                name: 'Qaaq Store',
+                type: 'service',
+                icon: '🏪',
+                description: 'Pre-order supplies for ship delivery',
+                items: []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
     id: 'india',
     name: 'India',
     type: 'country',
@@ -119,8 +287,232 @@ const cpssData: CPSSLevel[] = [
                 name: 'Port Dining',
                 type: 'service',
                 icon: '🍽️',
-                description: 'Authentic local restaurants',
+                description: 'Authentic Indian cuisine',
                 items: generateSampleItems('Port Dining', 'Mumbai Colaba')
+              },
+              {
+                id: 'qaaq-store',
+                name: 'Qaaq Store',
+                type: 'service',
+                icon: '🏪',
+                description: 'Pre-order supplies for ship delivery',
+                items: []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'japan',
+    name: 'Japan',
+    type: 'country',
+    icon: '🇯🇵',
+    children: [
+      {
+        id: 'yokohama-port',
+        name: 'Yokohama Port',
+        type: 'port',
+        icon: '⚓',
+        children: [
+          {
+            id: 'minato-mirai',
+            name: 'Minato Mirai',
+            type: 'suburb',
+            icon: '🏙️',
+            children: [
+              {
+                id: 'maritime-meetup',
+                name: 'Maritime Meetups',
+                type: 'service',
+                icon: '🤝',
+                description: 'Japanese maritime community',
+                items: generateSampleItems('Maritime Meetups', 'Yokohama Minato Mirai')
+              },
+              {
+                id: 'local-tours',
+                name: 'Local Tours',
+                type: 'service',
+                icon: '🗺️',
+                description: 'Tokyo Bay and cultural experiences',
+                items: generateSampleItems('Local Tours', 'Yokohama Minato Mirai')
+              },
+              {
+                id: 'port-dining',
+                name: 'Port Dining',
+                type: 'service',
+                icon: '🍽️',
+                description: 'Japanese and international cuisine',
+                items: generateSampleItems('Port Dining', 'Yokohama Minato Mirai')
+              },
+              {
+                id: 'qaaq-store',
+                name: 'Qaaq Store',
+                type: 'service',
+                icon: '🏪',
+                description: 'Pre-order supplies for ship delivery',
+                items: []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'netherlands',
+    name: 'Netherlands',
+    type: 'country',
+    icon: '🇳🇱',
+    children: [
+      {
+        id: 'rotterdam-port',
+        name: 'Rotterdam Port',
+        type: 'port',
+        icon: '⚓',
+        children: [
+          {
+            id: 'europoort',
+            name: 'Europoort',
+            type: 'suburb',
+            icon: '🏙️',
+            children: [
+              {
+                id: 'maritime-meetup',
+                name: 'Maritime Meetups',
+                type: 'service',
+                icon: '🤝',
+                description: 'European shipping hub community',
+                items: generateSampleItems('Maritime Meetups', 'Rotterdam Europoort')
+              },
+              {
+                id: 'local-tours',
+                name: 'Local Tours',
+                type: 'service',
+                icon: '🗺️',
+                description: 'Dutch maritime heritage tours',
+                items: generateSampleItems('Local Tours', 'Rotterdam Europoort')
+              },
+              {
+                id: 'port-dining',
+                name: 'Port Dining',
+                type: 'service',
+                icon: '🍽️',
+                description: 'Dutch and international cuisine',
+                items: generateSampleItems('Port Dining', 'Rotterdam Europoort')
+              },
+              {
+                id: 'qaaq-store',
+                name: 'Qaaq Store',
+                type: 'service',
+                icon: '🏪',
+                description: 'Pre-order supplies for ship delivery',
+                items: []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'panama',
+    name: 'Panama',
+    type: 'country',
+    icon: '🇵🇦',
+    children: [
+      {
+        id: 'panama-city-port',
+        name: 'Panama City Port',
+        type: 'port',
+        icon: '⚓',
+        children: [
+          {
+            id: 'casco-viejo',
+            name: 'Casco Viejo',
+            type: 'suburb',
+            icon: '🏙️',
+            children: [
+              {
+                id: 'maritime-meetup',
+                name: 'Maritime Meetups',
+                type: 'service',
+                icon: '🤝',
+                description: 'Canal zone maritime professionals',
+                items: generateSampleItems('Maritime Meetups', 'Panama City Casco Viejo')
+              },
+              {
+                id: 'local-tours',
+                name: 'Local Tours',
+                type: 'service',
+                icon: '🗺️',
+                description: 'Panama Canal and city tours',
+                items: generateSampleItems('Local Tours', 'Panama City Casco Viejo')
+              },
+              {
+                id: 'port-dining',
+                name: 'Port Dining',
+                type: 'service',
+                icon: '🍽️',
+                description: 'Latin American and seafood cuisine',
+                items: generateSampleItems('Port Dining', 'Panama City Casco Viejo')
+              },
+              {
+                id: 'qaaq-store',
+                name: 'Qaaq Store',
+                type: 'service',
+                icon: '🏪',
+                description: 'Pre-order supplies for ship delivery',
+                items: []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'singapore',
+    name: 'Singapore',
+    type: 'country',
+    icon: '🇸🇬',
+    children: [
+      {
+        id: 'singapore-port',
+        name: 'Singapore Port',
+        type: 'port',
+        icon: '⚓',
+        children: [
+          {
+            id: 'marina-bay',
+            name: 'Marina Bay',
+            type: 'suburb',
+            icon: '🏙️',
+            children: [
+              {
+                id: 'maritime-meetup',
+                name: 'Maritime Meetups',
+                type: 'service',
+                icon: '🤝',
+                description: 'Asian maritime hub community',
+                items: generateSampleItems('Maritime Meetups', 'Singapore Marina Bay')
+              },
+              {
+                id: 'local-tours',
+                name: 'Local Tours',
+                type: 'service',
+                icon: '🗺️',
+                description: 'Singapore city and cultural tours',
+                items: generateSampleItems('Local Tours', 'Singapore Marina Bay')
+              },
+              {
+                id: 'port-dining',
+                name: 'Port Dining',
+                type: 'service',
+                icon: '🍽️',
+                description: 'Multi-cultural cuisine hub',
+                items: generateSampleItems('Port Dining', 'Singapore Marina Bay')
               },
               {
                 id: 'qaaq-store',
@@ -163,12 +555,76 @@ const cpssData: CPSSLevel[] = [
                 items: generateSampleItems('Maritime Meetups', 'Dubai Deira')
               },
               {
+                id: 'local-tours',
+                name: 'Local Tours',
+                type: 'service',
+                icon: '🗺️',
+                description: 'Dubai city and desert tours',
+                items: generateSampleItems('Local Tours', 'Dubai Deira')
+              },
+              {
                 id: 'port-dining',
                 name: 'Port Dining',
                 type: 'service',
                 icon: '🍽️',
-                description: 'Multi-cuisine restaurants',
+                description: 'Middle Eastern and international cuisine',
                 items: generateSampleItems('Port Dining', 'Dubai Deira')
+              },
+              {
+                id: 'qaaq-store',
+                name: 'Qaaq Store',
+                type: 'service',
+                icon: '🏪',
+                description: 'Pre-order supplies for ship delivery',
+                items: []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'usa',
+    name: 'USA',
+    type: 'country',
+    icon: '🇺🇸',
+    children: [
+      {
+        id: 'houston-port',
+        name: 'Houston Port',
+        type: 'port',
+        icon: '⚓',
+        children: [
+          {
+            id: 'downtown',
+            name: 'Downtown',
+            type: 'suburb',
+            icon: '🏙️',
+            children: [
+              {
+                id: 'maritime-meetup',
+                name: 'Maritime Meetups',
+                type: 'service',
+                icon: '🤝',
+                description: 'Gulf Coast maritime community',
+                items: generateSampleItems('Maritime Meetups', 'Houston Downtown')
+              },
+              {
+                id: 'local-tours',
+                name: 'Local Tours',
+                type: 'service',
+                icon: '🗺️',
+                description: 'Houston and Texas Gulf Coast tours',
+                items: generateSampleItems('Local Tours', 'Houston Downtown')
+              },
+              {
+                id: 'port-dining',
+                name: 'Port Dining',
+                type: 'service',
+                icon: '🍽️',
+                description: 'Texas BBQ and international cuisine',
+                items: generateSampleItems('Port Dining', 'Houston Downtown')
               },
               {
                 id: 'qaaq-store',

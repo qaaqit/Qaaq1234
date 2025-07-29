@@ -165,6 +165,7 @@ Google Maps Controls: Transparent icon-only buttons positioned in bottom-left co
 - **UI Cleanup**: Removed "Track My Ship" and "Update My Location" buttons per user request for cleaner interface
 - **Automatic Location**: Implemented auto-location updates based on device permissions (5-minute intervals)
 - **Search Migration**: Moved search functionality from discover page to CPSS Navigator for focused "Koi Hai?" discovery
+- **Global CPSS Expansion**: Added 10 countries and ports based on authentic QAAQ user locations (Brazil, China, Germany, India, Japan, Netherlands, Panama, Singapore, UAE, USA)
 
 ### Premium Google Maps Integration (January 29, 2025)
 - **Google Maps API Integration**: Implemented premium Google Maps features for admin/premium QAAQ users
