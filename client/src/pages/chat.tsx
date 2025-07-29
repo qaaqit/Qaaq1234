@@ -21,7 +21,7 @@ export default function ChatPage() {
   const { user } = useAuth();
 
   // Fetch user's chat connections
-  const { data: connections = [], isLoading } = useQuery({
+  const { data: connections = [], isLoading } = useQuery<ExtendedChatConnection[]>({
     queryKey: ['/api/chat/connections'],
     refetchInterval: 5000, // Poll every 5 seconds for new connections
   });
@@ -124,7 +124,7 @@ export default function ChatPage() {
                           </Badge>
                         )}
                         <p className="text-xs text-gray-500 mt-1">
-                          {formatDistanceToNow(new Date(connection.createdAt), { addSuffix: true })}
+                          {connection.createdAt ? formatDistanceToNow(new Date(connection.createdAt), { addSuffix: true }) : 'Recently'}
                         </p>
                       </div>
                     </div>
@@ -184,7 +184,7 @@ export default function ChatPage() {
                             </div>
                           </div>
                           <p className="text-xs text-gray-500 mt-1">
-                            Connected {formatDistanceToNow(new Date(connection.acceptedAt || connection.createdAt), { addSuffix: true })}
+                            Connected {connection.acceptedAt || connection.createdAt ? formatDistanceToNow(new Date(connection.acceptedAt || connection.createdAt), { addSuffix: true }) : 'recently'}
                           </p>
                         </div>
                       </div>
@@ -230,7 +230,7 @@ export default function ChatPage() {
                           </Badge>
                         )}
                         <p className="text-xs text-gray-500 mt-1">
-                          Sent {formatDistanceToNow(new Date(connection.createdAt), { addSuffix: true })}
+                          Sent {connection.createdAt ? formatDistanceToNow(new Date(connection.createdAt), { addSuffix: true }) : 'recently'}
                         </p>
                       </div>
                     </div>
@@ -268,11 +268,13 @@ export default function ChatPage() {
       </div>
 
       {/* QChat Window */}
-      <QChatWindow
-        isOpen={isChatOpen}
-        onClose={() => setIsChatOpen(false)}
-        connection={selectedConnection}
-      />
+      {selectedConnection && (
+        <QChatWindow
+          isOpen={isChatOpen}
+          onClose={() => setIsChatOpen(false)}
+          connection={selectedConnection}
+        />
+      )}
     </div>
   );
 }
