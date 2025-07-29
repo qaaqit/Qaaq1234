@@ -432,13 +432,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         locationSource = 'device';
         console.log('Using device location:', userLat, userLon);
       } 
-      // Second priority: Present City coordinates from QAAQ database
+      // Second priority: Present City coordinates from seeded maritime data
       else if (currentUser?.latitude && currentUser?.longitude && 
                currentUser.latitude !== 0 && currentUser.longitude !== 0) {
         userLat = parseFloat(currentUser.latitude.toString());
         userLon = parseFloat(currentUser.longitude.toString());
         locationSource = 'city';
-        console.log('Using Present City location:', userLat, userLon, 'for city:', currentUser.city);
+        console.log('Using Present City location:', userLat, userLon, 'for', currentUser.city, currentUser.country);
       }
       
       if (!currentUser || !userLat || !userLon) {

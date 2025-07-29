@@ -61,12 +61,20 @@ export class DatabaseStorage implements IStorage {
   async getUser(id: string): Promise<User | undefined> {
     try {
       console.log(`Getting user data for ID: ${id}`);
-      // Get user from QAAQ admin database (primary source)
-      const result = await pool.query('SELECT * FROM users WHERE id = $1 LIMIT 1', [id]);
       
-      console.log(`Database query result: ${result.rows.length} rows found`);
+      // First check main database (where seeded maritime users are stored)
+      const localUser = await db.select().from(users).where(eq(users.id, id)).limit(1);
+      if (localUser.length > 0) {
+        console.log(`Found user in main database (seeded data): ${localUser[0].fullName}`);
+        return localUser[0];
+      }
+      
+      // Fallback to QAAQ admin database for legacy users
+      const result = await pool.query('SELECT * FROM users WHERE id = $1 LIMIT 1', [id]);
+      console.log(`QAAQ database query result: ${result.rows.length} rows found`);
+      
       if (result.rows.length === 0) {
-        console.log(`No user found with ID: ${id}`);
+        console.log(`No user found with ID: ${id} in either database`);
         return undefined;
       }
       
@@ -101,10 +109,10 @@ export class DatabaseStorage implements IStorage {
         // Use Present City coordinates if available, otherwise default coordinates
         latitude: parseFloat(user.latitude) || defaultCoords.lat,
         longitude: parseFloat(user.longitude) || defaultCoords.lng,
-        // Enhanced with device location if available
+        // Enhanced with device location for real-time positioning
         deviceLatitude: parseFloat(user.device_latitude) || null,
         deviceLongitude: parseFloat(user.device_longitude) || null,
-        locationSource: user.location_source || 'city',
+        locationSource: user.location_source || (user.device_latitude ? 'device' : 'city'),
         locationUpdatedAt: user.location_updated_at || new Date(),
         isVerified: user.is_verified || true,
         loginCount: user.login_count || 1,
