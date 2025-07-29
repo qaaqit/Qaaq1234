@@ -13,13 +13,13 @@ export default function BottomNav({ user }: BottomNavProps) {
     { 
       path: "/dm", 
       icon: "fas fa-comments", 
-      label: "QChat",
+      label: ["Ch13", "DM"],
       active: location === "/qhf" || location === "/dm" || location === "/chat"
     },
     { 
       path: "/post", 
       icon: "fas fa-plus-circle", 
-      label: "Post",
+      label: ["Ch16", "Broadcast"],
       active: location === "/post"
     }
   ];
@@ -29,7 +29,7 @@ export default function BottomNav({ user }: BottomNavProps) {
     { 
       path: "/admin", 
       icon: "fas fa-shield-alt", 
-      label: "Admin",
+      label: ["Admin", "Panel"],
       active: location === "/admin"
     }
   ];
@@ -52,7 +52,10 @@ export default function BottomNav({ user }: BottomNavProps) {
             } transition-colors`}
           >
             <i className={`${item.icon} text-xl mb-1`}></i>
-            <span className="text-xs font-medium">{item.label}</span>
+            <div className="text-xs font-medium text-center leading-tight">
+              <div>{Array.isArray(item.label) ? item.label[0] : item.label}</div>
+              {Array.isArray(item.label) && <div>{item.label[1]}</div>}
+            </div>
           </Button>
         ))}
       </div>

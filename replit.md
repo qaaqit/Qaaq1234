@@ -154,14 +154,15 @@ Google Maps Controls: Transparent icon-only buttons positioned in bottom-left co
 ## Recent Changes
 
 ### Navigation Streamlining (January 29, 2025)  
-- **Bottom Navigation Reduction**: Reduced to 2 tabs for regular users (QChat, Post) and 3 tabs for admin users (+ Admin tab)
+- **Bottom Navigation Reduction**: Reduced to 2 tabs for regular users (Ch13 DM, Ch16 Broadcast) and 3 tabs for admin users (+ Admin Panel)
+- **Channel-Based Naming**: Renamed QChat to "Ch13 DM" and Post to "Ch16 Broadcast" with two-line button layout for better fit
 - **Discover Tab Removed**: Eliminated Discover from bottom navigation to reduce clutter
-- **Home Logo Integration**: Added clickable QaaqConnect logo to QChat and Post page headers for easy return to Discover page
-- **QHF Integration**: Moved QHF functionality into QChat button, eliminating separate navigation item
+- **Home Logo Integration**: Added clickable QaaqConnect logo to Ch13 DM and Ch16 Broadcast page headers for easy return to Discover page
+- **QHF Integration**: Moved QHF functionality into Ch13 DM button, eliminating separate navigation item
 - **Consistent Navigation**: Both top-left circle icon on Discover page and header logos on other pages navigate to home page (/)
 - **Header Removal**: Eliminated admin header requirement, creating cleaner interface for all users
 - **WhatsApp Bot Rebranding**: Updated bot control to "Discover Bot Assistant" for better alignment with navigation structure
-- **Simplified User Flow**: Users access Discover via logos, chat via QChat tab, posting via Post tab, admin via Admin tab (admin only)
+- **Simplified User Flow**: Users access Discover via logos, chat via Ch13 DM tab, broadcasting via Ch16 Broadcast tab, admin via Admin Panel tab (admin only)
 
 ### Minimalistic App Focus (January 29, 2025)
 - **Simplified Architecture**: Removed maritime events management system to maintain focus on core features
