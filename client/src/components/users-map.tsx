@@ -350,12 +350,11 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
                 onclick="window.location.href = window.location.href.includes('#') ? window.location.href : window.location.href + '#koi-hai'">
                   <div style="
                     display: flex;
-                    flex-direction: column;
                     align-items: center;
+                    justify-content: center;
                     line-height: 1;
                   ">
-                    <div style="font-size: 8px; margin-bottom: 2px;">🔍</div>
-                    <div style="font-size: 9px;">Koi Hai?</div>
+                    <div style="font-size: 16px;">🔍</div>
                   </div>
                 </div>
               `,

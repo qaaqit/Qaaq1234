@@ -191,8 +191,7 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
                     <circle cx="30" cy="30" r="26" fill="url(#koiHaiGradient)" stroke="#ffffff" stroke-width="4"/>
                     <circle cx="30" cy="30" r="26" fill="url(#texture)"/>
                     <circle cx="30" cy="30" r="23" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
-                    <text x="30" y="22" text-anchor="middle" fill="white" font-size="8" font-weight="bold">🔍</text>
-                    <text x="30" y="34" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Koi Hai?</text>
+                    <text x="30" y="35" text-anchor="middle" fill="white" font-size="16" font-weight="bold">🔍</text>
                   </svg>
                 `),
                 scaledSize: new window.google.maps.Size(60, 60)
