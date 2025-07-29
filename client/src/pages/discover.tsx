@@ -58,6 +58,26 @@ export default function Discover({ user }: DiscoverProps) {
     refetch();
   };
 
+  // Listen for hash changes to trigger user search
+  useEffect(() => {
+    const handleHashChange = () => {
+      if (window.location.hash.includes('koi-hai')) {
+        setShowUsers(true);
+        refetch();
+      }
+    };
+
+    // Listen for hash change events
+    window.addEventListener('hashchange', handleHashChange);
+    
+    // Check initial hash on component mount
+    handleHashChange();
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
+  }, [refetch]);
+
   const handleLike = async (postId: string) => {
     try {
       const token = localStorage.getItem('qaaq_token');
