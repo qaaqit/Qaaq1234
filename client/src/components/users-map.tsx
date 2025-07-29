@@ -345,17 +345,81 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
                     radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.3) 2px, transparent 2px),
                     radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
                   background-size: 12px 12px, 8px 8px;
+                  overflow: hidden;
                 " 
                 title="Press to see Who's there?"
                 onclick="window.location.href = window.location.href.includes('#') ? window.location.href : window.location.href + '#koi-hai'">
+                  <!-- Rotating scan line -->
+                  <div style="
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    width: 2px;
+                    height: 20px;
+                    background: linear-gradient(to bottom, rgba(255,255,255,0.8), transparent);
+                    transform-origin: bottom center;
+                    transform: translate(-50%, -100%) rotate(0deg);
+                    animation: scan 2s linear infinite;
+                  "></div>
+                  
+                  <!-- Counter numbers -->
+                  <div class="koi-hai-counter" style="
+                    position: absolute;
+                    top: 8px;
+                    right: 8px;
+                    font-size: 10px;
+                    font-weight: bold;
+                    color: rgba(255,255,255,0.9);
+                  ">1</div>
+                  
+                  <!-- Koi Hai text animation -->
+                  <div style="
+                    position: absolute;
+                    bottom: -20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    font-size: 8px;
+                    color: rgba(128,128,128,0.6);
+                    white-space: nowrap;
+                    animation: koihai 8s linear infinite;
+                    animation-delay: 8s;
+                  ">Koi Hai...</div>
+                  
                   <div style="
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     line-height: 1;
+                    z-index: 2;
+                    position: relative;
                   ">
                     <div style="font-size: 16px;">🔍</div>
                   </div>
+                  
+                  <style>
+                    @keyframes scan {
+                      0% { transform: translate(-50%, -100%) rotate(0deg); }
+                      100% { transform: translate(-50%, -100%) rotate(360deg); }
+                    }
+                    
+                    @keyframes koihai {
+                      0%, 87% { opacity: 0; }
+                      88%, 100% { opacity: 1; }
+                    }
+                  </style>
+                  
+                  <script>
+                    (function() {
+                      const counter = document.querySelector('.koi-hai-counter');
+                      if (counter) {
+                        let count = 1;
+                        setInterval(() => {
+                          count = count >= 4 ? 1 : count + 1;
+                          counter.textContent = count;
+                        }, 2000);
+                      }
+                    })();
+                  </script>
                 </div>
               `,
               className: 'koi-hai-button',

@@ -187,11 +187,72 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
                         <circle cx="2" cy="2" r="1" fill="rgba(255,255,255,0.3)"/>
                         <circle cx="10" cy="10" r="0.5" fill="rgba(255,255,255,0.2)"/>
                       </pattern>
+                      <style>
+                        .scan-line { 
+                          animation: scan 2s linear infinite; 
+                          transform-origin: 30px 30px;
+                        }
+                        .counter { 
+                          animation: counter 8s linear infinite; 
+                        }
+                        .koihai-text { 
+                          animation: koihai 8s linear infinite; 
+                          animation-delay: 8s;
+                        }
+                        @keyframes scan {
+                          0% { transform: rotate(0deg); }
+                          100% { transform: rotate(360deg); }
+                        }
+                        @keyframes counter {
+                          0%, 24.9% { opacity: 1; }
+                          25%, 49.9% { opacity: 1; }
+                          50%, 74.9% { opacity: 1; }
+                          75%, 99.9% { opacity: 1; }
+                          100% { opacity: 1; }
+                        }
+                        @keyframes koihai {
+                          0%, 87% { opacity: 0; }
+                          88%, 100% { opacity: 1; }
+                        }
+                      </style>
                     </defs>
                     <circle cx="30" cy="30" r="26" fill="url(#koiHaiGradient)" stroke="#ffffff" stroke-width="4"/>
                     <circle cx="30" cy="30" r="26" fill="url(#texture)"/>
                     <circle cx="30" cy="30" r="23" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+                    
+                    <!-- Rotating scan line -->
+                    <line x1="30" y1="30" x2="30" y2="10" stroke="rgba(255,255,255,0.8)" stroke-width="2" class="scan-line"/>
+                    
+                    <!-- Counter numbers -->
+                    <text x="45" y="18" text-anchor="middle" fill="rgba(255,255,255,0.9)" font-size="8" font-weight="bold">
+                      <animate attributeName="opacity" values="1;1;1;1;1;1;1;1;1;1;1;1;1" dur="8s" repeatCount="indefinite"/>
+                      <animate begin="0s" dur="2s" attributeName="opacity" values="1;1" repeatCount="indefinite"/>
+                      1
+                    </text>
+                    <text x="45" y="18" text-anchor="middle" fill="rgba(255,255,255,0.9)" font-size="8" font-weight="bold">
+                      <animate begin="2s" dur="2s" attributeName="opacity" values="1;1" repeatCount="indefinite"/>
+                      <animate begin="0s" dur="2s" attributeName="opacity" values="0;0" repeatCount="indefinite"/>
+                      <animate begin="4s" dur="2s" attributeName="opacity" values="0;0" repeatCount="indefinite"/>
+                      <animate begin="6s" dur="2s" attributeName="opacity" values="0;0" repeatCount="indefinite"/>
+                      2
+                    </text>
+                    <text x="45" y="18" text-anchor="middle" fill="rgba(255,255,255,0.9)" font-size="8" font-weight="bold">
+                      <animate begin="4s" dur="2s" attributeName="opacity" values="1;1" repeatCount="indefinite"/>
+                      <animate begin="0s" dur="4s" attributeName="opacity" values="0;0;0;0" repeatCount="indefinite"/>
+                      <animate begin="6s" dur="2s" attributeName="opacity" values="0;0" repeatCount="indefinite"/>
+                      3
+                    </text>
+                    <text x="45" y="18" text-anchor="middle" fill="rgba(255,255,255,0.9)" font-size="8" font-weight="bold">
+                      <animate begin="6s" dur="2s" attributeName="opacity" values="1;1" repeatCount="indefinite"/>
+                      <animate begin="0s" dur="6s" attributeName="opacity" values="0;0;0;0;0;0" repeatCount="indefinite"/>
+                      4
+                    </text>
+                    
+                    <!-- Search icon -->
                     <text x="30" y="35" text-anchor="middle" fill="white" font-size="16" font-weight="bold">🔍</text>
+                    
+                    <!-- Koi Hai text -->
+                    <text x="30" y="55" text-anchor="middle" fill="rgba(128,128,128,0.6)" font-size="6" class="koihai-text">Koi Hai...</text>
                   </svg>
                 `),
                 scaledSize: new window.google.maps.Size(60, 60)
