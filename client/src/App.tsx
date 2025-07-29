@@ -60,6 +60,7 @@ function Router() {
           <Route path="/post" component={() => user ? <Post user={user} /> : <Home />} />
           <Route path="/chat" component={() => user ? <ChatPage /> : <Home />} />
           <Route path="/dm" component={() => user ? <DMPage /> : <Home />} />
+          <Route path="/qhf" component={() => user ? <DMPage /> : <Home />} />
           <Route path="/admin" component={() => user ? <Admin /> : <Home />} />
 
           <Route component={NotFound} />

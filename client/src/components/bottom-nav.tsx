@@ -17,10 +17,10 @@ export default function BottomNav({ user }: BottomNavProps) {
       active: location === "/" || location === "/discover"
     },
     { 
-      path: "/dm", 
+      path: "/qhf", 
       icon: "fas fa-comments", 
       label: "QChat",
-      active: location === "/dm" || location === "/chat"
+      active: location === "/qhf" || location === "/dm" || location === "/chat"
     },
     { 
       path: "https://wa.me/905363694997?text=Hello!%20I%20found%20you%20through%20QaaqConnect%20maritime%20platform.%20Can%20we%20connect%20for%20maritime%20events%20and%20services?", 
