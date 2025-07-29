@@ -299,7 +299,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userType: user.userType,
         rank: user.rank,
         shipName: user.shipName,
-        company: (user as any).company || '', // Add company field
         imoNumber: user.imoNumber,
         port: user.port,
         visitWindow: user.visitWindow,
