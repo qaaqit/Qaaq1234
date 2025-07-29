@@ -267,7 +267,7 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
               });
             }
             
-            // Add clickable area over user location (no visual icon needed)
+            // Add clickable area over user location with 1234 and Koi Hai animation
             const koiHaiButton = new window.google.maps.Marker({
               position: userPos,
               map: mapInstance,
@@ -276,6 +276,59 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
                 url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
                   <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <circle cx="20" cy="20" r="18" fill="transparent" stroke="transparent" stroke-width="2"/>
+                    
+                    <!-- 1234 Animation Container -->
+                    <g id="animation-container" style="display: none;">
+                      <!-- 1234 Counter -->
+                      <text x="20" y="15" text-anchor="middle" fill="#ef4444" font-size="8" font-weight="bold" font-family="monospace" id="counter-text">1</text>
+                      
+                      <!-- Koi Hai Circle -->
+                      <text x="20" y="25" text-anchor="middle" fill="rgba(239,68,68,0.8)" font-size="4" font-weight="bold" id="koihai-text" style="opacity: 0;">Koi Hai...</text>
+                    </g>
+                    
+                    <script type="application/ecmascript">
+                      <![CDATA[
+                        function startAnimation() {
+                          const container = document.getElementById('animation-container');
+                          const counter = document.getElementById('counter-text');
+                          const koihai = document.getElementById('koihai-text');
+                          
+                          if (container) {
+                            container.style.display = 'block';
+                            
+                            // 1234 Counter Animation
+                            let count = 1;
+                            const counterInterval = setInterval(() => {
+                              counter.textContent = count;
+                              count++;
+                              if (count > 4) {
+                                clearInterval(counterInterval);
+                                counter.style.opacity = '0';
+                                
+                                // Start Koi Hai animation
+                                let opacity = 0;
+                                let scale = 0.5;
+                                let fontSize = 4;
+                                
+                                const koihaiInterval = setInterval(() => {
+                                  if (scale < 4) {
+                                    opacity = Math.max(0, 1 - (scale - 1) / 3);
+                                    koihai.style.opacity = opacity;
+                                    koihai.style.fontSize = fontSize + 'px';
+                                    koihai.style.transform = 'scale(' + scale + ')';
+                                    scale += 0.1;
+                                    fontSize += 0.5;
+                                  } else {
+                                    clearInterval(koihaiInterval);
+                                    koihai.style.opacity = '0';
+                                  }
+                                }, 100);
+                              }
+                            }, 500);
+                          }
+                        }
+                      ]]>
+                    </script>
                   </svg>
                 `),
                 scaledSize: new window.google.maps.Size(40, 40)
@@ -288,8 +341,53 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
               if (radarOverlay) {
                 radarOverlay.setMap(null);
               }
-              // Trigger the search functionality
-              window.dispatchEvent(new CustomEvent('koiHaiClicked'));
+              
+              // Create animated overlay for 1234 and Koi Hai sequence
+              const animationOverlay = new window.google.maps.Marker({
+                position: userPos,
+                map: mapInstance,
+                icon: {
+                  url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                    <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <!-- 1234 Animation -->
+                      <text x="40" y="30" text-anchor="middle" fill="#ef4444" font-size="16" font-weight="bold" font-family="monospace" id="counter-text">
+                        1
+                        <animate attributeName="opacity" values="0;1;1;0" dur="2s" fill="freeze"/>
+                        <animateTransform attributeName="transform" type="scale" values="0.5;1.2;1.2;0.5" dur="2s" fill="freeze"/>
+                      </text>
+                      
+                      <!-- Koi Hai Growing Circle -->
+                      <text x="40" y="50" text-anchor="middle" fill="rgba(239,68,68,0.8)" font-size="8" font-weight="bold" id="koihai-text">
+                        Koi Hai...
+                        <animate attributeName="opacity" values="0;0;1;0.8;0.4;0" dur="4s" begin="2s" fill="freeze"/>
+                        <animateTransform attributeName="transform" type="scale" values="0.5;0.5;1;2;3;4" dur="4s" begin="2s" fill="freeze"/>
+                        <animate attributeName="font-size" values="8;8;12;16;20;24" dur="4s" begin="2s" fill="freeze"/>
+                      </text>
+                      
+                      <script>
+                        setTimeout(() => {
+                          let count = 1;
+                          const counter = document.getElementById('counter-text');
+                          const interval = setInterval(() => {
+                            if (counter) counter.textContent = count;
+                            count++;
+                            if (count > 4) clearInterval(interval);
+                          }, 500);
+                        }, 100);
+                      </script>
+                    </svg>
+                  `),
+                  scaledSize: new window.google.maps.Size(80, 80),
+                  anchor: new window.google.maps.Point(40, 40)
+                }
+              });
+              
+              // Remove animation overlay after sequence completes
+              setTimeout(() => {
+                animationOverlay.setMap(null);
+                // Trigger the search functionality
+                window.dispatchEvent(new CustomEvent('koiHaiClicked'));
+              }, 6000);
             });
           },
           (error) => console.log('Geolocation error:', error)

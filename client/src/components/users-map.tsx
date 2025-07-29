@@ -403,21 +403,149 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
                   font-size: 20px;
                   cursor: pointer;
                   box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                  position: relative;
                 " 
                 title="Press to see Who's there?"
                 onclick="
+                  // Start 1234 animation and trigger search
+                  this.classList.add('clicked');
+                  
                   // Stop the scanner animation
                   const scanner = document.querySelector('.radar-animation');
                   if (scanner) {
                     scanner.style.display = 'none';
                   }
-                  // Trigger the search functionality
-                  window.location.href = window.location.href.includes('#') ? window.location.href : window.location.href + '#koi-hai';
+                  
+                  // Start the sequence
+                  const koihaiAnimation = this.querySelector('.koihai-sequence');
+                  if (koihaiAnimation) {
+                    koihaiAnimation.style.display = 'block';
+                  }
+                  
+                  // Trigger the search functionality after a brief delay
+                  setTimeout(() => {
+                    window.location.href = window.location.href.includes('#') ? window.location.href : window.location.href + '#koi-hai';
+                  }, 6000);
                 ">
                   📍
+                  
+                  <!-- 1234 Animation and Koi Hai Sequence -->
+                  <div class="koihai-sequence" style="
+                    display: none;
+                    position: absolute;
+                    top: -20px;
+                    left: -20px;
+                    width: 80px;
+                    height: 80px;
+                    pointer-events: none;
+                  ">
+                    <!-- 1234 Counter Animation -->
+                    <div class="counter-1234" style="
+                      position: absolute;
+                      top: 50%;
+                      left: 50%;
+                      transform: translate(-50%, -50%);
+                      color: #ef4444;
+                      font-size: 14px;
+                      font-weight: bold;
+                      font-family: monospace;
+                      animation: counter1234 2s ease-in-out;
+                      z-index: 10;
+                    ">1</div>
+                    
+                    <!-- Koi Hai Circle Animation -->
+                    <div class="koihai-circle" style="
+                      position: absolute;
+                      top: 50%;
+                      left: 50%;
+                      transform: translate(-50%, -50%);
+                      color: rgba(239, 68, 68, 0.8);
+                      font-size: 8px;
+                      font-weight: bold;
+                      text-align: center;
+                      animation: koihaiGrow 4s ease-out 2s forwards;
+                      animation-delay: 2s;
+                      opacity: 0;
+                    ">Koi Hai...</div>
+                  </div>
+                  
+                  <style>
+                    @keyframes counter1234 {
+                      0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+                      20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); content: '1'; }
+                      25% { content: '2'; }
+                      50% { content: '2'; }
+                      55% { content: '3'; }
+                      75% { content: '3'; }
+                      80% { content: '4'; }
+                      95% { content: '4'; }
+                      100% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+                    }
+                    
+                    @keyframes koihaiGrow {
+                      0% { 
+                        opacity: 0; 
+                        transform: translate(-50%, -50%) scale(0.5);
+                        font-size: 8px;
+                      }
+                      20% { 
+                        opacity: 1; 
+                        transform: translate(-50%, -50%) scale(1);
+                        font-size: 10px;
+                      }
+                      60% { 
+                        opacity: 0.8; 
+                        transform: translate(-50%, -50%) scale(2);
+                        font-size: 16px;
+                      }
+                      80% { 
+                        opacity: 0.4; 
+                        transform: translate(-50%, -50%) scale(3);
+                        font-size: 20px;
+                      }
+                      100% { 
+                        opacity: 0; 
+                        transform: translate(-50%, -50%) scale(4);
+                        font-size: 24px;
+                      }
+                    }
+                    
+                    /* Counter text content animation using CSS counters */
+                    .counter-1234::before {
+                      content: counter(count-animation);
+                      counter-reset: count-animation 1;
+                      animation: count-sequence 2s steps(4) infinite;
+                    }
+                    
+                    @keyframes count-sequence {
+                      0% { counter-increment: count-animation 0; }
+                      25% { counter-increment: count-animation 1; }
+                      50% { counter-increment: count-animation 2; }
+                      75% { counter-increment: count-animation 3; }
+                      100% { counter-increment: count-animation 4; }
+                    }
+                  </style>
                 </div>
+                
+                <script>
+                  (function() {
+                    const counter = document.querySelector('.counter-1234');
+                    if (counter && !counter.dataset.initialized) {
+                      counter.dataset.initialized = 'true';
+                      let count = 1;
+                      const interval = setInterval(() => {
+                        counter.textContent = count;
+                        count++;
+                        if (count > 4) {
+                          clearInterval(interval);
+                          counter.style.opacity = '0';
+                        }
+                      }, 500);
+                    }
+                  })();
+                </script>
               `,
-              className: 'user-location-marker',
+              className: 'user-location-marker animated-pin',
               iconSize: [40, 40],
               iconAnchor: [20, 20],
             })}
