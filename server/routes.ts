@@ -398,13 +398,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get nearest users based on user's location
+  // Get nearest users based on user's location  
   app.get("/api/users/nearby", authenticateToken, async (req, res) => {
     try {
       const userId = req.userId!;
+      
+      // Get user data (this will check local database first, then QAAQ)
       const currentUser = await storage.getUser(userId);
       
-      if (!currentUser || !currentUser.latitude || !currentUser.longitude) {
+      console.log('Debug user data:', {
+        id: currentUser?.id,
+        deviceLat: currentUser?.deviceLatitude,
+        deviceLon: currentUser?.deviceLongitude,
+        lat: currentUser?.latitude,
+        lon: currentUser?.longitude
+      });
+      
+      // Try multiple sources for user location: device location, main lat/lon
+      let userLat: number | null = null;
+      let userLon: number | null = null;
+      
+      if (currentUser?.deviceLatitude && currentUser?.deviceLongitude && 
+          currentUser.deviceLatitude !== 0 && currentUser.deviceLongitude !== 0) {
+        userLat = parseFloat(currentUser.deviceLatitude.toString());
+        userLon = parseFloat(currentUser.deviceLongitude.toString());
+        console.log('Using device location:', userLat, userLon);
+      } else if (currentUser?.latitude && currentUser?.longitude && 
+                 currentUser.latitude !== 0 && currentUser.longitude !== 0) {
+        userLat = parseFloat(currentUser.latitude.toString());
+        userLon = parseFloat(currentUser.longitude.toString());
+        console.log('Using main location:', userLat, userLon);
+      }
+      
+      if (!currentUser || !userLat || !userLon) {
+        console.log('No valid location found');
         return res.status(400).json({ message: "User location not available" });
       }
 
@@ -423,14 +450,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return R * c;
       };
 
-      const userLat = parseFloat(currentUser.latitude!.toString());
-      const userLon = parseFloat(currentUser.longitude!.toString());
-
       // Calculate distances and sort by nearest
-      const usersWithDistance = otherUsers.map(user => ({
-        ...user,
-        distance: calculateDistance(userLat, userLon, parseFloat(user.latitude!.toString()), parseFloat(user.longitude!.toString()))
-      })).sort((a, b) => a.distance - b.distance);
+      const usersWithDistance = otherUsers.map(user => {
+        // Get user coordinates from available sources
+        let lat = user.latitude || user.deviceLatitude;
+        let lon = user.longitude || user.deviceLongitude;
+        
+        if (!lat || !lon) {
+          // Return very far distance if no location available
+          return { ...user, distance: 999999 };
+        }
+        
+        return {
+          ...user,
+          distance: calculateDistance(userLat!, userLon!, parseFloat(lat.toString()), parseFloat(lon.toString()))
+        };
+      }).sort((a, b) => a.distance - b.distance);
 
       // Return nearest 10 users
       const nearestUsers = usersWithDistance.slice(0, 10).map(user => ({

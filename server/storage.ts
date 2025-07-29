@@ -60,7 +60,14 @@ export class DatabaseStorage implements IStorage {
   }
   async getUser(id: string): Promise<User | undefined> {
     try {
-      // Use direct pool query to avoid column mapping issues
+      // First check local PostgreSQL users table for device location data
+      const localUserResult = await db.select().from(users).where(eq(users.id, id)).limit(1);
+      if (localUserResult.length > 0) {
+        console.log('Found user in local database with device location');
+        return localUserResult[0];
+      }
+      
+      // Use direct pool query to check QAAQ admin database
       const result = await pool.query('SELECT * FROM users WHERE id = $1 LIMIT 1', [id]);
       
       if (result.rows.length === 0) return undefined;
