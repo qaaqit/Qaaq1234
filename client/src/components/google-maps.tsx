@@ -181,9 +181,11 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
               radius: 50000 // 50km in meters
             });
             
-            // Add scanning radar animation overlay with proper scaling
-            const radarOverlay = new window.google.maps.Marker({
-              position: userPos,
+            // Add scanning radar animation overlay with proper scaling (only when not showing users)
+            let radarOverlay = null;
+            if (!showUsers) {
+              radarOverlay = new window.google.maps.Marker({
+                position: userPos,
               map: mapInstance,
               icon: {
                 url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
@@ -237,8 +239,9 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
                 `),
                 scaledSize: new window.google.maps.Size(200, 200),
                 anchor: new window.google.maps.Point(100, 100)
-              }
-            });
+                }
+              });
+            }
             
             // Add clickable area over user location (no visual icon needed)
             const koiHaiButton = new window.google.maps.Marker({
@@ -257,6 +260,10 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
             
             // Add click handler for Koi Hai button
             koiHaiButton.addListener('click', () => {
+              // Hide the radar animation
+              if (radarOverlay) {
+                radarOverlay.setMap(null);
+              }
               // Trigger the search functionality
               window.dispatchEvent(new CustomEvent('koiHaiClicked'));
             });

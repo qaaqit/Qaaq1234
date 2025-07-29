@@ -279,7 +279,7 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
         )}
         
         {/* Scanning radar animation overlaid on user's location */}
-        {userLocation && (
+        {userLocation && !showUsers && (
           <Marker
             position={[userLocation.lat, userLocation.lng]}
             icon={divIcon({
@@ -385,7 +385,15 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
                   box-shadow: 0 2px 6px rgba(0,0,0,0.3);
                 " 
                 title="Press to see Who's there?"
-                onclick="window.location.href = window.location.href.includes('#') ? window.location.href : window.location.href + '#koi-hai'">
+                onclick="
+                  // Stop the scanner animation
+                  const scanner = document.querySelector('.radar-animation');
+                  if (scanner) {
+                    scanner.style.display = 'none';
+                  }
+                  // Trigger the search functionality
+                  window.location.href = window.location.href.includes('#') ? window.location.href : window.location.href + '#koi-hai';
+                ">
                   📍
                 </div>
               `,
