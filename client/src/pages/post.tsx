@@ -48,7 +48,7 @@ export default function Post({ user }: PostProps) {
 
     setLoading(true);
     try {
-      await apiRequest('POST', '/api/posts', formData);
+      await apiRequest('/api/posts', 'POST', formData);
       
       toast({
         title: "Posted! 🦆",

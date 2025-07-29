@@ -25,22 +25,22 @@ export const authApi = {
     userType: 'sailor' | 'local';
     nickname?: string;
   }): Promise<AuthResponse> => {
-    const response = await apiRequest('POST', '/api/register', userData);
+    const response = await apiRequest('/api/register', 'POST', userData);
     return await response.json();
   },
 
   login: async (userId: string, password: string): Promise<AuthResponse> => {
-    const response = await apiRequest('POST', '/api/login', { userId, password });
+    const response = await apiRequest('/api/login', 'POST', { userId, password });
     return await response.json();
   },
 
   verify: async (email: string, code: string): Promise<AuthResponse> => {
-    const response = await apiRequest('POST', '/api/verify', { email, code });
+    const response = await apiRequest('/api/verify', 'POST', { email, code });
     return await response.json();
   },
 
   getProfile: async (): Promise<User> => {
-    const response = await apiRequest('GET', '/api/profile');
+    const response = await apiRequest('/api/profile', 'GET');
     return await response.json();
   }
 };

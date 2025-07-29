@@ -182,8 +182,9 @@ export default function QaaqStore({ location, suburb, port, country, userShipSch
         storeLocation: location
       };
 
-      const response = await apiRequest('POST', '/api/qaaq-store/create-order', orderData);
-      const { razorpayOrderId, amount } = response;
+      const response = await apiRequest('/api/qaaq-store/create-order', 'POST', orderData);
+      const data = await response.json();
+      const { razorpayOrderId, amount } = data;
 
       // Initialize Razorpay
       const options = {

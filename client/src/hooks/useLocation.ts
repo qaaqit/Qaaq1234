@@ -55,7 +55,7 @@ export function useLocation(userId?: string, autoUpdate: boolean = true) {
         // If userId is provided, update location on server
         if (userId) {
           try {
-            await apiRequest('POST', '/api/users/location/device', {
+            await apiRequest('/api/users/location/device', 'POST', {
               userId,
               latitude: locationData.latitude,
               longitude: locationData.longitude
@@ -91,7 +91,7 @@ export function useLocation(userId?: string, autoUpdate: boolean = true) {
     setError(null);
 
     try {
-      const response = await apiRequest('POST', '/api/users/location/ship', {
+      const response = await apiRequest('/api/users/location/ship', 'POST', {
         userId,
         imoNumber,
         shipName
@@ -148,7 +148,7 @@ export function useLocation(userId?: string, autoUpdate: boolean = true) {
           // Update if moved more than 100 meters
           if (distance > 0.1) {
             try {
-              await apiRequest('POST', '/api/users/location/device', {
+              await apiRequest('/api/users/location/device', 'POST', {
                 userId,
                 latitude: locationData.latitude,
                 longitude: locationData.longitude
