@@ -26,6 +26,8 @@ export const users = pgTable("users", {
   deviceLongitude: real("device_longitude"), // Current device GPS location
   locationSource: text("location_source").default("city"), // 'device', 'ship', 'city'
   locationUpdatedAt: timestamp("location_updated_at"),
+  questionCount: integer("question_count").default(0), // Total questions asked on QAAQ
+  answerCount: integer("answer_count").default(0), // Total answers given on QAAQ
   isVerified: boolean("is_verified").default(false),
   loginCount: integer("login_count").default(0),
   lastLogin: timestamp("last_login"),

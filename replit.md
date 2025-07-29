@@ -153,9 +153,12 @@ Google Maps Controls: Transparent icon-only buttons positioned in bottom-left co
 
 ## Recent Changes
 
-### Navigation Streamlining (January 29, 2025)  
+### Navigation Streamlining & Q&A Integration (January 29, 2025)  
 - **Bottom Navigation Reduction**: Reduced to 2 tabs for regular users (Ch13 DM, Ch16 Broadcast) and 3 tabs for admin users (+ Admin Panel)
 - **Channel-Based Naming**: Renamed QChat to "Ch13 DM" and Post to "Ch16 Broadcast" with two-line button layout for better fit
+- **QAAQ Q&A Count Display**: Added question and answer count display in user cards showing format like "E/C 5Q2A" after user rank
+- **Database Schema Enhancement**: Added questionCount and answerCount fields to users table with automatic tracking
+- **Comprehensive Q&A Integration**: Updated all user card displays across DM page, Google Maps, Users Map, and QChat window
 - **Discover Tab Removed**: Eliminated Discover from bottom navigation to reduce clutter
 - **Home Logo Integration**: Added clickable QaaqConnect logo to Ch13 DM and Ch16 Broadcast page headers for easy return to Discover page
 - **QHF Integration**: Moved QHF functionality into Ch13 DM button, eliminating separate navigation item

@@ -326,7 +326,13 @@ export default function DMPage() {
                           <div className="flex-1 min-w-0">
                             <h4 className="font-semibold text-gray-900 truncate">{userProfile.fullName}</h4>
                             {userProfile.rank && (
-                              <p className="text-sm text-gray-600 truncate">{userProfile.rank}</p>
+                              <p className="text-sm text-gray-600 truncate">
+                                {userProfile.rank} {userProfile.questionCount !== undefined && userProfile.answerCount !== undefined && 
+                                  <span className="text-xs text-blue-600 font-medium">
+                                    {userProfile.questionCount}Q{userProfile.answerCount}A
+                                  </span>
+                                }
+                              </p>
                             )}
                             <div className="flex items-center mt-1 text-xs text-gray-500">
                               <MapPin size={12} className="mr-1" />

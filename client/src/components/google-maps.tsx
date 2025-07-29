@@ -15,6 +15,8 @@ interface GoogleMapsUser {
   latitude: number;
   longitude: number;
   whatsappNumber?: string;
+  questionCount?: number;
+  answerCount?: number;
 }
 
 interface GoogleMapsProps {
@@ -655,6 +657,11 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
                   </div>
                   <div className="text-xs text-gray-600 truncate">
                     {user.rank ? getRankAbbreviation(user.rank) : 'Maritime Professional'}
+                    {user.questionCount !== undefined && user.answerCount !== undefined && 
+                      <span className="text-blue-600 font-medium ml-1">
+                        {user.questionCount}Q{user.answerCount}A
+                      </span>
+                    }
                   </div>
                   <div className="text-xs text-gray-500">
                     {user.distance?.toFixed(1)}km away

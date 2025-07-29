@@ -15,8 +15,8 @@ interface QChatWindowProps {
   isOpen: boolean;
   onClose: () => void;
   connection?: ChatConnection & {
-    sender: { id: string; fullName: string; rank?: string };
-    receiver: { id: string; fullName: string; rank?: string };
+    sender: { id: string; fullName: string; rank?: string; questionCount?: number; answerCount?: number };
+    receiver: { id: string; fullName: string; rank?: string; questionCount?: number; answerCount?: number };
   };
 }
 
@@ -136,7 +136,11 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
                 <div className="flex items-center space-x-2">
                   {otherUser?.rank && (
                     <Badge className="bg-white/20 text-white text-xs px-2 py-0.5">
-                      {otherUser.rank}
+                      {otherUser.rank} {otherUser.questionCount !== undefined && otherUser.answerCount !== undefined && 
+                        <span className="ml-1">
+                          {otherUser.questionCount}Q{otherUser.answerCount}A
+                        </span>
+                      }
                     </Badge>
                   )}
                   <span className="text-xs text-blue-100">
