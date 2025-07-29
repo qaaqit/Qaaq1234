@@ -523,14 +523,10 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
               iconSize: [40, 40],
               iconAnchor: [20, 20],
             })}
-          >
-            <Popup>
-              <div className="p-2">
-                <h3 className="font-bold text-red-600">Your Location</h3>
-              </div>
-            </Popup>
-          </Marker>
+          />
         )}
+        
+
         
 
         
