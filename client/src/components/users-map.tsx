@@ -285,8 +285,8 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
             icon={divIcon({
               html: `
                 <div style="
-                  width: 200px;
-                  height: 200px;
+                  width: 300px;
+                  height: 300px;
                   position: relative;
                   pointer-events: none;
                   transform: translate(-50%, -50%);
@@ -294,13 +294,13 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
                   <!-- Rotating scan line -->
                   <div style="
                     position: absolute;
-                    top: 50%;
-                    left: 50%;
+                    top: 150px;
+                    left: 150px;
                     width: 2px;
-                    height: 90px;
+                    height: 120px;
                     background: linear-gradient(to bottom, rgba(8,145,178,0.8), transparent);
-                    transform-origin: bottom center;
-                    transform: translate(-50%, -100%) rotate(0deg);
+                    transform-origin: 1px 0px;
+                    transform: rotate(0deg);
                     animation: radarScan 4s linear infinite;
                   "></div>
                   
@@ -335,8 +335,8 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
                   
                   <style>
                     @keyframes radarScan {
-                      0% { transform: translate(-50%, -100%) rotate(0deg); }
-                      100% { transform: translate(-50%, -100%) rotate(360deg); }
+                      0% { transform: rotate(0deg); }
+                      100% { transform: rotate(360deg); }
                     }
                     
                     @keyframes koihaiRadar {
@@ -361,8 +361,8 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
                 </div>
               `,
               className: 'radar-animation',
-              iconSize: [200, 200],
-              iconAnchor: [100, 100],
+              iconSize: [300, 300],
+              iconAnchor: [150, 150],
             })}
           />
         )}
