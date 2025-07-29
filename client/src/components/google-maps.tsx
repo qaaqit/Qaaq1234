@@ -70,6 +70,7 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
   const [isLoaded, setIsLoaded] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [mapRadius, setMapRadius] = useState<number>(50); // Initial 50km radius
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const mapRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<any[]>([]);
 
@@ -87,6 +88,29 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
       return response.json();
     }
   });
+
+  // Get nearest 9 users for the cards list
+  const getNearestUsers = (count: number = 9): (GoogleMapsUser & { distance: number })[] => {
+    if (!userLocation || !showUsers) return [];
+    
+    const validUsers = users.filter((u: any) => 
+      u.latitude && u.longitude && 
+      Math.abs(u.latitude) > 0.1 && Math.abs(u.longitude) > 0.1
+    );
+    
+    return validUsers
+      .map(user => ({
+        ...user,
+        distance: calculateDistance(
+          userLocation.lat, userLocation.lng,
+          user.latitude, user.longitude
+        )
+      }))
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, count);
+  };
+
+  const nearestUsers = getNearestUsers();
 
   useEffect(() => {
     if (!isPremiumUser) return;
@@ -344,7 +368,7 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
       
       map.fitBounds(paddedBounds);
     }
-  }, [map, isLoaded, showUsers, userLocation, users]);
+  }, [map, isLoaded, showUsers, userLocation, users, selectedUserId]);
 
   useEffect(() => {
     if (!map || !isLoaded) return;
@@ -370,7 +394,7 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
         icon: {
           url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
             <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="16" cy="16" r="12" fill="${user.userType === 'sailor' ? '#1e3a8a' : '#0d9488'}" stroke="#ffffff" stroke-width="2"/>
+              <circle cx="16" cy="16" r="12" fill="${selectedUserId === user.id ? '#22c55e' : (user.userType === 'sailor' ? '#1e3a8a' : '#0d9488')}" stroke="#ffffff" stroke-width="2"/>
               <text x="16" y="20" text-anchor="middle" fill="white" font-size="10" font-weight="bold">
                 ${user.userType === 'sailor' ? '⚓' : '🏠'}
               </text>
@@ -470,14 +494,7 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
 
   return (
     <div className="relative w-full h-full">
-      {/* Location Coordinates Overlay */}
-      {userLocation && (
-        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 bg-black/40 backdrop-blur-sm px-3 py-2 rounded-lg">
-          <div className="text-white font-mono text-sm">
-            {userLocation.lat.toFixed(6)}, {userLocation.lng.toFixed(6)}
-          </div>
-        </div>
-      )}
+
       
       {/* Map Controls - Bottom Left with Transparent Icons */}
       <div className="absolute bottom-4 left-4 z-10 flex flex-col space-y-2">
@@ -542,6 +559,38 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
         className="w-full h-full rounded-lg"
         style={{ minHeight: '400px' }}
       />
+
+      {/* Transparent User Cards List at Bottom */}
+      {showUsers && nearestUsers.length > 0 && (
+        <div className="absolute bottom-4 left-4 right-4 z-[1000]">
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg p-3 max-h-32 overflow-y-auto">
+            <h3 className="text-sm font-semibold text-gray-800 mb-2">Nearby Maritime Professionals</h3>
+            <div className="grid grid-cols-3 gap-2">
+              {nearestUsers.map((user) => (
+                <div
+                  key={user.id}
+                  onClick={() => setSelectedUserId(selectedUserId === user.id ? null : user.id)}
+                  className={`p-2 rounded-md cursor-pointer transition-all ${
+                    selectedUserId === user.id 
+                      ? 'bg-green-100 border-2 border-green-500' 
+                      : 'bg-white/50 hover:bg-white/70 border border-gray-200'
+                  }`}
+                >
+                  <div className="text-xs font-medium text-gray-900 truncate">
+                    {user.fullName}
+                  </div>
+                  <div className="text-xs text-gray-600 truncate">
+                    {user.rank ? getRankAbbreviation(user.rank) : 'Maritime Professional'}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {user.distance?.toFixed(1)}km away
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Premium Badge */}
       <div className="absolute bottom-4 left-4 z-10">

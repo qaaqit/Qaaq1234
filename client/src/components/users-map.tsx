@@ -121,6 +121,7 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
   const [bounds, setBounds] = useState<LatLngBounds | null>(null);
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
   const [mapRadius, setMapRadius] = useState<number>(50); // Initial 50km radius
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const { user } = useAuth();
 
   // Always show all users from QAAQ database when "Koi Hai?" is clicked
@@ -215,7 +216,8 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
   }, [users, showUsers, userLocation]);
 
   const createCustomIcon = (user: MapUser) => {
-    const color = user.userType === 'sailor' ? '#1e3a8a' : '#0891b2'; // navy blue for sailors, ocean teal for locals
+    // Green for selected user, otherwise navy blue for sailors or ocean teal for locals
+    const color = selectedUserId === user.id ? '#22c55e' : (user.userType === 'sailor' ? '#1e3a8a' : '#0891b2');
     
     return divIcon({
       html: `
@@ -242,6 +244,24 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
   // Use user location as default center, fallback to Mumbai
   const defaultCenter: [number, number] = userLocation ? [userLocation.lat, userLocation.lng] : [19.076, 72.8777];
   const defaultZoom = 9; // Always use zoom level 9 for 50km radius view
+
+  // Get nearest 9 users for the cards list
+  const getNearestUsers = (count: number = 9): (MapUser & { distance: number })[] => {
+    if (!userLocation || !showUsers) return [];
+    
+    return users
+      .map(user => ({
+        ...user,
+        distance: calculateDistance(
+          userLocation.lat, userLocation.lng,
+          user.latitude, user.longitude
+        )
+      }))
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, count);
+  };
+
+  const nearestUsers = getNearestUsers();
 
   return (
     <div className="w-full h-full overflow-hidden bg-gray-100 relative">
@@ -405,7 +425,6 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
             <Popup>
               <div className="p-2">
                 <h3 className="font-bold text-red-600">Your Location</h3>
-                <p className="text-sm text-gray-600">Search Radius: {mapRadius}km</p>
               </div>
             </Popup>
           </Marker>
@@ -461,6 +480,38 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
           </Marker>
         ))}
       </MapContainer>
+
+      {/* Transparent User Cards List at Bottom */}
+      {showUsers && nearestUsers.length > 0 && (
+        <div className="absolute bottom-4 left-4 right-4 z-[1000]">
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg p-3 max-h-32 overflow-y-auto">
+            <h3 className="text-sm font-semibold text-gray-800 mb-2">Nearby Maritime Professionals</h3>
+            <div className="grid grid-cols-3 gap-2">
+              {nearestUsers.map((user) => (
+                <div
+                  key={user.id}
+                  onClick={() => setSelectedUserId(selectedUserId === user.id ? null : user.id)}
+                  className={`p-2 rounded-md cursor-pointer transition-all ${
+                    selectedUserId === user.id 
+                      ? 'bg-green-100 border-2 border-green-500' 
+                      : 'bg-white/50 hover:bg-white/70 border border-gray-200'
+                  }`}
+                >
+                  <div className="text-xs font-medium text-gray-900 truncate">
+                    {user.fullName}
+                  </div>
+                  <div className="text-xs text-gray-600 truncate">
+                    {user.rank ? getRankAbbreviation(user.rank) : 'Maritime Professional'}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {user.distance?.toFixed(1)}km away
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
