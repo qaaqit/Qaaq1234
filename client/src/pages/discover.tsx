@@ -39,7 +39,7 @@ export default function Discover({ user }: DiscoverProps) {
   const [isPremiumMode, setIsPremiumMode] = useState(false);
   
   // Location functionality for enhanced user discovery
-  const { location, error: locationError, isLoading: locationLoading, requestDeviceLocation, updateShipLocation } = useLocation();
+  const { location, error: locationError, isLoading: locationLoading, requestDeviceLocation, updateShipLocation } = useLocation(user?.id, true);
   
   const { data: posts = [], isLoading, refetch } = useQuery<Post[]>({
     queryKey: searchQuery ? ['/api/posts/search', searchQuery, selectedCategory] : ['/api/posts'],
@@ -143,20 +143,7 @@ export default function Discover({ user }: DiscoverProps) {
 
       {/* Search and Location Controls */}
       <div className="px-4 py-4 bg-white border-b border-gray-200 flex-shrink-0">
-        {/* Location Controls Row */}
-        <div className="flex flex-wrap gap-3 mb-4">
-          {/* Device Location Button */}
-          <Button 
-            onClick={() => requestDeviceLocation(user.id)}
-            disabled={locationLoading}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg shadow-md flex items-center gap-2"
-          >
-            <Navigation className="w-4 h-4" />
-            {locationLoading ? 'Getting Location...' : 'Update My Location'}
-          </Button>
 
-
-        </div>
 
         {/* Location Status Display */}
         {location && (

@@ -14,7 +14,7 @@ interface LocationError {
   message: string;
 }
 
-export function useLocation() {
+export function useLocation(userId?: string, autoUpdate: boolean = true) {
   const [location, setLocation] = useState<LocationData | null>(null);
   const [error, setError] = useState<LocationError | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -178,6 +178,20 @@ export function useLocation() {
   const stopWatching = (watchId: number) => {
     navigator.geolocation.clearWatch(watchId);
   };
+
+  // Auto-request location on mount if enabled
+  useEffect(() => {
+    if (autoUpdate && userId) {
+      requestDeviceLocation(userId);
+      
+      // Set up periodic location updates every 5 minutes
+      const interval = setInterval(() => {
+        requestDeviceLocation(userId);
+      }, 5 * 60 * 1000); // 5 minutes
+      
+      return () => clearInterval(interval);
+    }
+  }, [userId, autoUpdate]);
 
   return {
     location,
