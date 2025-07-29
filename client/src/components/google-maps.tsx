@@ -160,13 +160,49 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
               title: 'Your Location',
               icon: {
                 url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="12" cy="12" r="8" fill="#3b82f6" stroke="#ffffff" stroke-width="2"/>
-                    <circle cx="12" cy="12" r="3" fill="#ffffff"/>
+                  <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="20" cy="20" r="16" fill="#ef4444" stroke="#ffffff" stroke-width="3"/>
+                    <text x="20" y="26" text-anchor="middle" fill="white" font-size="16">📍</text>
                   </svg>
                 `),
-                scaledSize: new window.google.maps.Size(24, 24)
+                scaledSize: new window.google.maps.Size(40, 40)
               }
+            });
+            
+            // Add Koi Hai button above user location
+            const koiHaiButton = new window.google.maps.Marker({
+              position: { lat: userPos.lat + 0.001, lng: userPos.lng }, // Slightly above user pin
+              map: mapInstance,
+              title: 'Koi Hai? - Find nearby users',
+              icon: {
+                url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                  <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                      <linearGradient id="koiHaiGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#0891b2;stop-opacity:1" />
+                        <stop offset="50%" style="stop-color:#0e7490;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#155e75;stop-opacity:1" />
+                      </linearGradient>
+                      <pattern id="texture" patternUnits="userSpaceOnUse" width="12" height="12">
+                        <circle cx="2" cy="2" r="1" fill="rgba(255,255,255,0.3)"/>
+                        <circle cx="10" cy="10" r="0.5" fill="rgba(255,255,255,0.2)"/>
+                      </pattern>
+                    </defs>
+                    <circle cx="30" cy="30" r="26" fill="url(#koiHaiGradient)" stroke="#ffffff" stroke-width="4"/>
+                    <circle cx="30" cy="30" r="26" fill="url(#texture)"/>
+                    <circle cx="30" cy="30" r="23" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+                    <text x="30" y="22" text-anchor="middle" fill="white" font-size="8" font-weight="bold">🔍</text>
+                    <text x="30" y="34" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Koi Hai?</text>
+                  </svg>
+                `),
+                scaledSize: new window.google.maps.Size(60, 60)
+              }
+            });
+            
+            // Add click handler for Koi Hai button
+            koiHaiButton.addListener('click', () => {
+              // Trigger the search functionality
+              window.dispatchEvent(new CustomEvent('koiHaiClicked'));
             });
           },
           (error) => console.log('Geolocation error:', error)
