@@ -153,6 +153,15 @@ Google Maps Controls: Transparent icon-only buttons positioned in bottom-left co
 
 ## Recent Changes
 
+### Navigation Streamlining (January 29, 2025)
+- **Bottom Navigation Reorganization**: Simplified to 3 tabs for regular users (Discover, QChat, Post) and 4 tabs for admin users (+ Admin tab)
+- **QHF Integration**: Moved QHF functionality into QChat button, eliminating separate navigation item
+- **Discover Button Simplification**: Both Discover button and top-left circle icon now navigate to home page (/)
+- **Header Removal**: Eliminated admin header requirement, creating cleaner interface for all users
+- **WhatsApp Bot Rebranding**: Updated bot control to "Discover Bot Assistant" for better alignment with navigation structure
+- **External Links Removed**: Removed WhatsApp Events external link from bottom navigation to maintain internal navigation flow
+- **Admin Panel Access**: Admin users access admin panel through dedicated bottom navigation tab instead of header
+
 ### Minimalistic App Focus (January 29, 2025)
 - **Simplified Architecture**: Removed maritime events management system to maintain focus on core features
 - **QAAQ Store Integration**: Kept full QAAQ Store functionality for maritime professionals to order essentials

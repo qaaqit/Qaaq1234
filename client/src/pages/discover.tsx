@@ -116,7 +116,10 @@ export default function Discover({ user }: DiscoverProps) {
         
         <div className="relative z-10 px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
+            <button 
+              onClick={() => setLocation('/')}
+              className="flex items-center space-x-3 hover:bg-white/10 rounded-lg p-2 transition-colors"
+            >
               <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
                 <i className="fas fa-anchor text-xl text-white"></i>
               </div>
@@ -124,7 +127,7 @@ export default function Discover({ user }: DiscoverProps) {
                 <h1 className="text-2xl font-bold">QaaqConnect</h1>
                 <p className="text-sm text-white/80">Welcome{user.fullName && !user.fullName.startsWith('+') ? `, ${user.fullName.split(' ')[0]}` : ''}!</p>
               </div>
-            </div>
+            </button>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-white/80">
                 {user.userType === 'sailor' ? '🚢' : '🏠'} {user.userType}

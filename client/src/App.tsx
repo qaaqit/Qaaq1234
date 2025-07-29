@@ -16,8 +16,6 @@ import DMPage from "@/pages/dm";
 
 import NotFound from "@/pages/not-found";
 import BottomNav from "@/components/bottom-nav";
-import Header from "@/components/header";
-
 import { getStoredToken, getStoredUser, type User } from "@/lib/auth";
 
 function Router() {
@@ -49,9 +47,7 @@ function Router() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {user?.isAdmin && <Header user={user} />}
-      
-      <div className={user?.isAdmin ? "pt-16 pb-16" : user ? "pb-16" : ""}>
+      <div className={user ? "pb-16" : ""}>
         <Switch>
           <Route path="/" component={() => user ? <Discover user={user} /> : <Home onSuccess={setUser} />} />
           <Route path="/register" component={() => <Register onSuccess={setUser} />} />
