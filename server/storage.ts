@@ -1,4 +1,4 @@
-import { users, posts, likes, verificationCodes, type User, type InsertUser, type Post, type InsertPost, type VerificationCode, type Like } from "@shared/schema";
+import { users, posts, likes, verificationCodes, chatConnections, chatMessages, type User, type InsertUser, type Post, type InsertPost, type VerificationCode, type Like, type ChatConnection, type ChatMessage, type InsertChatConnection, type InsertChatMessage } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, desc, and, ilike, or, sql, isNotNull } from "drizzle-orm";
 import { testDatabaseConnection } from "./test-db";
@@ -30,6 +30,16 @@ export interface IStorage {
   unlikePost(userId: string, postId: string): Promise<void>;
   getUserLike(userId: string, postId: string): Promise<Like | undefined>;
   updatePostLikesCount(postId: string): Promise<void>;
+  
+  // Chat functionality
+  createChatConnection(senderId: string, receiverId: string): Promise<ChatConnection>;
+  getChatConnection(senderId: string, receiverId: string): Promise<ChatConnection | undefined>;
+  acceptChatConnection(connectionId: string): Promise<void>;
+  rejectChatConnection(connectionId: string): Promise<void>;
+  getUserChatConnections(userId: string): Promise<ChatConnection[]>;
+  sendMessage(connectionId: string, senderId: string, message: string): Promise<ChatMessage>;
+  getChatMessages(connectionId: string): Promise<ChatMessage[]>;
+  markMessagesAsRead(connectionId: string, userId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -723,6 +733,84 @@ export class DatabaseStorage implements IStorage {
       .update(posts)
       .set({ likesCount: count })
       .where(eq(posts.id, postId));
+  }
+
+  // Chat functionality methods
+  async createChatConnection(senderId: string, receiverId: string): Promise<ChatConnection> {
+    const [connection] = await db
+      .insert(chatConnections)
+      .values({ senderId, receiverId })
+      .returning();
+    return connection;
+  }
+
+  async getChatConnection(senderId: string, receiverId: string): Promise<ChatConnection | undefined> {
+    const connection = await db
+      .select()
+      .from(chatConnections)
+      .where(
+        or(
+          and(eq(chatConnections.senderId, senderId), eq(chatConnections.receiverId, receiverId)),
+          and(eq(chatConnections.senderId, receiverId), eq(chatConnections.receiverId, senderId))
+        )
+      )
+      .limit(1);
+    return connection[0];
+  }
+
+  async acceptChatConnection(connectionId: string): Promise<void> {
+    await db
+      .update(chatConnections)
+      .set({ status: 'accepted', acceptedAt: new Date() })
+      .where(eq(chatConnections.id, connectionId));
+  }
+
+  async rejectChatConnection(connectionId: string): Promise<void> {
+    await db
+      .update(chatConnections)
+      .set({ status: 'rejected' })
+      .where(eq(chatConnections.id, connectionId));
+  }
+
+  async getUserChatConnections(userId: string): Promise<ChatConnection[]> {
+    return await db
+      .select()
+      .from(chatConnections)
+      .where(
+        or(
+          eq(chatConnections.senderId, userId),
+          eq(chatConnections.receiverId, userId)
+        )
+      )
+      .orderBy(desc(chatConnections.createdAt));
+  }
+
+  async sendMessage(connectionId: string, senderId: string, message: string): Promise<ChatMessage> {
+    const [chatMessage] = await db
+      .insert(chatMessages)
+      .values({ connectionId, senderId, message })
+      .returning();
+    return chatMessage;
+  }
+
+  async getChatMessages(connectionId: string): Promise<ChatMessage[]> {
+    return await db
+      .select()
+      .from(chatMessages)
+      .where(eq(chatMessages.connectionId, connectionId))
+      .orderBy(chatMessages.createdAt);
+  }
+
+  async markMessagesAsRead(connectionId: string, userId: string): Promise<void> {
+    await db
+      .update(chatMessages)
+      .set({ isRead: true })
+      .where(
+        and(
+          eq(chatMessages.connectionId, connectionId),
+          sql`${chatMessages.senderId} != ${userId}`
+        )
+      );
   }
 }
 

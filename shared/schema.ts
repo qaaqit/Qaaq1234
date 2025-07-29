@@ -60,11 +60,32 @@ export const likes = pgTable("likes", {
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 
+export const chatConnections = pgTable("chat_connections", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  senderId: varchar("sender_id").notNull(),
+  receiverId: varchar("receiver_id").notNull(),
+  status: text("status").notNull().default("pending"), // 'pending', 'accepted', 'rejected'
+  createdAt: timestamp("created_at").default(sql`now()`),
+  acceptedAt: timestamp("accepted_at"),
+});
+
+export const chatMessages = pgTable("chat_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  connectionId: varchar("connection_id").notNull(),
+  senderId: varchar("sender_id").notNull(),
+  message: text("message").notNull(),
+  isRead: boolean("is_read").default(false),
+  createdAt: timestamp("created_at").default(sql`now()`),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   posts: many(posts),
   likes: many(likes),
   verificationCodes: many(verificationCodes),
+  sentConnections: many(chatConnections, { relationName: 'sentConnections' }),
+  receivedConnections: many(chatConnections, { relationName: 'receivedConnections' }),
+  sentMessages: many(chatMessages, { relationName: 'sentMessages' }),
 }));
 
 export const postsRelations = relations(posts, ({ one, many }) => ({
@@ -90,6 +111,32 @@ export const verificationCodesRelations = relations(verificationCodes, ({ one })
   user: one(users, {
     fields: [verificationCodes.userId],
     references: [users.id],
+  }),
+}));
+
+export const chatConnectionsRelations = relations(chatConnections, ({ one, many }) => ({
+  sender: one(users, {
+    fields: [chatConnections.senderId],
+    references: [users.id],
+    relationName: 'sentConnections',
+  }),
+  receiver: one(users, {
+    fields: [chatConnections.receiverId],
+    references: [users.id],
+    relationName: 'receivedConnections',
+  }),
+  messages: many(chatMessages),
+}));
+
+export const chatMessagesRelations = relations(chatMessages, ({ one }) => ({
+  connection: one(chatConnections, {
+    fields: [chatMessages.connectionId],
+    references: [chatConnections.id],
+  }),
+  sender: one(users, {
+    fields: [chatMessages.senderId],
+    references: [users.id],
+    relationName: 'sentMessages',
   }),
 }));
 
@@ -122,6 +169,15 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
+export const insertChatConnectionSchema = createInsertSchema(chatConnections).pick({
+  receiverId: true,
+});
+
+export const insertChatMessageSchema = createInsertSchema(chatMessages).pick({
+  connectionId: true,
+  message: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -129,3 +185,7 @@ export type InsertPost = z.infer<typeof insertPostSchema>;
 export type Post = typeof posts.$inferSelect;
 export type VerificationCode = typeof verificationCodes.$inferSelect;
 export type Like = typeof likes.$inferSelect;
+export type ChatConnection = typeof chatConnections.$inferSelect;
+export type ChatMessage = typeof chatMessages.$inferSelect;
+export type InsertChatConnection = z.infer<typeof insertChatConnectionSchema>;
+export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;

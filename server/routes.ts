@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import jwt from 'jsonwebtoken';
 import { storage } from "./storage";
-import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema } from "@shared/schema";
+import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, insertChatConnectionSchema, insertChatMessageSchema } from "@shared/schema";
 import { sendVerificationEmail } from "./services/email";
 import { pool } from "./db";
 
@@ -647,6 +647,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Update order status error:', error);
       res.status(500).json({ message: "Failed to update order status" });
+    }
+  });
+
+  // Chat connection endpoints
+  app.post('/api/chat/connect', authenticateToken, async (req, res) => {
+    try {
+      const { receiverId } = insertChatConnectionSchema.parse(req.body);
+      const senderId = req.userId;
+
+      // Check if connection already exists
+      const existing = await storage.getChatConnection(senderId, receiverId);
+      if (existing) {
+        return res.status(400).json({ message: "Connection already exists" });
+      }
+
+      const connection = await storage.createChatConnection(senderId, receiverId);
+      res.json(connection);
+    } catch (error) {
+      console.error('Create chat connection error:', error);
+      res.status(500).json({ message: "Failed to create chat connection" });
+    }
+  });
+
+  app.post('/api/chat/accept/:connectionId', authenticateToken, async (req, res) => {
+    try {
+      const { connectionId } = req.params;
+      await storage.acceptChatConnection(connectionId);
+      res.json({ message: "Connection accepted" });
+    } catch (error) {
+      console.error('Accept chat connection error:', error);
+      res.status(500).json({ message: "Failed to accept connection" });
+    }
+  });
+
+  app.post('/api/chat/reject/:connectionId', authenticateToken, async (req, res) => {
+    try {
+      const { connectionId } = req.params;
+      await storage.rejectChatConnection(connectionId);
+      res.json({ message: "Connection rejected" });
+    } catch (error) {
+      console.error('Reject chat connection error:', error);
+      res.status(500).json({ message: "Failed to reject connection" });
+    }
+  });
+
+  app.get('/api/chat/connections', authenticateToken, async (req, res) => {
+    try {
+      const connections = await storage.getUserChatConnections(req.userId);
+      res.json(connections);
+    } catch (error) {
+      console.error('Get chat connections error:', error);
+      res.status(500).json({ message: "Failed to get connections" });
+    }
+  });
+
+  app.post('/api/chat/message', authenticateToken, async (req, res) => {
+    try {
+      const { connectionId, message } = insertChatMessageSchema.parse(req.body);
+      const senderId = req.userId;
+
+      const chatMessage = await storage.sendMessage(connectionId, senderId, message);
+      res.json(chatMessage);
+    } catch (error) {
+      console.error('Send message error:', error);
+      res.status(500).json({ message: "Failed to send message" });
+    }
+  });
+
+  app.get('/api/chat/messages/:connectionId', authenticateToken, async (req, res) => {
+    try {
+      const { connectionId } = req.params;
+      const messages = await storage.getChatMessages(connectionId);
+      await storage.markMessagesAsRead(connectionId, req.userId);
+      res.json(messages);
+    } catch (error) {
+      console.error('Get messages error:', error);
+      res.status(500).json({ message: "Failed to get messages" });
     }
   });
 
