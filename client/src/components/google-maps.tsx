@@ -169,9 +169,9 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
               }
             });
             
-            // Add Koi Hai button above user location
+            // Add Koi Hai button over user location
             const koiHaiButton = new window.google.maps.Marker({
-              position: { lat: userPos.lat + 0.001, lng: userPos.lng }, // Slightly above user pin
+              position: userPos, // Directly over user pin
               map: mapInstance,
               title: 'Koi Hai? - Find nearby users',
               icon: {

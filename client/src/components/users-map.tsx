@@ -314,7 +314,7 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
           </Marker>
         )}
         
-        {/* Koi Hai Button - Positioned above user's pin */}
+        {/* Koi Hai Button - Positioned over the red pin */}
         {userLocation && (
           <Marker
             position={[userLocation.lat, userLocation.lng]}
@@ -334,7 +334,6 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
                   font-weight: bold;
                   text-align: center;
                   cursor: pointer;
-                  transform: translateY(-50px);
                   box-shadow: 
                     0 4px 12px rgba(8, 145, 178, 0.4),
                     inset 0 1px 3px rgba(255, 255, 255, 0.3),
@@ -360,7 +359,7 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
               `,
               className: 'koi-hai-button',
               iconSize: [60, 60],
-              iconAnchor: [30, 80], // Positioned above the user pin
+              iconAnchor: [30, 30], // Centered on the user pin position
             })}
           />
         )}
