@@ -407,41 +407,22 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
             icon={divIcon({
               html: `
                 <div style="
-                  width: 60px;
-                  height: 60px;
+                  width: 40px;
+                  height: 40px;
                   display: flex;
                   align-items: center;
                   justify-content: center;
-                  background: linear-gradient(135deg, #0891b2 0%, #0e7490 50%, #155e75 100%);
-                  border: 4px solid #ffffff;
+                  background: #ef4444;
+                  border: 3px solid white;
                   border-radius: 50%;
                   color: white;
-                  font-size: 12px;
-                  font-weight: bold;
-                  text-align: center;
+                  font-size: 20px;
                   cursor: pointer;
-                  box-shadow: 
-                    0 4px 12px rgba(8, 145, 178, 0.4),
-                    inset 0 1px 3px rgba(255, 255, 255, 0.3),
-                    inset 0 -1px 3px rgba(0, 0, 0, 0.2);
-                  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-                  transition: transform 0.2s ease;
-                  position: relative;
-                  background-image: 
-                    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.3) 2px, transparent 2px),
-                    radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
-                  background-size: 12px 12px, 8px 8px;
+                  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
                 " 
                 title="Press to see Who's there?"
                 onclick="window.location.href = window.location.href.includes('#') ? window.location.href : window.location.href + '#koi-hai'">
-                  <div style="
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    line-height: 1;
-                  ">
-                    <div style="font-size: 16px;">🔍</div>
-                  </div>
+                  📍
                 </div>
               `,
               className: 'koi-hai-button',

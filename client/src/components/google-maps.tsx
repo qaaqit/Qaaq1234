@@ -240,34 +240,18 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
               }
             });
             
-            // Add Koi Hai button over user location
+            // Add clickable area over user location (no visual icon needed)
             const koiHaiButton = new window.google.maps.Marker({
-              position: userPos, // Directly over user pin
+              position: userPos,
               map: mapInstance,
               title: 'Press to see "Who\'s there?"',
               icon: {
                 url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-                  <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                      <linearGradient id="koiHaiGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style="stop-color:#0891b2;stop-opacity:1" />
-                        <stop offset="50%" style="stop-color:#0e7490;stop-opacity:1" />
-                        <stop offset="100%" style="stop-color:#155e75;stop-opacity:1" />
-                      </linearGradient>
-                      <pattern id="texture" patternUnits="userSpaceOnUse" width="12" height="12">
-                        <circle cx="2" cy="2" r="1" fill="rgba(255,255,255,0.3)"/>
-                        <circle cx="10" cy="10" r="0.5" fill="rgba(255,255,255,0.2)"/>
-                      </pattern>
-                    </defs>
-                    <circle cx="30" cy="30" r="26" fill="url(#koiHaiGradient)" stroke="#ffffff" stroke-width="4"/>
-                    <circle cx="30" cy="30" r="26" fill="url(#texture)"/>
-                    <circle cx="30" cy="30" r="23" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
-                    
-                    <!-- Search icon -->
-                    <text x="30" y="35" text-anchor="middle" fill="white" font-size="16" font-weight="bold">🔍</text>
+                  <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="20" cy="20" r="18" fill="transparent" stroke="transparent" stroke-width="2"/>
                   </svg>
                 `),
-                scaledSize: new window.google.maps.Size(60, 60)
+                scaledSize: new window.google.maps.Size(40, 40)
               }
             });
             
