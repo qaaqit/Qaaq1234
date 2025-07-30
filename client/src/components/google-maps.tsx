@@ -72,7 +72,7 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
   const [isLoaded, setIsLoaded] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [mapRadius, setMapRadius] = useState<number>(50); // Initial 50km radius
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedUser, setSelectedUser] = useState<GoogleMapsUser | null>(null);
   const mapRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<any[]>([]);
 
@@ -444,7 +444,7 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
       
       map.fitBounds(paddedBounds);
     }
-  }, [map, isLoaded, showUsers, userLocation, users, selectedUserId]);
+  }, [map, isLoaded, showUsers, userLocation, users, selectedUser]);
 
   useEffect(() => {
     if (!map || !isLoaded) return;
@@ -470,7 +470,7 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
         icon: {
           url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
             <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="16" cy="16" r="12" fill="${selectedUserId === user.id ? '#22c55e' : (user.userType === 'sailor' ? '#1e3a8a' : '#0d9488')}" stroke="#ffffff" stroke-width="2"/>
+              <circle cx="16" cy="16" r="12" fill="${selectedUser?.id === user.id ? '#22c55e' : (user.userType === 'sailor' ? '#1e3a8a' : '#0d9488')}" stroke="#ffffff" stroke-width="2"/>
               <text x="16" y="20" text-anchor="middle" fill="white" font-size="10" font-weight="bold">
                 ${user.userType === 'sailor' ? '⚓' : '🏠'}
               </text>
@@ -507,13 +507,14 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
       });
 
       marker.addListener('click', () => {
+        setSelectedUser(user);
         infoWindow.open(map, marker);
         if (onUserClick) onUserClick(user);
       });
 
       markersRef.current.push(marker);
     });
-  }, [map, users, isLoaded, onUserClick]);
+  }, [map, users, isLoaded, onUserClick, selectedUser]);
 
   const changeMapType = (type: 'roadmap' | 'satellite' | 'hybrid') => {
     setMapType(type);
@@ -570,8 +571,27 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
 
   return (
     <div className="relative w-full h-full">
+      {/* Coordinates Display Panel */}
+      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-[1000] bg-gray-500/80 backdrop-blur-sm px-4 py-2 rounded-lg min-w-[280px]">
+        {selectedUser ? (
+          <div className="text-white text-center">
+            <div className="text-sm font-medium">{selectedUser.fullName}</div>
+            <div className="font-mono text-xs mt-1">
+              {selectedUser.latitude.toFixed(6)}, {selectedUser.longitude.toFixed(6)}
+            </div>
+          </div>
+        ) : userLocation ? (
+          <div className="text-white text-center">
+            <div className="text-sm font-medium">Your Location</div>
+            <div className="font-mono text-xs mt-1">
+              {userLocation.lat.toFixed(6)}, {userLocation.lng.toFixed(6)}
+            </div>
+          </div>
+        ) : (
+          <div className="text-white text-center text-sm">Location Loading...</div>
+        )}
+      </div>
 
-      
       {/* Map Controls - Bottom Left with Transparent Icons */}
       <div className="absolute bottom-4 left-4 z-10 flex flex-col space-y-2">
         <div className="flex space-x-1">
@@ -645,9 +665,15 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
               {nearestUsers.map((user) => (
                 <div
                   key={user.id}
-                  onClick={() => setSelectedUserId(selectedUserId === user.id ? null : user.id)}
+                  onClick={() => {
+                    if (selectedUser?.id === user.id) {
+                      setSelectedUser(null);
+                    } else {
+                      setSelectedUser(user);
+                    }
+                  }}
                   className={`p-2 rounded-md cursor-pointer transition-all ${
-                    selectedUserId === user.id 
+                    selectedUser?.id === user.id 
                       ? 'bg-green-100 border-2 border-green-500' 
                       : 'bg-white/50 hover:bg-white/70 border border-gray-200'
                   }`}

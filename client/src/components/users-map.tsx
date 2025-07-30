@@ -123,6 +123,7 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
   const [bounds, setBounds] = useState<LatLngBounds | null>(null);
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
   const [mapRadius, setMapRadius] = useState<number>(50); // Initial 50km radius
+  const [selectedUser, setSelectedUser] = useState<MapUser | null>(null); // Track selected user for coordinate display
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const { user } = useAuth();
 
@@ -219,7 +220,7 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
 
   const createCustomIcon = (user: MapUser) => {
     // Green for selected user, otherwise navy blue for sailors or ocean teal for locals
-    const color = selectedUserId === user.id ? '#22c55e' : (user.userType === 'sailor' ? '#1e3a8a' : '#0891b2');
+    const color = selectedUser?.id === user.id ? '#22c55e' : (user.userType === 'sailor' ? '#1e3a8a' : '#0891b2');
     
     return divIcon({
       html: `
@@ -267,14 +268,26 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
 
   return (
     <div className="w-full h-full overflow-hidden bg-gray-100 relative">
-      {/* Location Coordinates Overlay */}
-      {userLocation && (
-        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-[1000] bg-black/40 backdrop-blur-sm px-3 py-2 rounded-lg">
-          <div className="text-white font-mono text-sm">
-            {userLocation.lat.toFixed(6)}, {userLocation.lng.toFixed(6)}
+      {/* Coordinates Display Panel */}
+      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-[1000] bg-gray-500/80 backdrop-blur-sm px-4 py-2 rounded-lg min-w-[280px]">
+        {selectedUser ? (
+          <div className="text-white text-center">
+            <div className="text-sm font-medium">{selectedUser.fullName}</div>
+            <div className="font-mono text-xs mt-1">
+              {selectedUser.latitude.toFixed(6)}, {selectedUser.longitude.toFixed(6)}
+            </div>
           </div>
-        </div>
-      )}
+        ) : userLocation ? (
+          <div className="text-white text-center">
+            <div className="text-sm font-medium">Your Location</div>
+            <div className="font-mono text-xs mt-1">
+              {userLocation.lat.toFixed(6)}, {userLocation.lng.toFixed(6)}
+            </div>
+          </div>
+        ) : (
+          <div className="text-white text-center text-sm">Location Loading...</div>
+        )}
+      </div>
       
       <MapContainer
         center={defaultCenter}
@@ -543,6 +556,11 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
             key={user.id}
             position={[user.latitude, user.longitude]}
             icon={createCustomIcon(user)}
+            eventHandlers={{
+              click: () => {
+                setSelectedUser(user);
+              }
+            }}
           >
             <Popup>
               <div className="p-2 min-w-[200px]">
@@ -596,9 +614,15 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
               {nearestUsers.map((user) => (
                 <div
                   key={user.id}
-                  onClick={() => setSelectedUserId(selectedUserId === user.id ? null : user.id)}
+                  onClick={() => {
+                    if (selectedUser?.id === user.id) {
+                      setSelectedUser(null);
+                    } else {
+                      setSelectedUser(user);
+                    }
+                  }}
                   className={`p-2 rounded-md cursor-pointer transition-all ${
-                    selectedUserId === user.id 
+                    selectedUser?.id === user.id 
                       ? 'bg-green-100 border-2 border-green-500' 
                       : 'bg-white/50 hover:bg-white/70 border border-gray-200'
                   }`}
