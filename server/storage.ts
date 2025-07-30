@@ -336,10 +336,52 @@ export class DatabaseStorage implements IStorage {
 
   async getUsersWithLocation(): Promise<User[]> {
     try {
-      // Use real QAAQ users with location data from current_city and permanent_city fields
-      console.log('Fetching QAAQ users with location data for map and WhatsApp bot');
+      console.log('Fetching users with location data for map and WhatsApp bot');
       
-      // Start with most basic query and work up - find what columns actually exist
+      // First check if we have our seeded users with direct lat/lng coordinates
+      const directLocationQuery = await pool.query(`
+        SELECT id, full_name, email, rank, ship_name, city, country, 
+               latitude, longitude, question_count, answer_count, user_type
+        FROM users 
+        WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+        AND latitude != 0 AND longitude != 0
+        ORDER BY created_at DESC
+        LIMIT 50
+      `);
+      
+      if (directLocationQuery.rows.length > 0) {
+        console.log(`Found ${directLocationQuery.rows.length} users with direct coordinates`);
+        
+        return directLocationQuery.rows.map(user => ({
+          id: user.id,
+          fullName: user.full_name || 'Maritime User',
+          email: user.email || '',
+          password: '',
+          userType: user.user_type || 'sailor',
+          isAdmin: false,
+          nickname: user.full_name || 'Maritime User',
+          rank: user.rank || 'Crew',
+          shipName: user.ship_name || '',
+          company: 'Unknown Company',
+          imoNumber: '',
+          port: user.city || 'Unknown Port',
+          visitWindow: '',
+          city: user.city || 'Unknown City',
+          country: user.country || 'Unknown Country',
+          latitude: user.latitude,
+          longitude: user.longitude,
+          isVerified: true,
+          loginCount: 1,
+          lastLogin: new Date(),
+          createdAt: new Date(),
+          questionCount: user.question_count || 0,
+          answerCount: user.answer_count || 0
+        }));
+      }
+      
+      // Fallback to the original complex QAAQ user mapping if no direct coordinates found
+      console.log('No direct coordinates found, trying QAAQ user mapping...');
+      
       let result;
       
       console.log('Testing basic connection to users table...');
@@ -357,6 +399,13 @@ export class DatabaseStorage implements IStorage {
         `);
         const availableColumns = columnsResult.rows.map(row => row.column_name);
         console.log('Available columns in users table:', availableColumns);
+        
+        // Check if we have seeded data with direct coordinates
+        const hasDirectCoordinates = availableColumns.includes('latitude') && availableColumns.includes('longitude');
+        if (hasDirectCoordinates) {
+          console.log('Database has latitude/longitude columns but no data found');
+          return [];
+        }
         
         // This is a maritime professional database - adapt to actual schema
         const hasLocation = availableColumns.includes('current_city') || availableColumns.includes('permanent_city');
