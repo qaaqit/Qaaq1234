@@ -639,14 +639,22 @@ export class DatabaseStorage implements IStorage {
             // Generate realistic question count and store it
             questionCount = await this.getQuestionCountForUser(fullName, rank);
             
-            // Store in database for future use
+            // Store in database for future use (using correct column names)
             try {
               await pool.query(
-                'INSERT INTO users (id, full_name, rank, question_count, answer_count) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id) DO UPDATE SET question_count = $4, answer_count = $5',
-                [user.id, fullName, rank, questionCount, Math.floor(questionCount * 0.3)]
+                'UPDATE users SET question_count = $2, answer_count = $3 WHERE id = $1',
+                [user.id, questionCount, Math.floor(questionCount * 0.3)]
               );
-            } catch (insertError) {
-              console.log('Could not store question count in database:', (insertError as Error).message);
+            } catch (updateError) {
+              // If update fails, try insert without full_name since it might not exist in QAAQ schema
+              try {
+                await pool.query(
+                  'INSERT INTO users (id, question_count, answer_count) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET question_count = $2, answer_count = $3',
+                  [user.id, questionCount, Math.floor(questionCount * 0.3)]
+                );
+              } catch (insertError) {
+                console.log('Could not store question count in database:', (insertError as Error).message);
+              }
             }
           }
         } catch (dbError) {

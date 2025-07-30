@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -9,7 +10,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useLocation } from "wouter";
 import { formatDistanceToNow } from "date-fns";
 import QChatWindow from "@/components/qchat-window";
 import type { ChatConnection, User as UserType } from "@shared/schema";
@@ -319,7 +319,11 @@ export default function DMPage() {
                   );
 
                   return (
-                    <Card key={userProfile.id} className="border border-gray-200 hover:shadow-lg transition-shadow">
+                    <Card 
+                      key={userProfile.id} 
+                      className="border border-gray-200 hover:shadow-lg transition-shadow cursor-pointer"
+                      onClick={() => setLocation(`/user/${userProfile.id}`)}
+                    >
                       <CardContent className="p-4">
                         <div className="flex items-start space-x-3 mb-3">
                           <Avatar className="w-12 h-12 border-2 border-ocean-teal/30">
@@ -370,26 +374,28 @@ export default function DMPage() {
                           {userProfile.userType === 'sailor' ? 'Sailor' : 'Local Guide'}
                         </Badge>
 
-                        {existingConnection ? (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="w-full"
-                            disabled
-                          >
-                            {existingConnection.status === 'accepted' ? 'Connected' : 
-                             existingConnection.status === 'pending' ? 'Request Sent' : 'Connection Declined'}
-                          </Button>
-                        ) : (
-                          <Button
-                            size="sm"
-                            className="w-full bg-gradient-to-r from-ocean-teal to-cyan-600 text-white hover:from-cyan-600 hover:to-ocean-teal"
-                            onClick={() => handleConnectUser(userProfile.id)}
-                            disabled={createConnectionMutation.isPending}
-                          >
-                            {createConnectionMutation.isPending ? 'Connecting...' : 'Connect'}
-                          </Button>
-                        )}
+                        <div onClick={(e) => e.stopPropagation()}>
+                          {existingConnection ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full"
+                              disabled
+                            >
+                              {existingConnection.status === 'accepted' ? 'Connected' : 
+                               existingConnection.status === 'pending' ? 'Request Sent' : 'Connection Declined'}
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              className="w-full bg-gradient-to-r from-ocean-teal to-cyan-600 text-white hover:from-cyan-600 hover:to-ocean-teal"
+                              onClick={() => handleConnectUser(userProfile.id)}
+                              disabled={createConnectionMutation.isPending}
+                            >
+                              {createConnectionMutation.isPending ? 'Connecting...' : 'Connect'}
+                            </Button>
+                          )}
+                        </div>
                       </CardContent>
                     </Card>
                   );

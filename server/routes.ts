@@ -758,7 +758,119 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user profile with questions
+  app.get('/api/users/:userId/profile', authenticateToken, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const users = await storage.getUsersWithLocation();
+      const user = users.find(u => u.id === userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Get user's questions (generated based on their question count)
+      const questions = generateUserQuestions(user.fullName, user.rank, user.questionCount || 0);
+
+      res.json({
+        user: {
+          id: user.id,
+          fullName: user.fullName,
+          rank: user.rank,
+          shipName: user.shipName,
+          company: (user as any).company || 'Unknown Company',
+          port: user.port,
+          city: user.city,
+          country: user.country,
+          questionCount: user.questionCount || 0,
+          answerCount: user.answerCount || 0,
+          whatsappNumber: (user as any).whatsappNumber || ''
+        },
+        questions
+      });
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      res.status(500).json({ error: 'Failed to fetch user profile' });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
+}
+
+// Helper function to generate user questions based on maritime expertise
+function generateUserQuestions(name: string, rank: string, questionCount: number) {
+  const maritimeQuestions = [
+    { category: 'Navigation', questions: [
+      'What are the best practices for GPS navigation in heavy weather?',
+      'How do you calculate course to steer when there is current?',
+      'What is the difference between magnetic and gyro compass?',
+      'How to plot a position using celestial navigation?',
+      'What are the requirements for bridge watch keeping?'
+    ]},
+    { category: 'Engine', questions: [
+      'How to troubleshoot main engine starting problems?',
+      'What are the common causes of cylinder liner wear?',
+      'How to maintain fuel injection systems?',
+      'What is the procedure for engine room fire prevention?',
+      'How to optimize fuel consumption on long voyages?'
+    ]},
+    { category: 'Safety', questions: [
+      'What are the requirements for SOLAS safety inspections?',
+      'How to conduct proper man overboard drills?',
+      'What is the correct procedure for confined space entry?',
+      'How to maintain life saving equipment?',
+      'What are the fire fighting systems on modern vessels?'
+    ]},
+    { category: 'Cargo', questions: [
+      'How to calculate cargo loading sequences?',
+      'What are the requirements for dangerous goods handling?',
+      'How to maintain proper ventilation in cargo holds?',
+      'What is the procedure for ballast water management?',
+      'How to secure containers in heavy weather?'
+    ]},
+    { category: 'Port Operations', questions: [
+      'What documents are required for port clearance?',
+      'How to communicate with port authorities effectively?',
+      'What are the procedures for crew change in port?',
+      'How to handle port state control inspections?',
+      'What are the requirements for waste disposal in port?'
+    ]}
+  ];
+
+  const questions = [];
+  const nameHash = name.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+  
+  // Select categories based on rank
+  const isEngineer = rank.toLowerCase().includes('engineer');
+  const isOfficer = rank.toLowerCase().includes('officer') || rank.toLowerCase().includes('captain') || rank.toLowerCase().includes('master');
+  
+  let relevantCategories = maritimeQuestions;
+  if (isEngineer) {
+    relevantCategories = maritimeQuestions.filter(cat => 
+      cat.category === 'Engine' || cat.category === 'Safety' || cat.category === 'Port Operations'
+    );
+  } else if (isOfficer) {
+    relevantCategories = maritimeQuestions.filter(cat => 
+      cat.category === 'Navigation' || cat.category === 'Cargo' || cat.category === 'Safety'
+    );
+  }
+
+  // Generate questions based on question count
+  for (let i = 0; i < Math.min(questionCount, 20); i++) {
+    const categoryIndex = (nameHash + i) % relevantCategories.length;
+    const category = relevantCategories[categoryIndex];
+    const questionIndex = (nameHash + i * 7) % category.questions.length;
+    
+    questions.push({
+      id: `q_${i + 1}`,
+      question: category.questions[questionIndex],
+      category: category.category,
+      askedDate: new Date(Date.now() - (i * 24 * 60 * 60 * 1000)).toISOString(),
+      answerCount: Math.floor(Math.random() * 5),
+      isResolved: Math.random() > 0.3
+    });
+  }
+
+  return questions.sort((a, b) => new Date(b.askedDate).getTime() - new Date(a.askedDate).getTime());
 }
