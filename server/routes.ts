@@ -318,7 +318,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get users with location data for map
   app.get("/api/users/map", async (req, res) => {
     try {
+      console.log('API route /api/users/map called');
       const users = await storage.getUsersWithLocation();
+      console.log(`Storage returned ${users.length} users for map`);
+      
       // Only return necessary data for the map
       const mapUsers = users.map(user => ({
         id: user.id,
@@ -335,6 +338,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         longitude: user.longitude,
         questionCount: user.questionCount
       }));
+      
+      console.log(`Returning ${mapUsers.length} users to frontend`);
+      if (mapUsers.length > 0) {
+        console.log('Sample user data:', mapUsers[0]);
+      }
+      
       res.json(mapUsers);
     } catch (error) {
       console.error('Get map users error:', error);

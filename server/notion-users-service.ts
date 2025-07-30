@@ -162,6 +162,11 @@ export async function getQAAQUsersFromNotion() {
             // Plot users at their city/port locations from their profiles
             const location = getMaritimeLocationCoordinates(homeCity || "", nationality);
             
+            // Debug logging for the first few users
+            if (index < 5) {
+                console.log(`User ${index + 1}: Name="${fullName}", City="${homeCity}", Nationality="${nationality}", Coords=[${location.lat}, ${location.lng}]`);
+            }
+            
             // Clean WhatsApp number
             const cleanWhatsappNumber = whatsappNumber.replace(/\s/g, '').replace(/[^\d+]/g, '');
             
@@ -198,8 +203,13 @@ export async function getQAAQUsersFromNotion() {
             };
         });
 
-        console.log(`Retrieved ${users.length} real QAAQ users from Notion`);
-        return users;
+        // Filter out users without valid coordinates (not at 0,0)
+        const validUsers = users.filter(user => 
+            user.latitude !== 0 || user.longitude !== 0
+        );
+        
+        console.log(`Retrieved ${users.length} total users from Notion, ${validUsers.length} with valid city coordinates`);
+        return validUsers;
 
     } catch (error) {
         console.error("Error fetching QAAQ users from Notion:", error);
@@ -212,7 +222,7 @@ export async function getQAAQUsersFromNotion() {
  */
 function getMaritimeLocationCoordinates(location: string, country: string = ''): { lat: number, lng: number } {
     const maritimeLocations: { [key: string]: { lat: number, lng: number } } = {
-        // Major Indian Ports
+        // Major Indian Ports and Cities
         'mumbai': { lat: 19.076, lng: 72.8777 },
         'mumbai port': { lat: 19.076, lng: 72.8777 },
         'chennai': { lat: 13.0827, lng: 80.2707 },
@@ -223,6 +233,19 @@ function getMaritimeLocationCoordinates(location: string, country: string = ''):
         'kochi': { lat: 9.9312, lng: 76.2673 },
         'vizag': { lat: 17.6868, lng: 83.2185 },
         'visakhapatnam': { lat: 17.6868, lng: 83.2185 },
+        
+        // Indian States and Cities (map to major port cities)
+        'andhrapradesh': { lat: 17.6868, lng: 83.2185 }, // Vizag port
+        'andhra pradesh': { lat: 17.6868, lng: 83.2185 },
+        'gujarat': { lat: 22.2587, lng: 70.3667 }, // Kandla port
+        'maharashtra': { lat: 19.076, lng: 72.8777 }, // Mumbai port
+        'tamil nadu': { lat: 13.0827, lng: 80.2707 }, // Chennai port
+        'kerala': { lat: 9.9312, lng: 76.2673 }, // Kochi port
+        'west bengal': { lat: 22.5726, lng: 88.3639 }, // Kolkata port
+        'karnataka': { lat: 14.5995, lng: 74.1737 }, // New Mangalore port
+        'goa': { lat: 15.3173, lng: 74.1240 }, // Mormugao port
+        'odisha': { lat: 20.2348, lng: 85.8252 }, // Paradip port
+        'telangana': { lat: 17.3850, lng: 78.4867 }, // Hyderabad
         
         // Major International Ports
         'singapore': { lat: 1.3521, lng: 103.8198 },
