@@ -961,7 +961,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         suburb,
         service,
         groupType,
-        createdBy: req.user.id
+        createdBy: req.user?.userId || req.user?.id || req.user?.email || 'unknown'
       });
 
       res.json({ group });
@@ -977,7 +977,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { groupId } = req.params;
       const { joinCPSSGroup } = await import('./cpss-groups-service');
       
-      const success = await joinCPSSGroup(groupId, req.user.id, req.user.fullName);
+      const userId = req.user?.userId || req.user?.id || req.user?.email;
+      const userName = req.user?.fullName || req.user?.email || 'Anonymous';
+      
+      if (!userId) {
+        return res.status(400).json({ error: 'User ID not found' });
+      }
+      
+      const success = await joinCPSSGroup(groupId, userId, userName);
       
       if (success) {
         res.json({ message: 'Successfully joined group' });
@@ -996,7 +1003,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { groupId } = req.params;
       const { leaveCPSSGroup } = await import('./cpss-groups-service');
       
-      const success = await leaveCPSSGroup(groupId, req.user.id);
+      const userId = req.user?.userId || req.user?.id || req.user?.email;
+      
+      if (!userId) {
+        return res.status(400).json({ error: 'User ID not found' });
+      }
+      
+      const success = await leaveCPSSGroup(groupId, userId);
       
       if (success) {
         res.json({ message: 'Successfully left group' });
@@ -1013,7 +1026,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/cpss/groups/my-groups', authenticateToken, async (req, res) => {
     try {
       const { getUserCPSSGroups } = await import('./cpss-groups-service');
-      const groups = await getUserCPSSGroups(req.user.id);
+      const userId = req.user?.userId || req.user?.id || req.user?.email;
+      
+      if (!userId) {
+        return res.status(400).json({ error: 'User ID not found' });
+      }
+      
+      const groups = await getUserCPSSGroups(userId);
       
       res.json({ groups });
     } catch (error) {
@@ -1049,7 +1068,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { getCPSSGroupPosts, isUserMemberOfGroup } = await import('./cpss-groups-service');
       
       // Check if user is member of the group
-      const isMember = await isUserMemberOfGroup(groupId, req.user.id);
+      const userId = req.user?.userId || req.user?.id || req.user?.email;
+      
+      if (!userId) {
+        return res.status(400).json({ error: 'User ID not found' });
+      }
+      
+      const isMember = await isUserMemberOfGroup(groupId, userId);
       if (!isMember) {
         return res.status(403).json({ error: 'You must be a member to view group posts' });
       }
@@ -1074,15 +1099,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check if user is member of the group
-      const isMember = await isUserMemberOfGroup(groupId, req.user.id);
+      const userId = req.user?.userId || req.user?.id || req.user?.email;
+      const userName = req.user?.fullName || req.user?.email || 'Anonymous';
+      
+      if (!userId) {
+        return res.status(400).json({ error: 'User ID not found' });
+      }
+      
+      const isMember = await isUserMemberOfGroup(groupId, userId);
       if (!isMember) {
         return res.status(403).json({ error: 'You must be a member to post in this group' });
       }
       
       const post = await createCPSSGroupPost({
         groupId,
-        userId: req.user.id,
-        userName: req.user.fullName,
+        userId,
+        userName,
         content,
         postType,
         attachments
@@ -1102,7 +1134,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { getCPSSGroupMembers, isUserMemberOfGroup } = await import('./cpss-groups-service');
       
       // Check if user is member of the group
-      const isMember = await isUserMemberOfGroup(groupId, req.user.id);
+      const userId = req.user?.userId || req.user?.id || req.user?.email;
+      
+      if (!userId) {
+        return res.status(400).json({ error: 'User ID not found' });
+      }
+      
+      const isMember = await isUserMemberOfGroup(groupId, userId);
       if (!isMember) {
         return res.status(403).json({ error: 'You must be a member to view group members' });
       }
