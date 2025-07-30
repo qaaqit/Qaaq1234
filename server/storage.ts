@@ -357,6 +357,7 @@ export class DatabaseStorage implements IStorage {
           fullName: user.full_name || 'Maritime User',
           email: user.email || '',
           password: '',
+          needsPasswordChange: null,
           userType: user.user_type || 'sailor',
           isAdmin: false,
           nickname: user.full_name || 'Maritime User',
@@ -370,6 +371,10 @@ export class DatabaseStorage implements IStorage {
           country: user.country || 'Unknown Country',
           latitude: user.latitude,
           longitude: user.longitude,
+          deviceLatitude: null,
+          deviceLongitude: null,
+          locationSource: null,
+          locationUpdatedAt: null,
           isVerified: true,
           loginCount: 1,
           lastLogin: new Date(),
@@ -751,15 +756,12 @@ export class DatabaseStorage implements IStorage {
 
   async updateUserLocation(userId: string, latitude: number, longitude: number, source: 'device' | 'ship' | 'city'): Promise<void> {
     try {
-      // Update location using available QAAQ database columns
-      // Use last_login_location to store location source and last_login_at for timestamp
-      const locationInfo = `${source}:${latitude},${longitude}`;
-      
+      // Update location using device_latitude/device_longitude columns
       await pool.query(`
         UPDATE users 
-        SET last_login_location = $1, last_login_at = NOW()
-        WHERE id = $2
-      `, [locationInfo, userId]);
+        SET device_latitude = $1, device_longitude = $2, location_source = $3, location_updated_at = NOW()
+        WHERE id = $4
+      `, [latitude, longitude, source, userId]);
       
       console.log(`Updated ${source} location for user ${userId}: ${latitude}, ${longitude} (stored in last_login_location)`);
     } catch (error) {
