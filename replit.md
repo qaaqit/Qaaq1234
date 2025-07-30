@@ -172,12 +172,13 @@ Google Maps Controls: Transparent icon-only buttons positioned in bottom-left co
 - **WhatsApp-Style Functionality**: Each rank group functions like WhatsApp groups with join/leave, posting, member management, and real-time discussions
 - **Single Group Membership**: Users can only join one rank group at a time - joining a new rank group automatically removes them from their current one
 - **Admin Default Membership**: Admin users are default members of all rank groups while regular users are limited to single membership
-- **Smart UI Indicators**: Visual indicators show current rank group membership, policy notifications, and "Switch" vs "Join" button states
+- **Dropdown Selection Interface**: Replaced policy text with space-efficient dropdown for rank group selection with Chat and Leave Group buttons
+- **Active Group Indicator**: Visual status showing current rank group membership with member count and green activity indicator
 - **Dedicated API Endpoints**: Added specialized endpoints for rank groups (`/api/cpss/groups/rank-groups`, `/api/cpss/groups/all-ranks`) separate from location-based CPSS groups
 - **Sample Content Seeded**: Pre-populated groups with authentic maritime discussions, member assignments based on typical career paths, and realistic member counts
-- **Rank Groups Tab**: Complete UI implementation showing all 9 groups with join/chat functionality, member counts, and professional descriptions
+- **Rank Groups Tab**: Complete UI implementation showing dropdown selection with join/chat functionality, member counts, and professional descriptions
 - **Recently Joined Priority**: Groups user recently joined appear at top of list for easier access
-- **Interface Rename**: Changed "My Groups" to "Rank Groups" for better maritime terminology alignment
+- **Interface Rename**: Changed "My Groups" to "Rank Groups" and "Discover Groups" to "Shore Leave" for better maritime terminology alignment
 
 ### CPSS Group Ordering & Interface Updates (January 30, 2025)
 - **Recently Joined Groups Priority**: Modified CPSS group ordering system so recently joined groups appear at top of "Discover Groups" card list

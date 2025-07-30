@@ -561,7 +561,7 @@ export default function Post({ user }: PostProps) {
         <Tabs defaultValue="my-groups" className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-6">
             <TabsTrigger value="my-groups">Rank Groups ({userRankGroups.length})</TabsTrigger>
-            <TabsTrigger value="discover">Discover Groups</TabsTrigger>
+            <TabsTrigger value="discover">Shore Leave</TabsTrigger>
           </TabsList>
 
           {/* Rank Groups Tab */}
