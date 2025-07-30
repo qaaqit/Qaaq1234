@@ -342,10 +342,10 @@ export class DatabaseStorage implements IStorage {
       try {
         const { getQAAQUsersFromNotion } = await import('./notion-users-service');
         
-        // Set a 10-second timeout for Notion response
+        // Set a 20-second timeout for Notion response to allow real users to load
         const notionPromise = getQAAQUsersFromNotion();
         const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Notion timeout')), 10000)
+          setTimeout(() => reject(new Error('Notion timeout')), 20000)
         );
         
         const notionUsers = await Promise.race([notionPromise, timeoutPromise]) as User[];
