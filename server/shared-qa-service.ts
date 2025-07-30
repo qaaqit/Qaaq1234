@@ -1,4 +1,4 @@
-import { db } from './storage';
+import { pool } from './db';
 
 // Interfaces for shared Q&A system
 export interface SharedQuestion {
@@ -77,7 +77,7 @@ export async function storeQuestion(questionData: {
   ];
 
   try {
-    const result = await db.query(query, values);
+    const result = await pool.query(query, values);
     return mapRowToQuestion(result.rows[0]);
   } catch (error) {
     console.error('Error storing question:', error);
@@ -96,7 +96,7 @@ export async function getUserQuestionsFromSharedDB(userId: string): Promise<Shar
   `;
 
   try {
-    const result = await db.query(query, [userId]);
+    const result = await pool.query(query, [userId]);
     return result.rows.map(mapRowToQuestion);
   } catch (error) {
     console.error('Error fetching user questions:', error);
@@ -115,7 +115,7 @@ export async function getQuestionsByUserName(userName: string): Promise<SharedQu
   `;
 
   try {
-    const result = await db.query(query, [`%${userName}%`]);
+    const result = await pool.query(query, [`%${userName}%`]);
     return result.rows.map(mapRowToQuestion);
   } catch (error) {
     console.error('Error fetching questions by user name:', error);
@@ -133,7 +133,7 @@ export async function getAllQuestionsFromSharedDB(): Promise<SharedQuestion[]> {
   `;
 
   try {
-    const result = await db.query(query);
+    const result = await pool.query(query);
     return result.rows.map(mapRowToQuestion);
   } catch (error) {
     console.error('Error fetching all questions:', error);
@@ -156,7 +156,7 @@ export async function searchQuestionsInSharedDB(keyword: string): Promise<Shared
   `;
 
   try {
-    const result = await db.query(query, [`%${keyword}%`]);
+    const result = await pool.query(query, [`%${keyword}%`]);
     return result.rows.map(mapRowToQuestion);
   } catch (error) {
     console.error('Error searching questions:', error);
@@ -201,7 +201,7 @@ export async function storeAnswer(answerData: {
   ];
 
   try {
-    const result = await db.query(query, values);
+    const result = await pool.query(query, values);
     
     // Update answer count in questions table
     await updateQuestionAnswerCount(answerData.questionId);
@@ -224,7 +224,7 @@ export async function getAnswersForQuestion(questionId: string): Promise<SharedA
   `;
 
   try {
-    const result = await db.query(query, [questionId]);
+    const result = await pool.query(query, [questionId]);
     return result.rows.map(mapRowToAnswer);
   } catch (error) {
     console.error('Error fetching answers:', error);
@@ -245,7 +245,7 @@ async function updateQuestionAnswerCount(questionId: string): Promise<void> {
   `;
 
   try {
-    await db.query(query, [questionId]);
+    await pool.query(query, [questionId]);
   } catch (error) {
     console.error('Error updating answer count:', error);
   }

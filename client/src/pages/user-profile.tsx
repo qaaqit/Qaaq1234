@@ -207,9 +207,17 @@ export default function UserProfile() {
               </p>
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm">
                 <p className="text-blue-800">
-                  <strong>Note:</strong> Question content is stored in the main QAAQ system and not currently accessible through this interface. 
-                  We can only display the verified question count from QAAQ metrics.
+                  <strong>Note:</strong> Question content is stored in the shared QAAQ database. 
+                  You can view your own questions on the My Questions page.
                 </p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="mt-3"
+                  onClick={() => navigate('/my-questions')}
+                >
+                  View My Questions
+                </Button>
               </div>
             </CardContent>
           </Card>

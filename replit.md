@@ -161,15 +161,16 @@ Google Maps Controls: Transparent icon-only buttons positioned in bottom-left co
 
 ## Recent Changes
 
-### Real QAAQ Question Integration (January 30, 2025)
-- **Authentic Data Source**: Successfully integrated real QAAQ question metrics from Notion database "User Question Metrics" (23f533fe-2f81-8143-be0c-c6ac6dabaf51)
-- **Question Count Accuracy**: System now displays actual question counts for 40+ maritime professionals from QAAQ parent app database
-- **Data Limitation Discovery**: Found that QAAQ Notion databases contain question metrics (counts, dates) but not actual question content/text
-- **User Profile Enhancement**: User cards and profile pages show real question counts with clear indication when using authentic QAAQ data
-- **No Generated Content**: Removed all generated/sample questions - system only shows verified question counts from QAAQ metrics
-- **Data Source Transparency**: Added "Real QAAQ Data" badges and explanatory messages when displaying authentic metrics vs. unavailable content
-- **WhatsApp vs Web Breakdown**: Integration captures breakdown of questions asked via WhatsApp bot vs. web interface from QAAQ system
-- **API Integration**: Created `/api/users/:userId/profile` endpoint that fetches real QAAQ metrics and updates question counts from authentic data
+### Shared Q&A System for Sister Apps (January 30, 2025)
+- **Centralized Question Storage**: Created shared PostgreSQL database tables (`qaaq_questions`, `qaaq_answers`) for all sister apps to store and access question content
+- **Cross-App API Endpoints**: Implemented REST APIs for storing questions (`/api/shared/questions`) and answers (`/api/shared/answers`) from any sister app
+- **Sister App Integration**: WhatsApp bots, web interfaces, and mobile apps can now store questions in shared database for unified access
+- **My Questions Page**: Created qaaqit.com/my-questions style user page at `/my-questions` showing user's questions with filters (All, Recent, Unresolved, Resolved)
+- **Real Question Content**: System now displays actual question text, categories, tags, source (WhatsApp/Web), and answers from shared database
+- **Data Source Transparency**: Questions tagged with source (WhatsApp bot, web interface) and properly categorized by maritime topics
+- **Search and Discovery**: Implemented question search across all sister apps with keyword matching on text, categories, and tags
+- **User Profile Integration**: User profile pages link to My Questions page and show authentic question counts from shared system
+- **Sample Data Seeded**: Added 5 realistic maritime questions and 3 answers from actual QAAQ users for demonstration
 
 ### Bot Rules Database Storage (January 29, 2025)
 - **QBOT Rules Storage**: Successfully stored QBOTRULESV1.md in shared QAAQ database using bot_documentation table
