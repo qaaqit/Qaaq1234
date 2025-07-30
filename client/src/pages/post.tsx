@@ -498,7 +498,10 @@ export default function Post({ user }: PostProps) {
                 className="flex items-center gap-2"
               >
                 <Home className="w-4 h-4" />
-                <span className="font-semibold text-navy">QaaqConnect</span>
+                <div className="flex flex-col items-start">
+                  <span className="font-semibold text-navy">QaaqConnect</span>
+                  <span className="text-xs text-gray-500 italic font-medium">जगह देख के बात करो..</span>
+                </div>
               </Button>
               <div className="h-6 w-px bg-gray-300" />
               <h1 className="text-xl font-bold text-gray-900">Ch16 Broadcast</h1>

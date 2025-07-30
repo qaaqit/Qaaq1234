@@ -151,7 +151,10 @@ export default function UserDropdown({ user, className = "" }: UserDropdownProps
                 <h3 className="text-white font-semibold truncate">
                   {user.fullName || user.id}
                 </h3>
-                <div className="flex items-center space-x-2 mt-1">
+                <p className="text-sm text-white/60 mb-2">
+                  Welcome{user.fullName && !user.fullName.startsWith('+') ? `, ${user.fullName.split(' ')[0]}` : ''}!
+                </p>
+                <div className="flex items-center space-x-2">
                   <Badge 
                     variant="outline" 
                     className="bg-navy/20 text-navy-300 border-navy-400 text-xs"
