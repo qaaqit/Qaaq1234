@@ -266,6 +266,12 @@ Google Maps Controls: Transparent icon-only buttons positioned in bottom-left co
 - **Navigation Update**: Updated bottom navigation to make QChat the primary chat interface
 - **Mobile-First Design**: Responsive cards layout with maritime color coding and professional styling
 
+### User Dropdown Z-Index Layering Fix (January 30, 2025)
+- **Critical Z-Index Fix**: Resolved user dropdown appearing behind map by increasing z-index to z-[9999] for dropdown and z-[9998] for headers
+- **Consistent Header Hierarchy**: Applied z-index hierarchy across all pages (Discover, DM, Post) to ensure dropdown always appears above content
+- **Dark Theme Preservation**: Maintained dark slate dropdown design matching parent app while fixing layering issues
+- **User Experience Enhancement**: Dropdown now properly appears above maps, content areas, and all other UI elements across the application
+
 ### Enhanced Location System for Maritime Discovery (January 28, 2025)
 - **QAAQ Authorization Integration**: Updated location system to use password field as temporary city storage during QAAQ authorization flow
 - **Multi-source Location**: Implemented priority-based location derivation: 1) Ship IMO tracking 2) Device GPS 3) City mapping 4) Password field fallback

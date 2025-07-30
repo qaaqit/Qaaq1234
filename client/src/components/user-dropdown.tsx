@@ -119,7 +119,7 @@ export default function UserDropdown({ user, className = "" }: UserDropdownProps
   }
 
   return (
-    <div className={`relative ${className}`} ref={dropdownRef}>
+    <div className={`relative z-[9999] ${className}`} ref={dropdownRef}>
       {/* User Avatar Button */}
       <Button
         variant="ghost"
@@ -138,7 +138,7 @@ export default function UserDropdown({ user, className = "" }: UserDropdownProps
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-slate-800 rounded-lg shadow-xl border border-slate-700 overflow-hidden z-50 animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200">
+        <div className="absolute right-0 top-full mt-2 w-80 bg-slate-800 rounded-lg shadow-xl border border-slate-700 overflow-hidden z-[9999] animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200">
           {/* User Info Header */}
           <div className="bg-slate-700 p-4 border-b border-slate-600">
             <div className="flex items-center space-x-3">

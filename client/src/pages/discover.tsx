@@ -112,7 +112,7 @@ export default function Discover({ user }: DiscoverProps) {
   return (
     <div className="h-screen bg-slate-50 flex flex-col">
       {/* Header */}
-      <header className="gradient-bg text-white relative overflow-hidden flex-shrink-0">
+      <header className="gradient-bg text-white relative overflow-hidden flex-shrink-0 z-[9998]">
         <div className="absolute inset-0 opacity-10">
           <div className="w-full h-full bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Cpath%20d%3D%22M20%2050h60m-50-20h40m-30%2040h20%22%20stroke%3D%22white%22%20stroke-width%3D%221%22%20fill%3D%22none%22%2F%3E%3C%2Fsvg%3E')] bg-[length:50px_50px]"></div>
         </div>
