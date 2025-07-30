@@ -35,7 +35,7 @@ export default function Discover({ user }: DiscoverProps) {
   const [, setLocation] = useWouterLocation();
 
   const [selectedCategory, setSelectedCategory] = useState("");
-  const [showUsers, setShowUsers] = useState(false);
+  const [showUsers, setShowUsers] = useState(true); // Always show anchor pins from start
   const [showNearbyCard, setShowNearbyCard] = useState(false);
   const [showWhatsAppPanel, setShowWhatsAppPanel] = useState(false);
   const [mapType, setMapType] = useState<'leaflet' | 'google'>('leaflet');
