@@ -338,7 +338,20 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log('Fetching users with location data for map and WhatsApp bot');
       
-      // First check if we have our seeded users with direct lat/lng coordinates
+      // First try to get real QAAQ users from Notion database
+      try {
+        const { getQAAQUsersFromNotion } = await import('./notion-users-service');
+        const notionUsers = await getQAAQUsersFromNotion();
+        
+        if (notionUsers.length > 0) {
+          console.log(`Found ${notionUsers.length} real QAAQ users from Notion database`);
+          return notionUsers;
+        }
+      } catch (notionError) {
+        console.log('Notion integration not available, falling back to PostgreSQL users');
+      }
+
+      // Fallback: check if we have users with direct lat/lng coordinates in PostgreSQL
       const directLocationQuery = await pool.query(`
         SELECT id, full_name, email, rank, ship_name, city, country, 
                latitude, longitude, question_count, answer_count, user_type
@@ -350,7 +363,7 @@ export class DatabaseStorage implements IStorage {
       `);
       
       if (directLocationQuery.rows.length > 0) {
-        console.log(`Found ${directLocationQuery.rows.length} users with direct coordinates`);
+        console.log(`Found ${directLocationQuery.rows.length} users with direct coordinates in PostgreSQL`);
         
         return directLocationQuery.rows.map(user => ({
           id: user.id,
