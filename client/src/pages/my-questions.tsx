@@ -31,7 +31,14 @@ export default function MyQuestions() {
 
   const { data: questionsData, isLoading, error } = useQuery({
     queryKey: ['/api/users', user?.id, 'profile'],
-    enabled: !!user?.id
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const response = await fetch(`/api/users/${user?.id}/profile`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch user profile: ${response.status}`);
+      }
+      return response.json();
+    }
   });
 
   const userQuestions = questionsData?.questions || [];

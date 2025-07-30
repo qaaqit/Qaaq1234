@@ -771,35 +771,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/users/:userId/profile', authenticateToken, async (req, res) => {
     try {
       const { userId } = req.params;
+      console.log(`Looking for user profile with ID: ${userId}`);
+      
       const users = await storage.getUsersWithLocation();
+      console.log(`Found ${users.length} total users, searching for ID: ${userId}`);
+      
       const user = users.find(u => u.id === userId);
       
       if (!user) {
+        console.log(`User not found with ID: ${userId}. Available user IDs:`, users.slice(0, 5).map(u => u.id));
         return res.status(404).json({ error: 'User not found' });
       }
+      
+      console.log(`Found user: ${user.fullName} (${user.id})`);
 
-      // Get user's real questions from QAAQ Notion database
-      const { getUserQuestions, getQAAQUserMetrics } = await import('./qa-service');
+      // Get user's real questions from QAAQ system
+      let questions: any[] = [];
+      let questionCount = user.questionCount || 0;
       
-      // First, get QAAQ metrics to update question count
-      const allMetrics = await getQAAQUserMetrics();
-      const userMetrics = allMetrics.find(m => 
-        m.fullName.toLowerCase() === user.fullName.toLowerCase() ||
-        m.userId === user.id ||
-        m.fullName.toLowerCase().includes(user.fullName.toLowerCase()) ||
-        user.fullName.toLowerCase().includes(m.fullName.toLowerCase())
-      );
-      
-      // Update question count from QAAQ if available
-      const questionCount = userMetrics?.totalQuestions || user.questionCount || 0;
-      
-      // Try to get actual questions from shared database first
-      const { getUserQuestionsFromSharedDB, getQuestionsByUserName } = await import('./shared-qa-service');
-      let questions = await getUserQuestionsFromSharedDB(user.id);
-      
-      // If no questions found by user ID, try by name
-      if (questions.length === 0) {
-        questions = await getQuestionsByUserName(user.fullName);
+      try {
+        // First try to get shared database questions
+        const { getUserQuestionsFromSharedDB, getQuestionsByUserName } = await import('./shared-qa-service');
+        questions = await getUserQuestionsFromSharedDB(user.id);
+        
+        // If no questions found by user ID, try by name
+        if (questions.length === 0) {
+          questions = await getQuestionsByUserName(user.fullName);
+        }
+        
+        console.log(`Found ${questions.length} questions from shared database for user ${user.fullName}`);
+      } catch (sharedDbError) {
+        console.log('Failed to fetch from shared database:', sharedDbError);
+        
+        // Fallback to QAAQ metrics
+        try {
+          const { getQAAQUserMetrics } = await import('./qa-service');
+          const allMetrics = await getQAAQUserMetrics();
+          const userMetrics = allMetrics.find(m => 
+            m.fullName.toLowerCase() === user.fullName.toLowerCase() ||
+            m.userId === user.id ||
+            m.fullName.toLowerCase().includes(user.fullName.toLowerCase()) ||
+            user.fullName.toLowerCase().includes(m.fullName.toLowerCase())
+          );
+          
+          questionCount = userMetrics?.totalQuestions || user.questionCount || 0;
+          console.log(`Using QAAQ metrics: ${questionCount} questions for ${user.fullName}`);
+        } catch (qaaQError) {
+          console.log('Failed to fetch QAAQ metrics:', qaaQError);
+        }
       }
       
       const finalQuestions = questions;
