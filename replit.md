@@ -179,6 +179,8 @@ Google Maps Controls: Transparent icon-only buttons positioned in bottom-left co
 - **Rank Groups Tab**: Complete UI implementation showing dropdown selection with join/chat functionality, member counts, and professional descriptions
 - **Recently Joined Priority**: Groups user recently joined appear at top of list for easier access
 - **Interface Rename**: Changed "My Groups" to "Rank Groups" and "Discover Groups" to "Shore Leave" for better maritime terminology alignment
+- **WhatsApp-Style Messaging**: Replaced Facebook-style posts (with like/share/comment buttons) with simple WhatsApp-style message bubbles showing only user avatar, name, timestamp, and message text
+- **Bottom Text Entry**: Added sticky bottom text input box with arrow send button instead of "+ New Post" dialog for seamless WhatsApp-like messaging experience
 
 ### CPSS Group Ordering & Interface Updates (January 30, 2025)
 - **Recently Joined Groups Priority**: Modified CPSS group ordering system so recently joined groups appear at top of "Discover Groups" card list

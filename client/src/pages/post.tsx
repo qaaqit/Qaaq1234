@@ -626,44 +626,23 @@ export default function Post({ user }: PostProps) {
                     </div>
                   ) : (
                     posts.map((post) => (
-                      <Card key={post.postId} className="border">
-                        <CardHeader className="pb-3">
-                          <div className="flex items-start justify-between">
-                            <div className="flex items-center gap-3">
-                              <Avatar className="w-10 h-10">
-                                <AvatarFallback className="bg-navy text-white">
-                                  {post.userName.charAt(0)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <div className="font-medium text-gray-900">{post.userName}</div>
-                                <div className="text-sm text-gray-500 flex items-center gap-2">
-                                  <Clock className="w-3 h-3" />
-                                  {formatTimeAgo(post.createdAt)}
-                                  {post.isPinned && <Badge variant="outline" className="text-xs">Pinned</Badge>}
-                                </div>
-                              </div>
+                      <div key={post.postId} className="flex items-start gap-3 mb-4">
+                        <Avatar className="w-8 h-8 flex-shrink-0">
+                          <AvatarFallback className="bg-navy text-white text-sm">
+                            {post.userName.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="bg-white rounded-lg border p-3 shadow-sm">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-medium text-gray-900 text-sm">{post.userName}</span>
+                              <span className="text-xs text-gray-500">{formatTimeAgo(post.createdAt)}</span>
+                              {post.isPinned && <Badge variant="outline" className="text-xs px-1 py-0">Pinned</Badge>}
                             </div>
+                            <p className="text-gray-800 text-sm leading-relaxed">{post.content}</p>
                           </div>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-gray-800 mb-4">{post.content}</p>
-                          <div className="flex items-center gap-4 text-sm text-gray-500">
-                            <button className="flex items-center gap-1 hover:text-red-500">
-                              <Heart className="w-4 h-4" />
-                              <span>{post.likesCount}</span>
-                            </button>
-                            <button className="flex items-center gap-1 hover:text-blue-500">
-                              <MessageCircle className="w-4 h-4" />
-                              <span>{post.commentsCount}</span>
-                            </button>
-                            <button className="flex items-center gap-1 hover:text-green-500">
-                              <Share2 className="w-4 h-4" />
-                              Share
-                            </button>
-                          </div>
-                        </CardContent>
-                      </Card>
+                        </div>
+                      </div>
                     ))
                   )}
                 </div>
