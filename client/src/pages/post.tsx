@@ -264,10 +264,9 @@ function CPSSTreeNavigation({ groups, userGroups, onJoinGroup, joinGroupMutation
                                   size="sm"
                                   onClick={() => onJoinGroup(group)}
                                   disabled={joinGroupMutation.isPending}
-                                  className="text-xs"
+                                  className="text-xs w-8 h-8 p-0"
                                 >
-                                  <UserPlus className="w-3 h-3 mr-1" />
-                                  {joinGroupMutation.isPending ? "Joining..." : "Join"}
+                                  <UserPlus className="w-3 h-3" />
                                 </Button>
                               )}
                               <ChevronRight className="w-4 h-4 text-gray-400" />
