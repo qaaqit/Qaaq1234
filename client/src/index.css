@@ -174,11 +174,24 @@
   height: 100% !important;
   width: 100% !important;
   background: #f5f5f5 !important;
-  z-index: 1;
+  z-index: 1 !important;
 }
 
 .leaflet-tile-pane {
   filter: brightness(0.95);
+  z-index: 1 !important;
+}
+
+.leaflet-marker-pane {
+  z-index: 2 !important;
+}
+
+.leaflet-popup-pane {
+  z-index: 3 !important;
+}
+
+.leaflet-control-container {
+  z-index: 4 !important;
 }
 
 .custom-anchor-marker {
@@ -197,4 +210,57 @@
 
 .leaflet-popup-content {
   margin: 8px 12px;
+}
+
+/* Google Maps Z-Index Constraints */
+.gm-style {
+  z-index: 1 !important;
+}
+
+.gm-style > div {
+  z-index: 1 !important;
+}
+
+.gm-style-cc {
+  z-index: 2 !important;
+}
+
+.gmnoprint {
+  z-index: 2 !important;
+}
+
+/* Ensure user dropdown always appears on top */
+[data-radix-popper-content-wrapper] {
+  z-index: 99999 !important;
+}
+
+/* Additional dropdown z-index overrides */
+.user-dropdown-menu {
+  z-index: 99999 !important;
+}
+
+div[role="dialog"] {
+  z-index: 99999 !important;
+}
+
+div[data-state="open"] {
+  z-index: 99999 !important;
+}
+
+/* Global dropdown z-index enforcement */
+.user-dropdown-menu {
+  position: fixed !important;
+  z-index: 2147483647 !important; /* Maximum z-index value */
+}
+
+/* Override all Google Maps elements */
+.gm-style, .gm-style > div, .gm-style-iw {
+  z-index: 1 !important;
+  position: relative !important;
+}
+
+/* Override all Leaflet elements */
+.leaflet-container, .leaflet-tile-pane, .leaflet-marker-pane, .leaflet-popup-pane {
+  z-index: 1 !important;
+  position: relative !important;
 }

@@ -27,8 +27,10 @@ export default function UserDropdown({ user, className = "" }: UserDropdownProps
   const [isOpen, setIsOpen] = useState(false);
   const [, setLocation] = useLocation();
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
 
-  // Close dropdown when clicking outside
+  // Close dropdown when clicking outside and calculate position
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -36,11 +38,20 @@ export default function UserDropdown({ user, className = "" }: UserDropdownProps
       }
     }
 
+    // Calculate dropdown position when opened
+    if (isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + 8,
+        right: window.innerWidth - rect.right
+      });
+    }
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
+  }, [isOpen]);
 
   const handleLogout = () => {
     logout();
@@ -122,6 +133,7 @@ export default function UserDropdown({ user, className = "" }: UserDropdownProps
     <div className={`relative z-[9999] ${className}`} ref={dropdownRef}>
       {/* User Avatar Button */}
       <Button
+        ref={buttonRef}
         variant="ghost"
         className="p-1 h-auto w-auto rounded-full hover:bg-white/10"
         onClick={() => setIsOpen(!isOpen)}
@@ -138,7 +150,15 @@ export default function UserDropdown({ user, className = "" }: UserDropdownProps
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-slate-800 rounded-lg shadow-xl border border-slate-700 overflow-hidden z-[9999] animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200">
+        <div 
+          className="user-dropdown-menu w-80 bg-slate-800 rounded-lg shadow-xl border border-slate-700 overflow-hidden z-[9999] animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200"
+          style={{
+            position: 'fixed',
+            top: `${dropdownPosition.top}px`,
+            right: `${dropdownPosition.right}px`,
+            zIndex: 2147483647
+          }}
+        >
           {/* User Info Header */}
           <div className="bg-slate-700 p-4 border-b border-slate-600">
             <div className="flex items-center space-x-3">

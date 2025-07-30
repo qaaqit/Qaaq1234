@@ -654,7 +654,7 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
       <div 
         ref={mapRef} 
         className="w-full h-full rounded-lg"
-        style={{ minHeight: '400px' }}
+        style={{ minHeight: '400px', zIndex: 1 }}
       />
 
       {/* Transparent User Cards List at Bottom */}

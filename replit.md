@@ -267,7 +267,10 @@ Google Maps Controls: Transparent icon-only buttons positioned in bottom-left co
 - **Mobile-First Design**: Responsive cards layout with maritime color coding and professional styling
 
 ### User Dropdown Z-Index Layering Fix (January 30, 2025)
-- **Critical Z-Index Fix**: Resolved user dropdown appearing behind map by increasing z-index to z-[9999] for dropdown and z-[9998] for headers
+- **Critical Z-Index Fix**: Resolved user dropdown appearing behind map by implementing fixed positioning with maximum z-index (2147483647)
+- **Comprehensive Map Override**: Applied strict z-index constraints to both Google Maps and Leaflet elements to ensure they stay below dropdown
+- **Fixed Positioning Solution**: Changed dropdown from absolute to fixed positioning with dynamic position calculation based on button location
+- **CSS Override Rules**: Added global CSS rules to enforce z-index hierarchy for all map components (.gm-style, .leaflet-container)
 - **Consistent Header Hierarchy**: Applied z-index hierarchy across all pages (Discover, DM, Post) to ensure dropdown always appears above content
 - **Dark Theme Preservation**: Maintained dark slate dropdown design matching parent app while fixing layering issues
 - **User Experience Enhancement**: Dropdown now properly appears above maps, content areas, and all other UI elements across the application
