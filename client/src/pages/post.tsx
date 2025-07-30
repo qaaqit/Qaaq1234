@@ -542,7 +542,7 @@ export default function Post({ user }: PostProps) {
                 <Home className="w-4 h-4" />
                 <div className="flex flex-col items-start">
                   <span className="font-semibold text-navy">QaaqConnect</span>
-                  <span className="text-xs text-gray-500 italic font-medium">जगह देख के बात करो..</span>
+                  <span className="text-xs italic font-medium text-[#326df4]">Group chat</span>
                 </div>
               </Button>
               <div className="h-6 w-px bg-gray-300" />
