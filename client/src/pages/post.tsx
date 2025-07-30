@@ -237,7 +237,7 @@ function CPSSTreeNavigation({ groups, userGroups, onJoinGroup, joinGroupMutation
                             <div className="flex-1">
                               <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
                                 <MapPin className="w-3 h-3" />
-                                <span>{group.breadcrumbPath}</span>
+                                <span>{group.breadcrumbPath || 'Unknown Path'}</span>
                               </div>
                               <h4 className="font-medium text-gray-900 mb-2">{group.groupName}</h4>
                               {group.description && (
@@ -299,7 +299,7 @@ function CPSSTreeNavigation({ groups, userGroups, onJoinGroup, joinGroupMutation
         node.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         node.groups.some(group => 
           group.groupName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          group.breadcrumbPath.toLowerCase().includes(searchTerm.toLowerCase())
+          (group.breadcrumbPath && group.breadcrumbPath.toLowerCase().includes(searchTerm.toLowerCase()))
         )
       )
     : treeData;
@@ -513,7 +513,7 @@ export default function Post({ user }: PostProps) {
 
   const filteredGroups = allGroups.filter((group: CPSSGroup) =>
     group.groupName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    group.breadcrumbPath.toLowerCase().includes(searchTerm.toLowerCase())
+    (group.breadcrumbPath && group.breadcrumbPath.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const formatTimeAgo = (dateString: string) => {
@@ -587,7 +587,7 @@ export default function Post({ user }: PostProps) {
                           
                           <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
                             <span>CPSS Navigation:</span>
-                            {currentGroup?.breadcrumbPath?.split(' > ').map((crumb, index, arr) => (
+                            {currentGroup?.breadcrumbPath && currentGroup.breadcrumbPath.split(' > ').map((crumb, index, arr) => (
                               <span key={index} className="flex items-center gap-1">
                                 <span className="font-medium">{crumb}</span>
                                 {index < arr.length - 1 && <ChevronRight className="w-3 h-3" />}
@@ -731,7 +731,7 @@ export default function Post({ user }: PostProps) {
                                   <div className="flex items-center gap-2">
                                     <span className="font-medium">{group.groupName}</span>
                                     <span className="text-sm text-gray-500">
-                                      - {group.breadcrumbPath}
+                                      - {group.breadcrumbPath || 'Unknown Path'}
                                     </span>
                                   </div>
                                   <span className="text-xs text-gray-400 ml-2">
