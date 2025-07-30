@@ -28,9 +28,13 @@ const authenticateToken = async (req: Request, res: Response, next: NextFunction
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+    console.log('JWT decoded user ID:', decoded.userId);
     req.user = { id: decoded.userId, userId: decoded.userId };
+    req.userId = decoded.userId; // Ensure req.userId is set for backward compatibility
+    console.log('Set req.userId to:', req.userId);
     next();
   } catch (error: unknown) {
+    console.error('JWT verification failed:', error);
     res.status(403).json({ message: 'Invalid token' });
   }
 };
@@ -635,7 +639,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/chat/connect', authenticateToken, async (req, res) => {
     try {
       const { receiverId } = insertChatConnectionSchema.parse(req.body);
-      const senderId = req.userId!;
+      const senderId = req.userId;
+      
+      console.log('Chat connect attempt - senderId:', senderId, 'receiverId:', receiverId);
+      
+      if (!senderId) {
+        console.error('senderId is null or undefined, req.userId:', req.userId);
+        return res.status(400).json({ message: "Authentication error: user ID not found" });
+      }
 
       // Check if connection already exists
       const existing = await storage.getChatConnection(senderId, receiverId);
@@ -675,10 +686,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/chat/connections', authenticateToken, async (req, res) => {
     try {
-      // For now, return empty array to fix the chat page loading issue
-      // TODO: Fix database schema issue with chat_connections table
-      const connections: any[] = [];
-      res.json(connections);
+      const userId = req.userId!;
+      const connections = await storage.getUserChatConnections(userId);
+      
+      // Enhance connections with user information
+      const enhancedConnections = await Promise.all(
+        connections.map(async (conn) => {
+          const sender = await storage.getUser(conn.senderId);
+          const receiver = await storage.getUser(conn.receiverId);
+          return {
+            ...conn,
+            sender: sender ? { id: sender.id, fullName: sender.fullName, rank: sender.rank } : null,
+            receiver: receiver ? { id: receiver.id, fullName: receiver.fullName, rank: receiver.rank } : null
+          };
+        })
+      );
+      
+      res.json(enhancedConnections);
     } catch (error) {
       console.error('Get chat connections error:', error);
       res.status(500).json({ message: "Failed to get connections" });
