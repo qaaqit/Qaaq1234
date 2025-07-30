@@ -173,6 +173,68 @@ export async function getUserCPSSGroups(userId: string): Promise<CPSSGroup[]> {
 }
 
 /**
+ * Get user's rank groups specifically
+ */
+export async function getUserRankGroups(userId: string): Promise<CPSSGroup[]> {
+  const query = `
+    SELECT g.* FROM cpss_groups g
+    JOIN cpss_group_members m ON g.group_id = m.group_id
+    WHERE m.user_id = $1 AND m.is_active = TRUE AND g.group_type = 'rank'
+    ORDER BY m.joined_at DESC
+  `;
+
+  try {
+    const result = await pool.query(query, [userId]);
+    return result.rows.map(mapRowToGroup);
+  } catch (error) {
+    console.error('Error fetching user rank groups:', error);
+    return [];
+  }
+}
+
+/**
+ * Get all available rank groups
+ */
+export async function getAllRankGroups(userId?: string): Promise<CPSSGroup[]> {
+  let query;
+  let params: any[] = [];
+  
+  if (userId) {
+    // Query that prioritizes recently joined rank groups at the top
+    query = `
+      SELECT 
+        g.*,
+        m.joined_at,
+        CASE WHEN m.user_id IS NOT NULL THEN 1 ELSE 0 END as is_user_member
+      FROM cpss_groups g
+      LEFT JOIN cpss_group_members m ON g.group_id = m.group_id AND m.user_id = $1 AND m.is_active = TRUE
+      WHERE g.is_active = TRUE AND g.group_type = 'rank'
+      ORDER BY 
+        is_user_member DESC,
+        m.joined_at DESC NULLS LAST,
+        g.member_count DESC,
+        g.group_name
+    `;
+    params = [userId];
+  } else {
+    // Original query for when no user ID is provided
+    query = `
+      SELECT * FROM cpss_groups 
+      WHERE is_active = TRUE AND group_type = 'rank'
+      ORDER BY member_count DESC, group_name
+    `;
+  }
+
+  try {
+    const result = await pool.query(query, params);
+    return result.rows.map(mapRowToGroup);
+  } catch (error) {
+    console.error('Error fetching all rank groups:', error);
+    throw error;
+  }
+}
+
+/**
  * Get all available CPSS groups
  */
 export async function getAllCPSSGroups(userId?: string): Promise<CPSSGroup[]> {

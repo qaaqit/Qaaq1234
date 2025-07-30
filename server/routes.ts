@@ -1093,6 +1093,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user's rank groups
+  app.get('/api/cpss/groups/rank-groups', authenticateToken, async (req, res) => {
+    try {
+      const { getUserRankGroups } = await import('./cpss-groups-service');
+      const userId = req.user?.userId || req.user?.id || req.user?.email;
+      
+      if (!userId) {
+        return res.status(400).json({ error: 'User ID not found' });
+      }
+      
+      const groups = await getUserRankGroups(userId);
+      
+      res.json({ groups });
+    } catch (error) {
+      console.error('Error fetching user rank groups:', error);
+      res.status(500).json({ error: 'Failed to fetch user rank groups' });
+    }
+  });
+
+  // Get all available rank groups
+  app.get('/api/cpss/groups/all-ranks', authenticateToken, async (req, res) => {
+    try {
+      const { getAllRankGroups } = await import('./cpss-groups-service');
+      
+      // Get user ID for personalized ordering
+      const userId = req.user?.userId || req.user?.id || req.user?.email;
+      
+      const groups = await getAllRankGroups(userId);
+      
+      res.json({ groups });
+    } catch (error) {
+      console.error('Error fetching all rank groups:', error);
+      res.status(500).json({ error: 'Failed to fetch rank groups' });
+    }
+  });
+
   // Get all available groups
   app.get('/api/cpss/groups', authenticateToken, async (req, res) => {
     try {

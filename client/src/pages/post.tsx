@@ -387,14 +387,21 @@ export default function Post({ user }: PostProps) {
     queryKey: ['/api/cpss/groups'],
   });
 
-  // Fetch user's joined groups
-  const { data: userGroupsData, isLoading: userGroupsLoading } = useQuery<{ groups: CPSSGroup[] }>({
-    queryKey: ['/api/cpss/groups/my-groups'],
+  // Fetch user's joined rank groups  
+  const { data: userRankGroupsData, isLoading: userRankGroupsLoading } = useQuery<{ groups: CPSSGroup[] }>({
+    queryKey: ['/api/cpss/groups/rank-groups'],
+    retry: false,
+  });
+
+  // Fetch all available rank groups
+  const { data: allRankGroupsData, isLoading: allRankGroupsLoading } = useQuery<{ groups: CPSSGroup[] }>({
+    queryKey: ['/api/cpss/groups/all-ranks'],
     retry: false,
   });
   
   const allGroups = allGroupsData?.groups || [];
-  const userGroups = userGroupsData?.groups || [];
+  const userRankGroups = userRankGroupsData?.groups || [];
+  const allRankGroups = allRankGroupsData?.groups || [];
 
   // Fetch posts for selected group
   const { data: postsData, isLoading: postsLoading } = useQuery<{ posts: CPSSGroupPost[] }>({
@@ -411,6 +418,8 @@ export default function Post({ user }: PostProps) {
       // Invalidate both user groups and all groups to refresh ordering
       queryClient.invalidateQueries({ queryKey: ['/api/cpss/groups/my-groups'] });
       queryClient.invalidateQueries({ queryKey: ['/api/cpss/groups'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/cpss/groups/rank-groups'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/cpss/groups/all-ranks'] });
       toast({
         title: "Joined Group",
         description: "Welcome to the group! You can now participate in discussions.",
@@ -516,7 +525,7 @@ export default function Post({ user }: PostProps) {
       <div className="max-w-6xl mx-auto p-4">
         <Tabs defaultValue="my-groups" className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="my-groups">Rank Groups ({userGroups.length})</TabsTrigger>
+            <TabsTrigger value="my-groups">Rank Groups ({userRankGroups.length})</TabsTrigger>
             <TabsTrigger value="discover">Discover Groups</TabsTrigger>
           </TabsList>
 
@@ -663,11 +672,11 @@ export default function Post({ user }: PostProps) {
                 </div>
               </div>
             ) : (
-              /* Groups List */
+              /* Rank Groups List */
               <div className="space-y-6">
-                {userGroupsLoading ? (
+                {allRankGroupsLoading ? (
                   <div className="grid gap-4">
-                    {[1, 2, 3].map(i => (
+                    {[1, 2, 3, 4, 5].map(i => (
                       <div key={i} className="bg-white rounded-lg p-6 border animate-pulse">
                         <div className="h-6 bg-gray-200 rounded w-1/3 mb-3"></div>
                         <div className="h-4 bg-gray-200 rounded w-2/3 mb-2"></div>
@@ -675,43 +684,72 @@ export default function Post({ user }: PostProps) {
                       </div>
                     ))}
                   </div>
-                ) : userGroups.length === 0 ? (
+                ) : allRankGroups.length === 0 ? (
                   <div className="bg-white rounded-lg p-8 border text-center">
                     <Users className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No groups joined yet</h3>
-                    <p className="text-gray-600 mb-4">Join groups to participate in location-based maritime discussions.</p>
-                    <Button variant="outline">
-                      Discover Groups
-                    </Button>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No rank groups available</h3>
+                    <p className="text-gray-600 mb-4">Maritime rank groups will appear here when they become available.</p>
                   </div>
                 ) : (
                   <div className="grid gap-4">
-                    {userGroups.map((group) => (
-                      <Card key={group.groupId} className="border cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedGroup(group)}>
-                        <CardContent className="p-6">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                                <MapPin className="w-3 h-3" />
-                                <span>{group.breadcrumbPath}</span>
-                              </div>
-                              <h3 className="text-lg font-semibold text-gray-900 mb-2">{group.groupName}</h3>
-                              {group.description && (
-                                <p className="text-gray-600 text-sm mb-3">{group.description}</p>
-                              )}
-                              <div className="flex items-center gap-4 text-sm text-gray-500">
-                                <div className="flex items-center gap-1">
-                                  <Users className="w-4 h-4" />
-                                  <span>{group.memberCount} members</span>
+                    {allRankGroups.map((group: CPSSGroup) => {
+                      const isJoined = userRankGroups.some(ug => ug.groupId === group.groupId);
+                      return (
+                        <Card key={group.groupId} className="border hover:shadow-md transition-shadow">
+                          <CardContent className="p-6">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <Badge variant={isJoined ? "default" : "outline"} className="bg-navy text-white">
+                                    {group.groupName}
+                                  </Badge>
+                                  {isJoined && (
+                                    <Badge variant="secondary" className="text-xs">
+                                      Joined
+                                    </Badge>
+                                  )}
                                 </div>
-                                <Badge variant="outline">{group.groupType}</Badge>
+                                <h3 className="text-lg font-semibold text-gray-900 mb-2">{group.breadcrumbPath}</h3>
+                                {group.description && (
+                                  <p className="text-gray-600 text-sm mb-3">{group.description}</p>
+                                )}
+                                <div className="flex items-center gap-4 text-sm text-gray-500">
+                                  <div className="flex items-center gap-1">
+                                    <Users className="w-4 h-4" />
+                                    <span>{group.memberCount} members</span>
+                                  </div>
+                                  <Badge variant="outline" className="capitalize">{group.groupType}</Badge>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {isJoined ? (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setSelectedGroup(group)}
+                                    className="flex items-center gap-1"
+                                  >
+                                    <MessageCircle className="w-4 h-4" />
+                                    Chat
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    variant="default"
+                                    size="sm"
+                                    onClick={() => handleJoinGroup(group)}
+                                    disabled={joinGroupMutation.isPending}
+                                    className="flex items-center gap-1 bg-navy hover:bg-navy/90"
+                                  >
+                                    <UserPlus className="w-4 h-4" />
+                                    Join
+                                  </Button>
+                                )}
                               </div>
                             </div>
-                            <ChevronRight className="w-5 h-5 text-gray-400" />
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -722,7 +760,7 @@ export default function Post({ user }: PostProps) {
           <TabsContent value="discover">
             <CPSSTreeNavigation 
               groups={allGroups}
-              userGroups={userGroups}
+              userGroups={userRankGroups}
               onJoinGroup={handleJoinGroup}
               joinGroupMutation={joinGroupMutation}
               groupsLoading={groupsLoading}
