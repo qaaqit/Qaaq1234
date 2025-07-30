@@ -76,7 +76,8 @@ export default function DMPage() {
   };
 
   const getOtherUser = (connection: ExtendedChatConnection) => {
-    return connection.sender?.id === user?.id ? connection.receiver : connection.sender;
+    if (!user) return null;
+    return connection.sender?.id === user.id ? connection.receiver : connection.sender;
   };
 
   const formatDistance = (distance: number) => {
@@ -125,13 +126,28 @@ export default function DMPage() {
     user.city?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Return early if user is not authenticated (after all hooks)
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-blue-50 p-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex justify-center items-center h-64">
+            <div className="text-center">
+              <p className="text-gray-600">Please log in to access chat features.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Separate connections by status
   const activeConnections = connections.filter(conn => conn.status === 'accepted');
   const pendingConnections = connections.filter(conn => 
-    conn.status === 'pending' && conn.receiverId === user?.id
+    conn.status === 'pending' && conn.receiverId === user.id
   );
   const sentRequests = connections.filter(conn => 
-    conn.status === 'pending' && conn.senderId === user?.id
+    conn.status === 'pending' && conn.senderId === user.id
   );
 
   if (connectionsLoading || usersLoading) {
@@ -202,6 +218,7 @@ export default function DMPage() {
               <div className="space-y-3">
                 {pendingConnections.map((connection) => {
                   const otherUser = getOtherUser(connection);
+                  if (!otherUser) return null;
                   return (
                     <div key={connection.id} className="flex items-center justify-between p-4 bg-white rounded-lg border border-duck-yellow/30">
                       <div className="flex items-center space-x-3">
@@ -260,6 +277,7 @@ export default function DMPage() {
               <div className="grid gap-4 md:grid-cols-2">
                 {activeConnections.map((connection) => {
                   const otherUser = getOtherUser(connection);
+                  if (!otherUser) return null;
                   return (
                     <div key={connection.id} className="flex items-center justify-between p-4 bg-white rounded-lg border border-green-200 hover:shadow-md transition-shadow">
                       <div className="flex items-center space-x-3">
@@ -420,6 +438,7 @@ export default function DMPage() {
               <div className="space-y-3">
                 {sentRequests.map((connection) => {
                   const otherUser = getOtherUser(connection);
+                  if (!otherUser) return null;
                   return (
                     <div key={connection.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                       <div className="flex items-center space-x-3">
