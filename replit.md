@@ -167,6 +167,13 @@ Google Maps Controls: Transparent icon-only buttons positioned in bottom-left co
 
 ## Recent Changes
 
+### CPSS Group Ordering & Interface Updates (January 30, 2025)
+- **Recently Joined Groups Priority**: Modified CPSS group ordering system so recently joined groups appear at top of "Discover Groups" card list
+- **Database Query Enhancement**: Updated getAllCPSSGroups function with user authentication to prioritize joined groups chronologically
+- **Cache Invalidation**: Enhanced mutation success handlers to refresh both user groups and all groups for immediate UI updates
+- **Interface Rename**: Changed "My Groups" tab to "Rank Groups" for better maritime terminology alignment
+- **Personalized Discovery**: Groups API now uses user ID for personalized ordering while maintaining backward compatibility
+
 ### Display All 100 Users Instead of Proximity-Limited 9 (January 30, 2025)
 - **Removed Smart Zoom Proximity Logic**: Eliminated the 9-user limitation that only showed nearest users within expanding radius (50km → 500km)
 - **Global User Display**: Modified both Leaflet and Google Maps components to display all 100 authentic QAAQ maritime professionals simultaneously
