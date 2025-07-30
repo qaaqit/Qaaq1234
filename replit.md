@@ -161,6 +161,17 @@ Google Maps Controls: Transparent icon-only buttons positioned in bottom-left co
 
 ## Recent Changes
 
+### CPSS Group System for Ch16 Broadcast (January 30, 2025)
+- **Location-Based Groups**: Implemented hierarchical CPSS group system with breadcrumb navigation (e.g., "India > Chennai Group", "India > Mumbai > Colaba > QaaqStore Group")
+- **Group Management**: Created complete group lifecycle with joining, leaving, posting, and member management functionality
+- **Database Architecture**: Built `cpss_groups`, `cpss_group_members`, and `cpss_group_posts` tables for scalable group operations
+- **Ch16 Broadcast Transformation**: Completely redesigned Post page into group-based communication system with My Groups and Discover tabs
+- **CPSS Navigation Integration**: Groups follow Country→Port→Suburb→Service hierarchy with visual breadcrumb display
+- **Real-time Posting**: Members can create posts, view discussions, and participate in location-specific maritime conversations
+- **Sample Groups Seeded**: Added 6 location-based groups including Mumbai, Chennai, Singapore, Dubai with authentic maritime content
+- **Group Discovery**: Search and filter functionality for finding relevant maritime groups by location and type
+- **Member Authentication**: Post viewing and creation restricted to group members with proper role management
+
 ### Shared Q&A System for Sister Apps (January 30, 2025)
 - **Centralized Question Storage**: Created shared PostgreSQL database tables (`qaaq_questions`, `qaaq_answers`) for all sister apps to store and access question content
 - **Cross-App API Endpoints**: Implemented REST APIs for storing questions (`/api/shared/questions`) and answers (`/api/shared/answers`) from any sister app

@@ -943,6 +943,178 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // CPSS Groups API endpoints
+  
+  // Create or get CPSS group based on breadcrumb
+  app.post('/api/cpss/groups', authenticateToken, async (req, res) => {
+    try {
+      const { createOrGetCPSSGroup } = await import('./cpss-groups-service');
+      const { country, port, suburb, service, groupType } = req.body;
+      
+      if (!groupType) {
+        return res.status(400).json({ error: 'Group type is required' });
+      }
+
+      const group = await createOrGetCPSSGroup({
+        country,
+        port,
+        suburb,
+        service,
+        groupType,
+        createdBy: req.user.id
+      });
+
+      res.json({ group });
+    } catch (error) {
+      console.error('Error creating/getting CPSS group:', error);
+      res.status(500).json({ error: 'Failed to create or get group' });
+    }
+  });
+
+  // Join CPSS group
+  app.post('/api/cpss/groups/:groupId/join', authenticateToken, async (req, res) => {
+    try {
+      const { groupId } = req.params;
+      const { joinCPSSGroup } = await import('./cpss-groups-service');
+      
+      const success = await joinCPSSGroup(groupId, req.user.id, req.user.fullName);
+      
+      if (success) {
+        res.json({ message: 'Successfully joined group' });
+      } else {
+        res.status(500).json({ error: 'Failed to join group' });
+      }
+    } catch (error) {
+      console.error('Error joining CPSS group:', error);
+      res.status(500).json({ error: 'Failed to join group' });
+    }
+  });
+
+  // Leave CPSS group
+  app.post('/api/cpss/groups/:groupId/leave', authenticateToken, async (req, res) => {
+    try {
+      const { groupId } = req.params;
+      const { leaveCPSSGroup } = await import('./cpss-groups-service');
+      
+      const success = await leaveCPSSGroup(groupId, req.user.id);
+      
+      if (success) {
+        res.json({ message: 'Successfully left group' });
+      } else {
+        res.status(500).json({ error: 'Failed to leave group' });
+      }
+    } catch (error) {
+      console.error('Error leaving CPSS group:', error);
+      res.status(500).json({ error: 'Failed to leave group' });
+    }
+  });
+
+  // Get user's joined groups
+  app.get('/api/cpss/groups/my-groups', authenticateToken, async (req, res) => {
+    try {
+      const { getUserCPSSGroups } = await import('./cpss-groups-service');
+      const groups = await getUserCPSSGroups(req.user.id);
+      
+      res.json({ groups });
+    } catch (error) {
+      console.error('Error fetching user groups:', error);
+      res.status(500).json({ error: 'Failed to fetch user groups' });
+    }
+  });
+
+  // Get all available groups
+  app.get('/api/cpss/groups', async (req, res) => {
+    try {
+      const { getAllCPSSGroups, getCPSSGroupsByLocation } = await import('./cpss-groups-service');
+      const { country, port, suburb } = req.query;
+      
+      let groups;
+      if (country || port || suburb) {
+        groups = await getCPSSGroupsByLocation(country as string, port as string, suburb as string);
+      } else {
+        groups = await getAllCPSSGroups();
+      }
+      
+      res.json({ groups });
+    } catch (error) {
+      console.error('Error fetching CPSS groups:', error);
+      res.status(500).json({ error: 'Failed to fetch groups' });
+    }
+  });
+
+  // Get group posts
+  app.get('/api/cpss/groups/:groupId/posts', authenticateToken, async (req, res) => {
+    try {
+      const { groupId } = req.params;
+      const { getCPSSGroupPosts, isUserMemberOfGroup } = await import('./cpss-groups-service');
+      
+      // Check if user is member of the group
+      const isMember = await isUserMemberOfGroup(groupId, req.user.id);
+      if (!isMember) {
+        return res.status(403).json({ error: 'You must be a member to view group posts' });
+      }
+      
+      const posts = await getCPSSGroupPosts(groupId);
+      res.json({ posts });
+    } catch (error) {
+      console.error('Error fetching group posts:', error);
+      res.status(500).json({ error: 'Failed to fetch group posts' });
+    }
+  });
+
+  // Create group post
+  app.post('/api/cpss/groups/:groupId/posts', authenticateToken, async (req, res) => {
+    try {
+      const { groupId } = req.params;
+      const { content, postType, attachments } = req.body;
+      const { createCPSSGroupPost, isUserMemberOfGroup } = await import('./cpss-groups-service');
+      
+      if (!content) {
+        return res.status(400).json({ error: 'Post content is required' });
+      }
+
+      // Check if user is member of the group
+      const isMember = await isUserMemberOfGroup(groupId, req.user.id);
+      if (!isMember) {
+        return res.status(403).json({ error: 'You must be a member to post in this group' });
+      }
+      
+      const post = await createCPSSGroupPost({
+        groupId,
+        userId: req.user.id,
+        userName: req.user.fullName,
+        content,
+        postType,
+        attachments
+      });
+      
+      res.json({ post });
+    } catch (error) {
+      console.error('Error creating group post:', error);
+      res.status(500).json({ error: 'Failed to create group post' });
+    }
+  });
+
+  // Get group members
+  app.get('/api/cpss/groups/:groupId/members', authenticateToken, async (req, res) => {
+    try {
+      const { groupId } = req.params;
+      const { getCPSSGroupMembers, isUserMemberOfGroup } = await import('./cpss-groups-service');
+      
+      // Check if user is member of the group
+      const isMember = await isUserMemberOfGroup(groupId, req.user.id);
+      if (!isMember) {
+        return res.status(403).json({ error: 'You must be a member to view group members' });
+      }
+      
+      const members = await getCPSSGroupMembers(groupId);
+      res.json({ members });
+    } catch (error) {
+      console.error('Error fetching group members:', error);
+      res.status(500).json({ error: 'Failed to fetch group members' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
