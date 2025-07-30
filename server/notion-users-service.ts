@@ -158,17 +158,9 @@ export async function getQAAQUsersFromNotion() {
             const answerCount = properties["AnswerCount"]?.number || 0;
             const nationality = properties["Nationality"]?.select?.name || "India";
             
-            // Use existing coordinates if available
-            const existingLat = properties["CurrentLatitude"]?.number;
-            const existingLng = properties["CurrentLongitude"]?.number;
-
-            // Use existing coordinates or calculate based on city
-            let location;
-            if (existingLat && existingLng) {
-                location = { lat: existingLat, lng: existingLng };
-            } else {
-                location = getMaritimeLocationCoordinates(homeCity || "", nationality);
-            }
+            // Always use city-based coordinates instead of GPS coordinates
+            // Plot users at their city/port locations from their profiles
+            const location = getMaritimeLocationCoordinates(homeCity || "", nationality);
             
             // Clean WhatsApp number
             const cleanWhatsappNumber = whatsappNumber.replace(/\s/g, '').replace(/[^\d+]/g, '');

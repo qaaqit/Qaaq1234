@@ -87,11 +87,12 @@ Google Maps Controls: Transparent icon-only buttons positioned in bottom-left co
 
 ### Discovery System
 - Interactive world map with light grey theme (CartoDB tiles)
-- Map loads empty initially, shows pins only when "Koi Hai?" is pressed
+- Anchor pins visible immediately on map load for user browsing
+- "Koi Hai?" button only reveals "Nearby Maritime Professionals" card list
 - Proximity-based discovery showing nearest 10 users without search text
-- **Accurate Location Display**: Shows users' actual locations from QAAQ database coordinates
-  - Sailors: Displayed at their ship's current location or port
-  - Locals: Displayed at their home city location
+- **City-Based Location Display**: Shows users at their profile city/port locations instead of GPS coordinates
+  - Sailors: Displayed at their current city or home port from profile
+  - Locals: Displayed at their home city location from profile
   - Automatic user type detection based on ship assignment
 - Ship information display (name, port, visit windows) without IMO numbers
 - Map pins color-coded by user type (navy for sailors, teal for locals)
