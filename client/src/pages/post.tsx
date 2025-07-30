@@ -386,14 +386,18 @@ export default function Post({ user }: PostProps) {
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
 
   // Fetch all available groups
-  const { data: allGroups = [], isLoading: groupsLoading } = useQuery<{ groups: CPSSGroup[] }>({
+  const { data: allGroupsData, isLoading: groupsLoading } = useQuery<{ groups: CPSSGroup[] }>({
     queryKey: ['/api/cpss/groups'],
   });
 
   // Fetch user's joined groups
   const { data: userGroupsData, isLoading: userGroupsLoading } = useQuery<{ groups: CPSSGroup[] }>({
     queryKey: ['/api/cpss/groups/my-groups'],
+    retry: false,
   });
+  
+  const allGroups = allGroupsData?.groups || [];
+  const userGroups = userGroupsData?.groups || [];
 
   // Fetch posts for selected group
   const { data: postsData, isLoading: postsLoading } = useQuery<{ posts: CPSSGroupPost[] }>({
@@ -465,11 +469,9 @@ export default function Post({ user }: PostProps) {
     });
   };
 
-  const userGroups = userGroupsData?.groups || [];
-  const groups = allGroups?.groups || [];
   const posts = postsData?.posts || [];
 
-  const filteredGroups = groups.filter(group =>
+  const filteredGroups = allGroups.filter((group: CPSSGroup) =>
     group.groupName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     group.breadcrumbPath.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -716,7 +718,7 @@ export default function Post({ user }: PostProps) {
           {/* Discover Groups Tab */}
           <TabsContent value="discover">
             <CPSSTreeNavigation 
-              groups={groups}
+              groups={allGroups}
               userGroups={userGroups}
               onJoinGroup={handleJoinGroup}
               joinGroupMutation={joinGroupMutation}
