@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import QChatWindow from "@/components/qchat-window";
+import UserDropdown from "@/components/user-dropdown";
 import type { ChatConnection, User as UserType } from "@shared/schema";
 
 interface ExtendedChatConnection extends ChatConnection {
@@ -168,6 +169,7 @@ export default function DMPage() {
                   <p className="text-sm text-white/80">Connect with maritime professionals</p>
                 </div>
               </button>
+              {user && <UserDropdown user={user} />}
             </div>
           </div>
         </div>

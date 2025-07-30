@@ -15,6 +15,7 @@ import { useLocation as useWouterLocation } from "wouter";
 import { type User } from "@/lib/auth";
 import { apiRequest } from "@/lib/queryClient";
 import { MapPin, Navigation, Ship, Satellite, Crown } from "lucide-react";
+import UserDropdown from "@/components/user-dropdown";
 
 interface Post {
   id: string;
@@ -131,9 +132,6 @@ export default function Discover({ user }: DiscoverProps) {
               </div>
             </button>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-white/80">
-                {user.userType === 'sailor' ? '🚢' : '🏠'} {user.userType}
-              </span>
               <Button
                 onClick={() => setShowWhatsAppPanel(!showWhatsAppPanel)}
                 variant="outline"
@@ -143,18 +141,7 @@ export default function Discover({ user }: DiscoverProps) {
               >
                 <i className="fab fa-whatsapp mr-2"></i>Discover
               </Button>
-              <Button
-                onClick={() => {
-                  localStorage.removeItem('qaaq_token');
-                  localStorage.removeItem('qaaq_user');
-                  window.location.href = '/';
-                }}
-                variant="outline"
-                size="sm"
-                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-              >
-                <i className="fas fa-sign-out-alt mr-2"></i>Logout
-              </Button>
+              <UserDropdown user={user} />
             </div>
           </div>
         </div>

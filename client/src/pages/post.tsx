@@ -15,6 +15,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { type User } from "@/lib/auth";
+import UserDropdown from "@/components/user-dropdown";
 
 interface CPSSGroup {
   id: string;
@@ -502,6 +503,7 @@ export default function Post({ user }: PostProps) {
               <div className="h-6 w-px bg-gray-300" />
               <h1 className="text-xl font-bold text-gray-900">Ch16 Broadcast</h1>
             </div>
+            <UserDropdown user={user} className="bg-gray-50" />
           </div>
         </div>
       </div>
