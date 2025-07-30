@@ -251,9 +251,6 @@ function CPSSTreeNavigation({ groups, userGroups, onJoinGroup, joinGroupMutation
                               </div>
                             </div>
                             <div className="ml-4 flex items-center gap-2">
-                              <Button variant="ghost" size="sm" className="w-8 h-8 p-0 text-red-500 hover:bg-red-50">
-                                <Heart className="w-4 h-4" />
-                              </Button>
                               <Button variant="ghost" size="sm" className="w-8 h-8 p-0 text-blue-500 hover:bg-blue-50">
                                 <Share2 className="w-4 h-4" />
                               </Button>
