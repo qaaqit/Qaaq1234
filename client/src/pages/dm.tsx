@@ -182,7 +182,7 @@ export default function DMPage() {
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold">QaaqConnect</h1>
-                  <p className="text-sm text-white/60 italic font-medium">जगह देख के बात करो..</p>
+                  <p className="text-sm text-white/60 italic font-medium">direct message</p>
                 </div>
               </button>
               {user && <UserDropdown user={user} />}
@@ -465,7 +465,6 @@ export default function DMPage() {
           </Card>
         )}
       </div>
-
       {/* QChat Window */}
       {selectedConnection && (
         <QChatWindow
