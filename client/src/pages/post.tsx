@@ -408,7 +408,9 @@ export default function Post({ user }: PostProps) {
       return apiRequest(`/api/cpss/groups/${groupId}/join`, 'POST');
     },
     onSuccess: () => {
+      // Invalidate both user groups and all groups to refresh ordering
       queryClient.invalidateQueries({ queryKey: ['/api/cpss/groups/my-groups'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/cpss/groups'] });
       toast({
         title: "Joined Group",
         description: "Welcome to the group! You can now participate in discussions.",

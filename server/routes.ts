@@ -1094,16 +1094,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all available groups
-  app.get('/api/cpss/groups', async (req, res) => {
+  app.get('/api/cpss/groups', authenticateToken, async (req, res) => {
     try {
       const { getAllCPSSGroups, getCPSSGroupsByLocation } = await import('./cpss-groups-service');
       const { country, port, suburb } = req.query;
+      
+      // Get user ID for personalized ordering
+      const userId = req.user?.userId || req.user?.id || req.user?.email;
       
       let groups;
       if (country || port || suburb) {
         groups = await getCPSSGroupsByLocation(country as string, port as string, suburb as string);
       } else {
-        groups = await getAllCPSSGroups();
+        groups = await getAllCPSSGroups(userId);
       }
       
       res.json({ groups });

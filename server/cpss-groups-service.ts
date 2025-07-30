@@ -175,15 +175,38 @@ export async function getUserCPSSGroups(userId: string): Promise<CPSSGroup[]> {
 /**
  * Get all available CPSS groups
  */
-export async function getAllCPSSGroups(): Promise<CPSSGroup[]> {
-  const query = `
-    SELECT * FROM cpss_groups 
-    WHERE is_active = TRUE 
-    ORDER BY breadcrumb_path, member_count DESC
-  `;
+export async function getAllCPSSGroups(userId?: string): Promise<CPSSGroup[]> {
+  let query;
+  let params: any[] = [];
+  
+  if (userId) {
+    // Query that prioritizes recently joined groups at the top
+    query = `
+      SELECT 
+        g.*,
+        m.joined_at,
+        CASE WHEN m.user_id IS NOT NULL THEN 1 ELSE 0 END as is_user_member
+      FROM cpss_groups g
+      LEFT JOIN cpss_group_members m ON g.group_id = m.group_id AND m.user_id = $1 AND m.is_active = TRUE
+      WHERE g.is_active = TRUE 
+      ORDER BY 
+        is_user_member DESC,
+        m.joined_at DESC NULLS LAST,
+        g.breadcrumb_path, 
+        g.member_count DESC
+    `;
+    params = [userId];
+  } else {
+    // Original query for when no user ID is provided
+    query = `
+      SELECT * FROM cpss_groups 
+      WHERE is_active = TRUE 
+      ORDER BY breadcrumb_path, member_count DESC
+    `;
+  }
 
   try {
-    const result = await pool.query(query);
+    const result = await pool.query(query, params);
     return result.rows.map(mapRowToGroup);
   } catch (error) {
     console.error('Error fetching all CPSS groups:', error);
