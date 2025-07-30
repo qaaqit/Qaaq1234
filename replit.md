@@ -2,7 +2,12 @@
 
 ## Overview
 
-QaaqConnect is a minimalistic location-based maritime discovery platform focused on "Koi Hai?" (Who's there?) functionality and QAAQ Store services. The app helps sailors find nearby maritime professionals through an interactive world map and provides essential services through the integrated QAAQ Store. Key features include proximity-based user discovery, real-time location mapping, WhatsApp integration for direct communication, and a curated marketplace for maritime essentials. The platform maintains a clean, focused approach with plans to expand features in future versions.
+QaaqConnect is a comprehensive maritime networking platform serving three core purposes:
+1. **Memorable Shore Leaves**: Enables sailors to check other sailors' experiences and anonymous feedback about ports and destinations
+2. **Hassle-Free Shopping**: Provides access to all Amazon SKUs for sailors to order, with QAAQ Store handling storage and delivery logistics
+3. **Nearby Social Network**: Helps sailors and locals connect to make new friends through location-based discovery
+
+The platform combines proximity-based user discovery, real-time location mapping, WhatsApp integration for direct communication, CPSS group navigation for location-based discussions, and a curated marketplace for maritime essentials. Built with a focus on authentic maritime community experiences and practical shore leave solutions.
 
 ## User Preferences
 
@@ -162,15 +167,17 @@ Google Maps Controls: Transparent icon-only buttons positioned in bottom-left co
 ## Recent Changes
 
 ### CPSS Group System for Ch16 Broadcast (January 30, 2025)
-- **Location-Based Groups**: Implemented hierarchical CPSS group system with breadcrumb navigation (e.g., "India > Chennai Group", "India > Mumbai > Colaba > QaaqStore Group")
+- **360 Location-Based Groups**: Implemented comprehensive hierarchical CPSS group system across 10 countries with breadcrumb navigation
 - **Group Management**: Created complete group lifecycle with joining, leaving, posting, and member management functionality
 - **Database Architecture**: Built `cpss_groups`, `cpss_group_members`, and `cpss_group_posts` tables for scalable group operations
-- **Ch16 Broadcast Transformation**: Completely redesigned Post page into group-based communication system with My Groups and Discover tabs
-- **CPSS Navigation Integration**: Groups follow Country→Port→Suburb→Service hierarchy with visual breadcrumb display
+- **Ch16 Broadcast Transformation**: Redesigned Post page into group-based communication system with My Groups and Discover tabs
+- **CPSS Tree Navigation**: Groups follow Country→Port→Suburb→Service hierarchy with collapsible tree structure and visual breadcrumb display
+- **Icon-Only Interface**: Streamlined group interaction with UserPlus icon for joining and Share icon for group links (removed heart/like button and join text)
 - **Real-time Posting**: Members can create posts, view discussions, and participate in location-specific maritime conversations
-- **Sample Groups Seeded**: Added 6 location-based groups including Mumbai, Chennai, Singapore, Dubai with authentic maritime content
+- **Global Coverage**: Seeded groups across India, Singapore, UAE, Turkiye, Germany, Netherlands, Belgium, Cyprus, USA, China
 - **Group Discovery**: Search and filter functionality for finding relevant maritime groups by location and type
 - **Member Authentication**: Post viewing and creation restricted to group members with proper role management
+- **Database Connection Fix**: Resolved DATABASE_URL connection issues to properly display CPSS tree in Discover Groups tab
 
 ### Shared Q&A System for Sister Apps (January 30, 2025)
 - **Centralized Question Storage**: Created shared PostgreSQL database tables (`qaaq_questions`, `qaaq_answers`) for all sister apps to store and access question content
