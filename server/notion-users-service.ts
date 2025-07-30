@@ -90,19 +90,24 @@ export async function getQAAQUsersFromNotion() {
             title: db.title?.map(t => t.plain_text).join('') || 'Untitled'
         })));
         
-        // Try different possible database names
-        let userDatabase = await findDatabaseByTitle("users") || 
+        // Find the specific "QAAQ Maritime Users" database
+        let userDatabase = await findDatabaseByTitle("QAAQ Maritime Users");
+        
+        if (!userDatabase) {
+            // Try alternative names
+            userDatabase = await findDatabaseByTitle("users") || 
                           await findDatabaseByTitle("qaaq users") ||
                           await findDatabaseByTitle("maritime users") ||
                           await findDatabaseByTitle("qaaq") ||
                           await findDatabaseByTitle("user database") ||
                           await findDatabaseByTitle("contacts") ||
                           await findDatabaseByTitle("members");
+        }
 
-        // If no specific database found, use the first available database
-        if (!userDatabase && allDatabases.length > 0) {
-            console.log('Using first available database as QAAQ users database');
-            userDatabase = allDatabases[0];
+        // If still not found, look for the specific database ID from the URL
+        if (!userDatabase) {
+            console.log('Looking for QAAQ Maritime Users database by ID...');
+            userDatabase = allDatabases.find(db => db.id === '23e533fe-2f81-8147-85e6-ede63f27b0f5');
         }
 
         if (!userDatabase) {
@@ -129,44 +134,58 @@ export async function getQAAQUsersFromNotion() {
         const users = response.results.map((page: any) => {
             const properties = page.properties;
             
-            // Extract user information from Notion properties
-            const fullName = properties["Full Name"]?.title?.[0]?.plain_text || 
-                           properties["Name"]?.title?.[0]?.plain_text || 
+            // Extract user information from Notion properties - try all possible field names
+            const fullName = properties["Name"]?.title?.[0]?.plain_text || 
+                           properties["Full Name"]?.title?.[0]?.plain_text || 
+                           properties["User Name"]?.title?.[0]?.plain_text ||
+                           properties["Title"]?.title?.[0]?.plain_text ||
                            "Maritime User";
             
             const email = properties["Email"]?.email || 
-                         properties["Contact"]?.email || "";
+                         properties["Contact Email"]?.email ||
+                         properties["email"]?.rich_text?.[0]?.plain_text || "";
             
             const whatsappNumber = properties["WhatsApp"]?.phone_number || 
                                  properties["Phone"]?.phone_number || 
-                                 properties["Contact Number"]?.rich_text?.[0]?.plain_text || "";
+                                 properties["Contact Number"]?.rich_text?.[0]?.plain_text ||
+                                 properties["Mobile"]?.rich_text?.[0]?.plain_text ||
+                                 properties["phone"]?.rich_text?.[0]?.plain_text || "";
             
             const rank = properties["Rank"]?.select?.name || 
-                        properties["Position"]?.select?.name || 
-                        "Crew";
+                        properties["Position"]?.select?.name ||
+                        properties["Job Title"]?.select?.name ||
+                        properties["Role"]?.select?.name ||
+                        "Maritime Professional";
             
             const shipName = properties["Current Ship"]?.rich_text?.[0]?.plain_text || 
                            properties["Ship Name"]?.rich_text?.[0]?.plain_text || 
-                           properties["Last Ship"]?.rich_text?.[0]?.plain_text || "";
+                           properties["Last Ship"]?.rich_text?.[0]?.plain_text ||
+                           properties["Vessel"]?.rich_text?.[0]?.plain_text || "";
             
             const company = properties["Company"]?.rich_text?.[0]?.plain_text || 
-                          properties["Employer"]?.rich_text?.[0]?.plain_text || "";
+                          properties["Employer"]?.rich_text?.[0]?.plain_text ||
+                          properties["Organization"]?.rich_text?.[0]?.plain_text || "";
             
             const currentPort = properties["Current Port"]?.rich_text?.[0]?.plain_text || 
-                              properties["Port"]?.rich_text?.[0]?.plain_text || "";
+                              properties["Port"]?.rich_text?.[0]?.plain_text ||
+                              properties["Current Location"]?.rich_text?.[0]?.plain_text || "";
             
             const homeCity = properties["Home City"]?.rich_text?.[0]?.plain_text || 
                            properties["City"]?.rich_text?.[0]?.plain_text || 
-                           properties["Location"]?.rich_text?.[0]?.plain_text || "";
+                           properties["Location"]?.rich_text?.[0]?.plain_text ||
+                           properties["Base Location"]?.rich_text?.[0]?.plain_text || "";
             
             const country = properties["Country"]?.select?.name || 
-                          properties["Nationality"]?.select?.name || "";
+                          properties["Nationality"]?.select?.name ||
+                          properties["Nation"]?.select?.name || "";
             
             const questionCount = properties["Questions Asked"]?.number || 
-                                properties["Total Questions"]?.number || 0;
+                                properties["Total Questions"]?.number ||
+                                properties["Questions"]?.number || 0;
             
             const answerCount = properties["Answers Given"]?.number || 
-                              properties["Total Answers"]?.number || 0;
+                              properties["Total Answers"]?.number ||
+                              properties["Answers"]?.number || 0;
 
             // Determine coordinates based on current port or home city
             const location = getMaritimeLocationCoordinates(currentPort || homeCity || "", country);
