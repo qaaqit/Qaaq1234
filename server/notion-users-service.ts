@@ -83,10 +83,27 @@ export async function getQAAQUsersFromNotion() {
     try {
         console.log('Fetching real QAAQ users from Notion database...');
         
-        // Find the QAAQ users database
-        const userDatabase = await findDatabaseByTitle("users") || 
-                             await findDatabaseByTitle("qaaq users") ||
-                             await findDatabaseByTitle("maritime users");
+        // List all available databases to debug
+        const allDatabases = await getNotionDatabases();
+        console.log('Available Notion databases:', allDatabases.map(db => ({
+            id: db.id,
+            title: db.title?.map(t => t.plain_text).join('') || 'Untitled'
+        })));
+        
+        // Try different possible database names
+        let userDatabase = await findDatabaseByTitle("users") || 
+                          await findDatabaseByTitle("qaaq users") ||
+                          await findDatabaseByTitle("maritime users") ||
+                          await findDatabaseByTitle("qaaq") ||
+                          await findDatabaseByTitle("user database") ||
+                          await findDatabaseByTitle("contacts") ||
+                          await findDatabaseByTitle("members");
+
+        // If no specific database found, use the first available database
+        if (!userDatabase && allDatabases.length > 0) {
+            console.log('Using first available database as QAAQ users database');
+            userDatabase = allDatabases[0];
+        }
 
         if (!userDatabase) {
             console.log('No QAAQ users database found in Notion');
@@ -95,25 +112,19 @@ export async function getQAAQUsersFromNotion() {
 
         console.log(`Found QAAQ users database: ${userDatabase.id}`);
 
-        const response = await notion.databases.query({
-            database_id: userDatabase.id,
-            filter: {
-                and: [
-                    {
-                        property: "Status",
-                        status: {
-                            equals: "Active"
-                        }
-                    }
-                ]
-            },
-            sorts: [
-                {
-                    property: "Last Login",
-                    direction: "descending"
-                }
-            ]
-        });
+        // Query all users from the database without filters first
+        let response;
+        try {
+            response = await notion.databases.query({
+                database_id: userDatabase.id,
+                page_size: 100
+            });
+        } catch (queryError) {
+            console.log('Simple query failed, trying without any filters or sorts');
+            response = await notion.databases.query({
+                database_id: userDatabase.id
+            });
+        }
 
         const users = response.results.map((page: any) => {
             const properties = page.properties;
