@@ -587,7 +587,7 @@ export default function Post({ user }: PostProps) {
                           
                           <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
                             <span>CPSS Navigation:</span>
-                            {currentGroup.breadcrumbPath.split(' > ').map((crumb, index, arr) => (
+                            {currentGroup?.breadcrumbPath?.split(' > ').map((crumb, index, arr) => (
                               <span key={index} className="flex items-center gap-1">
                                 <span className="font-medium">{crumb}</span>
                                 {index < arr.length - 1 && <ChevronRight className="w-3 h-3" />}
@@ -595,17 +595,17 @@ export default function Post({ user }: PostProps) {
                             ))}
                           </div>
                           
-                          <h2 className="text-2xl font-bold text-gray-900 mb-2">{currentGroup.groupName}</h2>
-                          {currentGroup.description && (
+                          <h2 className="text-2xl font-bold text-gray-900 mb-2">{currentGroup?.groupName}</h2>
+                          {currentGroup?.description && (
                             <p className="text-gray-600 mb-3">{currentGroup.description}</p>
                           )}
                           
                           <div className="flex items-center gap-4 text-sm text-gray-500">
                             <div className="flex items-center gap-1">
                               <Users className="w-4 h-4" />
-                              <span>{currentGroup.memberCount} members</span>
+                              <span>{currentGroup?.memberCount} members</span>
                             </div>
-                            <Badge variant="outline">{currentGroup.groupType}</Badge>
+                            <Badge variant="outline">{currentGroup?.groupType}</Badge>
                           </div>
                         </div>
                       </div>
@@ -655,7 +655,7 @@ export default function Post({ user }: PostProps) {
                       <div className="flex items-end gap-3">
                         <div className="flex-1">
                           <Textarea
-                            placeholder={`Message ${currentGroup.groupName}...`}
+                            placeholder={`Message ${currentGroup?.groupName || 'Group'}...`}
                             value={newPostContent}
                             onChange={(e) => setNewPostContent(e.target.value)}
                             rows={1}
