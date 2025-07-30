@@ -784,8 +784,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update question count from QAAQ if available
       const questionCount = userMetrics?.totalQuestions || user.questionCount || 0;
       
-      // Try to get actual questions (currently returns empty array since content not available)
-      const questions = await getUserQuestions(user.id, user.fullName);
+      // Try to get actual questions from shared database first
+      const { getUserQuestionsFromSharedDB, getQuestionsByUserName } = await import('./shared-qa-service');
+      let questions = await getUserQuestionsFromSharedDB(user.id);
+      
+      // If no questions found by user ID, try by name
+      if (questions.length === 0) {
+        questions = await getQuestionsByUserName(user.fullName);
+      }
       
       const finalQuestions = questions;
 
@@ -837,18 +843,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Search keyword required' });
       }
 
-      const { searchQuestions } = await import('./qa-service');
-      const questions = await searchQuestions(keyword);
+      const { searchQuestionsInSharedDB } = await import('./shared-qa-service');
+      const questions = await searchQuestionsInSharedDB(keyword);
       
       res.json({
         questions,
         total: questions.length,
         searchTerm: keyword,
-        dataSource: 'notion'
+        dataSource: 'shared-db'
       });
     } catch (error) {
       console.error('Error searching questions:', error);
       res.status(500).json({ error: 'Failed to search questions' });
+    }
+  });
+
+  // API for sister apps to store questions
+  app.post('/api/shared/questions', async (req, res) => {
+    try {
+      const { syncQuestionFromExternalSource } = await import('./shared-qa-service');
+      const questionData = req.body;
+      
+      // Validate required fields
+      if (!questionData.questionId || !questionData.userId || !questionData.questionText) {
+        return res.status(400).json({ error: 'Missing required fields: questionId, userId, questionText' });
+      }
+
+      const success = await syncQuestionFromExternalSource(questionData);
+      
+      if (success) {
+        res.json({ 
+          message: 'Question stored successfully in shared database',
+          questionId: questionData.questionId
+        });
+      } else {
+        res.status(500).json({ error: 'Failed to store question' });
+      }
+    } catch (error) {
+      console.error('Error storing shared question:', error);
+      res.status(500).json({ error: 'Failed to store question' });
+    }
+  });
+
+  // API for sister apps to store answers
+  app.post('/api/shared/answers', async (req, res) => {
+    try {
+      const { storeAnswer } = await import('./shared-qa-service');
+      const answerData = req.body;
+      
+      // Validate required fields
+      if (!answerData.answerId || !answerData.questionId || !answerData.answerText) {
+        return res.status(400).json({ error: 'Missing required fields: answerId, questionId, answerText' });
+      }
+
+      const answer = await storeAnswer(answerData);
+      
+      res.json({ 
+        message: 'Answer stored successfully in shared database',
+        answer
+      });
+    } catch (error) {
+      console.error('Error storing shared answer:', error);
+      res.status(500).json({ error: 'Failed to store answer' });
+    }
+  });
+
+  // Get all questions from shared database
+  app.get('/api/shared/questions', async (req, res) => {
+    try {
+      const { getAllQuestionsFromSharedDB } = await import('./shared-qa-service');
+      const questions = await getAllQuestionsFromSharedDB();
+      
+      res.json({
+        questions,
+        total: questions.length,
+        dataSource: 'shared-db'
+      });
+    } catch (error) {
+      console.error('Error fetching shared questions:', error);
+      res.status(500).json({ error: 'Failed to fetch questions' });
+    }
+  });
+
+  // Get answers for a specific question
+  app.get('/api/shared/questions/:questionId/answers', async (req, res) => {
+    try {
+      const { questionId } = req.params;
+      const { getAnswersForQuestion } = await import('./shared-qa-service');
+      const answers = await getAnswersForQuestion(questionId);
+      
+      res.json({
+        answers,
+        total: answers.length,
+        questionId
+      });
+    } catch (error) {
+      console.error('Error fetching answers:', error);
+      res.status(500).json({ error: 'Failed to fetch answers' });
     }
   });
 
