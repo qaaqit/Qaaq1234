@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { ArrowLeft, MapPin, Users, Clock, Heart, MessageCircle, Share2, ChevronDown, ChevronUp, Filter, Search, Plus, ChevronRight, Home, UserPlus, Settings, LogIn, MoreHorizontal } from "lucide-react";
+import { ArrowLeft, MapPin, Users, Clock, Heart, MessageCircle, Share2, ChevronDown, ChevronUp, Filter, Search, Plus, ChevronRight, Home, UserPlus, Settings, LogIn, MoreHorizontal, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -414,15 +414,20 @@ export default function Post({ user }: PostProps) {
     mutationFn: async (groupId: string) => {
       return apiRequest(`/api/cpss/groups/${groupId}/join`, 'POST');
     },
-    onSuccess: () => {
+    onSuccess: (data, groupId) => {
       // Invalidate both user groups and all groups to refresh ordering
       queryClient.invalidateQueries({ queryKey: ['/api/cpss/groups/my-groups'] });
       queryClient.invalidateQueries({ queryKey: ['/api/cpss/groups'] });
       queryClient.invalidateQueries({ queryKey: ['/api/cpss/groups/rank-groups'] });
       queryClient.invalidateQueries({ queryKey: ['/api/cpss/groups/all-ranks'] });
+      
+      // Find the group name for better toast message
+      const joinedGroup = allRankGroups.find(g => g.groupId === groupId);
+      const groupName = joinedGroup?.groupName || 'group';
+      
       toast({
-        title: "Joined Group",
-        description: "Welcome to the group! You can now participate in discussions.",
+        title: "Joined Rank Group",
+        description: `Welcome to ${groupName}! Note: You can only be in one rank group at a time.`,
       });
     },
     onError: (error: any) => {
@@ -691,65 +696,81 @@ export default function Post({ user }: PostProps) {
                     <p className="text-gray-600 mb-4">Maritime rank groups will appear here when they become available.</p>
                   </div>
                 ) : (
-                  <div className="grid gap-4">
-                    {allRankGroups.map((group: CPSSGroup) => {
-                      const isJoined = userRankGroups.some(ug => ug.groupId === group.groupId);
-                      return (
-                        <Card key={group.groupId} className="border hover:shadow-md transition-shadow">
-                          <CardContent className="p-6">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <Badge variant={isJoined ? "default" : "outline"} className="bg-navy text-white">
-                                    {group.groupName}
-                                  </Badge>
-                                  {isJoined && (
-                                    <Badge variant="secondary" className="text-xs">
-                                      Joined
+                  <div className="space-y-4">
+                    {/* Single Rank Group Info */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                      <div className="flex items-center gap-2 text-blue-800 mb-1">
+                        <Info className="w-4 h-4" />
+                        <span className="font-medium">Rank Group Policy</span>
+                      </div>
+                      <p className="text-blue-700 text-sm">
+                        You can only join one rank group at a time. Joining a new rank group will automatically remove you from your current one.
+                      </p>
+                    </div>
+
+                    <div className="grid gap-4">
+                      {allRankGroups.map((group: CPSSGroup) => {
+                        const isJoined = userRankGroups.some(ug => ug.groupId === group.groupId);
+                        const hasOtherRankGroup = userRankGroups.length > 0 && !isJoined;
+                        
+                        return (
+                          <Card key={group.groupId} className={`border hover:shadow-md transition-shadow ${isJoined ? 'ring-2 ring-navy/20 bg-navy/5' : ''}`}>
+                            <CardContent className="p-6">
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <Badge variant={isJoined ? "default" : "outline"} className={isJoined ? "bg-navy text-white" : ""}>
+                                      {group.groupName}
                                     </Badge>
+                                    {isJoined && (
+                                      <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">
+                                        Your Rank Group
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <h3 className="text-lg font-semibold text-gray-900 mb-2">{group.breadcrumbPath}</h3>
+                                  {group.description && (
+                                    <p className="text-gray-600 text-sm mb-3">{group.description}</p>
+                                  )}
+                                  <div className="flex items-center gap-4 text-sm text-gray-500">
+                                    <div className="flex items-center gap-1">
+                                      <Users className="w-4 h-4" />
+                                      <span>{group.memberCount} members</span>
+                                    </div>
+                                    <Badge variant="outline" className="capitalize">{group.groupType}</Badge>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  {isJoined ? (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => setSelectedGroup(group)}
+                                      className="flex items-center gap-1"
+                                    >
+                                      <MessageCircle className="w-4 h-4" />
+                                      Chat
+                                    </Button>
+                                  ) : (
+                                    <Button
+                                      variant="default"
+                                      size="sm"
+                                      onClick={() => handleJoinGroup(group)}
+                                      disabled={joinGroupMutation.isPending}
+                                      className="flex items-center gap-1 bg-navy hover:bg-navy/90"
+                                      title={hasOtherRankGroup ? "This will replace your current rank group" : "Join this rank group"}
+                                    >
+                                      <UserPlus className="w-4 h-4" />
+                                      {hasOtherRankGroup ? 'Switch' : 'Join'}
+                                    </Button>
                                   )}
                                 </div>
-                                <h3 className="text-lg font-semibold text-gray-900 mb-2">{group.breadcrumbPath}</h3>
-                                {group.description && (
-                                  <p className="text-gray-600 text-sm mb-3">{group.description}</p>
-                                )}
-                                <div className="flex items-center gap-4 text-sm text-gray-500">
-                                  <div className="flex items-center gap-1">
-                                    <Users className="w-4 h-4" />
-                                    <span>{group.memberCount} members</span>
-                                  </div>
-                                  <Badge variant="outline" className="capitalize">{group.groupType}</Badge>
-                                </div>
                               </div>
-                              <div className="flex items-center gap-2">
-                                {isJoined ? (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setSelectedGroup(group)}
-                                    className="flex items-center gap-1"
-                                  >
-                                    <MessageCircle className="w-4 h-4" />
-                                    Chat
-                                  </Button>
-                                ) : (
-                                  <Button
-                                    variant="default"
-                                    size="sm"
-                                    onClick={() => handleJoinGroup(group)}
-                                    disabled={joinGroupMutation.isPending}
-                                    className="flex items-center gap-1 bg-navy hover:bg-navy/90"
-                                  >
-                                    <UserPlus className="w-4 h-4" />
-                                    Join
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
               </div>

@@ -108,15 +108,57 @@ export async function createOrGetCPSSGroup(breadcrumbData: {
  * Join a CPSS group
  */
 export async function joinCPSSGroup(groupId: string, userId: string, userName: string): Promise<boolean> {
-  const query = `
-    INSERT INTO cpss_group_members (group_id, user_id, user_name)
-    VALUES ($1, $2, $3)
-    ON CONFLICT (group_id, user_id) 
-    DO UPDATE SET is_active = TRUE, joined_at = CURRENT_TIMESTAMP
-    RETURNING *
-  `;
-
   try {
+    // Check if this is a rank group and enforce single rank group membership
+    const groupTypeQuery = `SELECT group_type FROM cpss_groups WHERE group_id = $1`;
+    const groupTypeResult = await pool.query(groupTypeQuery, [groupId]);
+    
+    if (groupTypeResult.rows.length === 0) {
+      throw new Error('Group not found');
+    }
+    
+    const groupType = groupTypeResult.rows[0].group_type;
+    
+    // Check if user is admin (admin users can join multiple rank groups)
+    const isAdmin = userId === 'wa_919029010070' || userName === 'Piyush Gupta' || 
+                    userId === 'wa_919920027697' || userName === 'Explain VIT' ||
+                    userId.includes('mushy.piyush@gmail.com');
+    
+    if (groupType === 'rank' && !isAdmin) {
+      // Check if user is already in any rank group
+      const existingRankQuery = `
+        SELECT gm.group_id, g.group_name 
+        FROM cpss_group_members gm
+        JOIN cpss_groups g ON gm.group_id = g.group_id
+        WHERE gm.user_id = $1 AND gm.is_active = TRUE AND g.group_type = 'rank'
+      `;
+      const existingResult = await pool.query(existingRankQuery, [userId]);
+      
+      if (existingResult.rows.length > 0) {
+        // User is already in a rank group, leave the previous one
+        const previousGroupId = existingResult.rows[0].group_id;
+        const previousGroupName = existingResult.rows[0].group_name;
+        
+        await pool.query(
+          `UPDATE cpss_group_members SET is_active = FALSE WHERE group_id = $1 AND user_id = $2`,
+          [previousGroupId, userId]
+        );
+        
+        // Update previous group member count
+        await updateGroupMemberCount(previousGroupId);
+        
+        console.log(`User ${userName} left ${previousGroupName} to join new rank group`);
+      }
+    }
+
+    const query = `
+      INSERT INTO cpss_group_members (group_id, user_id, user_name)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (group_id, user_id) 
+      DO UPDATE SET is_active = TRUE, joined_at = CURRENT_TIMESTAMP
+      RETURNING *
+    `;
+
     await pool.query(query, [groupId, userId, userName]);
     
     // Update member count
