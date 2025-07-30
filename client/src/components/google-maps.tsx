@@ -92,9 +92,9 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
     }
   });
 
-  // Get nearest 9 users for the cards list
-  const getNearestUsers = (count: number = 9): (GoogleMapsUser & { distance: number })[] => {
-    if (!userLocation || !showNearbyCard) return [];
+  // Show ALL users instead of just nearest 9 - display all 100 pins  
+  const getAllUsers = (): (GoogleMapsUser & { distance: number })[] => {
+    if (!userLocation) return users.map(u => ({ ...u, distance: 0 }));
     
     const validUsers = users.filter((u: any) => 
       u.latitude && u.longitude && 
@@ -109,11 +109,11 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
           user.latitude, user.longitude
         )
       }))
-      .sort((a, b) => a.distance - b.distance)
-      .slice(0, count);
+      .sort((a, b) => a.distance - b.distance);
+      // Remove .slice(0, count) to show ALL users
   };
 
-  const nearestUsers = getNearestUsers();
+  const allUsers = getAllUsers(); // Show all 100 users instead of just 9
 
   useEffect(() => {
     if (!isPremiumUser) return;

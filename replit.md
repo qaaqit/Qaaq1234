@@ -167,6 +167,14 @@ Google Maps Controls: Transparent icon-only buttons positioned in bottom-left co
 
 ## Recent Changes
 
+### Display All 100 Users Instead of Proximity-Limited 9 (January 30, 2025)
+- **Removed Smart Zoom Proximity Logic**: Eliminated the 9-user limitation that only showed nearest users within expanding radius (50km → 500km)
+- **Global User Display**: Modified both Leaflet and Google Maps components to display all 100 authentic QAAQ maritime professionals simultaneously
+- **City-Based Plotting**: Users plotted at their city/port locations instead of GPS coordinates for better maritime coverage
+- **Enhanced Location Mapping**: Added comprehensive Indian state and maritime port mapping (Andhrapradesh → Vizag port coordinates)
+- **Immediate Pin Visibility**: All anchor pins now visible on map load without requiring "Koi Hai?" button press for better user browsing experience
+- **Real User Integration**: Successfully displaying 100 authentic QAAQ users from Notion database with valid city coordinates across global maritime locations
+
 ### CPSS Group System for Ch16 Broadcast (January 30, 2025)
 - **360 Location-Based Groups**: Implemented comprehensive hierarchical CPSS group system across 10 countries with breadcrumb navigation
 - **Group Management**: Created complete group lifecycle with joining, leaving, posting, and member management functionality

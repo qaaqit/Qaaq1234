@@ -166,39 +166,10 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
     }
   }, [user?.id, userLocation]);
 
-  // Smart zoom logic: center on user with expanding radius to show at least 9 pins
+  // Show all users without proximity filtering - display all 100 pins
   useEffect(() => {
-    if (showNearbyCard && users.length > 0 && userLocation) {
-      let currentRadius = 50; // Start with 50km
-      let nearbyUsers = [];
-      
-      // Keep expanding radius until we have at least 9 users or reach 500km max
-      while (nearbyUsers.length < 9 && currentRadius <= 500) {
-        nearbyUsers = users.filter(u => {
-          const distance = calculateDistance(
-            userLocation.lat, userLocation.lng,
-            u.latitude, u.longitude
-          );
-          return distance <= currentRadius;
-        });
-        
-        if (nearbyUsers.length < 9) {
-          currentRadius += 25; // Expand by 25km increments
-        }
-      }
-      
-      setMapRadius(currentRadius);
-      
-      // Set bounds to show the radius circle
-      const latDelta = currentRadius / 111; // Rough km to degrees conversion
-      const lngDelta = currentRadius / (111 * Math.cos(userLocation.lat * Math.PI / 180));
-      
-      setBounds(new LatLngBounds(
-        [userLocation.lat - latDelta, userLocation.lng - lngDelta],
-        [userLocation.lat + latDelta, userLocation.lng + lngDelta]
-      ));
-    } else if (showNearbyCard && users.length > 0 && !userLocation) {
-      // Fallback: show all users if no user location available
+    if (users.length > 0) {
+      // Always show ALL users - no radius restrictions
       const latitudes = users.map(u => u.latitude);
       const longitudes = users.map(u => u.longitude);
       
@@ -207,17 +178,21 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
       const minLng = Math.min(...longitudes);
       const maxLng = Math.max(...longitudes);
       
-      const latPadding = (maxLat - minLat) * 0.1;
-      const lngPadding = (maxLng - minLng) * 0.1;
+      // Add padding to show all users comfortably
+      const latPadding = (maxLat - minLat) * 0.1 || 1; // Minimum padding for single points
+      const lngPadding = (maxLng - minLng) * 0.1 || 1;
       
       setBounds(new LatLngBounds(
         [minLat - latPadding, minLng - lngPadding],
         [maxLat + latPadding, maxLng + lngPadding]
       ));
+      
+      // Set a large radius to ensure all users are "nearby"
+      setMapRadius(5000); // 5000km to cover global users
     } else {
       setBounds(null);
     }
-  }, [users, showNearbyCard, userLocation]);
+  }, [users]); // Remove showNearbyCard dependency to always show all users
 
   const createCustomIcon = (user: MapUser) => {
     // Green for selected user, otherwise navy blue for sailors or ocean teal for locals
