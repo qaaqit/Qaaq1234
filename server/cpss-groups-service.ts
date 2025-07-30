@@ -179,7 +179,7 @@ export async function getAllCPSSGroups(): Promise<CPSSGroup[]> {
   const query = `
     SELECT * FROM cpss_groups 
     WHERE is_active = TRUE 
-    ORDER BY member_count DESC, created_at DESC
+    ORDER BY breadcrumb_path, member_count DESC
   `;
 
   try {
@@ -187,7 +187,7 @@ export async function getAllCPSSGroups(): Promise<CPSSGroup[]> {
     return result.rows.map(mapRowToGroup);
   } catch (error) {
     console.error('Error fetching all CPSS groups:', error);
-    return [];
+    throw error; // Re-throw to see the actual error
   }
 }
 

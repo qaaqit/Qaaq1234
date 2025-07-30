@@ -28,7 +28,7 @@ const authenticateToken = async (req: Request, res: Response, next: NextFunction
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
-    req.userId = decoded.userId;
+    req.user = { id: decoded.userId, userId: decoded.userId };
     next();
   } catch (error: unknown) {
     res.status(403).json({ message: 'Invalid token' });
