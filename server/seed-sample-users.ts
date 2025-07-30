@@ -147,7 +147,8 @@ const sampleUsers = [
 ];
 
 async function seedSampleUsers() {
-  console.log("Starting to seed sample users...");
+  console.log("Sample user seeding disabled - using only authentic QAAQ users from Notion");
+  return; // Skip all sample user creation
   
   try {
     for (const userData of sampleUsers) {
