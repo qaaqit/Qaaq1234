@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { ArrowLeft, MapPin, Users, Clock, Heart, MessageCircle, Share2, ChevronDown, ChevronUp, Filter, Search, Plus, ChevronRight, Home, UserPlus, Settings, LogIn, MoreHorizontal, Info } from "lucide-react";
+import { ArrowLeft, MapPin, Users, Clock, Heart, MessageCircle, Share2, ChevronDown, ChevronUp, Filter, Search, Plus, ChevronRight, Home, UserPlus, Settings, LogIn, MoreHorizontal, Info, Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -380,7 +380,6 @@ export default function Post({ user }: PostProps) {
   const [selectedGroup, setSelectedGroup] = useState<CPSSGroup | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [newPostContent, setNewPostContent] = useState("");
-  const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
 
   // Fetch all available groups
   const { data: allGroupsData, isLoading: groupsLoading } = useQuery<{ groups: CPSSGroup[] }>({
@@ -447,7 +446,6 @@ export default function Post({ user }: PostProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/cpss/groups', selectedGroup?.groupId, 'posts'] });
       setNewPostContent("");
-      setIsCreatePostOpen(false);
       toast({
         title: "Post Created",
         description: "Your message has been shared with the group.",
@@ -605,39 +603,6 @@ export default function Post({ user }: PostProps) {
                         <Badge variant="outline">{selectedGroup.groupType}</Badge>
                       </div>
                     </div>
-                    
-                    <Dialog open={isCreatePostOpen} onOpenChange={setIsCreatePostOpen}>
-                      <DialogTrigger asChild>
-                        <Button className="flex items-center gap-2">
-                          <Plus className="w-4 h-4" />
-                          New Post
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Create Post in {selectedGroup.groupName}</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                          <Textarea
-                            placeholder="Share something with the group..."
-                            value={newPostContent}
-                            onChange={(e) => setNewPostContent(e.target.value)}
-                            rows={4}
-                          />
-                          <div className="flex justify-end gap-2">
-                            <Button variant="outline" onClick={() => setIsCreatePostOpen(false)}>
-                              Cancel
-                            </Button>
-                            <Button 
-                              onClick={handleCreatePost} 
-                              disabled={createPostMutation.isPending}
-                            >
-                              {createPostMutation.isPending ? "Posting..." : "Post"}
-                            </Button>
-                          </div>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
                   </div>
                 </div>
 
@@ -657,10 +622,7 @@ export default function Post({ user }: PostProps) {
                     <div className="bg-white rounded-lg p-8 border text-center">
                       <MessageCircle className="w-12 h-12 mx-auto text-gray-400 mb-4" />
                       <h3 className="text-lg font-medium text-gray-900 mb-2">No posts yet</h3>
-                      <p className="text-gray-600 mb-4">Be the first to start a discussion in this group!</p>
-                      <Button onClick={() => setIsCreatePostOpen(true)}>
-                        Create First Post
-                      </Button>
+                      <p className="text-gray-600">Be the first to start a discussion in this group!</p>
                     </div>
                   ) : (
                     posts.map((post) => (
@@ -704,6 +666,39 @@ export default function Post({ user }: PostProps) {
                       </Card>
                     ))
                   )}
+                </div>
+
+                {/* Bottom Message Input */}
+                <div className="sticky bottom-4 bg-white border rounded-lg shadow-sm p-4 mt-6">
+                  <div className="flex items-end gap-3">
+                    <div className="flex-1">
+                      <Textarea
+                        placeholder={`Message ${selectedGroup.groupName}...`}
+                        value={newPostContent}
+                        onChange={(e) => setNewPostContent(e.target.value)}
+                        rows={1}
+                        className="resize-none border-0 shadow-none focus-visible:ring-0 p-0 text-sm"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleCreatePost();
+                          }
+                        }}
+                      />
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={handleCreatePost}
+                      disabled={createPostMutation.isPending || !newPostContent.trim()}
+                      className="bg-navy hover:bg-navy/90 rounded-full p-2 h-8 w-8"
+                    >
+                      {createPostMutation.isPending ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Send className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </div>
             ) : (
