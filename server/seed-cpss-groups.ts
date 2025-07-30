@@ -1,6 +1,8 @@
 import { neon } from '@neondatabase/serverless';
 
-const sql = neon(process.env.DATABASE_URL!);
+// Use the same QAAQ Parent Database as the application
+const QAAQ_PARENT_DB_URL = "postgresql://neondb_owner:npg_rTOn7VZkYAb3@ep-autumn-hat-a27gd1cd.eu-central-1.aws.neon.tech/neondb?sslmode=require";
+const sql = neon(QAAQ_PARENT_DB_URL);
 
 interface GroupData {
   country: string;
