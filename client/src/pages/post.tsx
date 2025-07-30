@@ -400,10 +400,11 @@ export default function Post({ user }: PostProps) {
   const userRankGroups = userRankGroupsData?.groups || [];
   const allRankGroups = allRankGroupsData?.groups || [];
 
-  // Fetch posts for selected group
+  // Fetch posts for current group (selected or auto-selected)
+  const currentGroup = selectedGroup || (userRankGroups.length > 0 ? userRankGroups[0] : null);
   const { data: postsData, isLoading: postsLoading } = useQuery<{ posts: CPSSGroupPost[] }>({
-    queryKey: ['/api/cpss/groups', selectedGroup?.groupId, 'posts'],
-    enabled: !!selectedGroup?.groupId,
+    queryKey: ['/api/cpss/groups', currentGroup?.groupId, 'posts'],
+    enabled: !!currentGroup?.groupId,
   });
 
   // Join group mutation
@@ -439,10 +440,10 @@ export default function Post({ user }: PostProps) {
   // Create post mutation
   const createPostMutation = useMutation({
     mutationFn: async (postData: { content: string; postType: string }) => {
-      return apiRequest(`/api/cpss/groups/${selectedGroup?.groupId}/posts`, 'POST', postData);
+      return apiRequest(`/api/cpss/groups/${currentGroup?.groupId}/posts`, 'POST', postData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/cpss/groups', selectedGroup?.groupId, 'posts'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/cpss/groups', currentGroup?.groupId, 'posts'] });
       setNewPostContent("");
       toast({
         title: "Post Created",
@@ -555,56 +556,63 @@ export default function Post({ user }: PostProps) {
       <div className="max-w-6xl mx-auto p-4">
         <Tabs defaultValue="my-groups" className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="my-groups">My Groups ({userRankGroups.length})</TabsTrigger>
+            <TabsTrigger value="my-groups">My Group ({userRankGroups.length})</TabsTrigger>
             <TabsTrigger value="discover">Shore Leave</TabsTrigger>
           </TabsList>
 
           {/* Rank Groups Tab */}
           <TabsContent value="my-groups">
-            {selectedGroup ? (
+            {(selectedGroup || (userRankGroups.length > 0 && !selectedGroup)) ? (
               /* Group View */
-              (<div className="space-y-6">
-                {/* Group Header */}
-                <div className="bg-white rounded-lg p-6 border">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <Button
-                        variant="ghost"
-                        onClick={() => setSelectedGroup(null)}
-                        className="mb-3 -ml-2"
-                      >
-                        <ArrowLeft className="w-4 h-4 mr-2" />
-                        Back to Groups
-                      </Button>
-                      
-                      <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                        <span>CPSS Navigation:</span>
-                        {selectedGroup.breadcrumbPath.split(' > ').map((crumb, index, arr) => (
-                          <span key={index} className="flex items-center gap-1">
-                            <span className="font-medium">{crumb}</span>
-                            {index < arr.length - 1 && <ChevronRight className="w-3 h-3" />}
-                          </span>
-                        ))}
-                      </div>
-                      
-                      <h2 className="text-2xl font-bold text-gray-900 mb-2">{selectedGroup.groupName}</h2>
-                      {selectedGroup.description && (
-                        <p className="text-gray-600 mb-3">{selectedGroup.description}</p>
-                      )}
-                      
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
-                        <div className="flex items-center gap-1">
-                          <Users className="w-4 h-4" />
-                          <span>{selectedGroup.memberCount} members</span>
+              (() => {
+                const currentGroup = selectedGroup || (userRankGroups.length > 0 ? userRankGroups[0] : null);
+                if (!currentGroup) return null;
+                
+                return (
+                  <div className="space-y-6">
+                    {/* Group Header */}
+                    <div className="bg-white rounded-lg p-6 border">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          {selectedGroup && (
+                            <Button
+                              variant="ghost"
+                              onClick={() => setSelectedGroup(null)}
+                              className="mb-3 -ml-2"
+                            >
+                              <ArrowLeft className="w-4 h-4 mr-2" />
+                              Back to Groups
+                            </Button>
+                          )}
+                          
+                          <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                            <span>CPSS Navigation:</span>
+                            {currentGroup.breadcrumbPath.split(' > ').map((crumb, index, arr) => (
+                              <span key={index} className="flex items-center gap-1">
+                                <span className="font-medium">{crumb}</span>
+                                {index < arr.length - 1 && <ChevronRight className="w-3 h-3" />}
+                              </span>
+                            ))}
+                          </div>
+                          
+                          <h2 className="text-2xl font-bold text-gray-900 mb-2">{currentGroup.groupName}</h2>
+                          {currentGroup.description && (
+                            <p className="text-gray-600 mb-3">{currentGroup.description}</p>
+                          )}
+                          
+                          <div className="flex items-center gap-4 text-sm text-gray-500">
+                            <div className="flex items-center gap-1">
+                              <Users className="w-4 h-4" />
+                              <span>{currentGroup.memberCount} members</span>
+                            </div>
+                            <Badge variant="outline">{currentGroup.groupType}</Badge>
+                          </div>
                         </div>
-                        <Badge variant="outline">{selectedGroup.groupType}</Badge>
                       </div>
                     </div>
-                  </div>
-                </div>
                 {/* Group Posts */}
-                <div className="space-y-4">
-                  {postsLoading ? (
+                    <div className="space-y-4">
+                      {postsLoading ? (
                     <div className="space-y-4">
                       {[1, 2, 3].map(i => (
                         <div key={i} className="bg-white rounded-lg p-6 border animate-pulse">
@@ -643,38 +651,40 @@ export default function Post({ user }: PostProps) {
                   )}
                 </div>
                 {/* Bottom Message Input */}
-                <div className="sticky bottom-4 bg-white border rounded-lg shadow-sm p-4 mt-6">
-                  <div className="flex items-end gap-3">
-                    <div className="flex-1">
-                      <Textarea
-                        placeholder={`Message ${selectedGroup.groupName}...`}
-                        value={newPostContent}
-                        onChange={(e) => setNewPostContent(e.target.value)}
-                        rows={1}
-                        className="resize-none border-0 shadow-none focus-visible:ring-0 p-0 text-sm"
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            handleCreatePost();
-                          }
-                        }}
-                      />
+                    <div className="sticky bottom-4 bg-white border rounded-lg shadow-sm p-4 mt-6">
+                      <div className="flex items-end gap-3">
+                        <div className="flex-1">
+                          <Textarea
+                            placeholder={`Message ${currentGroup.groupName}...`}
+                            value={newPostContent}
+                            onChange={(e) => setNewPostContent(e.target.value)}
+                            rows={1}
+                            className="resize-none border-0 shadow-none focus-visible:ring-0 p-0 text-sm"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handleCreatePost();
+                              }
+                            }}
+                          />
+                        </div>
+                        <Button
+                          size="sm"
+                          onClick={handleCreatePost}
+                          disabled={createPostMutation.isPending || !newPostContent.trim()}
+                          className="bg-navy hover:bg-navy/90 rounded-full p-2 h-8 w-8"
+                        >
+                          {createPostMutation.isPending ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Send className="w-4 h-4" />
+                          )}
+                        </Button>
+                      </div>
                     </div>
-                    <Button
-                      size="sm"
-                      onClick={handleCreatePost}
-                      disabled={createPostMutation.isPending || !newPostContent.trim()}
-                      className="bg-navy hover:bg-navy/90 rounded-full p-2 h-8 w-8"
-                    >
-                      {createPostMutation.isPending ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Send className="w-4 h-4" />
-                      )}
-                    </Button>
                   </div>
-                </div>
-              </div>)
+                );
+              })()
             ) : (
               /* Rank Groups List */
               (<div className="space-y-6">
@@ -696,13 +706,13 @@ export default function Post({ user }: PostProps) {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {/* Rank Group Selection Dropdown */}
+                    {/* Rank Group Selection for users without a rank group */}
                     <div className="space-y-4">
                       <div className="flex items-center gap-4">
                         <Select
-                          value={userRankGroups.length > 0 ? userRankGroups[0].groupId : ""}
+                          value=""
                           onValueChange={(value) => {
-                            if (value && value !== userRankGroups[0]?.groupId) {
+                            if (value) {
                               const selectedGroup = allRankGroups.find(g => g.groupId === value);
                               if (selectedGroup) {
                                 handleJoinGroup(selectedGroup);
@@ -712,18 +722,7 @@ export default function Post({ user }: PostProps) {
                           disabled={joinGroupMutation.isPending}
                         >
                           <SelectTrigger className="flex-1">
-                            <SelectValue placeholder="Select your maritime rank group">
-                              {userRankGroups.length > 0 ? (
-                                <div className="flex items-center gap-2">
-                                  <Badge variant="default" className="bg-navy text-white">
-                                    {userRankGroups[0].groupName}
-                                  </Badge>
-                                  <span className="text-sm text-gray-600">
-                                    ({userRankGroups[0].memberCount} members)
-                                  </span>
-                                </div>
-                              ) : null}
-                            </SelectValue>
+                            <SelectValue placeholder="Select your maritime rank group to join the chat" />
                           </SelectTrigger>
                           <SelectContent>
                             {allRankGroups.map((group: CPSSGroup) => (
@@ -743,47 +742,17 @@ export default function Post({ user }: PostProps) {
                             ))}
                           </SelectContent>
                         </Select>
-                        
-                        {userRankGroups.length > 0 && (
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                const currentGroup = allRankGroups.find(g => g.groupId === userRankGroups[0].groupId);
-                                if (currentGroup) setSelectedGroup(currentGroup);
-                              }}
-                              className="flex items-center gap-1"
-                            >
-                              <MessageCircle className="w-4 h-4" />
-                              Chat
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleLeaveGroup(userRankGroups[0])}
-                              disabled={leaveGroupMutation.isPending}
-                              className="flex items-center gap-1 text-red-600 hover:text-red-700"
-                            >
-                              Leave Group
-                            </Button>
-                          </div>
-                        )}
                       </div>
                       
-                      {userRankGroups.length > 0 && (
-                        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                          <div className="flex items-center gap-2 text-green-800">
-                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                            <span className="text-sm font-medium">
-                              Active in {userRankGroups[0].groupName} 
-                            </span>
-                            <span className="text-xs text-green-600">
-                              ({userRankGroups[0].memberCount} members)
-                            </span>
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div className="flex items-start gap-3">
+                          <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                          <div className="text-sm text-blue-800">
+                            <p className="font-medium mb-1">Join your rank group to start chatting</p>
+                            <p className="text-blue-700">Select your maritime rank from the dropdown above to join the group chat and connect with others in your position.</p>
                           </div>
                         </div>
-                      )}
+                      </div>
                     </div>
                   </div>
                 )}
