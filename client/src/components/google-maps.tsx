@@ -24,6 +24,7 @@ interface GoogleMapsProps {
   searchQuery?: string;
   center?: { lat: number; lng: number };
   onUserClick?: (user: GoogleMapsUser) => void;
+  showNearbyCard?: boolean;
 }
 
 // Calculate distance between two coordinates using Haversine formula
@@ -65,7 +66,7 @@ const getRankAbbreviation = (rank: string): string => {
   return abbreviations[rank?.toLowerCase()] || 'OTHER';
 };
 
-export default function GoogleMaps({ showUsers = false, searchQuery = '', center, onUserClick }: GoogleMapsProps) {
+export default function GoogleMaps({ showUsers = false, searchQuery = '', center, onUserClick, showNearbyCard = false }: GoogleMapsProps) {
   const { user } = useAuth();
   const [map, setMap] = useState<any>(null);
   const [mapType, setMapType] = useState<'roadmap' | 'satellite' | 'hybrid'>('roadmap');
@@ -79,11 +80,11 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
   // Check if user is premium (admin users for now)
   const isPremiumUser = user?.email === 'mushy.piyush@gmail.com' || user?.id === '+919029010070' || (user as any)?.whatsappNumber === '+919029010070';
 
-  // Always show all users from QAAQ database when "Koi Hai?" is clicked (same as regular map)
+  // Always show all users from QAAQ database - fetch immediately on load
   const { data: users = [], isLoading: usersLoading } = useQuery<GoogleMapsUser[]>({
     queryKey: ['/api/users/map'],
     staleTime: 60000, // 1 minute
-    enabled: showUsers && isPremiumUser, // Only fetch when showUsers is true and user is premium
+    enabled: isPremiumUser, // Always fetch users to show pins from start
     queryFn: async () => {
       const response = await fetch('/api/users/map');
       if (!response.ok) throw new Error('Failed to fetch users');
@@ -93,7 +94,7 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
 
   // Get nearest 9 users for the cards list
   const getNearestUsers = (count: number = 9): (GoogleMapsUser & { distance: number })[] => {
-    if (!userLocation || !showUsers) return [];
+    if (!userLocation || !showNearbyCard) return [];
     
     const validUsers = users.filter((u: any) => 
       u.latitude && u.longitude && 
@@ -378,7 +379,7 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
 
   // Separate effect for smart zoom when userLocation changes
   useEffect(() => {
-    if (!map || !isLoaded || !showUsers) return;
+    if (!map || !isLoaded || !showNearbyCard) return;
 
     const validUsers = users.filter((u: any) => 
       u.latitude && u.longitude && 
@@ -444,7 +445,7 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
       
       map.fitBounds(paddedBounds);
     }
-  }, [map, isLoaded, showUsers, userLocation, users, selectedUser]);
+  }, [map, isLoaded, showNearbyCard, userLocation, users, selectedUser]);
 
   useEffect(() => {
     if (!map || !isLoaded) return;
@@ -657,7 +658,7 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
       />
 
       {/* Transparent User Cards List at Bottom */}
-      {showUsers && nearestUsers.length > 0 && (
+      {showNearbyCard && nearestUsers.length > 0 && (
         <div className="absolute bottom-4 left-4 right-4 z-[1000]">
           <div className="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg p-3 max-h-32 overflow-y-auto">
             <h3 className="text-sm font-semibold text-gray-800 mb-2">Nearby Maritime Professionals</h3>

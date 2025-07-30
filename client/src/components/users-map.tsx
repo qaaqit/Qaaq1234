@@ -105,6 +105,7 @@ const getRankAbbreviation = (rank: string): string => {
 interface UsersMapProps {
   showUsers?: boolean;
   searchQuery?: string;
+  showNearbyCard?: boolean;
 }
 
 // Haversine formula to calculate distance between two points
@@ -119,7 +120,7 @@ const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * c;
 };
 
-export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersMapProps) {
+export default function UsersMap({ showUsers = false, searchQuery = "", showNearbyCard = false }: UsersMapProps) {
   const [bounds, setBounds] = useState<LatLngBounds | null>(null);
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
   const [mapRadius, setMapRadius] = useState<number>(50); // Initial 50km radius
@@ -127,11 +128,11 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const { user } = useAuth();
 
-  // Always show all users from QAAQ database when "Koi Hai?" is clicked
+  // Always show all users from QAAQ database - fetch immediately on load
   const { data: users = [], isLoading } = useQuery<MapUser[]>({
     queryKey: ['/api/users/map'],
     staleTime: 60000, // 1 minute
-    enabled: showUsers, // Only fetch when showUsers is true
+    enabled: true, // Always fetch users to show pins from start
     queryFn: async () => {
       const response = await fetch('/api/users/map');
       if (!response.ok) throw new Error('Failed to fetch users');
@@ -167,7 +168,7 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
 
   // Smart zoom logic: center on user with expanding radius to show at least 9 pins
   useEffect(() => {
-    if (showUsers && users.length > 0 && userLocation) {
+    if (showNearbyCard && users.length > 0 && userLocation) {
       let currentRadius = 50; // Start with 50km
       let nearbyUsers = [];
       
@@ -196,7 +197,7 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
         [userLocation.lat - latDelta, userLocation.lng - lngDelta],
         [userLocation.lat + latDelta, userLocation.lng + lngDelta]
       ));
-    } else if (showUsers && users.length > 0 && !userLocation) {
+    } else if (showNearbyCard && users.length > 0 && !userLocation) {
       // Fallback: show all users if no user location available
       const latitudes = users.map(u => u.latitude);
       const longitudes = users.map(u => u.longitude);
@@ -216,7 +217,7 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
     } else {
       setBounds(null);
     }
-  }, [users, showUsers, userLocation]);
+  }, [users, showNearbyCard, userLocation]);
 
   const createCustomIcon = (user: MapUser) => {
     // Green for selected user, otherwise navy blue for sailors or ocean teal for locals
@@ -250,7 +251,7 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
 
   // Get nearest 9 users for the cards list
   const getNearestUsers = (count: number = 9): (MapUser & { distance: number })[] => {
-    if (!userLocation || !showUsers) return [];
+    if (!userLocation || !showNearbyCard) return [];
     
     return users
       .map(user => ({
@@ -293,7 +294,7 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
         center={defaultCenter}
         zoom={defaultZoom}
         className="w-full h-full"
-        bounds={showUsers && bounds ? bounds : undefined}
+        bounds={showNearbyCard && bounds ? bounds : undefined}
       >
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
@@ -314,7 +315,7 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
         )}
         
         {/* Scanning radar animation overlaid on user's location */}
-        {userLocation && !showUsers && (
+        {userLocation && !showNearbyCard && (
           <Marker
             position={[userLocation.lat, userLocation.lng]}
             icon={divIcon({
@@ -551,7 +552,7 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
         
 
         
-        {showUsers && !isLoading && users.map((user) => (
+        {!isLoading && users.map((user) => (
           <Marker
             key={user.id}
             position={[user.latitude, user.longitude]}
@@ -606,7 +607,7 @@ export default function UsersMap({ showUsers = false, searchQuery = "" }: UsersM
       </MapContainer>
 
       {/* Transparent User Cards List at Bottom */}
-      {showUsers && nearestUsers.length > 0 && (
+      {showNearbyCard && nearestUsers.length > 0 && (
         <div className="absolute bottom-4 left-4 right-4 z-[1000]">
           <div className="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg p-3 max-h-32 overflow-y-auto">
             <h3 className="text-sm font-semibold text-gray-800 mb-2">Nearby Maritime Professionals</h3>

@@ -36,6 +36,7 @@ export default function Discover({ user }: DiscoverProps) {
 
   const [selectedCategory, setSelectedCategory] = useState("");
   const [showUsers, setShowUsers] = useState(false);
+  const [showNearbyCard, setShowNearbyCard] = useState(false);
   const [showWhatsAppPanel, setShowWhatsAppPanel] = useState(false);
   const [mapType, setMapType] = useState<'leaflet' | 'google'>('leaflet');
   const [isPremiumMode, setIsPremiumMode] = useState(false);
@@ -54,7 +55,7 @@ export default function Discover({ user }: DiscoverProps) {
 
   const handleSearch = () => {
     setShowUsers(true);
-    // Always show users when "Koi Hai?" is clicked, regardless of search query
+    setShowNearbyCard(true); // Show the nearby card list when button is pressed
     refetch();
   };
 
@@ -63,6 +64,7 @@ export default function Discover({ user }: DiscoverProps) {
     const handleHashChange = () => {
       if (window.location.hash.includes('koi-hai')) {
         setShowUsers(true);
+        setShowNearbyCard(true);
         refetch();
       }
     };
@@ -183,12 +185,13 @@ export default function Discover({ user }: DiscoverProps) {
           <div className="w-full h-full">
             <GoogleMaps 
               showUsers={showUsers}
+              showNearbyCard={showNearbyCard}
               searchQuery=""
               center={{ lat: 19.076, lng: 72.8977 }}
             />
           </div>
         ) : (
-          <UsersMap showUsers={showUsers} searchQuery="" />
+          <UsersMap showUsers={showUsers} showNearbyCard={showNearbyCard} searchQuery="" />
         )}
         
         {/* WhatsApp Bot Control Panel - positioned outside map */}
