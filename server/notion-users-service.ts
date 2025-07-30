@@ -148,7 +148,7 @@ export async function getQAAQUsersFromNotion() {
             // Column 3: Location/City (Text field)
             
             // Extract data from the actual Notion field structure
-            const fullName = properties["Name"]?.title?.[0]?.plain_text || "Maritime User";
+            const originalName = properties["Name"]?.title?.[0]?.plain_text || "Maritime User";
             const whatsappNumber = properties["WhatsAppNumber"]?.rich_text?.[0]?.plain_text || "";
             const homeCity = properties["CurrentCity"]?.rich_text?.[0]?.plain_text || "";
             const email = properties["Email"]?.email || "";
@@ -157,6 +157,28 @@ export async function getQAAQUsersFromNotion() {
             const questionCount = properties["QuestionCount"]?.number || 0;
             const answerCount = properties["AnswerCount"]?.number || 0;
             const nationality = properties["Nationality"]?.select?.name || "India";
+            
+            // Generate unique display name based on email or create IP-like identifier
+            let uniqueName = originalName;
+            if (email && email.includes('@')) {
+                // Use email username as unique identifier
+                uniqueName = email.split('@')[0];
+            } else if (whatsappNumber) {
+                // Use last 4 digits of phone number
+                const phoneDigits = whatsappNumber.replace(/\D/g, '');
+                const lastFourDigits = phoneDigits.slice(-4);
+                uniqueName = `user${lastFourDigits}`;
+            } else {
+                // Generate consistent IP-like identifier based on index
+                // Start from 192.168.1.x range for realistic IP addresses
+                const baseIP = 192;
+                const subnet = 168;
+                const network = Math.floor(index / 254) + 1;
+                const host = (index % 254) + 1;
+                uniqueName = `${baseIP}.${subnet}.${network}.${host}`;
+            }
+            
+            const fullName = uniqueName;
             
             // Always use city-based coordinates instead of GPS coordinates
             // Plot users at their city/port locations from their profiles
@@ -173,7 +195,7 @@ export async function getQAAQUsersFromNotion() {
             return {
                 id: cleanWhatsappNumber || email || `user-${index}`,
                 fullName,
-                email: email || `${fullName?.toLowerCase().replace(/\s/g, '.')}@qaaq.com`,
+                email: email || `${uniqueName?.toLowerCase().replace(/\s/g, '.')}@qaaq.com`,
                 password: '',
                 needsPasswordChange: null,
                 userType: 'sailor',
