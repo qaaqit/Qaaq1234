@@ -338,17 +338,24 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log('Fetching users with location data for map and WhatsApp bot');
       
-      // First try to get real QAAQ users from Notion database
+      // Try to get real QAAQ users from Notion database with timeout
       try {
         const { getQAAQUsersFromNotion } = await import('./notion-users-service');
-        const notionUsers = await getQAAQUsersFromNotion();
         
-        if (notionUsers.length > 0) {
+        // Set a 5-second timeout for faster response
+        const notionPromise = getQAAQUsersFromNotion();
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Notion timeout')), 5000)
+        );
+        
+        const notionUsers = await Promise.race([notionPromise, timeoutPromise]);
+        
+        if (notionUsers && notionUsers.length > 0) {
           console.log(`Found ${notionUsers.length} real QAAQ users from Notion database`);
-          return notionUsers;
+          return notionUsers.slice(0, 50); // Limit to 50 users for faster performance
         }
       } catch (notionError) {
-        console.log('Notion integration not available, falling back to PostgreSQL users');
+        console.log('Notion integration timeout, using cached PostgreSQL users for speed');
       }
 
       // Fallback: check if we have users with direct lat/lng coordinates in PostgreSQL

@@ -147,79 +147,41 @@ export async function getQAAQUsersFromNotion() {
             // Column 2: WhatsApp Number (Text/Phone field) 
             // Column 3: Location/City (Text field)
             
-            const fullName = properties["Name"]?.title?.[0]?.plain_text || 
-                           properties["Full Name"]?.title?.[0]?.plain_text ||
-                           properties["Title"]?.title?.[0]?.plain_text ||
-                           Object.keys(properties).find(key => 
-                               properties[key]?.title && properties[key].title.length > 0
-                           ) ? properties[Object.keys(properties).find(key => 
-                               properties[key]?.title && properties[key].title.length > 0
-                           )]?.title?.[0]?.plain_text : "Maritime User";
+            // Extract data from the actual Notion field structure
+            const fullName = properties["Name"]?.title?.[0]?.plain_text || "Maritime User";
+            const whatsappNumber = properties["WhatsAppNumber"]?.rich_text?.[0]?.plain_text || "";
+            const homeCity = properties["CurrentCity"]?.rich_text?.[0]?.plain_text || "";
+            const email = properties["Email"]?.email || "";
+            const rank = properties["MaritimeRank"]?.select?.name || "Maritime Professional";
+            const shipName = properties["CurrentShipName"]?.rich_text?.[0]?.plain_text || "MV Ocean Vessel";
+            const questionCount = properties["QuestionCount"]?.number || 0;
+            const answerCount = properties["AnswerCount"]?.number || 0;
+            const nationality = properties["Nationality"]?.select?.name || "India";
             
-            // Extract WhatsApp number from various possible field types
-            let whatsappNumber = "";
-            
-            // Try phone_number field first
-            for (const [key, value] of Object.entries(properties)) {
-                if (value?.phone_number) {
-                    whatsappNumber = value.phone_number;
-                    break;
-                }
-            }
-            
-            // If no phone_number field, try rich_text fields
-            if (!whatsappNumber) {
-                for (const [key, value] of Object.entries(properties)) {
-                    if (value?.rich_text && Array.isArray(value.rich_text) && value.rich_text.length > 0) {
-                        const text = value.rich_text[0]?.plain_text || "";
-                        if (text.includes('+') || /^\d{10,15}$/.test(text.replace(/\D/g, ''))) {
-                            whatsappNumber = text;
-                            break;
-                        }
-                    }
-                }
-            }
-            
-            // Extract location/city from remaining text fields
-            let homeCity = "";
-            for (const [key, value] of Object.entries(properties)) {
-                if (value?.rich_text && Array.isArray(value.rich_text) && value.rich_text.length > 0) {
-                    const text = value.rich_text[0]?.plain_text || "";
-                    // Skip if this is the phone number field
-                    if (text !== whatsappNumber && text.length > 0) {
-                        homeCity = text;
-                        break;
-                    }
-                }
-            }
-            
-            // Default values for maritime professionals
-            const rank = "Maritime Professional";
-            const shipName = "MV Ocean Vessel";
-            const country = homeCity ? (homeCity.toLowerCase().includes('mumbai') ? 'India' :
-                                      homeCity.toLowerCase().includes('kerala') ? 'India' :
-                                      homeCity.toLowerCase().includes('delhi') ? 'India' :
-                                      homeCity.toLowerCase().includes('karachi') ? 'Pakistan' :
-                                      'India') : 'India';
-            
-            const questionCount = Math.floor(Math.random() * 10); // Random Q count
-            const answerCount = Math.floor(Math.random() * 5); // Random A count
+            // Use existing coordinates if available
+            const existingLat = properties["CurrentLatitude"]?.number;
+            const existingLng = properties["CurrentLongitude"]?.number;
 
-            // Determine coordinates based on city
-            const location = getMaritimeLocationCoordinates(homeCity || "", country);
+            // Use existing coordinates or calculate based on city
+            let location;
+            if (existingLat && existingLng) {
+                location = { lat: existingLat, lng: existingLng };
+            } else {
+                location = getMaritimeLocationCoordinates(homeCity || "", nationality);
+            }
             
-            // Clean up WhatsApp number format
+            // Clean WhatsApp number
             const cleanWhatsappNumber = whatsappNumber.replace(/\s/g, '').replace(/[^\d+]/g, '');
             
             return {
-                id: cleanWhatsappNumber || `user-${index}`,
-                fullName: fullName || `Maritime User ${index + 1}`,
-                email: `${fullName?.toLowerCase().replace(/\s/g, '.')}@qaaq.com` || "",
+                id: cleanWhatsappNumber || email || `user-${index}`,
+                fullName,
+                email: email || `${fullName?.toLowerCase().replace(/\s/g, '.')}@qaaq.com`,
                 password: '',
                 needsPasswordChange: null,
                 userType: 'sailor',
                 isAdmin: cleanWhatsappNumber === '+919029010070',
-                nickname: fullName || `Maritime User ${index + 1}`,
+                nickname: fullName,
                 rank,
                 shipName,
                 company: 'QAAQ Maritime',
@@ -227,7 +189,7 @@ export async function getQAAQUsersFromNotion() {
                 port: homeCity || 'Mumbai Port',
                 visitWindow: '2025-01-30 to 2025-02-05',
                 city: homeCity || 'Mumbai',
-                country,
+                country: nationality,
                 latitude: location.lat,
                 longitude: location.lng,
                 deviceLatitude: null,
