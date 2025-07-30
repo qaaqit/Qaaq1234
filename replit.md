@@ -161,6 +161,16 @@ Google Maps Controls: Transparent icon-only buttons positioned in bottom-left co
 
 ## Recent Changes
 
+### Real QAAQ Question Integration (January 30, 2025)
+- **Authentic Data Source**: Successfully integrated real QAAQ question metrics from Notion database "User Question Metrics" (23f533fe-2f81-8143-be0c-c6ac6dabaf51)
+- **Question Count Accuracy**: System now displays actual question counts for 40+ maritime professionals from QAAQ parent app database
+- **Data Limitation Discovery**: Found that QAAQ Notion databases contain question metrics (counts, dates) but not actual question content/text
+- **User Profile Enhancement**: User cards and profile pages show real question counts with clear indication when using authentic QAAQ data
+- **No Generated Content**: Removed all generated/sample questions - system only shows verified question counts from QAAQ metrics
+- **Data Source Transparency**: Added "Real QAAQ Data" badges and explanatory messages when displaying authentic metrics vs. unavailable content
+- **WhatsApp vs Web Breakdown**: Integration captures breakdown of questions asked via WhatsApp bot vs. web interface from QAAQ system
+- **API Integration**: Created `/api/users/:userId/profile` endpoint that fetches real QAAQ metrics and updates question counts from authentic data
+
 ### Bot Rules Database Storage (January 29, 2025)
 - **QBOT Rules Storage**: Successfully stored QBOTRULESV1.md in shared QAAQ database using bot_documentation table
 - **Cross-App Accessibility**: All sister apps can now access bot rules via SQL query: `SELECT doc_value FROM bot_documentation WHERE doc_key = 'QBOTRULESV1'`

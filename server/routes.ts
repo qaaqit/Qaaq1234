@@ -770,15 +770,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get user's real questions from QAAQ Notion database
-      const { getUserQuestions } = await import('./qa-service');
+      const { getUserQuestions, getQAAQUserMetrics } = await import('./qa-service');
+      
+      // First, get QAAQ metrics to update question count
+      const allMetrics = await getQAAQUserMetrics();
+      const userMetrics = allMetrics.find(m => 
+        m.fullName.toLowerCase() === user.fullName.toLowerCase() ||
+        m.userId === user.id ||
+        m.fullName.toLowerCase().includes(user.fullName.toLowerCase()) ||
+        user.fullName.toLowerCase().includes(m.fullName.toLowerCase())
+      );
+      
+      // Update question count from QAAQ if available
+      const questionCount = userMetrics?.totalQuestions || user.questionCount || 0;
+      
+      // Try to get actual questions (currently returns empty array since content not available)
       const questions = await getUserQuestions(user.id, user.fullName);
-
-      // If no questions found in Notion, fall back to checking if user has question count
-      let finalQuestions = questions;
-      if (questions.length === 0 && user.questionCount > 0) {
-        // Generate realistic questions as fallback only if user has a question count
-        finalQuestions = generateUserQuestions(user.fullName, user.rank, user.questionCount);
-      }
+      
+      const finalQuestions = questions;
 
       res.json({
         user: {
@@ -790,7 +799,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           port: user.port,
           city: user.city,
           country: user.country,
-          questionCount: user.questionCount || questions.length,
+          questionCount: questionCount,
           answerCount: user.answerCount || 0,
           whatsappNumber: (user as any).whatsappNumber || ''
         },

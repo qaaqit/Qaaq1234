@@ -187,12 +187,30 @@ export default function UserProfile() {
           <p className="text-gray-600">Maritime expertise questions from this professional</p>
         </div>
 
-        {questions.length === 0 ? (
+        {user.questionCount === 0 ? (
           <Card>
             <CardContent className="p-8 text-center">
               <MessageCircle className="w-12 h-12 mx-auto text-gray-400 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No Questions Yet</h3>
               <p className="text-gray-600">This professional hasn't asked any questions yet.</p>
+            </CardContent>
+          </Card>
+        ) : questions.length === 0 && user.questionCount > 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <MessageCircle className="w-12 h-12 mx-auto text-navy-500 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                {user.questionCount} Questions Asked
+              </h3>
+              <p className="text-gray-600 mb-4">
+                This maritime professional has asked {user.questionCount} questions in the QAAQ system.
+              </p>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm">
+                <p className="text-blue-800">
+                  <strong>Note:</strong> Question content is stored in the main QAAQ system and not currently accessible through this interface. 
+                  We can only display the verified question count from QAAQ metrics.
+                </p>
+              </div>
             </CardContent>
           </Card>
         ) : (

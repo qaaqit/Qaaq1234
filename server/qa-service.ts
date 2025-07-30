@@ -67,78 +67,31 @@ export async function getQAAQUserMetrics(): Promise<QAAQUserMetrics[]> {
 }
 
 /**
- * Generate realistic questions based on QAAQ expertise areas
- * Since individual question content isn't available, create realistic ones based on maritime categories
+ * Search for actual questions in QAAQ system
+ * Currently the Notion databases only contain question metrics, not the actual question content
  */
-function generateRealisticQAAQQuestions(userMetrics: QAAQUserMetrics): QAAQQuestion[] {
-  const maritimeCategories = {
-    'Navigation & Bridge': [
-      'How to calculate course to steer when there is strong current?',
-      'What are the COLREG requirements for fog signals?',
-      'Best practices for GPS navigation in coastal waters?',
-      'How to plot a position using radar bearings?',
-      'What are the bridge watch keeping requirements under STCW?'
-    ],
-    'Engine & Machinery': [
-      'How to troubleshoot main engine starting problems?',
-      'What causes excessive cylinder liner wear?',
-      'Best practices for fuel injection system maintenance?',
-      'How to handle engine room fire emergency procedures?',
-      'What are the requirements for auxiliary engine maintenance?'
-    ],
-    'Safety & Emergency': [
-      'What are the SOLAS requirements for safety inspections?',
-      'How to conduct proper man overboard drills?',
-      'What is the correct procedure for confined space entry?',
-      'How to maintain life saving equipment according to regulations?',
-      'What are the fire fighting systems requirements on tankers?'
-    ],
-    'Cargo Operations': [
-      'How to calculate proper cargo loading sequences?',
-      'What are the requirements for dangerous goods handling?',
-      'How to maintain proper ventilation in cargo holds?',
-      'What is the correct ballast water management procedure?',
-      'How to secure containers in heavy weather conditions?'
-    ],
-    'Port & Documentation': [
-      'What documents are required for port clearance?',
-      'How to handle port state control inspections effectively?',
-      'What are the procedures for crew change in different ports?',
-      'How to communicate with VTS and port authorities?',
-      'What are the requirements for waste disposal in port?'
-    ]
-  };
-
-  const questions: QAAQQuestion[] = [];
-  const categories = Object.keys(maritimeCategories);
-  const nameHash = userMetrics.fullName.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
-  
-  // Generate questions based on actual question count from QAAQ
-  for (let i = 0; i < Math.min(userMetrics.totalQuestions, 15); i++) {
-    const categoryIndex = (nameHash + i) % categories.length;
-    const category = categories[categoryIndex];
-    const categoryQuestions = maritimeCategories[category as keyof typeof maritimeCategories];
-    const questionIndex = (nameHash + i * 7) % categoryQuestions.length;
+async function searchForActualQuestions(userMetrics: QAAQUserMetrics): Promise<QAAQQuestion[]> {
+  try {
+    // The current QAAQ Notion databases only contain metrics (question counts) 
+    // but not the actual question content. The actual questions are likely stored 
+    // in WhatsApp bot logs or a separate system we don't have access to.
     
-    questions.push({
-      id: `qaaq_${userMetrics.userId}_${i + 1}`,
-      question: categoryQuestions[questionIndex],
-      askedBy: userMetrics.fullName,
-      category: category,
-      askedDate: new Date(Date.now() - (i * 24 * 60 * 60 * 1000 * (Math.random() * 30))).toISOString(),
-      answerCount: Math.floor(Math.random() * 5),
-      isResolved: Math.random() > 0.3,
-      tags: [category.split(' ')[0].toLowerCase()],
-      urgency: ['Low', 'Normal', 'High'][Math.floor(Math.random() * 3)],
-      location: 'Maritime'
-    });
+    console.log(`Searching for actual questions for ${userMetrics.fullName}...`);
+    console.log(`User has ${userMetrics.totalQuestions} questions (${userMetrics.whatsappQuestions} WhatsApp, ${userMetrics.webQuestions} Web)`);
+    
+    // TODO: Integrate with actual QAAQ question storage system when available
+    // For now, we can only show that the user has asked questions but cannot display the content
+    
+    return [];
+  } catch (error) {
+    console.error('Error searching for actual questions:', error);
+    return [];
   }
-
-  return questions.sort((a, b) => new Date(b.askedDate).getTime() - new Date(a.askedDate).getTime());
 }
 
 /**
  * Get questions for a specific user using real QAAQ metrics
+ * Currently only returns question count since actual question content is not available in Notion
  */
 export async function getUserQuestions(userId: string, userName: string): Promise<QAAQQuestion[]> {
   try {
@@ -157,7 +110,10 @@ export async function getUserQuestions(userId: string, userName: string): Promis
 
     if (userMetrics && userMetrics.totalQuestions > 0) {
       console.log(`Found QAAQ metrics for ${userMetrics.fullName}: ${userMetrics.totalQuestions} questions (${userMetrics.whatsappQuestions} WhatsApp, ${userMetrics.webQuestions} Web)`);
-      return generateRealisticQAAQQuestions(userMetrics);
+      
+      // Search for actual question content
+      const actualQuestions = await searchForActualQuestions(userMetrics);
+      return actualQuestions;
     } else {
       console.log(`No QAAQ metrics found for user ${userName}`);
       return [];
@@ -171,20 +127,18 @@ export async function getUserQuestions(userId: string, userName: string): Promis
 
 /**
  * Get all questions from all users with QAAQ metrics
+ * Currently returns empty array since actual question content is not available in current Notion setup
  */
 export async function getAllQAAQQuestions(): Promise<QAAQQuestion[]> {
   try {
     const allMetrics = await getQAAQUserMetrics();
-    const allQuestions: QAAQQuestion[] = [];
+    console.log(`Found ${allMetrics.length} users with QAAQ metrics`);
     
-    for (const userMetrics of allMetrics) {
-      if (userMetrics.totalQuestions > 0) {
-        const userQuestions = generateRealisticQAAQQuestions(userMetrics);
-        allQuestions.push(...userQuestions);
-      }
-    }
+    // The current QAAQ Notion setup only contains question counts, not actual questions
+    // Actual question content would need to be retrieved from WhatsApp bot logs or other system
+    console.log('Note: Actual question content not available in current Notion databases');
     
-    return allQuestions.sort((a, b) => new Date(b.askedDate).getTime() - new Date(a.askedDate).getTime());
+    return [];
   } catch (error) {
     console.error('Error fetching all QAAQ questions:', error);
     return [];
