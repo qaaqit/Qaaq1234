@@ -128,7 +128,7 @@ export default function Discover({ user }: DiscoverProps) {
               </div>
               <div>
                 <h1 className="text-2xl font-bold">QaaqConnect</h1>
-                <p className="text-sm text-white/60 italic font-medium">जगह देख के बात करो..</p>
+                <p className="text-sm text-white/60 italic font-medium">ship to ship</p>
               </div>
             </button>
             <div className="flex items-center space-x-4">
@@ -146,9 +146,6 @@ export default function Discover({ user }: DiscoverProps) {
           </div>
         </div>
       </header>
-
-
-
       {/* Main Content Area - Full Screen Map */}
       <div className="flex-1 overflow-hidden relative">
         {/* Premium Mode Notice */}
