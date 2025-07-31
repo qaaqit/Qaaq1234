@@ -191,6 +191,20 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     return filtered;
   }, [allUsers, userLocation?.lat, userLocation?.lng, showOnlineOnly, radiusKm, selectedRankCategory]);
 
+  // Get top 6 nearest users with distance calculation
+  const nearestUsers = useMemo(() => {
+    if (!userLocation || !filteredUsers.length) return [];
+    
+    const usersWithDistance = filteredUsers.map(user => ({
+      ...user,
+      distance: calculateDistance(userLocation.lat, userLocation.lng, user.latitude, user.longitude)
+    }));
+    
+    return usersWithDistance
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, 6);
+  }, [filteredUsers, userLocation]);
+
   // Update user count when users are loaded (temporarily disabled to fix infinite loop)
   // useEffect(() => {
   //   if (onUsersFound && filteredUsers.length >= 0) {
@@ -403,7 +417,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       </div>
 
       {/* Dual Map System: Google Maps for Admin, Leaflet for Users */}
-      <div className="absolute top-[60px] left-0 right-0 bottom-0">
+      <div className="absolute top-[60px] left-0 right-0 bottom-[180px]">
         {user?.isAdmin ? (
           <GoogleMap
             users={filteredUsers}
@@ -431,6 +445,48 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
           />
         )}
       </div>
+
+      {/* Bottom Panel - Top 6 Nearest Users */}
+      {nearestUsers.length > 0 && (
+        <div className="absolute bottom-0 left-0 right-0 h-[180px] bg-white/95 backdrop-blur-sm border-t border-gray-200 z-[1000]">
+          <div className="p-4">
+            <h3 className="text-sm font-medium text-gray-700 mb-3">Nearest Maritime Professionals ({nearestUsers.length})</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 overflow-x-auto">
+              {nearestUsers.map((user) => (
+                <div
+                  key={user.id}
+                  className="bg-white rounded-lg border border-gray-200 p-3 cursor-pointer hover:bg-gray-50 transition-colors min-w-[160px]"
+                  onClick={() => setOpenChatUserId(prev => prev === user.id ? null : user.id)}
+                >
+                  <div className="flex items-center space-x-2 mb-2">
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                      <span className="text-xs font-medium text-blue-600">
+                        {user.fullName.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-gray-900 truncate">{user.fullName}</div>
+                      {user.rank && (
+                        <div className="text-xs text-blue-600 font-medium">{getRankAbbreviation(user.rank)}</div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    {user.shipName && (
+                      <div className="text-xs text-gray-600 truncate">🚢 {user.shipName}</div>
+                    )}
+                    <div className="text-xs text-gray-500">📍 {user.distance?.toFixed(1)}km away</div>
+                    {user.questionCount && user.answerCount && (
+                      <div className="text-xs text-green-600">{user.questionCount}Q {user.answerCount}A</div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Hover User Card */}
       {hoveredUser && hoverPosition && (
