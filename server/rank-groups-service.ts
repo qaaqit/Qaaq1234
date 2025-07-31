@@ -293,20 +293,21 @@ export async function autoAssignUserToRankGroups(userId: string) {
       { keywords: ['chief engineer', '2nd engineer', 'second engineer'], groupName: 'CE 2E' },
       { keywords: ['3rd engineer', '4th engineer', 'third engineer', 'fourth engineer'], groupName: '3E 4E' },
       { keywords: ['cadet', 'trainee', 'deck cadet', 'engine cadet'], groupName: 'Cadets' },
-      { keywords: ['crew', 'seaman', 'bosun', 'fitter', 'wiper', 'cook', 'steward'], groupName: 'Crew' }
+      { keywords: ['crew', 'seaman', 'bosun', 'fitter', 'wiper', 'cook', 'steward'], groupName: 'Crew' },
+      { keywords: ['eto', 'electrical technical officer', 'electrical superintendent', 'electrician'], groupName: 'ETO & Elec Supdts' }
     ];
 
     const assignedGroups = [];
     
-    // Always assign to Marine Personnel
-    const marinePersonnelResult = await db.execute(sql`
-      SELECT id FROM rank_groups WHERE name = 'Marine Personnel' LIMIT 1
+    // Always assign to ETO & Elec Supdts (general maritime personnel group)
+    const etoElecSupdtsResult = await db.execute(sql`
+      SELECT id FROM rank_groups WHERE name = 'ETO & Elec Supdts' LIMIT 1
     `);
 
-    if (marinePersonnelResult.rows.length > 0) {
-      const joinResult = await joinRankGroup(userId, marinePersonnelResult.rows[0].id);
+    if (etoElecSupdtsResult.rows.length > 0) {
+      const joinResult = await joinRankGroup(userId, etoElecSupdtsResult.rows[0].id);
       if (joinResult.success) {
-        assignedGroups.push('Marine Personnel');
+        assignedGroups.push('ETO & Elec Supdts');
       }
     }
 
