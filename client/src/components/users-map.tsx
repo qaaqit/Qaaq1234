@@ -106,6 +106,7 @@ interface UsersMapProps {
   showUsers?: boolean;
   searchQuery?: string;
   showNearbyCard?: boolean;
+  onRedDotClick?: () => void;
 }
 
 // Haversine formula to calculate distance between two points
@@ -120,7 +121,7 @@ const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * c;
 };
 
-export default function UsersMap({ showUsers = false, searchQuery = "", showNearbyCard = false }: UsersMapProps) {
+export default function UsersMap({ showUsers = false, searchQuery = "", showNearbyCard = false, onRedDotClick }: UsersMapProps) {
   const [bounds, setBounds] = useState<LatLngBounds | null>(null);
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
   const [nearbyUsers, setNearbyUsers] = useState<(MapUser & { distance: number })[]>([]);
@@ -473,6 +474,67 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
         {userLocation && (
           <Marker
             position={[userLocation.lat, userLocation.lng]}
+            eventHandlers={{
+              click: () => {
+                alert('RED DOT CLICKED! Animation starting...');
+                console.log('🔴 RED DOT CLICKED! Starting animation...');
+                setIsAnimating(true);
+                setShowDropAnimation(true);
+                
+                // Stop the scanner animation
+                const scanner = document.querySelector('.radar-animation');
+                if (scanner) {
+                  scanner.style.display = 'none';
+                }
+                
+                // Animate the map zoom
+                const mapContainer = document.querySelector('.leaflet-container');
+                if (mapContainer) {
+                  mapContainer.style.transition = 'transform 1.5s ease-in-out';
+                  mapContainer.style.transform = 'scale(1.2)';
+                  
+                  setTimeout(() => {
+                    mapContainer.style.transform = 'scale(1)';
+                  }, 1500);
+                }
+                
+                // Animate all anchor drops
+                setTimeout(() => {
+                  const anchors = document.querySelectorAll('.custom-anchor-marker div');
+                  anchors.forEach((anchor, index) => {
+                    const el = anchor as HTMLElement;
+                    el.style.opacity = '0';
+                    el.style.transform = 'translateY(-100px) rotate(180deg)';
+                    el.style.transition = 'all 1s ease-out';
+                    
+                    setTimeout(() => {
+                      el.style.opacity = '1';
+                      el.style.transform = 'translateY(0) rotate(0deg)';
+                    }, index * 100);
+                  });
+                }, 500);
+                
+                // Trigger parent callback if provided
+                if (onRedDotClick) {
+                  onRedDotClick();
+                }
+                
+                // Fetch nearby users
+                if (userLocation) {
+                  fetch(`/api/users/nearby?lat=${userLocation.lat}&lng=${userLocation.lng}&mode=proximity`)
+                    .then(res => res.json())
+                    .then(proximityUsers => {
+                      console.log(`Received ${proximityUsers.length} nearby users`);
+                      setNearbyUsers(proximityUsers);
+                      setTimeout(() => setIsAnimating(false), 2000);
+                    })
+                    .catch(err => {
+                      console.error('Error fetching nearby users:', err);
+                      setIsAnimating(false);
+                    });
+                }
+              }
+            }}
             icon={divIcon({
               html: `
                 <div style="
@@ -491,76 +553,7 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
                   position: relative;
                 " 
                 title="Press to see Who's there?"
-                onclick="
-                  // Start epic zoom and animation sequence
-                  console.log('🔴 RED DOT CLICKED! Starting animation...');
-                  this.classList.add('clicked');
-                  
-                  // Immediate visual feedback - make button larger
-                  this.style.transform = 'scale(1.3)';
-                  this.style.boxShadow = '0 0 20px rgba(239, 68, 68, 0.8)';
-                  
-                  // Add zoom animation to entire map container
-                  const mapContainer = document.querySelector('.leaflet-container');
-                  if (mapContainer) {
-                    mapContainer.style.transition = 'transform 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-                    mapContainer.style.transform = 'scale(1.2)';
-                    
-                    // Reset zoom after animation
-                    setTimeout(() => {
-                      mapContainer.style.transform = 'scale(1)';
-                      mapContainer.style.transition = '';
-                    }, 2000);
-                  }
-                  
-                  // Trigger anchor drop animation on all visible anchors
-                  setTimeout(() => {
-                    const anchors = document.querySelectorAll('.custom-anchor-marker div');
-                    anchors.forEach((anchor, index) => {
-                      const delay = index * 100; // Staggered animation
-                      anchor.style.animation = 'none';
-                      anchor.style.opacity = '0';
-                      anchor.style.transform = 'translateY(-200px) scale(0) rotate(360deg)';
-                      
-                      setTimeout(() => {
-                        anchor.style.animation = 'anchorDrop 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards';
-                      }, delay);
-                    });
-                  }, 800);
-                  
-                  // Stop the scanner animation
-                  const scanner = document.querySelector('.radar-animation');
-                  if (scanner) {
-                    scanner.style.display = 'none';
-                  }
-                  
-                  // Start the sequence
-                  const koihaiAnimation = this.querySelector('.koihai-sequence');
-                  if (koihaiAnimation) {
-                    koihaiAnimation.style.display = 'block';
-                  }
-                  
-                  // Create spectacular ripple effect from user location
-                  const userMarker = this;
-                  userMarker.style.transform = 'scale(1.5)';
-                  userMarker.style.boxShadow = '0 0 0 0 rgba(239, 68, 68, 0.7)';
-                  userMarker.style.animation = 'pulse 2s infinite';
-                  
-                  // Reset user marker after animation
-                  setTimeout(() => {
-                    userMarker.style.transform = 'scale(1)';
-                    userMarker.style.animation = 'none';
-                    userMarker.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
-                  }, 4000);
-                  
-                  // Trigger the search functionality after animation completes
-                  setTimeout(() => {
-                    console.log('Red dot animation complete - triggering hash change');
-                    window.location.hash = 'koi-hai';
-                    // Force a hash change event
-                    window.dispatchEvent(new HashChangeEvent('hashchange'));
-                  }, 3000);
-                ">
+                class="red-dot-marker">
                   📍
                   
                   <!-- 1234 Animation and Koi Hai Sequence -->
