@@ -791,10 +791,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get random users for home page display (up to 50 users)
+  // Get random users for home page display (up to 100 users)
   app.get("/api/users/random", async (req, res) => {
     try {
-      const { limit = 50 } = req.query;
+      const { limit = 100 } = req.query;
       const allUsers = await storage.getUsersWithLocation();
       console.log(`Found ${allUsers.length} users, selecting random ${limit}`);
       

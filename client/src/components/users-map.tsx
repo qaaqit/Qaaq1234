@@ -132,13 +132,13 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const { user } = useAuth();
 
-  // Fetch up to 50 random users for anchor pin display
+  // Fetch up to 100 random users for anchor pin display (global distribution)
   const { data: users = [], isLoading } = useQuery<MapUser[]>({
     queryKey: ['/api/users/random'],
     staleTime: 60000, // 1 minute
     enabled: true, // Always fetch users to show pins from start
     queryFn: async () => {
-      const response = await fetch('/api/users/random?limit=50');
+      const response = await fetch('/api/users/random?limit=100');
       if (!response.ok) throw new Error('Failed to fetch users');
       return response.json();
     }
