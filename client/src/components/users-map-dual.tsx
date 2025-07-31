@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import MarineChatButton from './marine-chat-button';
@@ -73,6 +73,18 @@ const getRankAbbreviation = (rank: string): string => {
   return abbreviations[lowerRank] || rank.substring(0, 3).toUpperCase();
 };
 
+// Calculate distance between two points using Haversine formula
+const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+  const R = 6371; // Earth's radius in kilometers
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng/2) * Math.sin(dLng/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+};
+
 interface UsersMapDualProps {
   showNearbyCard?: boolean;
   onUsersFound?: (count: number) => void;
@@ -85,19 +97,52 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
   const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null);
   const [selectedUser, setSelectedUser] = useState<MapUser | null>(null);
   const [openChatUserId, setOpenChatUserId] = useState<string | null>(null);
+  const [showOnlineOnly, setShowOnlineOnly] = useState(true);
+  const [radiusKm, setRadiusKm] = useState(50);
 
-  // Fetch users with TanStack Query
-  const { data: users = [], isLoading } = useQuery<MapUser[]>({
+  // Fetch all users with TanStack Query
+  const { data: allUsers = [], isLoading } = useQuery<MapUser[]>({
     queryKey: ['/api/users/random'],
     enabled: true,
   });
 
-  // Update user count when users are loaded
-  useEffect(() => {
-    if (onUsersFound && users.length > 0) {
-      onUsersFound(users.length);
+  // Filter users based on location and online status using useMemo
+  const filteredUsers = useMemo(() => {
+    if (!userLocation || !allUsers.length) {
+      return [];
     }
-  }, [users.length, onUsersFound]);
+
+    let filtered = allUsers;
+
+    // Filter by radius
+    filtered = filtered.filter(mapUser => {
+      const distance = calculateDistance(
+        userLocation.lat, 
+        userLocation.lng, 
+        mapUser.latitude, 
+        mapUser.longitude
+      );
+      return distance <= radiusKm;
+    });
+
+    // Filter by online status if enabled
+    if (showOnlineOnly) {
+      filtered = filtered.filter(mapUser => {
+        const isRecentLocation = mapUser.locationUpdatedAt && 
+          new Date(mapUser.locationUpdatedAt).getTime() > Date.now() - 10 * 60 * 1000;
+        return !!(mapUser.deviceLatitude && mapUser.deviceLongitude && isRecentLocation);
+      });
+    }
+
+    return filtered;
+  }, [allUsers, userLocation?.lat, userLocation?.lng, showOnlineOnly, radiusKm]);
+
+  // Update user count when users are loaded (temporarily disabled to fix infinite loop)
+  // useEffect(() => {
+  //   if (onUsersFound && filteredUsers.length >= 0) {
+  //     onUsersFound(filteredUsers.length);
+  //   }
+  // }, [filteredUsers.length, onUsersFound]);
 
   // Get user's current location
   useEffect(() => {
@@ -109,7 +154,16 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
               lat: position.coords.latitude,
               lng: position.coords.longitude
             };
-            setUserLocation(newLocation);
+            
+            // Only update if location changed significantly (>100m)
+            setUserLocation(prevLocation => {
+              if (!prevLocation || 
+                  Math.abs(prevLocation.lat - newLocation.lat) > 0.001 ||
+                  Math.abs(prevLocation.lng - newLocation.lng) > 0.001) {
+                return newLocation;
+              }
+              return prevLocation;
+            });
 
             // Send location to server
             fetch('/api/users/location/device', {
@@ -147,7 +201,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     console.log('Component updated - hoveredUser:', hoveredUser ? hoveredUser.fullName : 'none');
   }, [hoveredUser]);
 
-  console.log('🗺️ UsersMapDual rendering with', users.length, 'users. Admin mode:', !!user?.isAdmin);
+  console.log('🗺️ UsersMapDual rendering with', filteredUsers.length, 'filtered users (online within', radiusKm, 'km). Admin mode:', !!user?.isAdmin);
 
   return (
     <div className="w-full h-full overflow-hidden bg-gray-100 relative">
@@ -172,10 +226,46 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
         )}
       </div>
       
+      {/* Control Panel for Filtering */}
+      <div className="absolute top-20 left-4 z-[1000] bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-3 min-w-[200px]">
+        <div className="text-sm font-medium text-gray-700 mb-2">Map Filter</div>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="online-only"
+              checked={showOnlineOnly}
+              onChange={(e) => setShowOnlineOnly(e.target.checked)}
+              className="rounded"
+            />
+            <label htmlFor="online-only" className="text-xs text-gray-600">
+              Online users only
+            </label>
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-gray-600">Radius:</label>
+            <select
+              value={radiusKm}
+              onChange={(e) => setRadiusKm(Number(e.target.value))}
+              className="text-xs border rounded px-1 py-0.5"
+            >
+              <option value={10}>10km</option>
+              <option value={25}>25km</option>
+              <option value={50}>50km</option>
+              <option value={100}>100km</option>
+              <option value={500}>500km</option>
+            </select>
+          </div>
+          <div className="text-xs text-gray-500 mt-1">
+            Showing: {filteredUsers.length} users
+          </div>
+        </div>
+      </div>
+
       {/* Dual Map System: Google Maps for Admin, Leaflet for Users */}
       {user?.isAdmin ? (
         <GoogleMap
-          users={users}
+          users={filteredUsers}
           userLocation={userLocation}
           onUserHover={(user, position) => {
             setHoveredUser(user);
@@ -187,7 +277,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
         />
       ) : (
         <LeafletMap
-          users={users}
+          users={filteredUsers}
           userLocation={userLocation}
           onUserHover={(user, position) => {
             setHoveredUser(user);
@@ -256,6 +346,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
           <div className="relative">
             <SingleMessageChat
               receiverId={openChatUserId}
+              receiverName={filteredUsers.find(u => u.id === openChatUserId)?.fullName || 'Maritime Professional'}
               onClose={() => setOpenChatUserId(null)}
             />
           </div>
