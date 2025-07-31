@@ -24,6 +24,7 @@ interface MapUser {
 interface GoogleMapProps {
   users: MapUser[];
   userLocation: { lat: number; lng: number } | null;
+  mapType?: string;
   onUserHover: (user: MapUser | null, position?: { x: number; y: number }) => void;
   onUserClick: (userId: string) => void;
 }
@@ -35,7 +36,7 @@ declare global {
   }
 }
 
-const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, onUserHover, onUserClick }) => {
+const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, mapType = 'roadmap', onUserHover, onUserClick }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
@@ -75,7 +76,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, onUserHover,
     mapInstanceRef.current = new window.google.maps.Map(mapRef.current, {
       zoom: 9,
       center: defaultCenter,
-      mapTypeId: 'roadmap',
+      mapTypeId: mapType,
       styles: [
         // Water bodies - light grey
         {
@@ -150,6 +151,13 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, onUserHover,
 
     console.log('✅ Google Maps initialized for admin user');
   }, [isMapLoaded, userLocation]);
+
+  // Update map type when mapType prop changes
+  useEffect(() => {
+    if (mapInstanceRef.current && mapType) {
+      mapInstanceRef.current.setMapTypeId(mapType);
+    }
+  }, [mapType]);
 
   // Add user markers
   useEffect(() => {

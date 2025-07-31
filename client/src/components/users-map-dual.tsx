@@ -5,6 +5,7 @@ import MarineChatButton from './marine-chat-button';
 import SingleMessageChat from './single-message-chat';
 import GoogleMap from './google-map';
 import LeafletMap from './leaflet-map';
+import { ChevronDown, Map, Filter, MapPin } from 'lucide-react';
 
 interface MapUser {
   id: string;
@@ -122,6 +123,10 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
   const [showOnlineOnly, setShowOnlineOnly] = useState(true);
   const [selectedRankCategory, setSelectedRankCategory] = useState<string>('everyone');
   const [showRankDropdown, setShowRankDropdown] = useState(false);
+  const [showMapTypeDropdown, setShowMapTypeDropdown] = useState(false);
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const [mapType, setMapType] = useState('roadmap');
   const [mapZoom, setMapZoom] = useState(10); // Default zoom level
 
   // Fetch all users with TanStack Query
@@ -250,136 +255,182 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     console.log('Component updated - hoveredUser:', hoveredUser ? hoveredUser.fullName : 'none');
   }, [hoveredUser]);
 
-  // Close rank dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Element;
-      if (!target.closest('.rank-dropdown') && showRankDropdown) {
+      if (!target.closest('.dropdown-container')) {
         setShowRankDropdown(false);
+        setShowMapTypeDropdown(false);
+        setShowFilterDropdown(false);
+        setShowLocationDropdown(false);
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showRankDropdown]);
+  }, []);
 
   console.log('🗺️ UsersMapDual rendering with', filteredUsers.length, 'filtered users (online within', radiusKm, 'km). Admin mode:', !!user?.isAdmin);
 
   return (
     <div className="w-full h-full overflow-hidden bg-gray-100 relative">
-      {/* Coordinates Display Panel */}
-      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-[1000] bg-gray-500/80 backdrop-blur-sm px-4 py-2 rounded-lg min-w-[280px]">
-        {selectedUser ? (
-          <div className="text-white text-center">
-            <div className="text-sm font-medium">{selectedUser.fullName}</div>
-            <div className="font-mono text-xs mt-1">
-              {selectedUser.latitude.toFixed(6)}, {selectedUser.longitude.toFixed(6)}
-            </div>
-          </div>
-        ) : userLocation ? (
-          <div className="text-white text-center">
-            <div className="text-sm font-medium">Your Location</div>
-            <div className="font-mono text-xs mt-1">
-              {userLocation.lat.toFixed(6)}, {userLocation.lng.toFixed(6)}
-            </div>
-          </div>
-        ) : (
-          <div className="text-white text-center text-sm">Location Loading...</div>
-        )}
-      </div>
-      
-      {/* Control Panel for Filtering */}
-      <div className="absolute top-20 left-4 z-[1000] bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-3 min-w-[240px]">
-        <div className="text-sm font-medium text-gray-700 mb-2">Map Filter</div>
-        <div className="space-y-3">
-          {/* Online Users Toggle */}
+      {/* Compact Header with Icon Dropdowns */}
+      <div className="absolute top-0 left-0 right-0 z-[1000] bg-white/95 backdrop-blur-sm border-b border-gray-200">
+        <div className="flex items-center justify-between px-4 py-3">
+          {/* Left side - Controls */}
           <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="onlineOnly"
-              checked={showOnlineOnly}
-              onChange={(e) => setShowOnlineOnly(e.target.checked)}
-              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-            />
-            <label htmlFor="onlineOnly" className="text-sm text-gray-700">
-              Online Users Only
-            </label>
-          </div>
-          
-          {/* Rank Category Filter */}
-          <div className="space-y-1 relative rank-dropdown">
-            <label className="text-xs text-gray-600">Rank Category</label>
-            <button
-              onClick={() => setShowRankDropdown(!showRankDropdown)}
-              className="w-full text-sm p-2 border border-gray-300 rounded bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex items-center justify-between"
-            >
-              <span className="text-left truncate">
-                {MARITIME_RANK_CATEGORIES.find(cat => cat.id === selectedRankCategory)?.label || 'Everyone'}
-              </span>
-              <svg className={`w-4 h-4 transition-transform ${showRankDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            
-            {showRankDropdown && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-[1001]">
-                {MARITIME_RANK_CATEGORIES.map((category) => (
-                  <button
-                    key={category.id}
-                    onClick={() => {
-                      setSelectedRankCategory(category.id);
-                      setShowRankDropdown(false);
-                    }}
-                    className={`w-full text-left p-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 ${
-                      selectedRankCategory === category.id ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
-                    }`}
-                  >
-                    <div className="font-medium text-sm">{category.label}</div>
-                    <div className="text-xs text-gray-500 mt-1">{category.description}</div>
-                  </button>
-                ))}
+            {/* Map Type Dropdown */}
+            {user?.isAdmin && (
+              <div className="relative dropdown-container">
+                <button
+                  onClick={() => setShowMapTypeDropdown(!showMapTypeDropdown)}
+                  className="flex items-center space-x-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  <Map size={16} />
+                  <ChevronDown size={14} className={`transition-transform ${showMapTypeDropdown ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {showMapTypeDropdown && (
+                  <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[120px] z-[1001]">
+                    {['roadmap', 'satellite', 'hybrid'].map((type) => (
+                      <button
+                        key={type}
+                        onClick={() => {
+                          setMapType(type);
+                          setShowMapTypeDropdown(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg capitalize ${
+                          mapType === type ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                        }`}
+                      >
+                        {type}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
+
+            {/* Filter Dropdown */}
+            <div className="relative dropdown-container">
+              <button
+                onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+                className="flex items-center space-x-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                <Filter size={16} />
+                <ChevronDown size={14} className={`transition-transform ${showFilterDropdown ? 'rotate-180' : ''}`} />
+              </button>
+              
+              {showFilterDropdown && (
+                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[200px] z-[1001]">
+                  <div className="p-3 space-y-3">
+                    {/* Online Toggle */}
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="onlineOnly"
+                        checked={showOnlineOnly}
+                        onChange={(e) => setShowOnlineOnly(e.target.checked)}
+                        className="w-4 h-4 text-blue-600"
+                      />
+                      <label htmlFor="onlineOnly" className="text-sm">Online Only</label>
+                    </div>
+                    
+                    {/* Rank Categories */}
+                    <div className="space-y-1">
+                      {MARITIME_RANK_CATEGORIES.map((category) => (
+                        <button
+                          key={category.id}
+                          onClick={() => {
+                            setSelectedRankCategory(category.id);
+                            setShowFilterDropdown(false);
+                          }}
+                          className={`w-full text-left px-2 py-1 rounded text-sm ${
+                            selectedRankCategory === category.id ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50'
+                          }`}
+                        >
+                          {category.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Location Dropdown */}
+            <div className="relative dropdown-container">
+              <button
+                onClick={() => setShowLocationDropdown(!showLocationDropdown)}
+                className="flex items-center space-x-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                <MapPin size={16} />
+                <ChevronDown size={14} className={`transition-transform ${showLocationDropdown ? 'rotate-180' : ''}`} />
+              </button>
+              
+              {showLocationDropdown && (
+                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[200px] z-[1001]">
+                  <div className="p-3">
+                    {selectedUser ? (
+                      <div>
+                        <div className="text-sm font-medium">{selectedUser.fullName}</div>
+                        <div className="font-mono text-xs text-gray-500 mt-1">
+                          {selectedUser.latitude.toFixed(6)}, {selectedUser.longitude.toFixed(6)}
+                        </div>
+                      </div>
+                    ) : userLocation ? (
+                      <div>
+                        <div className="text-sm font-medium">Your Location</div>
+                        <div className="font-mono text-xs text-gray-500 mt-1">
+                          {userLocation.lat.toFixed(6)}, {userLocation.lng.toFixed(6)}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-sm text-gray-500">Location Loading...</div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-          
-          {/* User Count Display */}
-          <div className="text-xs text-gray-500 pt-1 border-t border-gray-200">
+
+          {/* Right side - Status */}
+          <div className="text-xs text-gray-500">
             {filteredUsers.length} users (auto-radius: {radiusKm}km)
-            {selectedRankCategory !== 'everyone' && (
-              <div className="text-blue-600 mt-1">
-                Category: {MARITIME_RANK_CATEGORIES.find(cat => cat.id === selectedRankCategory)?.label}
-              </div>
-            )}
           </div>
         </div>
       </div>
 
       {/* Dual Map System: Google Maps for Admin, Leaflet for Users */}
-      {user?.isAdmin ? (
-        <GoogleMap
-          users={filteredUsers}
-          userLocation={userLocation}
-          onUserHover={(user, position) => {
-            setHoveredUser(user);
-            setHoverPosition(position || null);
-          }}
-          onUserClick={(userId) => {
-            setOpenChatUserId(prev => prev === userId ? null : userId);
-          }}
-        />
-      ) : (
-        <LeafletMap
-          users={filteredUsers}
-          userLocation={userLocation}
-          onUserHover={(user, position) => {
-            setHoveredUser(user);
-            setHoverPosition(position || null);
-          }}
-          onUserClick={(userId) => {
-            setOpenChatUserId(prev => prev === userId ? null : userId);
-          }}
-        />
-      )}
+      <div className="absolute top-[60px] left-0 right-0 bottom-0">
+        {user?.isAdmin ? (
+          <GoogleMap
+            users={filteredUsers}
+            userLocation={userLocation}
+            mapType={mapType}
+            onUserHover={(user, position) => {
+              setHoveredUser(user);
+              setHoverPosition(position || null);
+            }}
+            onUserClick={(userId) => {
+              setOpenChatUserId(prev => prev === userId ? null : userId);
+            }}
+          />
+        ) : (
+          <LeafletMap
+            users={filteredUsers}
+            userLocation={userLocation}
+            onUserHover={(user, position) => {
+              setHoveredUser(user);
+              setHoverPosition(position || null);
+            }}
+            onUserClick={(userId) => {
+              setOpenChatUserId(prev => prev === userId ? null : userId);
+            }}
+          />
+        )}
+      </div>
 
       {/* Hover User Card */}
       {hoveredUser && hoverPosition && (
