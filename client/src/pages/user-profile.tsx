@@ -96,11 +96,18 @@ export default function UserProfile() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
+    if (!dateString) return '';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return '';
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+    } catch (error) {
+      return '';
+    }
   };
 
   return (
@@ -223,26 +230,31 @@ export default function UserProfile() {
           </Card>
         ) : (
           <div className="space-y-4">
-            {questions.map((question) => (
-              <Card key={question.id} className="hover:shadow-md transition-shadow">
+            {questions.map((question: any) => (
+              <Card 
+                key={question.id} 
+                className="hover:shadow-md transition-shadow cursor-pointer hover:border-ocean-teal/40"
+                onClick={() => window.location.href = `/share/question/${question.id}`}
+              >
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <CardTitle className="text-lg leading-tight mb-2">
-                        {question.question}
+                        <span className="text-gray-500 mr-2">#{question.id}</span>
+                        {question.content || question.question}
                       </CardTitle>
                       <div className="flex items-center gap-3 text-sm text-gray-500">
-                        <Badge className={getCategoryColor(question.category)}>
-                          {question.category}
+                        <Badge className={getCategoryColor(question.category_name || question.category)}>
+                          {question.category_name || question.category}
                         </Badge>
                         <div className="flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
-                          <span>{formatDate(question.askedDate)}</span>
+                          <span>{formatDate(question.created_at || question.askedDate)}</span>
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {question.isResolved ? (
+                      {(question.is_resolved || question.isResolved) ? (
                         <CheckCircle className="w-5 h-5 text-green-500" />
                       ) : (
                         <Clock className="w-5 h-5 text-yellow-500" />
