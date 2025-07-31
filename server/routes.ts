@@ -1690,17 +1690,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all rank groups (admin only) or user's groups (regular users)
   app.get('/api/rank-groups', authenticateToken, async (req: any, res) => {
     try {
-      // Check if user is admin
-      const userResult = await pool.query('SELECT is_platform_admin FROM users WHERE id = $1', [req.userId]);
-      const isAdmin = userResult.rows.length > 0 ? userResult.rows[0].is_platform_admin : false;
+      console.log(`Fetching rank groups for user: ${req.userId}`);
+      
+      // Check if user is admin - handle both UUID admin and QAAQ database users
+      let isAdmin = false;
+      
+      // Special admin user ID check
+      if (req.userId === '5791e66f-9cc1-4be4-bd4b-7fc1bd2e258e') {
+        isAdmin = true;
+        console.log('Admin access granted for special user ID');
+      } else {
+        // Check database for admin status
+        const userResult = await pool.query('SELECT is_platform_admin FROM users WHERE id = $1', [req.userId]);
+        isAdmin = userResult.rows.length > 0 ? userResult.rows[0].is_platform_admin : false;
+        console.log(`Database admin check: ${isAdmin}`);
+      }
       
       if (isAdmin) {
         // Admin sees all groups
+        console.log('Fetching all rank groups for admin...');
         const groups = await getAllRankGroups();
+        console.log(`Found ${groups.length} rank groups`);
         res.json(groups);
       } else {
         // Regular users see only their own groups
+        console.log('Fetching user groups for regular user...');
         const userGroups = await getUserRankGroups(req.userId);
+        console.log(`Found ${userGroups.length} user groups`);
         res.json(userGroups);
       }
     } catch (error) {
