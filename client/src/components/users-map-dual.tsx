@@ -285,19 +285,19 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     return filtered;
   }, [allUsers, userLocation?.lat, userLocation?.lng, showOnlineOnly, radiusKm, selectedRankCategory, searchQuery]);
 
-  // Get top 6 nearest users with distance calculation or all search results
+  // Get all search results or top 6 nearest users for browsing
   const nearestUsers = useMemo(() => {
     if (!filteredUsers.length) return [];
     
-    // If searching, show all search results (up to 6) regardless of location
+    // If searching, show ALL search results with distance calculation
     if (searchQuery.trim()) {
-      return filteredUsers.slice(0, 6).map(user => ({
+      return filteredUsers.map(user => ({
         ...user,
         distance: userLocation ? calculateDistance(userLocation.lat, userLocation.lng, user.latitude, user.longitude) : 0
-      }));
+      })).sort((a, b) => a.distance - b.distance); // Sort by distance for search results
     }
     
-    // If not searching, show nearest users as before
+    // If not searching, show only top 6 nearest users for browsing
     if (!userLocation) return [];
     
     const usersWithDistance = filteredUsers.map(user => ({
@@ -578,7 +578,9 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       </div>
 
       {/* Dual Map System: Google Maps for Admin, Leaflet for Users */}
-      <div className={`absolute top-[80px] sm:top-[60px] left-0 right-0 ${nearestUsers.length > 0 ? 'bottom-[160px] sm:bottom-[180px]' : 'bottom-0'}`}>
+      <div className={`absolute top-[80px] sm:top-[60px] left-0 right-0 ${
+        searchQuery.trim() ? 'bottom-[65%]' : nearestUsers.length > 0 ? 'bottom-[160px] sm:bottom-[180px]' : 'bottom-0'
+      }`}>
         {user?.isAdmin ? (
           <GoogleMap
             users={filteredUsers}
@@ -686,22 +688,26 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
 
 
 
-      {/* Mobile-Optimized Bottom Panel - Responsive User Cards */}
+      {/* Search Results - Full Height Endless Scroll or Bottom Panel for Browsing */}
       {nearestUsers.length > 0 && (
-        <div className="absolute bottom-0 left-0 right-0 h-[160px] sm:h-[180px] bg-white/95 backdrop-blur-sm border-t border-gray-200 z-[1000]">
-          <div className="p-2 sm:p-4">
+        <div className={`absolute left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 z-[1000] ${
+          searchQuery.trim() ? 'top-[35%] bottom-0' : 'bottom-0 h-[160px] sm:h-[180px]'
+        }`}>
+          <div className="p-2 sm:p-4 h-full">
             <h3 className="text-xs sm:text-sm font-medium text-gray-700 mb-2 sm:mb-3">
               {searchQuery.toLowerCase().trim() === 'onboard'
                 ? `🚢 Sailors Currently Onboard Ships (${nearestUsers.length})`
                 : searchQuery.trim() 
-                ? `Search Results: ${nearestUsers.length} of ${filteredUsers.length} users` 
+                ? `Search Results: ${nearestUsers.length} users found` 
                 : `Nearest Maritime Professionals (${nearestUsers.length})`}
             </h3>
-            <div className="flex gap-2 sm:gap-3 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 pb-2">
+            <div className={`${searchQuery.trim() ? 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 overflow-y-auto h-[calc(100%-3rem)] scrollbar-thin scrollbar-thumb-gray-300 pr-2' : 'flex gap-2 sm:gap-3 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 pb-2'}`}>
               {nearestUsers.map((user) => (
                 <div
                   key={user.id}
-                  className="bg-white rounded-lg border border-gray-200 p-2 sm:p-3 hover:bg-gray-50 transition-colors min-w-[140px] sm:min-w-[160px] flex-shrink-0 touch-manipulation"
+                  className={`bg-white rounded-lg border border-gray-200 p-2 sm:p-3 hover:bg-gray-50 transition-colors touch-manipulation ${
+                    searchQuery.trim() ? 'w-full' : 'min-w-[140px] sm:min-w-[160px] flex-shrink-0'
+                  }`}
                   onClick={() => {
                     // Center map on user's location
                     setSelectedUser(user);
