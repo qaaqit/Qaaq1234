@@ -85,6 +85,14 @@ const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: numbe
   return R * c;
 };
 
+// Maritime ranks for filtering
+const MARITIME_RANKS = [
+  'Captain', 'Chief Officer', '2nd Officer', '3rd Officer',
+  'Chief Engineer', '2nd Engineer', '3rd Engineer', '4th Engineer',
+  'Deck Cadet', 'Engine Cadet', 'ETO', 'Bosun', 'AB', 'OS',
+  'Oiler', 'Wiper', 'Cook', 'Steward', 'Fitter', 'Electrician'
+];
+
 interface UsersMapDualProps {
   showNearbyCard?: boolean;
   onUsersFound?: (count: number) => void;
@@ -99,6 +107,8 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
   const [openChatUserId, setOpenChatUserId] = useState<string | null>(null);
   const [showOnlineOnly, setShowOnlineOnly] = useState(true);
   const [radiusKm, setRadiusKm] = useState(50);
+  const [selectedRanks, setSelectedRanks] = useState<string[]>([]);
+  const [showRankDropdown, setShowRankDropdown] = useState(false);
 
   // Fetch all users with TanStack Query
   const { data: allUsers = [], isLoading } = useQuery<MapUser[]>({
@@ -134,8 +144,17 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       });
     }
 
+    // Filter by selected ranks if any are selected
+    if (selectedRanks.length > 0) {
+      filtered = filtered.filter(mapUser => {
+        return selectedRanks.some(rank => 
+          mapUser.rank?.toLowerCase().includes(rank.toLowerCase())
+        );
+      });
+    }
+
     return filtered;
-  }, [allUsers, userLocation?.lat, userLocation?.lng, showOnlineOnly, radiusKm]);
+  }, [allUsers, userLocation?.lat, userLocation?.lng, showOnlineOnly, radiusKm, selectedRanks]);
 
   // Update user count when users are loaded (temporarily disabled to fix infinite loop)
   // useEffect(() => {
@@ -201,6 +220,19 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     console.log('Component updated - hoveredUser:', hoveredUser ? hoveredUser.fullName : 'none');
   }, [hoveredUser]);
 
+  // Close rank dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest('.rank-dropdown') && showRankDropdown) {
+        setShowRankDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showRankDropdown]);
+
   console.log('🗺️ UsersMapDual rendering with', filteredUsers.length, 'filtered users (online within', radiusKm, 'km). Admin mode:', !!user?.isAdmin);
 
   return (
@@ -227,37 +259,102 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       </div>
       
       {/* Control Panel for Filtering */}
-      <div className="absolute top-20 left-4 z-[1000] bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-3 min-w-[200px]">
+      <div className="absolute top-20 left-4 z-[1000] bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-3 min-w-[240px]">
         <div className="text-sm font-medium text-gray-700 mb-2">Map Filter</div>
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
+        <div className="space-y-3">
+          {/* Online Users Toggle */}
+          <div className="flex items-center space-x-2">
             <input
               type="checkbox"
-              id="online-only"
+              id="onlineOnly"
               checked={showOnlineOnly}
               onChange={(e) => setShowOnlineOnly(e.target.checked)}
-              className="rounded"
+              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
             />
-            <label htmlFor="online-only" className="text-xs text-gray-600">
-              Online users only
+            <label htmlFor="onlineOnly" className="text-sm text-gray-700">
+              Online Users Only
             </label>
           </div>
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-gray-600">Radius:</label>
+          
+          {/* Radius Selector */}
+          <div className="space-y-1">
+            <label className="text-xs text-gray-600">Radius (km)</label>
             <select
               value={radiusKm}
               onChange={(e) => setRadiusKm(Number(e.target.value))}
-              className="text-xs border rounded px-1 py-0.5"
+              className="w-full text-sm p-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value={10}>10km</option>
-              <option value={25}>25km</option>
-              <option value={50}>50km</option>
-              <option value={100}>100km</option>
-              <option value={500}>500km</option>
+              <option value={10}>10 km</option>
+              <option value={25}>25 km</option>
+              <option value={50}>50 km</option>
+              <option value={100}>100 km</option>
+              <option value={500}>500 km</option>
             </select>
           </div>
-          <div className="text-xs text-gray-500 mt-1">
-            Showing: {filteredUsers.length} users
+
+          {/* Rank Filter Dropdown */}
+          <div className="space-y-1 relative rank-dropdown">
+            <label className="text-xs text-gray-600">Maritime Ranks</label>
+            <button
+              onClick={() => setShowRankDropdown(!showRankDropdown)}
+              className="w-full text-sm p-2 border border-gray-300 rounded bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex items-center justify-between"
+            >
+              <span className="text-left truncate">
+                {selectedRanks.length === 0 
+                  ? 'All Ranks' 
+                  : selectedRanks.length === 1 
+                  ? selectedRanks[0]
+                  : `${selectedRanks.length} ranks selected`
+                }
+              </span>
+              <svg className={`w-4 h-4 transition-transform ${showRankDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            
+            {showRankDropdown && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto z-[1001]">
+                <div className="p-2 border-b border-gray-200">
+                  <button
+                    onClick={() => setSelectedRanks([])}
+                    className="text-xs text-blue-600 hover:text-blue-800"
+                  >
+                    Clear All
+                  </button>
+                </div>
+                {MARITIME_RANKS.map((rank) => (
+                  <div key={rank} className="flex items-center p-2 hover:bg-gray-50">
+                    <input
+                      type="checkbox"
+                      id={`rank-${rank}`}
+                      checked={selectedRanks.includes(rank)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedRanks([...selectedRanks, rank]);
+                        } else {
+                          setSelectedRanks(selectedRanks.filter(r => r !== rank));
+                        }
+                      }}
+                      className="w-3 h-3 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 mr-2"
+                    />
+                    <label htmlFor={`rank-${rank}`} className="text-xs text-gray-700 cursor-pointer flex-1">
+                      {rank}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          {/* User Count Display */}
+          <div className="text-xs text-gray-500 pt-1 border-t border-gray-200">
+            {filteredUsers.length} users within {radiusKm}km
+            {selectedRanks.length > 0 && (
+              <div className="text-blue-600 mt-1">
+                Filtered by: {selectedRanks.slice(0, 2).join(', ')}
+                {selectedRanks.length > 2 && ` +${selectedRanks.length - 2} more`}
+              </div>
+            )}
           </div>
         </div>
       </div>
