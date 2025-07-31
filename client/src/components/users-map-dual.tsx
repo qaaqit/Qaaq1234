@@ -271,13 +271,13 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     return () => clearInterval(locationInterval);
   }, []);
 
-  // Rotating scan arm animation
+  // Sophisticated scan arm animation with elegant timing
   useEffect(() => {
     if (!showScanElements) return;
     
     const scanInterval = setInterval(() => {
-      setScanAngle(prev => (prev + 2) % 360); // Rotate 2 degrees per interval
-    }, 50); // Update every 50ms for smooth rotation
+      setScanAngle(prev => (prev + 1.2) % 360); // Slower, more elegant rotation
+    }, 75); // Smoother frame rate for premium feel
     
     return () => clearInterval(scanInterval);
   }, [showScanElements]);

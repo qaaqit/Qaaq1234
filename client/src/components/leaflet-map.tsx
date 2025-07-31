@@ -159,22 +159,23 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, onUserHove
         
         <MapEventHandler />
 
-        {/* Scan Circle */}
+        {/* Sophisticated Scan Circle */}
         {showScanElements && userLocation && (
           <Circle
             center={[userLocation.lat, userLocation.lng]}
             radius={screenRadius * 1000} // Convert km to meters
             pathOptions={{
-              color: '#4ade80',
+              color: '#0891b2', // Elegant teal color
               weight: 2,
-              opacity: 0.6,
+              opacity: 0.5,
               fillOpacity: 0,
-              dashArray: '5, 5'
+              dashArray: '8, 4', // More sophisticated dash pattern
+              className: 'scan-circle-glow' // Custom CSS class for glow effect
             }}
           />
         )}
 
-        {/* Scan Line */}
+        {/* Sophisticated Scan Line */}
         {showScanElements && userLocation && scanEndPoint && (
           <Polyline
             positions={[
@@ -182,9 +183,10 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, onUserHove
               [scanEndPoint.lat, scanEndPoint.lng]
             ]}
             pathOptions={{
-              color: '#4B5563',
+              color: '#0891b2', // Matching teal color
               weight: 3,
-              opacity: 0.8
+              opacity: 0.7,
+              className: 'scan-line-glow' // Custom CSS class for glow effect
             }}
           />
         )}

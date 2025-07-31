@@ -1,0 +1,230 @@
+@import "leaflet/dist/leaflet.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(20, 14.3%, 4.1%);
+  --muted: hsl(210, 20%, 98%);
+  --muted-foreground: hsl(215, 13.8%, 34.1%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(20, 14.3%, 4.1%);
+  --border: hsl(214.3, 31.8%, 91.4%);
+  --input: hsl(214.3, 31.8%, 91.4%);
+  --primary: hsl(220, 90%, 56%);
+  --primary-foreground: hsl(210, 40%, 98%);
+  --secondary: hsl(210, 40%, 96%);
+  --secondary-foreground: hsl(222.2, 84%, 4.9%);
+  --accent: hsl(210, 40%, 96%);
+  --accent-foreground: hsl(222.2, 84%, 4.9%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(60, 9.1%, 97.8%);
+  --ring: hsl(20, 14.3%, 4.1%);
+  --radius: 0.5rem;
+  
+  /* Maritime theme colors */
+  --navy: hsl(220, 90%, 56%);
+  --ocean-teal: hsl(188, 78%, 41%);
+  --maritime-grey: hsl(215, 13.8%, 34.1%);
+  --duck-yellow: hsl(45, 93%, 47%);
+}
+
+.dark {
+  --background: hsl(240, 10%, 3.9%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(240, 3.7%, 15.9%);
+  --muted-foreground: hsl(240, 5%, 64.9%);
+  --popover: hsl(240, 10%, 3.9%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(240, 10%, 3.9%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(240, 3.7%, 15.9%);
+  --input: hsl(240, 3.7%, 15.9%);
+  --primary: hsl(220, 90%, 56%);
+  --primary-foreground: hsl(210, 40%, 98%);
+  --secondary: hsl(240, 3.7%, 15.9%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(240, 3.7%, 15.9%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(240, 4.9%, 83.9%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    font-family: 'Arial Rounded MT Bold', 'Helvetica Rounded', 'Arial', sans-serif;
+  }
+}
+
+@layer utilities {
+  .gradient-bg {
+    background: linear-gradient(135deg, hsl(220, 90%, 56%) 0%, hsl(188, 78%, 41%) 100%);
+  }
+  
+  .glass-effect {
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  /* Sophisticated scan animation styles */
+  .scan-circle-glow {
+    filter: drop-shadow(0 0 8px #0891b2) drop-shadow(0 0 16px rgba(8, 145, 178, 0.4));
+    animation: scanPulse 3s ease-in-out infinite;
+  }
+  
+  .scan-line-glow {
+    filter: drop-shadow(0 0 6px #0891b2) drop-shadow(0 0 12px rgba(8, 145, 178, 0.5));
+    animation: scanLineGlow 2s ease-in-out infinite alternate;
+  }
+
+  @keyframes scanPulse {
+    0%, 100% { 
+      opacity: 0.5; 
+      filter: drop-shadow(0 0 8px #0891b2) drop-shadow(0 0 16px rgba(8, 145, 178, 0.4));
+    }
+    50% { 
+      opacity: 0.7; 
+      filter: drop-shadow(0 0 12px #0891b2) drop-shadow(0 0 24px rgba(8, 145, 178, 0.6));
+    }
+  }
+
+  @keyframes scanLineGlow {
+    0% { 
+      opacity: 0.7; 
+      filter: drop-shadow(0 0 6px #0891b2) drop-shadow(0 0 12px rgba(8, 145, 178, 0.5));
+    }
+    100% { 
+      opacity: 0.9; 
+      filter: drop-shadow(0 0 10px #0891b2) drop-shadow(0 0 20px rgba(8, 145, 178, 0.7));
+    }
+  }
+
+  /* Dark mode variations for satellite/hybrid maps */
+  .dark .scan-circle-glow,
+  .scan-circle-dark {
+    filter: drop-shadow(0 0 10px #00d4ff) drop-shadow(0 0 20px rgba(0, 212, 255, 0.5));
+  }
+  
+  .dark .scan-line-glow,
+  .scan-line-dark {
+    filter: drop-shadow(0 0 8px #00d4ff) drop-shadow(0 0 16px rgba(0, 212, 255, 0.6));
+  }
+  }
+
+  /* Custom marker styling for map interactions */
+  .custom-anchor-marker {
+    z-index: 1000 !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+  }
+  
+  .custom-anchor-marker div {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    width: 40px !important;
+    height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: transform 0.2s ease !important;
+  }
+  
+  .custom-anchor-marker:hover div {
+    transform: scale(1.2) !important;
+  }
+
+  /* Marine Chat Button Styles */
+  .maritime-chat-button {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .maritime-chat-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.6s;
+  }
+
+  .maritime-chat-button:hover::before {
+    left: 100%;
+  }
+
+  /* Maritime Toast Styling */
+  .maritime-toast {
+    border-left: 4px solid hsl(220, 90%, 56%);
+    background: linear-gradient(135deg, rgba(30, 58, 138, 0.05) 0%, rgba(8, 145, 178, 0.05) 100%);
+  }
+  
+  .maritime-shadow {
+    box-shadow: 0 8px 32px hsla(220, 90%, 56%, 0.12);
+  }
+  
+  .duck-like {
+    color: hsl(45, 93%, 47%);
+    transition: all 0.2s ease;
+  }
+  
+  .duck-like:hover {
+    transform: scale(1.1);
+    color: hsl(38, 92%, 50%);
+  }
+  
+  .navy {
+    color: hsl(220, 90%, 56%);
+  }
+  
+  .ocean-teal {
+    color: hsl(188, 78%, 41%);
+  }
+  
+  .bg-navy {
+    background-color: hsl(220, 90%, 56%);
+  }
+  
+  .bg-ocean-teal {
+    background-color: hsl(188, 78%, 41%);
+  }
+  
+  .border-navy {
+    border-color: hsl(220, 90%, 56%);
+  }
+  
+  .border-ocean-teal {
+    border-color: hsl(188, 78%, 41%);
+  }
+
+  /* Maritime Chat Button Styles */
+  .maritime-chat-button {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .maritime-chat-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.6s;
+  }
+
+  .maritime-chat-button:hover::before {
+    left: 100%;
+  }
+

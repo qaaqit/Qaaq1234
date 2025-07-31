@@ -1,0 +1,28 @@
+/* Sophisticated scan animation styles */
+.scan-circle-glow {
+  filter: drop-shadow(0 0 8px #0891b2);
+  animation: scanPulse 3s ease-in-out infinite;
+}
+
+.scan-line-glow {
+  filter: drop-shadow(0 0 6px #0891b2);
+  animation: scanLineGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes scanPulse {
+  0%, 100% { 
+    opacity: 0.5; 
+  }
+  50% { 
+    opacity: 0.7; 
+  }
+}
+
+@keyframes scanLineGlow {
+  0% { 
+    opacity: 0.7; 
+  }
+  100% { 
+    opacity: 0.9; 
+  }
+}

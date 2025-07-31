@@ -383,21 +383,31 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, mapType = 'r
       screenRadius = baseRadius * zoomFactor;
     }
 
+    // Determine sophisticated colors based on map type
+    const isDarkMode = mapType === 'satellite' || mapType === 'hybrid';
+    const circleColor = isDarkMode ? '#00d4ff' : '#0891b2'; // Cyan for dark, teal for light
+    const circleOpacity = isDarkMode ? 0.7 : 0.5;
+
     // Create scan circle if not exists
     if (!scanCircleRef.current) {
       scanCircleRef.current = new window.google.maps.Circle({
         center: userLocation,
         radius: screenRadius,
-        strokeColor: '#4ade80',
-        strokeOpacity: 0.6,
+        strokeColor: circleColor,
+        strokeOpacity: circleOpacity,
         strokeWeight: 2,
         fillOpacity: 0,
+        strokeDashArray: '8, 4', // Elegant dashed pattern
         map: mapInstanceRef.current,
       });
     } else {
-      // Update existing circle
+      // Update existing circle with new colors and radius
       scanCircleRef.current.setCenter(userLocation);
       scanCircleRef.current.setRadius(screenRadius);
+      scanCircleRef.current.setOptions({
+        strokeColor: circleColor,
+        strokeOpacity: circleOpacity,
+      });
     }
 
     // Calculate end point of scan line based on angle and screen radius
@@ -421,18 +431,30 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, mapType = 'r
       lng: (lng2 * 180) / Math.PI,
     };
 
+    // Sophisticated scan line colors
+    const lineColor = isDarkMode ? '#00d4ff' : '#0891b2'; // Match circle color
+    const lineOpacity = isDarkMode ? 0.9 : 0.7;
+    const glowEffect = isDarkMode 
+      ? `0 0 10px ${lineColor}, 0 0 20px ${lineColor}` 
+      : `0 0 8px ${lineColor}`;
+
     // Create or update scan line
     if (!scanLineRef.current) {
       scanLineRef.current = new window.google.maps.Polyline({
         path: [userLocation, endPoint],
         geodesic: false,
-        strokeColor: '#4B5563',
-        strokeOpacity: 0.8,
-        strokeWeight: 3,
+        strokeColor: lineColor,
+        strokeOpacity: lineOpacity,
+        strokeWeight: isDarkMode ? 4 : 3, // Slightly thicker for dark mode
         map: mapInstanceRef.current,
       });
     } else {
       scanLineRef.current.setPath([userLocation, endPoint]);
+      scanLineRef.current.setOptions({
+        strokeColor: lineColor,
+        strokeOpacity: lineOpacity,
+        strokeWeight: isDarkMode ? 4 : 3,
+      });
     }
 
   }, [isMapLoaded, userLocation, showScanElements, scanAngle, boundsUpdateTrigger]);
