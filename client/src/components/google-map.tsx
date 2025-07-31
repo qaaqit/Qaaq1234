@@ -47,6 +47,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, mapType = 'r
   const userLocationMarkerRef = useRef<any>(null);
   const scanCircleRef = useRef<any>(null);
   const scanLineRef = useRef<any>(null);
+  const [boundsUpdateTrigger, setBoundsUpdateTrigger] = useState(0);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
 
   // Load Google Maps API
@@ -163,18 +164,29 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, mapType = 'r
   useEffect(() => {
     if (!mapInstanceRef.current || !onZoomChange) return;
     
-    const listener = mapInstanceRef.current.addListener('zoom_changed', () => {
+    const zoomListener = mapInstanceRef.current.addListener('zoom_changed', () => {
       const zoom = mapInstanceRef.current.getZoom();
       onZoomChange(zoom);
     });
 
-    // Cleanup listener on unmount or when onZoomChange changes
+    // Also listen for bounds changes to update scan circle
+    const boundsListener = mapInstanceRef.current.addListener('bounds_changed', () => {
+      // Trigger scan update when bounds change
+      if (showScanElements) {
+        setBoundsUpdateTrigger(prev => prev + 1);
+      }
+    });
+
+    // Cleanup listeners on unmount or when dependencies change
     return () => {
-      if (listener && listener.remove) {
-        listener.remove();
+      if (zoomListener && zoomListener.remove) {
+        zoomListener.remove();
+      }
+      if (boundsListener && boundsListener.remove) {
+        boundsListener.remove();
       }
     };
-  }, [isMapLoaded, onZoomChange]);
+  }, [isMapLoaded, onZoomChange, showScanElements]);
 
   // Update map type when mapType prop changes
   useEffect(() => {
@@ -316,11 +328,66 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, mapType = 'r
       return;
     }
 
+    // Calculate screen-edge radius based on zoom level and screen size
+    let screenRadius;
+    
+    try {
+      const bounds = mapInstanceRef.current.getBounds();
+      if (bounds) {
+        const center = mapInstanceRef.current.getCenter();
+        
+        // Get distance from center to edge of visible area
+        const ne = bounds.getNorthEast();
+        const sw = bounds.getSouthWest();
+        
+        // Calculate distances to each edge (if geometry library is available)
+        if (window.google.maps.geometry && window.google.maps.geometry.spherical) {
+          const distanceToNorth = window.google.maps.geometry.spherical.computeDistanceBetween(
+            center, new window.google.maps.LatLng(ne.lat(), center.lng())
+          );
+          const distanceToEast = window.google.maps.geometry.spherical.computeDistanceBetween(
+            center, new window.google.maps.LatLng(center.lat(), ne.lng())
+          );
+          const distanceToSouth = window.google.maps.geometry.spherical.computeDistanceBetween(
+            center, new window.google.maps.LatLng(sw.lat(), center.lng())
+          );
+          const distanceToWest = window.google.maps.geometry.spherical.computeDistanceBetween(
+            center, new window.google.maps.LatLng(center.lat(), sw.lng())
+          );
+          
+          // Use the minimum distance to ensure circle fits within screen
+          screenRadius = Math.min(distanceToNorth, distanceToEast, distanceToSouth, distanceToWest) * 0.8; // 80% of edge distance
+        } else {
+          // Fallback calculation using lat/lng differences
+          const latDiff = Math.abs(ne.lat() - sw.lat()) / 2;
+          const lngDiff = Math.abs(ne.lng() - sw.lng()) / 2;
+          const avgLat = (ne.lat() + sw.lat()) / 2;
+          
+          // Rough conversion to meters (simplified)
+          const latToMeters = 111000; // roughly 111km per degree
+          const lngToMeters = 111000 * Math.cos(avgLat * Math.PI / 180);
+          
+          const latDistance = latDiff * latToMeters;
+          const lngDistance = lngDiff * lngToMeters;
+          
+          screenRadius = Math.min(latDistance, lngDistance) * 0.8;
+        }
+      } else {
+        throw new Error('Bounds not available');
+      }
+    } catch (error) {
+      // Fallback to zoom-based calculation
+      const zoom = mapInstanceRef.current.getZoom() || 10;
+      const baseRadius = 50000; // 50km at zoom 10
+      const zoomFactor = Math.pow(2, 10 - zoom);
+      screenRadius = baseRadius * zoomFactor;
+    }
+
     // Create scan circle if not exists
     if (!scanCircleRef.current) {
       scanCircleRef.current = new window.google.maps.Circle({
         center: userLocation,
-        radius: radiusKm * 1000, // Convert km to meters
+        radius: screenRadius,
         strokeColor: '#4ade80',
         strokeOpacity: 0.6,
         strokeWeight: 2,
@@ -330,25 +397,23 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, mapType = 'r
     } else {
       // Update existing circle
       scanCircleRef.current.setCenter(userLocation);
-      scanCircleRef.current.setRadius(radiusKm * 1000);
+      scanCircleRef.current.setRadius(screenRadius);
     }
 
-    // Calculate end point of scan line based on angle
-    const earthRadius = 6371000; // Earth radius in meters
-    const distance = Math.min(radiusKm * 1000, 100000); // Limit line length
+    // Calculate end point of scan line based on angle and screen radius
     const bearing = (scanAngle * Math.PI) / 180; // Convert to radians
     
     const lat1 = (userLocation.lat * Math.PI) / 180;
     const lng1 = (userLocation.lng * Math.PI) / 180;
     
     const lat2 = Math.asin(
-      Math.sin(lat1) * Math.cos(distance / earthRadius) +
-      Math.cos(lat1) * Math.sin(distance / earthRadius) * Math.cos(bearing)
+      Math.sin(lat1) * Math.cos(screenRadius / 6371000) +
+      Math.cos(lat1) * Math.sin(screenRadius / 6371000) * Math.cos(bearing)
     );
     
     const lng2 = lng1 + Math.atan2(
-      Math.sin(bearing) * Math.sin(distance / earthRadius) * Math.cos(lat1),
-      Math.cos(distance / earthRadius) - Math.sin(lat1) * Math.sin(lat2)
+      Math.sin(bearing) * Math.sin(screenRadius / 6371000) * Math.cos(lat1),
+      Math.cos(screenRadius / 6371000) - Math.sin(lat1) * Math.sin(lat2)
     );
 
     const endPoint = {
@@ -370,7 +435,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, mapType = 'r
       scanLineRef.current.setPath([userLocation, endPoint]);
     }
 
-  }, [isMapLoaded, userLocation, showScanElements, scanAngle, radiusKm]);
+  }, [isMapLoaded, userLocation, showScanElements, scanAngle, boundsUpdateTrigger]);
 
   return (
     <div className="w-full h-full relative">

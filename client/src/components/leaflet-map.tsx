@@ -36,6 +36,7 @@ interface LeafletMapProps {
 
 const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, onUserHover, onUserClick, onZoomChange, showScanElements = false, scanAngle = 0, radiusKm = 50 }) => {
   const [bounds, setBounds] = useState<LatLngBounds | null>(null);
+  const [currentZoom, setCurrentZoom] = useState(10);
 
   const createCustomIcon = (user: MapUser, isOnlineWithLocation = false) => {
     // Green for online users with location enabled, selected user gets bright green,
@@ -85,19 +86,34 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, onUserHove
   const MapEventHandler = () => {
     useMapEvents({
       zoomend: (e) => {
+        const zoom = e.target.getZoom();
+        setCurrentZoom(zoom);
         if (onZoomChange) {
-          onZoomChange(e.target.getZoom());
+          onZoomChange(zoom);
         }
       },
     });
     return null;
   };
 
-  // Calculate scan line end point
+  // Calculate screen-edge radius based on current zoom level
+  const getScreenRadius = () => {
+    // Dynamic calculation based on zoom level
+    // Higher zoom = smaller screen area = smaller radius
+    // Lower zoom = larger screen area = larger radius
+    
+    const baseRadius = 50; // km at zoom 10
+    const zoomFactor = Math.pow(2, 10 - currentZoom);
+    const calculatedRadius = baseRadius * zoomFactor;
+    
+    // Constrain radius to reasonable limits
+    return Math.min(Math.max(calculatedRadius, 0.1), 5000); // Between 0.1km and 5000km
+  };
+
   const getScanLineEndPoint = () => {
     if (!userLocation || !showScanElements) return null;
     
-    const distance = radiusKm; // km
+    const distance = getScreenRadius(); // Use dynamic screen radius
     const bearing = scanAngle; // degrees
     
     const R = 6371; // Earth radius in km
@@ -124,6 +140,7 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, onUserHove
   // Use user location as default center, fallback to Mumbai
   const defaultCenter: [number, number] = userLocation ? [userLocation.lat, userLocation.lng] : [19.076, 72.8777];
   const scanEndPoint = getScanLineEndPoint();
+  const screenRadius = getScreenRadius();
 
   return (
     <div className="w-full h-full relative">
@@ -146,7 +163,7 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, onUserHove
         {showScanElements && userLocation && (
           <Circle
             center={[userLocation.lat, userLocation.lng]}
-            radius={radiusKm * 1000} // Convert km to meters
+            radius={screenRadius * 1000} // Convert km to meters
             pathOptions={{
               color: '#4ade80',
               weight: 2,
