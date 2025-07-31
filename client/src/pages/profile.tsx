@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -35,14 +35,30 @@ const profileUpdateSchema = z.object({
 type ProfileUpdate = z.infer<typeof profileUpdateSchema>;
 
 export default function Profile() {
-  const { user: authUser } = useAuth();
+  const { user: authUser, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [isEditing, setIsEditing] = useState(false);
 
-  // Redirect to login if not authenticated
+  // Redirect to login if not authenticated (using useEffect to avoid render-time state updates)
+  useEffect(() => {
+    if (!authLoading && !authUser) {
+      setLocation('/');
+    }
+  }, [authLoading, authUser, setLocation]);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex items-center gap-2">
+          <RefreshCw className="animate-spin" />
+          <span>Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
   if (!authUser) {
-    setLocation('/');
     return null;
   }
 

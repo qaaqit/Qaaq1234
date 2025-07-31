@@ -1025,18 +1025,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'User ID not found' });
       }
 
-      // Validate request body using updateProfileSchema
-      const { updateProfileSchema } = await import('@shared/schema');
-      const validationResult = updateProfileSchema.safeParse(req.body);
-      
-      if (!validationResult.success) {
-        return res.status(400).json({ 
-          error: 'Invalid profile data', 
-          details: validationResult.error.errors 
-        });
+      console.log('Profile update request for user:', userId, 'Data:', req.body);
+
+      // For now, just update the basic fields that exist in the current database structure
+      const allowedFields = {
+        fullName: req.body.fullName,
+        email: req.body.email,
+        nickname: req.body.nickname,
+        userType: req.body.userType,
+        rank: req.body.rank,
+        shipName: req.body.shipName,
+        city: req.body.city,
+        country: req.body.country,
+      };
+
+      // Filter out undefined values
+      const updateData = Object.fromEntries(
+        Object.entries(allowedFields).filter(([_, value]) => value !== undefined)
+      );
+
+      if (Object.keys(updateData).length === 0) {
+        return res.status(400).json({ error: 'No valid fields to update' });
       }
 
-      const updatedUser = await storage.updateUserProfile(userId, validationResult.data);
+      const updatedUser = await storage.updateUserProfile(userId, updateData);
       
       if (!updatedUser) {
         return res.status(404).json({ error: 'User not found' });
