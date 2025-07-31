@@ -1685,11 +1685,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get all rank groups
-  app.get('/api/rank-groups', authenticateToken, async (req, res) => {
+  // Get all rank groups (admin only) or user's groups (regular users)
+  app.get('/api/rank-groups', authenticateToken, async (req: any, res) => {
     try {
-      const groups = await getAllRankGroups();
-      res.json(groups);
+      // Check if user is admin
+      const userResult = await pool.query('SELECT is_admin FROM users WHERE id = $1', [req.userId]);
+      const isAdmin = userResult.rows.length > 0 ? userResult.rows[0].is_admin : false;
+      
+      if (isAdmin) {
+        // Admin sees all groups
+        const groups = await getAllRankGroups();
+        res.json(groups);
+      } else {
+        // Regular users see only their own groups
+        const userGroups = await getUserRankGroups(req.userId);
+        res.json(userGroups);
+      }
     } catch (error) {
       console.error('Error fetching rank groups:', error);
       res.status(500).json({ error: 'Failed to fetch rank groups' });

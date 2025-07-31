@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import { Users, MessageCircle, Crown, UserPlus, Send } from 'lucide-react';
+import { Users, MessageCircle, Crown, UserPlus, Send, Shield } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -44,17 +45,12 @@ export function RankGroupsPanel() {
   const [isAnnouncement, setIsAnnouncement] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
-  // Fetch all available rank groups
-  const { data: allGroups = [], isLoading: loadingAllGroups } = useQuery({
+  // Fetch groups based on user role (admins see all, users see only their groups)
+  const { data: groups = [], isLoading: loadingGroups } = useQuery({
     queryKey: ['/api/rank-groups'],
-    refetchInterval: 30000, // Refresh every 30 seconds
-  });
-
-  // Fetch user's joined groups
-  const { data: userGroups = [], isLoading: loadingUserGroups } = useQuery({
-    queryKey: ['/api/rank-groups/my-groups'],
-    refetchInterval: 10000, // Refresh every 10 seconds for unread count
+    refetchInterval: user?.isAdmin ? 30000 : 10000, // Admin: all groups every 30s, Users: their groups every 10s
   });
 
   // Fetch messages for selected group
@@ -73,7 +69,6 @@ export function RankGroupsPanel() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/rank-groups/my-groups'] });
       queryClient.invalidateQueries({ queryKey: ['/api/rank-groups'] });
       toast({ title: 'Successfully joined the group!' });
     },
@@ -90,7 +85,6 @@ export function RankGroupsPanel() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/rank-groups/my-groups'] });
       queryClient.invalidateQueries({ queryKey: ['/api/rank-groups'] });
       setSelectedGroup(null);
       toast({ title: 'Successfully left the group!' });
@@ -157,12 +151,12 @@ export function RankGroupsPanel() {
   };
 
   const isUserInGroup = (groupId: string) => {
-    return userGroups.some((group: UserGroup) => group.id === groupId);
+    return groups.some((group: any) => group.id === groupId && group.role); // Has role means user is in group
   };
 
-  const selectedGroupData = userGroups.find((group: UserGroup) => group.id === selectedGroup);
+  const selectedGroupData = groups.find((group: any) => group.id === selectedGroup);
 
-  if (loadingAllGroups || loadingUserGroups) {
+  if (loadingGroups) {
     return (
       <div className="p-6">
         <div className="flex items-center space-x-2 mb-4">
@@ -179,25 +173,29 @@ export function RankGroupsPanel() {
         <div className="flex items-center space-x-2">
           <Users className="h-6 w-6" />
           <h2 className="text-2xl font-bold">Maritime Rank Groups</h2>
+          {user?.isAdmin && <Shield className="h-5 w-5 text-blue-600" />}
         </div>
-        <Button 
-          onClick={() => autoAssignMutation.mutate()}
-          disabled={autoAssignMutation.isPending}
-          variant="outline"
-        >
-          <Crown className="h-4 w-4 mr-2" />
-          Auto-Assign Groups
-        </Button>
+        {!user?.isAdmin && (
+          <Button 
+            onClick={() => autoAssignMutation.mutate()}
+            disabled={autoAssignMutation.isPending}
+            variant="outline"
+          >
+            <Crown className="h-4 w-4 mr-2" />
+            Auto-Assign Groups
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Groups List */}
         <div className="lg:col-span-1">
-          <h3 className="text-lg font-semibold mb-4">Available Groups</h3>
+          <h3 className="text-lg font-semibold mb-4">
+            {user?.isAdmin ? 'All Groups (Admin View)' : 'Your Groups'}
+          </h3>
           <div className="space-y-3">
-            {allGroups.map((group: RankGroup) => {
-              const userGroup = userGroups.find((ug: UserGroup) => ug.id === group.id);
-              const isJoined = isUserInGroup(group.id);
+            {groups.map((group: any) => {
+              const isJoined = user?.isAdmin ? true : !!group.role; // Admin can see all, users only their groups
               
               return (
                 <Card 
@@ -212,11 +210,11 @@ export function RankGroupsPanel() {
                       <CardTitle className="text-sm">{group.name}</CardTitle>
                       <div className="flex items-center space-x-2">
                         <Badge variant={group.groupType === 'rank' ? 'default' : 'secondary'}>
-                          {group.memberCount} members
+                          {group.memberCount || 0} members
                         </Badge>
-                        {userGroup?.unreadCount > 0 && (
+                        {group.unreadCount > 0 && (
                           <Badge variant="destructive">
-                            {userGroup.unreadCount}
+                            {group.unreadCount}
                           </Badge>
                         )}
                       </div>
@@ -228,7 +226,7 @@ export function RankGroupsPanel() {
                   <CardContent className="pt-0">
                     {isJoined ? (
                       <div className="flex items-center justify-between">
-                        <Badge variant="outline">{userGroup?.role}</Badge>
+                        <Badge variant="outline">{group.role || 'Admin View'}</Badge>
                         <Button
                           size="sm"
                           variant="destructive"
