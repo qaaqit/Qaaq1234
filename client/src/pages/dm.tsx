@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageCircle, Anchor, Navigation, Search, MapPin, Clock, User, Ship } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -28,6 +29,7 @@ export default function DMPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedConnection, setSelectedConnection] = useState<ExtendedChatConnection | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("users");
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -205,7 +207,29 @@ export default function DMPage() {
           </CardContent>
         </Card>
 
-        {/* Pending Connection Requests */}
+        {/* Tab Navigation */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <Card className="border-2 border-ocean-teal/20">
+            <CardContent className="p-4">
+              <TabsList className="grid w-full grid-cols-2 bg-gradient-to-r from-navy/10 to-ocean-teal/10">
+                <TabsTrigger 
+                  value="users" 
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-navy data-[state=active]:to-ocean-teal data-[state=active]:text-white"
+                >
+                  Users
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="questions" 
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-navy data-[state=active]:to-ocean-teal data-[state=active]:text-white"
+                >
+                  Questions
+                </TabsTrigger>
+              </TabsList>
+            </CardContent>
+          </Card>
+
+          <TabsContent value="users" className="space-y-6">
+            {/* Pending Connection Requests */}
         {pendingConnections.length > 0 && (
           <Card className="border-2 border-duck-yellow/50 bg-duck-yellow/5">
             <CardHeader>
@@ -464,6 +488,30 @@ export default function DMPage() {
             </CardContent>
           </Card>
         )}
+          </TabsContent>
+
+          <TabsContent value="questions" className="space-y-6">
+            <Card className="border-2 border-ocean-teal/20">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2 text-navy">
+                  <MessageCircle size={20} />
+                  <span>Recent Questions</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-12">
+                  <div className="mx-auto w-16 h-16 bg-gradient-to-r from-navy to-blue-800 rounded-full flex items-center justify-center mb-4">
+                    <MessageCircle size={32} className="text-white" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Questions Coming Soon</h3>
+                  <p className="text-gray-600">
+                    QOI GPT Q&A functionality will be available here soon
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
       {/* QChat Window */}
       {selectedConnection && (

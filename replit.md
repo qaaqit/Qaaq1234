@@ -167,6 +167,13 @@ Google Maps Controls: Transparent icon-only buttons positioned in bottom-left co
 
 ## Recent Changes
 
+### Ch13 DM Tab Navigation Implementation (January 31, 2025)
+- **Tab-Based Interface**: Added "Users" and "Questions" tabs to Ch13 DM page, following Ch16 pattern
+- **Users Tab**: Moved "Top Q Professionals" list to Users tab with all existing chat connection functionality
+- **Questions Tab**: Created placeholder for future QOI GPT Q&A functionality integration
+- **Consistent UI**: Applied maritime-themed tab styling matching Ch16 Shore Leave/My Groups design
+- **Tab State Management**: Added activeTab state with proper tab switching functionality
+
 ### QOI GPT Search Interface Enhancement (January 31, 2025)
 - **AI Search Placeholder**: Updated search placeholder text to "AI Search. Ask anything.." across the platform
 - **Ch13 DM Search**: Primary QOI GPT integration point now clearly indicates AI-powered search capabilities
