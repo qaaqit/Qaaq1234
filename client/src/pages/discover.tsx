@@ -135,7 +135,7 @@ export default function Discover({ user }: DiscoverProps) {
               </div>
               <div>
                 <h1 className="text-lg sm:text-2xl font-bold">QaaqConnect</h1>
-                <p className="text-xs sm:text-sm text-white/60 italic font-medium">ship to ship</p>
+                <p className="text-xs sm:text-sm text-white/60 italic font-medium">1234 Koi Hai..</p>
               </div>
             </button>
             <div className="flex items-center space-x-2 sm:space-x-4">
