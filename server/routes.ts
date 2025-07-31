@@ -2,10 +2,20 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import jwt from 'jsonwebtoken';
 import { storage } from "./storage";
-import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, insertChatConnectionSchema, insertChatMessageSchema } from "@shared/schema";
+import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, insertChatConnectionSchema, insertChatMessageSchema, insertRankGroupSchema, insertRankGroupMemberSchema, insertRankGroupMessageSchema } from "@shared/schema";
 import { sendVerificationEmail } from "./services/email";
 import { pool } from "./db";
 import { getQuestions, searchQuestions } from "./questions-service";
+import { 
+  initializeRankGroups, 
+  getAllRankGroups, 
+  getUserRankGroups, 
+  joinRankGroup, 
+  leaveRankGroup, 
+  sendRankGroupMessage, 
+  getRankGroupMessages,
+  autoAssignUserToRankGroups 
+} from "./rank-groups-service";
 
 // Extend Express Request type
 declare global {
@@ -1652,6 +1662,129 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching user questions:', error);
       res.status(500).json({ error: 'Failed to fetch user questions' });
+    }
+  });
+
+  // ===================== RANK GROUPS API =====================
+
+  // Initialize rank groups (admin only)
+  app.post('/api/rank-groups/initialize', authenticateToken, async (req: any, res) => {
+    try {
+      // Check if user is admin
+      const user = await storage.getUserById(req.userId);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+      
+      const result = await initializeRankGroups();
+      res.json(result);
+    } catch (error) {
+      console.error('Error initializing rank groups:', error);
+      res.status(500).json({ error: 'Failed to initialize rank groups' });
+    }
+  });
+
+  // Get all rank groups
+  app.get('/api/rank-groups', authenticateToken, async (req, res) => {
+    try {
+      const groups = await getAllRankGroups();
+      res.json(groups);
+    } catch (error) {
+      console.error('Error fetching rank groups:', error);
+      res.status(500).json({ error: 'Failed to fetch rank groups' });
+    }
+  });
+
+  // Get user's rank groups
+  app.get('/api/rank-groups/my-groups', authenticateToken, async (req: any, res) => {
+    try {
+      const userGroups = await getUserRankGroups(req.userId);
+      res.json(userGroups);
+    } catch (error) {
+      console.error('Error fetching user rank groups:', error);
+      res.status(500).json({ error: 'Failed to fetch user rank groups' });
+    }
+  });
+
+  // Join a rank group
+  app.post('/api/rank-groups/:groupId/join', authenticateToken, async (req: any, res) => {
+    try {
+      const { groupId } = req.params;
+      const { role = 'member' } = req.body;
+      
+      const result = await joinRankGroup(req.userId, groupId, role);
+      res.json(result);
+    } catch (error) {
+      console.error('Error joining rank group:', error);
+      res.status(500).json({ error: 'Failed to join rank group' });
+    }
+  });
+
+  // Leave a rank group
+  app.post('/api/rank-groups/:groupId/leave', authenticateToken, async (req: any, res) => {
+    try {
+      const { groupId } = req.params;
+      
+      const result = await leaveRankGroup(req.userId, groupId);
+      res.json(result);
+    } catch (error) {
+      console.error('Error leaving rank group:', error);
+      res.status(500).json({ error: 'Failed to leave rank group' });
+    }
+  });
+
+  // Send message to rank group
+  app.post('/api/rank-groups/:groupId/messages', authenticateToken, async (req: any, res) => {
+    try {
+      const { groupId } = req.params;
+      const validation = insertRankGroupMessageSchema.safeParse(req.body);
+      
+      if (!validation.success) {
+        return res.status(400).json({ 
+          error: 'Validation failed', 
+          details: validation.error.issues 
+        });
+      }
+
+      const { message, messageType = 'text', isAnnouncement = false } = validation.data;
+      
+      const result = await sendRankGroupMessage(
+        req.userId, 
+        groupId, 
+        message, 
+        messageType, 
+        isAnnouncement
+      );
+      res.json(result);
+    } catch (error) {
+      console.error('Error sending rank group message:', error);
+      res.status(500).json({ error: 'Failed to send message' });
+    }
+  });
+
+  // Get rank group messages
+  app.get('/api/rank-groups/:groupId/messages', authenticateToken, async (req: any, res) => {
+    try {
+      const { groupId } = req.params;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = parseInt(req.query.offset as string) || 0;
+      
+      const result = await getRankGroupMessages(groupId, req.userId, limit, offset);
+      res.json(result);
+    } catch (error) {
+      console.error('Error fetching rank group messages:', error);
+      res.status(500).json({ error: 'Failed to fetch messages' });
+    }
+  });
+
+  // Auto-assign user to rank groups based on their maritime rank
+  app.post('/api/rank-groups/auto-assign', authenticateToken, async (req: any, res) => {
+    try {
+      const result = await autoAssignUserToRankGroups(req.userId);
+      res.json(result);
+    } catch (error) {
+      console.error('Error auto-assigning user to rank groups:', error);
+      res.status(500).json({ error: 'Failed to auto-assign rank groups' });
     }
   });
 

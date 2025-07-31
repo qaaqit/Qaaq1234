@@ -114,6 +114,37 @@ export const chatMessages = pgTable("chat_messages", {
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 
+// Rank-based groups for maritime personnel
+export const rankGroups = pgTable("rank_groups", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(), // TSI, MSI, Mtr CO, 20 30, CE 2E, 3E 4E, Cadets, Crew, Marine Personnel
+  description: text("description").notNull(),
+  groupType: text("group_type").notNull().default("rank"), // rank, department, general
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`),
+});
+
+// Group membership for users
+export const rankGroupMembers = pgTable("rank_group_members", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  groupId: varchar("group_id").notNull(),
+  userId: varchar("user_id").notNull(),
+  role: text("role").default("member"), // member, admin, moderator
+  joinedAt: timestamp("joined_at").default(sql`now()`),
+});
+
+// Group messages/broadcasts
+export const rankGroupMessages = pgTable("rank_group_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  groupId: varchar("group_id").notNull(),
+  senderId: varchar("sender_id").notNull(),
+  message: text("message").notNull(),
+  messageType: text("message_type").default("text"), // text, image, file, announcement
+  isAnnouncement: boolean("is_announcement").default(false),
+  createdAt: timestamp("created_at").default(sql`now()`),
+});
+
 // Bot Rules Documentation Table
 export const botRules = pgTable("bot_rules", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -137,7 +168,8 @@ export const usersRelations = relations(users, ({ many }) => ({
   sentConnections: many(chatConnections, { relationName: 'sentConnections' }),
   receivedConnections: many(chatConnections, { relationName: 'receivedConnections' }),
   sentMessages: many(chatMessages, { relationName: 'sentMessages' }),
-
+  rankGroupMemberships: many(rankGroupMembers),
+  rankGroupMessages: many(rankGroupMessages),
 }));
 
 export const postsRelations = relations(posts, ({ one, many }) => ({
@@ -192,6 +224,33 @@ export const chatMessagesRelations = relations(chatMessages, ({ one }) => ({
   }),
 }));
 
+export const rankGroupsRelations = relations(rankGroups, ({ many }) => ({
+  members: many(rankGroupMembers),
+  messages: many(rankGroupMessages),
+}));
+
+export const rankGroupMembersRelations = relations(rankGroupMembers, ({ one }) => ({
+  group: one(rankGroups, {
+    fields: [rankGroupMembers.groupId],
+    references: [rankGroups.id],
+  }),
+  user: one(users, {
+    fields: [rankGroupMembers.userId],
+    references: [users.id],
+  }),
+}));
+
+export const rankGroupMessagesRelations = relations(rankGroupMessages, ({ one }) => ({
+  group: one(rankGroups, {
+    fields: [rankGroupMessages.groupId],
+    references: [rankGroups.id],
+  }),
+  sender: one(users, {
+    fields: [rankGroupMessages.senderId],
+    references: [users.id],
+  }),
+}));
+
 
 
 // Schemas
@@ -239,6 +298,25 @@ export const insertChatConnectionSchema = createInsertSchema(chatConnections).pi
 export const insertChatMessageSchema = createInsertSchema(chatMessages).pick({
   connectionId: true,
   message: true,
+});
+
+export const insertRankGroupSchema = createInsertSchema(rankGroups).pick({
+  name: true,
+  description: true,
+  groupType: true,
+});
+
+export const insertRankGroupMemberSchema = createInsertSchema(rankGroupMembers).pick({
+  groupId: true,
+  userId: true,
+  role: true,
+});
+
+export const insertRankGroupMessageSchema = createInsertSchema(rankGroupMessages).pick({
+  groupId: true,
+  message: true,
+  messageType: true,
+  isAnnouncement: true,
 });
 
 export const insertBotRuleSchema = createInsertSchema(botRules)

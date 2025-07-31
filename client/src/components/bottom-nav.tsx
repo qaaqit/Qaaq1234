@@ -17,6 +17,12 @@ export default function BottomNav({ user }: BottomNavProps) {
       active: location === "/qhf" || location === "/dm" || location === "/chat"
     },
     { 
+      path: "/rank-groups", 
+      icon: "fas fa-users", 
+      label: ["Groups", "Rank"],
+      active: location === "/rank-groups"
+    },
+    { 
       path: "/post", 
       icon: "fas fa-plus-circle", 
       label: ["Ch16", "Broadcast"],
