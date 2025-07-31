@@ -723,6 +723,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Send initial message when creating connection (one message limit)
+  app.post('/api/chat/send-initial', authenticateToken, async (req, res) => {
+    try {
+      const { receiverId, message } = req.body;
+      const senderId = req.userId!;
+      
+      if (!message || !message.trim()) {
+        return res.status(400).json({ message: "Message cannot be empty" });
+      }
+
+      // Check if connection already exists
+      let connection = await storage.getChatConnection(senderId, receiverId);
+      
+      if (!connection) {
+        // Create new connection
+        connection = await storage.createChatConnection(senderId, receiverId);
+      }
+
+      // Send the initial message
+      const chatMessage = await storage.sendMessage(connection.id, senderId, message.trim());
+      res.json({ connection, message: chatMessage });
+    } catch (error) {
+      console.error('Send initial message error:', error);
+      res.status(500).json({ message: "Failed to send initial message" });
+    }
+  });
+
   app.get('/api/chat/messages/:connectionId', authenticateToken, async (req, res) => {
     try {
       const { connectionId } = req.params;

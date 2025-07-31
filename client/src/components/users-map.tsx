@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/useAuth';
 import MarineChatButton from './marine-chat-button';
+import SingleMessageChat from './single-message-chat';
 
 interface MapUser {
   id: string;
@@ -130,6 +131,9 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
   const [mapRadius, setMapRadius] = useState<number>(50); // Initial 50km radius
   const [selectedUser, setSelectedUser] = useState<MapUser | null>(null); // Track selected user for coordinate display
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [hoveredUser, setHoveredUser] = useState<MapUser | null>(null); // Track hovered user for card display
+  const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null); // Track mouse position for card
+  const [openChatUserId, setOpenChatUserId] = useState<string | null>(null); // Track opened chat window
   const { user } = useAuth();
 
   // Fetch up to 100 random users for anchor pin display (global distribution)
@@ -590,78 +594,24 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
               position={[plotLat, plotLng]}
               icon={createCustomIcon(user, isOnlineWithLocation)}
               eventHandlers={{
-                click: () => {
-                  setSelectedUser(user);
+                click: (e) => {
+                  // Open chat window on click
+                  setOpenChatUserId(openChatUserId === user.id ? null : user.id);
+                  e.originalEvent.stopPropagation();
+                },
+                mouseover: (e) => {
+                  // Show user card on hover
+                  setHoveredUser(user);
+                  const mouseEvent = e.originalEvent as MouseEvent;
+                  setHoverPosition({ x: mouseEvent.clientX, y: mouseEvent.clientY });
+                },
+                mouseout: () => {
+                  // Hide user card when not hovering
+                  setHoveredUser(null);
+                  setHoverPosition(null);
                 }
               }}
-            >
-            <Popup>
-              <div className="p-2 min-w-[200px]">
-                <h3 className="font-bold text-gray-900 mb-2">
-                  {user.fullName} {user.rank && user.rank !== '' && `(${getRankAbbreviation(user.rank)})`}
-                </h3>
-                {/* Last Company */}
-                {user.company && user.company !== '' && (
-                  <p className="text-sm text-gray-700">
-                    <span className="font-medium">Last Company:</span> {user.company}
-                  </p>
-                )}
-                {/* Last Ship */}
-                {user.shipName && user.shipName !== '' && (
-                  <p className="text-sm text-gray-700">
-                    <span className="font-medium">Last Ship:</span> {user.shipName}
-                  </p>
-                )}
-                {/* Show location status and distance */}
-                {userLocation && (
-                  <div className="text-xs text-gray-500 mt-2 pt-2 border-t space-y-1">
-                    {(() => {
-                      const isRecentLocation = user.locationUpdatedAt && 
-                        new Date(user.locationUpdatedAt).getTime() > Date.now() - 10 * 60 * 1000;
-                      const isOnline = !!(user.deviceLatitude && user.deviceLongitude && isRecentLocation);
-                      
-                      if (isOnline && user.deviceLatitude && user.deviceLongitude) {
-                        return (
-                          <>
-                            <p className="text-green-600 font-medium">🟢 Online with precise location</p>
-                            <p>
-                              {calculateDistance(
-                                userLocation.lat, userLocation.lng,
-                                user.deviceLatitude, user.deviceLongitude
-                              ).toFixed(1)}km away (precise)
-                            </p>
-                          </>
-                        );
-                      } else {
-                        return (
-                          <>
-                            <p className="text-gray-500">📍 City-based location</p>
-                            <p>
-                              {calculateDistance(
-                                userLocation.lat, userLocation.lng,
-                                user.latitude, user.longitude
-                              ).toFixed(1)}km away (approx)
-                            </p>
-                          </>
-                        );
-                      }
-                    })()}
-                  </div>
-                )}
-                
-                {/* Marine Chat Button */}
-                <div className="mt-3 pt-2 border-t">
-                  <MarineChatButton
-                    receiverId={user.id}
-                    receiverName={user.fullName}
-                    receiverRank={user.rank || undefined}
-                    size="sm"
-                    variant="marine"
-                  />
-                </div>
-              </div>
-            </Popup>
-          </Marker>
+            />
           );
         })}
       </MapContainer>
@@ -708,6 +658,138 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
           </div>
         </div>
       )}
+      
+      {/* Hover User Card */}
+      {hoveredUser && hoverPosition && (
+        <div 
+          className="fixed z-[2000] pointer-events-none"
+          style={{
+            left: `${hoverPosition.x + 10}px`,
+            top: `${hoverPosition.y - 10}px`,
+            transform: hoverPosition.x > window.innerWidth - 300 ? 'translateX(-100%)' : 'none'
+          }}
+        >
+          <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-200 p-3 max-w-[280px]">
+            <h3 className="font-bold text-gray-900 mb-2 text-sm">
+              {hoveredUser.fullName} 
+              {hoveredUser.rank && ` (${getRankAbbreviation(hoveredUser.rank)})`}
+              {hoveredUser.questionCount !== undefined && 
+                <span className="text-blue-600 font-medium ml-2">
+                  {hoveredUser.questionCount}Q{hoveredUser.answerCount || 0}A
+                </span>
+              }
+            </h3>
+            
+            {/* Company */}
+            {hoveredUser.company && hoveredUser.company !== '' && (
+              <p className="text-xs text-gray-600 mb-1">
+                <span className="font-medium">Company:</span> {hoveredUser.company}
+              </p>
+            )}
+            
+            {/* Ship */}
+            {hoveredUser.shipName && hoveredUser.shipName !== '' && (
+              <p className="text-xs text-gray-600 mb-1">
+                <span className="font-medium">Ship:</span> {hoveredUser.shipName}
+              </p>
+            )}
+            
+            {/* Location & Distance */}
+            {userLocation && (
+              <div className="text-xs text-gray-500 mt-2 pt-2 border-t">
+                {(() => {
+                  const isRecentLocation = hoveredUser.locationUpdatedAt && 
+                    new Date(hoveredUser.locationUpdatedAt).getTime() > Date.now() - 10 * 60 * 1000;
+                  const isOnline = !!(hoveredUser.deviceLatitude && hoveredUser.deviceLongitude && isRecentLocation);
+                  
+                  if (isOnline && hoveredUser.deviceLatitude && hoveredUser.deviceLongitude) {
+                    return (
+                      <>
+                        <p className="text-green-600 font-medium">🟢 Online with precise location</p>
+                        <p>
+                          {calculateDistance(
+                            userLocation.lat, userLocation.lng,
+                            hoveredUser.deviceLatitude, hoveredUser.deviceLongitude
+                          ).toFixed(1)}km away
+                        </p>
+                      </>
+                    );
+                  } else {
+                    return (
+                      <>
+                        <p className="text-gray-500">📍 City-based location</p>
+                        <p>
+                          {calculateDistance(
+                            userLocation.lat, userLocation.lng,
+                            hoveredUser.latitude, hoveredUser.longitude
+                          ).toFixed(1)}km away (approx)
+                        </p>
+                      </>
+                    );
+                  }
+                })()}
+                <p className="text-xs text-blue-500 mt-1 italic">Click to chat</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {/* Chat Window */}
+      {openChatUserId && (() => {
+        const chatUser = users.find(u => u.id === openChatUserId);
+        return chatUser ? (
+          <div className="fixed inset-0 z-[3000] bg-black/50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col">
+              {/* Chat Header */}
+              <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-teal-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                    {chatUser.fullName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 text-sm">
+                      {chatUser.fullName}
+                    </h3>
+                    <p className="text-xs text-gray-500">
+                      {chatUser.rank ? getRankAbbreviation(chatUser.rank) : 'Maritime Professional'}
+                      {chatUser.questionCount !== undefined && 
+                        <span className="text-blue-600 font-medium ml-2">
+                          {chatUser.questionCount}Q{chatUser.answerCount || 0}A
+                        </span>
+                      }
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setOpenChatUserId(null)}
+                  className="text-gray-400 hover:text-gray-600 p-2"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              {/* Chat Content */}
+              <div className="flex-1 p-4 overflow-y-auto">
+                <div className="text-center text-gray-500 text-sm mb-4">
+                  <p>Start a conversation with {chatUser.fullName}</p>
+                  <p className="text-xs mt-1">You can send one message. They'll see it when they accept.</p>
+                </div>
+                
+                {/* Single Message Interface */}
+                <div className="space-y-3">
+                  <SingleMessageChat
+                    receiverId={chatUser.id}
+                    receiverName={chatUser.fullName}
+                    receiverRank={chatUser.rank ? getRankAbbreviation(chatUser.rank) : undefined}
+                    onClose={() => setOpenChatUserId(null)}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null;
+      })()}
     </div>
   );
 }
