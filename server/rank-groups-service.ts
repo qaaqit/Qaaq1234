@@ -82,25 +82,21 @@ export async function initializeRankGroups() {
 // Get all rank groups
 export async function getAllRankGroups() {
   try {
-    const groups = await db
-      .select({
-        id: rankGroups.id,
-        name: rankGroups.name,
-        description: rankGroups.description,
-        groupType: rankGroups.groupType,
-        isActive: rankGroups.isActive,
-        memberCount: sql<number>`(
-          SELECT COUNT(*)::int 
-          FROM ${rankGroupMembers} 
-          WHERE ${rankGroupMembers.groupId} = ${rankGroups.id}
-        )`.as('memberCount'),
-        createdAt: rankGroups.createdAt
-      })
-      .from(rankGroups)
-      .where(eq(rankGroups.isActive, true))
-      .orderBy(rankGroups.name);
+    const result = await db.execute(sql`
+      SELECT 
+        rg.id,
+        rg.name,
+        rg.description,
+        rg."groupType",
+        rg."isActive",
+        rg."createdAt",
+        (SELECT COUNT(*)::int FROM rank_group_members rgm WHERE rgm."groupId" = rg.id) as "memberCount"
+      FROM rank_groups rg
+      WHERE rg."isActive" = true
+      ORDER BY rg.name
+    `);
 
-    return groups;
+    return result.rows;
   } catch (error) {
     console.error('Error fetching rank groups:', error);
     throw error;
@@ -110,37 +106,33 @@ export async function getAllRankGroups() {
 // Get user's rank groups
 export async function getUserRankGroups(userId: string) {
   try {
-    const userGroups = await db
-      .select({
-        id: rankGroups.id,
-        name: rankGroups.name,
-        description: rankGroups.description,
-        groupType: rankGroups.groupType,
-        role: rankGroupMembers.role,
-        joinedAt: rankGroupMembers.joinedAt,
-        unreadCount: sql<number>`(
+    const result = await db.execute(sql`
+      SELECT 
+        rg.id,
+        rg.name,
+        rg.description,
+        rg."groupType",
+        rgm.role,
+        rgm."joinedAt",
+        (
           SELECT COUNT(*)::int 
-          FROM ${rankGroupMessages} 
-          WHERE ${rankGroupMessages.groupId} = ${rankGroups.id} 
-          AND ${rankGroupMessages.createdAt} > COALESCE(
-            (SELECT MAX(${rankGroupMessages.createdAt}) 
-             FROM ${rankGroupMessages} 
-             WHERE ${rankGroupMessages.senderId} = ${userId}), 
-            ${rankGroupMembers.joinedAt}
+          FROM rank_group_messages rgm2 
+          WHERE rgm2."groupId" = rg.id 
+          AND rgm2."createdAt" > COALESCE(
+            (SELECT MAX(rgm3."createdAt") 
+             FROM rank_group_messages rgm3 
+             WHERE rgm3."senderId" = ${userId}), 
+            rgm."joinedAt"
           )
-        )`.as('unreadCount')
-      })
-      .from(rankGroupMembers)
-      .innerJoin(rankGroups, eq(rankGroupMembers.groupId, rankGroups.id))
-      .where(
-        and(
-          eq(rankGroupMembers.userId, userId),
-          eq(rankGroups.isActive, true)
-        )
-      )
-      .orderBy(rankGroups.name);
+        ) as "unreadCount"
+      FROM rank_group_members rgm
+      INNER JOIN rank_groups rg ON rgm."groupId" = rg.id
+      WHERE rgm."userId" = ${userId}
+      AND rg."isActive" = true
+      ORDER BY rg.name
+    `);
 
-    return userGroups;
+    return result.rows;
   } catch (error) {
     console.error('Error fetching user rank groups:', error);
     throw error;
@@ -151,27 +143,21 @@ export async function getUserRankGroups(userId: string) {
 export async function joinRankGroup(userId: string, groupId: string, role: string = "member") {
   try {
     // Check if user is already a member
-    const existing = await db
-      .select()
-      .from(rankGroupMembers)
-      .where(
-        and(
-          eq(rankGroupMembers.userId, userId),
-          eq(rankGroupMembers.groupId, groupId)
-        )
-      )
-      .limit(1);
+    const existingResult = await db.execute(sql`
+      SELECT id FROM rank_group_members 
+      WHERE "userId" = ${userId} AND "groupId" = ${groupId}
+      LIMIT 1
+    `);
 
-    if (existing.length > 0) {
+    if (existingResult.rows.length > 0) {
       return { success: false, message: 'User is already a member of this group' };
     }
 
     // Add user to group
-    await db.insert(rankGroupMembers).values({
-      userId,
-      groupId,
-      role
-    });
+    await db.execute(sql`
+      INSERT INTO rank_group_members ("userId", "groupId", role)
+      VALUES (${userId}, ${groupId}, ${role})
+    `);
 
     return { success: true, message: 'Successfully joined the group' };
   } catch (error) {
@@ -183,14 +169,10 @@ export async function joinRankGroup(userId: string, groupId: string, role: strin
 // Leave a rank group
 export async function leaveRankGroup(userId: string, groupId: string) {
   try {
-    await db
-      .delete(rankGroupMembers)
-      .where(
-        and(
-          eq(rankGroupMembers.userId, userId),
-          eq(rankGroupMembers.groupId, groupId)
-        )
-      );
+    await db.execute(sql`
+      DELETE FROM rank_group_members 
+      WHERE "userId" = ${userId} AND "groupId" = ${groupId}
+    `);
 
     return { success: true, message: 'Successfully left the group' };
   } catch (error) {
@@ -209,31 +191,24 @@ export async function sendRankGroupMessage(
 ) {
   try {
     // Verify user is a member of the group
-    const membership = await db
-      .select()
-      .from(rankGroupMembers)
-      .where(
-        and(
-          eq(rankGroupMembers.userId, senderId),
-          eq(rankGroupMembers.groupId, groupId)
-        )
-      )
-      .limit(1);
+    const membershipResult = await db.execute(sql`
+      SELECT id FROM rank_group_members 
+      WHERE "userId" = ${senderId} AND "groupId" = ${groupId}
+      LIMIT 1
+    `);
 
-    if (membership.length === 0) {
+    if (membershipResult.rows.length === 0) {
       return { success: false, message: 'User is not a member of this group' };
     }
 
     // Insert message
-    const result = await db.insert(rankGroupMessages).values({
-      senderId,
-      groupId,
-      message,
-      messageType,
-      isAnnouncement
-    }).returning();
+    const result = await db.execute(sql`
+      INSERT INTO rank_group_messages ("senderId", "groupId", message, "messageType", "isAnnouncement")
+      VALUES (${senderId}, ${groupId}, ${message}, ${messageType}, ${isAnnouncement})
+      RETURNING *
+    `);
 
-    return { success: true, message: 'Message sent successfully', data: result[0] };
+    return { success: true, message: 'Message sent successfully', data: result.rows[0] };
   } catch (error) {
     console.error('Error sending rank group message:', error);
     throw error;
@@ -244,44 +219,51 @@ export async function sendRankGroupMessage(
 export async function getRankGroupMessages(groupId: string, userId: string, limit: number = 50, offset: number = 0) {
   try {
     // Verify user is a member of the group
-    const membership = await db
-      .select()
-      .from(rankGroupMembers)
-      .where(
-        and(
-          eq(rankGroupMembers.userId, userId),
-          eq(rankGroupMembers.groupId, groupId)
-        )
-      )
-      .limit(1);
+    const membershipResult = await db.execute(sql`
+      SELECT id FROM rank_group_members 
+      WHERE "userId" = ${userId} AND "groupId" = ${groupId}
+      LIMIT 1
+    `);
 
-    if (membership.length === 0) {
+    if (membershipResult.rows.length === 0) {
       return { success: false, message: 'User is not a member of this group' };
     }
 
     // Get messages with sender info
-    const messages = await db
-      .select({
-        id: rankGroupMessages.id,
-        message: rankGroupMessages.message,
-        messageType: rankGroupMessages.messageType,
-        isAnnouncement: rankGroupMessages.isAnnouncement,
-        createdAt: rankGroupMessages.createdAt,
-        sender: {
-          id: users.id,
-          fullName: users.fullName,
-          rank: users.rank,
-          maritimeRank: users.maritimeRank
-        }
-      })
-      .from(rankGroupMessages)
-      .innerJoin(users, eq(rankGroupMessages.senderId, users.id))
-      .where(eq(rankGroupMessages.groupId, groupId))
-      .orderBy(sql`${rankGroupMessages.createdAt} DESC`)
-      .limit(limit)
-      .offset(offset);
+    const messagesResult = await db.execute(sql`
+      SELECT 
+        rgm.id,
+        rgm.message,
+        rgm."messageType",
+        rgm."isAnnouncement",
+        rgm."createdAt",
+        u.id as "senderId",
+        u.full_name as "senderFullName",
+        u.rank as "senderRank",
+        u.maritime_rank as "senderMaritimeRank"
+      FROM rank_group_messages rgm
+      INNER JOIN users u ON rgm."senderId" = u.id
+      WHERE rgm."groupId" = ${groupId}
+      ORDER BY rgm."createdAt" DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `);
 
-    return { success: true, data: messages.reverse() }; // Reverse to show oldest first
+    // Transform the data to match the expected format
+    const messages = messagesResult.rows.map(row => ({
+      id: row.id,
+      message: row.message,
+      messageType: row.messageType,
+      isAnnouncement: row.isAnnouncement,
+      createdAt: row.createdAt,
+      sender: {
+        id: row.senderId,
+        fullName: row.senderFullName,
+        rank: row.senderRank,
+        maritimeRank: row.senderMaritimeRank
+      }
+    })).reverse(); // Reverse to show oldest first
+
+    return { success: true, data: messages };
   } catch (error) {
     console.error('Error fetching rank group messages:', error);
     throw error;
@@ -291,17 +273,16 @@ export async function getRankGroupMessages(groupId: string, userId: string, limi
 // Auto-assign users to rank groups based on their maritime rank
 export async function autoAssignUserToRankGroups(userId: string) {
   try {
-    const user = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
+    const userResult = await db.execute(sql`
+      SELECT id, maritime_rank, rank FROM users WHERE id = ${userId} LIMIT 1
+    `);
 
-    if (user.length === 0) {
+    if (userResult.rows.length === 0) {
       return { success: false, message: 'User not found' };
     }
 
-    const userRank = user[0].maritimeRank?.toLowerCase() || user[0].rank?.toLowerCase() || '';
+    const user = userResult.rows[0];
+    const userRank = (user.maritime_rank?.toLowerCase() || user.rank?.toLowerCase() || '');
     
     // Mapping rules for auto-assignment
     const rankMappings = [
@@ -318,14 +299,12 @@ export async function autoAssignUserToRankGroups(userId: string) {
     const assignedGroups = [];
     
     // Always assign to Marine Personnel
-    const marinePersonnelGroup = await db
-      .select()
-      .from(rankGroups)
-      .where(eq(rankGroups.name, 'Marine Personnel'))
-      .limit(1);
+    const marinePersonnelResult = await db.execute(sql`
+      SELECT id FROM rank_groups WHERE name = 'Marine Personnel' LIMIT 1
+    `);
 
-    if (marinePersonnelGroup.length > 0) {
-      const joinResult = await joinRankGroup(userId, marinePersonnelGroup[0].id);
+    if (marinePersonnelResult.rows.length > 0) {
+      const joinResult = await joinRankGroup(userId, marinePersonnelResult.rows[0].id);
       if (joinResult.success) {
         assignedGroups.push('Marine Personnel');
       }
@@ -336,14 +315,12 @@ export async function autoAssignUserToRankGroups(userId: string) {
       const matchFound = mapping.keywords.some(keyword => userRank.includes(keyword));
       
       if (matchFound) {
-        const group = await db
-          .select()
-          .from(rankGroups)
-          .where(eq(rankGroups.name, mapping.groupName))
-          .limit(1);
+        const groupResult = await db.execute(sql`
+          SELECT id FROM rank_groups WHERE name = ${mapping.groupName} LIMIT 1
+        `);
 
-        if (group.length > 0) {
-          const joinResult = await joinRankGroup(userId, group[0].id);
+        if (groupResult.rows.length > 0) {
+          const joinResult = await joinRankGroup(userId, groupResult.rows[0].id);
           if (joinResult.success) {
             assignedGroups.push(mapping.groupName);
           }
