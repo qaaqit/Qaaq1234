@@ -40,33 +40,13 @@ export default function Profile() {
   const [, setLocation] = useLocation();
   const [isEditing, setIsEditing] = useState(false);
 
-  // Redirect to login if not authenticated (using useEffect to avoid render-time state updates)
-  useEffect(() => {
-    if (!authLoading && !authUser) {
-      setLocation('/');
-    }
-  }, [authLoading, authUser, setLocation]);
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="flex items-center gap-2">
-          <RefreshCw className="animate-spin" />
-          <span>Loading...</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (!authUser) {
-    return null;
-  }
-
-  // Fetch user profile data
-  const { data: profile, isLoading } = useQuery<User>({
+  // Always call useQuery hook
+  const { data: profile, isLoading: profileLoading } = useQuery<User>({
     queryKey: ['/api/users/profile'],
+    enabled: !!authUser, // Only fetch when user is authenticated
   });
 
+  // Always call useForm hook
   const form = useForm<ProfileUpdate>({
     resolver: zodResolver(profileUpdateSchema),
     values: profile ? {
@@ -85,7 +65,7 @@ export default function Profile() {
     },
   });
 
-  // Update profile mutation
+  // Always call useMutation hook
   const updateProfileMutation = useMutation({
     mutationFn: async (data: ProfileUpdate) => {
       return apiRequest('/api/users/profile', 'PUT', data);
@@ -107,11 +87,19 @@ export default function Profile() {
     },
   });
 
+  // Redirect to login if not authenticated (using useEffect to avoid render-time state updates)
+  useEffect(() => {
+    if (!authLoading && !authUser) {
+      setLocation('/');
+    }
+  }, [authLoading, authUser, setLocation]);
+
   const onSubmit = (data: ProfileUpdate) => {
     updateProfileMutation.mutate(data);
   };
 
-  if (isLoading) {
+  // Show loading state
+  if (authLoading || profileLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="flex items-center gap-2">
@@ -122,11 +110,26 @@ export default function Profile() {
     );
   }
 
+  // Show error state if not authenticated
+  if (!authUser) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
+          <p className="text-gray-600 mb-4">Please log in to access your profile.</p>
+          <Button onClick={() => setLocation('/')}>Go to Login</Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if profile not found
   if (!profile) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Profile Not Found</h1>
+          <p className="text-gray-600 mb-4">Unable to load your profile information.</p>
           <Button onClick={() => setLocation('/')}>Go Home</Button>
         </div>
       </div>
@@ -150,11 +153,9 @@ export default function Profile() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {profile && (
-                <Badge variant="default" className="bg-ocean-teal text-white">
-                  {profile.isVerified ? "Verified" : "Pending Verification"}
-                </Badge>
-              )}
+              <Badge variant="default" className="bg-ocean-teal text-white">
+                {profile.isVerified ? "Verified" : "Pending Verification"}
+              </Badge>
               {!isEditing ? (
                 <Button onClick={() => setIsEditing(true)}>
                   <UserIcon size={16} className="mr-2" />
