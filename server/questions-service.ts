@@ -180,8 +180,6 @@ export async function getQuestionAnswers(questionId: number): Promise<any[]> {
       LEFT JOIN users u ON u.id = a.author_id
       WHERE a.question_id = $1 AND a.is_hidden = false
       ORDER BY 
-        a.is_marked_as_answer DESC,
-        a.engagement_score DESC,
         a.created_at ASC
     `, [questionId]);
     

@@ -189,7 +189,10 @@ export function QuestionsTab() {
                           {getInitials(question.author_name)}
                         </AvatarFallback>
                       </Avatar>
-                      <div>
+                      <div onClick={(e) => {
+                        e.stopPropagation();
+                        window.location.href = `/user/${question.author_id}`;
+                      }} className="cursor-pointer hover:bg-gray-50 p-1 rounded">
                         <h4 className="font-medium text-gray-900">
                           <span className="text-gray-500 mr-2">#{question.id}</span>
                           {question.author_name}

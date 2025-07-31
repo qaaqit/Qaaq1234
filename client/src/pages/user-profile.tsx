@@ -39,7 +39,7 @@ export default function UserProfile() {
   const [, navigate] = useLocation();
 
   const { data: profile, isLoading, error } = useQuery<UserProfile>({
-    queryKey: ['/api/users', userId, 'profile'],
+    queryKey: [`/api/users/${userId}/questions`],
     enabled: !!userId,
   });
 

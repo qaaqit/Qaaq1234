@@ -1381,6 +1381,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user profile and questions
+  app.get('/api/users/:userId/questions', authenticateToken, async (req, res) => {
+    try {
+      const userId = req.params.userId;
+      
+      const { getQuestionsByUserId, getUserProfile } = await import('./user-questions-service');
+      
+      const [profile, questionsData] = await Promise.all([
+        getUserProfile(userId),
+        getQuestionsByUserId(userId)
+      ]);
+      
+      if (!profile) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      res.json({
+        user: profile,
+        questions: questionsData.questions,
+        total: questionsData.total
+      });
+    } catch (error) {
+      console.error('Error fetching user questions:', error);
+      res.status(500).json({ error: 'Failed to fetch user questions' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
