@@ -274,7 +274,7 @@ export async function getRankGroupMessages(groupId: string, userId: string, limi
 export async function autoAssignUserToRankGroups(userId: string) {
   try {
     const userResult = await db.execute(sql`
-      SELECT id, maritime_rank, rank FROM users WHERE id = ${userId} LIMIT 1
+      SELECT id, maritime_rank FROM users WHERE id = ${userId} LIMIT 1
     `);
 
     if (userResult.rows.length === 0) {
@@ -282,7 +282,7 @@ export async function autoAssignUserToRankGroups(userId: string) {
     }
 
     const user = userResult.rows[0];
-    const userRank = ((user.maritime_rank as string)?.toLowerCase() || (user.rank as string)?.toLowerCase() || '');
+    const userRank = (user.maritime_rank as string)?.toLowerCase() || '';
     
     // Mapping rules for auto-assignment
     const rankMappings = [
