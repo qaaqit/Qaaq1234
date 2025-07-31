@@ -122,23 +122,17 @@ const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: numbe
 };
 
 export default function UsersMap({ showUsers = false, searchQuery = "", showNearbyCard = false, onRedDotClick }: UsersMapProps) {
-  const [bounds, setBounds] = useState<LatLngBounds | null>(null);
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
-  const [nearbyUsers, setNearbyUsers] = useState<(MapUser & { distance: number })[]>([]);
-  const [mapRadius, setMapRadius] = useState<number>(50); // Initial 50km radius
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [showDropAnimation, setShowDropAnimation] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<MapUser | null>(null); // Track selected user for coordinate display
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedUser, setSelectedUser] = useState<MapUser | null>(null);
   const { user } = useAuth();
 
-  // Fetch up to 50 random users for anchor pin display
+  // Fetch all users for display on map
   const { data: users = [], isLoading } = useQuery<MapUser[]>({
-    queryKey: ['/api/users/random'],
+    queryKey: ['/api/users/all'],
     staleTime: 60000, // 1 minute
-    enabled: true, // Always fetch users to show pins from start
+    enabled: true,
     queryFn: async () => {
-      const response = await fetch('/api/users/random?limit=50');
+      const response = await fetch('/api/users/random?limit=100'); // Get more users
       if (!response.ok) throw new Error('Failed to fetch users');
       return response.json();
     }
@@ -170,105 +164,37 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
     }
   }, [user?.id, userLocation]);
 
-  // Fetch nearby users when red dot is clicked with animation
-  useEffect(() => {
-    if (showNearbyCard && userLocation) {
-      const fetchNearbyUsers = async () => {
-        try {
-          console.log(`Red dot clicked - starting animation sequence`);
-          setIsAnimating(true);
-          
-          // Start zoom animation first
-          setTimeout(() => {
-            setShowDropAnimation(true);
-          }, 500);
-          
-          console.log(`Fetching nearby users for red dot click at: ${userLocation.lat}, ${userLocation.lng}`);
-          const response = await fetch(`/api/users/nearby?lat=${userLocation.lat}&lng=${userLocation.lng}&mode=proximity`);
-          if (response.ok) {
-            const proximityUsers = await response.json();
-            console.log(`Received ${proximityUsers.length} nearby users for card display`);
-            
-            // Delay showing users to allow animation to complete
-            setTimeout(() => {
-              setNearbyUsers(proximityUsers);
-              setIsAnimating(false);
-            }, 2000);
-          }
-        } catch (error) {
-          console.error('Error fetching nearby users:', error);
-          setIsAnimating(false);
-        }
+  // Scatter overlapping pins by ±50km unless device location is available
+  const scatterPin = (user: MapUser, baseLatitude: number, baseLongitude: number) => {
+    // If user has device location or is online, don't scatter
+    if (user.isOnline || user.deviceLatitude || user.deviceLongitude) {
+      return {
+        lat: user.deviceLatitude || user.latitude,
+        lng: user.deviceLongitude || user.longitude
       };
+    }
+    
+    // Check if multiple users at same location - scatter them
+    const sameLocationUsers = users.filter(u => 
+      Math.abs(u.latitude - baseLatitude) < 0.001 && 
+      Math.abs(u.longitude - baseLongitude) < 0.001
+    );
+    
+    if (sameLocationUsers.length > 1) {
+      // Add random offset within 50km (approximately 0.45 degrees)
+      const offsetLat = (Math.random() - 0.5) * 0.9; // ±0.45 degrees ≈ ±50km
+      const offsetLng = (Math.random() - 0.5) * 0.9;
       
-      fetchNearbyUsers();
-    } else {
-      setShowDropAnimation(false);
-      setIsAnimating(false);
-    }
-  }, [showNearbyCard, userLocation]);
-
-  // Handle red dot click animation
-  const handleRedDotClick = () => {
-    console.log('🔴 RED DOT ANIMATION STARTING!');
-    
-    // Start animations
-    setIsAnimating(true);
-    setShowDropAnimation(true);
-    
-    // Stop scanner animation
-    const scanner = document.querySelector('.radar-animation');
-    if (scanner) {
-      (scanner as HTMLElement).style.display = 'none';
+      return {
+        lat: baseLatitude + offsetLat,
+        lng: baseLongitude + offsetLng
+      };
     }
     
-    // Animate map zoom
-    const mapContainer = document.querySelector('.leaflet-container');
-    if (mapContainer) {
-      (mapContainer as HTMLElement).style.transition = 'transform 1.5s ease-in-out';
-      (mapContainer as HTMLElement).style.transform = 'scale(1.2)';
-      
-      setTimeout(() => {
-        (mapContainer as HTMLElement).style.transform = 'scale(1)';
-      }, 1500);
-    }
-    
-    // Trigger anchor drop animations
-    setTimeout(() => {
-      const anchors = document.querySelectorAll('.custom-anchor-marker div');
-      anchors.forEach((anchor, index) => {
-        const el = anchor as HTMLElement;
-        el.style.opacity = '0';
-        el.style.transform = 'translateY(-100px) rotate(180deg)';
-        el.style.transition = 'all 1s ease-out';
-        
-        setTimeout(() => {
-          el.style.opacity = '1';
-          el.style.transform = 'translateY(0) rotate(0deg)';
-        }, index * 100);
-      });
-    }, 500);
-    
-    // Trigger parent callback
-    if (onRedDotClick) {
-      onRedDotClick();
-    }
-    
-    // Fetch nearby users
-    if (userLocation) {
-      fetch(`/api/users/nearby?lat=${userLocation.lat}&lng=${userLocation.lng}&mode=proximity`)
-        .then(res => res.json())
-        .then(proximityUsers => {
-          console.log(`Received ${proximityUsers.length} nearby users`);
-          setNearbyUsers(proximityUsers);
-          setTimeout(() => setIsAnimating(false), 2000);
-        })
-        .catch(err => {
-          console.error('Error fetching nearby users:', err);
-          setIsAnimating(false);
-        });
-    }
+    return { lat: baseLatitude, lng: baseLongitude };
   };
+
+
 
   // Set map bounds to show all random users (up to 50)
   useEffect(() => {
