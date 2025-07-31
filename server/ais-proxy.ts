@@ -113,55 +113,10 @@ export class AISProxy {
         this.aisConnection?.send(JSON.stringify(subscription));
         console.log('📡 Subscribed to AIS position reports with filter:', JSON.stringify(subscription, null, 2));
         
-        // Set a timer to provide fallback ships if no real data comes in
+        // Monitor connection status
         setTimeout(() => {
-          console.log('📊 AIS Status: No real ships received in 60s, adding test ships...');
-          
-          // Send a few test ships to demonstrate the system works
-          const testShips = [
-            {
-              id: 'test_ship_1',
-              name: 'MV Global Trader',
-              latitude: 51.5074,
-              longitude: -0.1278, // London
-              speed: 12.5,
-              course: 45,
-              heading: 45,
-              mmsi: 'TEST001',
-              shipType: 70,
-              destination: 'Rotterdam',
-              eta: '',
-              callSign: 'TEST1',
-              imo: 'IMO1234567',
-              timestamp: Date.now()
-            },
-            {
-              id: 'test_ship_2',  
-              name: 'MV Ocean Pioneer',
-              latitude: 40.7128,
-              longitude: -74.0060, // New York
-              speed: 8.3,
-              course: 120,
-              heading: 115,
-              mmsi: 'TEST002',
-              shipType: 80,
-              destination: 'Hamburg',
-              eta: '',
-              callSign: 'TEST2',
-              imo: 'IMO2345678',
-              timestamp: Date.now()
-            }
-          ];
-          
-          testShips.forEach(ship => {
-            this.broadcastToClients({
-              type: 'shipUpdate',
-              ship: ship,
-              isTestData: true
-            });
-          });
-          
-        }, 60000); // After 60 seconds
+          console.log('📊 AIS Status: Connected and monitoring global ship traffic...');
+        }, 30000);
 
         // Notify all clients of connection
         this.broadcastToClients({

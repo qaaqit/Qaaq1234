@@ -212,9 +212,10 @@ export default function ShipTracker({ onShipsUpdate, bounds }: ShipTrackerProps)
 
         // Timeout for connection
         const connectionTimeout = setTimeout(() => {
-          console.log('🚢 AIS proxy connection timeout, using demo data...');
+          console.log('🚢 AIS proxy connection timeout');
           ws.close();
-          createDemoShips();
+          setError('Connection timeout');
+          setIsConnected(false);
         }, 10000);
 
         ws.onopen = () => {
@@ -263,11 +264,6 @@ export default function ShipTracker({ onShipsUpdate, bounds }: ShipTrackerProps)
               // Update ships map
               shipsRef.current.set(ship.id, ship);
               
-              // If this is test data, set error to indicate mixed data
-              if (data.isTestData && !error) {
-                setError('Live stream + test ships');
-              }
-              
               // Clean up old ships (older than 30 minutes)
               const thirtyMinutesAgo = Date.now() - (30 * 60 * 1000);
               shipsRef.current.forEach((shipData, shipId) => {
@@ -289,22 +285,20 @@ export default function ShipTracker({ onShipsUpdate, bounds }: ShipTrackerProps)
         ws.onerror = (error) => {
           clearTimeout(connectionTimeout);
           console.error('AIS proxy error:', error);
-          setError('AIS proxy connection failed');
+          setError('Connection failed');
           setIsConnected(false);
-          createDemoShips();
         };
 
         ws.onclose = () => {
           clearTimeout(connectionTimeout);
-          console.log('AIS proxy connection closed - using demo data...');
+          console.log('AIS proxy connection closed');
           setIsConnected(false);
-          createDemoShips();
         };
 
       } catch (err) {
         console.error('Failed to connect to AIS Stream:', err);
-        setError('Using demo ship data for testing');
-        createDemoShips();
+        setError('Connection failed');
+        setIsConnected(false);
       }
     };
 
