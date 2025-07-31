@@ -235,33 +235,6 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, mapType = 'r
   return (
     <div className="w-full h-full relative">
       <div ref={mapRef} className="w-full h-full" />
-      
-      {/* Google Maps Controls */}
-      <div className="absolute bottom-4 left-4 z-[1000] flex flex-col gap-2">
-        <button
-          onClick={() => mapInstanceRef.current?.setMapTypeId('roadmap')}
-          className="bg-white/90 backdrop-blur-sm px-3 py-2 rounded-lg shadow-lg text-sm font-medium hover:bg-white transition-colors"
-        >
-          Road
-        </button>
-        <button
-          onClick={() => mapInstanceRef.current?.setMapTypeId('satellite')}
-          className="bg-white/90 backdrop-blur-sm px-3 py-2 rounded-lg shadow-lg text-sm font-medium hover:bg-white transition-colors"
-        >
-          Satellite
-        </button>
-        <button
-          onClick={() => mapInstanceRef.current?.setMapTypeId('hybrid')}
-          className="bg-white/90 backdrop-blur-sm px-3 py-2 rounded-lg shadow-lg text-sm font-medium hover:bg-white transition-colors"
-        >
-          Hybrid
-        </button>
-      </div>
-
-      {/* Admin indicator */}
-      <div className="absolute top-4 right-4 z-[1000] bg-green-600/90 backdrop-blur-sm px-3 py-2 rounded-lg shadow-lg text-white text-sm font-medium">
-        🗺️ Google Maps (Admin)
-      </div>
     </div>
   );
 };
