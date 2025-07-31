@@ -746,9 +746,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async sendMessage(connectionId: string, senderId: string, message: string): Promise<ChatMessage> {
-    // Use raw SQL to avoid schema naming issues
+    // Use raw SQL to avoid schema naming issues - using correct qaaq_chat_messages table
     const result = await pool.query(`
-      INSERT INTO chat_messages (connection_id, sender_id, message, is_read, created_at)
+      INSERT INTO qaaq_chat_messages (connection_id, sender_id, message, is_read, created_at)
       VALUES ($1, $2, $3, false, NOW())
       RETURNING id, connection_id, sender_id, message, is_read, created_at
     `, [connectionId, senderId, message]);
@@ -765,10 +765,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getChatMessages(connectionId: string): Promise<ChatMessage[]> {
-    // Use raw SQL to avoid schema naming issues
+    // Use raw SQL to avoid schema naming issues - using correct qaaq_chat_messages table
     const result = await pool.query(`
       SELECT id, connection_id, sender_id, message, is_read, created_at
-      FROM chat_messages
+      FROM qaaq_chat_messages
       WHERE connection_id = $1
       ORDER BY created_at ASC
     `, [connectionId]);
@@ -785,7 +785,7 @@ export class DatabaseStorage implements IStorage {
 
   async markMessagesAsRead(connectionId: string, userId: string): Promise<void> {
     await pool.query(`
-      UPDATE chat_messages
+      UPDATE qaaq_chat_messages
       SET is_read = true
       WHERE connection_id = $1 AND sender_id != $2
     `, [connectionId, userId]);

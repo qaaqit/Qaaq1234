@@ -27,18 +27,23 @@ export default function SingleMessageChat({
 
   const sendMessageMutation = useMutation({
     mutationFn: async () => {
-      // First create connection if it doesn't exist
-      await apiRequest('/api/chat/connect', 'POST', { receiverId });
-      
-      // Then send the message (this will be handled by the backend)
-      return await apiRequest('/api/chat/send-initial', 'POST', { 
-        receiverId, 
-        message: message.trim() 
-      });
+      try {
+        // First create connection if it doesn't exist
+        await apiRequest('/api/chat/connect', 'POST', { receiverId });
+        
+        // Then send the message (this will be handled by the backend)
+        return await apiRequest('/api/chat/send-initial', 'POST', { 
+          receiverId, 
+          message: message.trim() 
+        });
+      } catch (error) {
+        console.error('Send message error:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       setMessageSent(true);
-      setMessage("");
+      setMessage(""); // Clear message on success
       toast({
         title: "Message Sent! ⚓",
         description: `Your message has been sent to ${receiverName}. They'll see it when they accept your chat request.`,
@@ -53,6 +58,8 @@ export default function SingleMessageChat({
       }, 2000);
     },
     onError: (error: any) => {
+      console.error('Message send failed:', error);
+      setMessage(""); // Clear message even on error to prevent it staying in box
       toast({
         title: "Message Failed 🌊",
         description: error.response?.data?.message || "Unable to send message. Please try again.",
@@ -69,7 +76,13 @@ export default function SingleMessageChat({
     if (!message.trim()) return;
     
     setIsSending(true);
-    sendMessageMutation.mutate();
+    try {
+      sendMessageMutation.mutate();
+    } catch (error) {
+      console.error('Error in handleSendMessage:', error);
+      setMessage(""); // Clear message box if mutation fails
+      setIsSending(false);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
