@@ -28,6 +28,9 @@ interface GoogleMapProps {
   onUserHover: (user: MapUser | null, position?: { x: number; y: number }) => void;
   onUserClick: (userId: string) => void;
   onZoomChange?: (zoom: number) => void;
+  showScanElements?: boolean;
+  scanAngle?: number;
+  radiusKm?: number;
 }
 
 declare global {
@@ -37,11 +40,13 @@ declare global {
   }
 }
 
-const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, mapType = 'roadmap', onUserHover, onUserClick, onZoomChange }) => {
+const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, mapType = 'roadmap', onUserHover, onUserClick, onZoomChange, showScanElements = false, scanAngle = 0, radiusKm = 50 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
   const userLocationMarkerRef = useRef<any>(null);
+  const scanCircleRef = useRef<any>(null);
+  const scanLineRef = useRef<any>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
 
   // Load Google Maps API
@@ -295,6 +300,77 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, mapType = 'r
     markersRef.current.push(pulseRing);
 
   }, [isMapLoaded, userLocation]);
+
+  // Add scan overlay elements (circle and rotating line)
+  useEffect(() => {
+    if (!isMapLoaded || !mapInstanceRef.current || !userLocation || !showScanElements) {
+      // Clear existing scan elements when not needed
+      if (scanCircleRef.current) {
+        scanCircleRef.current.setMap(null);
+        scanCircleRef.current = null;
+      }
+      if (scanLineRef.current) {
+        scanLineRef.current.setMap(null);
+        scanLineRef.current = null;
+      }
+      return;
+    }
+
+    // Create scan circle if not exists
+    if (!scanCircleRef.current) {
+      scanCircleRef.current = new window.google.maps.Circle({
+        center: userLocation,
+        radius: radiusKm * 1000, // Convert km to meters
+        strokeColor: '#4ade80',
+        strokeOpacity: 0.6,
+        strokeWeight: 2,
+        fillOpacity: 0,
+        map: mapInstanceRef.current,
+      });
+    } else {
+      // Update existing circle
+      scanCircleRef.current.setCenter(userLocation);
+      scanCircleRef.current.setRadius(radiusKm * 1000);
+    }
+
+    // Calculate end point of scan line based on angle
+    const earthRadius = 6371000; // Earth radius in meters
+    const distance = Math.min(radiusKm * 1000, 100000); // Limit line length
+    const bearing = (scanAngle * Math.PI) / 180; // Convert to radians
+    
+    const lat1 = (userLocation.lat * Math.PI) / 180;
+    const lng1 = (userLocation.lng * Math.PI) / 180;
+    
+    const lat2 = Math.asin(
+      Math.sin(lat1) * Math.cos(distance / earthRadius) +
+      Math.cos(lat1) * Math.sin(distance / earthRadius) * Math.cos(bearing)
+    );
+    
+    const lng2 = lng1 + Math.atan2(
+      Math.sin(bearing) * Math.sin(distance / earthRadius) * Math.cos(lat1),
+      Math.cos(distance / earthRadius) - Math.sin(lat1) * Math.sin(lat2)
+    );
+
+    const endPoint = {
+      lat: (lat2 * 180) / Math.PI,
+      lng: (lng2 * 180) / Math.PI,
+    };
+
+    // Create or update scan line
+    if (!scanLineRef.current) {
+      scanLineRef.current = new window.google.maps.Polyline({
+        path: [userLocation, endPoint],
+        geodesic: false,
+        strokeColor: '#4B5563',
+        strokeOpacity: 0.8,
+        strokeWeight: 3,
+        map: mapInstanceRef.current,
+      });
+    } else {
+      scanLineRef.current.setPath([userLocation, endPoint]);
+    }
+
+  }, [isMapLoaded, userLocation, showScanElements, scanAngle, radiusKm]);
 
   return (
     <div className="w-full h-full relative">

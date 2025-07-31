@@ -475,6 +475,9 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
               setOpenChatUserId(prev => prev === userId ? null : userId);
             }}
             onZoomChange={handleZoomChange}
+            showScanElements={showScanElements}
+            scanAngle={scanAngle}
+            radiusKm={radiusKm}
           />
         ) : (
           <LeafletMap
@@ -488,71 +491,14 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
               setOpenChatUserId(prev => prev === userId ? null : userId);
             }}
             onZoomChange={handleZoomChange}
+            showScanElements={showScanElements}
+            scanAngle={scanAngle}
+            radiusKm={radiusKm}
           />
         )}
       </div>
 
-      {/* Scan Arm and Circle Overlay */}
-      {showScanElements && userLocation && (
-        <div className={`absolute top-[60px] left-0 right-0 ${nearestUsers.length > 0 ? 'bottom-[180px]' : 'bottom-0'} pointer-events-none z-[500]`}>
-          <div className="relative w-full h-full">
-            {/* 50km Circle */}
-            <div
-              className="absolute border-2 border-green-400/60 rounded-full pointer-events-none"
-              style={{
-                width: '200px',
-                height: '200px',
-                left: '50%',
-                top: '50%',
-                transform: 'translate(-50%, -50%)',
-                borderColor: '#4ade80',
-                borderWidth: '2px',
-                borderStyle: 'dashed',
-                animation: 'pulse 2s infinite'
-              }}
-            />
-            
-            {/* Rotating Scan Arm */}
-            <div
-              className="absolute pointer-events-none"
-              style={{
-                left: '50%',
-                top: '50%',
-                width: '100px',
-                height: '2px',
-                backgroundColor: '#4B5563',
-                transformOrigin: '0 50%',
-                transform: `translate(0, -50%) rotate(${scanAngle}deg)`,
-                boxShadow: '0 0 5px #4B5563',
-                opacity: 0.8
-              }}
-            />
-            
-            {/* Center Dot */}
-            <div
-              className="absolute w-2 h-2 bg-gray-600 rounded-full pointer-events-none"
-              style={{
-                left: '50%',
-                top: '50%',
-                transform: 'translate(-50%, -50%)',
-                boxShadow: '0 0 5px #4B5563'
-              }}
-            />
-            
-            {/* Scan Range Text */}
-            <div
-              className="absolute text-green-400 text-xs font-medium pointer-events-none"
-              style={{
-                left: '50%',
-                top: '50%',
-                transform: 'translate(-50%, -120px)'
-              }}
-            >
-              {radiusKm}km SCAN
-            </div>
-          </div>
-        </div>
-      )}
+
 
       {/* Bottom Panel - Top 6 Nearest Users */}
       {nearestUsers.length > 0 && (

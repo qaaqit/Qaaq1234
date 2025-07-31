@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMapEvents, Circle, Polyline } from 'react-leaflet';
 import { LatLngBounds, divIcon } from 'leaflet';
 
 interface MapUser {
@@ -29,9 +29,12 @@ interface LeafletMapProps {
   onUserHover: (user: MapUser | null, position?: { x: number; y: number }) => void;
   onUserClick: (userId: string) => void;
   onZoomChange?: (zoom: number) => void;
+  showScanElements?: boolean;
+  scanAngle?: number;
+  radiusKm?: number;
 }
 
-const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, onUserHover, onUserClick, onZoomChange }) => {
+const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, onUserHover, onUserClick, onZoomChange, showScanElements = false, scanAngle = 0, radiusKm = 50 }) => {
   const [bounds, setBounds] = useState<LatLngBounds | null>(null);
 
   const createCustomIcon = (user: MapUser, isOnlineWithLocation = false) => {
@@ -90,8 +93,37 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, onUserHove
     return null;
   };
 
+  // Calculate scan line end point
+  const getScanLineEndPoint = () => {
+    if (!userLocation || !showScanElements) return null;
+    
+    const distance = radiusKm; // km
+    const bearing = scanAngle; // degrees
+    
+    const R = 6371; // Earth radius in km
+    const lat1 = (userLocation.lat * Math.PI) / 180;
+    const lng1 = (userLocation.lng * Math.PI) / 180;
+    const brng = (bearing * Math.PI) / 180;
+    
+    const lat2 = Math.asin(
+      Math.sin(lat1) * Math.cos(distance / R) +
+      Math.cos(lat1) * Math.sin(distance / R) * Math.cos(brng)
+    );
+    
+    const lng2 = lng1 + Math.atan2(
+      Math.sin(brng) * Math.sin(distance / R) * Math.cos(lat1),
+      Math.cos(distance / R) - Math.sin(lat1) * Math.sin(lat2)
+    );
+    
+    return {
+      lat: (lat2 * 180) / Math.PI,
+      lng: (lng2 * 180) / Math.PI,
+    };
+  };
+
   // Use user location as default center, fallback to Mumbai
   const defaultCenter: [number, number] = userLocation ? [userLocation.lat, userLocation.lng] : [19.076, 72.8777];
+  const scanEndPoint = getScanLineEndPoint();
 
   return (
     <div className="w-full h-full relative">
@@ -109,6 +141,36 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, onUserHove
         />
         
         <MapEventHandler />
+
+        {/* Scan Circle */}
+        {showScanElements && userLocation && (
+          <Circle
+            center={[userLocation.lat, userLocation.lng]}
+            radius={radiusKm * 1000} // Convert km to meters
+            pathOptions={{
+              color: '#4ade80',
+              weight: 2,
+              opacity: 0.6,
+              fillOpacity: 0,
+              dashArray: '5, 5'
+            }}
+          />
+        )}
+
+        {/* Scan Line */}
+        {showScanElements && userLocation && scanEndPoint && (
+          <Polyline
+            positions={[
+              [userLocation.lat, userLocation.lng],
+              [scanEndPoint.lat, scanEndPoint.lng]
+            ]}
+            pathOptions={{
+              color: '#4B5563',
+              weight: 3,
+              opacity: 0.8
+            }}
+          />
+        )}
 
         {/* User markers with anchor pins */}
         {users.map((user) => {
