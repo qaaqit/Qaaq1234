@@ -5,6 +5,7 @@ import { storage } from "./storage";
 import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, insertChatConnectionSchema, insertChatMessageSchema } from "@shared/schema";
 import { sendVerificationEmail } from "./services/email";
 import { pool } from "./db";
+import { getQuestions, searchQuestions } from "./questions-service";
 
 // Extend Express Request type
 declare global {
@@ -1313,6 +1314,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching group members:', error);
       res.status(500).json({ error: 'Failed to fetch group members' });
+    }
+  });
+
+  // Get questions with pagination
+  app.get('/api/questions', authenticateToken, async (req, res) => {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const search = req.query.search as string;
+      
+      console.log(`API: Fetching questions page ${page}, limit ${limit}, search: ${search || 'none'}`);
+      
+      let result;
+      if (search && search.trim() !== '') {
+        result = await searchQuestions(search, page, limit);
+      } else {
+        result = await getQuestions(page, limit);
+      }
+      
+      console.log(`API: Returning ${result.questions.length} questions, total: ${result.total}`);
+      res.json(result);
+    } catch (error) {
+      console.error('Error fetching questions:', error);
+      res.status(500).json({ error: 'Failed to fetch questions' });
     }
   });
 

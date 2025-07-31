@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import QChatWindow from "@/components/qchat-window";
 import UserDropdown from "@/components/user-dropdown";
+import { QuestionsTab } from "@/components/questions-tab";
 import type { ChatConnection, User as UserType } from "@shared/schema";
 
 interface ExtendedChatConnection extends ChatConnection {
@@ -490,26 +491,8 @@ export default function DMPage() {
         )}
           </TabsContent>
 
-          <TabsContent value="questions" className="space-y-6">
-            <Card className="border-2 border-ocean-teal/20">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 text-navy">
-                  <MessageCircle size={20} />
-                  <span>Recent Questions</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <div className="mx-auto w-16 h-16 bg-gradient-to-r from-navy to-blue-800 rounded-full flex items-center justify-center mb-4">
-                    <MessageCircle size={32} className="text-white" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Questions Coming Soon</h3>
-                  <p className="text-gray-600">
-                    QOI GPT Q&A functionality will be available here soon
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+          <TabsContent value="questions" className="space-y-4">
+            <QuestionsTab />
           </TabsContent>
         </Tabs>
       </div>
