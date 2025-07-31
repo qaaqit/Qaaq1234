@@ -122,7 +122,8 @@ export async function getQAAQUsersFromNotion() {
         try {
             response = await notion.databases.query({
                 database_id: userDatabase.id,
-                page_size: 100
+                page_size: 100,
+                start_cursor: undefined
             });
         } catch (queryError) {
             console.log('Simple query failed, trying without any filters or sorts');
@@ -137,9 +138,12 @@ export async function getQAAQUsersFromNotion() {
             const properties = page.properties;
             
             // Debug log the first few users to understand the structure
-            if (index < 3) {
+            if (index < 5) {
                 console.log(`User ${index + 1} properties:`, Object.keys(properties));
                 console.log(`Sample property structures:`, JSON.stringify(properties, null, 2).substring(0, 500));
+                
+                // Log specific WhatsApp field to debug
+                console.log(`WhatsApp field for user ${index + 1}:`, JSON.stringify(properties["WhatsAppNumber"], null, 2));
             }
             
             // Based on your screenshot, the structure appears to be:
@@ -149,7 +153,17 @@ export async function getQAAQUsersFromNotion() {
             
             // Extract data from the actual Notion field structure
             const originalName = properties["Name"]?.title?.[0]?.plain_text || "";
-            const whatsappNumber = properties["WhatsAppNumber"]?.rich_text?.[0]?.plain_text || "";
+            
+            // Try multiple field types for WhatsApp number
+            const whatsappNumber = properties["WhatsAppNumber"]?.phone_number || 
+                                  properties["WhatsAppNumber"]?.rich_text?.[0]?.plain_text || 
+                                  properties["WhatsAppNumber"]?.phone ||
+                                  properties["WhatsApp Number"]?.phone_number ||
+                                  properties["WhatsApp Number"]?.rich_text?.[0]?.plain_text ||
+                                  properties["Phone"]?.phone_number ||
+                                  properties["Phone"]?.rich_text?.[0]?.plain_text ||
+                                  "";
+                                  
             const homeCity = properties["CurrentCity"]?.rich_text?.[0]?.plain_text || "";
             const email = properties["Email"]?.email || "";
             const rank = properties["MaritimeRank"]?.select?.name || "Maritime Professional";
@@ -188,7 +202,7 @@ export async function getQAAQUsersFromNotion() {
             return {
                 id: cleanWhatsappNumber || email || `user-${index}`,
                 fullName,
-                email: email || `${uniqueName?.toLowerCase().replace(/\s/g, '.')}@qaaq.com`,
+                email: email || `${fullName?.toLowerCase().replace(/\s/g, '.')}@qaaq.com`,
                 password: '',
                 needsPasswordChange: null,
                 userType: 'sailor',
@@ -223,7 +237,17 @@ export async function getQAAQUsersFromNotion() {
             user.latitude !== 0 || user.longitude !== 0
         );
         
-        console.log(`Retrieved ${users.length} total users from Notion, ${validUsers.length} with valid city coordinates`);
+        // Count unique WhatsApp numbers
+        const uniqueWhatsAppNumbers = new Set(
+            users
+                .map(u => u.whatsappNumber)
+                .filter(num => num && num.length > 5)
+        );
+        
+        console.log(`Retrieved ${users.length} total users from Notion`);
+        console.log(`Found ${uniqueWhatsAppNumbers.size} unique WhatsApp numbers`);
+        console.log(`${validUsers.length} users have valid city coordinates`);
+        
         return validUsers;
 
     } catch (error) {
