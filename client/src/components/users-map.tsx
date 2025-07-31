@@ -106,7 +106,6 @@ interface UsersMapProps {
   showUsers?: boolean;
   searchQuery?: string;
   showNearbyCard?: boolean;
-  onRedDotClick?: () => void;
 }
 
 // Haversine formula to calculate distance between two points
@@ -121,18 +120,22 @@ const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * c;
 };
 
-export default function UsersMap({ showUsers = false, searchQuery = "", showNearbyCard = false, onRedDotClick }: UsersMapProps) {
+export default function UsersMap({ showUsers = false, searchQuery = "", showNearbyCard = false }: UsersMapProps) {
+  const [bounds, setBounds] = useState<LatLngBounds | null>(null);
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
-  const [selectedUser, setSelectedUser] = useState<MapUser | null>(null);
+  const [nearbyUsers, setNearbyUsers] = useState<(MapUser & { distance: number })[]>([]);
+  const [mapRadius, setMapRadius] = useState<number>(50); // Initial 50km radius
+  const [selectedUser, setSelectedUser] = useState<MapUser | null>(null); // Track selected user for coordinate display
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const { user } = useAuth();
 
-  // Fetch all users for display on map
+  // Fetch up to 50 random users for anchor pin display
   const { data: users = [], isLoading } = useQuery<MapUser[]>({
-    queryKey: ['/api/users/all'],
+    queryKey: ['/api/users/random'],
     staleTime: 60000, // 1 minute
-    enabled: true,
+    enabled: true, // Always fetch users to show pins from start
     queryFn: async () => {
-      const response = await fetch('/api/users/random?limit=100'); // Get more users
+      const response = await fetch('/api/users/random?limit=50');
       if (!response.ok) throw new Error('Failed to fetch users');
       return response.json();
     }
@@ -164,37 +167,26 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
     }
   }, [user?.id, userLocation]);
 
-  // Scatter overlapping pins by ±50km unless device location is available
-  const scatterPin = (user: MapUser, baseLatitude: number, baseLongitude: number) => {
-    // If user has device location or is online, don't scatter
-    if (user.isOnline || user.deviceLatitude || user.deviceLongitude) {
-      return {
-        lat: user.deviceLatitude || user.latitude,
-        lng: user.deviceLongitude || user.longitude
+  // Fetch nearby users when red dot is clicked
+  useEffect(() => {
+    if (showNearbyCard && userLocation) {
+      const fetchNearbyUsers = async () => {
+        try {
+          console.log(`Fetching nearby users for red dot click at: ${userLocation.lat}, ${userLocation.lng}`);
+          const response = await fetch(`/api/users/nearby?lat=${userLocation.lat}&lng=${userLocation.lng}&mode=proximity`);
+          if (response.ok) {
+            const proximityUsers = await response.json();
+            console.log(`Received ${proximityUsers.length} nearby users for card display`);
+            setNearbyUsers(proximityUsers);
+          }
+        } catch (error) {
+          console.error('Error fetching nearby users:', error);
+        }
       };
-    }
-    
-    // Check if multiple users at same location - scatter them
-    const sameLocationUsers = users.filter(u => 
-      Math.abs(u.latitude - baseLatitude) < 0.001 && 
-      Math.abs(u.longitude - baseLongitude) < 0.001
-    );
-    
-    if (sameLocationUsers.length > 1) {
-      // Add random offset within 50km (approximately 0.45 degrees)
-      const offsetLat = (Math.random() - 0.5) * 0.9; // ±0.45 degrees ≈ ±50km
-      const offsetLng = (Math.random() - 0.5) * 0.9;
       
-      return {
-        lat: baseLatitude + offsetLat,
-        lng: baseLongitude + offsetLng
-      };
+      fetchNearbyUsers();
     }
-    
-    return { lat: baseLatitude, lng: baseLongitude };
-  };
-
-
+  }, [showNearbyCard, userLocation]);
 
   // Set map bounds to show all random users (up to 50)
   useEffect(() => {
@@ -223,10 +215,9 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
     }
   }, [users]); // Show up to 50 random users as anchor pins
 
-  const createCustomIcon = (user: MapUser, index: number = 0) => {
+  const createCustomIcon = (user: MapUser) => {
     // Green for selected user, otherwise navy blue for sailors or ocean teal for locals
     const color = selectedUser?.id === user.id ? '#22c55e' : (user.userType === 'sailor' ? '#1e3a8a' : '#0891b2');
-    const animationDelay = showDropAnimation ? `${index * 0.1}s` : '0s';
     
     return divIcon({
       html: `
@@ -240,8 +231,6 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
           font-size: 24px;
           text-shadow: 1px 1px 2px rgba(255,255,255,0.9), -1px -1px 2px rgba(255,255,255,0.9);
           filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
-          animation: ${showDropAnimation ? `anchorDrop 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) ${animationDelay} forwards` : 'none'};
-          animation-fill-mode: both;
         ">
           ⚓
         </div>
@@ -277,82 +266,6 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
 
   return (
     <div className="w-full h-full overflow-hidden bg-gray-100 relative">
-      {/* Custom CSS for anchor drop animation */}
-      <style>
-        {`
-          @keyframes anchorDrop {
-            0% {
-              transform: translateY(-200vh) scale(0) rotate(360deg);
-              opacity: 0;
-            }
-            50% {
-              transform: translateY(-20px) scale(1.3) rotate(180deg);
-              opacity: 0.8;
-            }
-            70% {
-              transform: translateY(30px) scale(1.1) rotate(45deg);
-              opacity: 1;
-            }
-            85% {
-              transform: translateY(-10px) scale(1.05) rotate(10deg);
-              opacity: 1;
-            }
-            100% {
-              transform: translateY(0) scale(1) rotate(0deg);
-              opacity: 1;
-            }
-          }
-          
-          .anchor-drop-animation {
-            animation: anchorDrop 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
-          }
-          
-          .custom-anchor-marker {
-            transition: all 0.3s ease;
-          }
-          
-          .custom-anchor-marker:hover {
-            transform: scale(1.1);
-            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
-          }
-          
-          @keyframes slideInFromBottom {
-            0% {
-              transform: translateY(100px);
-              opacity: 0;
-            }
-            100% {
-              transform: translateY(0);
-              opacity: 1;
-            }
-          }
-          
-          .animate-in {
-            animation: slideInFromBottom 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-          }
-          
-          @keyframes pulse {
-            0% {
-              transform: scale(1);
-              box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
-            }
-            70% {
-              transform: scale(1.05);
-              box-shadow: 0 0 0 30px rgba(239, 68, 68, 0);
-            }
-            100% {
-              transform: scale(1);
-              box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
-            }
-          }
-          
-          @keyframes mapZoom {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.3); }
-            100% { transform: scale(1); }
-          }
-        `}
-      </style>
       {/* Coordinates Display Panel */}
       <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-[1000] bg-gray-500/80 backdrop-blur-sm px-4 py-2 rounded-lg min-w-[280px]">
         {selectedUser ? (
@@ -462,12 +375,6 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
         {userLocation && (
           <Marker
             position={[userLocation.lat, userLocation.lng]}
-            eventHandlers={{
-              click: () => {
-                console.log('🔴 MARKER CLICKED!');
-                handleRedDotClick();
-              }
-            }}
             icon={divIcon({
               html: `
                 <div style="
@@ -486,7 +393,27 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
                   position: relative;
                 " 
                 title="Press to see Who's there?"
-                class="red-dot-marker">
+                onclick="
+                  // Start 1234 animation and trigger search
+                  this.classList.add('clicked');
+                  
+                  // Stop the scanner animation
+                  const scanner = document.querySelector('.radar-animation');
+                  if (scanner) {
+                    scanner.style.display = 'none';
+                  }
+                  
+                  // Start the sequence
+                  const koihaiAnimation = this.querySelector('.koihai-sequence');
+                  if (koihaiAnimation) {
+                    koihaiAnimation.style.display = 'block';
+                  }
+                  
+                  // Trigger the search functionality after a brief delay
+                  setTimeout(() => {
+                    window.location.href = window.location.href.includes('#') ? window.location.href : window.location.href + '#koi-hai';
+                  }, 6000);
+                ">
                   📍
                   
                   <!-- 1234 Animation and Koi Hai Sequence -->
@@ -622,11 +549,11 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
         
 
         
-        {!isLoading && users.map((user, index) => (
+        {!isLoading && users.map((user) => (
           <Marker
             key={user.id}
             position={[user.latitude, user.longitude]}
-            icon={createCustomIcon(user, index)}
+            icon={createCustomIcon(user)}
             eventHandlers={{
               click: () => {
                 setSelectedUser(user);
@@ -676,34 +603,13 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
         ))}
       </MapContainer>
 
-      {/* Floating Red Dot Button for Testing */}
-      {userLocation && (
-        <button
-          onClick={handleRedDotClick}
-          className="absolute top-4 left-4 z-[1000] bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg font-semibold transition-all duration-200 hover:scale-105"
-          style={{ zIndex: 1000 }}
-        >
-          🔴 Koi Hai? (Test)
-        </button>
-      )}
-
-      {/* Animated User Cards List at Bottom */}
+      {/* Transparent User Cards List at Bottom */}
       {showNearbyCard && nearestUsers.length > 0 && (
-        <div className={`absolute bottom-4 left-4 right-4 z-[1000] transition-all duration-1000 ${
-          isAnimating ? 'transform translate-y-full opacity-0' : 'transform translate-y-0 opacity-100'
-        }`}>
-          <div className="bg-white/90 backdrop-blur-md rounded-xl shadow-2xl p-4 max-h-40 overflow-y-auto border border-white/20">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-bold text-gray-800 flex items-center">
-                <span className="mr-2 text-lg">⚓</span>
-                Nearby Maritime Professionals
-              </h3>
-              <div className="text-xs text-gray-500 bg-blue-100 px-2 py-1 rounded-full">
-                {nearestUsers.length} found
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              {nearestUsers.map((user, index) => (
+        <div className="absolute bottom-4 left-4 right-4 z-[1000]">
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg p-3 max-h-32 overflow-y-auto">
+            <h3 className="text-sm font-semibold text-gray-800 mb-2">Nearby Maritime Professionals</h3>
+            <div className="grid grid-cols-3 gap-2">
+              {nearestUsers.map((user) => (
                 <div
                   key={user.id}
                   onClick={() => {
@@ -713,46 +619,28 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
                       setSelectedUser(user);
                     }
                   }}
-                  className={`p-3 rounded-lg cursor-pointer transition-all duration-300 transform hover:scale-105 animate-in slide-in-from-bottom ${
+                  className={`p-2 rounded-md cursor-pointer transition-all ${
                     selectedUser?.id === user.id 
-                      ? 'bg-gradient-to-br from-green-100 to-green-200 border-2 border-green-500 shadow-lg' 
-                      : 'bg-gradient-to-br from-white/70 to-white/50 hover:from-white/90 hover:to-white/70 border border-gray-200 shadow-md'
+                      ? 'bg-green-100 border-2 border-green-500' 
+                      : 'bg-white/50 hover:bg-white/70 border border-gray-200'
                   }`}
-                  style={{
-                    animationDelay: `${index * 100}ms`,
-                    animationDuration: '600ms'
-                  }}
                 >
-                  <div className="text-xs font-bold text-gray-900 truncate mb-1">
+                  <div className="text-xs font-medium text-gray-900 truncate">
                     {user.fullName}
                   </div>
-                  <div className="text-xs text-gray-600 truncate mb-1">
+                  <div className="text-xs text-gray-600 truncate">
                     {user.rank ? getRankAbbreviation(user.rank) : 'Maritime Professional'}
                     {user.questionCount !== undefined && 
-                      <span className="text-blue-600 font-bold ml-1 bg-blue-50 px-1 rounded">
+                      <span className="text-blue-600 font-medium ml-1">
                         {user.questionCount}Q
                       </span>
                     }
                   </div>
-                  <div className="text-xs text-gray-500 font-medium">
-                    📍 {user.distance?.toFixed(1)}km away
+                  <div className="text-xs text-gray-500">
+                    {user.distance?.toFixed(1)}km away
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Loading Animation Overlay */}
-      {isAnimating && (
-        <div className="absolute inset-0 z-[1001] bg-black/20 backdrop-blur-sm flex items-center justify-center">
-          <div className="bg-white/95 rounded-xl p-6 shadow-2xl text-center">
-            <div className="text-4xl mb-4 animate-bounce">⚓</div>
-            <div className="text-lg font-bold text-gray-800 mb-2">Discovering Maritime Professionals</div>
-            <div className="text-sm text-gray-600">Calculating distances and finding nearby sailors...</div>
-            <div className="mt-4 flex justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
             </div>
           </div>
         </div>
