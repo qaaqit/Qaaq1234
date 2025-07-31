@@ -510,22 +510,22 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                 top: '50%',
                 width: '100px',
                 height: '2px',
-                backgroundColor: '#22c55e',
+                backgroundColor: '#4B5563',
                 transformOrigin: '0 50%',
                 transform: `translate(0, -50%) rotate(${scanAngle}deg)`,
-                boxShadow: '0 0 10px #22c55e',
+                boxShadow: '0 0 5px #4B5563',
                 opacity: 0.8
               }}
             />
             
             {/* Center Dot */}
             <div
-              className="absolute w-3 h-3 bg-green-500 rounded-full pointer-events-none"
+              className="absolute w-2 h-2 bg-gray-600 rounded-full pointer-events-none"
               style={{
                 left: '50%',
                 top: '50%',
                 transform: 'translate(-50%, -50%)',
-                boxShadow: '0 0 10px #22c55e'
+                boxShadow: '0 0 5px #4B5563'
               }}
             />
             

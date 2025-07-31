@@ -249,11 +249,11 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, mapType = 'r
       title: 'Your Location',
       icon: {
         path: window.google.maps.SymbolPath.CIRCLE,
-        scale: 12,
+        scale: 4, // One third of 12
         fillColor: '#FF4444', // Red for user location
         fillOpacity: 1,
         strokeColor: '#ffffff',
-        strokeWeight: 3,
+        strokeWeight: 1,
       },
       zIndex: 1000, // High z-index to appear above other markers
     });
@@ -264,7 +264,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, mapType = 'r
       map: mapInstanceRef.current,
       icon: {
         path: window.google.maps.SymbolPath.CIRCLE,
-        scale: 20,
+        scale: 7, // One third of 20
         fillColor: '#FF4444',
         fillOpacity: 0.2,
         strokeColor: '#FF4444',
