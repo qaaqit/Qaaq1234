@@ -871,22 +871,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get all QAAQ questions
-  app.get('/api/questions', authenticateToken, async (req, res) => {
-    try {
-      const { getAllQAAQQuestions } = await import('./qa-service');
-      const questions = await getAllQAAQQuestions();
-      
-      res.json({
-        questions,
-        total: questions.length,
-        dataSource: 'qaaq-notion'
-      });
-    } catch (error) {
-      console.error('Error fetching QAAQ questions:', error);
-      res.status(500).json({ error: 'Failed to fetch questions' });
-    }
-  });
+  // OLD ENDPOINT - COMMENTED OUT TO USE NEW QUESTIONS SERVICE
+  // app.get('/api/questions', authenticateToken, async (req, res) => {
+  //   try {
+  //     const { getAllQAAQQuestions } = await import('./qa-service');
+  //     const questions = await getAllQAAQQuestions();
+  //     
+  //     res.json({
+  //       questions,
+  //       total: questions.length,
+  //       dataSource: 'qaaq-notion'
+  //     });
+  //   } catch (error) {
+  //     console.error('Error fetching QAAQ questions:', error);
+  //     res.status(500).json({ error: 'Failed to fetch questions' });
+  //   }
+  // });
 
   // Search questions
   app.get('/api/questions/search', authenticateToken, async (req, res) => {
