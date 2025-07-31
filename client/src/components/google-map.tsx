@@ -88,6 +88,8 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
       zoom: 9,
       center: defaultCenter,
       mapTypeId: mapType,
+      mapTypeControl: false, // Hide default map type control
+      streetViewControl: false, // Hide street view control
       styles: [
         // Water bodies - light grey
         {
