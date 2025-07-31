@@ -111,10 +111,14 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, onUserHove
             plotLat = user.deviceLatitude;
             plotLng = user.deviceLongitude;
           } else {
-            // Scatter within ±50km of city location (≈ ±0.45 degrees)
+            // Use stable seed for consistent positioning based on user ID
+            const seed = user.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+            const random1 = ((seed * 9301 + 49297) % 233280) / 233280;
+            const random2 = (((seed + 1) * 9301 + 49297) % 233280) / 233280;
+            
             const scatterRadius = 0.45; // 50km ≈ 0.45 degrees
-            plotLat = user.latitude + (Math.random() - 0.5) * scatterRadius;
-            plotLng = user.longitude + (Math.random() - 0.5) * scatterRadius;
+            plotLat = user.latitude + (random1 - 0.5) * scatterRadius;
+            plotLng = user.longitude + (random2 - 0.5) * scatterRadius;
           }
           
           console.log(`⚓ Leaflet marker added for ${user.fullName} at [${plotLat}, ${plotLng}]`);

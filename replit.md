@@ -167,6 +167,15 @@ Google Maps Controls: Transparent icon-only buttons positioned in bottom-left co
 
 ## Recent Changes
 
+### Stable Pin Positioning Fix (January 31, 2025)
+- **Fixed Anchor Pin Shifting**: Resolved issue where anchor pins moved positions during hover interactions
+- **Seed-Based Coordinates**: Implemented stable positioning using user ID as seed for consistent scatter calculation
+- **Maintained Maritime Scatter**: Preserved ±50km scatter around city coordinates with stable positioning
+- **Enhanced User Experience**: Pins now stay in fixed locations across renders and interactions
+- **Consistent Map Behavior**: Applied fix to both Google Maps (admin) and Leaflet (regular users) components
+
+## Previous Changes
+
 ### Ch13 DM Tab Navigation Implementation (January 31, 2025)
 - **Tab-Based Interface**: Added "Users" and "Questions" tabs to Ch13 DM page, following Ch16 pattern
 - **Users Tab**: Moved "Top Q Professionals" list to Users tab with all existing chat connection functionality

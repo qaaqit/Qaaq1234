@@ -96,7 +96,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, onUserHover,
     markersRef.current.forEach(marker => marker.setMap(null));
     markersRef.current = [];
 
-    // Add new markers
+    // Add new markers with stable positioning
     users.forEach((user) => {
       if (!user.latitude || !user.longitude) return;
 
@@ -110,10 +110,14 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, onUserHover,
         plotLat = user.deviceLatitude;
         plotLng = user.deviceLongitude;
       } else {
-        // Scatter within ±50km of city location
+        // Use stable seed for consistent positioning based on user ID
+        const seed = user.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        const random1 = ((seed * 9301 + 49297) % 233280) / 233280;
+        const random2 = (((seed + 1) * 9301 + 49297) % 233280) / 233280;
+        
         const scatterRadius = 0.45; // degrees (roughly 50km)
-        plotLat = user.latitude + (Math.random() - 0.5) * scatterRadius;
-        plotLng = user.longitude + (Math.random() - 0.5) * scatterRadius;
+        plotLat = user.latitude + (random1 - 0.5) * scatterRadius;
+        plotLng = user.longitude + (random2 - 0.5) * scatterRadius;
       }
 
       const color = isOnlineWithLocation ? '#10B981' : // green for GPS users
