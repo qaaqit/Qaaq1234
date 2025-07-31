@@ -208,6 +208,87 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
     }
   }, [showNearbyCard, userLocation]);
 
+  // Add click listener to red dot marker after it renders
+  useEffect(() => {
+    const handleRedDotClick = () => {
+      console.log('🔴 RED DOT CLICKED via DOM!');
+      
+      // Start animations
+      setIsAnimating(true);
+      setShowDropAnimation(true);
+      
+      // Stop scanner animation
+      const scanner = document.querySelector('.radar-animation');
+      if (scanner) {
+        (scanner as HTMLElement).style.display = 'none';
+      }
+      
+      // Animate map zoom
+      const mapContainer = document.querySelector('.leaflet-container');
+      if (mapContainer) {
+        (mapContainer as HTMLElement).style.transition = 'transform 1.5s ease-in-out';
+        (mapContainer as HTMLElement).style.transform = 'scale(1.2)';
+        
+        setTimeout(() => {
+          (mapContainer as HTMLElement).style.transform = 'scale(1)';
+        }, 1500);
+      }
+      
+      // Trigger anchor drop animations
+      setTimeout(() => {
+        const anchors = document.querySelectorAll('.custom-anchor-marker div');
+        anchors.forEach((anchor, index) => {
+          const el = anchor as HTMLElement;
+          el.style.opacity = '0';
+          el.style.transform = 'translateY(-100px) rotate(180deg)';
+          el.style.transition = 'all 1s ease-out';
+          
+          setTimeout(() => {
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0) rotate(0deg)';
+          }, index * 100);
+        });
+      }, 500);
+      
+      // Trigger parent callback
+      if (onRedDotClick) {
+        onRedDotClick();
+      }
+      
+      // Fetch nearby users
+      if (userLocation) {
+        fetch(`/api/users/nearby?lat=${userLocation.lat}&lng=${userLocation.lng}&mode=proximity`)
+          .then(res => res.json())
+          .then(proximityUsers => {
+            console.log(`Received ${proximityUsers.length} nearby users`);
+            setNearbyUsers(proximityUsers);
+            setTimeout(() => setIsAnimating(false), 2000);
+          })
+          .catch(err => {
+            console.error('Error fetching nearby users:', err);
+            setIsAnimating(false);
+          });
+      }
+    };
+    
+    // Wait for DOM to render then attach click listener
+    const timer = setTimeout(() => {
+      const redDotElement = document.querySelector('.user-location-marker');
+      if (redDotElement) {
+        console.log('Attaching click listener to red dot');
+        redDotElement.addEventListener('click', handleRedDotClick);
+      }
+    }, 1000);
+    
+    return () => {
+      clearTimeout(timer);
+      const redDotElement = document.querySelector('.user-location-marker');
+      if (redDotElement) {
+        redDotElement.removeEventListener('click', handleRedDotClick);
+      }
+    };
+  }, [userLocation, onRedDotClick]);
+
   // Set map bounds to show all random users (up to 50)
   useEffect(() => {
     if (users.length > 0) {
@@ -474,67 +555,6 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
         {userLocation && (
           <Marker
             position={[userLocation.lat, userLocation.lng]}
-            eventHandlers={{
-              click: () => {
-                alert('RED DOT CLICKED! Animation starting...');
-                console.log('🔴 RED DOT CLICKED! Starting animation...');
-                setIsAnimating(true);
-                setShowDropAnimation(true);
-                
-                // Stop the scanner animation
-                const scanner = document.querySelector('.radar-animation');
-                if (scanner) {
-                  scanner.style.display = 'none';
-                }
-                
-                // Animate the map zoom
-                const mapContainer = document.querySelector('.leaflet-container');
-                if (mapContainer) {
-                  mapContainer.style.transition = 'transform 1.5s ease-in-out';
-                  mapContainer.style.transform = 'scale(1.2)';
-                  
-                  setTimeout(() => {
-                    mapContainer.style.transform = 'scale(1)';
-                  }, 1500);
-                }
-                
-                // Animate all anchor drops
-                setTimeout(() => {
-                  const anchors = document.querySelectorAll('.custom-anchor-marker div');
-                  anchors.forEach((anchor, index) => {
-                    const el = anchor as HTMLElement;
-                    el.style.opacity = '0';
-                    el.style.transform = 'translateY(-100px) rotate(180deg)';
-                    el.style.transition = 'all 1s ease-out';
-                    
-                    setTimeout(() => {
-                      el.style.opacity = '1';
-                      el.style.transform = 'translateY(0) rotate(0deg)';
-                    }, index * 100);
-                  });
-                }, 500);
-                
-                // Trigger parent callback if provided
-                if (onRedDotClick) {
-                  onRedDotClick();
-                }
-                
-                // Fetch nearby users
-                if (userLocation) {
-                  fetch(`/api/users/nearby?lat=${userLocation.lat}&lng=${userLocation.lng}&mode=proximity`)
-                    .then(res => res.json())
-                    .then(proximityUsers => {
-                      console.log(`Received ${proximityUsers.length} nearby users`);
-                      setNearbyUsers(proximityUsers);
-                      setTimeout(() => setIsAnimating(false), 2000);
-                    })
-                    .catch(err => {
-                      console.error('Error fetching nearby users:', err);
-                      setIsAnimating(false);
-                    });
-                }
-              }
-            }}
             icon={divIcon({
               html: `
                 <div style="
