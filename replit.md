@@ -19,6 +19,7 @@ Header visibility: Show white header only for admin users, regular users should 
 Premium mode: Crown icon in search box toggles premium Google Maps features, requires premium plan for non-admin users
 WhatsApp Bot: Moved from map overlay to header button next to logout for cleaner map interface
 Google Maps Controls: Transparent icon-only buttons positioned in bottom-left corner (Road/Satellite/Hybrid view toggles)
+Home Reset Button: Blue "Home" button in top-left corner resets search, filters, and returns to base map view
 
 ## System Architecture
 

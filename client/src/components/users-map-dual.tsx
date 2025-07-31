@@ -5,7 +5,7 @@ import MarineChatButton from './marine-chat-button';
 import SingleMessageChat from './single-message-chat';
 import GoogleMap from './google-map';
 import LeafletMap from './leaflet-map';
-import { ChevronDown, Filter, MapPin, Radar, Search } from 'lucide-react';
+import { ChevronDown, Filter, MapPin, Radar, Search, Home } from 'lucide-react';
 
 interface MapUser {
   id: string;
@@ -370,8 +370,28 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       {/* Compact Header with Icon Dropdowns */}
       <div className="absolute top-0 left-0 right-0 z-[1000] bg-white/95 backdrop-blur-sm border-b border-gray-200">
         <div className="flex items-center justify-between px-4 py-3">
-          {/* Left side - Search and Controls */}
+          {/* Left side - Home Reset and Search */}
           <div className="flex items-center space-x-2">
+            {/* Home Reset Button */}
+            <button
+              onClick={() => {
+                setSearchQuery('');
+                setSelectedRankCategory('everyone');
+                setShowOnlineOnly(true);
+                setShowFilterDropdown(false);
+                setShowLocationDropdown(false);
+                setShowRankDropdown(false);
+                setOpenChatUserId(null);
+                setHoveredUser(null);
+                setSelectedUser(null);
+              }}
+              className="px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-xs font-medium flex items-center space-x-1"
+              title="Reset to home view"
+            >
+              <Home size={14} />
+              <span>Home</span>
+            </button>
+            
             {/* Search Input */}
             <div className="relative">
               <input
