@@ -83,3 +83,72 @@
   background: #f5f5f5 !important;
   z-index: 1 !important;
 }
+
+/* Stable marker styles - prevent flickering */
+.custom-anchor-marker {
+  transition: none !important;
+  animation: none !important;
+  transform: none !important;
+}
+
+.custom-anchor-marker div {
+  transition: none !important;
+  animation: none !important;
+  transform: none !important;
+  will-change: auto !important;
+}
+
+.user-location-marker {
+  transition: none !important;
+  animation: none !important;
+  transform: none !important;
+}
+
+.user-location-marker div {
+  transition: none !important;
+  animation: none !important;
+  transform: none !important;
+  will-change: auto !important;
+}
+
+.custom-ship-marker {
+  transition: none !important;
+  animation: none !important;
+  transform: none !important;
+}
+
+.custom-ship-marker div {
+  transition: none !important;
+  animation: none !important;
+  transform: none !important;
+  will-change: auto !important;
+}
+
+/* Disable all leaflet animations that might cause flickering */
+.leaflet-marker-icon {
+  transition: none !important;
+  animation: none !important;
+  will-change: auto !important;
+}
+
+.leaflet-marker-shadow {
+  transition: none !important;
+  animation: none !important;
+  will-change: auto !important;
+}
+
+/* Additional anti-flickering measures */
+.leaflet-container * {
+  transition: none !important;
+  animation: none !important;
+}
+
+.leaflet-marker-pane {
+  will-change: auto !important;
+}
+
+.leaflet-marker-pane img {
+  transition: none !important;
+  animation: none !important;
+  will-change: auto !important;
+}

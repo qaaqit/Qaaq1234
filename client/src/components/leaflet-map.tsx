@@ -206,7 +206,7 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, selectedUs
           />
         )}
 
-        {/* User markers with anchor pins */}
+        {/* User markers with anchor pins - stable rendering */}
         {users.map((user) => {
           // Check if user has valid coordinates
           if (!user.latitude || !user.longitude) return null;
@@ -232,7 +232,7 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, selectedUs
             plotLng = user.longitude + (random2 - 0.5) * scatterRadius;
           }
           
-          console.log(`⚓ Leaflet marker added for ${user.fullName} at [${plotLat}, ${plotLng}]`);
+          // Reduced logging to improve performance
           
           return (
             <Marker

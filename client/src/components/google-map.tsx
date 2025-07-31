@@ -207,11 +207,19 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
     }
   }, [selectedUser]);
 
-  // Add user markers
+  // Add user markers (optimized to prevent flickering)
   useEffect(() => {
-    if (!isMapLoaded || !mapInstanceRef.current || !users.length) return;
+    if (!isMapLoaded || !mapInstanceRef.current) return;
 
-    // Clear existing markers
+    // Only clear and recreate if users array actually changed
+    const currentUserIds = markersRef.current.map(m => m.userId).sort().join(',');
+    const newUserIds = users.map(u => u.id).sort().join(',');
+    
+    if (currentUserIds === newUserIds && markersRef.current.length > 0) {
+      return; // No change in users, don't recreate markers
+    }
+
+    // Clear existing markers only when necessary
     markersRef.current.forEach(marker => marker.setMap(null));
     markersRef.current = [];
 
@@ -255,7 +263,13 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
           strokeColor: '#ffffff',
           strokeWeight: 0.5, // Reduced stroke weight proportionally
         },
+        optimized: true, // Enable marker optimization to reduce flickering
+        clickable: true,
+        zIndex: 1,
       });
+
+      // Store user ID with marker for comparison
+      (marker as any).userId = user.id;
 
       // Add hover listeners
       marker.addListener('mouseover', (e: any) => {
@@ -275,7 +289,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
       });
 
       markersRef.current.push(marker);
-      console.log(`📍 Google Maps marker added for ${user.fullName} at [${plotLat}, ${plotLng}]`);
+      // Reduced logging to improve performance
     });
 
   }, [isMapLoaded, users, onUserHover, onUserClick]);
