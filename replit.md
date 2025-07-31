@@ -167,6 +167,14 @@ Google Maps Controls: Transparent icon-only buttons positioned in bottom-left co
 
 ## Recent Changes
 
+### Automatic Radius System & Neutral Map Theme (January 31, 2025)
+- **Auto-Radius Calculation**: Implemented zoom-based radius calculation (0.1km-20000km) eliminating manual radius selector
+- **Hierarchical Rank Filtering**: Added maritime rank categories (Everyone, Junior Officers+, Senior Officers+) for professional filtering
+- **Neutral Map Theme**: Updated Google Maps styling to match Leaflet's greyish neutral colors for consistent UI
+- **Enhanced Filter Panel**: Clean interface showing online toggle, rank categories, and auto-radius display
+- **Performance Optimization**: Fixed infinite re-render loops using useMemo for filtering logic instead of useEffect
+- **Smart Zoom Logic**: Radius automatically adjusts from neighborhood (0.1km) to world level (20000km) based on map zoom
+
 ### Stable Pin Positioning Fix (January 31, 2025)
 - **Fixed Anchor Pin Shifting**: Resolved issue where anchor pins moved positions during hover interactions
 - **Seed-Based Coordinates**: Implemented stable positioning using user ID as seed for consistent scatter calculation

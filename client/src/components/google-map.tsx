@@ -77,11 +77,74 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, onUserHover,
       center: defaultCenter,
       mapTypeId: 'roadmap',
       styles: [
+        // Water bodies - light grey
         {
           featureType: 'water',
           elementType: 'geometry',
-          stylers: [{ color: '#1e3a8a' }, { lightness: 17 }],
+          stylers: [{ color: '#c9d3e0' }],
         },
+        {
+          featureType: 'water',
+          elementType: 'labels.text.fill',
+          stylers: [{ color: '#9ca0a6' }],
+        },
+        // Land areas - light neutral grey
+        {
+          featureType: 'landscape',
+          elementType: 'geometry',
+          stylers: [{ color: '#f5f5f5' }],
+        },
+        // Roads - darker grey
+        {
+          featureType: 'road',
+          elementType: 'geometry',
+          stylers: [{ color: '#e0e0e0' }],
+        },
+        {
+          featureType: 'road.highway',
+          elementType: 'geometry',
+          stylers: [{ color: '#dadada' }],
+        },
+        // Administrative boundaries - subtle grey
+        {
+          featureType: 'administrative',
+          elementType: 'geometry.stroke',
+          stylers: [{ color: '#c9c9c9' }],
+        },
+        // Country/state labels - medium grey
+        {
+          featureType: 'administrative',
+          elementType: 'labels.text.fill',
+          stylers: [{ color: '#7c7c7c' }],
+        },
+        // Cities and places - dark grey
+        {
+          featureType: 'administrative.locality',
+          elementType: 'labels.text.fill',
+          stylers: [{ color: '#5c5c5c' }],
+        },
+        // Points of interest - lighter grey
+        {
+          featureType: 'poi',
+          elementType: 'geometry',
+          stylers: [{ color: '#eeeeee' }],
+        },
+        {
+          featureType: 'poi',
+          elementType: 'labels.text.fill',
+          stylers: [{ color: '#9e9e9e' }],
+        },
+        // Transit - neutral grey
+        {
+          featureType: 'transit',
+          elementType: 'geometry',
+          stylers: [{ color: '#e8e8e8' }],
+        },
+        {
+          featureType: 'transit',
+          elementType: 'labels.text.fill',
+          stylers: [{ color: '#8a8a8a' }],
+        }
       ],
     });
 
