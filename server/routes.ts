@@ -793,6 +793,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/chat/unread-counts', authenticateToken, async (req, res) => {
+    try {
+      const unreadCounts = await storage.getUnreadMessageCounts(req.userId!);
+      res.json(unreadCounts);
+    } catch (error) {
+      console.error('Get unread counts error:', error);
+      res.status(500).json({ message: "Failed to get unread counts" });
+    }
+  });
+
   // Get nearby users - supports both proximity-based and Q-based discovery
   app.get('/api/users/nearby', async (req, res) => {
     try {

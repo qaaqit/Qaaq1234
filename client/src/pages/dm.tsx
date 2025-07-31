@@ -15,6 +15,7 @@ import { formatDistanceToNow } from "date-fns";
 import QChatWindow from "@/components/qchat-window";
 import UserDropdown from "@/components/user-dropdown";
 import { QuestionsTab } from "@/components/questions-tab";
+import MessageNotificationDot from "@/components/message-notification-dot";
 import type { ChatConnection, User as UserType } from "@shared/schema";
 
 interface ExtendedChatConnection extends ChatConnection {
@@ -307,11 +308,14 @@ export default function DMPage() {
                   return (
                     <div key={connection.id} className="flex items-center justify-between p-4 bg-white rounded-lg border border-green-200 hover:shadow-md transition-shadow">
                       <div className="flex items-center space-x-3">
-                        <Avatar className="w-12 h-12 border-2 border-green-300">
-                          <AvatarFallback className="bg-green-100 text-green-700 font-bold">
-                            {getInitials(otherUser.fullName)}
-                          </AvatarFallback>
-                        </Avatar>
+                        <div className="relative">
+                          <Avatar className="w-12 h-12 border-2 border-green-300">
+                            <AvatarFallback className="bg-green-100 text-green-700 font-bold">
+                              {getInitials(otherUser.fullName)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <MessageNotificationDot userId={otherUser.id} />
+                        </div>
                         <div>
                           <h4 className="font-semibold text-gray-900">{otherUser.fullName}</h4>
                           {otherUser.rank && (
@@ -372,11 +376,14 @@ export default function DMPage() {
                     >
                       <CardContent className="p-4">
                         <div className="flex items-start space-x-3 mb-3">
-                          <Avatar className="w-12 h-12 border-2 border-ocean-teal/30">
-                            <AvatarFallback className="bg-ocean-teal/20 text-ocean-teal font-bold">
-                              {getInitials(userProfile.fullName)}
-                            </AvatarFallback>
-                          </Avatar>
+                          <div className="relative">
+                            <Avatar className="w-12 h-12 border-2 border-ocean-teal/30">
+                              <AvatarFallback className="bg-ocean-teal/20 text-ocean-teal font-bold">
+                                {getInitials(userProfile.fullName)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <MessageNotificationDot userId={userProfile.id} />
+                          </div>
                           <div className="flex-1 min-w-0">
                             <h4 className="font-semibold text-gray-900 truncate">{userProfile.fullName}</h4>
                             {userProfile.rank && (

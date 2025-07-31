@@ -791,6 +791,30 @@ export class DatabaseStorage implements IStorage {
     `, [connectionId, userId]);
   }
 
+  async getUnreadMessageCounts(userId: string): Promise<Record<string, number>> {
+    const result = await pool.query(`
+      SELECT 
+        c.sender_id,
+        c.receiver_id,
+        COUNT(m.id) as unread_count
+      FROM chat_connections c
+      LEFT JOIN qaaq_chat_messages m ON c.id = m.connection_id
+      WHERE (c.sender_id = $1 OR c.receiver_id = $1)
+        AND m.sender_id != $1
+        AND m.is_read = false
+      GROUP BY c.sender_id, c.receiver_id, c.id
+    `, [userId]);
+    
+    const unreadCounts: Record<string, number> = {};
+    
+    result.rows.forEach(row => {
+      const otherUserId = row.sender_id === userId ? row.receiver_id : row.sender_id;
+      unreadCounts[otherUserId] = (unreadCounts[otherUserId] || 0) + parseInt(row.unread_count || '0');
+    });
+    
+    return unreadCounts;
+  }
+
   async updateUserProfile(userId: string, profileData: Partial<User>): Promise<User | undefined> {
     try {
       console.log(`Updating profile for user ${userId}:`, profileData);

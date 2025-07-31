@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import MarineChatButton from './marine-chat-button';
 import SingleMessageChat from './single-message-chat';
+import MessageNotificationDot from './message-notification-dot';
 import GoogleMap from './google-map';
 import LeafletMap from './leaflet-map';
 import { ChevronDown, Filter, MapPin, Radar, Search, Home, Map, Satellite } from 'lucide-react';
@@ -716,17 +717,22 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                 >
                   <div className="flex items-center space-x-2 mb-1 sm:mb-2">
                     {/* Touch-Friendly Profile Circle for Chat */}
-                    <div 
-                      className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-100 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-200 hover:scale-110 transition-all duration-200 border-2 border-transparent hover:border-blue-300 touch-manipulation"
-                      onClick={(e) => {
-                        e.stopPropagation(); // Prevent card click
-                        setOpenChatUserId(prev => prev === user.id ? null : user.id);
-                      }}
-                      title="Tap to open chat"
+                    <div className="relative">
+                      <div 
+                        className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-100 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-200 hover:scale-110 transition-all duration-200 border-2 border-transparent hover:border-blue-300 touch-manipulation"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent card click
+                          setOpenChatUserId(prev => prev === user.id ? null : user.id);
+                        }}
+                        title="Tap to open chat"
                     >
-                      <span className="text-xs font-medium text-blue-600">
-                        {user.fullName.split(' ').map(n => n[0]).join('').substring(0, 2)}
-                      </span>
+                        <span className="text-xs font-medium text-blue-600">
+                          {user.fullName.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                        </span>
+                      </div>
+                      
+                      {/* Message notification dot */}
+                      <MessageNotificationDot userId={user.id} />
                     </div>
                     <div className="flex-1 min-w-0 cursor-pointer">
                       <div className="text-xs sm:text-sm font-medium text-gray-900 truncate">{user.fullName}</div>
