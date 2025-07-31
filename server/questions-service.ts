@@ -140,7 +140,7 @@ export async function getQuestionById(questionId: number): Promise<Question | nu
           ELSE 'General Discussion'
         END as category,
         (SELECT COUNT(*) FROM answers a WHERE a.question_id = q.id) as answer_count,
-        q.is_anonymous,
+        false as is_anonymous,
         CASE WHEN q.is_from_whatsapp THEN 'whatsapp' ELSE 'web' END as source
       FROM questions q
       LEFT JOIN users u ON u.id = q.author_id
