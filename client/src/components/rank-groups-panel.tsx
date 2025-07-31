@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import { Users, MessageCircle, Crown, UserPlus, Send, Shield } from 'lucide-react';
+import { Users, MessageCircle, Crown, UserPlus, Send, Shield, User } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -43,6 +43,7 @@ export function RankGroupsPanel() {
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const [isAnnouncement, setIsAnnouncement] = useState(false);
+  const [showMembers, setShowMembers] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -58,6 +59,13 @@ export function RankGroupsPanel() {
     queryKey: ['/api/rank-groups', selectedGroup, 'messages'],
     enabled: !!selectedGroup,
     refetchInterval: 5000, // Refresh every 5 seconds
+  });
+
+  // Fetch members for selected group
+  const { data: membersData } = useQuery({
+    queryKey: ['/api/rank-groups', selectedGroup, 'members'],
+    enabled: !!selectedGroup,
+    refetchInterval: 10000, // Refresh every 10 seconds
   });
 
   // Join group mutation
@@ -285,41 +293,103 @@ export function RankGroupsPanel() {
           {selectedGroup && selectedGroupData ? (
             <Card className="h-[600px] flex flex-col">
               <CardHeader className="border-b">
-                <CardTitle className="flex items-center space-x-2">
-                  <MessageCircle className="h-5 w-5" />
-                  <span>{selectedGroupData.name}</span>
-                  <Badge>{(selectedGroupData as any).role || 'Admin View'}</Badge>
-                </CardTitle>
-                <CardDescription>{selectedGroupData.description}</CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center space-x-2">
+                      <MessageCircle className="h-5 w-5" />
+                      <span>{selectedGroupData.name}</span>
+                      <Badge>{(selectedGroupData as any).role || 'Admin View'}</Badge>
+                    </CardTitle>
+                    <CardDescription>{selectedGroupData.description}</CardDescription>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button
+                      variant={showMembers ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setShowMembers(!showMembers)}
+                    >
+                      <Users className="h-4 w-4 mr-1" />
+                      {selectedGroupData.memberCount} Members
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
 
-              {/* Messages */}
+              {/* Content Area - Messages or Members */}
               <CardContent className="flex-1 overflow-y-auto p-4">
-                <div className="space-y-4">
-                  {Array.isArray(messagesData) && messagesData.map((message: GroupMessage) => (
-                    <div key={message.id} className="space-y-1">
-                      <div className="flex items-center space-x-2 text-xs text-gray-500">
-                        <span className="font-medium">{message.sender.fullName}</span>
-                        {message.sender.maritimeRank && (
-                          <Badge variant="outline" className="text-xs">
-                            {message.sender.maritimeRank}
-                          </Badge>
-                        )}
-                        <span>{new Date(message.createdAt).toLocaleString()}</span>
-                        {message.isAnnouncement && (
-                          <Badge variant="secondary">Announcement</Badge>
-                        )}
-                      </div>
-                      <div className={`p-3 rounded-lg ${
-                        message.isAnnouncement 
-                          ? 'bg-blue-50 border-blue-200 border' 
-                          : 'bg-gray-50'
-                      }`}>
-                        {message.message}
-                      </div>
+                {showMembers ? (
+                  /* Members List */
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2 mb-4">
+                      <Users className="h-5 w-5" />
+                      <h3 className="font-semibold">Group Members ({Array.isArray(membersData) ? membersData.length : 0})</h3>
                     </div>
-                  ))}
-                </div>
+                    {Array.isArray(membersData) && membersData.length > 0 ? (
+                      membersData.map((member: any) => (
+                        <div key={member.id} className="flex items-center space-x-3 p-3 border rounded-lg">
+                          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                            <User className="h-5 w-5 text-blue-600" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2">
+                              <span className="font-medium">{member.fullName}</span>
+                              {member.isVerified && (
+                                <Badge variant="secondary" className="text-xs">Verified</Badge>
+                              )}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {member.maritimeRank && (
+                                <span className="font-medium">{member.maritimeRank}</span>
+                              )}
+                              {member.city && member.maritimeRank && <span> • </span>}
+                              {member.city && <span>{member.city}</span>}
+                            </div>
+                          </div>
+                          <Badge variant="outline">{member.role}</Badge>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center text-gray-500 py-8">
+                        <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>No members found in this group</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* Messages */
+                  <div className="space-y-4">
+                    {Array.isArray(messagesData) && messagesData.length > 0 ? (
+                      messagesData.map((message: GroupMessage) => (
+                        <div key={message.id} className="space-y-1">
+                          <div className="flex items-center space-x-2 text-xs text-gray-500">
+                            <span className="font-medium">{message.sender.fullName}</span>
+                            {message.sender.maritimeRank && (
+                              <Badge variant="outline" className="text-xs">
+                                {message.sender.maritimeRank}
+                              </Badge>
+                            )}
+                            <span>{new Date(message.createdAt).toLocaleString()}</span>
+                            {message.isAnnouncement && (
+                              <Badge variant="secondary">Announcement</Badge>
+                            )}
+                          </div>
+                          <div className={`p-3 rounded-lg ${
+                            message.isAnnouncement 
+                              ? 'bg-blue-50 border-blue-200 border' 
+                              : 'bg-gray-50'
+                          }`}>
+                            {message.message}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center text-gray-500 py-8">
+                        <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>No messages yet. Start the conversation!</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </CardContent>
 
               {/* Message Input */}

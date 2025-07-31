@@ -1807,6 +1807,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get rank group members
+  app.get('/api/rank-groups/:groupId/members', authenticateToken, async (req: any, res) => {
+    try {
+      const { groupId } = req.params;
+      
+      const result = await pool.query(`
+        SELECT 
+          u.id,
+          u.first_name,
+          u.last_name,
+          u.maritime_rank,
+          u.city,
+          u.is_verified,
+          rgm.role,
+          rgm."joinedAt"
+        FROM rank_group_members rgm
+        JOIN users u ON rgm."userId" = u.id
+        WHERE rgm."groupId" = $1
+        ORDER BY rgm."joinedAt" ASC
+      `, [groupId]);
+      
+      const members = result.rows.map(member => ({
+        id: member.id,
+        fullName: `${member.first_name} ${member.last_name}`.trim(),
+        maritimeRank: member.maritime_rank,
+        city: member.city,
+        isVerified: member.is_verified,
+        role: member.role,
+        joinedAt: member.joinedAt,
+      }));
+      
+      res.json(members);
+    } catch (error) {
+      console.error('Error fetching rank group members:', error);
+      res.status(500).json({ error: 'Failed to fetch rank group members' });
+    }
+  });
+
   // Auto-assign user to rank groups based on their maritime rank
   app.post('/api/rank-groups/auto-assign', authenticateToken, async (req: any, res) => {
     try {
