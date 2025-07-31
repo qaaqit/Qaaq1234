@@ -198,101 +198,101 @@ export default function ShipTracker({ onShipsUpdate, bounds }: ShipTrackerProps)
       return updateInterval;
     };
 
-    // Try AIS WebSocket first, fallback to demo data
+    // Connect to our server-side AIS proxy
     const connectWebSocket = () => {
       try {
         setError(null);
-        const ws = new WebSocket('wss://stream.aisstream.io/v0/stream');
+        
+        // Connect to our server's AIS proxy endpoint
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/api/ais-stream`;
+        
+        const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
 
         // Timeout for connection
         const connectionTimeout = setTimeout(() => {
-          console.log('🚢 AIS connection timeout, using demo data...');
+          console.log('🚢 AIS proxy connection timeout, using demo data...');
           ws.close();
-          const demoInterval = createDemoShips();
-          return () => clearInterval(demoInterval);
-        }, 5000);
+          createDemoShips();
+        }, 10000);
 
         ws.onopen = () => {
           clearTimeout(connectionTimeout);
-          console.log('🚢 Connected to AIS Stream');
+          console.log('🚢 Connected to AIS proxy');
           setIsConnected(true);
           
-          // Subscribe to AIS messages
-          const subscription = {
-            APIKey: "free", // Using free tier
-            BoundingBoxes: bounds ? [[[bounds.west, bounds.south], [bounds.east, bounds.north]]] : undefined,
-            FilterMessageTypes: ["PositionReport"], // Only position reports
-            FiltersShipAndCargo: {
-              MessageTypes: [1, 2, 3] // Position report message types
-            }
-          };
-          
-          ws.send(JSON.stringify(subscription));
+          // Send bounds if available
+          if (bounds) {
+            ws.send(JSON.stringify({
+              type: 'setBounds',
+              bounds: bounds
+            }));
+          }
         };
 
         ws.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
             
-            if (data.MessageType === "PositionReport") {
-              const message = data.Message;
-              const metadata = data.MetaData;
-              
-              if (message && metadata && message.Latitude && message.Longitude) {
-                const ship: ShipData = {
-                  id: metadata.MMSI?.toString() || `ship_${Date.now()}`,
-                  name: metadata.ShipName || 'Unknown Vessel',
-                  latitude: message.Latitude,
-                  longitude: message.Longitude,
-                  speed: message.Sog || 0, // Speed over ground
-                  course: message.Cog || 0, // Course over ground
-                  heading: message.Heading || 0,
-                  mmsi: metadata.MMSI?.toString() || '',
-                  type: metadata.ShipType || 0,
-                  destination: metadata.Destination || '',
-                  eta: metadata.Eta || '',
-                  callSign: metadata.CallSign || '',
-                  imo: metadata.Imo?.toString() || '',
-                  timestamp: Date.now()
-                };
-
-                // Update ships map
-                shipsRef.current.set(ship.id, ship);
-                
-                // Clean up old ships (older than 30 minutes)
-                const thirtyMinutesAgo = Date.now() - (30 * 60 * 1000);
-                shipsRef.current.forEach((shipData, shipId) => {
-                  if (shipData.timestamp < thirtyMinutesAgo) {
-                    shipsRef.current.delete(shipId);
-                  }
-                });
-
-                // Update ship count and notify parent
-                const currentShips = Array.from(shipsRef.current.values());
-                setShipCount(currentShips.length);
-                onShipsUpdate(currentShips);
+            if (data.type === 'status') {
+              console.log('🚢 AIS Status:', data.connected ? 'Connected' : 'Disconnected');
+              if (!data.connected && data.error) {
+                setError(data.error);
               }
+            } else if (data.type === 'shipUpdate' && data.ship) {
+              const shipData = data.ship;
+              
+              const ship: ShipData = {
+                id: shipData.mmsi || `ship_${Date.now()}`,
+                name: shipData.name || 'Unknown Vessel',
+                latitude: shipData.latitude,
+                longitude: shipData.longitude,
+                speed: shipData.speed || 0,
+                course: shipData.course || 0,
+                heading: shipData.heading || 0,
+                mmsi: shipData.mmsi || '',
+                type: shipData.shipType || 0,
+                destination: shipData.destination || '',
+                eta: shipData.eta || '',
+                callSign: shipData.callSign || '',
+                imo: shipData.imo || '',
+                timestamp: shipData.timestamp || Date.now()
+              };
+
+              // Update ships map
+              shipsRef.current.set(ship.id, ship);
+              
+              // Clean up old ships (older than 30 minutes)
+              const thirtyMinutesAgo = Date.now() - (30 * 60 * 1000);
+              shipsRef.current.forEach((shipData, shipId) => {
+                if (shipData.timestamp < thirtyMinutesAgo) {
+                  shipsRef.current.delete(shipId);
+                }
+              });
+
+              // Update ship count and notify parent
+              const currentShips = Array.from(shipsRef.current.values());
+              setShipCount(currentShips.length);
+              onShipsUpdate(currentShips);
             }
           } catch (err) {
-            console.error('Error parsing AIS message:', err);
+            console.error('Error parsing AIS proxy message:', err);
           }
         };
 
         ws.onerror = (error) => {
           clearTimeout(connectionTimeout);
-          console.error('AIS WebSocket error:', error);
-          setError('Using demo data - real AIS unavailable');
+          console.error('AIS proxy error:', error);
+          setError('AIS proxy connection failed');
           setIsConnected(false);
-          // Fallback to demo data
           createDemoShips();
         };
 
         ws.onclose = () => {
           clearTimeout(connectionTimeout);
-          console.log('AIS WebSocket closed - using demo data...');
+          console.log('AIS proxy connection closed - using demo data...');
           setIsConnected(false);
-          // Use demo data instead of reconnecting
           createDemoShips();
         };
 
