@@ -554,58 +554,7 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
         
 
         
-        {!isLoading && users.map((user) => {
-          // Check if user is online with recent location update (within 10 minutes)
-          const isRecentLocation = user.locationUpdatedAt && 
-            new Date(user.locationUpdatedAt).getTime() > Date.now() - 10 * 60 * 1000;
-          const isOnlineWithLocation = !!(user.deviceLatitude && user.deviceLongitude && isRecentLocation);
-          
-          let plotLat: number, plotLng: number;
-          if (isOnlineWithLocation && user.deviceLatitude && user.deviceLongitude) {
-            // Use precise location for online users with location enabled
-            plotLat = user.deviceLatitude;
-            plotLng = user.deviceLongitude;
-          } else {
-            // Scatter within ±50km of city location (≈ ±0.45 degrees)
-            const scatterRadius = 0.45; // 50km ≈ 0.45 degrees
-            plotLat = user.latitude + (Math.random() - 0.5) * scatterRadius;
-            plotLng = user.longitude + (Math.random() - 0.5) * scatterRadius;
-          }
-          
-          console.log(`Rendering marker for ${user.fullName} at [${plotLat}, ${plotLng}]`);
-          
-          return (
-            <Marker
-              key={user.id}
-              position={[plotLat, plotLng]}
-              icon={createCustomIcon(user, isOnlineWithLocation)}
-              eventHandlers={{
-                add: () => {
-                  console.log('✅ MARKER ADDED:', user.fullName);
-                },
-                remove: () => {
-                  console.log('❌ MARKER REMOVED:', user.fullName);
-                },
-                mouseover: (e) => {
-                  console.log('🟢 HOVER EVENT FIRED for', user.fullName);
-                  const mouseEvent = e.originalEvent as MouseEvent;
-                  setHoveredUser(user);
-                  setHoverPosition({ x: mouseEvent.clientX, y: mouseEvent.clientY });
-                },
-                mouseout: () => {
-                  console.log('🔴 MOUSEOUT EVENT FIRED for', user.fullName);
-                  setHoveredUser(null);
-                  setHoverPosition(null);
-                },
-                click: (e) => {
-                  console.log('🔵 CLICK EVENT FIRED for', user.fullName);
-                  setOpenChatUserId(prev => prev === user.id ? null : user.id);
-                  e.originalEvent?.stopPropagation();
-                }
-              }}
-            />
-          );
-        })}
+        {/* No anchor pins - clean map base */}
       </MapContainer>
 
       {/* Transparent User Cards List at Bottom */}
