@@ -148,6 +148,37 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
     }
   });
 
+  // Set up global window functions for pin interactions
+  useEffect(() => {
+    // Define window functions for pin interactions
+    (window as any).handlePinClick = (userId: string) => {
+      console.log('Pin clicked for user:', userId);
+      setOpenChatUserId(openChatUserId === userId ? null : userId);
+    };
+    
+    (window as any).handlePinHover = (userId: string, event: MouseEvent) => {
+      console.log('Pin hovered for user:', userId);
+      const targetUser = users.find(u => u.id === userId);
+      if (targetUser) {
+        setHoveredUser(targetUser);
+        setHoverPosition({ x: event.clientX, y: event.clientY });
+      }
+    };
+    
+    (window as any).handlePinLeave = () => {
+      console.log('Pin hover ended');
+      setHoveredUser(null);
+      setHoverPosition(null);
+    };
+    
+    // Cleanup function
+    return () => {
+      delete (window as any).handlePinClick;
+      delete (window as any).handlePinHover;
+      delete (window as any).handlePinLeave;
+    };
+  }, [users, openChatUserId]);
+
   // Get user's current location
   useEffect(() => {
     if (user?.id && !userLocation) {
@@ -234,23 +265,30 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
     
     return divIcon({
       html: `
-        <div style="
-          width: 32px;
-          height: 32px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: ${color};
-          font-size: 24px;
-          text-shadow: 1px 1px 2px rgba(255,255,255,0.9), -1px -1px 2px rgba(255,255,255,0.9);
-          cursor: pointer;
-          pointer-events: auto;
-          user-select: none;
-          transition: transform 0.2s ease;
-          ${isOnlineWithLocation ? 'animation: pulse 2s infinite;' : ''}
-        " 
-        onmouseover="this.style.transform='scale(1.2)'" 
-        onmouseout="this.style.transform='scale(1)'">
+        <div 
+          class="anchor-pin" 
+          data-user-id="${user.id}"
+          data-user-name="${user.fullName}"
+          style="
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: ${color};
+            font-size: 24px;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.9), -1px -1px 2px rgba(255,255,255,0.9);
+            cursor: pointer;
+            pointer-events: auto;
+            user-select: none;
+            transition: transform 0.2s ease;
+            ${isOnlineWithLocation ? 'animation: pulse 2s infinite;' : ''}
+          " 
+          onmouseover="this.style.transform='scale(1.2)'" 
+          onmouseout="this.style.transform='scale(1)'"
+          onclick="window.handlePinClick('${user.id}')"
+          onmouseenter="window.handlePinHover('${user.id}', event)"
+          onmouseleave="window.handlePinLeave()">
           ⚓
         </div>
         ${isOnlineWithLocation ? `
@@ -599,24 +637,6 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
               key={user.id}
               position={[plotLat, plotLng]}
               icon={createCustomIcon(user, isOnlineWithLocation)}
-              eventHandlers={{
-                click: (e) => {
-                  // Open chat window on click
-                  setOpenChatUserId(openChatUserId === user.id ? null : user.id);
-                  e.originalEvent.stopPropagation();
-                },
-                mouseover: (e) => {
-                  // Show user card on hover
-                  setHoveredUser(user);
-                  const mouseEvent = e.originalEvent as MouseEvent;
-                  setHoverPosition({ x: mouseEvent.clientX, y: mouseEvent.clientY });
-                },
-                mouseout: () => {
-                  // Hide user card when not hovering
-                  setHoveredUser(null);
-                  setHoverPosition(null);
-                }
-              }}
             />
           );
         })}
