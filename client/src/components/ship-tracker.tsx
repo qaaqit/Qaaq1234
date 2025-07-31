@@ -244,7 +244,7 @@ export default function ShipTracker({ onShipsUpdate, bounds }: ShipTrackerProps)
               const shipData = data.ship;
               
               const ship: ShipData = {
-                id: shipData.mmsi || `ship_${Date.now()}`,
+                id: shipData.id || shipData.mmsi || `ship_${Date.now()}`,
                 name: shipData.name || 'Unknown Vessel',
                 latitude: shipData.latitude,
                 longitude: shipData.longitude,
@@ -262,6 +262,11 @@ export default function ShipTracker({ onShipsUpdate, bounds }: ShipTrackerProps)
 
               // Update ships map
               shipsRef.current.set(ship.id, ship);
+              
+              // If this is test data, set error to indicate mixed data
+              if (data.isTestData && !error) {
+                setError('Live stream + test ships');
+              }
               
               // Clean up old ships (older than 30 minutes)
               const thirtyMinutesAgo = Date.now() - (30 * 60 * 1000);
@@ -327,7 +332,9 @@ export default function ShipTracker({ onShipsUpdate, bounds }: ShipTrackerProps)
         <Ship size={14} />
         <span className="font-medium">
           {isConnected 
-            ? `${shipCount} ships ${error ? '(demo)' : '(live)'}` 
+            ? shipCount > 0 
+              ? `${shipCount} ships (live)` 
+              : 'Waiting for ships...'
             : error 
             ? 'Demo ship data'
             : 'Connecting to ships...'
