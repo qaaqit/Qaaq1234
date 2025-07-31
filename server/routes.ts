@@ -1819,7 +1819,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           u.last_name,
           u.maritime_rank,
           u.city,
-          u.is_verified,
           rgm.role,
           rgm."joinedAt"
         FROM rank_group_members rgm
@@ -1833,7 +1832,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fullName: `${member.first_name} ${member.last_name}`.trim(),
         maritimeRank: member.maritime_rank,
         city: member.city,
-        isVerified: member.is_verified,
+        isVerified: false, // Not available in QAAQ database
         role: member.role,
         joinedAt: member.joinedAt,
       }));
