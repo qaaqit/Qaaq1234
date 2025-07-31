@@ -120,15 +120,28 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
   const [selectedUser, setSelectedUser] = useState<MapUser | null>(null);
   const [openChatUserId, setOpenChatUserId] = useState<string | null>(null);
   const [showOnlineOnly, setShowOnlineOnly] = useState(true);
-  const [radiusKm, setRadiusKm] = useState(50);
   const [selectedRankCategory, setSelectedRankCategory] = useState<string>('everyone');
   const [showRankDropdown, setShowRankDropdown] = useState(false);
+  const [mapZoom, setMapZoom] = useState(10); // Default zoom level
 
   // Fetch all users with TanStack Query
   const { data: allUsers = [], isLoading } = useQuery<MapUser[]>({
     queryKey: ['/api/users/random'],
     enabled: true,
   });
+
+  // Calculate radius based on map zoom level
+  const radiusKm = useMemo(() => {
+    // Zoom levels: 1 (world) to 20 (building level)
+    // Lower zoom = larger area = larger radius
+    const zoomToRadius: Record<number, number> = {
+      1: 20000, 2: 10000, 3: 5000, 4: 2500, 5: 1250,
+      6: 625, 7: 300, 8: 150, 9: 75, 10: 50,
+      11: 25, 12: 15, 13: 10, 14: 5, 15: 3,
+      16: 2, 17: 1, 18: 0.5, 19: 0.3, 20: 0.1
+    };
+    return zoomToRadius[Math.min(20, Math.max(1, Math.round(mapZoom)))] || 50;
+  }, [mapZoom]);
 
   // Filter users based on location and online status using useMemo
   const filteredUsers = useMemo(() => {
@@ -138,7 +151,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
 
     let filtered = allUsers;
 
-    // Filter by radius
+    // Filter by auto-calculated radius based on zoom
     filtered = filtered.filter(mapUser => {
       const distance = calculateDistance(
         userLocation.lat, 
@@ -293,22 +306,6 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             </label>
           </div>
           
-          {/* Radius Selector */}
-          <div className="space-y-1">
-            <label className="text-xs text-gray-600">Radius (km)</label>
-            <select
-              value={radiusKm}
-              onChange={(e) => setRadiusKm(Number(e.target.value))}
-              className="w-full text-sm p-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value={10}>10 km</option>
-              <option value={25}>25 km</option>
-              <option value={50}>50 km</option>
-              <option value={100}>100 km</option>
-              <option value={500}>500 km</option>
-            </select>
-          </div>
-
           {/* Rank Category Filter */}
           <div className="space-y-1 relative rank-dropdown">
             <label className="text-xs text-gray-600">Rank Category</label>
@@ -347,7 +344,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
           
           {/* User Count Display */}
           <div className="text-xs text-gray-500 pt-1 border-t border-gray-200">
-            {filteredUsers.length} users within {radiusKm}km
+            {filteredUsers.length} users (auto-radius: {radiusKm}km)
             {selectedRankCategory !== 'everyone' && (
               <div className="text-blue-600 mt-1">
                 Category: {MARITIME_RANK_CATEGORIES.find(cat => cat.id === selectedRankCategory)?.label}
