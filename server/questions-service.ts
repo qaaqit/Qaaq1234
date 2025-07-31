@@ -175,7 +175,7 @@ export async function getQuestionAnswers(questionId: number): Promise<any[]> {
         u.first_name || ' ' || COALESCE(u.last_name, '') as author_name,
         u.maritime_rank as author_rank,
         a.created_at,
-        a.is_marked_as_answer as is_best_answer
+        false as is_best_answer
       FROM answers a
       LEFT JOIN users u ON u.id = a.author_id
       WHERE a.question_id = $1 AND a.is_hidden = false

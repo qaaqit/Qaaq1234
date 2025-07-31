@@ -121,7 +121,7 @@ export default function QuestionPage() {
           <div className="flex items-start justify-between">
             <div className="flex items-start space-x-3 flex-1">
               <Avatar className="w-12 h-12 border-2 border-ocean-teal">
-                <AvatarFallback className="bg-gradient-to-r from-ocean-teal to-cyan-600 text-white font-bold">
+                <AvatarFallback className="flex h-full w-full items-center justify-center rounded-full bg-gradient-to-r from-ocean-teal to-cyan-600 font-bold text-[#3179f2]">
                   {getInitials(question.author_name || 'Anonymous')}
                 </AvatarFallback>
               </Avatar>
