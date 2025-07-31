@@ -835,24 +835,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const query = searchQuery.toLowerCase().trim();
         console.log(`Searching for: "${query}"`);
         
-        filteredUsers = allUsers.filter(user => {
-          // Search across multiple fields
-          const searchableText = [
-            user.fullName || '',
-            user.rank || '',
-            user.shipName || '',
-            user.company || '',
-            user.imoNumber || '',
-            user.port || '',
-            user.city || '',
-            user.country || '',
-            user.userType || ''
-          ].join(' ').toLowerCase();
-          
-          return searchableText.includes(query);
-        });
-        
-        console.log(`Found ${filteredUsers.length} users matching search query`);
+        // Special handling for "onboard" search - show only sailing users with ship info
+        if (query === 'onboard') {
+          console.log('🚢 Onboard search detected - filtering for sailing users with ship information');
+          filteredUsers = allUsers.filter(user => {
+            // Must be a sailor with ship information
+            return user.userType === 'sailor' && 
+                   (user.shipName || user.imoNumber) && 
+                   user.shipName !== null && 
+                   user.shipName !== '';
+          });
+          console.log(`Found ${filteredUsers.length} sailors currently onboard ships`);
+        } else {
+          // Regular text search across multiple fields
+          filteredUsers = allUsers.filter(user => {
+            const searchableText = [
+              user.fullName || '',
+              user.rank || '',
+              user.shipName || '',
+              user.company || '',
+              user.imoNumber || '',
+              user.port || '',
+              user.city || '',
+              user.country || '',
+              user.userType || ''
+            ].join(' ').toLowerCase();
+            
+            return searchableText.includes(query);
+          });
+          console.log(`Found ${filteredUsers.length} users matching search query`);
+        }
       } else {
         // If no search query, return random selection for performance
         const shuffled = allUsers.sort(() => 0.5 - Math.random());

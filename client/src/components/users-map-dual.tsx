@@ -572,7 +572,9 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
         <div className="absolute bottom-0 left-0 right-0 h-[180px] bg-white/95 backdrop-blur-sm border-t border-gray-200 z-[1000]">
           <div className="p-4">
             <h3 className="text-sm font-medium text-gray-700 mb-3">
-              {searchQuery.trim() 
+              {searchQuery.toLowerCase().trim() === 'onboard'
+                ? `🚢 Sailors Currently Onboard Ships (${nearestUsers.length})`
+                : searchQuery.trim() 
                 ? `Search Results: ${nearestUsers.length} of ${filteredUsers.length} users` 
                 : `Nearest Maritime Professionals (${nearestUsers.length})`}
             </h3>
@@ -610,16 +612,33 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                   </div>
                   
                   <div className="space-y-1">
-                    {user.shipName && (
-                      <div className="text-xs text-gray-600 truncate">🚢 {user.shipName}</div>
+                    {/* Show ship info prominently for onboard searches */}
+                    {searchQuery.toLowerCase().trim() === 'onboard' ? (
+                      <>
+                        {user.shipName && (
+                          <div className="text-xs text-blue-700 font-semibold truncate">🚢 {user.shipName}</div>
+                        )}
+                        {user.imoNumber && (
+                          <div className="text-xs text-gray-600 truncate">IMO: {user.imoNumber}</div>
+                        )}
+                        <div className="text-xs text-gray-500">
+                          📍 {user.city}, {user.country}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        {user.shipName && (
+                          <div className="text-xs text-gray-600 truncate">🚢 {user.shipName}</div>
+                        )}
+                        <div className="text-xs text-gray-500">
+                          {searchQuery.trim() && user.distance ? 
+                            `📍 ${user.distance.toFixed(1)}km away` : 
+                            searchQuery.trim() ? 
+                            `📍 ${user.city}, ${user.country}` : 
+                            `📍 ${user.distance?.toFixed(1)}km away`}
+                        </div>
+                      </>
                     )}
-                    <div className="text-xs text-gray-500">
-                      {searchQuery.trim() && user.distance ? 
-                        `📍 ${user.distance.toFixed(1)}km away` : 
-                        searchQuery.trim() ? 
-                        `📍 ${user.city}, ${user.country}` : 
-                        `📍 ${user.distance?.toFixed(1)}km away`}
-                    </div>
                     {user.questionCount && user.answerCount && (
                       <div className="text-xs text-green-600">{user.questionCount}Q {user.answerCount}A</div>
                     )}

@@ -21,6 +21,7 @@ WhatsApp Bot: Moved from map overlay to header button next to logout for cleaner
 Google Maps Controls: Transparent icon-only buttons positioned in bottom-left corner (Road/Satellite/Hybrid view toggles)
 Home Reset Button: Blue "Home" button in top-left corner resets search, filters, and returns to base map view
 User Card Interactions: Profile photo circles are clickable for chat, clicking card body centers map on user location
+Onboard Search: Special "onboard" keyword search filters for sailing users and displays ship name & IMO number prominently
 
 ## System Architecture
 
