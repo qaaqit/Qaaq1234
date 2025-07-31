@@ -152,3 +152,60 @@
   animation: none !important;
   will-change: auto !important;
 }
+
+/* Mobile-optimized styles for better touch interaction */
+@media (max-width: 768px) {
+  /* Touch-friendly button sizes */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+  
+  /* Improved scrolling for mobile */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+  
+  .scrollbar-thumb-gray-300::-webkit-scrollbar {
+    height: 4px;
+  }
+  
+  .scrollbar-thumb-gray-300::-webkit-scrollbar-thumb {
+    background-color: #d1d5db;
+    border-radius: 2px;
+  }
+  
+  .scrollbar-thumb-gray-300::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+  
+  /* Ensure minimum touch target sizes */
+  button, .cursor-pointer {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Reduce excessive padding on small screens */
+  .mobile-compact {
+    padding: 0.5rem !important;
+  }
+  
+  /* Better text readability on mobile */
+  .text-mobile-base {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  
+  /* Optimize map controls for mobile */
+  .map-controls {
+    bottom: 20px;
+    left: 10px;
+    right: 10px;
+  }
+}
+
+/* Ensure dropdowns don't get cut off on mobile */
+.dropdown-container .absolute {
+  max-width: calc(100vw - 2rem);
+  max-height: 60vh;
+  overflow-y: auto;
+}

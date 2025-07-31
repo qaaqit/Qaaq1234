@@ -414,11 +414,11 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
 
   return (
     <div className="w-full h-full overflow-hidden bg-gray-100 relative">
-      {/* Compact Header with Icon Dropdowns */}
+      {/* Mobile-Optimized Header with Touch-Friendly Controls */}
       <div className="absolute top-0 left-0 right-0 z-[1000] bg-white/95 backdrop-blur-sm border-b border-gray-200">
-        <div className="flex items-center justify-between px-4 py-3">
-          {/* Left side - Home Reset and Search */}
-          <div className="flex items-center space-x-2">
+        <div className="flex flex-col space-y-2 px-2 sm:px-4 py-2 sm:py-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+          {/* Search Row - Full width on mobile */}
+          <div className="flex items-center space-x-1 sm:space-x-2">
             {/* Home Reset Button */}
             <button
               onClick={() => {
@@ -434,27 +434,27 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                 setHoveredUser(null);
                 setSelectedUser(null);
               }}
-              className="px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-xs font-medium flex items-center space-x-1"
+              className="px-2 py-2 sm:px-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-xs font-medium flex items-center space-x-1 min-w-fit"
               title="Reset to home view"
             >
               <Home size={14} />
-              <span>Home</span>
+              <span className="hidden sm:inline">Home</span>
             </button>
             
-            {/* Search Input */}
-            <div className="relative">
+            {/* Search Input - Responsive width */}
+            <div className="relative flex-1 sm:w-48 lg:w-64">
               <input
                 type="text"
                 placeholder="Sailors/ Ships/ Ports Services"
                 value={searchQuery}
                 onChange={(e) => handleSearchInput(e.target.value)}
-                className="w-64 pl-10 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-8 sm:pl-10 pr-8 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-              <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <Search size={14} className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 text-lg"
                 >
                   ×
                 </button>
@@ -462,14 +462,15 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             </div>
 
 
-            {/* Filter Dropdown */}
+            {/* Filter Dropdown - Touch-friendly */}
             <div className="relative dropdown-container">
               <button
                 onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-                className="flex items-center space-x-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                className="flex items-center space-x-1 px-2 sm:px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto justify-center"
+                title="Filter options"
               >
                 <Filter size={16} />
-                <ChevronDown size={14} className={`transition-transform ${showFilterDropdown ? 'rotate-180' : ''}`} />
+                <ChevronDown size={14} className={`transition-transform ${showFilterDropdown ? 'rotate-180' : ''} hidden sm:block`} />
               </button>
               
               {showFilterDropdown && (
@@ -509,14 +510,15 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
               )}
             </div>
 
-            {/* Location Dropdown */}
+            {/* Location Dropdown - Touch-friendly */}
             <div className="relative dropdown-container">
               <button
                 onClick={() => setShowLocationDropdown(!showLocationDropdown)}
-                className="flex items-center space-x-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                className="flex items-center space-x-1 px-2 sm:px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto justify-center"
+                title="Location settings"
               >
                 <MapPin size={16} />
-                <ChevronDown size={14} className={`transition-transform ${showLocationDropdown ? 'rotate-180' : ''}`} />
+                <ChevronDown size={14} className={`transition-transform ${showLocationDropdown ? 'rotate-180' : ''} hidden sm:block`} />
               </button>
               
               {showLocationDropdown && (
@@ -575,7 +577,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       </div>
 
       {/* Dual Map System: Google Maps for Admin, Leaflet for Users */}
-      <div className={`absolute top-[60px] left-0 right-0 ${nearestUsers.length > 0 ? 'bottom-[180px]' : 'bottom-0'}`}>
+      <div className={`absolute top-[80px] sm:top-[60px] left-0 right-0 ${nearestUsers.length > 0 ? 'bottom-[160px] sm:bottom-[180px]' : 'bottom-0'}`}>
         {user?.isAdmin ? (
           <GoogleMap
             users={filteredUsers}
@@ -618,44 +620,44 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
 
 
 
-      {/* Bottom Panel - Top 6 Nearest Users */}
+      {/* Mobile-Optimized Bottom Panel - Responsive User Cards */}
       {nearestUsers.length > 0 && (
-        <div className="absolute bottom-0 left-0 right-0 h-[180px] bg-white/95 backdrop-blur-sm border-t border-gray-200 z-[1000]">
-          <div className="p-4">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">
+        <div className="absolute bottom-0 left-0 right-0 h-[160px] sm:h-[180px] bg-white/95 backdrop-blur-sm border-t border-gray-200 z-[1000]">
+          <div className="p-2 sm:p-4">
+            <h3 className="text-xs sm:text-sm font-medium text-gray-700 mb-2 sm:mb-3">
               {searchQuery.toLowerCase().trim() === 'onboard'
                 ? `🚢 Sailors Currently Onboard Ships (${nearestUsers.length})`
                 : searchQuery.trim() 
                 ? `Search Results: ${nearestUsers.length} of ${filteredUsers.length} users` 
                 : `Nearest Maritime Professionals (${nearestUsers.length})`}
             </h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 overflow-x-auto">
+            <div className="flex gap-2 sm:gap-3 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 pb-2">
               {nearestUsers.map((user) => (
                 <div
                   key={user.id}
-                  className="bg-white rounded-lg border border-gray-200 p-3 hover:bg-gray-50 transition-colors min-w-[160px]"
+                  className="bg-white rounded-lg border border-gray-200 p-2 sm:p-3 hover:bg-gray-50 transition-colors min-w-[140px] sm:min-w-[160px] flex-shrink-0 touch-manipulation"
                   onClick={() => {
                     // Center map on user's location
                     setSelectedUser(user);
                     setHoveredUser(null);
                   }}
                 >
-                  <div className="flex items-center space-x-2 mb-2">
-                    {/* Clickable Profile Circle for Chat */}
+                  <div className="flex items-center space-x-2 mb-1 sm:mb-2">
+                    {/* Touch-Friendly Profile Circle for Chat */}
                     <div 
-                      className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-200 hover:scale-110 transition-all duration-200 border-2 border-transparent hover:border-blue-300"
+                      className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-100 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-200 hover:scale-110 transition-all duration-200 border-2 border-transparent hover:border-blue-300 touch-manipulation"
                       onClick={(e) => {
                         e.stopPropagation(); // Prevent card click
                         setOpenChatUserId(prev => prev === user.id ? null : user.id);
                       }}
-                      title="Click to open chat"
+                      title="Tap to open chat"
                     >
                       <span className="text-xs font-medium text-blue-600">
                         {user.fullName.split(' ').map(n => n[0]).join('').substring(0, 2)}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0 cursor-pointer">
-                      <div className="text-sm font-medium text-gray-900 truncate">{user.fullName}</div>
+                      <div className="text-xs sm:text-sm font-medium text-gray-900 truncate">{user.fullName}</div>
                       {user.rank && (
                         <div className="text-xs text-blue-600 font-medium">{getRankAbbreviation(user.rank)}</div>
                       )}
