@@ -160,9 +160,9 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
             stylers: [{ visibility: 'on' }] // Show ports and maritime businesses
           }
         ],
-        mapTypeControl: true,
-        streetViewControl: true,
-        fullscreenControl: true,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false,
         zoomControl: true,
         gestureHandling: 'greedy'
       });
@@ -593,62 +593,7 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
         )}
       </div>
 
-      {/* Map Controls - Bottom Left with Transparent Icons */}
-      <div className="absolute bottom-4 left-4 z-10 flex flex-col space-y-2">
-        <div className="flex space-x-1">
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => changeMapType('roadmap')}
-            className={`w-10 h-10 p-0 rounded-lg backdrop-blur-sm border transition-all ${
-              mapType === 'roadmap' 
-                ? 'bg-white/90 border-blue-500 shadow-lg' 
-                : 'bg-white/60 border-white/40 hover:bg-white/80'
-            }`}
-            title="Road Map"
-          >
-            <Map className="w-4 h-4 text-gray-700" />
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => changeMapType('satellite')}
-            className={`w-10 h-10 p-0 rounded-lg backdrop-blur-sm border transition-all ${
-              mapType === 'satellite' 
-                ? 'bg-white/90 border-blue-500 shadow-lg' 
-                : 'bg-white/60 border-white/40 hover:bg-white/80'
-            }`}
-            title="Satellite View"
-          >
-            <Satellite className="w-4 h-4 text-gray-700" />
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => changeMapType('hybrid')}
-            className={`w-10 h-10 p-0 rounded-lg backdrop-blur-sm border transition-all ${
-              mapType === 'hybrid' 
-                ? 'bg-white/90 border-blue-500 shadow-lg' 
-                : 'bg-white/60 border-white/40 hover:bg-white/80'
-            }`}
-            title="Hybrid View"
-          >
-            <MapPin className="w-4 h-4 text-gray-700" />
-          </Button>
-        </div>
-        
-        {userLocation && (
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={centerOnUser}
-            className="w-10 h-10 p-0 rounded-lg bg-white/60 backdrop-blur-sm border border-white/40 hover:bg-white/80 transition-all"
-            title="Center on My Location"
-          >
-            <Navigation className="w-4 h-4 text-blue-600" />
-          </Button>
-        )}
-      </div>
+
 
       {/* Map Container */}
       <div 

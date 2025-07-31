@@ -5,7 +5,7 @@ import MarineChatButton from './marine-chat-button';
 import SingleMessageChat from './single-message-chat';
 import GoogleMap from './google-map';
 import LeafletMap from './leaflet-map';
-import { ChevronDown, Map, Filter, MapPin, Radar } from 'lucide-react';
+import { ChevronDown, Filter, MapPin, Radar } from 'lucide-react';
 
 interface MapUser {
   id: string;
@@ -123,7 +123,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
   const [showOnlineOnly, setShowOnlineOnly] = useState(true);
   const [selectedRankCategory, setSelectedRankCategory] = useState<string>('everyone');
   const [showRankDropdown, setShowRankDropdown] = useState(false);
-  const [showMapTypeDropdown, setShowMapTypeDropdown] = useState(false);
+
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [mapType, setMapType] = useState('roadmap');
@@ -303,7 +303,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       const target = event.target as Element;
       if (!target.closest('.dropdown-container')) {
         setShowRankDropdown(false);
-        setShowMapTypeDropdown(false);
+
         setShowFilterDropdown(false);
         setShowLocationDropdown(false);
       }
@@ -322,37 +322,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
         <div className="flex items-center justify-between px-4 py-3">
           {/* Left side - Controls */}
           <div className="flex items-center space-x-2">
-            {/* Map Type Dropdown */}
-            {user?.isAdmin && (
-              <div className="relative dropdown-container">
-                <button
-                  onClick={() => setShowMapTypeDropdown(!showMapTypeDropdown)}
-                  className="flex items-center space-x-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                >
-                  <Map size={16} />
-                  <ChevronDown size={14} className={`transition-transform ${showMapTypeDropdown ? 'rotate-180' : ''}`} />
-                </button>
-                
-                {showMapTypeDropdown && (
-                  <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[120px] z-[1001]">
-                    {['roadmap', 'satellite', 'hybrid'].map((type) => (
-                      <button
-                        key={type}
-                        onClick={() => {
-                          setMapType(type);
-                          setShowMapTypeDropdown(false);
-                        }}
-                        className={`w-full text-left px-3 py-2 hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg capitalize ${
-                          mapType === type ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
-                        }`}
-                      >
-                        {type}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+
 
             {/* Filter Dropdown */}
             <div className="relative dropdown-container">
