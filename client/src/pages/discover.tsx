@@ -64,9 +64,16 @@ export default function Discover({ user }: DiscoverProps) {
   useEffect(() => {
     const handleHashChange = () => {
       if (window.location.hash.includes('koi-hai')) {
+        console.log('Red dot clicked - triggering proximity-based user search');
         setShowUsers(true);
         setShowNearbyCard(true);
         refetch();
+        
+        // Trigger nearby users API call with proximity mode if user location is available
+        if (location?.latitude && location?.longitude) {
+          console.log(`Fetching nearby users for location: ${location.latitude}, ${location.longitude}`);
+          // The UsersMap component will handle the API call with proximity mode
+        }
       }
     };
 
@@ -79,7 +86,7 @@ export default function Discover({ user }: DiscoverProps) {
     return () => {
       window.removeEventListener('hashchange', handleHashChange);
     };
-  }, [refetch]);
+  }, [refetch, location]);
 
   const handleLike = async (postId: string) => {
     try {

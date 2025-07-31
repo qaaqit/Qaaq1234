@@ -123,18 +123,19 @@ const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: numbe
 export default function UsersMap({ showUsers = false, searchQuery = "", showNearbyCard = false }: UsersMapProps) {
   const [bounds, setBounds] = useState<LatLngBounds | null>(null);
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [nearbyUsers, setNearbyUsers] = useState<(MapUser & { distance: number })[]>([]);
   const [mapRadius, setMapRadius] = useState<number>(50); // Initial 50km radius
   const [selectedUser, setSelectedUser] = useState<MapUser | null>(null); // Track selected user for coordinate display
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const { user } = useAuth();
 
-  // Always show all users from QAAQ database - fetch immediately on load
+  // Fetch up to 50 random users for anchor pin display
   const { data: users = [], isLoading } = useQuery<MapUser[]>({
-    queryKey: ['/api/users/map'],
+    queryKey: ['/api/users/random'],
     staleTime: 60000, // 1 minute
     enabled: true, // Always fetch users to show pins from start
     queryFn: async () => {
-      const response = await fetch('/api/users/map');
+      const response = await fetch('/api/users/random?limit=50');
       if (!response.ok) throw new Error('Failed to fetch users');
       return response.json();
     }
@@ -166,10 +167,30 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
     }
   }, [user?.id, userLocation]);
 
-  // Show all users without proximity filtering - display all 100 pins
+  // Fetch nearby users when red dot is clicked
+  useEffect(() => {
+    if (showNearbyCard && userLocation) {
+      const fetchNearbyUsers = async () => {
+        try {
+          console.log(`Fetching nearby users for red dot click at: ${userLocation.lat}, ${userLocation.lng}`);
+          const response = await fetch(`/api/users/nearby?lat=${userLocation.lat}&lng=${userLocation.lng}&mode=proximity`);
+          if (response.ok) {
+            const proximityUsers = await response.json();
+            console.log(`Received ${proximityUsers.length} nearby users for card display`);
+            setNearbyUsers(proximityUsers);
+          }
+        } catch (error) {
+          console.error('Error fetching nearby users:', error);
+        }
+      };
+      
+      fetchNearbyUsers();
+    }
+  }, [showNearbyCard, userLocation]);
+
+  // Set map bounds to show all random users (up to 50)
   useEffect(() => {
     if (users.length > 0) {
-      // Always show ALL users - no radius restrictions
       const latitudes = users.map(u => u.latitude);
       const longitudes = users.map(u => u.longitude);
       
@@ -192,7 +213,7 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
     } else {
       setBounds(null);
     }
-  }, [users]); // Remove showNearbyCard dependency to always show all users
+  }, [users]); // Show up to 50 random users as anchor pins
 
   const createCustomIcon = (user: MapUser) => {
     // Green for selected user, otherwise navy blue for sailors or ocean teal for locals
@@ -224,7 +245,7 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
   const defaultCenter: [number, number] = userLocation ? [userLocation.lat, userLocation.lng] : [19.076, 72.8777];
   const defaultZoom = 9; // Always use zoom level 9 for 50km radius view
 
-  // Get nearest 9 users for the cards list
+  // Fallback function to calculate nearest users from the displayed users (for compatibility)
   const getNearestUsers = (count: number = 9): (MapUser & { distance: number })[] => {
     if (!userLocation || !showNearbyCard) return [];
     
@@ -240,7 +261,8 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
       .slice(0, count);
   };
 
-  const nearestUsers = getNearestUsers();
+  // Use fetched nearby users when available, fallback to calculated nearest users
+  const nearestUsers = nearbyUsers.length > 0 ? nearbyUsers : getNearestUsers();
 
   return (
     <div className="w-full h-full overflow-hidden bg-gray-100 relative">

@@ -24,6 +24,7 @@ interface ExtendedChatConnection extends ChatConnection {
 
 interface UserWithDistance extends UserType {
   distance: number;
+  company?: string;
 }
 
 export default function DMPage() {

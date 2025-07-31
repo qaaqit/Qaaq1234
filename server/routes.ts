@@ -735,28 +735,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get top 9 users by question count for DM discovery
+  // Get nearby users - supports both proximity-based and Q-based discovery
   app.get('/api/users/nearby', async (req, res) => {
     try {
-      console.log('Getting top Q users for DM discovery');
-      
+      const { lat, lng, mode } = req.query;
       const allUsers = await storage.getUsersWithLocation();
       console.log(`Found ${allUsers.length} users with location data`);
       
-      // Sort by question count in descending order, take top 9, and add distance placeholder
-      const topQuestionUsers = allUsers
-        .sort((a, b) => (b.questionCount || 0) - (a.questionCount || 0))
-        .slice(0, 9)
-        .map(user => {
-          console.log(`User: ${user.fullName}, Q: ${user.questionCount || 0}`);
-          return { ...user, distance: 0 }; // Distance not relevant for Q-based sorting
-        });
+      // If latitude and longitude provided, do proximity-based search
+      if (lat && lng && mode === 'proximity') {
+        const userLat = parseFloat(lat as string);
+        const userLng = parseFloat(lng as string);
+        console.log(`Getting nearby users for location: ${userLat}, ${userLng}`);
+        
+        // Calculate distance for each user using Haversine formula
+        const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+          const R = 6371; // Earth's radius in kilometers
+          const dLat = (lat2 - lat1) * Math.PI / 180;
+          const dLon = (lon2 - lon1) * Math.PI / 180;
+          const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+          return R * c;
+        };
+        
+        const usersWithDistance = allUsers
+          .filter(user => user.latitude && user.longitude) // Only users with valid coordinates
+          .map(user => ({
+            ...user,
+            distance: calculateDistance(userLat, userLng, user.latitude, user.longitude)
+          }))
+          .sort((a, b) => a.distance - b.distance)
+          .slice(0, 9); // Return 9 closest users
+          
+        console.log(`Returning ${usersWithDistance.length} nearby users by proximity`);
+        res.json(usersWithDistance);
+      } else {
+        // Default: Sort by question count for DM discovery
+        console.log('Getting top Q users for DM discovery');
+        const topQuestionUsers = allUsers
+          .sort((a, b) => (b.questionCount || 0) - (a.questionCount || 0))
+          .slice(0, 9)
+          .map(user => {
+            console.log(`User: ${user.fullName}, Q: ${user.questionCount || 0}`);
+            return { ...user, distance: 0 }; // Distance not relevant for Q-based sorting
+          });
 
-      console.log(`Returning ${topQuestionUsers.length} top Q users`);
-      res.json(topQuestionUsers);
+        console.log(`Returning ${topQuestionUsers.length} top Q users`);
+        res.json(topQuestionUsers);
+      }
     } catch (error) {
-      console.error('Get top question users error:', error);
-      res.status(500).json({ message: "Failed to get top question users" });
+      console.error('Get nearby users error:', error);
+      res.status(500).json({ message: "Failed to get nearby users" });
+    }
+  });
+
+  // Get random users for home page display (up to 50 users)
+  app.get("/api/users/random", async (req, res) => {
+    try {
+      const { limit = 50 } = req.query;
+      const allUsers = await storage.getUsersWithLocation();
+      console.log(`Found ${allUsers.length} users, selecting random ${limit}`);
+      
+      // Shuffle users and take the requested limit
+      const shuffled = allUsers.sort(() => 0.5 - Math.random());
+      const randomUsers = shuffled.slice(0, parseInt(limit as string));
+      
+      console.log(`Returning ${randomUsers.length} random users for home page display`);
+      res.json(randomUsers);
+    } catch (error) {
+      console.error('Get random users error:', error);
+      res.status(500).json({ message: "Failed to get random users" });
     }
   });
 
