@@ -1691,8 +1691,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/rank-groups', authenticateToken, async (req: any, res) => {
     try {
       // Check if user is admin
-      const userResult = await pool.query('SELECT "isAdmin" FROM users WHERE id = $1', [req.userId]);
-      const isAdmin = userResult.rows.length > 0 ? userResult.rows[0].isAdmin : false;
+      const userResult = await pool.query('SELECT is_platform_admin FROM users WHERE id = $1', [req.userId]);
+      const isAdmin = userResult.rows.length > 0 ? userResult.rows[0].is_platform_admin : false;
       
       if (isAdmin) {
         // Admin sees all groups
@@ -1823,8 +1823,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/rank-groups/populate', authenticateToken, async (req: any, res) => {
     try {
       // Check if user is admin
-      const userResult = await pool.query('SELECT "isAdmin" FROM users WHERE id = $1', [req.userId]);
-      const isAdmin = userResult.rows.length > 0 ? userResult.rows[0].isAdmin : false;
+      const userResult = await pool.query('SELECT is_platform_admin FROM users WHERE id = $1', [req.userId]);
+      const isAdmin = userResult.rows.length > 0 ? userResult.rows[0].is_platform_admin : false;
       
       if (!isAdmin) {
         return res.status(403).json({ error: 'Admin access required' });
