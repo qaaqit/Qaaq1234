@@ -214,13 +214,13 @@ export default function DMPage() {
               <TabsList className="grid w-full grid-cols-2 bg-gradient-to-r from-navy/10 to-ocean-teal/10">
                 <TabsTrigger 
                   value="users" 
-                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-navy data-[state=active]:to-ocean-teal data-[state=active]:text-white"
+                  className="text-[#565f6b] data-[state=active]:bg-gradient-to-r data-[state=active]:from-navy data-[state=active]:to-ocean-teal data-[state=active]:text-white"
                 >
                   Users
                 </TabsTrigger>
                 <TabsTrigger 
                   value="questions" 
-                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-navy data-[state=active]:to-ocean-teal data-[state=active]:text-white"
+                  className="text-[#565f6b] data-[state=active]:bg-gradient-to-r data-[state=active]:from-navy data-[state=active]:to-ocean-teal data-[state=active]:text-white"
                 >
                   Questions
                 </TabsTrigger>
