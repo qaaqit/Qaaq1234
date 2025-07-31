@@ -818,6 +818,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Search ship positions by name or IMO number
+  app.get("/api/ships/search", async (req, res) => {
+    try {
+      const { q } = req.query;
+      const searchQuery = q as string;
+      
+      if (!searchQuery || !searchQuery.trim()) {
+        return res.status(400).json({ message: "Search query required" });
+      }
+      
+      const query = searchQuery.toLowerCase().trim();
+      console.log(`🚢 Searching for ship: "${query}"`);
+      
+      // Get ship location using our ship location service
+      const shipLocationService = await import('./ship-location');
+      const service = new shipLocationService.default();
+      
+      try {
+        const position = await service.getShipPosition(query);
+        
+        if (position) {
+          const shipData = {
+            id: `ship_${query.replace(/\s+/g, '_')}`,
+            name: query,
+            type: 'ship',
+            latitude: position.latitude,
+            longitude: position.longitude,
+            port: position.port,
+            lastUpdate: position.lastUpdate || new Date()
+          };
+          
+          console.log(`Found ship position for "${query}":`, shipData);
+          res.json(shipData);
+        } else {
+          console.log(`No position found for ship "${query}"`);
+          res.status(404).json({ message: "Ship position not found" });
+        }
+      } catch (error) {
+        console.error(`Error getting ship position for "${query}":`, error);
+        res.status(500).json({ message: "Failed to get ship position" });
+      }
+      
+    } catch (error) {
+      console.error('Ship search error:', error);
+      res.status(500).json({ message: "Failed to search ships" });
+    }
+  });
+
   // Search all users with comprehensive text search functionality
   app.get("/api/users/search", async (req, res) => {
     try {

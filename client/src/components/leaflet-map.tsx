@@ -33,9 +33,10 @@ interface LeafletMapProps {
   showScanElements?: boolean;
   scanAngle?: number;
   radiusKm?: number;
+  shipPosition?: any;
 }
 
-const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, selectedUser, onUserHover, onUserClick, onZoomChange, showScanElements = false, scanAngle = 0, radiusKm = 50 }) => {
+const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, selectedUser, onUserHover, onUserClick, onZoomChange, showScanElements = false, scanAngle = 0, radiusKm = 50, shipPosition = null }) => {
   const [bounds, setBounds] = useState<LatLngBounds | null>(null);
   const [currentZoom, setCurrentZoom] = useState(10);
 
@@ -54,6 +55,15 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, selectedUs
       className: 'custom-anchor-marker',
       iconSize: [40, 40],
       iconAnchor: [20, 20],
+    });
+  };
+
+  const createShipIcon = () => {
+    return divIcon({
+      html: `<div style="color: #dc2626; font-size: 36px; cursor: pointer; pointer-events: auto; filter: drop-shadow(0 0 4px rgba(220, 38, 38, 0.5));">🚢</div>`,
+      className: 'custom-ship-marker',
+      iconSize: [44, 44],
+      iconAnchor: [22, 22],
     });
   };
 
@@ -248,6 +258,19 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, selectedUs
             />
           );
         })}
+
+        {/* Ship Position Marker */}
+        {shipPosition && shipPosition.latitude && shipPosition.longitude && (
+          <Marker
+            position={[shipPosition.latitude, shipPosition.longitude]}
+            icon={createShipIcon()}
+            eventHandlers={{
+              click: () => {
+                console.log('🚢 Ship clicked:', shipPosition.name);
+              },
+            }}
+          />
+        )}
 
         {/* User's current location marker */}
         {userLocation && (

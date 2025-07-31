@@ -131,6 +131,8 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
   const [scanAngle, setScanAngle] = useState(0); // For rotating scan arm
   const [showScanElements, setShowScanElements] = useState(false); // Toggle scan arm and circle
   const [searchQuery, setSearchQuery] = useState(''); // User search input
+  const [shipSearchResult, setShipSearchResult] = useState<any>(null); // Ship position result
+  const [searchType, setSearchType] = useState<'users' | 'ships'>('users'); // Toggle between user and ship search
 
   // Stable zoom change handler to prevent map re-initialization
   const handleZoomChange = useCallback((zoom: number) => {
@@ -153,9 +155,54 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       if (!response.ok) throw new Error('Failed to fetch users');
       return response.json();
     },
-    enabled: true,
+    enabled: searchType === 'users',
     staleTime: searchQuery.trim() ? 30000 : 60000, // Shorter cache for search results
   });
+
+  // Search for ship positions when in ship mode
+  const searchShipPosition = async (shipQuery: string) => {
+    if (!shipQuery.trim()) {
+      setShipSearchResult(null);
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/ships/search?q=${encodeURIComponent(shipQuery.trim())}`);
+      if (response.ok) {
+        const shipData = await response.json();
+        setShipSearchResult(shipData);
+        console.log('🚢 Ship found:', shipData);
+      } else {
+        console.log('Ship not found');
+        setShipSearchResult(null);
+      }
+    } catch (error) {
+      console.error('Ship search error:', error);
+      setShipSearchResult(null);
+    }
+  };
+
+  // Enhanced search handler that detects ship queries
+  const handleSearchInput = (value: string) => {
+    setSearchQuery(value);
+    
+    // Auto-detect ship search patterns
+    const shipPatterns = [
+      /^IMO[\s\-:]?\d{7}$/i,  // IMO number pattern
+      /^\d{7}$/,              // Pure 7-digit IMO
+      /vessel|ship|cargo|tanker|container/i, // Ship type keywords
+    ];
+    
+    const isShipQuery = shipPatterns.some(pattern => pattern.test(value.trim()));
+    
+    if (isShipQuery && value.trim()) {
+      setSearchType('ships');
+      searchShipPosition(value);
+    } else if (value.trim()) {
+      setSearchType('users');
+      setShipSearchResult(null);
+    }
+  };
 
   // Calculate radius based on map zoom level
   const radiusKm = useMemo(() => {
@@ -376,6 +423,8 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             <button
               onClick={() => {
                 setSearchQuery('');
+                setShipSearchResult(null);
+                setSearchType('users');
                 setSelectedRankCategory('everyone');
                 setShowOnlineOnly(true);
                 setShowFilterDropdown(false);
@@ -396,9 +445,9 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             <div className="relative">
               <input
                 type="text"
-                placeholder="Search users, ships, ranks, ports..."
+                placeholder={searchType === 'ships' ? 'Search ships by name or IMO...' : 'Search users, ships, ranks, ports...'}
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => handleSearchInput(e.target.value)}
                 className="w-64 pl-10 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -544,6 +593,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             showScanElements={showScanElements}
             scanAngle={scanAngle}
             radiusKm={radiusKm}
+            shipPosition={shipSearchResult}
           />
         ) : (
           <LeafletMap
@@ -561,6 +611,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             showScanElements={showScanElements}
             scanAngle={scanAngle}
             radiusKm={radiusKm}
+            shipPosition={shipSearchResult}
           />
         )}
       </div>

@@ -603,12 +603,12 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
       />
 
       {/* Transparent User Cards List at Bottom */}
-      {showNearbyCard && nearestUsers.length > 0 && (
+      {showNearbyCard && allUsers.length > 0 && (
         <div className="absolute bottom-4 left-4 right-4 z-[1000]">
           <div className="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg p-3 max-h-32 overflow-y-auto">
             <h3 className="text-sm font-semibold text-gray-800 mb-2">Nearby Maritime Professionals</h3>
             <div className="grid grid-cols-3 gap-2">
-              {nearestUsers.map((user) => (
+              {allUsers.slice(0, 9).map((user: GoogleMapsUser & { distance: number }) => (
                 <div
                   key={user.id}
                   onClick={() => {

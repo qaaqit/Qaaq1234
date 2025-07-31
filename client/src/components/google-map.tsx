@@ -32,6 +32,7 @@ interface GoogleMapProps {
   showScanElements?: boolean;
   scanAngle?: number;
   radiusKm?: number;
+  shipPosition?: any;
 }
 
 declare global {
@@ -41,11 +42,12 @@ declare global {
   }
 }
 
-const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser, mapType = 'roadmap', onUserHover, onUserClick, onZoomChange, showScanElements = false, scanAngle = 0, radiusKm = 50 }) => {
+const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser, mapType = 'roadmap', onUserHover, onUserClick, onZoomChange, showScanElements = false, scanAngle = 0, radiusKm = 50, shipPosition = null }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
   const userLocationMarkerRef = useRef<any>(null);
+  const shipMarkerRef = useRef<any>(null);
   const scanCircleRef = useRef<any>(null);
   const scanLineRef = useRef<any>(null);
   const [boundsUpdateTrigger, setBoundsUpdateTrigger] = useState(0);
@@ -277,6 +279,41 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
     });
 
   }, [isMapLoaded, users, onUserHover, onUserClick]);
+
+  // Add ship position marker
+  useEffect(() => {
+    if (!isMapLoaded || !mapInstanceRef.current) return;
+
+    // Clear existing ship marker
+    if (shipMarkerRef.current) {
+      shipMarkerRef.current.setMap(null);
+      shipMarkerRef.current = null;
+    }
+
+    // Add ship marker if ship position is available
+    if (shipPosition && shipPosition.latitude && shipPosition.longitude) {
+      shipMarkerRef.current = new window.google.maps.Marker({
+        position: { lat: shipPosition.latitude, lng: shipPosition.longitude },
+        map: mapInstanceRef.current,
+        title: `Ship: ${shipPosition.name}`,
+        icon: {
+          path: 'M12 2L13.09 8.26L22 9L13.09 9.74L12 16L10.91 9.74L2 9L10.91 8.26L12 2Z', // Ship-like star shape
+          scale: 2,
+          fillColor: '#DC2626', // Red color for ships
+          fillOpacity: 1,
+          strokeColor: '#ffffff',
+          strokeWeight: 2,
+        },
+        zIndex: 2000, // Higher than user markers
+      });
+
+      // Center map on ship position
+      mapInstanceRef.current.setCenter({ lat: shipPosition.latitude, lng: shipPosition.longitude });
+      mapInstanceRef.current.setZoom(12);
+
+      console.log(`🚢 Ship marker added for ${shipPosition.name} at [${shipPosition.latitude}, ${shipPosition.longitude}]`);
+    }
+  }, [isMapLoaded, shipPosition]);
 
   // Add user location marker (current user's position)
   useEffect(() => {
