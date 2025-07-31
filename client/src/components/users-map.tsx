@@ -243,8 +243,14 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
           color: ${color};
           font-size: 24px;
           text-shadow: 1px 1px 2px rgba(255,255,255,0.9), -1px -1px 2px rgba(255,255,255,0.9);
+          cursor: pointer;
+          pointer-events: auto;
+          user-select: none;
+          transition: transform 0.2s ease;
           ${isOnlineWithLocation ? 'animation: pulse 2s infinite;' : ''}
-        ">
+        " 
+        onmouseover="this.style.transform='scale(1.2)'" 
+        onmouseout="this.style.transform='scale(1)'">
           ⚓
         </div>
         ${isOnlineWithLocation ? `

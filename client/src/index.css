@@ -73,6 +73,17 @@
   .glass-effect {
     backdrop-filter: blur(10px);
     background: rgba(255, 255, 255, 0.1);
+  }
+
+  /* Custom marker styling for map interactions */
+  .custom-anchor-marker {
+    z-index: 1000 !important;
+    pointer-events: auto !important;
+  }
+  
+  .custom-anchor-marker div {
+    pointer-events: auto !important;
+    cursor: pointer !important;
     border: 1px solid rgba(255, 255, 255, 0.2);
   }
 
