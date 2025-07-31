@@ -578,11 +578,6 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                 ? `Search Results: ${nearestUsers.length} of ${filteredUsers.length} users` 
                 : `Nearest Maritime Professionals (${nearestUsers.length})`}
             </h3>
-            {searchQuery.toLowerCase().trim() === 'onboard' && (
-              <div className="text-xs text-amber-600 mb-2 px-2 py-1 bg-amber-50 rounded border border-amber-200">
-                ⚠️ Note: Ship and IMO data may be test/placeholder information from the QAAQ database
-              </div>
-            )}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 overflow-x-auto">
               {nearestUsers.map((user) => (
                 <div
@@ -621,23 +616,14 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                     {searchQuery.toLowerCase().trim() === 'onboard' ? (
                       <>
                         {user.shipName && (
-                          <div className="text-xs text-blue-700 font-semibold truncate">
-                            🚢 {user.shipName}
-                            {user.shipName.includes('test') || user.shipName.toLowerCase().includes('now') ? 
-                              <span className="text-amber-600 ml-1">(test data)</span> : ''}
-                          </div>
+                          <div className="text-xs text-blue-700 font-semibold truncate">🚢 {user.shipName}</div>
                         )}
-                        {user.imoNumber && user.imoNumber.trim() !== '' ? (
+                        {user.imoNumber && (
                           <div className="text-xs text-gray-600 truncate">IMO: {user.imoNumber}</div>
-                        ) : (
-                          <div className="text-xs text-amber-600 truncate">IMO: Not available</div>
                         )}
                         <div className="text-xs text-gray-500">
                           📍 {user.city}, {user.country}
                         </div>
-                        {user.rank && (
-                          <div className="text-xs text-green-600 truncate">⚓ {user.rank.replace('_', ' ')}</div>
-                        )}
                       </>
                     ) : (
                       <>
