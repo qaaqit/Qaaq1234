@@ -79,12 +79,22 @@
   .custom-anchor-marker {
     z-index: 1000 !important;
     pointer-events: auto !important;
+    cursor: pointer !important;
   }
   
   .custom-anchor-marker div {
     pointer-events: auto !important;
     cursor: pointer !important;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    width: 40px !important;
+    height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: transform 0.2s ease !important;
+  }
+  
+  .custom-anchor-marker:hover div {
+    transform: scale(1.2) !important;
   }
 
   /* Marine Chat Button Styles */
