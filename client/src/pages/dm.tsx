@@ -438,7 +438,7 @@ export default function DMPage() {
                           ) : (
                             <Button
                               size="sm"
-                              className="w-full bg-gradient-to-r from-ocean-teal to-cyan-600 text-white hover:from-cyan-600 hover:to-ocean-teal"
+                              className="w-full bg-gradient-to-r from-ocean-teal to-cyan-600 hover:from-cyan-600 hover:to-ocean-teal text-[#191c25]"
                               onClick={() => handleConnectUser(userProfile.id)}
                               disabled={createConnectionMutation.isPending}
                             >
