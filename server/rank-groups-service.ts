@@ -282,7 +282,7 @@ export async function autoAssignUserToRankGroups(userId: string) {
     }
 
     const user = userResult.rows[0];
-    const userRank = (user.maritime_rank?.toLowerCase() || user.rank?.toLowerCase() || '');
+    const userRank = ((user.maritime_rank as string)?.toLowerCase() || (user.rank as string)?.toLowerCase() || '');
     
     // Mapping rules for auto-assignment
     const rankMappings = [
@@ -299,19 +299,13 @@ export async function autoAssignUserToRankGroups(userId: string) {
 
     const assignedGroups = [];
     
-    // Always assign to ETO & Elec Supdts (general maritime personnel group)
-    const etoElecSupdtsResult = await db.execute(sql`
-      SELECT id FROM rank_groups WHERE name = 'ETO & Elec Supdts' LIMIT 1
+    // Remove user from all existing rank groups first (single group rule)
+    await db.execute(sql`
+      DELETE FROM rank_group_members WHERE "userId" = ${userId}
     `);
 
-    if (etoElecSupdtsResult.rows.length > 0) {
-      const joinResult = await joinRankGroup(userId, etoElecSupdtsResult.rows[0].id);
-      if (joinResult.success) {
-        assignedGroups.push('ETO & Elec Supdts');
-      }
-    }
-
-    // Try to match specific rank group
+    // Try to match specific rank group first
+    let foundSpecificGroup = false;
     for (const mapping of rankMappings) {
       const matchFound = mapping.keywords.some(keyword => userRank.includes(keyword));
       
@@ -321,12 +315,27 @@ export async function autoAssignUserToRankGroups(userId: string) {
         `);
 
         if (groupResult.rows.length > 0) {
-          const joinResult = await joinRankGroup(userId, groupResult.rows[0].id);
+          const joinResult = await joinRankGroup(userId, groupResult.rows[0].id as string);
           if (joinResult.success) {
             assignedGroups.push(mapping.groupName);
+            foundSpecificGroup = true;
           }
         }
         break; // Only assign to first matching group
+      }
+    }
+
+    // If no specific rank matched, assign to ETO & Elec Supdts as default
+    if (!foundSpecificGroup) {
+      const etoElecSupdtsResult = await db.execute(sql`
+        SELECT id FROM rank_groups WHERE name = 'ETO & Elec Supdts' LIMIT 1
+      `);
+
+      if (etoElecSupdtsResult.rows.length > 0) {
+        const joinResult = await joinRankGroup(userId, etoElecSupdtsResult.rows[0].id as string);
+        if (joinResult.success) {
+          assignedGroups.push('ETO & Elec Supdts');
+        }
       }
     }
 
@@ -337,6 +346,39 @@ export async function autoAssignUserToRankGroups(userId: string) {
     };
   } catch (error) {
     console.error('Error auto-assigning user to rank groups:', error);
+    throw error;
+  }
+}
+
+// Switch user to a different rank group (for promotions)
+export async function switchUserRankGroup(userId: string, newGroupId: string) {
+  try {
+    // Remove user from all existing rank groups
+    await db.execute(sql`
+      DELETE FROM rank_group_members WHERE "userId" = ${userId}
+    `);
+
+    // Add user to new group
+    const joinResult = await joinRankGroup(userId, newGroupId);
+    
+    if (joinResult.success) {
+      // Get the new group name for response
+      const groupResult = await db.execute(sql`
+        SELECT name FROM rank_groups WHERE id = ${newGroupId} LIMIT 1
+      `);
+      
+      const groupName = groupResult.rows.length > 0 ? groupResult.rows[0].name : 'Unknown Group';
+      
+      return { 
+        success: true, 
+        message: `Successfully switched to ${groupName}`,
+        newGroup: groupName
+      };
+    }
+    
+    return joinResult;
+  } catch (error) {
+    console.error('Error switching user rank group:', error);
     throw error;
   }
 }

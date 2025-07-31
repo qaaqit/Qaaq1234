@@ -14,7 +14,8 @@ import {
   leaveRankGroup, 
   sendRankGroupMessage, 
   getRankGroupMessages,
-  autoAssignUserToRankGroups 
+  autoAssignUserToRankGroups,
+  switchUserRankGroup
 } from "./rank-groups-service";
 
 // Extend Express Request type
@@ -1785,6 +1786,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error auto-assigning user to rank groups:', error);
       res.status(500).json({ error: 'Failed to auto-assign rank groups' });
+    }
+  });
+
+  // Switch user to different rank group (for promotions)
+  app.post('/api/rank-groups/switch', authenticateToken, async (req: any, res) => {
+    try {
+      const { groupId } = req.body;
+      
+      if (!groupId) {
+        return res.status(400).json({ error: 'Group ID is required' });
+      }
+      
+      const result = await switchUserRankGroup(req.userId, groupId);
+      res.json(result);
+    } catch (error) {
+      console.error('Error switching rank group:', error);
+      res.status(500).json({ error: 'Failed to switch rank group' });
     }
   });
 
