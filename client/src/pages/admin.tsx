@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from "recharts";
 
 interface AdminUser {
   id: string;
@@ -35,6 +37,14 @@ interface AdminStats {
   totalLogins: number;
 }
 
+interface CountryAnalytics {
+  country: string;
+  userCount: number;
+  verifiedCount: number;
+  activeCount: number;
+  totalHits: number;
+}
+
 export default function AdminPanel() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -52,6 +62,11 @@ export default function AdminPanel() {
   // Fetch all users
   const { data: users, isLoading: usersLoading } = useQuery<AdminUser[]>({
     queryKey: ["/api/admin/users"],
+  });
+
+  // Fetch country analytics
+  const { data: countryAnalytics, isLoading: countryLoading } = useQuery<CountryAnalytics[]>({
+    queryKey: ["/api/admin/analytics/countries"],
   });
 
   // Fetch QBOT rules from database
@@ -125,7 +140,7 @@ export default function AdminPanel() {
     },
   });
 
-  if (statsLoading || usersLoading) {
+  if (statsLoading || usersLoading || countryLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -244,6 +259,86 @@ export default function AdminPanel() {
               <div className="text-2xl font-bold text-orange-600">{stats?.totalLogins || 0}</div>
             </CardContent>
           </Card>
+            </div>
+
+            {/* Top Countries Analytics Chart */}
+            <div className="mt-8">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg font-semibold text-gray-800 flex items-center">
+                    <i className="fas fa-globe mr-2 text-ocean-teal"></i>
+                    Top Countries by Hits
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">User activity distribution by country</p>
+                </CardHeader>
+                <CardContent>
+                  {countryAnalytics && countryAnalytics.length > 0 ? (
+                    <div className="space-y-4">
+                      <ChartContainer
+                        config={{
+                          totalHits: {
+                            label: "Total Hits",
+                            color: "#0ea5e9",
+                          },
+                          userCount: {
+                            label: "Users",
+                            color: "#10b981",
+                          },
+                          activeCount: {
+                            label: "Active Users",
+                            color: "#f59e0b",
+                          },
+                        }}
+                        className="h-[300px]"
+                      >
+                        <BarChart data={countryAnalytics}>
+                          <XAxis dataKey="country" />
+                          <YAxis />
+                          <ChartTooltip content={<ChartTooltipContent />} />
+                          <Bar dataKey="totalHits" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ChartContainer>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+                        {countryAnalytics.slice(0, 6).map((country, index) => (
+                          <div key={country.country} className="bg-gray-50 rounded-lg p-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <h4 className="font-medium text-gray-800 flex items-center">
+                                <span className="text-lg mr-2">
+                                  {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🌍'}
+                                </span>
+                                {country.country}
+                              </h4>
+                              <span className="text-sm font-semibold text-ocean-teal">
+                                {country.totalHits} hits
+                              </span>
+                            </div>
+                            <div className="space-y-1 text-sm text-gray-600">
+                              <div className="flex justify-between">
+                                <span>Total Users:</span>
+                                <span className="font-medium">{country.userCount}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Active Users:</span>
+                                <span className="font-medium text-green-600">{country.activeCount}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Verified:</span>
+                                <span className="font-medium text-blue-600">{country.verifiedCount}</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <i className="fas fa-chart-bar text-3xl mb-4"></i>
+                      <p>No country data available</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
 

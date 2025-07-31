@@ -451,10 +451,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await pool.query(`
         SELECT 
           COUNT(*) as total_users,
-          COUNT(CASE WHEN current_ship_name IS NOT NULL OR ship_name IS NOT NULL THEN 1 END) as sailors,
-          COUNT(CASE WHEN current_ship_name IS NULL AND ship_name IS NULL THEN 1 END) as locals,
+          COUNT(CASE WHEN ship_name IS NOT NULL THEN 1 END) as sailors,
+          COUNT(CASE WHEN ship_name IS NULL THEN 1 END) as locals,
           COUNT(CASE WHEN is_verified = true THEN 1 END) as verified_users,
-          COUNT(CASE WHEN last_login_at > NOW() - INTERVAL '30 days' THEN 1 END) as active_users,
+          COUNT(CASE WHEN last_login > NOW() - INTERVAL '30 days' THEN 1 END) as active_users,
           COALESCE(SUM(login_count), 0) as total_logins
         FROM users
       `);
@@ -478,9 +478,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const result = await pool.query(`
         SELECT id, full_name, nickname, email, is_admin, maritime_rank,
-               current_ship_name, ship_name, imo_number, current_ship_imo,
-               current_city, current_country, permanent_city, permanent_country, city,
-               is_verified, login_count, last_login_at, created_at
+               ship_name, imo_number,
+               city, country,
+               is_verified, login_count, last_login, created_at, whatsapp_number
         FROM users 
         ORDER BY created_at DESC
       `);
@@ -489,16 +489,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: user.id,
         fullName: user.full_name || user.nickname || user.email,
         email: user.email,
-        userType: (user.current_ship_name || user.ship_name) ? 'sailor' : 'local',
+        userType: user.ship_name ? 'sailor' : 'local',
         isAdmin: user.is_admin || false,
         rank: user.maritime_rank,
-        shipName: user.current_ship_name || user.ship_name,
-        imoNumber: user.imo_number || user.current_ship_imo,
-        city: user.current_city || user.permanent_city || user.city,
-        country: user.current_country || user.permanent_country,
+        shipName: user.ship_name,
+        imoNumber: user.imo_number,
+        city: user.city,
+        country: user.country,
         isVerified: user.is_verified || false,
         loginCount: user.login_count || 0,
-        lastLogin: user.last_login_at,
+        lastLogin: user.last_login,
         whatsappNumber: user.whatsapp_number
       }));
 
@@ -538,6 +538,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating user verification:", error);
       res.status(500).json({ message: "Failed to update user verification" });
+    }
+  });
+
+  // Country analytics endpoint
+  app.get('/api/admin/analytics/countries', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      const result = await pool.query(`
+        SELECT 
+          COALESCE(country, 'Unknown') as country,
+          COUNT(*) as user_count,
+          COUNT(CASE WHEN is_verified = true THEN 1 END) as verified_count,
+          COUNT(CASE WHEN last_login > NOW() - INTERVAL '30 days' THEN 1 END) as active_count,
+          COALESCE(SUM(login_count), 0) as total_hits
+        FROM users 
+        GROUP BY country 
+        ORDER BY total_hits DESC, user_count DESC
+        LIMIT 10
+      `);
+
+      const countryData = result.rows.map(row => ({
+        country: row.country,
+        userCount: parseInt(row.user_count),
+        verifiedCount: parseInt(row.verified_count),
+        activeCount: parseInt(row.active_count),
+        totalHits: parseInt(row.total_hits)
+      }));
+
+      res.json(countryData);
+    } catch (error) {
+      console.error("Error fetching country analytics:", error);
+      res.status(500).json({ message: "Failed to fetch country analytics" });
     }
   });
 
