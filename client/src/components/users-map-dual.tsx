@@ -5,7 +5,7 @@ import MarineChatButton from './marine-chat-button';
 import SingleMessageChat from './single-message-chat';
 import GoogleMap from './google-map';
 import LeafletMap from './leaflet-map';
-import { ChevronDown, Filter, MapPin, Radar } from 'lucide-react';
+import { ChevronDown, Filter, MapPin, Radar, Search } from 'lucide-react';
 
 interface MapUser {
   id: string;
@@ -130,16 +130,31 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
   const [mapZoom, setMapZoom] = useState(10); // Default zoom level
   const [scanAngle, setScanAngle] = useState(0); // For rotating scan arm
   const [showScanElements, setShowScanElements] = useState(false); // Toggle scan arm and circle
+  const [searchQuery, setSearchQuery] = useState(''); // User search input
 
   // Stable zoom change handler to prevent map re-initialization
   const handleZoomChange = useCallback((zoom: number) => {
     setMapZoom(zoom);
   }, []);
 
-  // Fetch all users with TanStack Query
+  // Fetch all users with comprehensive search functionality
   const { data: allUsers = [], isLoading } = useQuery<MapUser[]>({
-    queryKey: ['/api/users/random'],
+    queryKey: ['/api/users/search', searchQuery],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (searchQuery.trim()) {
+        params.append('q', searchQuery.trim());
+        params.append('limit', '500'); // Higher limit for search results
+      } else {
+        params.append('limit', '100'); // Default limit for browsing
+      }
+      
+      const response = await fetch(`/api/users/search?${params}`);
+      if (!response.ok) throw new Error('Failed to fetch users');
+      return response.json();
+    },
     enabled: true,
+    staleTime: searchQuery.trim() ? 30000 : 60000, // Shorter cache for search results
   });
 
   // Calculate radius based on map zoom level
@@ -320,8 +335,27 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       {/* Compact Header with Icon Dropdowns */}
       <div className="absolute top-0 left-0 right-0 z-[1000] bg-white/95 backdrop-blur-sm border-b border-gray-200">
         <div className="flex items-center justify-between px-4 py-3">
-          {/* Left side - Controls */}
+          {/* Left side - Search and Controls */}
           <div className="flex items-center space-x-2">
+            {/* Search Input */}
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search users, ships, ranks, ports..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-64 pl-10 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  ×
+                </button>
+              )}
+            </div>
 
 
             {/* Filter Dropdown */}
@@ -420,13 +454,19 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             </button>
           </div>
 
-          {/* Right side - Zoom/Radius Button */}
-          <button
-            className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-xs font-medium text-gray-700"
-            title={`Zoom level ${Math.round(mapZoom)} shows ${radiusKm}km radius with ${filteredUsers.length} users`}
-          >
-            Z{Math.round(mapZoom)} • {radiusKm}km • {filteredUsers.length} users
-          </button>
+          {/* Right side - Search Results/Status */}
+          <div className="flex items-center space-x-2">
+            {searchQuery.trim() ? (
+              <div className="px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-xs font-medium text-blue-700">
+                {isLoading ? '🔍 Searching...' : `📊 ${allUsers.length} results for "${searchQuery.trim()}"`}
+              </div>
+            ) : (
+              <div className="px-3 py-2 bg-gray-100 rounded-lg text-xs font-medium text-gray-700"
+                   title={`Zoom level ${Math.round(mapZoom)} shows ${radiusKm}km radius with ${filteredUsers.length} users`}>
+                Z{Math.round(mapZoom)} • {radiusKm}km • {filteredUsers.length} users
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

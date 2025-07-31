@@ -818,7 +818,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get random users for home page display (up to 100 users)
+  // Search all users with comprehensive text search functionality
+  app.get("/api/users/search", async (req, res) => {
+    try {
+      const { q, limit = 500 } = req.query;
+      const searchQuery = q as string;
+      
+      // Get all users from database
+      const allUsers = await storage.getUsersWithLocation();
+      console.log(`Found ${allUsers.length} total users in database`);
+      
+      let filteredUsers = allUsers;
+      
+      // Apply text-based search if query provided
+      if (searchQuery && searchQuery.trim()) {
+        const query = searchQuery.toLowerCase().trim();
+        console.log(`Searching for: "${query}"`);
+        
+        filteredUsers = allUsers.filter(user => {
+          // Search across multiple fields
+          const searchableText = [
+            user.fullName || '',
+            user.rank || '',
+            user.shipName || '',
+            user.company || '',
+            user.imoNumber || '',
+            user.port || '',
+            user.city || '',
+            user.country || '',
+            user.userType || ''
+          ].join(' ').toLowerCase();
+          
+          return searchableText.includes(query);
+        });
+        
+        console.log(`Found ${filteredUsers.length} users matching search query`);
+      } else {
+        // If no search query, return random selection for performance
+        const shuffled = allUsers.sort(() => 0.5 - Math.random());
+        filteredUsers = shuffled.slice(0, parseInt(limit as string));
+        console.log(`No search query provided, returning ${filteredUsers.length} random users`);
+      }
+      
+      // Sort by relevance (exact name matches first, then by question count)
+      if (searchQuery && searchQuery.trim()) {
+        filteredUsers.sort((a, b) => {
+          const query = searchQuery.toLowerCase();
+          const aNameMatch = a.fullName?.toLowerCase().includes(query) ? 1 : 0;
+          const bNameMatch = b.fullName?.toLowerCase().includes(query) ? 1 : 0;
+          
+          if (aNameMatch !== bNameMatch) {
+            return bNameMatch - aNameMatch; // Name matches first
+          }
+          
+          return (b.questionCount || 0) - (a.questionCount || 0); // Then by Q count
+        });
+      }
+      
+      // Apply limit
+      const limitedUsers = filteredUsers.slice(0, parseInt(limit as string));
+      
+      console.log(`Returning ${limitedUsers.length} users (limit: ${limit})`);
+      res.json(limitedUsers);
+      
+    } catch (error) {
+      console.error('Search users error:', error);
+      res.status(500).json({ message: "Failed to search users" });
+    }
+  });
+
+  // Get random users for home page display (backward compatibility)
   app.get("/api/users/random", async (req, res) => {
     try {
       const { limit = 100 } = req.query;
