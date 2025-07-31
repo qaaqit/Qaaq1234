@@ -5,9 +5,17 @@ import * as schema from "@shared/schema";
 
 neonConfig.webSocketConstructor = ws;
 
-// Use QAAQ_DATABASE_URL for authentic maritime user data, fallback to DATABASE_URL for CPSS groups
-const databaseUrl = process.env.QAAQ_DATABASE_URL || process.env.DATABASE_URL;
-console.log(`Using database: ${databaseUrl?.includes('ep-autumn-hat') ? 'QAAQ Database (ep-autumn-hat-a27gd1cd)' : 'Local Database'}`);
+// Use QAAQ_PRODUCTION_DATABASE_URL for real maritime users, fallback to QAAQ_DATABASE_URL for test data
+const databaseUrl = process.env.QAAQ_PRODUCTION_DATABASE_URL || process.env.QAAQ_DATABASE_URL || process.env.DATABASE_URL;
+
+// Log which environment variable is being used
+if (process.env.QAAQ_PRODUCTION_DATABASE_URL) {
+  console.log('Using database: QAAQ Production Database (Real Maritime Professionals)');
+} else if (process.env.QAAQ_DATABASE_URL) {
+  console.log('Using database: QAAQ Test Database (Sample/Seed Data Only)');
+} else {
+  console.log('Using database: Local Database');
+}
 
 export const pool = new Pool({ 
   connectionString: databaseUrl,
