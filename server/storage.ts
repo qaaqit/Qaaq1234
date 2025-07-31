@@ -268,6 +268,45 @@ export class DatabaseStorage implements IStorage {
       'montreal': { lat: 45.5017, lng: -73.5673 },
       'halifax': { lat: 44.6488, lng: -63.5752 },
       
+      // Additional Indian cities from database
+      'goa': { lat: 15.2993, lng: 74.1240 },
+      'kandla': { lat: 23.0333, lng: 70.2167 },
+      'mangalore': { lat: 12.9141, lng: 74.8560 },
+      'tuticorin': { lat: 8.7642, lng: 78.1348 },
+      'paradip': { lat: 20.3167, lng: 86.6167 },
+      'haldia': { lat: 22.0333, lng: 88.0833 },
+      'ennore': { lat: 13.2333, lng: 80.3167 },
+      'jnpt': { lat: 18.9500, lng: 72.9500 },
+      'jawaharlal nehru port': { lat: 18.9500, lng: 72.9500 },
+      'new mangalore': { lat: 12.9141, lng: 74.8560 },
+      'cochin': { lat: 9.9312, lng: 76.2673 },
+      'kakinada': { lat: 16.9891, lng: 82.2475 },
+      'lakshadweep': { lat: 10.5667, lng: 72.6417 },
+      'bareilly': { lat: 28.3670, lng: 79.4304 },
+      'jaipur rajasthan': { lat: 26.9124, lng: 75.7873 },
+      'gwalior madhya pradesh': { lat: 26.2183, lng: 78.1828 },
+      'bhavnagar': { lat: 21.7645, lng: 72.1519 },
+      'vasco da gama': { lat: 15.3960, lng: 73.8157 },
+      'mormugao': { lat: 15.4167, lng: 73.8000 },
+      
+      // International ports and cities
+      'singapore port': { lat: 1.3521, lng: 103.8198 },
+      'port klang': { lat: 3.0000, lng: 101.3833 },
+      'laem chabang': { lat: 13.0833, lng: 100.8833 },
+      'tanjung pelepas': { lat: 1.3667, lng: 103.5500 },
+      'chittagong': { lat: 22.3569, lng: 91.7832 },
+      'karachi': { lat: 24.8607, lng: 67.0011 },
+      'colombo': { lat: 6.9271, lng: 79.8612 },
+      'male': { lat: 4.1755, lng: 73.5093 },
+      'djibouti': { lat: 11.8251, lng: 42.5903 },
+      'sohar': { lat: 24.3477, lng: 56.7088 },
+      'salalah': { lat: 17.0151, lng: 54.0924 },
+      'fujairah': { lat: 25.1164, lng: 56.3264 },
+      'aden': { lat: 12.7797, lng: 45.0369 },
+      'suez': { lat: 29.9668, lng: 32.5498 },
+      'limassol': { lat: 34.6851, lng: 33.0330 },
+      'constanta': { lat: 44.1598, lng: 28.6348 },
+      
       // Default coordinates for unknown cities (Mumbai as maritime hub)
       'default': { lat: 19.0760, lng: 72.8777 }
     };
@@ -442,7 +481,19 @@ export class DatabaseStorage implements IStorage {
         const fullName = [user.first_name, user.middle_name, user.last_name].filter(Boolean).join(' ') || user.email || 'Maritime User';
         const userCity = user.city || user.current_city || 'Mumbai';
         const userCountry = user.current_country || 'India';
-        const defaultCoords = this.getCityCoordinates(userCity, userCountry);
+        
+        // Get base coordinates for the user's city
+        const cityCoords = this.getCityCoordinates(userCity, userCountry);
+        
+        // Add realistic geographic scatter within city area (±0.1 degrees ≈ ±11km)
+        const userId = user.id.toString();
+        const hashSeed = userId.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+        const latOffset = ((hashSeed % 200) - 100) / 1000; // ±0.1 degrees
+        const lngOffset = (((hashSeed * 7) % 200) - 100) / 1000; // ±0.1 degrees
+        
+        // Use precise GPS if available, otherwise use city coords with realistic scatter
+        const finalLat = user.current_latitude ? parseFloat(user.current_latitude) : cityCoords.lat + latOffset;
+        const finalLng = user.current_longitude ? parseFloat(user.current_longitude) : cityCoords.lng + lngOffset;
         
         return {
           id: user.id,
@@ -460,10 +511,10 @@ export class DatabaseStorage implements IStorage {
           city: userCity,
           country: userCountry,
           company: user.last_company || '',
-          latitude: parseFloat(user.current_latitude) || defaultCoords.lat,
-          longitude: parseFloat(user.current_longitude) || defaultCoords.lng,
-          deviceLatitude: parseFloat(user.current_latitude) || null,
-          deviceLongitude: parseFloat(user.current_longitude) || null,
+          latitude: finalLat,
+          longitude: finalLng,
+          deviceLatitude: user.current_latitude ? parseFloat(user.current_latitude) : null,
+          deviceLongitude: user.current_longitude ? parseFloat(user.current_longitude) : null,
           locationSource: user.current_latitude ? 'device' : 'city',
           locationUpdatedAt: user.location_updated_at || new Date(),
           isVerified: user.has_completed_onboarding || true,
