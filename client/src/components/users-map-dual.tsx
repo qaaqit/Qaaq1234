@@ -5,7 +5,7 @@ import MarineChatButton from './marine-chat-button';
 import SingleMessageChat from './single-message-chat';
 import GoogleMap from './google-map';
 import LeafletMap from './leaflet-map';
-import { ChevronDown, Map, Filter, MapPin } from 'lucide-react';
+import { ChevronDown, Map, Filter, MapPin, Radar } from 'lucide-react';
 
 interface MapUser {
   id: string;
@@ -128,6 +128,8 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [mapType, setMapType] = useState('roadmap');
   const [mapZoom, setMapZoom] = useState(10); // Default zoom level
+  const [scanAngle, setScanAngle] = useState(0); // For rotating scan arm
+  const [showScanElements, setShowScanElements] = useState(false); // Toggle scan arm and circle
 
   // Fetch all users with TanStack Query
   const { data: allUsers = [], isLoading } = useQuery<MapUser[]>({
@@ -263,6 +265,27 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     const locationInterval = setInterval(updateLocation, 5 * 60 * 1000);
     return () => clearInterval(locationInterval);
   }, []);
+
+  // Rotating scan arm animation
+  useEffect(() => {
+    if (!showScanElements) return;
+    
+    const scanInterval = setInterval(() => {
+      setScanAngle(prev => (prev + 2) % 360); // Rotate 2 degrees per interval
+    }, 50); // Update every 50ms for smooth rotation
+    
+    return () => clearInterval(scanInterval);
+  }, [showScanElements]);
+
+  // Auto-enable scan elements when users are detected
+  useEffect(() => {
+    if (filteredUsers.length > 0 && !showScanElements) {
+      setShowScanElements(true);
+      // Auto-disable after 20 seconds
+      const timeout = setTimeout(() => setShowScanElements(false), 20000);
+      return () => clearTimeout(timeout);
+    }
+  }, [filteredUsers.length, showScanElements]);
 
   // Component updated log for debugging
   useEffect(() => {
@@ -407,6 +430,19 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                 </div>
               )}
             </div>
+
+            {/* Radar Toggle Button */}
+            <button
+              onClick={() => setShowScanElements(!showScanElements)}
+              className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors ${
+                showScanElements 
+                  ? 'bg-green-100 text-green-700 hover:bg-green-200' 
+                  : 'bg-gray-100 hover:bg-gray-200'
+              }`}
+              title="Toggle radar scan"
+            >
+              <Radar size={16} className={showScanElements ? 'animate-spin' : ''} />
+            </button>
           </div>
 
           {/* Right side - Status */}
@@ -445,6 +481,68 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
           />
         )}
       </div>
+
+      {/* Scan Arm and Circle Overlay */}
+      {showScanElements && userLocation && (
+        <div className="absolute top-[60px] left-0 right-0 bottom-[180px] pointer-events-none z-[500]">
+          <div className="relative w-full h-full">
+            {/* 50km Circle */}
+            <div
+              className="absolute border-2 border-green-400/60 rounded-full pointer-events-none"
+              style={{
+                width: '200px',
+                height: '200px',
+                left: '50%',
+                top: '50%',
+                transform: 'translate(-50%, -50%)',
+                borderColor: '#4ade80',
+                borderWidth: '2px',
+                borderStyle: 'dashed',
+                animation: 'pulse 2s infinite'
+              }}
+            />
+            
+            {/* Rotating Scan Arm */}
+            <div
+              className="absolute pointer-events-none"
+              style={{
+                left: '50%',
+                top: '50%',
+                width: '100px',
+                height: '2px',
+                backgroundColor: '#22c55e',
+                transformOrigin: '0 50%',
+                transform: `translate(0, -50%) rotate(${scanAngle}deg)`,
+                boxShadow: '0 0 10px #22c55e',
+                opacity: 0.8
+              }}
+            />
+            
+            {/* Center Dot */}
+            <div
+              className="absolute w-3 h-3 bg-green-500 rounded-full pointer-events-none"
+              style={{
+                left: '50%',
+                top: '50%',
+                transform: 'translate(-50%, -50%)',
+                boxShadow: '0 0 10px #22c55e'
+              }}
+            />
+            
+            {/* Scan Range Text */}
+            <div
+              className="absolute text-green-400 text-xs font-medium pointer-events-none"
+              style={{
+                left: '50%',
+                top: '50%',
+                transform: 'translate(-50%, -120px)'
+              }}
+            >
+              {radiusKm}km SCAN
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bottom Panel - Top 6 Nearest Users */}
       {nearestUsers.length > 0 && (
