@@ -445,7 +445,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             <div className="relative">
               <input
                 type="text"
-                placeholder={searchType === 'ships' ? 'Search ships by name or IMO...' : 'Search users, ships, ranks, ports...'}
+                placeholder="Sailors/ Ships/ Ports Services"
                 value={searchQuery}
                 onChange={(e) => handleSearchInput(e.target.value)}
                 className="w-64 pl-10 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
