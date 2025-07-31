@@ -71,7 +71,7 @@ export default function UserDropdown({ user, className = "" }: UserDropdownProps
       icon: Settings,
       label: "Update CV/Profile", 
       onClick: () => {
-        setLocation(`/user/${user.id}`);
+        setLocation('/profile');
         setIsOpen(false);
       }
     },

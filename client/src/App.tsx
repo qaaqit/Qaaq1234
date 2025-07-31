@@ -14,6 +14,7 @@ import Admin from "@/pages/admin";
 import ChatPage from "@/pages/chat";
 import DMPage from "@/pages/dm";
 import UserProfile from "@/pages/user-profile";
+import Profile from "@/pages/profile";
 import MyQuestions from "@/pages/my-questions";
 
 import NotFound from "@/pages/not-found";
@@ -60,6 +61,7 @@ function Router() {
           <Route path="/dm" component={() => user ? <DMPage /> : <Home />} />
           <Route path="/qhf" component={() => user ? <DMPage /> : <Home />} />
           <Route path="/user/:userId" component={() => user ? <UserProfile /> : <Home />} />
+          <Route path="/profile" component={() => user ? <Profile /> : <Home />} />
           <Route path="/my-questions" component={() => user ? <MyQuestions /> : <Home />} />
           <Route path="/admin" component={() => user ? <Admin /> : <Home />} />
 

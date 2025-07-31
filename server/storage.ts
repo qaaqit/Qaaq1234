@@ -14,6 +14,7 @@ export interface IStorage {
   incrementLoginCount(userId: string): Promise<void>;
   getUsersWithLocation(): Promise<User[]>;
   updateUserLocation(userId: string, latitude: number, longitude: number, source: 'device' | 'ship' | 'city'): Promise<void>;
+  updateUserProfile(userId: string, profileData: Partial<User>): Promise<User | undefined>;
   
   // Verification codes
   createVerificationCode(userId: string, code: string, expiresAt: Date): Promise<VerificationCode>;
@@ -479,74 +480,6 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  private getCityCoordinates(city: string, country: string): { lat: number; lng: number } {
-    // Major maritime cities and ports coordinates
-    const cityCoords: { [key: string]: { lat: number; lng: number } } = {
-      // India
-      'mumbai': { lat: 19.0760, lng: 72.8777 },
-      'chennai': { lat: 13.0827, lng: 80.2707 },
-      'kolkata': { lat: 22.5726, lng: 88.3639 },
-      'kochi': { lat: 9.9312, lng: 76.2673 },
-      'delhi': { lat: 28.6139, lng: 77.2090 },
-      'bangalore': { lat: 12.9716, lng: 77.5946 },
-      'hyderabad': { lat: 17.3850, lng: 78.4867 },
-      'pune': { lat: 18.5204, lng: 73.8567 },
-      'ahmedabad': { lat: 23.0225, lng: 72.5714 },
-      
-      // UAE
-      'dubai': { lat: 25.2048, lng: 55.2708 },
-      'abu dhabi': { lat: 24.4539, lng: 54.3773 },
-      'sharjah': { lat: 25.3463, lng: 55.4209 },
-      
-      // Singapore
-      'singapore': { lat: 1.3521, lng: 103.8198 },
-      
-      // Major ports worldwide
-      'hamburg': { lat: 53.5511, lng: 9.9937 },
-      'rotterdam': { lat: 51.9225, lng: 4.4792 },
-      'antwerp': { lat: 51.2194, lng: 4.4025 },
-      'shanghai': { lat: 31.2304, lng: 121.4737 },
-      'hong kong': { lat: 22.3193, lng: 114.1694 },
-      'los angeles': { lat: 34.0522, lng: -118.2437 },
-      'long beach': { lat: 33.7701, lng: -118.1937 },
-      'new york': { lat: 40.7128, lng: -74.0060 },
-      'london': { lat: 51.5074, lng: -0.1278 },
-      'tokyo': { lat: 35.6762, lng: 139.6503 },
-      'osaka': { lat: 34.6937, lng: 135.5023 },
-      'busan': { lat: 35.1796, lng: 129.0756 },
-    };
-    
-    const searchKey = city.toLowerCase();
-    
-    // Check direct city match first
-    if (cityCoords[searchKey]) {
-      return cityCoords[searchKey];
-    }
-    
-    // Check if city contains known port names
-    for (const [knownCity, coords] of Object.entries(cityCoords)) {
-      if (searchKey.includes(knownCity) || knownCity.includes(searchKey)) {
-        return coords;
-      }
-    }
-    
-    // Default coordinates for unknown cities (approximate center of maritime activity)
-    const countryDefaults: { [key: string]: { lat: number; lng: number } } = {
-      'india': { lat: 20.5937, lng: 78.9629 },
-      'uae': { lat: 24.4539, lng: 54.3773 },
-      'singapore': { lat: 1.3521, lng: 103.8198 },
-      'germany': { lat: 53.5511, lng: 9.9937 },
-      'netherlands': { lat: 51.9225, lng: 4.4792 },
-      'china': { lat: 31.2304, lng: 121.4737 },
-      'usa': { lat: 34.0522, lng: -118.2437 },
-      'uk': { lat: 51.5074, lng: -0.1278 },
-      'japan': { lat: 35.6762, lng: 139.6503 },
-      'south korea': { lat: 35.1796, lng: 129.0756 },
-    };
-    
-    return countryDefaults[country.toLowerCase()] || { lat: 0, lng: 0 };
-  }
-
   async createVerificationCode(userId: string, code: string, expiresAt: Date): Promise<VerificationCode> {
     const [verCode] = await db
       .insert(verificationCodes)
@@ -745,7 +678,91 @@ export class DatabaseStorage implements IStorage {
       );
   }
 
+  async updateUserProfile(userId: string, profileData: Partial<User>): Promise<User | undefined> {
+    try {
+      console.log(`Updating profile for user ${userId}:`, profileData);
+      
+      // Update using raw SQL to avoid Drizzle schema issues with QAAQ database
+      const updateFields = [];
+      const updateValues = [];
+      let paramIndex = 2; // Start at 2 since $1 is userId
+      
+      // Map profile fields to database columns
+      const fieldMapping = {
+        fullName: 'full_name',
+        email: 'email',
+        whatsAppNumber: 'whatsapp_number',
+        nationality: 'nationality',
+        dateOfBirth: 'date_of_birth',
+        gender: 'gender',
+        maritimeRank: 'maritime_rank',
+        experienceLevel: 'experience_level',
+        currentShipName: 'current_ship_name',
+        currentShipIMO: 'current_ship_imo',
+        lastCompany: 'last_company',
+        lastShip: 'last_ship',
+        onboardSince: 'onboard_since',
+        onboardStatus: 'onboard_status',
+        currentCity: 'current_city',
+        currentLatitude: 'current_latitude',
+        currentLongitude: 'current_longitude',
+        userType: 'user_type',
+        nickname: 'nickname',
+        rank: 'rank',
+        shipName: 'ship_name',
+        imoNumber: 'imo_number',
+        port: 'port',
+        visitWindow: 'visit_window',
+        city: 'city',
+        country: 'country',
+        latitude: 'latitude',
+        longitude: 'longitude',
+      };
 
+      // Build the SET clause dynamically
+      for (const [key, value] of Object.entries(profileData)) {
+        if (value !== undefined && fieldMapping[key as keyof typeof fieldMapping]) {
+          const dbColumn = fieldMapping[key as keyof typeof fieldMapping];
+          updateFields.push(`${dbColumn} = $${paramIndex}`);
+          updateValues.push(value);
+          paramIndex++;
+        }
+      }
+
+      if (updateFields.length === 0) {
+        console.log('No fields to update');
+        return this.getUser(userId);
+      }
+
+      // Add last_updated timestamp
+      updateFields.push(`last_updated = NOW()`);
+
+      const updateQuery = `
+        UPDATE users 
+        SET ${updateFields.join(', ')}
+        WHERE id = $1
+        RETURNING *
+      `;
+
+      console.log('Executing update query:', updateQuery);
+      console.log('With values:', [userId, ...updateValues]);
+
+      const result = await pool.query(updateQuery, [userId, ...updateValues]);
+      
+      if (result.rows.length === 0) {
+        console.log(`No user found with ID: ${userId}`);
+        return undefined;
+      }
+
+      const updatedUser = result.rows[0];
+      console.log('Profile updated successfully:', updatedUser.full_name);
+      
+      return updatedUser as User;
+    } catch (error) {
+      console.error(`Error updating profile for user ${userId}:`, error);
+      throw error;
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();

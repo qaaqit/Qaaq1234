@@ -995,6 +995,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User Profile API endpoints
+  
+  // Get user profile for CV/Profile page
+  app.get('/api/users/profile', authenticateToken, async (req, res) => {
+    try {
+      const userId = req.user?.userId || req.user?.id || req.user?.email;
+      if (!userId) {
+        return res.status(400).json({ error: 'User ID not found' });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      res.json(user);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      res.status(500).json({ error: 'Failed to fetch profile' });
+    }
+  });
+
+  // Update user profile
+  app.put('/api/users/profile', authenticateToken, async (req, res) => {
+    try {
+      const userId = req.user?.userId || req.user?.id || req.user?.email;
+      if (!userId) {
+        return res.status(400).json({ error: 'User ID not found' });
+      }
+
+      // Validate request body using updateProfileSchema
+      const { updateProfileSchema } = await import('@shared/schema');
+      const validationResult = updateProfileSchema.safeParse(req.body);
+      
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          error: 'Invalid profile data', 
+          details: validationResult.error.errors 
+        });
+      }
+
+      const updatedUser = await storage.updateUserProfile(userId, validationResult.data);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      res.json(updatedUser);
+    } catch (error) {
+      console.error('Error updating user profile:', error);
+      res.status(500).json({ error: 'Failed to update profile' });
+    }
+  });
+
   // CPSS Groups API endpoints
   
   // Create or get CPSS group based on breadcrumb
