@@ -103,8 +103,8 @@ const MARITIME_RANK_CATEGORIES = [
   {
     id: 'senior_officers_above',
     label: 'Senior Officers & Above', 
-    description: 'Captain, Chief Officer, Chief Engineer',
-    ranks: ['captain', 'chief officer', 'chief engineer']
+    description: '2nd Engineer, Chief Engineer, Superintendents',
+    ranks: ['2nd engineer', 'second engineer', '2E', 'chief engineer', 'chief_engineer', 'CE', 'superintendent', 'superintendents']
   }
 ];
 
