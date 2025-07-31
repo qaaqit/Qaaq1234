@@ -672,32 +672,52 @@ export class DatabaseStorage implements IStorage {
 
   // Chat functionality methods
   async createChatConnection(senderId: string, receiverId: string): Promise<ChatConnection> {
-    const [connection] = await db
-      .insert(chatConnections)
-      .values({ senderId, receiverId })
-      .returning();
-    return connection;
+    // Use raw SQL to avoid schema naming issues
+    const result = await pool.query(`
+      INSERT INTO chat_connections (sender_id, receiver_id, status, created_at)
+      VALUES ($1, $2, 'pending', NOW())
+      RETURNING id, sender_id, receiver_id, status, created_at, accepted_at
+    `, [senderId, receiverId]);
+    
+    const row = result.rows[0];
+    return {
+      id: row.id,
+      senderId: row.sender_id,
+      receiverId: row.receiver_id,
+      status: row.status,
+      createdAt: row.created_at,
+      acceptedAt: row.accepted_at
+    };
   }
 
   async getChatConnection(senderId: string, receiverId: string): Promise<ChatConnection | undefined> {
-    const connection = await db
-      .select()
-      .from(chatConnections)
-      .where(
-        or(
-          and(eq(chatConnections.senderId, senderId), eq(chatConnections.receiverId, receiverId)),
-          and(eq(chatConnections.senderId, receiverId), eq(chatConnections.receiverId, senderId))
-        )
-      )
-      .limit(1);
-    return connection[0];
+    // Use raw SQL to avoid schema naming issues
+    const result = await pool.query(`
+      SELECT id, sender_id, receiver_id, status, created_at, accepted_at
+      FROM chat_connections
+      WHERE (sender_id = $1 AND receiver_id = $2) OR (sender_id = $2 AND receiver_id = $1)
+      LIMIT 1
+    `, [senderId, receiverId]);
+    
+    if (result.rows.length === 0) return undefined;
+    
+    const row = result.rows[0];
+    return {
+      id: row.id,
+      senderId: row.sender_id,
+      receiverId: row.receiver_id,
+      status: row.status,
+      createdAt: row.created_at,
+      acceptedAt: row.accepted_at
+    };
   }
 
   async acceptChatConnection(connectionId: string): Promise<void> {
-    await db
-      .update(chatConnections)
-      .set({ status: 'accepted', acceptedAt: new Date() })
-      .where(eq(chatConnections.id, connectionId));
+    await pool.query(`
+      UPDATE chat_connections
+      SET status = 'accepted', accepted_at = NOW()
+      WHERE id = $1
+    `, [connectionId]);
   }
 
   async rejectChatConnection(connectionId: string): Promise<void> {
@@ -708,44 +728,67 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserChatConnections(userId: string): Promise<ChatConnection[]> {
-    return await db
-      .select()
-      .from(chatConnections)
-      .where(
-        or(
-          eq(chatConnections.senderId, userId),
-          eq(chatConnections.receiverId, userId)
-        )
-      )
-      .orderBy(desc(chatConnections.createdAt));
+    const result = await pool.query(`
+      SELECT id, sender_id, receiver_id, status, created_at, accepted_at
+      FROM chat_connections
+      WHERE sender_id = $1 OR receiver_id = $1
+      ORDER BY created_at DESC
+    `, [userId]);
+    
+    return result.rows.map(row => ({
+      id: row.id,
+      senderId: row.sender_id,
+      receiverId: row.receiver_id,
+      status: row.status,
+      createdAt: row.created_at,
+      acceptedAt: row.accepted_at
+    }));
   }
 
   async sendMessage(connectionId: string, senderId: string, message: string): Promise<ChatMessage> {
-    const [chatMessage] = await db
-      .insert(chatMessages)
-      .values({ connectionId, senderId, message })
-      .returning();
-    return chatMessage;
+    // Use raw SQL to avoid schema naming issues
+    const result = await pool.query(`
+      INSERT INTO chat_messages (connection_id, sender_id, message, is_read, created_at)
+      VALUES ($1, $2, $3, false, NOW())
+      RETURNING id, connection_id, sender_id, message, is_read, created_at
+    `, [connectionId, senderId, message]);
+    
+    const row = result.rows[0];
+    return {
+      id: row.id,
+      connectionId: row.connection_id,
+      senderId: row.sender_id,
+      message: row.message,
+      isRead: row.is_read,
+      createdAt: row.created_at
+    };
   }
 
   async getChatMessages(connectionId: string): Promise<ChatMessage[]> {
-    return await db
-      .select()
-      .from(chatMessages)
-      .where(eq(chatMessages.connectionId, connectionId))
-      .orderBy(chatMessages.createdAt);
+    // Use raw SQL to avoid schema naming issues
+    const result = await pool.query(`
+      SELECT id, connection_id, sender_id, message, is_read, created_at
+      FROM chat_messages
+      WHERE connection_id = $1
+      ORDER BY created_at ASC
+    `, [connectionId]);
+    
+    return result.rows.map(row => ({
+      id: row.id,
+      connectionId: row.connection_id,
+      senderId: row.sender_id,
+      message: row.message,
+      isRead: row.is_read,
+      createdAt: row.created_at
+    }));
   }
 
   async markMessagesAsRead(connectionId: string, userId: string): Promise<void> {
-    await db
-      .update(chatMessages)
-      .set({ isRead: true })
-      .where(
-        and(
-          eq(chatMessages.connectionId, connectionId),
-          sql`${chatMessages.senderId} != ${userId}`
-        )
-      );
+    await pool.query(`
+      UPDATE chat_messages
+      SET is_read = true
+      WHERE connection_id = $1 AND sender_id != $2
+    `, [connectionId, userId]);
   }
 
   async updateUserProfile(userId: string, profileData: Partial<User>): Promise<User | undefined> {
