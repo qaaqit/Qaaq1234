@@ -40,6 +40,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, mapType = 'r
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
+  const userLocationMarkerRef = useRef<any>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
 
   // Load Google Maps API
@@ -231,6 +232,51 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, mapType = 'r
     });
 
   }, [isMapLoaded, users, onUserHover, onUserClick]);
+
+  // Add user location marker (current user's position)
+  useEffect(() => {
+    if (!isMapLoaded || !mapInstanceRef.current || !userLocation) return;
+
+    // Clear existing user location marker
+    if (userLocationMarkerRef.current) {
+      userLocationMarkerRef.current.setMap(null);
+    }
+
+    // Create a prominent marker for user's current location
+    userLocationMarkerRef.current = new window.google.maps.Marker({
+      position: userLocation,
+      map: mapInstanceRef.current,
+      title: 'Your Location',
+      icon: {
+        path: window.google.maps.SymbolPath.CIRCLE,
+        scale: 12,
+        fillColor: '#FF4444', // Red for user location
+        fillOpacity: 1,
+        strokeColor: '#ffffff',
+        strokeWeight: 3,
+      },
+      zIndex: 1000, // High z-index to appear above other markers
+    });
+
+    // Add pulsing ring around user location
+    const pulseRing = new window.google.maps.Marker({
+      position: userLocation,
+      map: mapInstanceRef.current,
+      icon: {
+        path: window.google.maps.SymbolPath.CIRCLE,
+        scale: 20,
+        fillColor: '#FF4444',
+        fillOpacity: 0.2,
+        strokeColor: '#FF4444',
+        strokeWeight: 1,
+        strokeOpacity: 0.6,
+      },
+      zIndex: 999,
+    });
+
+    markersRef.current.push(pulseRing);
+
+  }, [isMapLoaded, userLocation]);
 
   return (
     <div className="w-full h-full relative">

@@ -147,6 +147,27 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, onUserHove
             />
           );
         })}
+
+        {/* User's current location marker */}
+        {userLocation && (
+          <Marker
+            position={[userLocation.lat, userLocation.lng]}
+            icon={divIcon({
+              html: `<div style="
+                background: #FF4444; 
+                border: 3px solid white; 
+                border-radius: 50%; 
+                width: 16px; 
+                height: 16px;
+                box-shadow: 0 0 0 4px rgba(255, 68, 68, 0.3);
+                cursor: default;
+              "></div>`,
+              className: 'user-location-marker',
+              iconSize: [16, 16],
+              iconAnchor: [8, 8],
+            })}
+          />
+        )}
       </MapContainer>
 
       {/* Regular user indicator */}
