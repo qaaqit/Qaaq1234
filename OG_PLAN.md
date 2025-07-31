@@ -129,17 +129,17 @@ AI determines whether questions should go to:
 - ✅ Proximity-based user discovery
 - ✅ Ship and port information display
 
-### Phase 2: CPSS Navigation
-- 🔄 Hierarchical location browsing
-- 🔄 Category-based service discovery
-- 🔄 Maritime meetup organization
-- 🔄 Local tour booking system
+### Phase 2: CPSS Navigation - SKIPPED
+- ❌ Hierarchical location browsing (removed from scope)
+- ❌ Category-based service discovery (removed from scope)
+- ❌ Maritime meetup organization (removed from scope)
+- ❌ Local tour booking system (removed from scope)
 
-### Phase 3: Social Features
-- 📋 Real-time messaging between users
-- 📋 Event creation and management
-- 📋 Review system for local services
-- 📋 Photo sharing for port experiences
+### Phase 3: Social Features - SKIPPED
+- ❌ Real-time messaging between users (removed from scope)
+- ❌ Event creation and management (removed from scope)
+- ❌ Review system for local services (removed from scope)
+- ❌ Photo sharing for port experiences (removed from scope)
 
 ### Phase 4: AI Integration
 - 📋 Smart question routing to QAAQ
@@ -183,6 +183,7 @@ AI determines whether questions should go to:
 
 ---
 
-**Last Updated**: January 27, 2025
+**Last Updated**: July 31, 2025
 **Status**: Phase 1 Core Discovery - Successfully Implemented
-**Next Priority**: CPSS Navigation System Implementation
+**Scope Change**: CPSS Navigation and Social Features removed from roadmap
+**Current Focus**: Core Discovery optimization and technical enhancements

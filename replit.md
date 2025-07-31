@@ -11,9 +11,9 @@ Map display: Full screen with light grey theme initially, becomes colorful when 
 Map behavior: Shows empty grey map on load, displays pins only when "Koi Hai?" button is pressed
 Proximity feature: Shows nearest 10 users when searching without text input
 User data: Connected to QAAQ parent database - contains test/seed data with 2 real users (+919029010070, +919920027697) and 10 test maritime profiles
-CPSS Navigation: Implemented hierarchical Country→Port→Suburb→Service structure with SEMM-like content cards
-CPSS Features: Endless scroll, like/share functions, card carousels, breadcrumb navigation
-CPSS Content: Maritime meetups, local tours, port dining, shore shopping, cultural experiences
+Scope Focus: Core "Koi Hai?" discovery functionality - CPSS navigation and social features removed from roadmap
+Mobile Optimization: Responsive layout with touch-friendly controls and compact design
+Enhanced Search: Updated placeholder to "Sailors/ Ships/ Company" for better user guidance
 Admin shield location: Keep admin shield in header top right corner (not in bottom navigation)
 Header visibility: Show white header only for admin users, regular users should not see the header
 Premium mode: Crown icon in search box toggles premium Google Maps features, requires premium plan for non-admin users
