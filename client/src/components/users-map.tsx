@@ -20,6 +20,9 @@ interface MapUser {
   country: string | null;
   latitude: number;
   longitude: number;
+  deviceLatitude?: number | null;  // Precise location for online users
+  deviceLongitude?: number | null; // Precise location for online users
+  locationUpdatedAt?: Date | string | null; // Track when location was last updated
   questionCount?: number;
   answerCount?: number;
 }
@@ -215,9 +218,15 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
     }
   }, [users]); // Show up to 50 random users as anchor pins
 
-  const createCustomIcon = (user: MapUser) => {
-    // Green for selected user, otherwise navy blue for sailors or ocean teal for locals
-    const color = selectedUser?.id === user.id ? '#22c55e' : (user.userType === 'sailor' ? '#1e3a8a' : '#0891b2');
+  const createCustomIcon = (user: MapUser, isOnlineWithLocation = false) => {
+    // Green for online users with location enabled, selected user gets bright green,
+    // otherwise navy blue for sailors or ocean teal for locals
+    let color;
+    if (isOnlineWithLocation) {
+      color = selectedUser?.id === user.id ? '#16a34a' : '#22c55e'; // Green for online with location
+    } else {
+      color = selectedUser?.id === user.id ? '#22c55e' : (user.userType === 'sailor' ? '#1e3a8a' : '#0891b2');
+    }
     
     return divIcon({
       html: `
@@ -230,9 +239,18 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
           color: ${color};
           font-size: 24px;
           text-shadow: 1px 1px 2px rgba(255,255,255,0.9), -1px -1px 2px rgba(255,255,255,0.9);
+          ${isOnlineWithLocation ? 'animation: pulse 2s infinite;' : ''}
         ">
           ⚓
         </div>
+        ${isOnlineWithLocation ? `
+          <style>
+            @keyframes pulse {
+              0%, 100% { opacity: 1; }
+              50% { opacity: 0.7; }
+            }
+          </style>
+        ` : ''}
       `,
       className: 'custom-anchor-marker',
       iconSize: [32, 32],
@@ -549,16 +567,28 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
 
         
         {!isLoading && users.map((user) => {
-          // Add small random offset to prevent perfect overlap (±0.002 degrees ≈ ±200m)
-          const scatterOffset = 0.002;
-          const offsetLat = user.latitude + (Math.random() - 0.5) * scatterOffset;
-          const offsetLng = user.longitude + (Math.random() - 0.5) * scatterOffset;
+          // Check if user is online with recent location update (within 10 minutes)
+          const isRecentLocation = user.locationUpdatedAt && 
+            new Date(user.locationUpdatedAt).getTime() > Date.now() - 10 * 60 * 1000;
+          const isOnlineWithLocation = !!(user.deviceLatitude && user.deviceLongitude && isRecentLocation);
+          
+          let plotLat: number, plotLng: number;
+          if (isOnlineWithLocation && user.deviceLatitude && user.deviceLongitude) {
+            // Use precise location for online users with location enabled
+            plotLat = user.deviceLatitude;
+            plotLng = user.deviceLongitude;
+          } else {
+            // Scatter within ±50km of city location (≈ ±0.45 degrees)
+            const scatterRadius = 0.45; // 50km ≈ 0.45 degrees
+            plotLat = user.latitude + (Math.random() - 0.5) * scatterRadius;
+            plotLng = user.longitude + (Math.random() - 0.5) * scatterRadius;
+          }
           
           return (
             <Marker
               key={user.id}
-              position={[offsetLat, offsetLng]}
-              icon={createCustomIcon(user)}
+              position={[plotLat, plotLng]}
+              icon={createCustomIcon(user, isOnlineWithLocation)}
               eventHandlers={{
                 click: () => {
                   setSelectedUser(user);
@@ -582,14 +612,41 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
                     <span className="font-medium">Last Ship:</span> {user.shipName}
                   </p>
                 )}
-                {/* Show distance from user if user location available */}
+                {/* Show location status and distance */}
                 {userLocation && (
-                  <p className="text-xs text-gray-500 mt-2 pt-2 border-t">
-                    {calculateDistance(
-                      userLocation.lat, userLocation.lng,
-                      user.latitude, user.longitude
-                    ).toFixed(1)}km away
-                  </p>
+                  <div className="text-xs text-gray-500 mt-2 pt-2 border-t space-y-1">
+                    {(() => {
+                      const isRecentLocation = user.locationUpdatedAt && 
+                        new Date(user.locationUpdatedAt).getTime() > Date.now() - 10 * 60 * 1000;
+                      const isOnline = !!(user.deviceLatitude && user.deviceLongitude && isRecentLocation);
+                      
+                      if (isOnline && user.deviceLatitude && user.deviceLongitude) {
+                        return (
+                          <>
+                            <p className="text-green-600 font-medium">🟢 Online with precise location</p>
+                            <p>
+                              {calculateDistance(
+                                userLocation.lat, userLocation.lng,
+                                user.deviceLatitude, user.deviceLongitude
+                              ).toFixed(1)}km away (precise)
+                            </p>
+                          </>
+                        );
+                      } else {
+                        return (
+                          <>
+                            <p className="text-gray-500">📍 City-based location</p>
+                            <p>
+                              {calculateDistance(
+                                userLocation.lat, userLocation.lng,
+                                user.latitude, user.longitude
+                              ).toFixed(1)}km away (approx)
+                            </p>
+                          </>
+                        );
+                      }
+                    })()}
+                  </div>
                 )}
                 
                 {/* Marine Chat Button */}
