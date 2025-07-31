@@ -408,16 +408,21 @@ export default function DMPage() {
                           </div>
                         )}
 
-                        <Badge 
-                          variant="secondary" 
-                          className={`mb-3 ${
-                            userProfile.userType === 'sailor' 
-                              ? 'bg-navy/10 text-navy' 
-                              : 'bg-ocean-teal/10 text-ocean-teal'
-                          }`}
-                        >
-                          {userProfile.userType === 'sailor' ? 'Sailor' : 'Local Guide'}
-                        </Badge>
+                        {userProfile.company ? (
+                          <Badge 
+                            variant="secondary" 
+                            className="mb-3 bg-gray-100 text-gray-700"
+                          >
+                            {userProfile.company}
+                          </Badge>
+                        ) : userProfile.userType === 'sailor' ? (
+                          <Badge 
+                            variant="secondary" 
+                            className="mb-3 bg-navy/10 text-navy"
+                          >
+                            Sailor
+                          </Badge>
+                        ) : null}
 
                         <div onClick={(e) => e.stopPropagation()}>
                           {existingConnection ? (

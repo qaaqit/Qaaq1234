@@ -175,12 +175,18 @@ export default function UserDropdown({ user, className = "" }: UserDropdownProps
                   Welcome{user.fullName && !user.fullName.startsWith('+') ? `, ${user.fullName.split(' ')[0]}` : ''}!
                 </p>
                 <div className="flex items-center space-x-2">
-                  <Badge 
-                    variant="outline" 
-                    className="bg-navy/20 text-navy-300 border-navy-400 text-xs"
-                  >
-                    {user.userType === 'sailor' ? '🚢 Sailor' : '🏠 Local Guide'}
-                  </Badge>
+                  {(user.company || user.userType === 'sailor') && (
+                    <Badge 
+                      variant="outline" 
+                      className={`text-xs ${
+                        user.company 
+                          ? 'bg-gray-200 text-gray-700 border-gray-400'
+                          : 'bg-navy/20 text-navy-300 border-navy-400'
+                      }`}
+                    >
+                      {user.company || (user.userType === 'sailor' ? '🚢 Sailor' : '')}
+                    </Badge>
+                  )}
                   {user.isAdmin && (
                     <Badge 
                       variant="outline" 

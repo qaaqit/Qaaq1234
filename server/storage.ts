@@ -372,6 +372,7 @@ export class DatabaseStorage implements IStorage {
           visitWindow: '',
           city: userCity,
           country: userCountry,
+          company: user.last_company || '',
           latitude: parseFloat(user.current_latitude) || defaultCoords.lat,
           longitude: parseFloat(user.current_longitude) || defaultCoords.lng,
           deviceLatitude: parseFloat(user.current_latitude) || null,
