@@ -249,11 +249,11 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
         title: user.fullName,
         icon: {
           path: window.google.maps.SymbolPath.CIRCLE,
-          scale: 15,
+          scale: 3, // Reduced from 15 to 3 (1/5th size)
           fillColor: color,
           fillOpacity: 1,
           strokeColor: '#ffffff',
-          strokeWeight: 2,
+          strokeWeight: 0.5, // Reduced stroke weight proportionally
         },
       });
 
@@ -331,24 +331,24 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
       title: 'Your Location',
       icon: {
         path: window.google.maps.SymbolPath.CIRCLE,
-        scale: 4, // One third of 12
+        scale: 1, // Reduced from 4 to 1 (1/4th size)
         fillColor: '#FF4444', // Red for user location
         fillOpacity: 1,
         strokeColor: '#ffffff',
-        strokeWeight: 1,
+        strokeWeight: 0.3, // Reduced stroke weight
       },
       zIndex: 1000, // High z-index to appear above other markers
     });
 
-    // Add pulsing ring around user location
+    // Add static ring around user location (removed pulsing for stability)
     const pulseRing = new window.google.maps.Marker({
       position: userLocation,
       map: mapInstanceRef.current,
       icon: {
         path: window.google.maps.SymbolPath.CIRCLE,
-        scale: 7, // One third of 20
+        scale: 2, // Reduced from 7 to 2 (smaller static ring)
         fillColor: '#FF4444',
-        fillOpacity: 0.2,
+        fillOpacity: 0.1, // Reduced opacity for subtlety
         strokeColor: '#FF4444',
         strokeWeight: 1,
         strokeOpacity: 0.6,

@@ -51,10 +51,10 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, selectedUs
     }
     
     return divIcon({
-      html: `<div style="color: ${color}; font-size: 32px; cursor: pointer; pointer-events: auto;">⚓</div>`,
+      html: `<div style="color: ${color}; font-size: 6px; cursor: pointer; pointer-events: auto;">⚓</div>`,
       className: 'custom-anchor-marker',
-      iconSize: [40, 40],
-      iconAnchor: [20, 20],
+      iconSize: [8, 8], // Reduced from 40x40 to 8x8 (1/5th size)
+      iconAnchor: [4, 4], // Adjusted anchor point
     });
   };
 
@@ -185,7 +185,7 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, selectedUs
               opacity: 0.5,
               fillOpacity: 0,
               dashArray: '8, 4', // More sophisticated dash pattern
-              className: 'scan-circle-glow' // Custom CSS class for glow effect
+              className: 'scan-circle-stable' // Stable circle without effects
             }}
           />
         )}
@@ -201,7 +201,7 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, selectedUs
               color: '#0891b2', // Matching teal color
               weight: 3,
               opacity: 0.7,
-              className: 'scan-line-glow' // Custom CSS class for glow effect
+              className: 'scan-line-stable' // Stable line without effects
             }}
           />
         )}
@@ -279,16 +279,15 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, selectedUs
             icon={divIcon({
               html: `<div style="
                 background: #FF4444; 
-                border: 1px solid white; 
+                border: 0.3px solid white; 
                 border-radius: 50%; 
-                width: 5px; 
-                height: 5px;
-                box-shadow: 0 0 0 2px rgba(255, 68, 68, 0.3);
+                width: 1px; 
+                height: 1px;
                 cursor: default;
               "></div>`,
               className: 'user-location-marker',
-              iconSize: [5, 5],
-              iconAnchor: [2.5, 2.5],
+              iconSize: [1, 1], // Reduced from 5x5 to 1x1 (1/5th size)
+              iconAnchor: [0.5, 0.5], // Adjusted anchor point
             })}
           />
         )}
