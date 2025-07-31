@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import MarineChatButton from './marine-chat-button';
@@ -130,6 +130,11 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
   const [mapZoom, setMapZoom] = useState(10); // Default zoom level
   const [scanAngle, setScanAngle] = useState(0); // For rotating scan arm
   const [showScanElements, setShowScanElements] = useState(false); // Toggle scan arm and circle
+
+  // Stable zoom change handler to prevent map re-initialization
+  const handleZoomChange = useCallback((zoom: number) => {
+    setMapZoom(zoom);
+  }, []);
 
   // Fetch all users with TanStack Query
   const { data: allUsers = [], isLoading } = useQuery<MapUser[]>({
@@ -469,7 +474,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             onUserClick={(userId) => {
               setOpenChatUserId(prev => prev === userId ? null : userId);
             }}
-            onZoomChange={(zoom) => setMapZoom(zoom)}
+            onZoomChange={handleZoomChange}
           />
         ) : (
           <LeafletMap
@@ -482,7 +487,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             onUserClick={(userId) => {
               setOpenChatUserId(prev => prev === userId ? null : userId);
             }}
-            onZoomChange={(zoom) => setMapZoom(zoom)}
+            onZoomChange={handleZoomChange}
           />
         )}
       </div>

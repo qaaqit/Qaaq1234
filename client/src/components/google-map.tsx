@@ -151,16 +151,25 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, mapType = 'r
       ],
     });
 
-    // Add zoom change listener
-    if (onZoomChange) {
-      mapInstanceRef.current.addListener('zoom_changed', () => {
-        const zoom = mapInstanceRef.current.getZoom();
-        onZoomChange(zoom);
-      });
-    }
-
     console.log('✅ Google Maps initialized for admin user');
-  }, [isMapLoaded, userLocation, onZoomChange]);
+  }, [isMapLoaded, userLocation]);
+
+  // Separate effect for zoom listener to avoid re-initialization
+  useEffect(() => {
+    if (!mapInstanceRef.current || !onZoomChange) return;
+    
+    const listener = mapInstanceRef.current.addListener('zoom_changed', () => {
+      const zoom = mapInstanceRef.current.getZoom();
+      onZoomChange(zoom);
+    });
+
+    // Cleanup listener on unmount or when onZoomChange changes
+    return () => {
+      if (listener && listener.remove) {
+        listener.remove();
+      }
+    };
+  }, [isMapLoaded, onZoomChange]);
 
   // Update map type when mapType prop changes
   useEffect(() => {
