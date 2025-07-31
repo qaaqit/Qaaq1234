@@ -175,11 +175,11 @@ Google Maps Controls: Transparent icon-only buttons positioned in bottom-left co
 - **Tab State Management**: Added activeTab state with proper tab switching functionality
 
 ### Database Migration to QAAQ Production System (January 31, 2025)
-- **Dual Database Architecture**: Successfully connected to QAAQ Production Database for local data storage + Notion API for real maritime professionals
-- **100+ Real Maritime Users**: Fetching authentic QAAQ users from Notion including jisenjoseph24, imu.shashi156, member9113930371, and 97 others
-- **Production Database Connected**: Using QAAQ_PRODUCTION_DATABASE_URL for posts, groups, and app-specific data storage
-- **Notion Integration**: Real maritime professionals' profiles fetched directly from QAAQ Notion database with actual user data
-- **Seed Data Clarification**: PostgreSQL contains only 10 test users (Piyush Gupta, Rohit Sharma, etc.) while Notion provides 100+ real maritime professionals
+- **Direct PostgreSQL Access**: Modified system to fetch users directly from Neon PostgreSQL database without Notion API integration
+- **Database Status**: QAAQ Production Database currently contains only 10 test/seed users (Piyush Gupta, Rohit Sharma, etc.)
+- **Expected vs Actual**: User expects 500+ real maritime professionals with unique WhatsApp numbers, but database only has 10 test entries
+- **Production Database Connected**: Using QAAQ_PRODUCTION_DATABASE_URL for all data storage
+- **No Notion Integration**: Per user request, removed all Notion API integration - now using direct PostgreSQL access only
 
 ### QOI GPT Search Interface Enhancement (January 31, 2025)
 - **AI Search Placeholder**: Updated search placeholder text to "AI Search. Ask anything.." across the platform

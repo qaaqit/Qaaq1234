@@ -337,129 +337,26 @@ export class DatabaseStorage implements IStorage {
 
   async getUsersWithLocation(): Promise<User[]> {
     try {
-      console.log('Fetching users with location data for map and WhatsApp bot');
+      console.log('Fetching users directly from PostgreSQL database');
       
-      // Only get real QAAQ users from Notion database - no sample users
-      try {
-        const { getQAAQUsersFromNotion } = await import('./notion-users-service');
-        
-        // Set a 20-second timeout for Notion response to allow real users to load
-        const notionPromise = getQAAQUsersFromNotion();
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Notion timeout')), 20000)
-        );
-        
-        const notionUsers = await Promise.race([notionPromise, timeoutPromise]) as User[];
-        
-        if (Array.isArray(notionUsers) && notionUsers.length > 0) {
-          console.log(`Retrieved ${notionUsers.length} real QAAQ users from Notion`);
-          return notionUsers.slice(0, 100); // Show all authentic users
-        }
-      } catch (notionError) {
-        console.log('Notion integration timeout, using fallback users:', notionError);
+      // Get all users directly from PostgreSQL
+      const dbUsers = await db
+        .select()
+        .from(users)
+        .limit(1000); // Get up to 1000 users
+      
+      console.log(`Retrieved ${dbUsers.length} users from PostgreSQL database`);
+      
+      if (dbUsers.length > 0) {
+        return dbUsers;
       }
-
-      // Create a few test users with valid city coordinates for testing
-      console.log('No authentic QAAQ users available from Notion, using test city-based users');
-      const testUsers = [
-        {
-          id: "test-mumbai-sailor",
-          fullName: "Test Mumbai Sailor",
-          email: "mumbai.sailor@qaaq.com",
-          password: "",
-          needsPasswordChange: null,
-          userType: "sailor" as const,
-          isAdmin: false,
-          nickname: "Mumbai Sailor",
-          rank: "Second Officer",
-          shipName: "MV Mumbai Express",
-          company: "QAAQ Maritime",
-          imoNumber: "9876543",
-          port: "Mumbai Port",
-          visitWindow: "2025-01-30 to 2025-02-05",
-          city: "Mumbai",
-          country: "India",
-          latitude: 19.076,
-          longitude: 72.8777,
-          deviceLatitude: null,
-          deviceLongitude: null,
-          locationSource: "city" as const,
-          locationUpdatedAt: new Date(),
-          isVerified: true,
-          loginCount: 1,
-          lastLogin: new Date(),
-          createdAt: new Date(),
-          questionCount: 3,
-          answerCount: 1,
-          whatsappNumber: "+919876543210"
-        },
-        {
-          id: "test-chennai-engineer",
-          fullName: "Test Chennai Engineer",
-          email: "chennai.engineer@qaaq.com",
-          password: "",
-          needsPasswordChange: null,
-          userType: "sailor" as const,
-          isAdmin: false,
-          nickname: "Chennai Engineer",
-          rank: "Third Engineer",
-          shipName: "MV Chennai Star",
-          company: "QAAQ Maritime",
-          imoNumber: "9876544",
-          port: "Chennai Port",
-          visitWindow: "2025-02-01 to 2025-02-07",
-          city: "Chennai",
-          country: "India",
-          latitude: 13.0827,
-          longitude: 80.2707,
-          deviceLatitude: null,
-          deviceLongitude: null,
-          locationSource: "city" as const,
-          locationUpdatedAt: new Date(),
-          isVerified: true,
-          loginCount: 2,
-          lastLogin: new Date(),
-          createdAt: new Date(),
-          questionCount: 5,
-          answerCount: 2,
-          whatsappNumber: "+919876543211"
-        },
-        {
-          id: "test-andhra-cadet",
-          fullName: "Test Andhra Cadet",
-          email: "andhra.cadet@qaaq.com",
-          password: "",
-          needsPasswordChange: null,
-          userType: "sailor" as const,
-          isAdmin: false,
-          nickname: "Andhra Cadet",
-          rank: "Engine Cadet",
-          shipName: "MV Vizag Pride",
-          company: "QAAQ Maritime",
-          imoNumber: "9876545",
-          port: "Visakhapatnam Port",
-          visitWindow: "2025-02-03 to 2025-02-10",
-          city: "Andhrapradesh",
-          country: "India",
-          latitude: 17.6868,
-          longitude: 83.2185,
-          deviceLatitude: null,
-          deviceLongitude: null,
-          locationSource: "city" as const,
-          locationUpdatedAt: new Date(),
-          isVerified: true,
-          loginCount: 1,
-          lastLogin: new Date(),
-          createdAt: new Date(),
-          questionCount: 2,
-          answerCount: 0,
-          whatsappNumber: "+919876543212"
-        }
-      ];
       
-      return testUsers;
+      // If no users in database, return empty array
+      console.log('No users found in PostgreSQL database');
+      return [];
+
     } catch (error) {
-      console.error('Error fetching users with location:', error);
+      console.error('Error fetching users from database:', error);
       return [];
     }
   }
