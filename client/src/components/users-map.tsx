@@ -230,7 +230,6 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
           color: ${color};
           font-size: 24px;
           text-shadow: 1px 1px 2px rgba(255,255,255,0.9), -1px -1px 2px rgba(255,255,255,0.9);
-          filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
         ">
           ⚓
         </div>
@@ -549,17 +548,23 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
         
 
         
-        {!isLoading && users.map((user) => (
-          <Marker
-            key={user.id}
-            position={[user.latitude, user.longitude]}
-            icon={createCustomIcon(user)}
-            eventHandlers={{
-              click: () => {
-                setSelectedUser(user);
-              }
-            }}
-          >
+        {!isLoading && users.map((user) => {
+          // Add small random offset to prevent perfect overlap (±0.002 degrees ≈ ±200m)
+          const scatterOffset = 0.002;
+          const offsetLat = user.latitude + (Math.random() - 0.5) * scatterOffset;
+          const offsetLng = user.longitude + (Math.random() - 0.5) * scatterOffset;
+          
+          return (
+            <Marker
+              key={user.id}
+              position={[offsetLat, offsetLng]}
+              icon={createCustomIcon(user)}
+              eventHandlers={{
+                click: () => {
+                  setSelectedUser(user);
+                }
+              }}
+            >
             <Popup>
               <div className="p-2 min-w-[200px]">
                 <h3 className="font-bold text-gray-900 mb-2">
@@ -600,7 +605,8 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
               </div>
             </Popup>
           </Marker>
-        ))}
+          );
+        })}
       </MapContainer>
 
       {/* Transparent User Cards List at Bottom */}
