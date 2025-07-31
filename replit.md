@@ -167,6 +167,12 @@ Google Maps Controls: Transparent icon-only buttons positioned in bottom-left co
 
 ## Recent Changes
 
+### QOI GPT Search Interface Enhancement (January 31, 2025)
+- **AI Search Placeholder**: Updated search placeholder text to "AI Search. Ask anything.." across the platform
+- **Ch13 DM Search**: Primary QOI GPT integration point now clearly indicates AI-powered search capabilities
+- **CPSS Navigator Search**: Aligned search interface with AI branding for consistent user experience
+- **User Experience**: Search boxes now clearly communicate AI-powered assistance for maritime questions and discovery
+
 ### Maritime Rank Groups System Implementation (January 30, 2025)
 - **9 Rank-Based Groups Created**: Implemented complete maritime rank group system: Mtr CO, 2O 3O, CE 2E, 3E 4E, Cadets, Crew, ETO, Superintendents, Marine Professionals
 - **WhatsApp-Style Functionality**: Each rank group functions like WhatsApp groups with join/leave, posting, member management, and real-time discussions

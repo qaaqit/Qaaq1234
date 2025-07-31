@@ -949,7 +949,7 @@ export default function CPSSNavigator({ onServiceSelect }: CPSSNavigatorProps) {
           value={searchQuery}
           onChange={(e) => handleSearch(e.target.value)}
           className="pl-10 pr-4 py-3 text-lg border-gray-200 focus:border-ocean-teal"
-          placeholder="Search maritime services, locations, events..."
+          placeholder="AI Search. Ask anything.."
         />
       </div>
 
