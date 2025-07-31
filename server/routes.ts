@@ -1341,6 +1341,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get single question by ID
+  app.get('/api/questions/:id', authenticateToken, async (req, res) => {
+    try {
+      const questionId = parseInt(req.params.id);
+      if (isNaN(questionId)) {
+        return res.status(400).json({ error: 'Invalid question ID' });
+      }
+      
+      const { getQuestionById } = await import('./questions-service');
+      const question = await getQuestionById(questionId);
+      
+      if (!question) {
+        return res.status(404).json({ error: 'Question not found' });
+      }
+      
+      res.json(question);
+    } catch (error) {
+      console.error('Error fetching question:', error);
+      res.status(500).json({ error: 'Failed to fetch question' });
+    }
+  });
+
+  // Get answers for a question
+  app.get('/api/questions/:id/answers', authenticateToken, async (req, res) => {
+    try {
+      const questionId = parseInt(req.params.id);
+      if (isNaN(questionId)) {
+        return res.status(400).json({ error: 'Invalid question ID' });
+      }
+      
+      const { getQuestionAnswers } = await import('./questions-service');
+      const answers = await getQuestionAnswers(questionId);
+      
+      res.json(answers);
+    } catch (error) {
+      console.error('Error fetching answers:', error);
+      res.status(500).json({ error: 'Failed to fetch answers' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

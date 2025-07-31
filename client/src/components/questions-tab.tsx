@@ -176,7 +176,10 @@ export function QuestionsTab() {
               key={question.id}
               ref={index === allQuestions.length - 1 ? lastQuestionCallback : null}
             >
-              <Card className="border-2 border-gray-200 hover:border-ocean-teal/40 transition-colors cursor-pointer">
+              <Card 
+                className="border-2 border-gray-200 hover:border-ocean-teal/40 transition-colors cursor-pointer"
+                onClick={() => window.location.href = `/share/question/${question.id}`}
+              >
                 <CardContent className="p-4">
                   {/* Author and Metadata */}
                   <div className="flex items-start justify-between mb-3">
@@ -187,7 +190,10 @@ export function QuestionsTab() {
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <h4 className="font-medium text-gray-900">{question.author_name}</h4>
+                        <h4 className="font-medium text-gray-900">
+                          <span className="text-gray-500 mr-2">#{question.id}</span>
+                          {question.author_name}
+                        </h4>
                         {question.author_rank && (
                           <p className="text-sm text-gray-600">{formatRank(question.author_rank)}</p>
                         )}

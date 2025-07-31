@@ -112,6 +112,88 @@ export async function getQuestions(page: number = 1, limit: number = 20): Promis
 }
 
 /**
+ * Get a single question by ID
+ */
+export async function getQuestionById(questionId: number): Promise<Question | null> {
+  try {
+    const client = await pool.connect();
+    
+    const result = await client.query(`
+      SELECT 
+        q.id,
+        q.content,
+        q.author_id,
+        u.first_name || ' ' || COALESCE(u.last_name, '') as author_name,
+        u.maritime_rank as author_rank,
+        q.tags,
+        q.views as view_count,
+        q.is_resolved,
+        q.created_at,
+        q.updated_at,
+        q.image_urls,
+        q.is_from_whatsapp,
+        q.engagement_score,
+        q.flag_count,
+        CASE 
+          WHEN q.category_id IS NOT NULL THEN 'Maritime Equipment'
+          WHEN q.is_from_whatsapp THEN 'WhatsApp Q&A'
+          ELSE 'General Discussion'
+        END as category,
+        (SELECT COUNT(*) FROM answers a WHERE a.question_id = q.id) as answer_count,
+        q.is_anonymous,
+        CASE WHEN q.is_from_whatsapp THEN 'whatsapp' ELSE 'web' END as source
+      FROM questions q
+      LEFT JOIN users u ON u.id = q.author_id
+      WHERE q.id = $1 AND q.is_archived = false AND q.is_hidden = false
+    `, [questionId]);
+    
+    client.release();
+    
+    if (result.rows.length === 0) {
+      return null;
+    }
+    
+    return result.rows[0];
+  } catch (error) {
+    console.error('Error fetching question by ID:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get answers for a specific question
+ */
+export async function getQuestionAnswers(questionId: number): Promise<any[]> {
+  try {
+    const client = await pool.connect();
+    
+    const result = await client.query(`
+      SELECT 
+        a.id,
+        a.content,
+        a.author_id,
+        u.first_name || ' ' || COALESCE(u.last_name, '') as author_name,
+        u.maritime_rank as author_rank,
+        a.created_at,
+        a.is_marked_as_answer as is_best_answer
+      FROM answers a
+      LEFT JOIN users u ON u.id = a.author_id
+      WHERE a.question_id = $1 AND a.is_hidden = false
+      ORDER BY 
+        a.is_marked_as_answer DESC,
+        a.engagement_score DESC,
+        a.created_at ASC
+    `, [questionId]);
+    
+    client.release();
+    return result.rows;
+  } catch (error) {
+    console.error('Error fetching question answers:', error);
+    throw error;
+  }
+}
+
+/**
  * Search questions by text
  */
 export async function searchQuestions(query: string, page: number = 1, limit: number = 20): Promise<{

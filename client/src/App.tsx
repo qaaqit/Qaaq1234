@@ -16,6 +16,7 @@ import DMPage from "@/pages/dm";
 import UserProfile from "@/pages/user-profile";
 import Profile from "@/pages/profile";
 import MyQuestions from "@/pages/my-questions";
+import QuestionPage from "@/pages/question";
 
 import NotFound from "@/pages/not-found";
 import BottomNav from "@/components/bottom-nav";
@@ -63,6 +64,7 @@ function Router() {
           <Route path="/user/:userId" component={() => user ? <UserProfile /> : <Home />} />
           <Route path="/profile" component={() => user ? <Profile /> : <Home />} />
           <Route path="/my-questions" component={() => user ? <MyQuestions /> : <Home />} />
+          <Route path="/share/question/:id" component={() => user ? <QuestionPage /> : <Home />} />
           <Route path="/admin" component={() => user ? <Admin /> : <Home />} />
 
           <Route component={NotFound} />
