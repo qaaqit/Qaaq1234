@@ -251,7 +251,8 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
           font-size: 24px;
           text-shadow: 1px 1px 2px rgba(255,255,255,0.9), -1px -1px 2px rgba(255,255,255,0.9);
           filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
-          animation: ${showDropAnimation ? `anchorDrop 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) ${animationDelay} forwards` : 'none'};
+          animation: ${showDropAnimation ? `anchorDrop 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) ${animationDelay} forwards` : 'none'};
+          animation-fill-mode: both;
         ">
           ⚓
         </div>
@@ -492,20 +493,40 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
                 title="Press to see Who's there?"
                 onclick="
                   // Start epic zoom and animation sequence
+                  console.log('🔴 RED DOT CLICKED! Starting animation...');
                   this.classList.add('clicked');
+                  
+                  // Immediate visual feedback - make button larger
+                  this.style.transform = 'scale(1.3)';
+                  this.style.boxShadow = '0 0 20px rgba(239, 68, 68, 0.8)';
                   
                   // Add zoom animation to entire map container
                   const mapContainer = document.querySelector('.leaflet-container');
                   if (mapContainer) {
-                    mapContainer.style.transition = 'transform 2s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-                    mapContainer.style.transform = 'scale(1.5)';
+                    mapContainer.style.transition = 'transform 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    mapContainer.style.transform = 'scale(1.2)';
                     
                     // Reset zoom after animation
                     setTimeout(() => {
                       mapContainer.style.transform = 'scale(1)';
                       mapContainer.style.transition = '';
-                    }, 3000);
+                    }, 2000);
                   }
+                  
+                  // Trigger anchor drop animation on all visible anchors
+                  setTimeout(() => {
+                    const anchors = document.querySelectorAll('.custom-anchor-marker div');
+                    anchors.forEach((anchor, index) => {
+                      const delay = index * 100; // Staggered animation
+                      anchor.style.animation = 'none';
+                      anchor.style.opacity = '0';
+                      anchor.style.transform = 'translateY(-200px) scale(0) rotate(360deg)';
+                      
+                      setTimeout(() => {
+                        anchor.style.animation = 'anchorDrop 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards';
+                      }, delay);
+                    });
+                  }, 800);
                   
                   // Stop the scanner animation
                   const scanner = document.querySelector('.radar-animation');
@@ -529,12 +550,16 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
                   setTimeout(() => {
                     userMarker.style.transform = 'scale(1)';
                     userMarker.style.animation = 'none';
+                    userMarker.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
                   }, 4000);
                   
                   // Trigger the search functionality after animation completes
                   setTimeout(() => {
-                    window.location.href = window.location.href.includes('#') ? window.location.href : window.location.href + '#koi-hai';
-                  }, 6000);
+                    console.log('Red dot animation complete - triggering hash change');
+                    window.location.hash = 'koi-hai';
+                    // Force a hash change event
+                    window.dispatchEvent(new HashChangeEvent('hashchange'));
+                  }, 3000);
                 ">
                   📍
                   

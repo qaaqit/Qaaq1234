@@ -63,11 +63,17 @@ export default function Discover({ user }: DiscoverProps) {
   // Listen for hash changes to trigger user search
   useEffect(() => {
     const handleHashChange = () => {
+      console.log('Hash change detected:', window.location.hash);
       if (window.location.hash.includes('koi-hai')) {
         console.log('Red dot clicked - triggering proximity-based user search');
         setShowUsers(true);
         setShowNearbyCard(true);
         refetch();
+        
+        // Clear hash after processing to allow repeated clicks
+        setTimeout(() => {
+          window.location.hash = '';
+        }, 1000);
         
         // Trigger nearby users API call with proximity mode if user location is available
         if (location?.latitude && location?.longitude) {
