@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { authApi, setStoredToken, setStoredUser, type User } from "@/lib/auth";
-import UsersMap from "@/components/users-map";
+import UsersMapDual from "@/components/users-map-dual";
 
 interface HomeProps {
   onSuccess?: (user: User) => void;
@@ -65,7 +65,7 @@ export default function Home({ onSuccess }: HomeProps) {
     >
       {/* Full Screen Map Background */}
       <div className="absolute inset-0 z-0">
-        <UsersMap showUsers={false} searchQuery="" />
+        <UsersMapDual showNearbyCard={false} />
       </div>
       {/* Overlay for better contrast */}
       <div className="absolute inset-0 z-10 bg-black/20"></div>

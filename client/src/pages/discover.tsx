@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import DiscoveryCard from "@/components/discovery-card";
-import UsersMap from "@/components/users-map";
+import UsersMapDual from "@/components/users-map-dual";
 import GoogleMaps from "@/components/google-maps";
 import WhatsAppBotControl from "@/components/whatsapp-bot-control";
 import CPSSNavigator from "@/components/cpss-navigator";
@@ -171,19 +171,8 @@ export default function Discover({ user }: DiscoverProps) {
           </div>
         )}
 
-        {/* Render appropriate map based on selection */}
-        {isPremiumMode && user.isAdmin ? (
-          <div className="w-full h-full">
-            <GoogleMaps 
-              showUsers={showUsers}
-              showNearbyCard={showNearbyCard}
-              searchQuery=""
-              center={{ lat: 19.076, lng: 72.8977 }}
-            />
-          </div>
-        ) : (
-          <UsersMap showUsers={showUsers} showNearbyCard={showNearbyCard} searchQuery="" />
-        )}
+        {/* Dual Map System - Always use UsersMapDual */}
+        <UsersMapDual showNearbyCard={showNearbyCard} />
         
         {/* WhatsApp Bot Control Panel - positioned outside map */}
         {showWhatsAppPanel && user.isAdmin && (
