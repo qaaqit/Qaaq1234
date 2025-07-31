@@ -5,20 +5,29 @@ import * as schema from "@shared/schema";
 
 neonConfig.webSocketConstructor = ws;
 
-// Use QAAQ_PRODUCTION_DATABASE_URL for real maritime users, fallback to QAAQ_DATABASE_URL for test data
-const databaseUrl = process.env.QAAQ_PRODUCTION_DATABASE_URL || process.env.QAAQ_DATABASE_URL || process.env.DATABASE_URL;
+// User's provided connection string
+const userProvidedUrl = 'postgresql://neondb_owner:npg_rTOn7VZkYAb3@ep-autumn-hat-a27gd1cd.eu-central-1.aws.neon.tech/neondb?sslmode=require';
 
-// Log which environment variable is being used
-if (process.env.QAAQ_PRODUCTION_DATABASE_URL) {
-  console.log('Using database: QAAQ Production Database (Real Maritime Professionals)');
-} else if (process.env.QAAQ_DATABASE_URL) {
-  console.log('Using database: QAAQ Test Database (Sample/Seed Data Only)');
-} else {
-  console.log('Using database: Local Database');
-}
+// Always use the user's provided URL
+const databaseUrl = userProvidedUrl;
+
+console.log('Using Neon PostgreSQL database');
+console.log('Connection string:', databaseUrl.replace(/:[^@]+@/, ':****@')); // Log URL with masked password
 
 export const pool = new Pool({ 
   connectionString: databaseUrl,
-  ssl: databaseUrl?.includes('neon.tech') ? { rejectUnauthorized: false } : undefined
+  ssl: { rejectUnauthorized: false }
 });
+
+// Test the connection
+pool.connect()
+  .then(client => {
+    console.log('Successfully connected to PostgreSQL database');
+    client.release();
+  })
+  .catch(err => {
+    console.error('Failed to connect to PostgreSQL database:', err.message);
+    console.error('Please check your database connection string');
+  });
+
 export const db = drizzle({ client: pool, schema });

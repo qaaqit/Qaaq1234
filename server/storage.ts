@@ -74,44 +74,46 @@ export class DatabaseStorage implements IStorage {
       }
       
       const user = result.rows[0];
+      const fullName = [user.first_name, user.middle_name, user.last_name].filter(Boolean).join(' ') || user.email || 'Maritime User';
       console.log(`Raw user data:`, {
         id: user.id,
-        full_name: user.full_name,
-        city: user.city,
-        latitude: user.latitude,
-        longitude: user.longitude
+        first_name: user.first_name,
+        last_name: user.last_name,
+        city: user.city || user.current_city,
+        current_latitude: user.current_latitude,
+        current_longitude: user.current_longitude
       });
       
       // Get Mumbai coordinates as default for empty city
-      const defaultCoords = this.getCityCoordinates(user.city || 'mumbai', user.country || 'india');
+      const defaultCoords = this.getCityCoordinates(user.city || user.current_city || 'mumbai', user.current_country || 'india');
       
       // Create user object with Present City coordinates as base location
       const userObj = {
         id: user.id,
-        fullName: user.full_name || user.nickname || user.email || 'Maritime User',
+        fullName: fullName,
         email: user.email || '',
         password: '',
-        userType: user.user_type || (user.ship_name ? 'sailor' : 'local'),
-        isAdmin: user.is_admin || (user.email === "mushy.piyush@gmail.com") || false,
-        nickname: user.nickname || '',
-        rank: user.rank || '',
-        shipName: user.ship_name || '',
-        imoNumber: user.imo_number || '',
-        port: user.port || user.city || '',
-        visitWindow: user.visit_window || '',
-        city: user.city || 'Mumbai',
-        country: user.country || 'India',
-        // Use Present City coordinates if available, otherwise default coordinates
-        latitude: parseFloat(user.latitude) || defaultCoords.lat,
-        longitude: parseFloat(user.longitude) || defaultCoords.lng,
+        userType: user.current_ship_name ? 'sailor' : 'local',
+        isAdmin: user.is_platform_admin || (user.email === "mushy.piyush@gmail.com") || false,
+        nickname: '',
+        rank: user.maritime_rank || '',
+        shipName: user.current_ship_name || user.last_ship || '',
+        imoNumber: user.current_ship_imo || '',
+        port: user.last_port_visited || user.city || user.current_city || '',
+        visitWindow: '',
+        city: user.city || user.current_city || 'Mumbai',
+        country: user.current_country || 'India',
+        // Use current location coordinates if available, otherwise default coordinates
+        latitude: parseFloat(user.current_latitude) || defaultCoords.lat,
+        longitude: parseFloat(user.current_longitude) || defaultCoords.lng,
         // Enhanced with device location for real-time positioning
-        deviceLatitude: parseFloat(user.device_latitude) || null,
-        deviceLongitude: parseFloat(user.device_longitude) || null,
-        locationSource: user.location_source || (user.device_latitude ? 'device' : 'city'),
+        deviceLatitude: parseFloat(user.current_latitude) || null,
+        deviceLongitude: parseFloat(user.current_longitude) || null,
+        locationSource: user.current_latitude ? 'device' : 'city',
         locationUpdatedAt: user.location_updated_at || new Date(),
-        isVerified: user.is_verified || true,
-        loginCount: user.login_count || 1,
-        lastLogin: user.last_login || new Date(),
+        isVerified: user.has_completed_onboarding || true,
+        loginCount: 1,
+        lastLogin: user.last_login_at || new Date(),
         createdAt: user.created_at || new Date(),
         questionCount: user.question_count || 0,
         answerCount: user.answer_count || 0,
@@ -208,30 +210,31 @@ export class DatabaseStorage implements IStorage {
           const result = await pool.query('SELECT * FROM users WHERE id = $1 LIMIT 1', ["5791e66f-9cc1-4be4-bd4b-7fc1bd2e258e"]);
           if (result.rows.length > 0) {
             const user = result.rows[0];
+            const fullName = [user.first_name, user.middle_name, user.last_name].filter(Boolean).join(' ') || user.email || 'Admin User';
             const adminUser = {
               id: user.id,
-              fullName: user.full_name || user.nickname || user.email || 'Admin User',
+              fullName: fullName,
               email: user.email || 'mushy.piyush@gmail.com',
               password: '',
-              userType: user.user_type || 'sailor',
+              userType: user.current_ship_name ? 'sailor' : 'local',
               isAdmin: true,
-              nickname: user.nickname || 'Admin',
-              rank: user.rank || 'Administrator',
-              shipName: user.ship_name || '',
-              imoNumber: user.imo_number || '',
-              port: user.port || user.city || '',
-              visitWindow: user.visit_window || '',
-              city: user.city || '',
-              country: user.country || '',
-              latitude: parseFloat(user.latitude) || this.getCityCoordinates(user.city || 'mumbai', user.country || 'india').lat,
-              longitude: parseFloat(user.longitude) || this.getCityCoordinates(user.city || 'mumbai', user.country || 'india').lng,
-              deviceLatitude: parseFloat(user.device_latitude) || null,
-              deviceLongitude: parseFloat(user.device_longitude) || null,
-              locationSource: user.location_source || 'city',
+              nickname: '',
+              rank: user.maritime_rank || 'Administrator',
+              shipName: user.current_ship_name || user.last_ship || '',
+              imoNumber: user.current_ship_imo || '',
+              port: user.last_port_visited || user.city || user.current_city || '',
+              visitWindow: '',
+              city: user.city || user.current_city || '',
+              country: user.current_country || '',
+              latitude: parseFloat(user.current_latitude) || this.getCityCoordinates(user.city || user.current_city || 'mumbai', user.current_country || 'india').lat,
+              longitude: parseFloat(user.current_longitude) || this.getCityCoordinates(user.city || user.current_city || 'mumbai', user.current_country || 'india').lng,
+              deviceLatitude: parseFloat(user.current_latitude) || null,
+              deviceLongitude: parseFloat(user.current_longitude) || null,
+              locationSource: user.current_latitude ? 'device' : 'city',
               locationUpdatedAt: user.location_updated_at || new Date(),
-              isVerified: user.is_verified || true,
-              loginCount: user.login_count || 1,
-              lastLogin: user.last_login || new Date(),
+              isVerified: user.has_completed_onboarding || true,
+              loginCount: 1,
+              lastLogin: user.last_login_at || new Date(),
               createdAt: user.created_at || new Date(),
             } as User;
             console.log('Loaded admin user from database:', adminUser.city, adminUser.latitude, adminUser.longitude);
@@ -339,21 +342,52 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log('Fetching users directly from PostgreSQL database');
       
-      // Get all users directly from PostgreSQL
-      const dbUsers = await db
-        .select()
-        .from(users)
-        .limit(1000); // Get up to 1000 users
+      // Get all users directly from PostgreSQL using raw query
+      const result = await pool.query(`
+        SELECT * FROM users 
+        WHERE current_latitude IS NOT NULL OR city IS NOT NULL OR current_city IS NOT NULL
+        LIMIT 1000
+      `);
       
-      console.log(`Retrieved ${dbUsers.length} users from PostgreSQL database`);
+      console.log(`Retrieved ${result.rows.length} users from PostgreSQL database`);
       
-      if (dbUsers.length > 0) {
-        return dbUsers;
-      }
+      const mappedUsers: User[] = result.rows.map(user => {
+        const fullName = [user.first_name, user.middle_name, user.last_name].filter(Boolean).join(' ') || user.email || 'Maritime User';
+        const userCity = user.city || user.current_city || 'Mumbai';
+        const userCountry = user.current_country || 'India';
+        const defaultCoords = this.getCityCoordinates(userCity, userCountry);
+        
+        return {
+          id: user.id,
+          fullName: fullName,
+          email: user.email || '',
+          password: '',
+          userType: user.current_ship_name ? 'sailor' : 'local',
+          isAdmin: user.is_platform_admin || (user.email === "mushy.piyush@gmail.com") || false,
+          nickname: '',
+          rank: user.maritime_rank || '',
+          shipName: user.current_ship_name || user.last_ship || '',
+          imoNumber: user.current_ship_imo || '',
+          port: user.last_port_visited || userCity || '',
+          visitWindow: '',
+          city: userCity,
+          country: userCountry,
+          latitude: parseFloat(user.current_latitude) || defaultCoords.lat,
+          longitude: parseFloat(user.current_longitude) || defaultCoords.lng,
+          deviceLatitude: parseFloat(user.current_latitude) || null,
+          deviceLongitude: parseFloat(user.current_longitude) || null,
+          locationSource: user.current_latitude ? 'device' : 'city',
+          locationUpdatedAt: user.location_updated_at || new Date(),
+          isVerified: user.has_completed_onboarding || true,
+          loginCount: 1,
+          lastLogin: user.last_login_at || new Date(),
+          createdAt: user.created_at || new Date(),
+          questionCount: user.question_count || 0,
+          answerCount: user.answer_count || 0,
+        } as User;
+      });
       
-      // If no users in database, return empty array
-      console.log('No users found in PostgreSQL database');
-      return [];
+      return mappedUsers;
 
     } catch (error) {
       console.error('Error fetching users from database:', error);
@@ -363,14 +397,14 @@ export class DatabaseStorage implements IStorage {
 
   async updateUserLocation(userId: string, latitude: number, longitude: number, source: 'device' | 'ship' | 'city'): Promise<void> {
     try {
-      // Update location using device_latitude/device_longitude columns
+      // Update location using current_latitude/current_longitude columns
       await pool.query(`
         UPDATE users 
-        SET device_latitude = $1, device_longitude = $2, location_source = $3, location_updated_at = NOW()
-        WHERE id = $4
-      `, [latitude, longitude, source, userId]);
+        SET current_latitude = $1, current_longitude = $2, location_updated_at = NOW()
+        WHERE id = $3
+      `, [latitude, longitude, userId]);
       
-      console.log(`Updated ${source} location for user ${userId}: ${latitude}, ${longitude} (stored in last_login_location)`);
+      console.log(`Updated ${source} location for user ${userId}: ${latitude}, ${longitude}`);
     } catch (error) {
       console.error(`Error updating ${source} location for user ${userId}:`, error as Error);
       throw error;
