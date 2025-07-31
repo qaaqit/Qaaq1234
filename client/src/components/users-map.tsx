@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
 import { LatLngBounds, divIcon } from 'leaflet';
 import { useQuery } from '@tanstack/react-query';
@@ -135,6 +135,7 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
   const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null); // Track mouse position for card
   const [openChatUserId, setOpenChatUserId] = useState<string | null>(null); // Track opened chat window
   const { user } = useAuth();
+  const mapRef = useRef<any>(null);
 
   // Fetch up to 100 random users for anchor pin display (global distribution)
   const { data: users = [], isLoading } = useQuery<MapUser[]>({
@@ -148,34 +149,77 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
     }
   });
 
-  // Set up global window functions for pin interactions
+  // Attach event listeners to anchor pins after they're rendered by Leaflet
   useEffect(() => {
-    // Define window functions for pin interactions
-    (window as any).handlePinClick = (userId: string) => {
-      console.log('Pin clicked for user:', userId);
-      setOpenChatUserId(openChatUserId === userId ? null : userId);
+    const attachEventListeners = () => {
+      const anchorPins = document.querySelectorAll('.anchor-pin');
+      console.log('Found anchor pins:', anchorPins.length);
+      
+      anchorPins.forEach((pin, index) => {
+        const userId = pin.getAttribute('data-user-id');
+        if (userId) {
+          console.log(`Attaching events to pin ${index} for user ${userId}`);
+          
+          // Remove existing listeners to avoid duplicates
+          pin.removeEventListener('mouseenter', pin._hoverHandler as any);
+          pin.removeEventListener('mouseleave', pin._leaveHandler as any);
+          pin.removeEventListener('click', pin._clickHandler as any);
+          
+          // Create new handlers
+          const hoverHandler = (e: Event) => {
+            console.log('Direct event: mouseenter fired for', userId);
+            const mouseEvent = e as MouseEvent;
+            const targetUser = users.find(u => u.id === userId);
+            if (targetUser) {
+              setHoveredUser(targetUser);
+              setHoverPosition({ x: mouseEvent.clientX, y: mouseEvent.clientY });
+            }
+          };
+          
+          const leaveHandler = () => {
+            console.log('Direct event: mouseleave fired for', userId);
+            setHoveredUser(null);
+            setHoverPosition(null);
+          };
+          
+          const clickHandler = () => {
+            console.log('Direct event: click fired for', userId);
+            setOpenChatUserId(openChatUserId === userId ? null : userId);
+          };
+          
+          // Store handlers on element for cleanup
+          (pin as any)._hoverHandler = hoverHandler;
+          (pin as any)._leaveHandler = leaveHandler;
+          (pin as any)._clickHandler = clickHandler;
+          
+          // Attach listeners
+          pin.addEventListener('mouseenter', hoverHandler);
+          pin.addEventListener('mouseleave', leaveHandler);
+          pin.addEventListener('click', clickHandler);
+        }
+      });
     };
     
-    (window as any).handlePinHover = (userId: string, event: MouseEvent) => {
-      console.log('Pin hovered for user:', userId);
-      const targetUser = users.find(u => u.id === userId);
-      if (targetUser) {
-        setHoveredUser(targetUser);
-        setHoverPosition({ x: event.clientX, y: event.clientY });
-      }
-    };
+    // Initial attachment
+    setTimeout(attachEventListeners, 100);
     
-    (window as any).handlePinLeave = () => {
-      console.log('Pin hover ended');
-      setHoveredUser(null);
-      setHoverPosition(null);
-    };
+    // Watch for new pins being added (when user list changes)
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.addedNodes.length > 0) {
+          setTimeout(attachEventListeners, 50);
+        }
+      });
+    });
     
-    // Cleanup function
+    // Start observing the map container
+    const mapContainer = document.querySelector('.leaflet-map-pane');
+    if (mapContainer) {
+      observer.observe(mapContainer, { childList: true, subtree: true });
+    }
+    
     return () => {
-      delete (window as any).handlePinClick;
-      delete (window as any).handlePinHover;
-      delete (window as any).handlePinLeave;
+      observer.disconnect();
     };
   }, [users, openChatUserId]);
 
@@ -286,9 +330,7 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
           " 
           onmouseover="this.style.transform='scale(1.2)'" 
           onmouseout="this.style.transform='scale(1)'"
-          onclick="window.handlePinClick('${user.id}')"
-          onmouseenter="window.handlePinHover('${user.id}', event)"
-          onmouseleave="window.handlePinLeave()">
+>
           ⚓
         </div>
         ${isOnlineWithLocation ? `
