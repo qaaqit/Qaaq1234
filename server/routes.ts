@@ -1030,11 +1030,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { joinCPSSGroup } = await import('./cpss-groups-service');
       
       const userId = req.user?.userId || req.user?.id || req.user?.email;
-      const userName = req.user?.fullName || req.user?.email || 'Anonymous';
       
       if (!userId) {
         return res.status(400).json({ error: 'User ID not found' });
       }
+
+      // Get user's full name from storage
+      const user = await storage.getUser(userId);
+      const userName = user?.fullName || user?.email || userId;
       
       const success = await joinCPSSGroup(groupId, userId, userName);
       
@@ -1191,11 +1194,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check if user is member of the group
       const userId = req.user?.userId || req.user?.id || req.user?.email;
-      const userName = req.user?.fullName || req.user?.email || 'Anonymous';
       
       if (!userId) {
         return res.status(400).json({ error: 'User ID not found' });
       }
+
+      // Get user's full name from storage
+      const user = await storage.getUser(userId);
+      const userName = user?.fullName || user?.email || userId;
       
       const isMember = await isUserMemberOfGroup(groupId, userId);
       if (!isMember) {
