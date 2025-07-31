@@ -85,12 +85,26 @@ const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: numbe
   return R * c;
 };
 
-// Maritime ranks for filtering
-const MARITIME_RANKS = [
-  'Captain', 'Chief Officer', '2nd Officer', '3rd Officer',
-  'Chief Engineer', '2nd Engineer', '3rd Engineer', '4th Engineer',
-  'Deck Cadet', 'Engine Cadet', 'ETO', 'Bosun', 'AB', 'OS',
-  'Oiler', 'Wiper', 'Cook', 'Steward', 'Fitter', 'Electrician'
+// Maritime rank categories for filtering
+const MARITIME_RANK_CATEGORIES = [
+  {
+    id: 'everyone',
+    label: 'Everyone',
+    description: 'All maritime professionals',
+    ranks: []
+  },
+  {
+    id: 'junior_officers_above',
+    label: 'Junior Officers & Above',
+    description: 'Officers, Engineers, and Leadership',
+    ranks: ['captain', 'chief officer', '2nd officer', '3rd officer', 'chief engineer', '2nd engineer', '3rd engineer', '4th engineer', 'eto']
+  },
+  {
+    id: 'senior_officers_above',
+    label: 'Senior Officers & Above', 
+    description: 'Captain, Chief Officer, Chief Engineer',
+    ranks: ['captain', 'chief officer', 'chief engineer']
+  }
 ];
 
 interface UsersMapDualProps {
@@ -107,7 +121,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
   const [openChatUserId, setOpenChatUserId] = useState<string | null>(null);
   const [showOnlineOnly, setShowOnlineOnly] = useState(true);
   const [radiusKm, setRadiusKm] = useState(50);
-  const [selectedRanks, setSelectedRanks] = useState<string[]>([]);
+  const [selectedRankCategory, setSelectedRankCategory] = useState<string>('everyone');
   const [showRankDropdown, setShowRankDropdown] = useState(false);
 
   // Fetch all users with TanStack Query
@@ -144,17 +158,20 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       });
     }
 
-    // Filter by selected ranks if any are selected
-    if (selectedRanks.length > 0) {
-      filtered = filtered.filter(mapUser => {
-        return selectedRanks.some(rank => 
-          mapUser.rank?.toLowerCase().includes(rank.toLowerCase())
-        );
-      });
+    // Filter by selected rank category
+    if (selectedRankCategory !== 'everyone') {
+      const category = MARITIME_RANK_CATEGORIES.find(cat => cat.id === selectedRankCategory);
+      if (category && category.ranks.length > 0) {
+        filtered = filtered.filter(mapUser => {
+          return category.ranks.some(rank => 
+            mapUser.rank?.toLowerCase().includes(rank.toLowerCase())
+          );
+        });
+      }
     }
 
     return filtered;
-  }, [allUsers, userLocation?.lat, userLocation?.lng, showOnlineOnly, radiusKm, selectedRanks]);
+  }, [allUsers, userLocation?.lat, userLocation?.lng, showOnlineOnly, radiusKm, selectedRankCategory]);
 
   // Update user count when users are loaded (temporarily disabled to fix infinite loop)
   // useEffect(() => {
@@ -292,20 +309,15 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             </select>
           </div>
 
-          {/* Rank Filter Dropdown */}
+          {/* Rank Category Filter */}
           <div className="space-y-1 relative rank-dropdown">
-            <label className="text-xs text-gray-600">Maritime Ranks</label>
+            <label className="text-xs text-gray-600">Rank Category</label>
             <button
               onClick={() => setShowRankDropdown(!showRankDropdown)}
               className="w-full text-sm p-2 border border-gray-300 rounded bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex items-center justify-between"
             >
               <span className="text-left truncate">
-                {selectedRanks.length === 0 
-                  ? 'All Ranks' 
-                  : selectedRanks.length === 1 
-                  ? selectedRanks[0]
-                  : `${selectedRanks.length} ranks selected`
-                }
+                {MARITIME_RANK_CATEGORIES.find(cat => cat.id === selectedRankCategory)?.label || 'Everyone'}
               </span>
               <svg className={`w-4 h-4 transition-transform ${showRankDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -313,34 +325,21 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             </button>
             
             {showRankDropdown && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto z-[1001]">
-                <div className="p-2 border-b border-gray-200">
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-[1001]">
+                {MARITIME_RANK_CATEGORIES.map((category) => (
                   <button
-                    onClick={() => setSelectedRanks([])}
-                    className="text-xs text-blue-600 hover:text-blue-800"
+                    key={category.id}
+                    onClick={() => {
+                      setSelectedRankCategory(category.id);
+                      setShowRankDropdown(false);
+                    }}
+                    className={`w-full text-left p-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 ${
+                      selectedRankCategory === category.id ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                    }`}
                   >
-                    Clear All
+                    <div className="font-medium text-sm">{category.label}</div>
+                    <div className="text-xs text-gray-500 mt-1">{category.description}</div>
                   </button>
-                </div>
-                {MARITIME_RANKS.map((rank) => (
-                  <div key={rank} className="flex items-center p-2 hover:bg-gray-50">
-                    <input
-                      type="checkbox"
-                      id={`rank-${rank}`}
-                      checked={selectedRanks.includes(rank)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedRanks([...selectedRanks, rank]);
-                        } else {
-                          setSelectedRanks(selectedRanks.filter(r => r !== rank));
-                        }
-                      }}
-                      className="w-3 h-3 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 mr-2"
-                    />
-                    <label htmlFor={`rank-${rank}`} className="text-xs text-gray-700 cursor-pointer flex-1">
-                      {rank}
-                    </label>
-                  </div>
                 ))}
               </div>
             )}
@@ -349,10 +348,9 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
           {/* User Count Display */}
           <div className="text-xs text-gray-500 pt-1 border-t border-gray-200">
             {filteredUsers.length} users within {radiusKm}km
-            {selectedRanks.length > 0 && (
+            {selectedRankCategory !== 'everyone' && (
               <div className="text-blue-600 mt-1">
-                Filtered by: {selectedRanks.slice(0, 2).join(', ')}
-                {selectedRanks.length > 2 && ` +${selectedRanks.length - 2} more`}
+                Category: {MARITIME_RANK_CATEGORIES.find(cat => cat.id === selectedRankCategory)?.label}
               </div>
             )}
           </div>
