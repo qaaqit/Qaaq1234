@@ -5,7 +5,7 @@ import MarineChatButton from './marine-chat-button';
 import SingleMessageChat from './single-message-chat';
 import GoogleMap from './google-map';
 import LeafletMap from './leaflet-map';
-import { ChevronDown, Filter, MapPin, Radar, Search, Home } from 'lucide-react';
+import { ChevronDown, Filter, MapPin, Radar, Search, Home, Map, Satellite } from 'lucide-react';
 
 interface MapUser {
   id: string;
@@ -126,6 +126,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
 
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const [showMapTypeDropdown, setShowMapTypeDropdown] = useState(false);
   const [mapType, setMapType] = useState('roadmap');
   const [mapZoom, setMapZoom] = useState(10); // Default zoom level
   const [scanAngle, setScanAngle] = useState(0); // For rotating scan arm
@@ -400,9 +401,9 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       const target = event.target as Element;
       if (!target.closest('.dropdown-container')) {
         setShowRankDropdown(false);
-
         setShowFilterDropdown(false);
         setShowLocationDropdown(false);
+        setShowMapTypeDropdown(false);
       }
     };
 
@@ -615,6 +616,71 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             radiusKm={radiusKm}
             shipPosition={shipSearchResult}
           />
+        )}
+
+        {/* Map Controls - Top Left Corner with Chevron Dropdown */}
+        {user?.isAdmin && (
+          <div className="absolute top-4 left-4 z-[1001]">
+            <div className="relative dropdown-container">
+              <button
+                onClick={() => setShowMapTypeDropdown(!showMapTypeDropdown)}
+                className="flex items-center space-x-1 px-3 py-2 bg-white/90 backdrop-blur-sm hover:bg-white rounded-lg shadow-lg border border-gray-200 transition-colors"
+                title="Map view options"
+              >
+                {mapType === 'roadmap' ? <Map size={16} /> : <Satellite size={16} />}
+                <ChevronDown size={14} className={`transition-transform ${showMapTypeDropdown ? 'rotate-180' : ''}`} />
+              </button>
+              
+              {showMapTypeDropdown && (
+                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[140px] z-[1002]">
+                  <div className="p-1">
+                    <button
+                      onClick={() => {
+                        setMapType('roadmap');
+                        setShowMapTypeDropdown(false);
+                      }}
+                      className={`w-full flex items-center space-x-2 px-3 py-2 rounded-md text-sm transition-colors ${
+                        mapType === 'roadmap' 
+                          ? 'bg-blue-50 text-blue-700 font-medium' 
+                          : 'hover:bg-gray-50 text-gray-700'
+                      }`}
+                    >
+                      <Map size={16} />
+                      <span>Map</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setMapType('satellite');
+                        setShowMapTypeDropdown(false);
+                      }}
+                      className={`w-full flex items-center space-x-2 px-3 py-2 rounded-md text-sm transition-colors ${
+                        mapType === 'satellite' 
+                          ? 'bg-blue-50 text-blue-700 font-medium' 
+                          : 'hover:bg-gray-50 text-gray-700'
+                      }`}
+                    >
+                      <Satellite size={16} />
+                      <span>Satellite</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setMapType('hybrid');
+                        setShowMapTypeDropdown(false);
+                      }}
+                      className={`w-full flex items-center space-x-2 px-3 py-2 rounded-md text-sm transition-colors ${
+                        mapType === 'hybrid' 
+                          ? 'bg-blue-50 text-blue-700 font-medium' 
+                          : 'hover:bg-gray-50 text-gray-700'
+                      }`}
+                    >
+                      <div className="w-4 h-4 rounded border border-gray-300 bg-gradient-to-br from-green-100 to-blue-100"></div>
+                      <span>Hybrid</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         )}
       </div>
 
