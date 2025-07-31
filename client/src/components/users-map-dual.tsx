@@ -445,7 +445,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             <div className="relative flex-1 sm:w-48 lg:w-64">
               <input
                 type="text"
-                placeholder="Sailors/ Ships/ Ports Services"
+                placeholder="Sailors/ Ships/ Company"
                 value={searchQuery}
                 onChange={(e) => handleSearchInput(e.target.value)}
                 className="w-full pl-8 sm:pl-10 pr-8 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
