@@ -152,8 +152,62 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
   // Attach event listeners to anchor pins after they're rendered by Leaflet
   useEffect(() => {
     const attachEventListeners = () => {
+      // Look for both the anchor pins and their parent Leaflet containers
       const anchorPins = document.querySelectorAll('.anchor-pin');
+      const leafletMarkers = document.querySelectorAll('.custom-anchor-marker');
       console.log('Found anchor pins:', anchorPins.length);
+      console.log('Found leaflet markers:', leafletMarkers.length);
+      
+      // Try attaching to Leaflet marker containers instead
+      leafletMarkers.forEach((marker, index) => {
+        const pin = marker.querySelector('.anchor-pin');
+        if (!pin) return;
+        
+        const userId = pin.getAttribute('data-user-id');
+        if (userId) {
+          console.log(`Attaching events to leaflet marker ${index} for user ${userId}`);
+          
+          // Remove existing listeners to avoid duplicates
+          marker.removeEventListener('mouseenter', (marker as any)._hoverHandler);
+          marker.removeEventListener('mouseleave', (marker as any)._leaveHandler);
+          marker.removeEventListener('click', (marker as any)._clickHandler);
+          
+          // Create new handlers
+          const hoverHandler = (e: Event) => {
+            console.log('LEAFLET MARKER: mouseenter fired for', userId);
+            e.stopPropagation();
+            const mouseEvent = e as MouseEvent;
+            const targetUser = users.find(u => u.id === userId);
+            if (targetUser) {
+              setHoveredUser(targetUser);
+              setHoverPosition({ x: mouseEvent.clientX, y: mouseEvent.clientY });
+            }
+          };
+          
+          const leaveHandler = (e: Event) => {
+            console.log('LEAFLET MARKER: mouseleave fired for', userId);
+            e.stopPropagation();
+            setHoveredUser(null);
+            setHoverPosition(null);
+          };
+          
+          const clickHandler = (e: Event) => {
+            console.log('LEAFLET MARKER: click fired for', userId);
+            e.stopPropagation();
+            setOpenChatUserId(openChatUserId === userId ? null : userId);
+          };
+          
+          // Store handlers on element for cleanup
+          (marker as any)._hoverHandler = hoverHandler;
+          (marker as any)._leaveHandler = leaveHandler;
+          (marker as any)._clickHandler = clickHandler;
+          
+          // Attach listeners to the marker container
+          marker.addEventListener('mouseenter', hoverHandler);
+          marker.addEventListener('mouseleave', leaveHandler);
+          marker.addEventListener('click', clickHandler);
+        }
+      });
       
       anchorPins.forEach((pin, index) => {
         const userId = pin.getAttribute('data-user-id');
@@ -168,6 +222,7 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
           // Create new handlers
           const hoverHandler = (e: Event) => {
             console.log('Direct event: mouseenter fired for', userId);
+            e.stopPropagation(); // Prevent Leaflet from interfering
             const mouseEvent = e as MouseEvent;
             const targetUser = users.find(u => u.id === userId);
             if (targetUser) {
@@ -176,14 +231,16 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
             }
           };
           
-          const leaveHandler = () => {
+          const leaveHandler = (e: Event) => {
             console.log('Direct event: mouseleave fired for', userId);
+            e.stopPropagation(); // Prevent Leaflet from interfering
             setHoveredUser(null);
             setHoverPosition(null);
           };
           
-          const clickHandler = () => {
+          const clickHandler = (e: Event) => {
             console.log('Direct event: click fired for', userId);
+            e.stopPropagation(); // Prevent Leaflet from interfering
             setOpenChatUserId(openChatUserId === userId ? null : userId);
           };
           
@@ -192,7 +249,17 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
           (pin as any)._leaveHandler = leaveHandler;
           (pin as any)._clickHandler = clickHandler;
           
-          // Attach listeners
+          // Test basic event functionality first
+          pin.addEventListener('mouseover', () => {
+            console.log('MOUSEOVER detected on pin for', userId);
+            (pin as HTMLElement).style.filter = 'brightness(1.5)';
+          });
+          pin.addEventListener('mouseout', () => {
+            console.log('MOUSEOUT detected on pin for', userId);
+            (pin as HTMLElement).style.filter = 'brightness(1)';
+          });
+          
+          // Attach main listeners
           pin.addEventListener('mouseenter', hoverHandler);
           pin.addEventListener('mouseleave', leaveHandler);
           pin.addEventListener('click', clickHandler);
@@ -326,6 +393,7 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
             pointer-events: auto;
             user-select: none;
             transition: transform 0.2s ease;
+            z-index: 1000;
             ${isOnlineWithLocation ? 'animation: pulse 2s infinite;' : ''}
           " 
           onmouseover="this.style.transform='scale(1.2)'" 
@@ -679,6 +747,24 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
               key={user.id}
               position={[plotLat, plotLng]}
               icon={createCustomIcon(user, isOnlineWithLocation)}
+              eventHandlers={{
+                mouseover: (e) => {
+                  console.log('LEAFLET EVENT: mouseover fired for', user.fullName);
+                  const mouseEvent = e.originalEvent as MouseEvent;
+                  setHoveredUser(user);
+                  setHoverPosition({ x: mouseEvent.clientX, y: mouseEvent.clientY });
+                },
+                mouseout: () => {
+                  console.log('LEAFLET EVENT: mouseout fired for', user.fullName);
+                  setHoveredUser(null);
+                  setHoverPosition(null);
+                },
+                click: (e) => {
+                  console.log('LEAFLET EVENT: click fired for', user.fullName);
+                  setOpenChatUserId(openChatUserId === user.id ? null : user.id);
+                  e.originalEvent.stopPropagation();
+                }
+              }}
             />
           );
         })}
