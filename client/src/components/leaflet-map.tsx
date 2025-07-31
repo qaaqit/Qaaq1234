@@ -26,6 +26,7 @@ interface MapUser {
 interface LeafletMapProps {
   users: MapUser[];
   userLocation: { lat: number; lng: number } | null;
+  selectedUser?: MapUser | null;
   onUserHover: (user: MapUser | null, position?: { x: number; y: number }) => void;
   onUserClick: (userId: string) => void;
   onZoomChange?: (zoom: number) => void;
@@ -34,7 +35,7 @@ interface LeafletMapProps {
   radiusKm?: number;
 }
 
-const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, onUserHover, onUserClick, onZoomChange, showScanElements = false, scanAngle = 0, radiusKm = 50 }) => {
+const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, selectedUser, onUserHover, onUserClick, onZoomChange, showScanElements = false, scanAngle = 0, radiusKm = 50 }) => {
   const [bounds, setBounds] = useState<LatLngBounds | null>(null);
   const [currentZoom, setCurrentZoom] = useState(10);
 
@@ -137,8 +138,12 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, onUserHove
     };
   };
 
-  // Use user location as default center, fallback to Mumbai
-  const defaultCenter: [number, number] = userLocation ? [userLocation.lat, userLocation.lng] : [19.076, 72.8777];
+  // Use selectedUser location if available, then user location, fallback to Mumbai
+  const defaultCenter: [number, number] = selectedUser 
+    ? [selectedUser.latitude, selectedUser.longitude]
+    : userLocation 
+    ? [userLocation.lat, userLocation.lng] 
+    : [19.076, 72.8777];
   const scanEndPoint = getScanLineEndPoint();
   const screenRadius = getScreenRadius();
 

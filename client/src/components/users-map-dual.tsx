@@ -531,6 +531,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
           <GoogleMap
             users={filteredUsers}
             userLocation={userLocation}
+            selectedUser={selectedUser}
             mapType={mapType}
             onUserHover={(user, position) => {
               setHoveredUser(user);
@@ -548,6 +549,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
           <LeafletMap
             users={filteredUsers}
             userLocation={userLocation}
+            selectedUser={selectedUser}
             onUserHover={(user, position) => {
               setHoveredUser(user);
               setHoverPosition(position || null);
@@ -578,16 +580,28 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
               {nearestUsers.map((user) => (
                 <div
                   key={user.id}
-                  className="bg-white rounded-lg border border-gray-200 p-3 cursor-pointer hover:bg-gray-50 transition-colors min-w-[160px]"
-                  onClick={() => setOpenChatUserId(prev => prev === user.id ? null : user.id)}
+                  className="bg-white rounded-lg border border-gray-200 p-3 hover:bg-gray-50 transition-colors min-w-[160px]"
+                  onClick={() => {
+                    // Center map on user's location
+                    setSelectedUser(user);
+                    setHoveredUser(null);
+                  }}
                 >
                   <div className="flex items-center space-x-2 mb-2">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                    {/* Clickable Profile Circle for Chat */}
+                    <div 
+                      className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-200 hover:scale-110 transition-all duration-200 border-2 border-transparent hover:border-blue-300"
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent card click
+                        setOpenChatUserId(prev => prev === user.id ? null : user.id);
+                      }}
+                      title="Click to open chat"
+                    >
                       <span className="text-xs font-medium text-blue-600">
                         {user.fullName.split(' ').map(n => n[0]).join('').substring(0, 2)}
                       </span>
                     </div>
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 cursor-pointer">
                       <div className="text-sm font-medium text-gray-900 truncate">{user.fullName}</div>
                       {user.rank && (
                         <div className="text-xs text-blue-600 font-medium">{getRankAbbreviation(user.rank)}</div>

@@ -24,6 +24,7 @@ interface MapUser {
 interface GoogleMapProps {
   users: MapUser[];
   userLocation: { lat: number; lng: number } | null;
+  selectedUser?: MapUser | null;
   mapType?: string;
   onUserHover: (user: MapUser | null, position?: { x: number; y: number }) => void;
   onUserClick: (userId: string) => void;
@@ -40,7 +41,7 @@ declare global {
   }
 }
 
-const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, mapType = 'roadmap', onUserHover, onUserClick, onZoomChange, showScanElements = false, scanAngle = 0, radiusKm = 50 }) => {
+const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser, mapType = 'roadmap', onUserHover, onUserClick, onZoomChange, showScanElements = false, scanAngle = 0, radiusKm = 50 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
@@ -194,6 +195,15 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, mapType = 'r
       mapInstanceRef.current.setMapTypeId(mapType);
     }
   }, [mapType]);
+
+  // Center map on selected user
+  useEffect(() => {
+    if (mapInstanceRef.current && selectedUser) {
+      const center = new window.google.maps.LatLng(selectedUser.latitude, selectedUser.longitude);
+      mapInstanceRef.current.panTo(center);
+      mapInstanceRef.current.setZoom(14); // Zoom in to show the selected user clearly
+    }
+  }, [selectedUser]);
 
   // Add user markers
   useEffect(() => {
