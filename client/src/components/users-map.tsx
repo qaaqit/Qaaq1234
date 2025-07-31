@@ -210,7 +210,9 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
 
   // Add click listener to red dot marker after it renders
   useEffect(() => {
-    const handleRedDotClick = () => {
+    const handleRedDotClick = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
       console.log('🔴 RED DOT CLICKED via DOM!');
       
       // Start animations
@@ -271,21 +273,53 @@ export default function UsersMap({ showUsers = false, searchQuery = "", showNear
       }
     };
     
-    // Wait for DOM to render then attach click listener
-    const timer = setTimeout(() => {
-      const redDotElement = document.querySelector('.user-location-marker');
-      if (redDotElement) {
-        console.log('Attaching click listener to red dot');
-        redDotElement.addEventListener('click', handleRedDotClick);
+    // Multiple selectors to find the red dot
+    const attachListener = () => {
+      const selectors = [
+        '.user-location-marker',
+        '.user-location-marker div',
+        '.leaflet-marker-icon[title="Press to see Who\'s there?"]',
+        '.red-dot-marker'
+      ];
+      
+      for (const selector of selectors) {
+        const element = document.querySelector(selector);
+        if (element) {
+          console.log(`Attaching click listener to: ${selector}`);
+          element.addEventListener('click', handleRedDotClick, { capture: true });
+          element.addEventListener('mousedown', handleRedDotClick, { capture: true });
+          
+          // Also try to make it more clickable
+          (element as HTMLElement).style.cursor = 'pointer';
+          (element as HTMLElement).style.zIndex = '1000';
+          break;
+        }
       }
-    }, 1000);
+    };
+    
+    // Try multiple times with different delays
+    const timers = [100, 500, 1000, 2000].map(delay => 
+      setTimeout(attachListener, delay)
+    );
     
     return () => {
-      clearTimeout(timer);
-      const redDotElement = document.querySelector('.user-location-marker');
-      if (redDotElement) {
-        redDotElement.removeEventListener('click', handleRedDotClick);
-      }
+      timers.forEach(timer => clearTimeout(timer));
+      
+      // Remove listeners from all possible elements
+      const selectors = [
+        '.user-location-marker',
+        '.user-location-marker div',
+        '.leaflet-marker-icon[title="Press to see Who\'s there?"]',
+        '.red-dot-marker'
+      ];
+      
+      selectors.forEach(selector => {
+        const element = document.querySelector(selector);
+        if (element) {
+          element.removeEventListener('click', handleRedDotClick, { capture: true });
+          element.removeEventListener('mousedown', handleRedDotClick, { capture: true });
+        }
+      });
     };
   }, [userLocation, onRedDotClick]);
 
