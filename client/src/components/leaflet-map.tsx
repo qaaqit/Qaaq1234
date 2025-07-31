@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import { LatLngBounds, divIcon } from 'leaflet';
 
 interface MapUser {
@@ -28,9 +28,10 @@ interface LeafletMapProps {
   userLocation: { lat: number; lng: number } | null;
   onUserHover: (user: MapUser | null, position?: { x: number; y: number }) => void;
   onUserClick: (userId: string) => void;
+  onZoomChange?: (zoom: number) => void;
 }
 
-const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, onUserHover, onUserClick }) => {
+const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, onUserHover, onUserClick, onZoomChange }) => {
   const [bounds, setBounds] = useState<LatLngBounds | null>(null);
 
   const createCustomIcon = (user: MapUser, isOnlineWithLocation = false) => {
@@ -77,6 +78,18 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, onUserHove
     }
   }, [users]);
 
+  // Component to handle map events
+  const MapEventHandler = () => {
+    useMapEvents({
+      zoomend: (e) => {
+        if (onZoomChange) {
+          onZoomChange(e.target.getZoom());
+        }
+      },
+    });
+    return null;
+  };
+
   // Use user location as default center, fallback to Mumbai
   const defaultCenter: [number, number] = userLocation ? [userLocation.lat, userLocation.lng] : [19.076, 72.8777];
 
@@ -94,6 +107,8 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, onUserHove
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
         />
+        
+        <MapEventHandler />
 
         {/* User markers with anchor pins */}
         {users.map((user) => {

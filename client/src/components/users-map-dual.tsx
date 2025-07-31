@@ -445,10 +445,13 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             </button>
           </div>
 
-          {/* Right side - Status */}
-          <div className="text-xs text-gray-500">
-            {filteredUsers.length} users (auto-radius: {radiusKm}km)
-          </div>
+          {/* Right side - Zoom/Radius Button */}
+          <button
+            className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-xs font-medium text-gray-700"
+            title={`Zoom level ${Math.round(mapZoom)} shows ${radiusKm}km radius with ${filteredUsers.length} users`}
+          >
+            Z{Math.round(mapZoom)} • {radiusKm}km • {filteredUsers.length} users
+          </button>
         </div>
       </div>
 
@@ -466,6 +469,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             onUserClick={(userId) => {
               setOpenChatUserId(prev => prev === userId ? null : userId);
             }}
+            onZoomChange={(zoom) => setMapZoom(zoom)}
           />
         ) : (
           <LeafletMap
@@ -478,6 +482,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             onUserClick={(userId) => {
               setOpenChatUserId(prev => prev === userId ? null : userId);
             }}
+            onZoomChange={(zoom) => setMapZoom(zoom)}
           />
         )}
       </div>

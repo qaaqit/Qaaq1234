@@ -27,6 +27,7 @@ interface GoogleMapProps {
   mapType?: string;
   onUserHover: (user: MapUser | null, position?: { x: number; y: number }) => void;
   onUserClick: (userId: string) => void;
+  onZoomChange?: (zoom: number) => void;
 }
 
 declare global {
@@ -36,7 +37,7 @@ declare global {
   }
 }
 
-const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, mapType = 'roadmap', onUserHover, onUserClick }) => {
+const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, mapType = 'roadmap', onUserHover, onUserClick, onZoomChange }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
@@ -150,8 +151,16 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, mapType = 'r
       ],
     });
 
+    // Add zoom change listener
+    if (onZoomChange) {
+      mapInstanceRef.current.addListener('zoom_changed', () => {
+        const zoom = mapInstanceRef.current.getZoom();
+        onZoomChange(zoom);
+      });
+    }
+
     console.log('✅ Google Maps initialized for admin user');
-  }, [isMapLoaded, userLocation]);
+  }, [isMapLoaded, userLocation, onZoomChange]);
 
   // Update map type when mapType prop changes
   useEffect(() => {
