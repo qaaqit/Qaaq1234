@@ -453,7 +453,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       </div>
 
       {/* Dual Map System: Google Maps for Admin, Leaflet for Users */}
-      <div className="absolute top-[60px] left-0 right-0 bottom-[180px]">
+      <div className={`absolute top-[60px] left-0 right-0 ${nearestUsers.length > 0 ? 'bottom-[180px]' : 'bottom-0'}`}>
         {user?.isAdmin ? (
           <GoogleMap
             users={filteredUsers}
@@ -484,7 +484,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
 
       {/* Scan Arm and Circle Overlay */}
       {showScanElements && userLocation && (
-        <div className="absolute top-[60px] left-0 right-0 bottom-[180px] pointer-events-none z-[500]">
+        <div className={`absolute top-[60px] left-0 right-0 ${nearestUsers.length > 0 ? 'bottom-[180px]' : 'bottom-0'} pointer-events-none z-[500]`}>
           <div className="relative w-full h-full">
             {/* 50km Circle */}
             <div
