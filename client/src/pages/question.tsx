@@ -138,10 +138,14 @@ export default function QuestionPage() {
                   )}
                 </div>
                 <div className="flex items-center space-x-4 mt-1 text-sm text-gray-600">
-                  <span className="flex items-center">
+                  <Link 
+                    href={`/user/${question.author_id}`} 
+                    className="flex items-center hover:text-blue-600 hover:underline cursor-pointer"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <User size={14} className="mr-1" />
                     {question.author_name}
-                  </span>
+                  </Link>
                   {question.author_rank && (
                     <span>{formatRank(question.author_rank)}</span>
                   )}

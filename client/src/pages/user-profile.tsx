@@ -120,15 +120,15 @@ export default function UserProfile() {
           <div className="flex items-start gap-4">
             <Avatar className="w-16 h-16">
               <AvatarFallback className="bg-navy-600 text-white text-lg">
-                {user.fullName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                {(user.full_name || user.fullName || '').split(' ').map(n => n[0]).join('').slice(0, 2)}
               </AvatarFallback>
             </Avatar>
             
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-2xl font-bold text-gray-900">{user.fullName}</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{user.full_name || user.fullName}</h1>
                 <Badge variant="outline" className="bg-navy-50 text-navy-700 border-navy-200">
-                  {user.rank}
+                  {user.maritime_rank || user.rank}
                 </Badge>
               </div>
               
@@ -147,7 +147,7 @@ export default function UserProfile() {
                 
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4" />
-                  <span>{user.city}, {user.country}</span>
+                  <span>{user.current_city || user.city}, {user.current_country || user.country}</span>
                 </div>
                 
                 {user.whatsappNumber && (
@@ -160,11 +160,11 @@ export default function UserProfile() {
               
               <div className="flex gap-6 mt-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-navy-600">{user.questionCount}</div>
+                  <div className="text-2xl font-bold text-navy-600">{user.question_count || user.questionCount || 0}</div>
                   <div className="text-xs text-gray-500">Questions Asked</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-teal-600">{user.answerCount}</div>
+                  <div className="text-2xl font-bold text-teal-600">{user.answer_count || user.answerCount || 0}</div>
                   <div className="text-xs text-gray-500">Answers Given</div>
                 </div>
               </div>

@@ -104,9 +104,11 @@ export async function getUserProfile(userId: string): Promise<any> {
         maritime_rank,
         email,
         phone_number,
-        ship_name,
-        current_location,
-        created_at
+        current_city,
+        current_country,
+        created_at,
+        question_count,
+        answer_count
       FROM users
       WHERE id = $1
     `, [userId]);

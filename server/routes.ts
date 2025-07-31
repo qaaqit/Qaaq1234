@@ -1382,7 +1382,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get user profile and questions
-  app.get('/api/users/:userId/questions', authenticateToken, async (req, res) => {
+  app.get('/api/users/:userId/questions', authenticateToken, async (req: any, res) => {
     try {
       const userId = req.params.userId;
       
