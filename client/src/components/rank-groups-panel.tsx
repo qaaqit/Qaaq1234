@@ -324,6 +324,10 @@ export function RankGroupsPanel() {
                       <Users className="h-5 w-5" />
                       <h3 className="font-semibold">Group Members ({Array.isArray(membersData) ? membersData.length : 0})</h3>
                     </div>
+                    <div className="text-xs text-gray-500 mb-2">
+                      Debug: membersData type: {typeof membersData}, isArray: {Array.isArray(membersData) ? 'true' : 'false'}
+                      {membersData && <span>, length: {membersData.length}</span>}
+                    </div>
                     {Array.isArray(membersData) && membersData.length > 0 ? (
                       membersData.map((member: any) => (
                         <div key={member.id} className="flex items-center space-x-3 p-3 border rounded-lg">
@@ -351,7 +355,10 @@ export function RankGroupsPanel() {
                     ) : (
                       <div className="text-center text-gray-500 py-8">
                         <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <p>No members found in this group</p>
+                        <p>Loading members... or no members found</p>
+                        <div className="text-xs mt-2">
+                          API Response: {JSON.stringify(membersData)}
+                        </div>
                       </div>
                     )}
                   </div>
