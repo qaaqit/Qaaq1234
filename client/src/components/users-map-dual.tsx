@@ -170,13 +170,37 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     return zoomToRadius[Math.min(20, Math.max(1, Math.round(mapZoom)))] || 50;
   }, [mapZoom]);
 
-  // Filter users based on location and online status using useMemo
+  // Filter users based on search query first, then location and other filters
   const filteredUsers = useMemo(() => {
-    if (!userLocation || !allUsers.length) {
+    if (!allUsers.length) {
       return [];
     }
 
     let filtered = allUsers;
+
+    // If there's a search query, show all search results regardless of location
+    if (searchQuery.trim()) {
+      console.log(`🔍 Search mode: showing ${filtered.length} search results for "${searchQuery}"`);
+      
+      // Apply only rank filter if selected during search
+      if (selectedRankCategory !== 'everyone') {
+        const category = MARITIME_RANK_CATEGORIES.find(cat => cat.id === selectedRankCategory);
+        if (category && category.ranks.length > 0) {
+          filtered = filtered.filter(mapUser => {
+            return category.ranks.some(rank => 
+              mapUser.rank?.toLowerCase().includes(rank.toLowerCase())
+            );
+          });
+        }
+      }
+      
+      return filtered; // Return all search results without location constraints
+    }
+
+    // If no search query, apply location-based filtering
+    if (!userLocation) {
+      return [];
+    }
 
     // Filter by auto-calculated radius based on zoom
     filtered = filtered.filter(mapUser => {
@@ -211,11 +235,22 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     }
 
     return filtered;
-  }, [allUsers, userLocation?.lat, userLocation?.lng, showOnlineOnly, radiusKm, selectedRankCategory]);
+  }, [allUsers, userLocation?.lat, userLocation?.lng, showOnlineOnly, radiusKm, selectedRankCategory, searchQuery]);
 
-  // Get top 6 nearest users with distance calculation
+  // Get top 6 nearest users with distance calculation or all search results
   const nearestUsers = useMemo(() => {
-    if (!userLocation || !filteredUsers.length) return [];
+    if (!filteredUsers.length) return [];
+    
+    // If searching, show all search results (up to 6) regardless of location
+    if (searchQuery.trim()) {
+      return filteredUsers.slice(0, 6).map(user => ({
+        ...user,
+        distance: userLocation ? calculateDistance(userLocation.lat, userLocation.lng, user.latitude, user.longitude) : 0
+      }));
+    }
+    
+    // If not searching, show nearest users as before
+    if (!userLocation) return [];
     
     const usersWithDistance = filteredUsers.map(user => ({
       ...user,
@@ -225,7 +260,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     return usersWithDistance
       .sort((a, b) => a.distance - b.distance)
       .slice(0, 6);
-  }, [filteredUsers, userLocation]);
+  }, [filteredUsers, userLocation, searchQuery]);
 
   // Update user count when users are loaded (temporarily disabled to fix infinite loop)
   // useEffect(() => {
@@ -458,7 +493,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
           <div className="flex items-center space-x-2">
             {searchQuery.trim() ? (
               <div className="px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-xs font-medium text-blue-700">
-                {isLoading ? '🔍 Searching...' : `📊 ${allUsers.length} results for "${searchQuery.trim()}"`}
+                {isLoading ? '🔍 Searching...' : `📊 ${allUsers.length} results for "${searchQuery.trim()}" • Showing ${filteredUsers.length} on map`}
               </div>
             ) : (
               <div className="px-3 py-2 bg-gray-100 rounded-lg text-xs font-medium text-gray-700"
@@ -514,7 +549,11 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       {nearestUsers.length > 0 && (
         <div className="absolute bottom-0 left-0 right-0 h-[180px] bg-white/95 backdrop-blur-sm border-t border-gray-200 z-[1000]">
           <div className="p-4">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Nearest Maritime Professionals ({nearestUsers.length})</h3>
+            <h3 className="text-sm font-medium text-gray-700 mb-3">
+              {searchQuery.trim() 
+                ? `Search Results: ${nearestUsers.length} of ${filteredUsers.length} users` 
+                : `Nearest Maritime Professionals (${nearestUsers.length})`}
+            </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 overflow-x-auto">
               {nearestUsers.map((user) => (
                 <div
@@ -540,7 +579,13 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                     {user.shipName && (
                       <div className="text-xs text-gray-600 truncate">🚢 {user.shipName}</div>
                     )}
-                    <div className="text-xs text-gray-500">📍 {user.distance?.toFixed(1)}km away</div>
+                    <div className="text-xs text-gray-500">
+                      {searchQuery.trim() && user.distance ? 
+                        `📍 ${user.distance.toFixed(1)}km away` : 
+                        searchQuery.trim() ? 
+                        `📍 ${user.city}, ${user.country}` : 
+                        `📍 ${user.distance?.toFixed(1)}km away`}
+                    </div>
                     {user.questionCount && user.answerCount && (
                       <div className="text-xs text-green-600">{user.questionCount}Q {user.answerCount}A</div>
                     )}
