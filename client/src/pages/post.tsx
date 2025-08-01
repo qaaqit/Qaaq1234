@@ -528,31 +528,33 @@ export default function Post({ user }: PostProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-[9998]">
-        <div className="max-w-6xl mx-auto p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button 
-                variant="ghost" 
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-blue-50 p-6">
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Header with Home Logo - Same as DM Page */}
+        <div className="gradient-bg text-white px-4 py-6 rounded-xl shadow-lg mb-6 relative z-[9998]">
+          <div className="absolute inset-0 opacity-10 rounded-xl">
+            <div className="w-full h-full bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Cpath%20d%3D%22M20%2050h60m-50-20h40m-30%2040h20%22%20stroke%3D%22white%22%20stroke-width%3D%221%22%20fill%3D%22none%22%2F%3E%3C%2Fsvg%3E')] bg-[length:50px_50px]"></div>
+          </div>
+          
+          <div className="relative z-10">
+            <div className="flex items-center justify-between">
+              <button 
                 onClick={() => navigate('/')}
-                className="flex items-center gap-2"
+                className="flex items-center space-x-3 hover:bg-white/10 rounded-lg p-2 transition-colors"
               >
-                <Home className="w-4 h-4" />
-                <div className="flex flex-col items-start">
-                  <span className="font-semibold text-navy">QaaqConnect</span>
-                  <span className="text-xs italic font-medium text-[#326df4]">Group chat</span>
+                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                  <i className="fas fa-anchor text-xl text-white"></i>
                 </div>
-              </Button>
-              <div className="h-6 w-px bg-gray-300" />
-              <h1 className="text-xl font-bold text-gray-900">Ch16 Broadcast</h1>
+                <div>
+                  <h1 className="text-2xl font-bold">QaaqConnect</h1>
+                  <p className="text-sm text-white/60 italic font-medium">group chat</p>
+                </div>
+              </button>
+              {user && <UserDropdown user={user} />}
             </div>
-            <UserDropdown user={user} className="bg-gray-50" />
           </div>
         </div>
-      </div>
-      <div className="max-w-6xl mx-auto p-4">
+
         <Tabs defaultValue="my-groups" className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-6">
             <TabsTrigger value="my-groups">My Groups ({userRankGroups.length})</TabsTrigger>
