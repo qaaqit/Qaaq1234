@@ -182,8 +182,12 @@ export default function DMPage() {
                 onClick={() => setLocation('/')}
                 className="flex items-center space-x-3 hover:bg-white/10 rounded-lg p-2 transition-colors"
               >
-                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                  <i className="fas fa-anchor text-xl text-white"></i>
+                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center overflow-hidden">
+                  <img 
+                    src="/attached_assets/qaaq_1754050453718.jpg" 
+                    alt="QAAQ Logo" 
+                    className="w-8 h-8 object-contain"
+                  />
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold">QaaqConnect</h1>
