@@ -25,7 +25,7 @@ export default function BottomNav({ user }: BottomNavProps) {
     { 
       path: "/", 
       icon: "fas fa-map-marked-alt", 
-      label: ["Home", "Map"],
+      label: ["Map", "Radar"],
       active: location === "/" || location === "/discover" || location === "/users"
     }
   ];
