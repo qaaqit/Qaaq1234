@@ -7,7 +7,7 @@ import MessageNotificationDot from './message-notification-dot';
 import GoogleMap from './google-map';
 import LeafletMap from './leaflet-map';
 import ShipTracker from './ship-tracker';
-import { ChevronDown, Filter, MapPin, Radar, Search, Home, Map, Satellite, Ship } from 'lucide-react';
+import { ChevronDown, ChevronUp, Filter, MapPin, Radar, Search, Home, Map, Satellite, Ship } from 'lucide-react';
 
 interface MapUser {
   id: string;
@@ -123,6 +123,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
   const [selectedUser, setSelectedUser] = useState<MapUser | null>(null);
   const [openChatUserId, setOpenChatUserId] = useState<string | null>(null);
   const [showOnlineOnly, setShowOnlineOnly] = useState(true);
+  const [searchPanelMinimized, setSearchPanelMinimized] = useState(false);
   const [selectedRankCategory, setSelectedRankCategory] = useState<string>('everyone');
   const [showRankDropdown, setShowRankDropdown] = useState(false);
 
@@ -728,17 +729,34 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
 
       {/* Search Results - Full Height Endless Scroll or Bottom Panel for Browsing */}
       {nearestUsers.length > 0 && (
-        <div className={`absolute left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 z-[1000] ${
-          searchQuery.trim() ? 'top-[35%] bottom-0' : 'bottom-0 h-[160px] sm:h-[180px]'
+        <div className={`absolute left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 z-[1000] transition-all duration-300 ease-in-out ${
+          searchPanelMinimized 
+            ? 'bottom-0 h-1/2' 
+            : searchQuery.trim() 
+            ? 'top-[35%] bottom-0' 
+            : 'bottom-0 h-[160px] sm:h-[180px]'
         }`}>
           <div className="p-2 sm:p-4 h-full">
-            <h3 className="text-xs sm:text-sm font-medium text-gray-700 mb-2 sm:mb-3">
-              {searchQuery.toLowerCase().trim() === 'onboard'
-                ? `🚢 Sailors Currently Onboard Ships (${nearestUsers.length})`
-                : searchQuery.trim() 
-                ? `Search Results: ${nearestUsers.length} users found` 
-                : `Nearest Maritime Professionals (${nearestUsers.length})`}
-            </h3>
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <h3 className="text-xs sm:text-sm font-medium text-gray-700">
+                {searchQuery.toLowerCase().trim() === 'onboard'
+                  ? `🚢 Sailors Currently Onboard Ships (${nearestUsers.length})`
+                  : searchQuery.trim() 
+                  ? `Search Results: ${nearestUsers.length} users found` 
+                  : `Nearest Maritime Professionals (${nearestUsers.length})`}
+              </h3>
+              
+              {/* Minimize/Expand Button for Search Results */}
+              {searchQuery.trim() && (
+                <button
+                  onClick={() => setSearchPanelMinimized(!searchPanelMinimized)}
+                  className="flex items-center justify-center w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors ml-2"
+                  title={searchPanelMinimized ? "Expand to full height" : "Minimize to half screen"}
+                >
+                  {searchPanelMinimized ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </button>
+              )}
+            </div>
             <div className={`${searchQuery.trim() ? 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 overflow-y-auto h-[calc(100%-3rem)] scrollbar-thin scrollbar-thumb-gray-300 pr-2' : 'flex gap-2 sm:gap-3 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 pb-2'}`}>
               {nearestUsers.map((user) => (
                 <div
