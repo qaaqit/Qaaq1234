@@ -223,63 +223,104 @@ export function RankGroupsPanel() {
           </h3>
           <div className="space-y-3">
             {groups.map((group: any) => {
-              const isJoined = user?.isAdmin ? true : !!(group as any).role; // Admin can see all, users only their groups
+              const isJoined = user?.isAdmin ? true : !!(group as any).role;
+              const hasUnread = group.unreadCount > 0;
               
               return (
                 <Card 
                   key={group.id} 
-                  className={`cursor-pointer transition-colors hover:bg-gray-50 ${
-                    selectedGroup === group.id ? 'ring-2 ring-blue-500 bg-blue-50' : ''
+                  className={`cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-[1.02] ${
+                    selectedGroup === group.id 
+                      ? 'ring-2 ring-blue-500 bg-blue-50 shadow-lg' 
+                      : hasUnread 
+                        ? 'bg-green-50 border-green-200' 
+                        : 'hover:bg-gray-50'
                   }`}
-                  onClick={() => setSelectedGroup(group.id)}
+                  onClick={() => {
+                    setSelectedGroup(group.id);
+                    setShowMembers(false); // Start with chat view
+                  }}
                 >
-                  <CardHeader className="pb-2">
+                  <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-sm">{group.name}</CardTitle>
                       <div className="flex items-center space-x-2">
-                        <Badge variant={group.groupType === 'rank' ? 'default' : 'secondary'}>
-                          {group.memberCount || 0} members
+                        <div className={`w-3 h-3 rounded-full ${
+                          group.isActive ? 'bg-green-500' : 'bg-gray-400'
+                        }`} />
+                        <CardTitle className="text-base font-semibold">
+                          {group.name}
+                        </CardTitle>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant={group.groupType === 'rank' ? 'default' : 'secondary'} className="text-xs">
+                          {group.memberCount || 0}
                         </Badge>
-                        {group.unreadCount > 0 && (
-                          <Badge variant="destructive">
+                        {hasUnread && (
+                          <Badge variant="destructive" className="animate-pulse">
                             {group.unreadCount}
                           </Badge>
                         )}
                       </div>
                     </div>
-                    <CardDescription className="text-xs">
+                    <CardDescription className="text-sm text-gray-600">
                       {group.description}
                     </CardDescription>
                   </CardHeader>
+                  
                   <CardContent className="pt-0">
-                    {isJoined ? (
-                      <div className="flex items-center justify-between">
-                        <Badge variant="outline">{group.role || 'Admin View'}</Badge>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            leaveGroupMutation.mutate(group.id);
-                          }}
-                          disabled={leaveGroupMutation.isPending}
-                        >
-                          Leave
-                        </Button>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        {isJoined ? (
+                          <>
+                            <Badge variant="outline" className="text-xs">
+                              {group.role || 'Admin'}
+                            </Badge>
+                            <MessageCircle className="h-4 w-4 text-blue-500" />
+                          </>
+                        ) : (
+                          <Badge variant="outline" className="text-xs text-gray-500">
+                            Not Joined
+                          </Badge>
+                        )}
                       </div>
-                    ) : (
-                      <Button
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          joinGroupMutation.mutate(group.id);
-                        }}
-                        disabled={joinGroupMutation.isPending}
-                        className="w-full"
-                      >
-                        <UserPlus className="h-3 w-3 mr-1" />
-                        Join
-                      </Button>
+                      
+                      {!user?.isAdmin && (
+                        <div className="flex space-x-1">
+                          {isJoined ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                leaveGroupMutation.mutate(group.id);
+                              }}
+                              disabled={leaveGroupMutation.isPending}
+                              className="text-xs px-2 py-1"
+                            >
+                              Leave
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                joinGroupMutation.mutate(group.id);
+                              }}
+                              disabled={joinGroupMutation.isPending}
+                              className="text-xs px-2 py-1"
+                            >
+                              <UserPlus className="h-3 w-3 mr-1" />
+                              Join
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    
+                    {selectedGroup === group.id && (
+                      <div className="mt-2 pt-2 border-t text-xs text-green-600 font-medium">
+                        ✓ Click to open chat • Click Members to view group
+                      </div>
                     )}
                   </CardContent>
                 </Card>
@@ -304,12 +345,22 @@ export function RankGroupsPanel() {
                   </div>
                   <div className="flex space-x-2">
                     <Button
+                      variant={!showMembers ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setShowMembers(false)}
+                      className="flex items-center space-x-1"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      <span>Chat</span>
+                    </Button>
+                    <Button
                       variant={showMembers ? "default" : "outline"}
                       size="sm"
-                      onClick={() => setShowMembers(!showMembers)}
+                      onClick={() => setShowMembers(true)}
+                      className="flex items-center space-x-1"
                     >
-                      <Users className="h-4 w-4 mr-1" />
-                      {selectedGroupData.memberCount} Members
+                      <Users className="h-4 w-4" />
+                      <span>{selectedGroupData.memberCount || 0} Members</span>
                     </Button>
                   </div>
                 </div>
@@ -322,23 +373,22 @@ export function RankGroupsPanel() {
                   <div className="space-y-3">
                     <div className="flex items-center space-x-2 mb-4">
                       <Users className="h-5 w-5" />
-                      <h3 className="font-semibold">Group Members ({Array.isArray(membersData) ? membersData.length : 0})</h3>
+                      <h3 className="font-semibold">Group Members ({membersData?.length || 0})</h3>
                     </div>
-                    <div className="text-xs text-gray-500 mb-2">
-                      Debug: membersData type: {typeof membersData}, isArray: {Array.isArray(membersData) ? 'true' : 'false'}
-                      {membersData && <span>, length: {membersData.length}</span>}
-                    </div>
-                    {Array.isArray(membersData) && membersData.length > 0 ? (
+                    {membersData && membersData.length > 0 ? (
                       membersData.map((member: any) => (
-                        <div key={member.id} className="flex items-center space-x-3 p-3 border rounded-lg">
+                        <div key={member.id || member.userId} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
                           <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
                             <User className="h-5 w-5 text-blue-600" />
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center space-x-2">
-                              <span className="font-medium">{member.fullName}</span>
+                              <span className="font-medium">{member.fullName || `${member.firstName} ${member.lastName}`}</span>
                               {member.isVerified && (
                                 <Badge variant="secondary" className="text-xs">Verified</Badge>
+                              )}
+                              {member.role === 'admin' && (
+                                <Badge variant="default" className="text-xs">Admin</Badge>
                               )}
                             </div>
                             <div className="text-sm text-gray-500">
@@ -347,52 +397,65 @@ export function RankGroupsPanel() {
                               )}
                               {member.city && member.maritimeRank && <span> • </span>}
                               {member.city && <span>{member.city}</span>}
+                              {member.joinedAt && (
+                                <span className="text-xs block mt-1">
+                                  Joined {new Date(member.joinedAt).toLocaleDateString()}
+                                </span>
+                              )}
                             </div>
                           </div>
-                          <Badge variant="outline">{member.role}</Badge>
+                          <Badge variant="outline" className="text-xs">
+                            {member.role || 'Member'}
+                          </Badge>
                         </div>
                       ))
                     ) : (
                       <div className="text-center text-gray-500 py-8">
                         <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <p>Loading members... or no members found</p>
-                        <div className="text-xs mt-2">
-                          API Response: {JSON.stringify(membersData)}
-                        </div>
+                        <p>No members in this group yet</p>
+                        <p className="text-sm mt-2">Be the first to join!</p>
                       </div>
                     )}
                   </div>
                 ) : (
-                  /* Messages */
-                  <div className="space-y-4">
+                  /* Messages - WhatsApp Style */
+                  <div className="space-y-3">
                     {Array.isArray(messagesData) && messagesData.length > 0 ? (
                       messagesData.map((message: GroupMessage) => (
                         <div key={message.id} className="space-y-1">
                           <div className="flex items-center space-x-2 text-xs text-gray-500">
-                            <span className="font-medium">{message.sender.fullName}</span>
+                            <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                              <span className="text-xs font-medium">
+                                {message.sender.fullName?.charAt(0) || 'U'}
+                              </span>
+                            </div>
+                            <span className="font-medium text-gray-700">{message.sender.fullName}</span>
                             {message.sender.maritimeRank && (
                               <Badge variant="outline" className="text-xs">
                                 {message.sender.maritimeRank}
                               </Badge>
                             )}
-                            <span>{new Date(message.createdAt).toLocaleString()}</span>
+                            <span className="text-xs">
+                              {new Date(message.createdAt).toLocaleTimeString()}
+                            </span>
                             {message.isAnnouncement && (
-                              <Badge variant="secondary">Announcement</Badge>
+                              <Badge variant="secondary" className="text-xs">📢 Announcement</Badge>
                             )}
                           </div>
-                          <div className={`p-3 rounded-lg ${
+                          <div className={`p-3 rounded-lg ml-8 ${
                             message.isAnnouncement 
-                              ? 'bg-blue-50 border-blue-200 border' 
-                              : 'bg-gray-50'
+                              ? 'bg-blue-50 border-l-4 border-blue-400' 
+                              : 'bg-gray-50 hover:bg-gray-100 transition-colors'
                           }`}>
-                            {message.message}
+                            <p className="text-sm">{message.message}</p>
                           </div>
                         </div>
                       ))
                     ) : (
-                      <div className="text-center text-gray-500 py-8">
-                        <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <p>No messages yet. Start the conversation!</p>
+                      <div className="text-center text-gray-500 py-12">
+                        <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                        <p className="text-lg font-medium">No messages yet</p>
+                        <p className="text-sm">Start the conversation in this {selectedGroupData.name} group!</p>
                       </div>
                     )}
                   </div>
