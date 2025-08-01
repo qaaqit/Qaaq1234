@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "QaaqConnect",
+    "slug": "qaaq-connect-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./attached_assets/qaaq_1754050453718.jpg",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./attached_assets/qaaq_1754050453718.jpg",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.qaaq.connect"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./attached_assets/qaaq_1754050453718.jpg",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.qaaq.connect"
+    },
+    "web": {
+      "favicon": "./attached_assets/qaaq_1754050453718.jpg",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-location",
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
