@@ -3,6 +3,9 @@
 ## Overview
 QaaqConnect is a comprehensive maritime networking platform designed to enhance shore leaves, simplify shopping for sailors, and facilitate social connections. It enables sailors to discover nearby peers and locals, access a curated marketplace for maritime essentials, and engage in location-based discussions. The platform aims to foster an authentic maritime community experience by integrating proximity-based user discovery, real-time location mapping, direct communication tools, and a structured content navigation system.
 
+## Recent Major Changes
+- **January 2025**: Completely removed AIS (Automatic Identification System) API integration for real-time ship tracking. The system now focuses solely on user-based location discovery without external ship tracking capabilities.
+
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 Username field label: "USER NAME (This may be ur country code +91 & whatsapp number )"

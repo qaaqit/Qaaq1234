@@ -21,23 +21,6 @@ interface MapUser {
   answerCount?: number;
 }
 
-interface ShipData {
-  id: string;
-  name: string;
-  latitude: number;
-  longitude: number;
-  speed: number;
-  course: number;
-  heading: number;
-  mmsi: string;
-  type: number;
-  destination: string;
-  eta: string;
-  callSign: string;
-  imo: string;
-  timestamp: number;
-}
-
 interface GoogleMapProps {
   users: MapUser[];
   userLocation: { lat: number; lng: number } | null;
@@ -49,9 +32,6 @@ interface GoogleMapProps {
   showScanElements?: boolean;
   scanAngle?: number;
   radiusKm?: number;
-  shipPosition?: any;
-  ships?: ShipData[];
-  showShips?: boolean;
 }
 
 declare global {
@@ -61,13 +41,11 @@ declare global {
   }
 }
 
-const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser, mapType = 'roadmap', onUserHover, onUserClick, onZoomChange, showScanElements = false, scanAngle = 0, radiusKm = 50, shipPosition = null, ships = [], showShips = false }) => {
+const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser, mapType = 'roadmap', onUserHover, onUserClick, onZoomChange, showScanElements = false, scanAngle = 0, radiusKm = 50 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
-  const shipMarkersRef = useRef<any[]>([]);
   const userLocationMarkerRef = useRef<any>(null);
-  const shipMarkerRef = useRef<any>(null);
   const scanCircleRef = useRef<any>(null);
   const scanLineRef = useRef<any>(null);
   const [boundsUpdateTrigger, setBoundsUpdateTrigger] = useState(0);
@@ -316,112 +294,6 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
 
   }, [isMapLoaded, users, onUserHover, onUserClick]);
 
-  // Add ship markers from AIS data
-  useEffect(() => {
-    if (!isMapLoaded || !mapInstanceRef.current || !showShips) return;
-
-    // Clear existing ship markers
-    shipMarkersRef.current.forEach(marker => marker.setMap(null));
-    shipMarkersRef.current = [];
-
-    // Add ship markers
-    ships.forEach((ship) => {
-      if (!ship.latitude || !ship.longitude) return;
-
-      // Create ship icon with rotation based on heading/course
-      const shipIcon = {
-        path: 'M0,-15 L-5,-5 L-2,0 L-2,10 L2,10 L2,0 L5,-5 Z', // Ship shape pointing north
-        scale: 1.5,
-        fillColor: getShipColor(ship.type, ship.speed),
-        fillOpacity: 0.9,
-        strokeColor: '#ffffff',
-        strokeWeight: 1,
-        rotation: ship.heading || ship.course || 0, // Rotate based on heading or course
-        anchor: new window.google.maps.Point(0, 0),
-      };
-
-      const marker = new window.google.maps.Marker({
-        position: { lat: ship.latitude, lng: ship.longitude },
-        map: mapInstanceRef.current,
-        title: `${ship.name} (${ship.mmsi})`,
-        icon: shipIcon,
-        optimized: true,
-        clickable: true,
-        zIndex: 1500, // Higher than user markers, lower than selected
-      });
-
-      // Add info window for ship details
-      const infoWindow = new window.google.maps.InfoWindow({
-        content: `
-          <div style="padding: 8px; font-family: Arial, sans-serif;">
-            <h3 style="margin: 0 0 8px 0; color: #1e40af; font-size: 14px;">${ship.name || 'Unknown Vessel'}</h3>
-            <div style="font-size: 12px; line-height: 1.4;">
-              <div><strong>MMSI:</strong> ${ship.mmsi}</div>
-              <div><strong>Speed:</strong> ${ship.speed.toFixed(1)} knots</div>
-              <div><strong>Course:</strong> ${ship.course.toFixed(0)}°</div>
-              ${ship.destination ? `<div><strong>Destination:</strong> ${ship.destination}</div>` : ''}
-              ${ship.callSign ? `<div><strong>Call Sign:</strong> ${ship.callSign}</div>` : ''}
-              ${ship.imo ? `<div><strong>IMO:</strong> ${ship.imo}</div>` : ''}
-              <div><strong>Type:</strong> ${getShipTypeName(ship.type)}</div>
-              <div style="color: #666; font-size: 10px; margin-top: 4px;">
-                Updated: ${new Date(ship.timestamp).toLocaleTimeString()}
-              </div>
-            </div>
-          </div>
-        `
-      });
-
-      // Show info window on click
-      marker.addListener('click', () => {
-        // Close other info windows
-        shipMarkersRef.current.forEach(m => {
-          if (m.infoWindow) m.infoWindow.close();
-        });
-        infoWindow.open(mapInstanceRef.current, marker);
-      });
-
-      // Store info window reference
-      (marker as any).infoWindow = infoWindow;
-      shipMarkersRef.current.push(marker);
-    });
-
-  }, [isMapLoaded, ships, showShips]);
-
-  // Legacy ship position marker (keeping for compatibility)
-  useEffect(() => {
-    if (!isMapLoaded || !mapInstanceRef.current) return;
-
-    // Clear existing ship marker
-    if (shipMarkerRef.current) {
-      shipMarkerRef.current.setMap(null);
-      shipMarkerRef.current = null;
-    }
-
-    // Add ship marker if ship position is available
-    if (shipPosition && shipPosition.latitude && shipPosition.longitude) {
-      shipMarkerRef.current = new window.google.maps.Marker({
-        position: { lat: shipPosition.latitude, lng: shipPosition.longitude },
-        map: mapInstanceRef.current,
-        title: `Ship: ${shipPosition.name}`,
-        icon: {
-          path: 'M12 2L13.09 8.26L22 9L13.09 9.74L12 16L10.91 9.74L2 9L10.91 8.26L12 2Z', // Ship-like star shape
-          scale: 2,
-          fillColor: '#DC2626', // Red color for ships
-          fillOpacity: 1,
-          strokeColor: '#ffffff',
-          strokeWeight: 2,
-        },
-        zIndex: 2000, // Higher than user markers
-      });
-
-      // Center map on ship position
-      mapInstanceRef.current.setCenter({ lat: shipPosition.latitude, lng: shipPosition.longitude });
-      mapInstanceRef.current.setZoom(12);
-
-      console.log(`🚢 Ship marker added for ${shipPosition.name} at [${shipPosition.latitude}, ${shipPosition.longitude}]`);
-    }
-  }, [isMapLoaded, shipPosition]);
-
   // Add user location marker (current user's position)
   useEffect(() => {
     if (!isMapLoaded || !mapInstanceRef.current || !userLocation) return;
@@ -619,35 +491,5 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
     </div>
   );
 };
-
-// Helper function to get ship color based on type and speed
-function getShipColor(type: number, speed: number): string {
-  // Color by speed first (moving vs stationary)
-  if (speed < 0.5) {
-    return '#6B7280'; // Gray for stationary ships
-  }
-  
-  // Color by ship type for moving ships
-  if (type >= 70 && type <= 79) return '#059669'; // Green for cargo ships
-  if (type >= 80 && type <= 89) return '#DC2626'; // Red for tankers
-  if (type >= 60 && type <= 69) return '#2563EB'; // Blue for passenger ships
-  if (type >= 30 && type <= 39) return '#7C3AED'; // Purple for fishing vessels
-  if (type >= 40 && type <= 49) return '#EA580C'; // Orange for high-speed craft
-  
-  return '#0891B2'; // Default cyan for other types
-}
-
-// Helper function to get ship type name
-function getShipTypeName(typeCode: number): string {
-  const SHIP_TYPE_NAMES: { [key: number]: string } = {
-    30: 'Fishing', 31: 'Towing', 32: 'Towing (large)', 33: 'Dredging', 34: 'Diving',
-    35: 'Military', 36: 'Sailing', 37: 'Pleasure Craft', 40: 'High Speed Craft',
-    50: 'Pilot', 51: 'Search & Rescue', 52: 'Tug', 53: 'Port Tender',
-    54: 'Anti-pollution', 55: 'Law Enforcement', 58: 'Medical',
-    60: 'Passenger', 70: 'Cargo', 80: 'Tanker'
-  };
-  
-  return SHIP_TYPE_NAMES[typeCode] || 'Other Vessel';
-}
 
 export default GoogleMap;

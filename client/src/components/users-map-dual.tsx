@@ -6,8 +6,7 @@ import SingleMessageChat from './single-message-chat';
 import MessageNotificationDot from './message-notification-dot';
 import GoogleMap from './google-map';
 import LeafletMap from './leaflet-map';
-import ShipTracker from './ship-tracker';
-import { ChevronDown, ChevronUp, Filter, MapPin, Radar, Search, Home, Map, Satellite, Ship } from 'lucide-react';
+import { ChevronDown, ChevronUp, Filter, MapPin, Radar, Search, Home, Map, Satellite } from 'lucide-react';
 
 interface MapUser {
   id: string;
@@ -135,21 +134,13 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
   const [scanAngle, setScanAngle] = useState(0); // For rotating scan arm
   const [showScanElements, setShowScanElements] = useState(false); // Toggle scan arm and circle
   const [searchQuery, setSearchQuery] = useState(''); // User search input
-  const [shipSearchResult, setShipSearchResult] = useState<any>(null); // Ship position result
-  const [searchType, setSearchType] = useState<'users' | 'ships'>('users'); // Toggle between user and ship search
-  const [ships, setShips] = useState<any[]>([]);
-  const [showShips, setShowShips] = useState(false);
-  const [mapBounds, setMapBounds] = useState<any>(null);
 
   // Stable zoom change handler to prevent map re-initialization
   const handleZoomChange = useCallback((zoom: number) => {
     setMapZoom(zoom);
   }, []);
 
-  // Handle ship data updates from the ship tracker
-  const handleShipsUpdate = useCallback((shipData: any[]) => {
-    setShips(shipData);
-  }, []);
+
 
   // Fetch all users with comprehensive search functionality
   const { data: allUsers = [], isLoading } = useQuery<MapUser[]>({
@@ -167,53 +158,12 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       if (!response.ok) throw new Error('Failed to fetch users');
       return response.json();
     },
-    enabled: searchType === 'users',
     staleTime: searchQuery.trim() ? 30000 : 60000, // Shorter cache for search results
   });
 
-  // Search for ship positions when in ship mode
-  const searchShipPosition = async (shipQuery: string) => {
-    if (!shipQuery.trim()) {
-      setShipSearchResult(null);
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/ships/search?q=${encodeURIComponent(shipQuery.trim())}`);
-      if (response.ok) {
-        const shipData = await response.json();
-        setShipSearchResult(shipData);
-        console.log('🚢 Ship found:', shipData);
-      } else {
-        console.log('Ship not found');
-        setShipSearchResult(null);
-      }
-    } catch (error) {
-      console.error('Ship search error:', error);
-      setShipSearchResult(null);
-    }
-  };
-
-  // Enhanced search handler that detects ship queries
+  // Simple search handler
   const handleSearchInput = (value: string) => {
     setSearchQuery(value);
-    
-    // Auto-detect ship search patterns
-    const shipPatterns = [
-      /^IMO[\s\-:]?\d{7}$/i,  // IMO number pattern
-      /^\d{7}$/,              // Pure 7-digit IMO
-      /vessel|ship|cargo|tanker|container/i, // Ship type keywords
-    ];
-    
-    const isShipQuery = shipPatterns.some(pattern => pattern.test(value.trim()));
-    
-    if (isShipQuery && value.trim()) {
-      setSearchType('ships');
-      searchShipPosition(value);
-    } else if (value.trim()) {
-      setSearchType('users');
-      setShipSearchResult(null);
-    }
   };
 
   // Calculate radius based on map zoom level
@@ -570,22 +520,6 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             >
               <Radar size={16} className={showScanElements ? 'animate-spin' : ''} />
             </button>
-
-            {/* Ship Tracking Toggle (Admin Only) */}
-            {user?.isAdmin && (
-              <button
-                onClick={() => setShowShips(!showShips)}
-                className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors ${
-                  showShips 
-                    ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' 
-                    : 'bg-gray-100 hover:bg-gray-200'
-                }`}
-                title="Toggle real-time ship tracking"
-              >
-                <Ship size={16} />
-                {showShips && <span className="text-xs">ON</span>}
-              </button>
-            )}
           </div>
 
           {/* Right side - Search Results/Status */}
@@ -603,15 +537,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
           </div>
         </div>
 
-        {/* Ship Tracker Component - Hidden but provides real-time data */}
-        {user?.isAdmin && showShips && (
-          <div className="absolute top-4 right-4 z-[1001]">
-            <ShipTracker 
-              onShipsUpdate={handleShipsUpdate}
-              bounds={mapBounds}
-            />
-          </div>
-        )}
+
       </div>
 
       {/* Dual Map System: Google Maps for Admin, Leaflet for Users */}
@@ -635,9 +561,6 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             showScanElements={showScanElements}
             scanAngle={scanAngle}
             radiusKm={radiusKm}
-            shipPosition={shipSearchResult}
-            ships={ships}
-            showShips={showShips}
           />
         ) : (
           <LeafletMap
@@ -655,7 +578,6 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             showScanElements={showScanElements}
             scanAngle={scanAngle}
             radiusKm={radiusKm}
-            shipPosition={shipSearchResult}
           />
         )}
 

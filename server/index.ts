@@ -3,7 +3,6 @@ import { createServer } from "http";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import QoiGPTBot from "./whatsapp-bot";
-import { AISProxy } from "./ais-proxy";
 
 const app = express();
 app.use(express.json());
@@ -40,18 +39,9 @@ app.use((req, res, next) => {
 });
 
 let whatsappBot: QoiGPTBot | null = null;
-let aisProxy: AISProxy | null = null;
 
 (async () => {
   const server = await registerRoutes(app);
-  
-  // Initialize AIS Proxy for real-time ship tracking
-  try {
-    aisProxy = new AISProxy({ server });
-    console.log('🚢 AIS Proxy initialized for ship tracking');
-  } catch (error) {
-    console.error('❌ Failed to initialize AIS Proxy:', error);
-  }
 
   // Add WhatsApp bot endpoints
   app.get("/api/whatsapp-status", (req, res) => {
