@@ -653,19 +653,17 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       {nearestUsers.length > 0 && (
         <div className={`absolute left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 z-[1000] transition-all duration-300 ease-in-out ${
           searchPanelState === 'minimized'
-            ? 'bottom-0 h-[40px]'
+            ? 'bottom-0 h-[60px]'
             : searchPanelState === 'half'
             ? 'bottom-0 h-1/2'
             : searchQuery.trim() 
             ? 'top-[35%] bottom-0' 
             : 'bottom-0 h-[160px] sm:h-[180px]'
         }`}>
-          <div className={`${searchPanelState === 'minimized' ? 'p-1' : 'p-2 sm:p-4'} h-full`}>
-            <div className={`flex items-center justify-between ${searchPanelState === 'minimized' ? 'mb-0' : 'mb-2 sm:mb-3'}`}>
-              <h3 className={`font-medium text-gray-700 ${searchPanelState === 'minimized' ? 'text-xs truncate' : 'text-xs sm:text-sm'}`}>
-                {searchPanelState === 'minimized' 
-                  ? `${nearestUsers.length} results`
-                  : searchQuery.toLowerCase().trim() === 'onboard'
+          <div className="p-2 sm:p-4 h-full">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <h3 className="text-xs sm:text-sm font-medium text-gray-700">
+                {searchQuery.toLowerCase().trim() === 'onboard'
                   ? `🚢 Sailors Currently Onboard Ships (${nearestUsers.length})`
                   : searchQuery.trim() 
                   ? `Search Results: ${nearestUsers.length} users found` 
@@ -684,9 +682,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                       setSearchPanelState('full');
                     }
                   }}
-                  className={`flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-full transition-colors ml-2 ${
-                    searchPanelState === 'minimized' ? 'w-6 h-6' : 'w-8 h-8'
-                  }`}
+                  className="flex items-center justify-center w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors ml-2"
                   title={
                     searchPanelState === 'full' 
                       ? "Minimize to half screen" 
@@ -696,7 +692,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                   }
                 >
                   {searchPanelState === 'minimized' ? (
-                    <ChevronUp size={searchPanelState === 'minimized' ? 12 : 16} />
+                    <ChevronUp size={16} />
                   ) : searchPanelState === 'half' ? (
                     <ChevronDown size={16} />
                   ) : (
