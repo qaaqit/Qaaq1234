@@ -62,7 +62,7 @@ export function RankGroupsPanel() {
   });
 
   // Fetch members for selected group
-  const { data: membersData } = useQuery({
+  const { data: membersData = [] } = useQuery<any[]>({
     queryKey: ['/api/rank-groups', selectedGroup, 'members'],
     enabled: !!selectedGroup,
     refetchInterval: 10000, // Refresh every 10 seconds
@@ -236,9 +236,12 @@ export function RankGroupsPanel() {
                         ? 'bg-green-50 border-green-200' 
                         : 'hover:bg-gray-50'
                   }`}
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Group clicked:', group.name, group.id);
                     setSelectedGroup(group.id);
-                    setShowMembers(false); // Start with chat view
+                    setShowMembers(false);
                   }}
                 >
                   <CardHeader className="pb-3">
@@ -375,7 +378,7 @@ export function RankGroupsPanel() {
                       <Users className="h-5 w-5" />
                       <h3 className="font-semibold">Group Members ({membersData?.length || 0})</h3>
                     </div>
-                    {membersData && membersData.length > 0 ? (
+                    {Array.isArray(membersData) && membersData.length > 0 ? (
                       membersData.map((member: any) => (
                         <div key={member.id || member.userId} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
                           <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
