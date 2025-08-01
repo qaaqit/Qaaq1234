@@ -3,6 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { Search, Filter, MapPin, MessageCircle, Users, ChevronDown } from 'lucide-react';
 import { Link } from 'wouter';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 
 interface User {
   id: string;
@@ -214,63 +217,76 @@ export default function UsersPage() {
         </div>
       </div>
 
-      {/* Search and Filters */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            {/* Search Input */}
-            <div className="flex-1">
-              <div className="relative">
-                <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search by name, ship, company, rank..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
+      {/* Search Sailor Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <Card className="border-2 border-blue-500/20">
+          <CardHeader>
+            <div className="flex flex-col space-y-4">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center space-x-2 text-blue-900">
+                  <Users size={20} />
+                  <span>Search Sailor</span>
+                  <Badge variant="secondary" className="ml-2">
+                    {filteredUsers.length} Sailors
+                  </Badge>
+                </CardTitle>
               </div>
-            </div>
-
-            {/* Rank Filter Dropdown */}
-            <div className="relative dropdown-container">
-              <button
-                onClick={() => setShowRankDropdown(!showRankDropdown)}
-                className="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors border border-gray-300"
-              >
-                <Filter size={16} />
-                <span className="text-sm font-medium">
-                  {MARITIME_RANK_CATEGORIES.find(cat => cat.id === selectedRankCategory)?.name}
-                </span>
-                <ChevronDown size={14} className={`transition-transform ${showRankDropdown ? 'rotate-180' : ''}`} />
-              </button>
-              
-              {showRankDropdown && (
-                <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[280px] z-[1001]">
-                  <div className="p-2">
-                    {MARITIME_RANK_CATEGORIES.map((category) => (
-                      <button
-                        key={category.id}
-                        onClick={() => {
-                          setSelectedRankCategory(category.id);
-                          setShowRankDropdown(false);
-                        }}
-                        className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                          selectedRankCategory === category.id
-                            ? 'bg-blue-50 text-blue-700 font-medium'
-                            : 'hover:bg-gray-50 text-gray-700'
-                        }`}
-                      >
-                        <div className="font-medium">{category.name}</div>
-                        <div className="text-xs text-gray-500 mt-1">{category.description}</div>
-                      </button>
-                    ))}
+              <div className="flex flex-col sm:flex-row gap-4">
+                {/* Search Input */}
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                    <Input
+                      type="text"
+                      placeholder="Search sailors by name, ship, company, rank..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10 border-blue-500/30 focus:border-blue-500"
+                    />
                   </div>
                 </div>
-              )}
+
+                {/* Rank Filter Dropdown */}
+                <div className="relative dropdown-container">
+                  <button
+                    onClick={() => setShowRankDropdown(!showRankDropdown)}
+                    className="flex items-center space-x-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors border border-blue-200"
+                  >
+                    <Filter size={16} className="text-blue-600" />
+                    <span className="text-sm font-medium text-blue-700">
+                      {MARITIME_RANK_CATEGORIES.find(cat => cat.id === selectedRankCategory)?.name}
+                    </span>
+                    <ChevronDown size={14} className={`transition-transform text-blue-600 ${showRankDropdown ? 'rotate-180' : ''}`} />
+                  </button>
+                  
+                  {showRankDropdown && (
+                    <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[280px] z-[1001]">
+                      <div className="p-2">
+                        {MARITIME_RANK_CATEGORIES.map((category) => (
+                          <button
+                            key={category.id}
+                            onClick={() => {
+                              setSelectedRankCategory(category.id);
+                              setShowRankDropdown(false);
+                            }}
+                            className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                              selectedRankCategory === category.id
+                                ? 'bg-blue-50 text-blue-700 font-medium'
+                                : 'hover:bg-gray-50 text-gray-700'
+                            }`}
+                          >
+                            <div className="font-medium">{category.name}</div>
+                            <div className="text-xs text-gray-500 mt-1">{category.description}</div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          </CardHeader>
+        </Card>
       </div>
 
       {/* Users Grid */}
