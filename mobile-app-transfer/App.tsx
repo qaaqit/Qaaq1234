@@ -1,14 +1,18 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, ActivityIndicator } from 'react-native';
 
 // Import screens
 import MapScreen from './src/screens/MapScreen';
 import GroupsScreen from './src/screens/GroupsScreen';
 import DMScreen from './src/screens/DMScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
+import LoginScreen from './src/screens/LoginScreen';
+
+// Import services
+import AuthService from './src/services/AuthService';
 
 // Import icons
 import { Ionicons } from '@expo/vector-icons';
@@ -16,6 +20,51 @@ import { Ionicons } from '@expo/vector-icons';
 const Tab = createBottomTabNavigator();
 
 export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const authService = AuthService.getInstance();
+
+  useEffect(() => {
+    initializeAuth();
+  }, []);
+
+  const initializeAuth = async () => {
+    try {
+      await authService.initialize();
+      setIsAuthenticated(authService.isAuthenticated());
+    } catch (error) {
+      console.error('Auth initialization error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLoginSuccess = () => {
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = async () => {
+    await authService.logout();
+    setIsAuthenticated(false);
+  };
+
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0891b2" />
+      </View>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <View style={styles.container}>
+        <StatusBar style="auto" />
+        <LoginScreen onLoginSuccess={handleLoginSuccess} />
+      </View>
+    );
+  }
+
   return (
     <NavigationContainer>
       <View style={styles.container}>
@@ -76,6 +125,7 @@ export default function App() {
             name="Profile" 
             component={ProfileScreen} 
             options={{ title: 'Profile' }}
+            initialParams={{ onLogout: handleLogout }}
           />
         </Tab.Navigator>
       </View>
@@ -86,6 +136,12 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#f8fafc',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: '#f8fafc',
   },
 });
