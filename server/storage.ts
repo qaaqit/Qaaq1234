@@ -492,9 +492,25 @@ export class DatabaseStorage implements IStorage {
         const latOffset = ((hashSeed % 200) - 100) / 1000; // ±0.1 degrees
         const lngOffset = (((hashSeed * 7) % 200) - 100) / 1000; // ±0.1 degrees
         
-        // Use precise GPS if available, otherwise use city coords with realistic scatter
-        const finalLat = user.current_latitude ? parseFloat(user.current_latitude) : cityCoords.lat + latOffset;
-        const finalLng = user.current_longitude ? parseFloat(user.current_longitude) : cityCoords.lng + lngOffset;
+        // For onboard users, prioritize ship coordinates over city coordinates
+        let finalLat, finalLng, locationSource;
+        
+        if (user.onboard_status === 'ONBOARD' && user.current_latitude && user.current_longitude) {
+          // User is onboard and has ship coordinates - use ship position
+          finalLat = parseFloat(user.current_latitude);
+          finalLng = parseFloat(user.current_longitude);
+          locationSource = 'ship';
+        } else if (user.current_latitude && user.current_longitude) {
+          // User has GPS coordinates - use precise location
+          finalLat = parseFloat(user.current_latitude);
+          finalLng = parseFloat(user.current_longitude);
+          locationSource = 'device';
+        } else {
+          // Use city coordinates with realistic scatter
+          finalLat = cityCoords.lat + latOffset;
+          finalLng = cityCoords.lng + lngOffset;
+          locationSource = 'city';
+        }
         
         return {
           id: user.id,
@@ -516,7 +532,7 @@ export class DatabaseStorage implements IStorage {
           longitude: finalLng,
           deviceLatitude: user.current_latitude ? parseFloat(user.current_latitude) : null,
           deviceLongitude: user.current_longitude ? parseFloat(user.current_longitude) : null,
-          locationSource: user.current_latitude ? 'device' : 'city',
+          locationSource: locationSource,
           locationUpdatedAt: user.location_updated_at || new Date(),
           isVerified: user.has_completed_onboarding || true,
           loginCount: 1,
