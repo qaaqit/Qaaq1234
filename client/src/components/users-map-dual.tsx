@@ -122,7 +122,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
   const [selectedUser, setSelectedUser] = useState<MapUser | null>(null);
   const [openChatUserId, setOpenChatUserId] = useState<string | null>(null);
   const [showOnlineOnly, setShowOnlineOnly] = useState(true);
-  const [searchPanelMinimized, setSearchPanelMinimized] = useState(false);
+  const [searchPanelState, setSearchPanelState] = useState<'full' | 'half' | 'minimized'>('full');
   const [selectedRankCategory, setSelectedRankCategory] = useState<string>('everyone');
   const [showRankDropdown, setShowRankDropdown] = useState(false);
 
@@ -649,11 +649,13 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
 
 
 
-      {/* Search Results - Full Height Endless Scroll or Bottom Panel for Browsing */}
+      {/* Search Results - Expandable Panel with Three States */}
       {nearestUsers.length > 0 && (
         <div className={`absolute left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 z-[1000] transition-all duration-300 ease-in-out ${
-          searchPanelMinimized 
-            ? 'bottom-0 h-1/2' 
+          searchPanelState === 'minimized'
+            ? 'bottom-0 h-[60px]'
+            : searchPanelState === 'half'
+            ? 'bottom-0 h-1/2'
             : searchQuery.trim() 
             ? 'top-[35%] bottom-0' 
             : 'bottom-0 h-[160px] sm:h-[180px]'
@@ -668,18 +670,44 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                   : `Nearest Maritime Professionals (${nearestUsers.length})`}
               </h3>
               
-              {/* Minimize/Expand Button for Search Results */}
-              {searchQuery.trim() && (
+              {/* Panel Control Button for Search Results */}
+              {(searchQuery.trim() || nearestUsers.length > 0) && (
                 <button
-                  onClick={() => setSearchPanelMinimized(!searchPanelMinimized)}
+                  onClick={() => {
+                    if (searchPanelState === 'full') {
+                      setSearchPanelState('half');
+                    } else if (searchPanelState === 'half') {
+                      setSearchPanelState('minimized');
+                    } else {
+                      setSearchPanelState('full');
+                    }
+                  }}
                   className="flex items-center justify-center w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors ml-2"
-                  title={searchPanelMinimized ? "Expand to full height" : "Minimize to half screen"}
+                  title={
+                    searchPanelState === 'full' 
+                      ? "Minimize to half screen" 
+                      : searchPanelState === 'half'
+                      ? "Minimize to bottom bar"
+                      : "Expand to full screen"
+                  }
                 >
-                  {searchPanelMinimized ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                  {searchPanelState === 'minimized' ? (
+                    <ChevronUp size={16} />
+                  ) : searchPanelState === 'half' ? (
+                    <ChevronDown size={16} />
+                  ) : (
+                    <ChevronDown size={16} />
+                  )}
                 </button>
               )}
             </div>
-            <div className={`${searchQuery.trim() ? 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 overflow-y-auto h-[calc(100%-3rem)] scrollbar-thin scrollbar-thumb-gray-300 pr-2' : 'flex gap-2 sm:gap-3 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 pb-2'}`}>
+            <div className={`${
+              searchPanelState === 'minimized' 
+                ? 'hidden' 
+                : searchQuery.trim() 
+                ? 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 overflow-y-auto h-[calc(100%-3rem)] scrollbar-thin scrollbar-thumb-gray-300 pr-2' 
+                : 'flex gap-2 sm:gap-3 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 pb-2'
+            }`}>
               {nearestUsers.map((user) => (
                 <div
                   key={user.id}
