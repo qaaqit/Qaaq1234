@@ -3,6 +3,14 @@ const { Client, LocalAuth } = pkg;
 import * as qrcode from 'qrcode-terminal';
 import { DatabaseStorage } from './storage';
 
+// Type definitions to fix TypeScript errors
+type WhatsAppClient = InstanceType<typeof Client>;
+interface WhatsAppMessage {
+  body: string;
+  getContact(): Promise<{ number: string }>;
+  reply(text: string): Promise<any>;
+}
+
 interface ProximityUser {
   fullName: string;
   rank: string;
@@ -14,7 +22,7 @@ interface ProximityUser {
 }
 
 class QoiGPTBot {
-  private client: Client;
+  private client: WhatsAppClient;
   private storage: DatabaseStorage;
   private isReady = false;
 
@@ -43,7 +51,7 @@ class QoiGPTBot {
   }
 
   private setupEventHandlers() {
-    this.client.on('qr', (qr) => {
+    this.client.on('qr', (qr: string) => {
       console.log('\n🔗 Qoi GPT WhatsApp Bot - Scan QR Code:');
       qrcode.generate(qr, { small: true });
       console.log('\nScan the QR code above with your WhatsApp to connect the bot.\n');
@@ -55,21 +63,21 @@ class QoiGPTBot {
       this.isReady = true;
     });
 
-    this.client.on('message', async (message: Message) => {
+    this.client.on('message', async (message: WhatsAppMessage) => {
       await this.handleMessage(message);
     });
 
-    this.client.on('auth_failure', (msg) => {
+    this.client.on('auth_failure', (msg: any) => {
       console.error('❌ WhatsApp authentication failed:', msg);
     });
 
-    this.client.on('disconnected', (reason) => {
+    this.client.on('disconnected', (reason: any) => {
       console.log('📱 Qoi GPT Bot disconnected:', reason);
       this.isReady = false;
     });
   }
 
-  private async handleMessage(message: any) {
+  private async handleMessage(message: WhatsAppMessage) {
     try {
       const messageBody = message.body.trim();
       const messageBodyLower = messageBody.toLowerCase();
@@ -141,7 +149,7 @@ class QoiGPTBot {
       let extractedShipName = null;
 
       for (const pattern of shipPatterns) {
-        const matches = messageBody.matchAll(pattern);
+        const matches = Array.from(messageBody.matchAll(pattern));
         for (const match of matches) {
           if (match[1]) {
             extractedShipName = match[1].trim();

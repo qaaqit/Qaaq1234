@@ -134,6 +134,8 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
   const [scanAngle, setScanAngle] = useState(0); // For rotating scan arm
   const [showScanElements, setShowScanElements] = useState(false); // Toggle scan arm and circle
   const [searchQuery, setSearchQuery] = useState(''); // User search input
+  const [shipSearchResult, setShipSearchResult] = useState<any>(null); // Ship search result
+  const [searchType, setSearchType] = useState<'users' | 'ships'>('users'); // Search type
 
   // Stable zoom change handler to prevent map re-initialization
   const handleZoomChange = useCallback((zoom: number) => {
