@@ -1,73 +1,93 @@
-import { pool } from "./db";
-import fs from "fs/promises";
-import path from "path";
+import { pool } from './db';
+import fs from 'fs';
 
 async function storeBotRules() {
-  let client;
   try {
-    console.log("Reading QBOTRULESV1.md file...");
-    const content = await fs.readFile(
-      path.join(process.cwd(), "QBOTRULESV1.md"),
-      "utf-8"
-    );
+    const client = await pool.connect();
     
-    client = await pool.connect();
+    // Read the bot rules file
+    const botRulesContent = fs.readFileSync('./QBOTRULESV1.md', 'utf8');
     
-    // First, let's create a simple key-value storage table for bot documentation
-    console.log("Creating bot_documentation table if not exists...");
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS bot_documentation (
-        id SERIAL PRIMARY KEY,
-        doc_key VARCHAR(255) UNIQUE NOT NULL,
-        doc_value TEXT NOT NULL,
-        doc_type VARCHAR(100) DEFAULT 'rules',
-        created_at TIMESTAMP DEFAULT NOW(),
-        updated_at TIMESTAMP DEFAULT NOW()
-      );
-    `);
+    console.log('Storing enhanced QBOT rules with ship name extraction...');
     
-    // Insert or update the QBOT rules
-    console.log("Storing QBOT rules...");
+    // Insert or update the bot rules in the database
     const result = await client.query(`
-      INSERT INTO bot_documentation (doc_key, doc_value, doc_type)
-      VALUES ($1, $2, $3)
-      ON CONFLICT (doc_key) 
+      INSERT INTO bot_documentation (
+        bot_name, 
+        version, 
+        rules_content, 
+        last_updated,
+        features
+      ) VALUES (
+        'QBOT', 
+        'V1.1_SHIP_EXTRACTION', 
+        $1, 
+        NOW(),
+        ARRAY['ship_name_extraction', 'onboard_status_detection', 'maritime_pattern_matching']
+      )
+      ON CONFLICT (bot_name, version) 
       DO UPDATE SET 
-        doc_value = EXCLUDED.doc_value,
-        updated_at = NOW()
-      RETURNING *;
-    `, ['QBOTRULESV1', content, 'rules']);
-    
-    console.log("✅ QBOT rules successfully stored in bot_documentation table!");
+        rules_content = EXCLUDED.rules_content,
+        last_updated = NOW(),
+        features = EXCLUDED.features
+      RETURNING id, bot_name, version
+    `, [botRulesContent]);
     
     if (result.rows.length > 0) {
-      const doc = result.rows[0];
-      console.log("\nStored documentation:");
-      console.log("- Key:", doc.doc_key);
-      console.log("- Type:", doc.doc_type);
-      console.log("- Content length:", doc.doc_value.length, "characters");
-      console.log("- Created at:", doc.created_at);
-      console.log("- Updated at:", doc.updated_at);
+      const rule = result.rows[0];
+      console.log(`✅ Successfully stored ${rule.bot_name} ${rule.version} rules`);
+      console.log(`📋 Rule ID: ${rule.id}`);
       
-      // Also display first few lines
-      const preview = doc.doc_value.split('\n').slice(0, 5).join('\n');
-      console.log("\nContent preview:");
-      console.log(preview);
-      console.log("...");
+      // Add example patterns to the database
+      await client.query(`
+        INSERT INTO bot_documentation (
+          bot_name, 
+          version, 
+          rules_content, 
+          last_updated,
+          features
+        ) VALUES (
+          'QBOT_PATTERNS', 
+          'SHIP_NAME_EXTRACTION', 
+          $1, 
+          NOW(),
+          ARRAY['regex_patterns', 'natural_language_processing']
+        )
+        ON CONFLICT (bot_name, version) 
+        DO UPDATE SET 
+          rules_content = EXCLUDED.rules_content,
+          last_updated = NOW()
+      `, [
+        `# Ship Name Extraction Patterns
+
+## Supported Conversation Patterns:
+1. "Hi, I am Harshal Jichkar 4E currently on federal kumano"
+2. "I'm working on MV Ocean Star"
+3. "Our ship is Atlantic Voyager"
+4. "Aboard the vessel Pacific Dawn"
+5. "Ship name is Mediterranean Explorer"
+6. "Sailing on Northern Lights"
+7. "Currently stationed on Baltic Merchant"
+
+## Regular Expression Patterns:
+- /(?:currently\\s+on|on\\s+(?:the\\s+)?|aboard\\s+(?:the\\s+)?|ship\\s+|vessel\\s+|mv\\s+|ms\\s+)([a-zA-Z0-9\\s\\-]+)/gi
+- /(?:sailing\\s+on|working\\s+on|stationed\\s+on)\\s+([a-zA-Z0-9\\s\\-]+)/gi
+- /(?:my\\s+ship\\s+is|our\\s+ship\\s+is|ship\\s+name\\s+is)\\s+([a-zA-Z0-9\\s\\-]+)/gi
+
+## Database Updates:
+- current_ship_name: Extracted ship name
+- last_ship: Same as current_ship_name
+- onboard_status: Automatically set to 'ONBOARD'`
+      ]);
+      
+      console.log('📊 Added ship name extraction patterns to database');
     }
     
-    // Verify access for sister apps
-    console.log("\n📢 Bot rules are now available for all QAAQ sister apps!");
-    console.log("Sister apps can retrieve using: SELECT doc_value FROM bot_documentation WHERE doc_key = 'QBOTRULESV1'");
+    client.release();
+    console.log('\n🎉 Bot rules successfully updated with ship name extraction capabilities!');
     
-    process.exit(0);
   } catch (error) {
-    console.error("Error storing bot rules:", error);
-    process.exit(1);
-  } finally {
-    if (client) {
-      client.release();
-    }
+    console.error('❌ Error storing bot rules:', error);
   }
 }
 

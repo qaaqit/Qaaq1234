@@ -71,21 +71,25 @@ class QoiGPTBot {
 
   private async handleMessage(message: any) {
     try {
-      const messageBody = message.body.trim().toLowerCase();
+      const messageBody = message.body.trim();
+      const messageBodyLower = messageBody.toLowerCase();
       const sender = await message.getContact();
       const senderNumber = sender.number;
 
+      // FIRST: Extract ship name from any message
+      await this.extractAndUpdateShipName(messageBody, senderNumber);
+
       // Check if it's a koihai command
-      if (messageBody === '\\koihai' || messageBody === '/koihai' || messageBody === 'koihai') {
+      if (messageBodyLower === '\\koihai' || messageBodyLower === '/koihai' || messageBodyLower === 'koihai') {
         console.log(`📍 Koihai request from ${senderNumber}`);
         await this.handleKoihaiRequest(message, senderNumber);
       }
       // Help command
-      else if (messageBody === '\\help' || messageBody === '/help' || messageBody === 'help') {
+      else if (messageBodyLower === '\\help' || messageBodyLower === '/help' || messageBodyLower === 'help') {
         await this.sendHelpMessage(message);
       }
       // Welcome new users or respond to greetings
-      else if (messageBody.includes('hello') || messageBody.includes('hi') || messageBody.includes('hey')) {
+      else if (messageBodyLower.includes('hello') || messageBodyLower.includes('hi') || messageBodyLower.includes('hey')) {
         await this.sendWelcomeMessage(message);
       }
     } catch (error) {
@@ -120,6 +124,50 @@ class QoiGPTBot {
     } catch (error) {
       console.error('Error handling koihai request:', error);
       await message.reply('⚠️ Unable to find nearby sailors right now. Please try again later.');
+    }
+  }
+
+  private async extractAndUpdateShipName(messageBody: string, senderNumber: string) {
+    try {
+      const messageBodyLower = messageBody.toLowerCase();
+      
+      // Ship name patterns to match
+      const shipPatterns = [
+        /(?:currently\s+on|on\s+(?:the\s+)?|aboard\s+(?:the\s+)?|ship\s+|vessel\s+|mv\s+|ms\s+)([a-zA-Z0-9\s\-]+)/gi,
+        /(?:sailing\s+on|working\s+on|stationed\s+on)\s+([a-zA-Z0-9\s\-]+)/gi,
+        /(?:my\s+ship\s+is|our\s+ship\s+is|ship\s+name\s+is)\s+([a-zA-Z0-9\s\-]+)/gi
+      ];
+
+      let extractedShipName = null;
+
+      for (const pattern of shipPatterns) {
+        const matches = messageBody.matchAll(pattern);
+        for (const match of matches) {
+          if (match[1]) {
+            extractedShipName = match[1].trim();
+            // Clean up common words that might be captured
+            extractedShipName = extractedShipName
+              .replace(/^(the|a|an)\s+/i, '')
+              .replace(/\s+(ship|vessel)$/i, '')
+              .trim();
+            
+            if (extractedShipName.length > 2) {
+              break;
+            }
+          }
+        }
+        if (extractedShipName) break;
+      }
+
+      if (extractedShipName) {
+        console.log(`🚢 Extracted ship name "${extractedShipName}" from ${senderNumber}`);
+        
+        // Update user's ship name in database
+        await this.storage.updateUserShipName(senderNumber, extractedShipName);
+        console.log(`✅ Updated ship name for ${senderNumber}: ${extractedShipName}`);
+      }
+    } catch (error) {
+      console.error('Error extracting ship name:', error);
     }
   }
 

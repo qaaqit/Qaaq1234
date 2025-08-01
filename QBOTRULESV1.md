@@ -28,10 +28,14 @@
 **Send personalized greeting**
 - Retrieve user data: Name, Rank, Ship, Location
 - Display: "Hello [Name] ([Rank])! How can I assist you today?"
+- If ship name available: "I see you're on [Ship Name]. How can I help?"
 - ↓ Continue to Step 5
 
-## STEP 5: MESSAGE CLASSIFICATION
-**Analyze incoming message type**
+## STEP 5: MESSAGE CLASSIFICATION & SHIP NAME EXTRACTION
+**Analyze incoming message type & extract ship information**
+- ↓ FIRST: Check for ship name patterns in message
+  - Patterns: "on [ship name]", "ship [name]", "vessel [name]", "currently on [name]"
+  - If found: Update user's current_ship_name in database
 - → Technical Question: Go to Step 6
 - → Location Query: Go to Step 10
 - → QAAQ Store: Go to Step 14

@@ -15,6 +15,7 @@ export interface IStorage {
   getUsersWithLocation(): Promise<User[]>;
   updateUserLocation(userId: string, latitude: number, longitude: number, source: 'device' | 'ship' | 'city'): Promise<void>;
   updateUserProfile(userId: string, profileData: Partial<User>): Promise<User | undefined>;
+  updateUserShipName(userId: string, shipName: string): Promise<void>;
   
   // Verification codes
   createVerificationCode(userId: string, code: string, expiresAt: Date): Promise<VerificationCode>;
@@ -546,6 +547,22 @@ export class DatabaseStorage implements IStorage {
       console.log(`Updated ${source} location for user ${userId}: ${latitude}, ${longitude}`);
     } catch (error) {
       console.error(`Error updating ${source} location for user ${userId}:`, error as Error);
+      throw error;
+    }
+  }
+
+  async updateUserShipName(userId: string, shipName: string): Promise<void> {
+    try {
+      // Update both current_ship_name and last_ship for WhatsApp bot users
+      await pool.query(`
+        UPDATE users 
+        SET current_ship_name = $1, last_ship = $1, onboard_status = 'ONBOARD'
+        WHERE id = $2
+      `, [shipName, userId]);
+      
+      console.log(`🚢 Updated ship name for user ${userId}: ${shipName}`);
+    } catch (error) {
+      console.error(`Error updating ship name for user ${userId}:`, error as Error);
       throw error;
     }
   }
