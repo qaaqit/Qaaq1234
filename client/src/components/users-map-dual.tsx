@@ -648,8 +648,8 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
           </div>
         )}
 
-        {/* Koi Hai Animation at 6 o'clock position */}
-        {showScanElements && userLocation && (
+        {/* Koi Hai Animation at 6 o'clock position - only show during search, not when results are displayed */}
+        {showScanElements && userLocation && nearestUsers.length === 0 && (
           <div className="absolute inset-0 pointer-events-none z-[999] flex items-center justify-center">
             <div className="relative w-full h-full">
               {/* Position text at 6 o'clock (bottom) of the scanning circle */}
