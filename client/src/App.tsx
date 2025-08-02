@@ -63,6 +63,7 @@ function Router() {
           <Route path="/dm" component={() => user ? <DMPage /> : <Home />} />
           <Route path="/qhf" component={() => user ? <DMPage /> : <Home />} />
           <Route path="/user/:userId" component={() => user ? <UserProfile /> : <Home />} />
+          <Route path="/user-profile/:userId" component={() => user ? <UserProfile /> : <Home />} />
           <Route path="/profile" component={() => user ? <Profile /> : <Home />} />
           <Route path="/my-questions" component={() => user ? <MyQuestions /> : <Home />} />
           <Route path="/share/question/:id" component={() => user ? <QuestionPage /> : <Home />} />

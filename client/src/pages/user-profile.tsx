@@ -66,11 +66,11 @@ export default function UserProfile() {
         <div className="max-w-4xl mx-auto">
           <Button 
             variant="ghost" 
-            onClick={() => navigate('/dm')}
+            onClick={() => navigate('/')}
             className="mb-4"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to DM
+            Back to Map
           </Button>
           <div className="bg-white rounded-lg p-8 text-center">
             <h2 className="text-xl font-semibold mb-2">User Not Found</h2>
@@ -117,11 +117,11 @@ export default function UserProfile() {
         <div className="max-w-4xl mx-auto p-4">
           <Button 
             variant="ghost" 
-            onClick={() => navigate('/dm')}
+            onClick={() => navigate('/')}
             className="mb-4"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to DM
+            Back to Map
           </Button>
           
           <div className="flex items-start gap-4">
@@ -157,12 +157,7 @@ export default function UserProfile() {
                   <span>{user.current_city || user.city}, {user.current_country || user.country}</span>
                 </div>
                 
-                {user.whatsappNumber && (
-                  <div className="flex items-center gap-2">
-                    <Phone className="w-4 h-4" />
-                    <span>{user.whatsappNumber}</span>
-                  </div>
-                )}
+                {/* Phone number hidden for public profile */}
               </div>
               
               <div className="flex gap-6 mt-4">
