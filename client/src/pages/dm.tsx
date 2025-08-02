@@ -129,22 +129,29 @@ export default function DMPage() {
 
   // Auto-open chat for specific user if specified in URL
   useEffect(() => {
-    if (targetUserId && connections.length > 0 && nearbyUsers.length > 0) {
+    console.log('🔍 DM Auto-connect check:', { targetUserId, connectionsCount: connections.length, nearbyUsersCount: nearbyUsers.length });
+    
+    if (targetUserId && connections.length >= 0 && nearbyUsers.length >= 0) {
       // Check if there's already an existing connection
       const existingConnection = connections.find(conn => {
         const otherUser = getOtherUser(conn);
+        console.log('🔍 Checking connection:', { connectionId: conn.id, otherUserId: otherUser?.id, targetUserId, status: conn.status });
         return otherUser?.id === targetUserId;
       });
 
       if (existingConnection && existingConnection.status === 'accepted') {
-        // Open existing chat
+        console.log('✅ Opening existing chat with:', targetUserId);
         openChat(existingConnection);
       } else if (!existingConnection) {
         // Find the user in nearby users and auto-connect
         const targetUser = nearbyUsers.find(u => u.id === targetUserId);
+        console.log('🔍 Target user found in nearby:', !!targetUser, targetUser?.fullName);
         if (targetUser) {
+          console.log('🚀 Auto-connecting to user:', targetUserId);
           handleConnectUser(targetUserId);
         }
+      } else {
+        console.log('⏳ Connection exists but not accepted yet:', existingConnection.status);
       }
     }
   }, [targetUserId, connections, nearbyUsers]);
