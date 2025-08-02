@@ -16,6 +16,7 @@ import { type User } from "@/lib/auth";
 import { apiRequest } from "@/lib/queryClient";
 import { MapPin, Navigation, Ship, Satellite, Crown } from "lucide-react";
 import UserDropdown from "@/components/user-dropdown";
+import qaaqLogo from "@/assets/qaaq-logo.png";
 
 interface Post {
   id: string;
@@ -130,8 +131,8 @@ export default function Discover({ user }: DiscoverProps) {
               onClick={() => setLocation('/')}
               className="flex items-center space-x-2 sm:space-x-3 hover:bg-white/10 rounded-lg p-1 sm:p-2 transition-colors"
             >
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 rounded-full flex items-center justify-center">
-                <i className="fas fa-anchor text-sm sm:text-xl text-white"></i>
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full flex items-center justify-center overflow-hidden">
+                <img src={qaaqLogo} alt="QAAQ Logo" className="w-full h-full object-cover" />
               </div>
               <div>
                 <h1 className="text-lg sm:text-2xl font-bold">QaaqConnect</h1>
