@@ -118,7 +118,9 @@ export class DatabaseStorage implements IStorage {
         createdAt: user.created_at || new Date(),
         questionCount: user.question_count || 0,
         answerCount: user.answer_count || 0,
-        profilePictureUrl: null, // Profile pictures not available in QAAQ database
+        profilePictureUrl: user.whatsapp_profile_picture_url || null,
+        whatsAppProfilePictureUrl: user.whatsapp_profile_picture_url || null,
+        whatsAppDisplayName: user.whatsapp_display_name || null,
       } as User;
       
       console.log(`User ${id} final location: city=${userObj.city}, lat=${userObj.latitude}, lng=${userObj.longitude}, deviceLat=${userObj.deviceLatitude}`);
@@ -541,7 +543,9 @@ export class DatabaseStorage implements IStorage {
           createdAt: user.created_at || new Date(),
           questionCount: user.question_count || 0,
           answerCount: user.answer_count || 0,
-          profilePictureUrl: null, // Profile pictures not available in QAAQ database
+          profilePictureUrl: user.whatsapp_profile_picture_url || null,
+          whatsAppProfilePictureUrl: user.whatsapp_profile_picture_url || null,
+          whatsAppDisplayName: user.whatsapp_display_name || null,
         } as User;
       });
       

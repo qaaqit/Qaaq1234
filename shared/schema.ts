@@ -39,6 +39,8 @@ export const users = pgTable("users", {
   dateOfBirth: text("date_of_birth"), // QAAQ field
   gender: text("gender"), // QAAQ field
   whatsAppNumber: text("whatsapp_number"), // QAAQ field
+  whatsAppProfilePictureUrl: text("whatsapp_profile_picture_url"), // WhatsApp profile picture from QBOT
+  whatsAppDisplayName: text("whatsapp_display_name"), // WhatsApp display name from QBOT
   
   // System Fields
   hasCompletedOnboarding: boolean("has_completed_onboarding").default(false), // QAAQ field

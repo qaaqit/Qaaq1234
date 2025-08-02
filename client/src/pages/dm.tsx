@@ -241,8 +241,19 @@ export default function DMPage() {
                     <div key={connection.id} className="flex items-center justify-between p-4 bg-white rounded-lg border border-duck-yellow/30">
                       <div className="flex items-center space-x-3">
                         <Avatar className="w-12 h-12 border-2 border-duck-yellow/30">
+                          {(otherUser.whatsAppProfilePictureUrl || otherUser.profilePictureUrl) && (
+                            <img 
+                              src={otherUser.whatsAppProfilePictureUrl || otherUser.profilePictureUrl} 
+                              alt={`${otherUser.whatsAppDisplayName || otherUser.fullName}'s profile`}
+                              className="w-full h-full rounded-full object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                              }}
+                            />
+                          )}
                           <AvatarFallback className="bg-duck-yellow/20 text-duck-yellow font-bold">
-                            {getInitials(otherUser.fullName)}
+                            {getInitials(otherUser.whatsAppDisplayName || otherUser.fullName)}
                           </AvatarFallback>
                         </Avatar>
                         <div>
@@ -396,10 +407,10 @@ export default function DMPage() {
                         <div className="flex items-start space-x-3 mb-3">
                           <div className="relative">
                             <Avatar className="w-12 h-12 border-2 border-ocean-teal/30">
-                              {userProfile.profilePictureUrl ? (
+                              {(userProfile.whatsAppProfilePictureUrl || userProfile.profilePictureUrl) ? (
                                 <img 
-                                  src={userProfile.profilePictureUrl} 
-                                  alt={`${userProfile.fullName}'s profile`}
+                                  src={userProfile.whatsAppProfilePictureUrl || userProfile.profilePictureUrl} 
+                                  alt={`${userProfile.whatsAppDisplayName || userProfile.fullName}'s profile`}
                                   className="w-full h-full rounded-full object-cover"
                                   onError={(e) => {
                                     const target = e.target as HTMLImageElement;
@@ -408,7 +419,7 @@ export default function DMPage() {
                                 />
                               ) : null}
                               <AvatarFallback className="bg-ocean-teal/20 text-ocean-teal font-bold">
-                                {getInitials(userProfile.fullName)}
+                                {getInitials(userProfile.whatsAppDisplayName || userProfile.fullName)}
                               </AvatarFallback>
                             </Avatar>
                             <MessageNotificationDot userId={userProfile.id} />
@@ -510,8 +521,19 @@ export default function DMPage() {
                     <div key={connection.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                       <div className="flex items-center space-x-3">
                         <Avatar className="w-10 h-10 border-2 border-gray-300">
+                          {(otherUser.whatsAppProfilePictureUrl || otherUser.profilePictureUrl) && (
+                            <img 
+                              src={otherUser.whatsAppProfilePictureUrl || otherUser.profilePictureUrl} 
+                              alt={`${otherUser.whatsAppDisplayName || otherUser.fullName}'s profile`}
+                              className="w-full h-full rounded-full object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                              }}
+                            />
+                          )}
                           <AvatarFallback className="bg-gray-200 text-gray-600 font-bold text-sm">
-                            {getInitials(otherUser.fullName)}
+                            {getInitials(otherUser.whatsAppDisplayName || otherUser.fullName)}
                           </AvatarFallback>
                         </Avatar>
                         <div>

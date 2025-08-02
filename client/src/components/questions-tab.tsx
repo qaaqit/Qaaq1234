@@ -26,6 +26,9 @@ interface Question {
   flag_count: number;
   category_name?: string;
   answer_count: number;
+  author_whatsapp_profile_picture_url?: string | null;
+  author_whatsapp_display_name?: string | null;
+  author_profile_picture_url?: string | null;
 }
 
 interface QuestionsResponse {
@@ -185,8 +188,19 @@ export function QuestionsTab() {
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center space-x-3">
                       <Avatar className="w-10 h-10 border-2 border-ocean-teal">
+                        {(question.author_whatsapp_profile_picture_url || question.author_profile_picture_url) && (
+                          <img 
+                            src={(question.author_whatsapp_profile_picture_url || question.author_profile_picture_url) as string} 
+                            alt={`${question.author_whatsapp_display_name || question.author_name}'s profile`}
+                            className="w-full h-full rounded-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                            }}
+                          />
+                        )}
                         <AvatarFallback className="bg-gradient-to-r from-ocean-teal to-cyan-600 text-white font-bold text-sm">
-                          {getInitials(question.author_name)}
+                          {getInitials(question.author_whatsapp_display_name || question.author_name)}
                         </AvatarFallback>
                       </Avatar>
                       <div onClick={(e) => {

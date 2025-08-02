@@ -149,7 +149,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           longitude: user.longitude,
           isVerified: user.isVerified,
           loginCount: (user.loginCount || 0) + 1,
-          profilePictureUrl: user.profilePictureUrl
+          profilePictureUrl: user.profilePictureUrl,
+          whatsAppProfilePictureUrl: user.whatsAppProfilePictureUrl,
+          whatsAppDisplayName: user.whatsAppDisplayName
         },
         token,
         needsVerification: false
@@ -356,7 +358,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         latitude: user.latitude,
         longitude: user.longitude,
         questionCount: user.questionCount,
-        profilePictureUrl: user.profilePictureUrl
+        profilePictureUrl: user.profilePictureUrl,
+        whatsAppProfilePictureUrl: user.whatsAppProfilePictureUrl,
+        whatsAppDisplayName: user.whatsAppDisplayName
       }));
       
       console.log(`Returning ${mapUsers.length} users to frontend`);
@@ -1123,7 +1127,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           questionCount: questionCount,
           answerCount: user.answerCount || 0,
           whatsappNumber: (user as any).whatsappNumber || '',
-          profilePictureUrl: user.profilePictureUrl
+          profilePictureUrl: user.profilePictureUrl,
+          whatsAppProfilePictureUrl: user.whatsAppProfilePictureUrl,
+          whatsAppDisplayName: user.whatsAppDisplayName
         },
         questions: finalQuestions,
         dataSource: questions.length > 0 ? 'notion' : 'generated'

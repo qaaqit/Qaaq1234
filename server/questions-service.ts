@@ -17,6 +17,9 @@ export interface Question {
   author_id: string;
   author_name?: string;
   author_rank?: string;
+  author_whatsapp_profile_picture_url?: string | null;
+  author_whatsapp_display_name?: string | null;
+  author_profile_picture_url?: string | null;
   tags: string[];
   views: number;
   is_resolved: boolean;
@@ -52,6 +55,9 @@ export async function getQuestions(page: number = 1, limit: number = 20): Promis
         q.author_id,
         u.first_name || ' ' || COALESCE(u.last_name, '') as author_name,
         u.maritime_rank as author_rank,
+        u.whatsapp_profile_picture_url as author_whatsapp_profile_picture_url,
+        u.whatsapp_display_name as author_whatsapp_display_name,
+        u.profile_image_url as author_profile_picture_url,
         q.tags,
         q.views,
         q.is_resolved,
@@ -85,6 +91,9 @@ export async function getQuestions(page: number = 1, limit: number = 20): Promis
     const questions = questionsResult.rows.map(row => ({
       ...row,
       author_name: row.author_name?.trim() || 'Anonymous',
+      author_whatsapp_profile_picture_url: row.author_whatsapp_profile_picture_url || null,
+      author_whatsapp_display_name: row.author_whatsapp_display_name || null,
+      author_profile_picture_url: row.author_profile_picture_url || null,
       tags: row.tags || [],
       image_urls: row.image_urls || [],
       views: row.views || 0,
@@ -212,6 +221,9 @@ export async function searchQuestions(query: string, page: number = 1, limit: nu
         q.author_id,
         u.first_name || ' ' || COALESCE(u.last_name, '') as author_name,
         u.maritime_rank as author_rank,
+        u.whatsapp_profile_picture_url as author_whatsapp_profile_picture_url,
+        u.whatsapp_display_name as author_whatsapp_display_name,
+        u.profile_image_url as author_profile_picture_url,
         q.tags,
         q.views,
         q.is_resolved,
@@ -265,6 +277,9 @@ export async function searchQuestions(query: string, page: number = 1, limit: nu
     const questions = questionsResult.rows.map(row => ({
       ...row,
       author_name: row.author_name?.trim() || 'Anonymous',
+      author_whatsapp_profile_picture_url: row.author_whatsapp_profile_picture_url || null,
+      author_whatsapp_display_name: row.author_whatsapp_display_name || null,
+      author_profile_picture_url: row.author_profile_picture_url || null,
       tags: row.tags || [],
       image_urls: row.image_urls || [],
       views: row.views || 0,
