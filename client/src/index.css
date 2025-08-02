@@ -74,6 +74,22 @@
     backdrop-filter: blur(10px);
     background: rgba(255, 255, 255, 0.1);
   }
+
+  /* Koi Hai animation */
+  .koi-hai-blink {
+    animation: koiHaiBlink 2s ease-in-out infinite;
+  }
+
+  @keyframes koiHaiBlink {
+    0%, 100% { 
+      opacity: 0.7; 
+      transform: translateX(-50%) scale(1);
+    }
+    50% { 
+      opacity: 1; 
+      transform: translateX(-50%) scale(1.05);
+    }
+  }
 }
 
 /* Leaflet Map Styles */

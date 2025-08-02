@@ -647,6 +647,27 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             </div>
           </div>
         )}
+
+        {/* Koi Hai Animation at 6 o'clock position */}
+        {showScanElements && userLocation && (
+          <div className="absolute inset-0 pointer-events-none z-[999] flex items-center justify-center">
+            <div className="relative w-full h-full">
+              {/* Position text at 6 o'clock (bottom) of the scanning circle */}
+              <div 
+                className="absolute koi-hai-blink"
+                style={{
+                  top: 'calc(50% + 120px)', // Position below center at 6 o'clock
+                  left: '50%',
+                  transform: 'translateX(-50%)'
+                }}
+              >
+                <div className="bg-gradient-to-r from-blue-600 to-teal-600 text-white px-4 py-2 rounded-full shadow-xl border-2 border-white/30 backdrop-blur-sm">
+                  <span className="text-sm font-bold tracking-wider drop-shadow-lg">Koi Hai?</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
 
