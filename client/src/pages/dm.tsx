@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,6 +37,10 @@ export default function DMPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
+  
+  // Get the target user ID from URL parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const targetUserId = urlParams.get('user');
 
   // Fetch user's chat connections
   const { data: connections = [], isLoading: connectionsLoading } = useQuery<ExtendedChatConnection[]>({
@@ -122,6 +126,28 @@ export default function DMPage() {
 
     createConnectionMutation.mutate(userId);
   };
+
+  // Auto-open chat for specific user if specified in URL
+  useEffect(() => {
+    if (targetUserId && connections.length > 0 && nearbyUsers.length > 0) {
+      // Check if there's already an existing connection
+      const existingConnection = connections.find(conn => {
+        const otherUser = getOtherUser(conn);
+        return otherUser?.id === targetUserId;
+      });
+
+      if (existingConnection && existingConnection.status === 'accepted') {
+        // Open existing chat
+        openChat(existingConnection);
+      } else if (!existingConnection) {
+        // Find the user in nearby users and auto-connect
+        const targetUser = nearbyUsers.find(u => u.id === targetUserId);
+        if (targetUser) {
+          handleConnectUser(targetUserId);
+        }
+      }
+    }
+  }, [targetUserId, connections, nearbyUsers]);
 
   // Filter users based on search query
   const filteredUsers = nearbyUsers.filter(user =>
