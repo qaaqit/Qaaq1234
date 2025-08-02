@@ -5,6 +5,7 @@ QaaqConnect is a comprehensive maritime networking platform designed to enhance 
 
 ## Recent Major Changes
 - **January 2025**: Completely removed AIS (Automatic Identification System) API integration for real-time ship tracking. The system now focuses solely on user-based location discovery without external ship tracking capabilities.
+- **August 2025**: Updated application logo from anchor icon to official QAAQ golden duck logo. Profile picture functionality removed due to QAAQ database limitations.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
