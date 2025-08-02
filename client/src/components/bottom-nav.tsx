@@ -30,17 +30,7 @@ export default function BottomNav({ user }: BottomNavProps) {
     }
   ];
 
-  const adminNavItems = [
-    ...baseNavItems,
-    { 
-      path: "/admin", 
-      icon: "fas fa-shield-alt", 
-      label: ["Admin", "Panel"],
-      active: location === "/admin"
-    }
-  ];
-
-  const navItems = user.isAdmin ? adminNavItems : baseNavItems;
+  const navItems = baseNavItems;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 maritime-shadow z-50">
