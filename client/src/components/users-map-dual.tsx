@@ -544,7 +544,15 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
 
       {/* Dual Map System: Google Maps for Admin, Leaflet for Users */}
       <div className={`absolute top-[80px] sm:top-[60px] left-0 right-0 ${
-        searchQuery.trim() ? 'bottom-[65%]' : nearestUsers.length > 0 ? 'bottom-[160px] sm:bottom-[180px]' : 'bottom-0'
+        nearestUsers.length > 0 
+          ? searchPanelState === 'minimized'
+            ? 'bottom-[60px]'
+            : searchPanelState === 'half'
+            ? 'bottom-1/2'
+            : searchQuery.trim() 
+            ? 'bottom-[65%]' 
+            : 'bottom-[160px] sm:bottom-[180px]'
+          : 'bottom-0'
       }`}>
         {user?.isAdmin ? (
           <GoogleMap
