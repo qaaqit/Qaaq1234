@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import DiscoveryCard from "@/components/discovery-card";
 import UsersMapDual from "@/components/users-map-dual";
 import GoogleMaps from "@/components/google-maps";
-import WhatsAppBotControl from "@/components/whatsapp-bot-control";
+
 import CPSSNavigator from "@/components/cpss-navigator";
 import { useLocation } from "@/hooks/useLocation";
 import { useLocation as useWouterLocation } from "wouter";
@@ -39,7 +39,7 @@ export default function Discover({ user }: DiscoverProps) {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [showUsers, setShowUsers] = useState(true); // Always show anchor pins from start
   const [showNearbyCard, setShowNearbyCard] = useState(false);
-  const [showWhatsAppPanel, setShowWhatsAppPanel] = useState(false);
+
   const [mapType, setMapType] = useState<'leaflet' | 'google'>('leaflet');
   const [isPremiumMode, setIsPremiumMode] = useState(false);
   
@@ -140,17 +140,7 @@ export default function Discover({ user }: DiscoverProps) {
               </div>
             </button>
             <div className="flex items-center space-x-2 sm:space-x-4">
-              <Button
-                onClick={() => setShowWhatsAppPanel(!showWhatsAppPanel)}
-                variant="outline"
-                size="sm"
-                className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-xs sm:text-sm px-2 sm:px-3"
-                title="Discover Bot - Maritime Assistant"
-              >
-                <i className="fab fa-whatsapp mr-1 sm:mr-2"></i>
-                <span className="hidden sm:inline">Discover</span>
-                <span className="sm:hidden">Bot</span>
-              </Button>
+
               <UserDropdown user={user} />
             </div>
           </div>
@@ -177,25 +167,7 @@ export default function Discover({ user }: DiscoverProps) {
         {/* Dual Map System - Always use UsersMapDual */}
         <UsersMapDual showNearbyCard={showNearbyCard} />
         
-        {/* WhatsApp Bot Control Panel - positioned outside map */}
-        {showWhatsAppPanel && user.isAdmin && (
-          <div className="absolute top-16 right-4 z-50 max-w-sm">
-            <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 border">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="font-semibold text-gray-800">Discover Bot Control</h3>
-                <Button
-                  onClick={() => setShowWhatsAppPanel(false)}
-                  variant="ghost"
-                  size="sm"
-                  className="p-1 h-6 w-6"
-                >
-                  ×
-                </Button>
-              </div>
-              <WhatsAppBotControl />
-            </div>
-          </div>
-        )}
+
       </div>
     </div>
   );

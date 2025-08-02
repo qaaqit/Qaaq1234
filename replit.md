@@ -21,7 +21,7 @@ Enhanced Search: Updated placeholder to "Sailors/ Ships/ Company" for better use
 Admin shield location: Keep admin shield in header top right corner (not in bottom navigation)
 Header visibility: Show white header only for admin users, regular users should not see the header
 Premium mode: Crown icon in search box toggles premium Google Maps features, requires premium plan for non-admin users
-WhatsApp Bot: Moved from map overlay to header button next to logout for cleaner map interface
+Bot Integration: Prepared for external bot import from parent application
 Google Maps Controls: Transparent icon-only buttons positioned in bottom-left corner (Road/Satellite/Hybrid view toggles)
 Home Reset Button: Blue "Home" button in top-left corner resets search, filters, and returns to base map view
 User Card Interactions: Profile photo circles are clickable for chat, clicking card body centers map on user location
@@ -47,11 +47,8 @@ Onboard Search: Special "onboard" keyword search filters for sailing users and d
 - **Session Management**: Express sessions with PostgreSQL storage
 
 ### Bot Integration Architecture
-- **QBOT**: WhatsApp bot for maritime networking assistance, location discovery, and QAAQ Store services
-- **QOI GPT**: WhatsApp bot for Q&A functionality, professional experience sharing, and maritime guidance
-- **Shared Service**: Both bots serve QAAQ, QaaqConnect, and other Replit apps through unified WhatsApp interface
+- **External Bot Integration**: Prepared for QBOT import from parent application
 - **Database Access**: Direct access to shared QAAQ database
-- **Bot Documentation Storage**: Bot rules and documentation stored in `bot_documentation` table
 
 ### Database Design
 - **Users Table**: Stores user profiles with sailor/local distinction, verification status, and login tracking.
@@ -60,7 +57,6 @@ Onboard Search: Special "onboard" keyword search filters for sailing users and d
 - **Verification Codes Table**: Time-limited email verification system.
 - **Shared Q&A System**: Centralized `qaaq_questions`, `qaaq_answers` tables for all sister apps.
 - **CPSS Group System**: `cpss_groups`, `cpss_group_members`, `cpss_group_posts` tables for hierarchical location-based groups.
-- **Bot Rules Storage**: `bot_documentation` table for storing bot rules.
 
 ### Key Components
 - **Authentication System**: QAAQ User ID and Password authentication (dummy password "1234koihai"), JWT tokens, user type distinction.
@@ -72,7 +68,6 @@ Onboard Search: Special "onboard" keyword search filters for sailing users and d
 
 ## External Dependencies
 - **Shared QAAQ Database**: PostgreSQL database for authentic maritime user data.
-- **WhatsApp Bot Services**: QBOT and QOI GPT for unified bot services.
 - **Gmail SMTP**: Email delivery for verification.
 - **Replit**: Development and deployment platform.
 - **Radix UI**: Accessible component primitives.

@@ -147,18 +147,8 @@ export const rankGroupMessages = pgTable("rank_group_messages", {
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 
-// Bot Rules Documentation Table
-export const botRules = pgTable("bot_rules", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  name: varchar("name", { length: 255 }).notNull().unique(),
-  version: varchar("version", { length: 50 }).notNull(),
-  content: text("content").notNull(),
-  category: varchar("category", { length: 100 }).notNull(), // 'QBOT', 'QOI_GPT', 'GENERAL'
-  status: varchar("status", { length: 50 }).default('active'), // 'active', 'archived', 'draft'
-  createdAt: timestamp("created_at").default(sql`now()`),
-  updatedAt: timestamp("updated_at").default(sql`now()`),
-  createdBy: varchar("created_by").references(() => users.id),
-});
+
+
 
 
 
@@ -321,8 +311,7 @@ export const insertRankGroupMessageSchema = createInsertSchema(rankGroupMessages
   isAnnouncement: true,
 });
 
-export const insertBotRuleSchema = createInsertSchema(botRules)
-  .omit({ id: true, createdAt: true, updatedAt: true });
+
 
 export const updateProfileSchema = createInsertSchema(users).omit({
   id: true,
