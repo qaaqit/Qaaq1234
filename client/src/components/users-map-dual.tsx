@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/useAuth';
 import MarineChatButton from './marine-chat-button';
 import SingleMessageChat from './single-message-chat';
@@ -116,6 +117,7 @@ interface UsersMapDualProps {
 
 export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: UsersMapDualProps) {
   const { user } = useAuth();
+  const [, navigate] = useLocation();
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [hoveredUser, setHoveredUser] = useState<MapUser | null>(null);
   const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null);
@@ -565,7 +567,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
               setHoverPosition(position || null);
             }}
             onUserClick={(userId) => {
-              setOpenChatUserId(prev => prev === userId ? null : userId);
+              navigate(`/user-profile/${userId}`);
             }}
             onZoomChange={handleZoomChange}
             showScanElements={showScanElements}
@@ -582,7 +584,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
               setHoverPosition(position || null);
             }}
             onUserClick={(userId) => {
-              setOpenChatUserId(prev => prev === userId ? null : userId);
+              navigate(`/user-profile/${userId}`);
             }}
             onZoomChange={handleZoomChange}
             showScanElements={showScanElements}

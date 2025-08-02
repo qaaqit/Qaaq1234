@@ -175,6 +175,17 @@ export default function UserProfile() {
                   <div className="text-xs text-gray-500">Answers Given</div>
                 </div>
               </div>
+              
+              {/* Chat Button */}
+              <div className="mt-4">
+                <Button 
+                  onClick={() => navigate(`/chat/${user.id || userId}`)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Start Chat
+                </Button>
+              </div>
             </div>
           </div>
         </div>
