@@ -66,7 +66,7 @@ export class DatabaseStorage implements IStorage {
       console.log(`Getting user data for ID: ${id}`);
       
       // Use raw SQL query to avoid Drizzle schema mismatch issues
-      const result = await pool.query('SELECT *, profile_picture_url FROM users WHERE id = $1 LIMIT 1', [id]);
+      const result = await pool.query('SELECT * FROM users WHERE id = $1 LIMIT 1', [id]);
       console.log(`QAAQ database query result: ${result.rows.length} rows found`);
       
       if (result.rows.length === 0) {
@@ -118,7 +118,7 @@ export class DatabaseStorage implements IStorage {
         createdAt: user.created_at || new Date(),
         questionCount: user.question_count || 0,
         answerCount: user.answer_count || 0,
-        profilePictureUrl: user.profile_picture_url || null,
+        profilePictureUrl: null, // Profile pictures not available in QAAQ database
       } as User;
       
       console.log(`User ${id} final location: city=${userObj.city}, lat=${userObj.latitude}, lng=${userObj.longitude}, deviceLat=${userObj.deviceLatitude}`);
@@ -541,7 +541,7 @@ export class DatabaseStorage implements IStorage {
           createdAt: user.created_at || new Date(),
           questionCount: user.question_count || 0,
           answerCount: user.answer_count || 0,
-          profilePictureUrl: user.profile_picture_url || null,
+          profilePictureUrl: null, // Profile pictures not available in QAAQ database
         } as User;
       });
       
