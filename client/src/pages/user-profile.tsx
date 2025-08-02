@@ -174,7 +174,7 @@ export default function UserProfile() {
               {/* Chat Button */}
               <div className="mt-4">
                 <Button 
-                  onClick={() => navigate(`/chat/${user.id || userId}`)}
+                  onClick={() => navigate(`/dm?user=${user.id || userId}`)}
                   className="bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   <MessageCircle className="w-4 h-4 mr-2" />
