@@ -396,6 +396,17 @@ export default function DMPage() {
                         <div className="flex items-start space-x-3 mb-3">
                           <div className="relative">
                             <Avatar className="w-12 h-12 border-2 border-ocean-teal/30">
+                              {userProfile.profilePictureUrl ? (
+                                <img 
+                                  src={userProfile.profilePictureUrl} 
+                                  alt={`${userProfile.fullName}'s profile`}
+                                  className="w-full h-full rounded-full object-cover"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                  }}
+                                />
+                              ) : null}
                               <AvatarFallback className="bg-ocean-teal/20 text-ocean-teal font-bold">
                                 {getInitials(userProfile.fullName)}
                               </AvatarFallback>

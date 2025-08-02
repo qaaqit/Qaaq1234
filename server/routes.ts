@@ -148,7 +148,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           latitude: user.latitude,
           longitude: user.longitude,
           isVerified: user.isVerified,
-          loginCount: (user.loginCount || 0) + 1
+          loginCount: (user.loginCount || 0) + 1,
+          profilePictureUrl: user.profilePictureUrl
         },
         token,
         needsVerification: false
@@ -354,7 +355,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         country: user.country,
         latitude: user.latitude,
         longitude: user.longitude,
-        questionCount: user.questionCount
+        questionCount: user.questionCount,
+        profilePictureUrl: user.profilePictureUrl
       }));
       
       console.log(`Returning ${mapUsers.length} users to frontend`);
@@ -1120,7 +1122,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           country: user.country,
           questionCount: questionCount,
           answerCount: user.answerCount || 0,
-          whatsappNumber: (user as any).whatsappNumber || ''
+          whatsappNumber: (user as any).whatsappNumber || '',
+          profilePictureUrl: user.profilePictureUrl
         },
         questions: finalQuestions,
         dataSource: questions.length > 0 ? 'notion' : 'generated'

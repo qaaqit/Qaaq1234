@@ -309,12 +309,30 @@ export default function UsersPage() {
                 key={user.id}
                 className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow"
               >
-                {/* Header with initials and name */}
+                {/* Header with avatar and name */}
                 <div className="flex items-center space-x-3 mb-3">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span className="text-sm font-semibold text-blue-600">
-                      {user.fullName.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
-                    </span>
+                  <div className="relative">
+                    {user.profilePictureUrl ? (
+                      <img 
+                        src={user.profilePictureUrl} 
+                        alt={`${user.fullName}'s profile`}
+                        className="w-12 h-12 rounded-full object-cover border-2 border-blue-100"
+                        onError={(e) => {
+                          // Fallback to initials if image fails to load
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const fallback = target.nextElementSibling as HTMLElement;
+                          if (fallback) fallback.style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+                    <div 
+                      className={`w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center ${user.profilePictureUrl ? 'hidden' : ''}`}
+                    >
+                      <span className="text-sm font-semibold text-blue-600">
+                        {user.fullName.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                      </span>
+                    </div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-sm font-semibold text-gray-900 truncate">{user.fullName}</h3>

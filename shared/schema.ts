@@ -39,6 +39,7 @@ export const users = pgTable("users", {
   dateOfBirth: text("date_of_birth"), // QAAQ field
   gender: text("gender"), // QAAQ field
   whatsAppNumber: text("whatsapp_number"), // QAAQ field
+  profilePictureUrl: text("profile_picture_url"), // WhatsApp profile picture URL
   
   // System Fields
   hasCompletedOnboarding: boolean("has_completed_onboarding").default(false), // QAAQ field
@@ -363,7 +364,10 @@ export const updateProfileSchema = createInsertSchema(users).omit({
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type UpdateProfile = z.infer<typeof updateProfileSchema>;
-export type User = typeof users.$inferSelect;
+export type User = typeof users.$inferSelect & {
+  profilePictureUrl?: string | null;
+  company?: string | null;
+};
 export type InsertPost = z.infer<typeof insertPostSchema>;
 export type Post = typeof posts.$inferSelect;
 export type VerificationCode = typeof verificationCodes.$inferSelect;

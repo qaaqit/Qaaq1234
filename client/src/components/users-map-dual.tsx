@@ -726,14 +726,27 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                     {/* Touch-Friendly Profile Circle for Chat */}
                     <div className="relative">
                       <div 
-                        className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-100 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-200 hover:scale-110 transition-all duration-200 border-2 border-transparent hover:border-blue-300 touch-manipulation"
+                        className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-100 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-200 hover:scale-110 transition-all duration-200 border-2 border-transparent hover:border-blue-300 touch-manipulation overflow-hidden"
                         onClick={(e) => {
                           e.stopPropagation(); // Prevent card click
                           setOpenChatUserId(prev => prev === user.id ? null : user.id);
                         }}
                         title="Tap to open chat"
-                    >
-                        <span className="text-xs font-medium text-blue-600">
+                      >
+                        {user.profilePictureUrl ? (
+                          <img 
+                            src={user.profilePictureUrl} 
+                            alt={`${user.fullName}'s profile`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              const fallback = target.nextElementSibling as HTMLElement;
+                              if (fallback) fallback.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        <span className={`text-xs font-medium text-blue-600 ${user.profilePictureUrl ? 'hidden' : 'flex'} items-center justify-center w-full h-full`}>
                           {user.fullName.split(' ').map(n => n[0]).join('').substring(0, 2)}
                         </span>
                       </div>

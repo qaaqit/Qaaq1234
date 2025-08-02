@@ -140,6 +140,17 @@ export default function UserDropdown({ user, className = "" }: UserDropdownProps
       >
         <div className="flex items-center space-x-2">
           <Avatar className="w-10 h-10 border-2 border-white/20">
+            {user.profilePictureUrl ? (
+              <img 
+                src={user.profilePictureUrl} 
+                alt={`${user.fullName}'s profile`}
+                className="w-full h-full rounded-full object-cover"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                }}
+              />
+            ) : null}
             <AvatarFallback className="bg-white/20 text-white font-semibold">
               {user.fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
             </AvatarFallback>
