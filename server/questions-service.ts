@@ -188,11 +188,14 @@ export async function getQuestionAnswers(questionId: number): Promise<any[]> {
         u.profile_image_url as author_profile_picture_url,
         a.created_at,
         a.image_urls,
-        a.is_from_whatsapp,
+        CASE 
+          WHEN a.author_id LIKE 'wa_%' OR u.whatsapp_display_name IS NOT NULL THEN true
+          ELSE false
+        END as is_from_whatsapp,
         false as is_best_answer
-      FROM answers a
+      FROM qaaq_answers a
       LEFT JOIN users u ON u.id = a.author_id
-      WHERE a.question_id = $1 AND a.is_hidden = false
+      WHERE a.question_id = $1
       ORDER BY 
         a.created_at ASC
     `, [questionId]);

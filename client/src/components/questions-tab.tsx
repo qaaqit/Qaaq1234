@@ -234,10 +234,21 @@ export function QuestionsTab() {
     </div>
   );
 
-  // Question with Answers Component  
+  // Helper function to truncate text to word count
+  const truncateToWords = (text: string, wordCount: number): string => {
+    const words = text.split(' ');
+    if (words.length <= wordCount) {
+      return text;
+    }
+    return words.slice(0, wordCount).join(' ') + '...';
+  };
+
+  // Question with Answer Previews Component  
   const QuestionWithAnswers = ({ question, index }: { question: Question; index: number }) => {
-    const isExpanded = expandedQuestions.has(question.id);
-    const { data: answers, isLoading: answersLoading } = useQuestionAnswers(question.id, isExpanded);
+    const { data: answers, isLoading: answersLoading } = useQuestionAnswers(question.id, true);
+
+    // Get the best bot answer (from WhatsApp or first answer)
+    const botAnswer = answers?.find(answer => answer.is_from_whatsapp) || answers?.[0];
 
     return (
       <div
@@ -246,7 +257,7 @@ export function QuestionsTab() {
       >
         <Card className="border-2 border-gray-200 hover:border-ocean-teal/40 transition-colors">
           <CardContent className="p-4">
-            {/* Question Content - same as before */}
+            {/* Question Content */}
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center space-x-3">
                 <Avatar className="w-10 h-10 border-2 border-ocean-teal">
@@ -338,6 +349,45 @@ export function QuestionsTab() {
               </div>
             )}
 
+            {/* Bot Answer Preview */}
+            {botAnswer && (
+              <div className="bg-blue-50 border-l-4 border-blue-400 p-3 mb-3 rounded-r-lg">
+                <div className="flex items-start space-x-2 mb-2">
+                  <Avatar className="w-6 h-6">
+                    {(botAnswer.author_whatsapp_profile_picture_url || botAnswer.author_profile_picture_url) && (
+                      <img 
+                        src={(botAnswer.author_whatsapp_profile_picture_url || botAnswer.author_profile_picture_url) as string} 
+                        alt={`${botAnswer.author_whatsapp_display_name || botAnswer.author_name}'s profile`}
+                        className="w-full h-full rounded-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                        }}
+                      />
+                    )}
+                    <AvatarFallback className="bg-blue-500 text-white text-xs">
+                      {getInitials(botAnswer.author_whatsapp_display_name || botAnswer.author_name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2">
+                      <h6 className="font-medium text-blue-900 text-sm">
+                        {botAnswer.author_whatsapp_display_name || botAnswer.author_name}
+                      </h6>
+                      {botAnswer.is_from_whatsapp && (
+                        <Badge variant="secondary" className="bg-green-50 text-green-700 text-xs">
+                          QBOT
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-blue-800 text-sm mt-1">
+                      {truncateToWords(botAnswer.content, 40)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Footer Stats and Actions */}
             <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
               <div className="flex items-center space-x-4">
@@ -361,60 +411,8 @@ export function QuestionsTab() {
               </span>
             </div>
 
-            {/* Expand/Collapse Answers Button */}
-            {question.answer_count > 0 && (
-              <div className="pt-2 border-t border-gray-200">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleExpanded(question.id);
-                  }}
-                  className="w-full justify-center text-ocean-teal hover:text-ocean-teal hover:bg-ocean-teal/5"
-                >
-                  {isExpanded ? (
-                    <>
-                      <ChevronUp size={16} className="mr-1" />
-                      Hide {question.answer_count} Answers
-                    </>
-                  ) : (
-                    <>
-                      <ChevronDown size={16} className="mr-1" />
-                      Show {question.answer_count} Answers
-                    </>
-                  )}
-                </Button>
-              </div>
-            )}
-
-            {/* Answers Section */}
-            {isExpanded && (
-              <div className="mt-4 space-y-3 border-t border-gray-200 pt-4">
-                {answersLoading ? (
-                  <div className="space-y-3">
-                    {Array.from({ length: 2 }).map((_, i) => (
-                      <div key={i} className="bg-gray-50 rounded-lg p-4">
-                        <Skeleton className="h-4 w-3/4 mb-2" />
-                        <Skeleton className="h-3 w-1/2 mb-2" />
-                        <Skeleton className="h-12 w-full" />
-                      </div>
-                    ))}
-                  </div>
-                ) : answers && answers.length > 0 ? (
-                  answers.map((answer) => (
-                    <AnswerCard key={answer.id} answer={answer} />
-                  ))
-                ) : (
-                  <div className="text-center text-gray-500 py-4">
-                    No answers available yet
-                  </div>
-                )}
-              </div>
-            )}
-
             {/* View Full Question Link */}
-            <div className="mt-3 pt-3 border-t border-gray-200">
+            <div className="pt-3 border-t border-gray-200">
               <Button
                 variant="ghost"
                 size="sm"
@@ -424,7 +422,7 @@ export function QuestionsTab() {
                 }}
                 className="text-ocean-teal hover:text-ocean-teal hover:bg-ocean-teal/5"
               >
-                View Full Question & Add Answer
+                View Full Question & All Answers
               </Button>
             </div>
           </CardContent>
