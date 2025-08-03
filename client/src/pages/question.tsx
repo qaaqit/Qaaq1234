@@ -4,7 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, CheckCircle, MessageCircle, Eye, Clock, Hash, User } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { ArrowLeft, CheckCircle, MessageCircle, Eye, Clock, Hash, User, Share2, TrendingUp } from 'lucide-react';
 
 interface Question {
   id: number;
@@ -37,13 +39,14 @@ interface Answer {
 export default function QuestionPage() {
   const params = useParams();
   const questionId = params.id;
+  const { toast } = useToast();
 
-  const { data: question, status } = useQuery({
+  const { data: question, status } = useQuery<Question>({
     queryKey: [`/api/questions/${questionId}`],
     enabled: !!questionId,
   });
 
-  const { data: answers = [] } = useQuery({
+  const { data: answers = [] } = useQuery<Answer[]>({
     queryKey: [`/api/questions/${questionId}/answers`],
     enabled: !!questionId,
   });
@@ -74,6 +77,51 @@ export default function QuestionPage() {
     if (diffDays === 1) return 'Yesterday';
     if (diffDays < 7) return `${diffDays} days ago`;
     return d.toLocaleDateString();
+  };
+
+  const handleShare = async () => {
+    if (!question) return;
+    
+    const shareData = {
+      title: `Question #${question.id} - QaaqConnect`,
+      text: question.content.slice(0, 100) + (question.content.length > 100 ? '...' : ''),
+      url: window.location.href,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.log('Error sharing:', err);
+        fallbackShare();
+      }
+    } else {
+      fallbackShare();
+    }
+  };
+
+  const fallbackShare = () => {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      toast({
+        title: "Link Copied!",
+        description: "Question link has been copied to clipboard.",
+      });
+    }).catch(() => {
+      toast({
+        title: "Share Failed",
+        description: "Unable to copy link. Please copy manually from address bar.",
+        variant: "destructive",
+      });
+    });
+  };
+
+  const formatViewCount = (count: number) => {
+    if (count >= 1000000) {
+      return `${(count / 1000000).toFixed(1)}M`;
+    } else if (count >= 1000) {
+      return `${(count / 1000).toFixed(1)}K`;
+    }
+    return count.toString();
   };
 
   if (status === 'pending') {
@@ -173,21 +221,38 @@ export default function QuestionPage() {
             </div>
           )}
 
-          {/* Stats */}
-          <div className="flex items-center space-x-6 text-sm text-gray-600">
-            <span className="flex items-center">
-              <Eye size={16} className="mr-1" />
-              {question.view_count} views
-            </span>
-            <span className="flex items-center">
-              <MessageCircle size={16} className="mr-1" />
-              {question.answer_count} answers
-            </span>
-            {question.is_from_whatsapp && (
-              <Badge variant="secondary" className="bg-green-50 text-green-700">
-                WhatsApp
-              </Badge>
-            )}
+          {/* Stats and Actions */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-6 text-sm text-gray-600">
+              <span className="flex items-center">
+                <Eye size={16} className="mr-1" />
+                {formatViewCount(question.view_count)} views
+              </span>
+              <span className="flex items-center">
+                <MessageCircle size={16} className="mr-1" />
+                {question.answer_count} answers
+              </span>
+              {question.view_count > 100 && (
+                <span className="flex items-center text-orange-600">
+                  <TrendingUp size={16} className="mr-1" />
+                  Trending
+                </span>
+              )}
+              {question.is_from_whatsapp && (
+                <Badge variant="secondary" className="bg-green-50 text-green-700">
+                  WhatsApp
+                </Badge>
+              )}
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleShare}
+              className="flex items-center space-x-2 text-gray-600 hover:text-blue-600"
+            >
+              <Share2 size={16} />
+              <span>Share</span>
+            </Button>
           </div>
         </CardContent>
       </Card>
