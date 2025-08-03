@@ -16,6 +16,7 @@ import QChatWindow from "@/components/qchat-window";
 import UserDropdown from "@/components/user-dropdown";
 import { QuestionsTab } from "@/components/questions-tab";
 import MessageNotificationDot from "@/components/message-notification-dot";
+import qaaqLogo from "@/assets/qaaq-logo.png";
 import type { ChatConnection, User as UserType } from "@shared/schema";
 
 interface ExtendedChatConnection extends ChatConnection {
@@ -217,7 +218,7 @@ export default function DMPage() {
               >
                 <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center overflow-hidden">
                   <img 
-                    src="/attached_assets/qaaq_1754050453718.jpg" 
+                    src={qaaqLogo} 
                     alt="QAAQ Logo" 
                     className="w-8 h-8 object-contain"
                   />
