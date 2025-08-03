@@ -238,16 +238,16 @@ export default function DMPage() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <Card className="border-2 border-ocean-teal/20">
             <CardContent className="p-4">
-              <TabsList className="grid w-full grid-cols-2 bg-gradient-to-r from-navy/10 to-ocean-teal/10">
+              <TabsList className="grid w-full grid-cols-2 bg-gray-100/50">
                 <TabsTrigger 
                   value="users" 
-                  className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-navy data-[state=active]:to-ocean-teal data-[state=active]:text-black text-[#2f7ae8]"
+                  className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-600 hover:text-blue-600"
                 >
                   Users
                 </TabsTrigger>
                 <TabsTrigger 
                   value="questions" 
-                  className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-navy data-[state=active]:to-ocean-teal data-[state=active]:text-black text-[#2f7ae8]"
+                  className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-600 hover:text-blue-600"
                 >
                   Questions
                 </TabsTrigger>
