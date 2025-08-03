@@ -183,7 +183,12 @@ export async function getQuestionAnswers(questionId: number): Promise<any[]> {
         a.author_id,
         u.first_name || ' ' || COALESCE(u.last_name, '') as author_name,
         u.maritime_rank as author_rank,
+        u.whatsapp_profile_picture_url as author_whatsapp_profile_picture_url,
+        u.whatsapp_display_name as author_whatsapp_display_name,
+        u.profile_image_url as author_profile_picture_url,
         a.created_at,
+        a.image_urls,
+        a.is_from_whatsapp,
         false as is_best_answer
       FROM answers a
       LEFT JOIN users u ON u.id = a.author_id
@@ -192,8 +197,18 @@ export async function getQuestionAnswers(questionId: number): Promise<any[]> {
         a.created_at ASC
     `, [questionId]);
     
+    const answers = result.rows.map(row => ({
+      ...row,
+      author_name: row.author_name?.trim() || 'Anonymous',
+      author_whatsapp_profile_picture_url: row.author_whatsapp_profile_picture_url || null,
+      author_whatsapp_display_name: row.author_whatsapp_display_name || null,
+      author_profile_picture_url: row.author_profile_picture_url || null,
+      image_urls: row.image_urls || [],
+      is_from_whatsapp: row.is_from_whatsapp || false
+    }));
+    
     client.release();
-    return result.rows;
+    return answers;
   } catch (error) {
     console.error('Error fetching question answers:', error);
     throw error;

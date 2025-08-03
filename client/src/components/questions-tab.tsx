@@ -5,7 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MessageCircle, Search, Calendar, Eye, CheckCircle, Clock, Hash } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { MessageCircle, Search, Calendar, Eye, CheckCircle, Clock, Hash, ChevronDown, ChevronUp, Image as ImageIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { apiRequest } from '@/lib/queryClient';
 
@@ -31,6 +32,21 @@ interface Question {
   author_profile_picture_url?: string | null;
 }
 
+interface Answer {
+  id: number;
+  content: string;
+  author_id: string;
+  author_name: string;
+  author_rank?: string;
+  created_at: string;
+  is_best_answer: boolean;
+  image_urls?: string[];
+  is_from_whatsapp?: boolean;
+  author_whatsapp_profile_picture_url?: string | null;
+  author_whatsapp_display_name?: string | null;
+  author_profile_picture_url?: string | null;
+}
+
 interface QuestionsResponse {
   questions: Question[];
   total: number;
@@ -40,6 +56,7 @@ interface QuestionsResponse {
 export function QuestionsTab() {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [expandedQuestions, setExpandedQuestions] = useState<Set<number>>(new Set());
   const observer = useRef<IntersectionObserver | null>(null);
   const lastQuestionRef = useRef<HTMLDivElement | null>(null);
 
@@ -111,8 +128,310 @@ export function QuestionsTab() {
     ).join(' ');
   };
 
+  const toggleExpanded = (questionId: number) => {
+    const newExpanded = new Set(expandedQuestions);
+    if (newExpanded.has(questionId)) {
+      newExpanded.delete(questionId);
+    } else {
+      newExpanded.add(questionId);
+    }
+    setExpandedQuestions(newExpanded);
+  };
+
+  // Fetch answers for a specific question
+  const useQuestionAnswers = (questionId: number, enabled: boolean) => {
+    return useQuery({
+      queryKey: [`/api/questions/${questionId}/answers`],
+      queryFn: async () => {
+        const response = await apiRequest(`/api/questions/${questionId}/answers`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch answers');
+        }
+        return response.json() as Promise<Answer[]>;
+      },
+      enabled
+    });
+  };
+
   const allQuestions = data?.pages.flatMap(page => page.questions) || [];
   const totalQuestions = data?.pages[0]?.total || 0;
+
+  // Answer Card Component
+  const AnswerCard = ({ answer }: { answer: Answer }) => (
+    <div className="bg-gray-50 rounded-lg p-4 border-l-4 border-ocean-teal/30">
+      <div className="flex items-start space-x-3 mb-3">
+        <Avatar className="w-8 h-8 border border-ocean-teal/30">
+          {(answer.author_whatsapp_profile_picture_url || answer.author_profile_picture_url) && (
+            <img 
+              src={(answer.author_whatsapp_profile_picture_url || answer.author_profile_picture_url) as string} 
+              alt={`${answer.author_whatsapp_display_name || answer.author_name}'s profile`}
+              className="w-full h-full rounded-full object-cover"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+              }}
+            />
+          )}
+          <AvatarFallback className="bg-gradient-to-r from-ocean-teal/20 to-cyan-200 text-gray-700 text-xs">
+            {getInitials(answer.author_whatsapp_display_name || answer.author_name)}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1">
+          <div className="flex items-center space-x-2 mb-1">
+            <h5 className="font-medium text-gray-900 text-sm">
+              {answer.author_whatsapp_display_name || answer.author_name}
+            </h5>
+            {answer.author_rank && (
+              <Badge variant="outline" className="text-xs bg-white">
+                {formatRank(answer.author_rank)}
+              </Badge>
+            )}
+            {answer.is_best_answer && (
+              <Badge className="bg-green-100 text-green-800 border-green-300 text-xs">
+                <CheckCircle size={12} className="mr-1" />
+                Best Answer
+              </Badge>
+            )}
+            {answer.is_from_whatsapp && (
+              <Badge variant="secondary" className="bg-green-50 text-green-700 text-xs">
+                WhatsApp
+              </Badge>
+            )}
+          </div>
+          <p className="text-gray-800 text-sm mb-2">
+            {answer.content}
+          </p>
+          
+          {/* Answer Images */}
+          {answer.image_urls && answer.image_urls.length > 0 && (
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              {answer.image_urls.slice(0, 4).map((imageUrl, imgIndex) => (
+                <div key={imgIndex} className="relative group">
+                  <img 
+                    src={imageUrl}
+                    alt={`Answer image ${imgIndex + 1}`}
+                    className="w-full h-24 object-cover rounded-lg border cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => window.open(imageUrl, '_blank')}
+                  />
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity rounded-lg flex items-center justify-center">
+                    <ImageIcon className="text-white opacity-0 group-hover:opacity-70 transition-opacity" size={20} />
+                  </div>
+                </div>
+              ))}
+              {answer.image_urls.length > 4 && (
+                <div className="flex items-center justify-center bg-gray-200 rounded-lg h-24 text-gray-600 text-sm">
+                  +{answer.image_urls.length - 4} more
+                </div>
+              )}
+            </div>
+          )}
+          
+          <span className="text-xs text-gray-500">
+            {format(new Date(answer.created_at), 'MMM d, yyyy • h:mm a')}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Question with Answers Component  
+  const QuestionWithAnswers = ({ question, index }: { question: Question; index: number }) => {
+    const isExpanded = expandedQuestions.has(question.id);
+    const { data: answers, isLoading: answersLoading } = useQuestionAnswers(question.id, isExpanded);
+
+    return (
+      <div
+        key={question.id}
+        ref={index === allQuestions.length - 1 ? lastQuestionCallback : null}
+      >
+        <Card className="border-2 border-gray-200 hover:border-ocean-teal/40 transition-colors">
+          <CardContent className="p-4">
+            {/* Question Content - same as before */}
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center space-x-3">
+                <Avatar className="w-10 h-10 border-2 border-ocean-teal">
+                  {(question.author_whatsapp_profile_picture_url || question.author_profile_picture_url) && (
+                    <img 
+                      src={(question.author_whatsapp_profile_picture_url || question.author_profile_picture_url) as string} 
+                      alt={`${question.author_whatsapp_display_name || question.author_name}'s profile`}
+                      className="w-full h-full rounded-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                      }}
+                    />
+                  )}
+                  <AvatarFallback className="bg-gradient-to-r from-ocean-teal to-cyan-600 text-white font-bold text-sm">
+                    {getInitials(question.author_whatsapp_display_name || question.author_name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div onClick={(e) => {
+                  e.stopPropagation();
+                  window.location.href = `/user/${question.author_id}`;
+                }} className="cursor-pointer hover:bg-gray-50 p-1 rounded">
+                  <h4 className="font-medium text-gray-900">
+                    <span className="text-gray-500 mr-2">#{question.id}</span>
+                    {question.author_name}
+                  </h4>
+                  {question.author_rank && (
+                    <p className="text-sm text-gray-600">{formatRank(question.author_rank)}</p>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                {question.is_resolved && (
+                  <Badge className="bg-green-100 text-green-800 border-green-300">
+                    <CheckCircle size={14} className="mr-1" />
+                    Resolved
+                  </Badge>
+                )}
+                {question.is_from_whatsapp && (
+                  <Badge variant="secondary" className="bg-green-50 text-green-700">
+                    WhatsApp
+                  </Badge>
+                )}
+              </div>
+            </div>
+
+            <p className="text-gray-900 mb-3 line-clamp-3">
+              {question.content || 'Question content not available'}
+            </p>
+
+            {/* Question Images */}
+            {question.image_urls && question.image_urls.length > 0 && (
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                {question.image_urls.slice(0, 4).map((imageUrl, imgIndex) => (
+                  <div key={imgIndex} className="relative group">
+                    <img 
+                      src={imageUrl}
+                      alt={`Question image ${imgIndex + 1}`}
+                      className="w-full h-32 object-cover rounded-lg border cursor-pointer hover:opacity-90 transition-opacity"
+                      onClick={() => window.open(imageUrl, '_blank')}
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity rounded-lg flex items-center justify-center">
+                      <ImageIcon className="text-white opacity-0 group-hover:opacity-70 transition-opacity" size={24} />
+                    </div>
+                  </div>
+                ))}
+                {question.image_urls.length > 4 && (
+                  <div className="flex items-center justify-center bg-gray-200 rounded-lg h-32 text-gray-600">
+                    +{question.image_urls.length - 4} more
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Tags */}
+            {question.tags && question.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-3">
+                {question.tags.slice(0, 5).map((tag, i) => (
+                  <Badge key={i} variant="outline" className="text-xs">
+                    <Hash size={12} className="mr-1" />
+                    {tag}
+                  </Badge>
+                ))}
+                {question.tags.length > 5 && (
+                  <Badge variant="outline" className="text-xs">
+                    +{question.tags.length - 5} more
+                  </Badge>
+                )}
+              </div>
+            )}
+
+            {/* Footer Stats and Actions */}
+            <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
+              <div className="flex items-center space-x-4">
+                <span className="flex items-center space-x-1">
+                  <Eye size={16} />
+                  <span>{question.views || 0} views</span>
+                </span>
+                <span className="flex items-center space-x-1">
+                  <MessageCircle size={16} />
+                  <span>{question.answer_count || 0} answers</span>
+                </span>
+                {question.category_name && (
+                  <Badge variant="secondary" className="text-xs">
+                    {question.category_name}
+                  </Badge>
+                )}
+              </div>
+              <span className="flex items-center space-x-1">
+                <Calendar size={16} />
+                <span>{format(new Date(question.created_at), 'MMM d, yyyy')}</span>
+              </span>
+            </div>
+
+            {/* Expand/Collapse Answers Button */}
+            {question.answer_count > 0 && (
+              <div className="pt-2 border-t border-gray-200">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleExpanded(question.id);
+                  }}
+                  className="w-full justify-center text-ocean-teal hover:text-ocean-teal hover:bg-ocean-teal/5"
+                >
+                  {isExpanded ? (
+                    <>
+                      <ChevronUp size={16} className="mr-1" />
+                      Hide {question.answer_count} Answers
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown size={16} className="mr-1" />
+                      Show {question.answer_count} Answers
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+
+            {/* Answers Section */}
+            {isExpanded && (
+              <div className="mt-4 space-y-3 border-t border-gray-200 pt-4">
+                {answersLoading ? (
+                  <div className="space-y-3">
+                    {Array.from({ length: 2 }).map((_, i) => (
+                      <div key={i} className="bg-gray-50 rounded-lg p-4">
+                        <Skeleton className="h-4 w-3/4 mb-2" />
+                        <Skeleton className="h-3 w-1/2 mb-2" />
+                        <Skeleton className="h-12 w-full" />
+                      </div>
+                    ))}
+                  </div>
+                ) : answers && answers.length > 0 ? (
+                  answers.map((answer) => (
+                    <AnswerCard key={answer.id} answer={answer} />
+                  ))
+                ) : (
+                  <div className="text-center text-gray-500 py-4">
+                    No answers available yet
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* View Full Question Link */}
+            <div className="mt-3 pt-3 border-t border-gray-200">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.location.href = `/share/question/${question.id}`;
+                }}
+                className="text-ocean-teal hover:text-ocean-teal hover:bg-ocean-teal/5"
+              >
+                View Full Question & Add Answer
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-4">
@@ -175,109 +494,7 @@ export function QuestionsTab() {
           </Card>
         ) : (
           allQuestions.map((question, index) => (
-            <div
-              key={question.id}
-              ref={index === allQuestions.length - 1 ? lastQuestionCallback : null}
-            >
-              <Card 
-                className="border-2 border-gray-200 hover:border-ocean-teal/40 transition-colors cursor-pointer"
-                onClick={() => window.location.href = `/share/question/${question.id}`}
-              >
-                <CardContent className="p-4">
-                  {/* Author and Metadata */}
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center space-x-3">
-                      <Avatar className="w-10 h-10 border-2 border-ocean-teal">
-                        {(question.author_whatsapp_profile_picture_url || question.author_profile_picture_url) && (
-                          <img 
-                            src={(question.author_whatsapp_profile_picture_url || question.author_profile_picture_url) as string} 
-                            alt={`${question.author_whatsapp_display_name || question.author_name}'s profile`}
-                            className="w-full h-full rounded-full object-cover"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                            }}
-                          />
-                        )}
-                        <AvatarFallback className="bg-gradient-to-r from-ocean-teal to-cyan-600 text-white font-bold text-sm">
-                          {getInitials(question.author_whatsapp_display_name || question.author_name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div onClick={(e) => {
-                        e.stopPropagation();
-                        window.location.href = `/user/${question.author_id}`;
-                      }} className="cursor-pointer hover:bg-gray-50 p-1 rounded">
-                        <h4 className="font-medium text-gray-900">
-                          <span className="text-gray-500 mr-2">#{question.id}</span>
-                          {question.author_name}
-                        </h4>
-                        {question.author_rank && (
-                          <p className="text-sm text-gray-600">{formatRank(question.author_rank)}</p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {question.is_resolved && (
-                        <Badge className="bg-green-100 text-green-800 border-green-300">
-                          <CheckCircle size={14} className="mr-1" />
-                          Resolved
-                        </Badge>
-                      )}
-                      {question.is_from_whatsapp && (
-                        <Badge variant="secondary" className="bg-green-50 text-green-700">
-                          WhatsApp
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Question Content */}
-                  <p className="text-gray-900 mb-3 line-clamp-3">
-                    {question.content || 'Question content not available'}
-                  </p>
-
-                  {/* Tags */}
-                  {question.tags && question.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {question.tags.slice(0, 5).map((tag, i) => (
-                        <Badge key={i} variant="outline" className="text-xs">
-                          <Hash size={12} className="mr-1" />
-                          {tag}
-                        </Badge>
-                      ))}
-                      {question.tags.length > 5 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{question.tags.length - 5} more
-                        </Badge>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Footer Stats */}
-                  <div className="flex items-center justify-between text-sm text-gray-600">
-                    <div className="flex items-center space-x-4">
-                      <span className="flex items-center space-x-1">
-                        <Eye size={16} />
-                        <span>{question.views || 0} views</span>
-                      </span>
-                      <span className="flex items-center space-x-1">
-                        <MessageCircle size={16} />
-                        <span>{question.answer_count || 0} answers</span>
-                      </span>
-                      {question.category_name && (
-                        <Badge variant="secondary" className="text-xs">
-                          {question.category_name}
-                        </Badge>
-                      )}
-                    </div>
-                    <span className="flex items-center space-x-1">
-                      <Calendar size={16} />
-                      <span>{format(new Date(question.created_at), 'MMM d, yyyy')}</span>
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+            <QuestionWithAnswers key={question.id} question={question} index={index} />
           ))
         )}
 

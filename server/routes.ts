@@ -5,7 +5,7 @@ import { storage } from "./storage";
 import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, insertChatConnectionSchema, insertChatMessageSchema, insertRankGroupSchema, insertRankGroupMemberSchema, insertRankGroupMessageSchema } from "@shared/schema";
 import { sendVerificationEmail } from "./services/email";
 import { pool } from "./db";
-import { getQuestions, searchQuestions } from "./questions-service";
+import { getQuestions, searchQuestions, getQuestionAnswers } from "./questions-service";
 import { 
   initializeRankGroups, 
   getAllRankGroups, 
@@ -1607,6 +1607,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching questions:', error);
       res.status(500).json({ error: 'Failed to fetch questions' });
+    }
+  });
+
+  // Get answers for a specific question
+  app.get('/api/questions/:questionId/answers', authenticateToken, async (req, res) => {
+    try {
+      const questionId = parseInt(req.params.questionId);
+      
+      if (isNaN(questionId)) {
+        return res.status(400).json({ error: 'Invalid question ID' });
+      }
+      
+      console.log(`API: Fetching answers for question ${questionId}`);
+      
+      const answers = await getQuestionAnswers(questionId);
+      
+      console.log(`API: Returning ${answers.length} answers for question ${questionId}`);
+      res.json(answers);
+    } catch (error) {
+      console.error('Error fetching question answers:', error);
+      res.status(500).json({ error: 'Failed to fetch answers' });
     }
   });
 
