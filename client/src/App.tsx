@@ -29,11 +29,21 @@ function Router() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = getStoredToken();
-    const storedUser = getStoredUser();
+    // Check if we're in Replit preview mode
+    const isPreview = window.location.hostname.includes('.id.repl.co') || 
+                     window.location.hostname.includes('.replit.dev') ||
+                     window.location.hostname.includes('localhost');
     
-    if (token && storedUser) {
-      setUser(storedUser);
+    // Force landing page in preview if requested
+    const forceHome = new URLSearchParams(window.location.search).get('forceHome');
+    
+    if (!forceHome) {
+      const token = getStoredToken();
+      const storedUser = getStoredUser();
+      
+      if (token && storedUser) {
+        setUser(storedUser);
+      }
     }
     setLoading(false);
   }, []);
