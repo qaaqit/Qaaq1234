@@ -280,12 +280,12 @@ export function QuestionsTab() {
                   e.stopPropagation();
                   window.location.href = `/user/${question.author_id}`;
                 }} className="cursor-pointer hover:bg-gray-50 p-1 rounded">
-                  <h4 className="font-medium text-gray-900">
-                    <span className="text-gray-500 mr-2">#{question.id}</span>
+                  <h4 className="font-semibold text-gray-900 text-base">
+                    <span className="text-orange-600 mr-2 font-bold">#{question.id}</span>
                     {question.author_name}
                   </h4>
                   {question.author_rank && (
-                    <p className="text-sm text-gray-600">{formatRank(question.author_rank)}</p>
+                    <p className="text-sm text-gray-700 font-medium">{formatRank(question.author_rank)}</p>
                   )}
                 </div>
               </div>
@@ -304,7 +304,7 @@ export function QuestionsTab() {
               </div>
             </div>
 
-            <p className="text-gray-900 mb-3 line-clamp-3">
+            <p className="text-gray-800 mb-3 line-clamp-3 text-base font-medium leading-relaxed">
               {question.content || 'Question content not available'}
             </p>
 
@@ -351,7 +351,7 @@ export function QuestionsTab() {
 
             {/* Bot Answer Preview */}
             {botAnswer && (
-              <div className="bg-blue-50 border-l-4 border-blue-400 p-3 mb-3 rounded-r-lg">
+              <div className="bg-orange-50 border-l-4 border-orange-400 p-3 mb-3 rounded-r-lg">
                 <div className="flex items-start space-x-2 mb-2">
                   <Avatar className="w-6 h-6">
                     {(botAnswer.author_whatsapp_profile_picture_url || botAnswer.author_profile_picture_url) && (
@@ -365,13 +365,13 @@ export function QuestionsTab() {
                         }}
                       />
                     )}
-                    <AvatarFallback className="bg-blue-500 text-white text-xs">
+                    <AvatarFallback className="bg-orange-500 text-white text-xs">
                       {getInitials(botAnswer.author_whatsapp_display_name || botAnswer.author_name)}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
                     <div className="flex items-center space-x-2">
-                      <h6 className="font-medium text-blue-900 text-sm">
+                      <h6 className="font-semibold text-orange-900 text-sm">
                         {botAnswer.author_whatsapp_display_name || botAnswer.author_name}
                       </h6>
                       {botAnswer.is_from_whatsapp && (
@@ -380,7 +380,7 @@ export function QuestionsTab() {
                         </Badge>
                       )}
                     </div>
-                    <p className="text-blue-800 text-sm mt-1">
+                    <p className="text-orange-800 text-sm mt-1 font-medium leading-relaxed">
                       {truncateToWords(botAnswer.content, 40)}
                     </p>
                   </div>
@@ -389,30 +389,30 @@ export function QuestionsTab() {
             )}
 
             {/* Footer Stats and Actions */}
-            <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
+            <div className="flex items-center justify-between text-sm text-gray-700 mb-3 font-medium">
               <div className="flex items-center space-x-4">
                 <span className="flex items-center space-x-1">
-                  <Eye size={16} />
+                  <Eye size={16} className="text-orange-600" />
                   <span>{question.views || 0} views</span>
                 </span>
                 <span className="flex items-center space-x-1">
-                  <MessageCircle size={16} />
+                  <MessageCircle size={16} className="text-orange-600" />
                   <span>{question.answer_count || 0} answers</span>
                 </span>
                 {question.category_name && (
-                  <Badge variant="secondary" className="text-xs">
+                  <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-800 border-orange-300">
                     {question.category_name}
                   </Badge>
                 )}
               </div>
               <span className="flex items-center space-x-1">
-                <Calendar size={16} />
+                <Calendar size={16} className="text-orange-600" />
                 <span>{format(new Date(question.created_at), 'MMM d, yyyy')}</span>
               </span>
             </div>
 
             {/* View Full Question Link */}
-            <div className="pt-3 border-t border-gray-200">
+            <div className="pt-3 border-t border-orange-200">
               <Button
                 variant="ghost"
                 size="sm"
@@ -420,7 +420,7 @@ export function QuestionsTab() {
                   e.stopPropagation();
                   window.location.href = `/share/question/${question.id}`;
                 }}
-                className="text-ocean-teal hover:text-ocean-teal hover:bg-ocean-teal/5"
+                className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 font-medium"
               >
                 View Full Question & All Answers
               </Button>
