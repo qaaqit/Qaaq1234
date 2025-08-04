@@ -12,19 +12,16 @@ export default function QBOTChatHeader({
   isMinimized = false 
 }: QBOTChatHeaderProps) {
   return (
-    <div className="relative h-[60px] bg-gradient-to-r from-red-500 to-orange-500 shadow-lg flex items-center justify-between px-4">
-      {/* Left: Clear/Trash Icon - Hide when minimized */}
-      {!isMinimized && (
-        <button
-          onClick={onClear}
-          className="p-2 rounded-full hover:bg-white/10 transition-colors"
-          aria-label="Clear chat"
-          title="Clear chat history"
-        >
-          <Trash2 size={20} className="text-white" />
-        </button>
-      )}
-      {isMinimized && <div className="w-10" />}
+    <div className="relative h-[60px] bg-gradient-to-r from-red-500 to-orange-500 shadow-lg flex items-center justify-between px-4 sm:rounded-t-lg">
+      {/* Left: Clear/Trash Icon */}
+      <button
+        onClick={onClear}
+        className="p-2 rounded-full hover:bg-white/10 transition-colors"
+        aria-label="Clear chat"
+        title="Clear chat history"
+      >
+        <Trash2 size={20} className="text-white" />
+      </button>
 
       {/* Center: QBOT AI Text */}
       <h2 className="text-white font-bold text-lg tracking-wide">

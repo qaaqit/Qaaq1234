@@ -507,33 +507,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Commandment I: AI-powered technical responses
       else if (isQuestionMessage(message) || isTechnicalMessage(message)) {
         response = await generateAIResponse(message, category, user, activeRules);
-        
-        // Save question to shared database and add link (per QBOTRULES)
-        try {
-          const { storeQuestion } = await import('./shared-qa-service');
-          const questionId = `qbot_${userId}_${Date.now()}`;
-          
-          const storedQuestion = await storeQuestion({
-            questionId,
-            userId: userId || 'guest',
-            userName: user?.fullName || 'Guest User',
-            questionText: message,
-            questionCategory: category,
-            askedDate: new Date(),
-            source: 'api' as const,
-            urgency: 'normal' as const,
-            tags: [category.toLowerCase()],
-            location: user?.city || undefined
-          });
-          
-          // Add link to question card at the end of answer (Commandment I, line 29)
-          const questionShareLink = `\n\nView full discussion: https://qaaqit.com/share/question/${questionId}`;
-          response += questionShareLink;
-          
-          console.log(`📝 Question saved to SEMM page: ${category}, ID: ${questionId}`);
-        } catch (error) {
-          console.error('Failed to save question to shared database:', error);
-        }
       }
       // Location/proximity requests (Commandment VI)
       else if (isLocationQuery(message)) {
@@ -546,33 +519,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Default AI response for all other messages (Commandment I)
       else {
         response = await generateAIResponse(message, category, user, activeRules);
-        
-        // Save question to shared database and add link (per QBOTRULES)
-        try {
-          const { storeQuestion } = await import('./shared-qa-service');
-          const questionId = `qbot_${userId}_${Date.now()}`;
-          
-          const storedQuestion = await storeQuestion({
-            questionId,
-            userId: userId || 'guest',
-            userName: user?.fullName || 'Guest User',
-            questionText: message,
-            questionCategory: category,
-            askedDate: new Date(),
-            source: 'api' as const,
-            urgency: 'normal' as const,
-            tags: [category.toLowerCase()],
-            location: user?.city || undefined
-          });
-          
-          // Add link to question card at the end of answer (Commandment I, line 29)
-          const questionShareLink = `\n\nView full discussion: https://qaaqit.com/share/question/${questionId}`;
-          response += questionShareLink;
-          
-          console.log(`📝 Question saved to SEMM page: ${category}, ID: ${questionId}`);
-        } catch (error) {
-          console.error('Failed to save question to shared database:', error);
-        }
       }
 
       // Commandment II: Ensure message uniqueness (simplified for API)

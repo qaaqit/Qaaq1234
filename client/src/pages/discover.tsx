@@ -146,7 +146,7 @@ export default function Discover({ user }: DiscoverProps) {
   return (
     <div className="h-screen bg-slate-50 flex flex-col">
       {/* Header - Mobile Optimized */}
-      <header className="gradient-bg text-white relative overflow-hidden flex-shrink-0 z-[110]">
+      <header className="gradient-bg text-white relative overflow-hidden flex-shrink-0 z-[9998]">
         <div className="absolute inset-0 opacity-10">
           <div className="w-full h-full bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Cpath%20d%3D%22M20%2050h60m-50-20h40m-30%2040h20%22%20stroke%3D%22white%22%20stroke-width%3D%221%22%20fill%3D%22none%22%2F%3E%3C%2Fsvg%3E')] bg-[length:50px_50px]"></div>
         </div>
@@ -182,8 +182,49 @@ export default function Discover({ user }: DiscoverProps) {
           </div>
         </div>
       </header>
-      
-      {/* QBOT Chat Container - Positioned below header */}
+      {/* Main Content Area - Full Screen Map */}
+      <div className="flex-1 overflow-hidden relative">
+        {/* Premium Mode Notice */}
+        {isPremiumMode && !user.isAdmin && (
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 bg-yellow-50 border border-yellow-200 rounded-lg p-4 shadow-lg max-w-sm">
+            <div className="text-center">
+              <Crown className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
+              <h3 className="font-semibold text-yellow-800 mb-2">Premium Features</h3>
+              <p className="text-sm text-yellow-700 mb-3">
+                Unlock Google Maps with satellite view, enhanced navigation, and premium maritime features.
+              </p>
+              <Button className="bg-yellow-500 hover:bg-yellow-600 text-white text-sm">
+                Upgrade to Premium
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Dual Map System - Always use UsersMapDual */}
+        <UsersMapDual showNearbyCard={showNearbyCard} />
+        
+        {/* WhatsApp Bot Control Panel - positioned outside map */}
+        {showWhatsAppPanel && user.isAdmin && (
+          <div className="absolute top-16 right-4 z-50 max-w-sm">
+            <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 border">
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="font-semibold text-gray-800">Discover Bot Control</h3>
+                <Button
+                  onClick={() => setShowWhatsAppPanel(false)}
+                  variant="ghost"
+                  size="sm"
+                  className="p-1 h-6 w-6"
+                >
+                  ×
+                </Button>
+              </div>
+              <WhatsAppBotControl />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* QBOT Chat Container */}
       <QBOTChatContainer 
         isOpen={showQBOTChat}
         onClose={() => {
@@ -267,48 +308,6 @@ export default function Discover({ user }: DiscoverProps) {
           )}
         </div>
       </QBOTChatContainer>
-      
-      {/* Main Content Area - Full Screen Map */}
-      <div className={`flex-1 overflow-hidden relative ${showQBOTChat && !isQBOTMinimized ? 'h-0' : ''}`}>
-        {/* Premium Mode Notice */}
-        {isPremiumMode && !user.isAdmin && (
-          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 bg-yellow-50 border border-yellow-200 rounded-lg p-4 shadow-lg max-w-sm">
-            <div className="text-center">
-              <Crown className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
-              <h3 className="font-semibold text-yellow-800 mb-2">Premium Features</h3>
-              <p className="text-sm text-yellow-700 mb-3">
-                Unlock Google Maps with satellite view, enhanced navigation, and premium maritime features.
-              </p>
-              <Button className="bg-yellow-500 hover:bg-yellow-600 text-white text-sm">
-                Upgrade to Premium
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Dual Map System - Always use UsersMapDual */}
-        <UsersMapDual showNearbyCard={showNearbyCard} />
-        
-        {/* WhatsApp Bot Control Panel - positioned outside map */}
-        {showWhatsAppPanel && user.isAdmin && (
-          <div className="absolute top-16 right-4 z-50 max-w-sm">
-            <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 border">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="font-semibold text-gray-800">Discover Bot Control</h3>
-                <Button
-                  onClick={() => setShowWhatsAppPanel(false)}
-                  variant="ghost"
-                  size="sm"
-                  className="p-1 h-6 w-6"
-                >
-                  ×
-                </Button>
-              </div>
-              <WhatsAppBotControl />
-            </div>
-          </div>
-        )}
-      </div>
     </div>
   );
 }

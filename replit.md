@@ -6,7 +6,6 @@ QaaqConnect is a comprehensive maritime networking platform designed to enhance 
 ## Recent Major Changes
 - **January 2025**: Completely removed AIS (Automatic Identification System) API integration for real-time ship tracking. The system now focuses solely on user-based location discovery without external ship tracking capabilities.
 - **August 2025**: Updated application logo from anchor icon to official QAAQ golden duck logo. Integrated WhatsApp profile data (profile pictures and display names) from QBOT scavenged data for enhanced user identification.
-- **August 2025**: Implemented QBOT auto-posting feature - QBOT now automatically saves questions to relevant SEMM (System-Equipment-Make-Model) pages after providing answers and includes shareable links to question discussions.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -62,7 +61,6 @@ Onboard Search: Special "onboard" keyword search filters for sailing users and d
 - **Shared Q&A System**: Centralized `qaaq_questions`, `qaaq_answers` tables for all sister apps.
 - **CPSS Group System**: `cpss_groups`, `cpss_group_members`, `cpss_group_posts` tables for hierarchical location-based groups.
 - **Bot Rules Storage**: `bot_documentation` table for storing bot rules.
-- **QBOT SEMM Integration**: Questions automatically categorized and posted to appropriate SEMM pages with shareable links included in responses.
 
 ### Key Components
 - **Authentication System**: QAAQ User ID and Password authentication (dummy password "1234koihai"), JWT tokens, user type distinction.
