@@ -531,18 +531,16 @@ export default function Post({ user }: PostProps) {
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-blue-50 p-6">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header with Home Logo - Same as DM Page */}
-        <div className="gradient-bg text-white px-4 py-6 rounded-xl shadow-lg mb-6 relative z-[9998]">
-          <div className="absolute inset-0 opacity-10 rounded-xl">
-            <div className="w-full h-full bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Cpath%20d%3D%22M20%2050h60m-50-20h40m-30%2040h20%22%20stroke%3D%22white%22%20stroke-width%3D%221%22%20fill%3D%22none%22%2F%3E%3C%2Fsvg%3E')] bg-[length:50px_50px]"></div>
-          </div>
+        <header className="bg-white text-black shadow-md relative overflow-hidden flex-shrink-0 z-[110] border-b-2 border-orange-400 rounded-t-lg mb-6">
+          <div className="absolute inset-0 bg-gradient-to-r from-red-50 via-orange-50 to-yellow-50 opacity-50"></div>
           
-          <div className="relative z-10">
+          <div className="relative z-10 px-3 py-2 sm:px-4 sm:py-4">
             <div className="flex items-center justify-between">
               <button 
                 onClick={() => navigate('/')}
-                className="flex items-center space-x-3 hover:bg-white/10 rounded-lg p-2 transition-colors"
+                className="flex items-center space-x-3 hover:bg-orange-100 rounded-lg p-2 transition-colors"
               >
-                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center overflow-hidden">
+                <div className="w-10 h-10 bg-gradient-to-r from-orange-400 to-red-500 rounded-full flex items-center justify-center overflow-hidden shadow-lg">
                   <img 
                     src="/attached_assets/qaaq_1754050453718.jpg" 
                     alt="QAAQ Logo" 
@@ -550,14 +548,14 @@ export default function Post({ user }: PostProps) {
                   />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold">QaaqConnect</h1>
-                  <p className="text-sm text-white/60 italic font-medium">group chat</p>
+                  <h1 className="text-2xl font-bold text-gray-800">QaaqConnect</h1>
+                  <p className="text-sm text-orange-600 italic font-medium">group chat</p>
                 </div>
               </button>
               {user && <UserDropdown user={user} />}
             </div>
           </div>
-        </div>
+        </header>
 
         <Tabs defaultValue="my-groups" className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-6">
