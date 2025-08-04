@@ -21,7 +21,7 @@ import { useLocation } from "@/hooks/useLocation";
 import { useLocation as useWouterLocation } from "wouter";
 import { type User } from "@/lib/auth";
 import { apiRequest } from "@/lib/queryClient";
-import { MapPin, Navigation, Ship, Satellite, Crown } from "lucide-react";
+import { MapPin, Navigation, Ship, Satellite, Crown, ChevronUp, ChevronDown } from "lucide-react";
 import UserDropdown from "@/components/user-dropdown";
 import BottomNav from "@/components/bottom-nav";
 import qaaqLogo from "@/assets/qaaq-logo.png";
@@ -178,12 +178,21 @@ export default function Discover({ user }: DiscoverProps) {
                 }}
                 variant="outline"
                 size="sm"
-                className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-xs sm:text-sm px-2 sm:px-3"
+                className="bg-gradient-to-r from-red-500 to-yellow-500 border-2 border-yellow-400 text-white hover:from-red-600 hover:to-yellow-600 hover:border-yellow-500 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 text-xs sm:text-sm px-2 sm:px-3 font-bold robotic-button"
                 title={showQBOTChat ? (isQBOTMinimized ? "Expand QBOT" : "Minimize QBOT") : "Open QBOT - Maritime Assistant"}
               >
-                <i className="fab fa-whatsapp mr-1 sm:mr-2"></i>
+                <i className="fas fa-robot mr-1 sm:mr-2 text-yellow-200"></i>
                 <span className="hidden sm:inline">QBOT</span>
                 <span className="sm:hidden">QBOT</span>
+                {showQBOTChat ? (
+                  isQBOTMinimized ? (
+                    <ChevronUp size={14} className="ml-1 text-yellow-200" />
+                  ) : (
+                    <ChevronDown size={14} className="ml-1 text-yellow-200" />
+                  )
+                ) : (
+                  <ChevronDown size={14} className="ml-1 text-yellow-200" />
+                )}
               </Button>
               <UserDropdown user={user} />
             </div>
