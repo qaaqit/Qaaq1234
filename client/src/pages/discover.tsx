@@ -186,7 +186,7 @@ export default function Discover({ user }: DiscoverProps) {
                 <img src={qaaqLogo} alt="QAAQ Logo" className="w-full h-full object-cover" />
               </div>
               <div>
-                <h1 className="text-lg sm:text-2xl font-bold">QaaqConnect</h1>
+                <h1 className="text-lg sm:text-2xl font-bold">Qaaq</h1>
                 <p className="text-xs sm:text-sm text-white/60 italic font-medium">1234 Koi Hai..</p>
               </div>
             </button>
@@ -239,7 +239,6 @@ export default function Discover({ user }: DiscoverProps) {
           </div>
         </div>
       </header>
-      
       {/* QBOT Chat Container - Positioned below header */}
       <QBOTChatContainer 
         isOpen={showQBOTChat}
@@ -324,7 +323,6 @@ export default function Discover({ user }: DiscoverProps) {
           )}
         </div>
       </QBOTChatContainer>
-      
       {/* Main Content Area - Full Screen Map */}
       <div className="flex-1 overflow-hidden relative">
         {/* Premium Mode Notice */}
@@ -366,7 +364,6 @@ export default function Discover({ user }: DiscoverProps) {
           </div>
         )}
       </div>
-      
       {/* Bottom Navigation */}
       <BottomNav user={user} />
     </div>
