@@ -5,8 +5,9 @@ import { useAuth } from '@/hooks/useAuth';
 import MarineChatButton from './marine-chat-button';
 import SingleMessageChat from './single-message-chat';
 import MessageNotificationDot from './message-notification-dot';
-import GoogleMap from './google-map';
-import LeafletMap from './leaflet-map';
+// Temporarily disabled for debugging
+// import GoogleMap from './google-map';
+// import LeafletMap from './leaflet-map';
 import { ChevronDown, ChevronUp, Filter, MapPin, Radar, Search, Home, Map, Satellite } from 'lucide-react';
 
 interface MapUser {
@@ -556,42 +557,14 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             : 'bottom-[160px] sm:bottom-[180px]'
           : 'bottom-0'
       }`}>
-        {user?.isAdmin ? (
-          <GoogleMap
-            users={filteredUsers}
-            userLocation={userLocation}
-            selectedUser={selectedUser}
-            mapType={mapType}
-            onUserHover={(user, position) => {
-              setHoveredUser(user);
-              setHoverPosition(position || null);
-            }}
-            onUserClick={(userId) => {
-              navigate(`/user-profile/${userId}`);
-            }}
-            onZoomChange={handleZoomChange}
-            showScanElements={showScanElements}
-            scanAngle={scanAngle}
-            radiusKm={radiusKm}
-          />
-        ) : (
-          <LeafletMap
-            users={filteredUsers}
-            userLocation={userLocation}
-            selectedUser={selectedUser}
-            onUserHover={(user, position) => {
-              setHoveredUser(user);
-              setHoverPosition(position || null);
-            }}
-            onUserClick={(userId) => {
-              navigate(`/user-profile/${userId}`);
-            }}
-            onZoomChange={handleZoomChange}
-            showScanElements={showScanElements}
-            scanAngle={scanAngle}
-            radiusKm={radiusKm}
-          />
-        )}
+        {/* Maps disabled for debugging */}
+        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-lg font-semibold text-gray-600 mb-2">Map Temporarily Disabled</p>
+            <p className="text-sm text-gray-500">Maps have been disabled for debugging</p>
+            <p className="text-xs text-gray-400 mt-2">Found {filteredUsers.length} users in {radiusKm}km radius</p>
+          </div>
+        </div>
 
         {/* Map Controls - Top Left Corner with Chevron Dropdown */}
         {user?.isAdmin && (
