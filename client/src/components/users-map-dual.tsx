@@ -573,7 +573,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                       }}
                       className={`w-full flex items-center space-x-2 px-3 py-2 rounded-md text-sm transition-colors ${
                         mapType === 'roadmap' 
-                          ? 'bg-blue-50 text-blue-700 font-medium' 
+                          ? 'bg-orange-50 text-orange-700 font-medium' 
                           : 'hover:bg-gray-50 text-gray-700'
                       }`}
                     >
@@ -587,7 +587,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                       }}
                       className={`w-full flex items-center space-x-2 px-3 py-2 rounded-md text-sm transition-colors ${
                         mapType === 'satellite' 
-                          ? 'bg-blue-50 text-blue-700 font-medium' 
+                          ? 'bg-orange-50 text-orange-700 font-medium' 
                           : 'hover:bg-gray-50 text-gray-700'
                       }`}
                     >
@@ -601,7 +601,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                       }}
                       className={`w-full flex items-center space-x-2 px-3 py-2 rounded-md text-sm transition-colors ${
                         mapType === 'hybrid' 
-                          ? 'bg-blue-50 text-blue-700 font-medium' 
+                          ? 'bg-orange-50 text-orange-700 font-medium' 
                           : 'hover:bg-gray-50 text-gray-700'
                       }`}
                     >
