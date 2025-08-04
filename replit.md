@@ -4,6 +4,7 @@
 QaaqConnect is a comprehensive maritime networking platform designed to enhance shore leaves, simplify shopping for sailors, and facilitate social connections. It enables sailors to discover nearby peers and locals, access a curated marketplace for maritime essentials, and engage in location-based discussions. The platform aims to foster an authentic maritime community experience by integrating proximity-based user discovery, real-time location mapping, direct communication tools, and a structured content navigation system.
 
 ## Recent Major Changes
+- **August 2025 - React Native Mobile App**: Created complete React Native Expo mobile app mirroring QaaqConnect web functionality. Features include GPS-powered "Koi Hai?" discovery, direct messaging, profile management, and authentication. Built with TypeScript, React Navigation, React Native Maps, and TanStack Query. Optimized for maritime professionals with ocean-themed UI and touch-friendly interface.
 - **January 2025 - QaaqConnect Mariana**: Fixed critical mobile responsiveness issue on landing page. The login form now displays correctly across all screen sizes with improved viewport handling, proper fallback backgrounds, and enhanced visibility on mobile devices. Profile dropdown z-index conflicts resolved.
 - **January 2025**: Completely removed AIS (Automatic Identification System) API integration for real-time ship tracking. The system now focuses solely on user-based location discovery without external ship tracking capabilities.
 - **January 2025**: Enabled Google Maps for all users (previously restricted to admin only). Completely removed Leaflet Maps integration. All users now have access to map type controls (Road/Satellite/Hybrid views).
@@ -32,12 +33,14 @@ Onboard Search: Special "onboard" keyword search filters for sailing users and d
 ## System Architecture
 
 ### Frontend Architecture
-- **Framework**: React 18 with TypeScript
-- **Routing**: Wouter
-- **UI Framework**: Shadcn/ui with Radix UI primitives
-- **Styling**: Tailwind CSS with custom maritime theme
+- **Web Framework**: React 18 with TypeScript
+- **Mobile Framework**: React Native with Expo SDK 50
+- **Routing**: Wouter (web), React Navigation (mobile)
+- **UI Framework**: Shadcn/ui with Radix UI primitives (web), React Native Paper (mobile)
+- **Styling**: Tailwind CSS with custom maritime theme (web), StyleSheet API (mobile)
 - **State Management**: TanStack Query for server state, local React state for UI
-- **Build Tool**: Vite
+- **Build Tool**: Vite (web), Expo CLI (mobile)
+- **Maps**: Google Maps JavaScript API (web), React Native Maps (mobile)
 
 ### Backend Architecture
 - **Runtime**: Node.js with Express.js
@@ -65,12 +68,13 @@ Onboard Search: Special "onboard" keyword search filters for sailing users and d
 - **Bot Rules Storage**: `bot_documentation` table for storing bot rules.
 
 ### Key Components
-- **Authentication System**: QAAQ User ID and Password authentication (dummy password "1234koihai"), JWT tokens, user type distinction.
+- **Authentication System**: QAAQ User ID and Password authentication (dummy password "1234koihai"), JWT tokens, user type distinction. Cross-platform compatibility between web and mobile.
 - **Social Features**: Post creation with content categories and location tagging, like/unlike functionality, author display options.
 - **CPSS Navigation System**: Hierarchical Country → Port → Suburb → Service navigation, SEMM-like interface with content cards, endless scroll, breadcrumb navigation, and card carousels.
-- **Discovery System**: Interactive world map with light grey theme, proximity-based user discovery showing nearest users, city-based location display for sailors and locals, color-coded map pins.
-- **UI/UX Design**: Maritime-themed color palette, mobile-first responsive design with bottom navigation, PWA features, consistent component library.
-- **QChat DM Page**: Dedicated DM page with existing chat cards and distance-sorted user cards, distance-based discovery, chat connection workflow.
+- **Discovery System**: Interactive world map with light grey theme, proximity-based user discovery showing nearest users, city-based location display for sailors and locals, color-coded map pins. Mobile GPS integration for real-time location.
+- **UI/UX Design**: Maritime-themed color palette (#0891b2 ocean-teal, #1e3a8a navy-blue), mobile-first responsive design with bottom navigation, PWA features, consistent component library. Native mobile interface with touch-optimized controls.
+- **QChat DM Page**: Dedicated DM page with existing chat cards and distance-sorted user cards, distance-based discovery, chat connection workflow. Real-time messaging interface on mobile.
+- **Mobile App Architecture**: React Native Expo app with native navigation, GPS location services, offline capabilities, push notification support, and app store deployment readiness.
 
 ## External Dependencies
 - **Shared QAAQ Database**: PostgreSQL database for authentic maritime user data.
