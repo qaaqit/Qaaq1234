@@ -10,6 +10,7 @@ import UsersMapDual from "@/components/users-map-dual";
 import GoogleMaps from "@/components/google-maps";
 import WhatsAppBotControl from "@/components/whatsapp-bot-control";
 import CPSSNavigator from "@/components/cpss-navigator";
+import QBOTChatContainer from "@/components/qbot-chat/QBOTChatContainer";
 import { useLocation } from "@/hooks/useLocation";
 import { useLocation as useWouterLocation } from "wouter";
 import { type User } from "@/lib/auth";
@@ -40,6 +41,7 @@ export default function Discover({ user }: DiscoverProps) {
   const [showUsers, setShowUsers] = useState(true); // Always show anchor pins from start
   const [showNearbyCard, setShowNearbyCard] = useState(false);
   const [showWhatsAppPanel, setShowWhatsAppPanel] = useState(false);
+  const [showQBOTChat, setShowQBOTChat] = useState(false);
   const [mapType, setMapType] = useState<'leaflet' | 'google'>('leaflet');
   const [isPremiumMode, setIsPremiumMode] = useState(false);
   
@@ -141,7 +143,7 @@ export default function Discover({ user }: DiscoverProps) {
             </button>
             <div className="flex items-center space-x-2 sm:space-x-4">
               <Button
-                onClick={() => setShowWhatsAppPanel(!showWhatsAppPanel)}
+                onClick={() => setShowQBOTChat(true)}
                 variant="outline"
                 size="sm"
                 className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-xs sm:text-sm px-2 sm:px-3"
@@ -197,6 +199,17 @@ export default function Discover({ user }: DiscoverProps) {
           </div>
         )}
       </div>
+
+      {/* QBOT Chat Container */}
+      <QBOTChatContainer 
+        isOpen={showQBOTChat}
+        onClose={() => setShowQBOTChat(false)}
+      >
+        {/* Chat content will be added in subsequent steps */}
+        <div className="flex items-center justify-center h-full">
+          <p className="text-gray-500">QBOT Chat - Implementation in progress...</p>
+        </div>
+      </QBOTChatContainer>
     </div>
   );
 }
