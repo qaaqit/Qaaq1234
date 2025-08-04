@@ -399,7 +399,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                 setHoveredUser(null);
                 setSelectedUser(null);
               }}
-              className="px-2 py-2 sm:px-3 hover:bg-blue-600 text-white rounded-lg transition-colors text-xs font-medium flex items-center space-x-1 min-w-fit bg-[#da1d0b]"
+              className="px-2 py-2 sm:px-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-xs font-medium flex items-center space-x-1 min-w-fit"
               title="Reset to home view"
             >
               <Home size={14} />
@@ -542,6 +542,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
 
 
       </div>
+
       {/* Dual Map System: Google Maps for Admin, Leaflet for Users */}
       <div className={`absolute top-[80px] sm:top-[60px] left-0 right-0 ${
         nearestUsers.length > 0 
@@ -656,6 +657,9 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
           </div>
         )}
       </div>
+
+
+
       {/* Search Results - Expandable Panel with Three States */}
       {nearestUsers.length > 0 && (
         <div className={`absolute left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 z-[1000] transition-all duration-300 ease-in-out ${
@@ -805,6 +809,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
           </div>
         </div>
       )}
+
       {/* Hover User Card */}
       {hoveredUser && hoverPosition && (
         <div 
@@ -855,6 +860,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
           </div>
         </div>
       )}
+
       {/* Chat Window */}
       {openChatUserId && (
         <div className="absolute inset-0 z-[1500] flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -867,6 +873,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
           </div>
         </div>
       )}
+
       {/* Loading indicator */}
       {isLoading && (
         <div className="absolute inset-0 z-[1000] flex items-center justify-center bg-gray-100/80 backdrop-blur-sm">
