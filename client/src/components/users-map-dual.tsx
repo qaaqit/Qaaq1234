@@ -6,7 +6,6 @@ import MarineChatButton from './marine-chat-button';
 import SingleMessageChat from './single-message-chat';
 import MessageNotificationDot from './message-notification-dot';
 import GoogleMap from './google-map';
-import LeafletMap from './leaflet-map';
 import { ChevronDown, ChevronUp, Filter, MapPin, Radar, Search, Home, Map, Satellite } from 'lucide-react';
 
 interface MapUser {
@@ -556,46 +555,26 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             : 'bottom-[160px] sm:bottom-[180px]'
           : 'bottom-0'
       }`}>
-        {user?.isAdmin ? (
-          <GoogleMap
-            users={filteredUsers}
-            userLocation={userLocation}
-            selectedUser={selectedUser}
-            mapType={mapType}
-            onUserHover={(user, position) => {
-              setHoveredUser(user);
-              setHoverPosition(position || null);
-            }}
-            onUserClick={(userId) => {
-              navigate(`/user-profile/${userId}`);
-            }}
-            onZoomChange={handleZoomChange}
-            showScanElements={showScanElements}
-            scanAngle={scanAngle}
-            radiusKm={radiusKm}
-          />
-        ) : (
-          <LeafletMap
-            users={filteredUsers}
-            userLocation={userLocation}
-            selectedUser={selectedUser}
-            onUserHover={(user, position) => {
-              setHoveredUser(user);
-              setHoverPosition(position || null);
-            }}
-            onUserClick={(userId) => {
-              navigate(`/user-profile/${userId}`);
-            }}
-            onZoomChange={handleZoomChange}
-            showScanElements={showScanElements}
-            scanAngle={scanAngle}
-            radiusKm={radiusKm}
-          />
-        )}
+        <GoogleMap
+          users={filteredUsers}
+          userLocation={userLocation}
+          selectedUser={selectedUser}
+          mapType={mapType}
+          onUserHover={(user, position) => {
+            setHoveredUser(user);
+            setHoverPosition(position || null);
+          }}
+          onUserClick={(userId) => {
+            navigate(`/user-profile/${userId}`);
+          }}
+          onZoomChange={handleZoomChange}
+          showScanElements={showScanElements}
+          scanAngle={scanAngle}
+          radiusKm={radiusKm}
+        />
 
         {/* Map Controls - Top Left Corner with Chevron Dropdown */}
-        {user?.isAdmin && (
-          <div className="absolute top-4 left-4 z-[1001]">
+        <div className="absolute top-4 left-4 z-[1001]">
             <div className="relative dropdown-container">
               <button
                 onClick={() => setShowMapTypeDropdown(!showMapTypeDropdown)}
@@ -656,7 +635,6 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
               )}
             </div>
           </div>
-        )}
 
         {/* Koi Hai Animation at 6 o'clock position - only show during search, not when results are displayed */}
         {showScanElements && userLocation && nearestUsers.length === 0 && (
