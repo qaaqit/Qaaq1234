@@ -620,17 +620,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   async function generateAIResponse(message: string, category: string, user: any): Promise<string> {
     // Commandment I: AI-powered responses for all messages
-    // This would integrate with OpenAI API in production
-    
-    const responses = [
-      `For ${category.toLowerCase()}: Check the manufacturer's manual for specific troubleshooting steps. Ensure proper safety protocols are followed.`,
-      `Regarding ${category.toLowerCase()}: Common causes include mechanical wear, insufficient lubrication, or electrical faults. Inspect systematically.`,
-      `${category.toLowerCase()} issue: Verify operating parameters are within normal range. Consider environmental factors affecting performance.`,
-      `Technical analysis for ${category.toLowerCase()}: Monitor temperature, pressure, and vibration readings. Document any anomalies for further review.`,
-      `Maritime solution: Consult with senior engineer and review vessel's maintenance schedule. Safety first in all operations.`
-    ];
-    
-    return responses[Math.floor(Math.random() * responses.length)];
+    try {
+      if (!process.env.OPENAI_API_KEY) {
+        throw new Error('OpenAI API key not configured');
+      }
+
+      const { OpenAI } = await import('openai');
+      const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+
+      const systemPrompt = `You are QBOT, an expert maritime engineering assistant specializing in ${category}. 
+      Provide technical, practical advice for maritime professionals. Keep responses concise and actionable.
+      User context: ${user.maritimeRank || 'Maritime Professional'} ${user.shipName ? `aboard ${user.shipName}` : 'shore-based'}.
+      Always prioritize safety and follow maritime regulations.`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: message }
+        ],
+        max_tokens: 200,
+        temperature: 0.7,
+      });
+
+      const aiResponse = response.choices[0]?.message?.content || 'Unable to generate response at this time.';
+      console.log(`🤖 AI Response generated for ${category}: ${aiResponse.substring(0, 50)}...`);
+      return aiResponse;
+
+    } catch (error) {
+      console.error('OpenAI API error:', error);
+      
+      // Fallback to technical responses if OpenAI fails
+      const fallbackResponses = [
+        `For ${category.toLowerCase()}: Check the manufacturer's manual for specific troubleshooting steps. Ensure proper safety protocols are followed.`,
+        `Regarding ${category.toLowerCase()}: Common causes include mechanical wear, insufficient lubrication, or electrical faults. Inspect systematically.`,
+        `${category.toLowerCase()} issue: Verify operating parameters are within normal range. Consider environmental factors affecting performance.`,
+        `Technical analysis for ${category.toLowerCase()}: Monitor temperature, pressure, and vibration readings. Document any anomalies for further review.`,
+        `Maritime solution: Consult with senior engineer and review vessel's maintenance schedule. Safety first in all operations.`
+      ];
+      
+      return fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
+    }
   }
 
   function handleLocationQuery(message: string, user: any): string {
