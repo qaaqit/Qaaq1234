@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useEffect, useState } from "react";
 
+import QBOTHome from "@/pages/qbot-home";
 import Home from "@/pages/home";
 import Register from "@/pages/register";
 import Verify from "@/pages/verify";
@@ -65,12 +66,13 @@ function Router() {
     <div className="min-h-screen bg-slate-50">
       <div className={user ? "pb-16" : ""}>
         <Switch>
-          <Route path="/" component={() => user ? <Discover user={user} /> : <Home onSuccess={setUser} />} />
+          <Route path="/" component={QBOTHome} />
+          <Route path="/login" component={() => <Home onSuccess={setUser} />} />
           <Route path="/home" component={() => <Home onSuccess={setUser} />} />
           <Route path="/landing" component={() => <Home onSuccess={setUser} />} />
           <Route path="/register" component={() => <Register onSuccess={setUser} />} />
           <Route path="/verify" component={() => <Verify onSuccess={setUser} />} />
-          <Route path="/discover" component={() => user ? <Discover user={user} /> : <Home />} />
+          <Route path="/discover" component={() => user ? <Discover user={user} /> : <Home onSuccess={setUser} />} />
           <Route path="/post" component={() => user ? <Post user={user} /> : <Home />} />
           <Route path="/chat" component={() => user ? <ChatPage /> : <Home />} />
           <Route path="/chat/:userId" component={() => user ? <DMPage /> : <Home />} />
