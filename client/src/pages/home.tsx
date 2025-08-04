@@ -60,19 +60,21 @@ export default function Home({ onSuccess }: HomeProps) {
 
   return (
     <div 
-      className="min-h-screen relative overflow-hidden cursor-pointer"
+      className="min-h-screen relative overflow-hidden cursor-pointer bg-gray-100"
       onClick={() => setIsMinimized(false)}
     >
-      {/* Full Screen Map Background */}
-      <div className="absolute inset-0 z-0">
-        <UsersMapDual showNearbyCard={false} />
+      {/* Full Screen Map Background with Error Boundary */}
+      <div className="absolute inset-0 z-0 bg-gray-100">
+        <div className="w-full h-full">
+          <UsersMapDual showNearbyCard={false} />
+        </div>
       </div>
       {/* Overlay for better contrast */}
-      <div className="absolute inset-0 z-10 bg-black/20"></div>
+      <div className="absolute inset-0 z-10 bg-black/20 pointer-events-none"></div>
       {/* Translucent Login Box - Mobile Responsive */}
-      <div className={`absolute z-20 top-2 sm:top-4 right-2 sm:right-4 left-2 sm:left-4 flex justify-center transition-all duration-500`}>
+      <div className={`fixed sm:absolute z-20 top-2 sm:top-4 right-2 sm:right-4 left-2 sm:left-4 flex justify-center transition-all duration-500`}>
         <div 
-          className="backdrop-blur-md sm:backdrop-blur-lg border border-white/30 shadow-2xl rounded-xl relative transition-all duration-500 p-4 sm:p-6 w-full max-w-[calc(100vw-1rem)] sm:max-w-md bg-white/10 sm:bg-[#f5e9e900]"
+          className="backdrop-blur-sm sm:backdrop-blur-lg border border-white/40 shadow-2xl rounded-xl relative transition-all duration-500 p-4 sm:p-6 w-full max-w-[calc(100vw-1rem)] sm:max-w-md bg-white/80 sm:bg-white/60"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Chevron toggle button in top-right corner */}

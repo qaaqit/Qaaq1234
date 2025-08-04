@@ -3,6 +3,21 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Ensure minimum viewport height on mobile */
+@supports (-webkit-touch-callout: none) {
+  /* iOS Safari specific fixes */
+  .min-h-screen {
+    min-height: -webkit-fill-available;
+  }
+}
+
+/* Prevent white screen on resize */
+html, body, #root {
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  background-color: #f3f4f6;
+}
+
 :root {
   --background: hsl(0, 0%, 100%);
   --foreground: hsl(0, 0%, 10%);
