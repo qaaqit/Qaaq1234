@@ -12,54 +12,37 @@ export default function QBOTChatContainer({ isOpen, onClose, isMinimized = false
   // Handle escape key to close chat
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === 'Escape' && isOpen && !isMinimized) {
         onClose();
       }
     };
 
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
-      // Prevent body scroll when chat is open
-      document.body.style.overflow = 'hidden';
     }
 
     return () => {
       document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, isMinimized]);
 
   if (!isOpen) return null;
 
   return (
-    <>
-      {/* Backdrop - click to close on desktop, hide when minimized */}
-      {!isMinimized && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-[9999] transition-opacity duration-300"
-          onClick={onClose}
-          aria-hidden="true"
-        />
-      )}
-      
-      {/* Chat Container */}
-      <div 
-        className={`fixed z-[10000] transition-all duration-300 transform
-          ${isMinimized 
-            ? 'bottom-0 right-4 sm:bottom-4 sm:right-4 w-[400px] h-[60px] rounded-t-lg sm:rounded-lg'
-            : 'sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 inset-0 sm:inset-auto sm:w-[400px] sm:h-[600px] sm:rounded-lg w-full h-full'
-          }
-          bg-white shadow-xl sm:border sm:border-gray-200
-          flex flex-col
-          ${!isMinimized && 'animate-in fade-in slide-in-from-bottom-5 sm:slide-in-from-bottom-0 sm:zoom-in-95'}`}
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-label="QBOT Chat"
-      >
-        {/* Chat content */}
-        {children}
-      </div>
-    </>
+    <div 
+      className={`fixed top-16 left-0 right-0 z-[100] transition-all duration-300 transform
+        ${isMinimized 
+          ? 'h-[60px]'
+          : 'h-[calc(100vh-4rem)]'
+        }
+        bg-white shadow-xl border-b border-gray-200
+        flex flex-col`}
+      role="dialog"
+      aria-modal="true"
+      aria-label="QBOT Chat"
+    >
+      {/* Chat content */}
+      {children}
+    </div>
   );
 }
