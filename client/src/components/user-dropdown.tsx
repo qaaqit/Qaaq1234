@@ -21,9 +21,10 @@ import { logout, type User as AuthUser } from "@/lib/auth";
 interface UserDropdownProps {
   user: AuthUser;
   className?: string;
+  onLogout?: () => void;
 }
 
-export default function UserDropdown({ user, className = "" }: UserDropdownProps) {
+export default function UserDropdown({ user, className = "", onLogout }: UserDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [, setLocation] = useLocation();
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -55,6 +56,9 @@ export default function UserDropdown({ user, className = "" }: UserDropdownProps
 
   const handleLogout = () => {
     logout();
+    if (onLogout) {
+      onLogout();
+    }
     window.location.href = '/';
   };
 

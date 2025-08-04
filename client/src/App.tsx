@@ -38,6 +38,10 @@ function Router() {
     setLoading(false);
   }, []);
 
+  const handleLogout = () => {
+    setUser(null);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -77,7 +81,7 @@ function Router() {
         </Switch>
       </div>
       
-      {user && <BottomNav user={user} />}
+      {user && <BottomNav user={user} onLogout={handleLogout} />}
     </div>
   );
 }

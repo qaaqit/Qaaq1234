@@ -4,9 +4,10 @@ import type { User } from "@/lib/auth";
 
 interface BottomNavProps {
   user: User;
+  onLogout?: () => void;
 }
 
-export default function BottomNav({ user }: BottomNavProps) {
+export default function BottomNav({ user, onLogout }: BottomNavProps) {
   const [location, setLocation] = useLocation();
 
   const baseNavItems = [
