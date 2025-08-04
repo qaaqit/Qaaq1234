@@ -56,6 +56,8 @@ function Router() {
       <div className={user ? "pb-16" : ""}>
         <Switch>
           <Route path="/" component={() => user ? <Discover user={user} /> : <Home onSuccess={setUser} />} />
+          <Route path="/home" component={() => <Home onSuccess={setUser} />} />
+          <Route path="/landing" component={() => <Home onSuccess={setUser} />} />
           <Route path="/register" component={() => <Register onSuccess={setUser} />} />
           <Route path="/verify" component={() => <Verify onSuccess={setUser} />} />
           <Route path="/discover" component={() => user ? <Discover user={user} /> : <Home />} />

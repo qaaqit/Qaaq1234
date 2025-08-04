@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,17 @@ export default function Home({ onSuccess }: HomeProps) {
     userId: "",
     password: "",
   });
+
+  // Clear any cached auth on mount to ensure landing page is visible
+  useEffect(() => {
+    // Check if we're in preview mode with cached auth
+    const clearAuth = new URLSearchParams(window.location.search).get('clearAuth');
+    if (clearAuth === 'true') {
+      localStorage.removeItem('qaaq_token');
+      localStorage.removeItem('qaaq_user');
+      window.location.href = '/';
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
