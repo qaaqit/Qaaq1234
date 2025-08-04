@@ -135,11 +135,11 @@ export default function UserDropdown({ user, className = "" }: UserDropdownProps
       <Button
         ref={buttonRef}
         variant="ghost"
-        className="p-1 h-auto w-auto rounded-full hover:bg-white/10"
+        className="p-1 h-auto w-auto rounded-full bg-gradient-to-r from-orange-400 to-yellow-400 hover:from-orange-500 hover:to-yellow-500 shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200"
         onClick={() => setIsOpen(!isOpen)}
       >
         <div className="flex items-center space-x-2">
-          <Avatar className="w-10 h-10 border-2 border-white/20">
+          <Avatar className="w-10 h-10 border-2 border-yellow-300 shadow-lg">
             {user.profilePictureUrl ? (
               <img 
                 src={user.profilePictureUrl} 
@@ -155,14 +155,14 @@ export default function UserDropdown({ user, className = "" }: UserDropdownProps
               {user.fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <ChevronDown className={`w-4 h-4 text-white/80 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`w-4 h-4 text-yellow-100 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
         </div>
       </Button>
 
       {/* Dropdown Menu */}
       {isOpen && (
         <div 
-          className="user-dropdown-menu w-80 bg-slate-800 rounded-lg shadow-xl border border-slate-700 overflow-hidden z-[9999] animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200"
+          className="user-dropdown-menu w-80 bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50 rounded-lg shadow-xl border-2 border-orange-300 overflow-hidden z-[9999] animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200"
           style={{
             position: 'fixed',
             top: `${dropdownPosition.top}px`,
@@ -171,15 +171,15 @@ export default function UserDropdown({ user, className = "" }: UserDropdownProps
           }}
         >
           {/* User Info Header */}
-          <div className="bg-slate-700 p-4 border-b border-slate-600">
+          <div className="bg-gradient-to-r from-red-400 to-orange-400 p-4 border-b-2 border-orange-300">
             <div className="flex items-center space-x-3">
               <Avatar className="w-12 h-12">
-                <AvatarFallback className="bg-navy text-white font-semibold text-lg">
+                <AvatarFallback className="bg-yellow-400 text-red-600 font-semibold text-lg">
                   {user.fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <h3 className="text-white font-semibold truncate">
+                <h3 className="text-white font-bold truncate">
                   {user.fullName || user.id}
                 </h3>
                 <p className="text-sm text-white/60 mb-2">

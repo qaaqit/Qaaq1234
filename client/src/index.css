@@ -67,7 +67,25 @@
 
 @layer utilities {
   .gradient-bg {
-    background: linear-gradient(135deg, hsl(220, 90%, 56%) 0%, hsl(188, 78%, 41%) 100%);
+    background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 25%, #ffa500 50%, #ffd93d 75%, #ffed4e 100%);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .gradient-bg::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    animation: headerShimmer 4s infinite;
+  }
+
+  @keyframes headerShimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
   }
   
   .glass-effect {
@@ -136,6 +154,84 @@
   @keyframes roboticShine {
     0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
     100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+  }
+
+  /* Additional cute styling for red, orange, golden theme */
+  .maritime-shadow {
+    box-shadow: 0 4px 12px rgba(255, 140, 0, 0.3);
+  }
+
+  /* Update primary button styles */
+  .btn-primary-custom {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ffa500 100%);
+    color: white;
+    font-weight: bold;
+    transition: all 0.3s ease;
+  }
+
+  .btn-primary-custom:hover {
+    background: linear-gradient(135deg, #ff8e53 0%, #ffd93d 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(255, 140, 0, 0.4);
+  }
+
+  /* Cute floating hearts animation */
+  .floating-hearts {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .heart {
+    position: absolute;
+    bottom: -20px;
+    background: linear-gradient(45deg, #ff6b6b, #ffa500);
+    height: 15px;
+    width: 15px;
+    transform: rotate(-45deg);
+    animation: float 6s infinite;
+    opacity: 0.7;
+  }
+
+  .heart::after,
+  .heart::before {
+    content: '';
+    position: absolute;
+    height: 15px;
+    width: 15px;
+    background: inherit;
+    border-radius: 50%;
+  }
+
+  .heart::after {
+    top: -7.5px;
+    left: 0;
+  }
+
+  .heart::before {
+    left: 7.5px;
+    top: 0;
+  }
+
+  @keyframes float {
+    0% {
+      bottom: -20px;
+      opacity: 0;
+      transform: translateX(0) rotate(-45deg) scale(0.5);
+    }
+    20% {
+      opacity: 0.7;
+    }
+    80% {
+      opacity: 0.7;
+    }
+    100% {
+      bottom: 100vh;
+      opacity: 0;
+      transform: translateX(-20px) rotate(-45deg) scale(1.2);
+    }
   }
 }
 
