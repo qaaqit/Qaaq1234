@@ -135,11 +135,11 @@ export default function UserDropdown({ user, className = "" }: UserDropdownProps
       <Button
         ref={buttonRef}
         variant="ghost"
-        className="p-1 h-auto w-auto rounded-full bg-gradient-to-r from-orange-400 to-yellow-400 hover:from-orange-500 hover:to-yellow-500 shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200"
+        className="p-1 h-auto w-auto rounded-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200"
         onClick={() => setIsOpen(!isOpen)}
       >
         <div className="flex items-center space-x-2">
-          <Avatar className="w-10 h-10 border-2 border-yellow-300 shadow-lg">
+          <Avatar className="w-10 h-10 border-2 border-white shadow-lg">
             {user.profilePictureUrl ? (
               <img 
                 src={user.profilePictureUrl} 
@@ -162,7 +162,7 @@ export default function UserDropdown({ user, className = "" }: UserDropdownProps
       {/* Dropdown Menu */}
       {isOpen && (
         <div 
-          className="user-dropdown-menu w-80 bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50 rounded-lg shadow-xl border-2 border-orange-300 overflow-hidden z-[9999] animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200"
+          className="user-dropdown-menu w-80 bg-white rounded-lg shadow-xl border-2 border-orange-400 overflow-hidden z-[9999] animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200"
           style={{
             position: 'fixed',
             top: `${dropdownPosition.top}px`,
@@ -171,7 +171,7 @@ export default function UserDropdown({ user, className = "" }: UserDropdownProps
           }}
         >
           {/* User Info Header */}
-          <div className="bg-gradient-to-r from-red-400 to-orange-400 p-4 border-b-2 border-orange-300">
+          <div className="bg-gradient-to-r from-orange-100 to-yellow-100 p-4 border-b-2 border-orange-300">
             <div className="flex items-center space-x-3">
               <Avatar className="w-12 h-12">
                 <AvatarFallback className="bg-yellow-400 text-red-600 font-semibold text-lg">
@@ -179,10 +179,10 @@ export default function UserDropdown({ user, className = "" }: UserDropdownProps
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <h3 className="text-white font-bold truncate">
+                <h3 className="text-gray-800 font-bold truncate">
                   {user.fullName || user.id}
                 </h3>
-                <p className="text-sm text-white/60 mb-2">
+                <p className="text-sm text-gray-600 mb-2">
                   Welcome{user.fullName && !user.fullName.startsWith('+') ? `, ${user.fullName.split(' ')[0]}` : ''}!
                 </p>
                 <div className="flex items-center space-x-2">

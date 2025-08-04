@@ -145,12 +145,10 @@ export default function Discover({ user }: DiscoverProps) {
   ];
 
   return (
-    <div className="h-screen bg-slate-50 flex flex-col">
+    <div className="h-screen bg-gradient-to-br from-orange-50 via-white to-yellow-50 flex flex-col">
       {/* Header - Mobile Optimized */}
-      <header className="gradient-bg text-white relative overflow-hidden flex-shrink-0 z-[110]">
-        <div className="absolute inset-0 opacity-10">
-          <div className="w-full h-full bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Cpath%20d%3D%22M20%2050h60m-50-20h40m-30%2040h20%22%20stroke%3D%22white%22%20stroke-width%3D%221%22%20fill%3D%22none%22%2F%3E%3C%2Fsvg%3E')] bg-[length:50px_50px]"></div>
-        </div>
+      <header className="bg-white text-black shadow-md relative overflow-hidden flex-shrink-0 z-[110] border-b-2 border-orange-400">
+        <div className="absolute inset-0 bg-gradient-to-r from-red-50 via-orange-50 to-yellow-50 opacity-50"></div>
         
         <div className="relative z-10 px-3 py-2 sm:px-4 sm:py-4">
           <div className="flex items-center justify-between">
@@ -162,8 +160,8 @@ export default function Discover({ user }: DiscoverProps) {
                 <img src={qaaqLogo} alt="QAAQ Logo" className="w-full h-full object-cover" />
               </div>
               <div>
-                <h1 className="text-lg sm:text-2xl font-bold">QaaqConnect</h1>
-                <p className="text-xs sm:text-sm text-white/60 italic font-medium">1234 Koi Hai..</p>
+                <h1 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">QaaqConnect</h1>
+                <p className="text-xs sm:text-sm text-gray-600 italic font-medium">1234 Koi Hai..</p>
               </div>
             </button>
             <div className="flex items-center space-x-2 sm:space-x-4">
@@ -178,7 +176,7 @@ export default function Discover({ user }: DiscoverProps) {
                 }}
                 variant="outline"
                 size="sm"
-                className="bg-gradient-to-r from-red-500 to-yellow-500 border-2 border-yellow-400 text-white hover:from-red-600 hover:to-yellow-600 hover:border-yellow-500 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 text-xs sm:text-sm px-2 sm:px-3 font-bold robotic-button"
+                className="bg-gradient-to-r from-orange-500 to-yellow-500 border-2 border-red-400 text-white hover:from-red-500 hover:to-orange-500 hover:border-red-500 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 text-xs sm:text-sm px-2 sm:px-3 font-bold"
                 title={showQBOTChat ? (isQBOTMinimized ? "Expand QBOT" : "Minimize QBOT") : "Open QBOT - Maritime Assistant"}
               >
                 <i className="fas fa-robot mr-1 sm:mr-2 text-yellow-200"></i>

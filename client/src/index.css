@@ -5,31 +5,32 @@
 
 :root {
   --background: hsl(0, 0%, 100%);
-  --foreground: hsl(20, 14.3%, 4.1%);
-  --muted: hsl(210, 20%, 98%);
-  --muted-foreground: hsl(215, 13.8%, 34.1%);
+  --foreground: hsl(0, 0%, 10%);
+  --muted: hsl(30, 20%, 98%);
+  --muted-foreground: hsl(0, 0%, 30%);
   --popover: hsl(0, 0%, 100%);
-  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --popover-foreground: hsl(0, 0%, 10%);
   --card: hsl(0, 0%, 100%);
-  --card-foreground: hsl(20, 14.3%, 4.1%);
-  --border: hsl(214.3, 31.8%, 91.4%);
-  --input: hsl(214.3, 31.8%, 91.4%);
-  --primary: hsl(220, 90%, 56%);
-  --primary-foreground: hsl(210, 40%, 98%);
-  --secondary: hsl(210, 40%, 96%);
-  --secondary-foreground: hsl(222.2, 84%, 4.9%);
-  --accent: hsl(210, 40%, 96%);
-  --accent-foreground: hsl(222.2, 84%, 4.9%);
+  --card-foreground: hsl(0, 0%, 10%);
+  --border: hsl(30, 20%, 90%);
+  --input: hsl(30, 20%, 95%);
+  --primary: hsl(15, 80%, 50%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(40, 90%, 50%);
+  --secondary-foreground: hsl(0, 0%, 100%);
+  --accent: hsl(45, 100%, 51%);
+  --accent-foreground: hsl(0, 0%, 10%);
   --destructive: hsl(0, 84.2%, 60.2%);
   --destructive-foreground: hsl(60, 9.1%, 97.8%);
-  --ring: hsl(20, 14.3%, 4.1%);
-  --radius: 0.5rem;
+  --ring: hsl(15, 80%, 50%);
+  --radius: 0.75rem;
   
-  /* Maritime theme colors */
-  --navy: hsl(220, 90%, 56%);
-  --ocean-teal: hsl(188, 78%, 41%);
-  --maritime-grey: hsl(215, 13.8%, 34.1%);
-  --duck-yellow: hsl(45, 93%, 47%);
+  /* Theme colors */
+  --red-primary: hsl(0, 80%, 50%);
+  --orange-primary: hsl(25, 90%, 55%);
+  --golden-primary: hsl(45, 100%, 51%);
+  --black-primary: hsl(0, 0%, 10%);
+  --white-primary: hsl(0, 0%, 100%);
 }
 
 .dark {

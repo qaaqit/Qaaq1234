@@ -35,7 +35,7 @@ export default function QBOTChatContainer({ isOpen, onClose, isMinimized = false
           ? 'h-[60px] overflow-hidden'
           : 'h-[calc(100vh-4rem)] overflow-visible'
         }
-        bg-white shadow-xl border-b border-gray-200
+        bg-white shadow-xl border-b-2 border-orange-400
         flex flex-col`}
       role="dialog"
       aria-modal="true"
