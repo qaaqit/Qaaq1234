@@ -445,10 +445,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`JWT decoded user ID: ${userId}`);
       console.log(`Set req.userId to: ${userId}`);
 
-      // Get user for context
-      const user = await storage.getUser(userId);
+      // Get user for context - allow QBOT to work even without full user registration
+      let user;
+      try {
+        user = await storage.getUser(userId);
+      } catch (error) {
+        console.log(`User lookup failed for QBOT chat: ${userId}, continuing with minimal context`);
+      }
+      
       if (!user) {
-        return res.status(401).json({ message: "User not found" });
+        console.log(`No user found for QBOT chat: ${userId}, using guest context`);
       }
 
       // Extract ship name from message (Commandment IV)
@@ -467,7 +473,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`📋 Message categorized as: ${category}`);
 
       // Check if user needs onboarding (Commandment VI)
-      const needsOnboarding = !user.maritimeRank || !user.email || !user.city;
+      const needsOnboarding = !user || !user.maritimeRank || !user.email || !user.city;
       if (needsOnboarding && !isQuestionMessage(message)) {
         const onboardingResponse = handleOnboarding(user, message);
         return res.json({
@@ -630,9 +636,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         apiKey: process.env.OPENAI_API_KEY,
       });
 
+      const userRank = user?.maritimeRank || 'Maritime Professional';
+      const userShip = user?.shipName ? `aboard ${user.shipName}` : 'shore-based';
+      
       const systemPrompt = `You are QBOT, an expert maritime engineering assistant specializing in ${category}. 
       Provide technical, practical advice for maritime professionals. Keep responses concise and actionable.
-      User context: ${user.maritimeRank || 'Maritime Professional'} ${user.shipName ? `aboard ${user.shipName}` : 'shore-based'}.
+      User context: ${userRank} ${userShip}.
       Always prioritize safety and follow maritime regulations.`;
 
       const response = await openai.chat.completions.create({
@@ -666,7 +675,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   function handleLocationQuery(message: string, user: any): string {
-    if (user.city && user.country) {
+    if (user?.city && user?.country) {
       return `You're registered in ${user.city}, ${user.country}. Use the 'Koi Hai?' feature to find nearby maritime professionals.`;
     }
     return "Please share your current location using WhatsApp's location feature 📍 to find nearby sailors and maritime professionals.";
@@ -678,6 +687,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   function handleOnboarding(user: any, message: string): string {
     // Commandment VI: 6-field onboarding system
+    if (!user) {
+      return "Welcome to QBOT! I'm your maritime assistant. To personalize my responses, what's your maritime rank or position? (e.g., Chief Engineer, Deck Officer, Sailor)";
+    }
     if (!user.maritimeRank) {
       return "Welcome to QBOT! I'm your maritime assistant. What's your maritime rank or position? (e.g., Chief Engineer, Deck Officer, Sailor)";
     }
