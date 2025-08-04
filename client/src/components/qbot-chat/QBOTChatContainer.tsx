@@ -54,15 +54,6 @@ export default function QBOTChatContainer({ isOpen, onClose, children }: QBOTCha
         aria-modal="true"
         aria-label="QBOT Chat"
       >
-        {/* Close button for mobile (visible in top-right corner) */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors sm:hidden"
-          aria-label="Close chat"
-        >
-          <X size={20} className="text-white" />
-        </button>
-
         {/* Chat content */}
         {children}
       </div>

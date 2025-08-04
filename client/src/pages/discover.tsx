@@ -11,6 +11,7 @@ import GoogleMaps from "@/components/google-maps";
 import WhatsAppBotControl from "@/components/whatsapp-bot-control";
 import CPSSNavigator from "@/components/cpss-navigator";
 import QBOTChatContainer from "@/components/qbot-chat/QBOTChatContainer";
+import QBOTChatHeader from "@/components/qbot-chat/QBOTChatHeader";
 import { useLocation } from "@/hooks/useLocation";
 import { useLocation as useWouterLocation } from "wouter";
 import { type User } from "@/lib/auth";
@@ -205,9 +206,24 @@ export default function Discover({ user }: DiscoverProps) {
         isOpen={showQBOTChat}
         onClose={() => setShowQBOTChat(false)}
       >
-        {/* Chat content will be added in subsequent steps */}
-        <div className="flex items-center justify-center h-full">
-          <p className="text-gray-500">QBOT Chat - Implementation in progress...</p>
+        <div className="flex flex-col h-full">
+          {/* Gradient Header */}
+          <QBOTChatHeader 
+            onClear={() => {
+              // TODO: Clear chat messages
+              console.log('Clear chat');
+            }}
+            onToggleFullscreen={() => {
+              // TODO: Toggle fullscreen mode
+              console.log('Toggle fullscreen');
+            }}
+            isFullscreen={false}
+          />
+          
+          {/* Chat content will be added in subsequent steps */}
+          <div className="flex-1 flex items-center justify-center">
+            <p className="text-gray-500">QBOT Chat - Implementation in progress...</p>
+          </div>
         </div>
       </QBOTChatContainer>
     </div>
