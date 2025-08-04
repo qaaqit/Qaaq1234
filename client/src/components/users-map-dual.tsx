@@ -384,28 +384,6 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
         <div className="flex flex-col space-y-2 px-2 sm:px-4 py-2 sm:py-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           {/* Search Row - Full width on mobile */}
           <div className="flex items-center space-x-1 sm:space-x-2">
-            {/* Home Reset Button */}
-            <button
-              onClick={() => {
-                setSearchQuery('');
-                setShipSearchResult(null);
-                setSearchType('users');
-                setSelectedRankCategory('everyone');
-                setShowOnlineOnly(true);
-                setShowFilterDropdown(false);
-                setShowLocationDropdown(false);
-                setShowRankDropdown(false);
-                setOpenChatUserId(null);
-                setHoveredUser(null);
-                setSelectedUser(null);
-              }}
-              className="px-2 py-2 sm:px-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-xs font-medium flex items-center space-x-1 min-w-fit"
-              title="Reset to home view"
-            >
-              <Home size={14} />
-              <span className="hidden sm:inline">Home</span>
-            </button>
-            
             {/* Search Input - Responsive width */}
             <div className="relative flex-1 sm:w-48 lg:w-64">
               <input
