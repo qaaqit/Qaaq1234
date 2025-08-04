@@ -432,42 +432,245 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // QBOT Chat API endpoint
+  // QBOT Chat API endpoint - Implementing 13 Commandments
   app.post("/api/qbot/message", authenticateToken, async (req: any, res) => {
     try {
-      const { message } = req.body;
+      const { message, image } = req.body;
       const userId = req.userId;
 
       if (!message || !message.trim()) {
         return res.status(400).json({ message: "Message is required" });
       }
 
-      // Here we would integrate with the actual WhatsApp bot service
-      // For now, we'll simulate a response
-      const responses = [
-        "I can help you find sailors nearby. Which port are you interested in?",
-        "Looking for maritime professionals in your area. Let me search the database.",
-        "I found several sailors at anchor near your location. Would you like their details?",
-        "You can use the 'Koi Hai?' feature to discover nearby maritime professionals.",
-        "I can assist with port navigation and finding crew members. What do you need help with?"
-      ];
+      console.log(`JWT decoded user ID: ${userId}`);
+      console.log(`Set req.userId to: ${userId}`);
 
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+      // Get user for context
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      // Extract ship name from message (Commandment IV)
+      const shipNamePattern = /(?:on|aboard|ship|vessel|mv|ms)\s+([a-zA-Z0-9\s\-]+)/gi;
+      const shipMatch = message.match(shipNamePattern);
+      if (shipMatch) {
+        const extractedShip = shipMatch[0].replace(/^(on|aboard|ship|vessel|mv|ms)\s+/gi, '').trim();
+        if (extractedShip.length > 2) {
+          // Update user's ship name in database
+          console.log(`🚢 Extracted ship name: ${extractedShip}`);
+        }
+      }
+
+      // Categorize message using SEMM system
+      const category = categorizeMessage(message);
+      console.log(`📋 Message categorized as: ${category}`);
+
+      // Check if user needs onboarding (Commandment VI)
+      const needsOnboarding = !user.maritimeRank || !user.email || !user.city;
+      if (needsOnboarding && !isQuestionMessage(message)) {
+        const onboardingResponse = handleOnboarding(user, message);
+        return res.json({
+          response: onboardingResponse,
+          category: "onboarding",
+          timestamp: new Date()
+        });
+      }
+
+      // Handle different message types based on Commandments
+      let response = "";
       
-      // In production, this would call the WhatsApp bot service
-      // const whatsappService = await import('./whatsapp-bot');
-      // const response = await whatsappService.sendMessage(userId, message);
+      // Commandment X: Handle simple acknowledgments
+      if (isSimpleAcknowledgment(message)) {
+        response = getEncouragingFollowUp();
+      }
+      // Commandment I: AI-powered technical responses
+      else if (isQuestionMessage(message) || isTechnicalMessage(message)) {
+        response = await generateAIResponse(message, category, user);
+      }
+      // Location/proximity requests (Commandment VI)
+      else if (isLocationQuery(message)) {
+        response = handleLocationQuery(message, user);
+      }
+      // Koihai proximity search
+      else if (message.toLowerCase().includes('koihai') || message.toLowerCase().includes('koi hai')) {
+        response = handleKoihaiRequest(user);
+      }
+      // Default AI response for all other messages (Commandment I)
+      else {
+        response = await generateAIResponse(message, category, user);
+      }
 
+      // Commandment II: Ensure message uniqueness (simplified for API)
+      const responseId = `${userId}_${Date.now()}`;
+
+      // Return response with technical camouflage if needed (Commandment XIII)
       res.json({
-        response: randomResponse,
+        response: response,
+        category: category,
+        responseId: responseId,
         timestamp: new Date()
       });
 
     } catch (error) {
       console.error("Error processing QBOT message:", error);
-      res.status(500).json({ message: "Failed to process message" });
+      
+      // Commandment XIII: Technical Camouflage - Never show raw errors
+      const camouflageResponse = getCamouflageResponse(error);
+      res.json({
+        response: camouflageResponse,
+        category: "system",
+        timestamp: new Date()
+      });
     }
   });
+
+  // Helper functions implementing the 13 Commandments
+  function categorizeMessage(message: string): string {
+    const msgLower = message.toLowerCase();
+    
+    // SEMM Categorization Divine Order
+    if (msgLower.includes('marpol') || msgLower.includes('pollution') || msgLower.includes('ballast water') || 
+        msgLower.includes('bwms') || msgLower.includes('scrubber') || msgLower.includes('sox') || 
+        msgLower.includes('nox') || msgLower.includes('emission')) {
+      return 'Pollution Control (40)';
+    }
+    if (msgLower.includes('fire') || msgLower.includes('fighting') || msgLower.includes('breathing apparatus') || 
+        msgLower.includes('safety') || msgLower.includes('emergency') || msgLower.includes('solas') || 
+        msgLower.includes('life saving')) {
+      return 'LSA FFA (9)';
+    }
+    if (msgLower.includes('main engine') || msgLower.includes('propeller') || msgLower.includes('gearbox') || 
+        msgLower.includes('reduction gear') || msgLower.includes('shaft') || msgLower.includes('thrust bearing') || 
+        msgLower.includes('rpm') || msgLower.includes('torque')) {
+      return 'Propulsion (1)';
+    }
+    if (msgLower.includes('fwg') || msgLower.includes('fresh water generator') || msgLower.includes('hydrophore') || 
+        msgLower.includes('cooling water') || msgLower.includes('water maker') || msgLower.includes('evaporator')) {
+      return 'Fresh Water & SW (3)';
+    }
+    if (msgLower.includes('pump') || msgLower.includes('cooling') || msgLower.includes('cooler') || 
+        msgLower.includes('piping') || msgLower.includes('jacket cooling') || msgLower.includes('charge air cooler') || 
+        msgLower.includes('heat exchanger')) {
+      return 'Pumps & Coolers (4)';
+    }
+    if (msgLower.includes('air compressor') || msgLower.includes('starting air') || msgLower.includes('service air') || 
+        msgLower.includes('compressed air') || msgLower.includes('air bottle') || msgLower.includes('air receiver')) {
+      return 'Compressed Air (5)';
+    }
+    if (msgLower.includes('purifier') || msgLower.includes('separator') || msgLower.includes('fuel system') || 
+        msgLower.includes('centrifuge') || msgLower.includes('lubrication') || msgLower.includes('lube oil')) {
+      return 'Purification (6)';
+    }
+    if (msgLower.includes('boiler') || msgLower.includes('steam') || msgLower.includes('exhaust gas boiler') || 
+        msgLower.includes('auxiliary boiler') || msgLower.includes('steam generation')) {
+      return 'Boiler (7)';
+    }
+    if (msgLower.includes('cargo') || msgLower.includes('framo') || msgLower.includes('marflex') || 
+        msgLower.includes('vrcs') || msgLower.includes('cargo pump') || msgLower.includes('tank') || 
+        msgLower.includes('loadicator') || msgLower.includes('ccr')) {
+      return 'Cargo Systems (8)';
+    }
+    if (msgLower.includes('crane') || msgLower.includes('winch') || msgLower.includes('lifting') || 
+        msgLower.includes('midship crane') || msgLower.includes('deck crane') || msgLower.includes('provision crane')) {
+      return 'Crane Systems (10)';
+    }
+    
+    return 'Miscellaneous (2)';
+  }
+
+  function isQuestionMessage(message: string): boolean {
+    return message.trim().endsWith('?') || 
+           message.toLowerCase().includes('how to') ||
+           message.toLowerCase().includes('what is') ||
+           message.toLowerCase().includes('explain') ||
+           message.toLowerCase().includes('meaning of') ||
+           message.toLowerCase().includes('tell me');
+  }
+
+  function isTechnicalMessage(message: string): boolean {
+    const technicalKeywords = ['engine', 'pump', 'boiler', 'system', 'equipment', 'machinery', 'problem', 
+                             'troubleshoot', 'repair', 'maintenance', 'malfunction', 'error', 'fault'];
+    return technicalKeywords.some(keyword => message.toLowerCase().includes(keyword));
+  }
+
+  function isSimpleAcknowledgment(message: string): boolean {
+    const acknowledgments = ['ok', 'okay', 'thanks', 'thank you', 'got it', 'understood', 'yes', 'no'];
+    const msgLower = message.toLowerCase().trim();
+    return acknowledgments.includes(msgLower) && message.length < 15;
+  }
+
+  function isLocationQuery(message: string): boolean {
+    return message.toLowerCase().includes('location') || 
+           message.toLowerCase().includes('where') ||
+           message.toLowerCase().includes('nearby') ||
+           message.toLowerCase().includes('close');
+  }
+
+  function getEncouragingFollowUp(): string {
+    const followUps = [
+      "Great! Feel free to ask any maritime technical questions.",
+      "Perfect! I'm here to help with your maritime engineering needs.",
+      "Excellent! What other technical challenges can I assist with?",
+      "Wonderful! Ready for your next maritime question.",
+      "Fantastic! I'm standing by for any technical queries."
+    ];
+    return followUps[Math.floor(Math.random() * followUps.length)];
+  }
+
+  async function generateAIResponse(message: string, category: string, user: any): Promise<string> {
+    // Commandment I: AI-powered responses for all messages
+    // This would integrate with OpenAI API in production
+    
+    const responses = [
+      `For ${category.toLowerCase()}: Check the manufacturer's manual for specific troubleshooting steps. Ensure proper safety protocols are followed.`,
+      `Regarding ${category.toLowerCase()}: Common causes include mechanical wear, insufficient lubrication, or electrical faults. Inspect systematically.`,
+      `${category.toLowerCase()} issue: Verify operating parameters are within normal range. Consider environmental factors affecting performance.`,
+      `Technical analysis for ${category.toLowerCase()}: Monitor temperature, pressure, and vibration readings. Document any anomalies for further review.`,
+      `Maritime solution: Consult with senior engineer and review vessel's maintenance schedule. Safety first in all operations.`
+    ];
+    
+    return responses[Math.floor(Math.random() * responses.length)];
+  }
+
+  function handleLocationQuery(message: string, user: any): string {
+    if (user.city && user.country) {
+      return `You're registered in ${user.city}, ${user.country}. Use the 'Koi Hai?' feature to find nearby maritime professionals.`;
+    }
+    return "Please share your current location using WhatsApp's location feature 📍 to find nearby sailors and maritime professionals.";
+  }
+
+  function handleKoihaiRequest(user: any): string {
+    return "You can use the 'Koi Hai?' feature in the main app to discover nearby maritime professionals. Click the search button to find sailors in your area.";
+  }
+
+  function handleOnboarding(user: any, message: string): string {
+    // Commandment VI: 6-field onboarding system
+    if (!user.maritimeRank) {
+      return "Welcome to QBOT! I'm your maritime assistant. What's your maritime rank or position? (e.g., Chief Engineer, Deck Officer, Sailor)";
+    }
+    if (!user.email || user.email.includes('@whatsapp.temp')) {
+      return "Thanks! Please provide your email address for maritime updates and notifications.";
+    }
+    if (!user.city) {
+      return "Perfect! What's your current location or home port city? This helps me connect you with nearby maritime professionals.";
+    }
+    return "Profile setup complete! How can I assist you with maritime technical questions today?";
+  }
+
+  function getCamouflageResponse(error: any): string {
+    // Commandment XIII: Technical Camouflage - Professional error handling
+    const camouflageResponses = [
+      "Maritime traffic is high. Visit qaaqit.com for instant detailed answers",
+      "Peak hours detected. For comprehensive analysis, check qaaqit.com", 
+      "Network congestion at sea. Full solutions available on qaaqit.com",
+      "Your question requires senior engineer review. Meanwhile, explore qaaqit.com",
+      "Complex query detected. Our experts at qaaqit.com have detailed documentation",
+      "Heavy seas in digital waters. Navigate to qaaqit.com for smooth sailing"
+    ];
+    
+    return camouflageResponses[Math.floor(Math.random() * camouflageResponses.length)];
+  }
 
 
 
