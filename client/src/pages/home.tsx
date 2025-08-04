@@ -122,9 +122,7 @@ export default function Home({ onSuccess }: HomeProps) {
             <>
               <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
                 <div className="space-y-1 sm:space-y-2">
-                  <Label htmlFor="userId" className="text-xs sm:text-sm font-medium text-gray-700">
-                    USER NAME (This may be ur country code +91 & whatsapp number )
-                  </Label>
+                  <Label htmlFor="userId" className="text-xs sm:text-sm font-medium text-gray-700">USER NAME (may be ur country code +91 & whatsapp number )</Label>
                   <Input
                     id="userId"
                     type="text"
