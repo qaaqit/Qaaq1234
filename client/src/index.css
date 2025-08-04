@@ -90,6 +90,16 @@
       transform: translateX(-50%) scale(1.05);
     }
   }
+
+  /* Hide scrollbar for chat messages */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
 
 /* Leaflet Map Styles */
