@@ -24,6 +24,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { MapPin, Navigation, Ship, Satellite, Crown, ChevronUp, ChevronDown, Sun, Moon } from "lucide-react";
 import UserDropdown from "@/components/user-dropdown";
 import BottomNav from "@/components/bottom-nav";
+import { useTheme } from "@/contexts/ThemeContext";
 import qaaqLogo from "@/assets/qaaq-logo.png";
 
 interface Post {
@@ -55,11 +56,7 @@ export default function Discover({ user }: DiscoverProps) {
   const [hasInitialized, setHasInitialized] = useState(false);
   const [mapType, setMapType] = useState<'leaflet' | 'google'>('leaflet');
   const [isPremiumMode, setIsPremiumMode] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    // Check for saved theme preference or default to light mode
-    const saved = localStorage.getItem('qaaq-theme');
-    return saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
-  });
+  const { theme, toggleTheme } = useTheme();
   
   // Location functionality for enhanced user discovery
   const { location, error: locationError, isLoading: locationLoading, requestDeviceLocation, updateShipLocation } = useLocation(user?.id, true);
@@ -121,24 +118,7 @@ export default function Discover({ user }: DiscoverProps) {
     }
   }, [showQBOTChat, hasInitialized]);
 
-  // Apply theme to document
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('qaaq-theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('qaaq-theme', 'light');
-    }
-  }, [isDarkMode]);
 
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
-    toast({
-      title: isDarkMode ? "☀️ Light Mode" : "🌙 Dark Mode",
-      description: `Switched to ${isDarkMode ? 'light' : 'dark'} theme`,
-    });
-  };
 
   const handleLike = async (postId: string) => {
     try {
@@ -169,7 +149,7 @@ export default function Discover({ user }: DiscoverProps) {
   ];
 
   return (
-    <div className="h-screen bg-slate-50 flex flex-col">
+    <div className="h-screen bg-slate-50 dark:bg-slate-900 flex flex-col">
       {/* Header - Mobile Optimized */}
       <header className="gradient-bg text-white relative overflow-hidden flex-shrink-0 z-[110]">
         <div className="absolute inset-0 opacity-10">
@@ -196,15 +176,15 @@ export default function Discover({ user }: DiscoverProps) {
                 variant="outline"
                 size="sm"
                 className="bg-white/20 border border-white/30 text-white hover:bg-white/30 hover:border-white/50 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 text-xs sm:text-sm px-2 sm:px-3"
-                title={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
+                title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
               >
-                {isDarkMode ? (
+                {theme === 'dark' ? (
                   <Sun size={16} className="text-yellow-200" />
                 ) : (
                   <Moon size={16} className="text-blue-200" />
                 )}
                 <span className="hidden sm:inline ml-1">
-                  {isDarkMode ? 'Light' : 'Dark'}
+                  {theme === 'dark' ? 'Light' : 'Dark'}
                 </span>
               </Button>
               <Button

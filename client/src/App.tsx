@@ -41,19 +41,19 @@ function Router() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 bg-gradient-to-br from-navy to-ocean-teal rounded-2xl flex items-center justify-center mx-auto mb-4">
             <i className="fas fa-anchor text-2xl text-white"></i>
           </div>
-          <p className="text-maritime-grey">Loading QaaqConnect...</p>
+          <p className="text-maritime-grey dark:text-slate-300">Loading QaaqConnect...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       <div className={user ? "pb-16" : ""}>
         <Switch>
           <Route path="/" component={() => user ? <Discover user={user} /> : <Home onSuccess={setUser} />} />
