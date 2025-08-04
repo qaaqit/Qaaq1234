@@ -21,7 +21,7 @@ import { useLocation } from "@/hooks/useLocation";
 import { useLocation as useWouterLocation } from "wouter";
 import { type User } from "@/lib/auth";
 import { apiRequest } from "@/lib/queryClient";
-import { MapPin, Navigation, Ship, Satellite, Crown, ChevronUp, ChevronDown } from "lucide-react";
+import { MapPin, Navigation, Ship, Satellite, Crown, ChevronUp, ChevronDown, Sun, Moon } from "lucide-react";
 import UserDropdown from "@/components/user-dropdown";
 import BottomNav from "@/components/bottom-nav";
 import qaaqLogo from "@/assets/qaaq-logo.png";
@@ -55,6 +55,11 @@ export default function Discover({ user }: DiscoverProps) {
   const [hasInitialized, setHasInitialized] = useState(false);
   const [mapType, setMapType] = useState<'leaflet' | 'google'>('leaflet');
   const [isPremiumMode, setIsPremiumMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Check for saved theme preference or default to light mode
+    const saved = localStorage.getItem('qaaq-theme');
+    return saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  });
   
   // Location functionality for enhanced user discovery
   const { location, error: locationError, isLoading: locationLoading, requestDeviceLocation, updateShipLocation } = useLocation(user?.id, true);
@@ -116,6 +121,25 @@ export default function Discover({ user }: DiscoverProps) {
     }
   }, [showQBOTChat, hasInitialized]);
 
+  // Apply theme to document
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('qaaq-theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('qaaq-theme', 'light');
+    }
+  }, [isDarkMode]);
+
+  const toggleTheme = () => {
+    setIsDarkMode(!isDarkMode);
+    toast({
+      title: isDarkMode ? "☀️ Light Mode" : "🌙 Dark Mode",
+      description: `Switched to ${isDarkMode ? 'light' : 'dark'} theme`,
+    });
+  };
+
   const handleLike = async (postId: string) => {
     try {
       const token = localStorage.getItem('qaaq_token');
@@ -167,6 +191,22 @@ export default function Discover({ user }: DiscoverProps) {
               </div>
             </button>
             <div className="flex items-center space-x-2 sm:space-x-4">
+              <Button
+                onClick={toggleTheme}
+                variant="outline"
+                size="sm"
+                className="bg-white/20 border border-white/30 text-white hover:bg-white/30 hover:border-white/50 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 text-xs sm:text-sm px-2 sm:px-3"
+                title={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
+              >
+                {isDarkMode ? (
+                  <Sun size={16} className="text-yellow-200" />
+                ) : (
+                  <Moon size={16} className="text-blue-200" />
+                )}
+                <span className="hidden sm:inline ml-1">
+                  {isDarkMode ? 'Light' : 'Dark'}
+                </span>
+              </Button>
               <Button
                 onClick={() => {
                   if (!showQBOTChat) {

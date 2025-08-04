@@ -203,16 +203,6 @@ export function RankGroupsPanel() {
           <h2 className="text-2xl font-bold">RankGroups</h2>
           {user?.isAdmin && <Shield className="h-5 w-5 text-blue-600" />}
         </div>
-        {!user?.isAdmin && (
-          <Button 
-            onClick={() => autoAssignMutation.mutate()}
-            disabled={autoAssignMutation.isPending}
-            variant="outline"
-          >
-            <Crown className="h-4 w-4 mr-2" />
-            Auto-Assign Groups
-          </Button>
-        )}
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Groups List */}
