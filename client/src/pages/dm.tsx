@@ -242,13 +242,13 @@ export default function DMPage() {
               <TabsList className="grid w-full grid-cols-2 bg-gray-100/50">
                 <TabsTrigger 
                   value="questions" 
-                  className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm data-[state=active]:bg-red-600 data-[state=active]:text-white text-gray-600 hover:text-red-600 bg-white"
+                  className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-600 hover:text-blue-600"
                 >
                   Questions
                 </TabsTrigger>
                 <TabsTrigger 
                   value="users" 
-                  className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm data-[state=active]:bg-red-600 data-[state=active]:text-white text-gray-600 hover:text-red-600 bg-white"
+                  className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-600 hover:text-blue-600"
                 >
                   Users
                 </TabsTrigger>

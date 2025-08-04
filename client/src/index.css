@@ -33,31 +33,25 @@
 }
 
 .dark {
-  --background: hsl(225, 25%, 8%);
-  --foreground: hsl(0, 0%, 100%);
-  --muted: hsl(225, 20%, 15%);
-  --muted-foreground: hsl(0, 0%, 75%);
-  --popover: hsl(225, 25%, 12%);
-  --popover-foreground: hsl(0, 0%, 100%);
-  --card: hsl(225, 25%, 12%);
-  --card-foreground: hsl(0, 0%, 100%);
-  --border: hsl(225, 20%, 25%);
-  --input: hsl(225, 20%, 20%);
-  --primary: hsl(225, 60%, 35%);
-  --primary-foreground: hsl(0, 0%, 100%);
-  --secondary: hsl(225, 20%, 18%);
-  --secondary-foreground: hsl(0, 0%, 85%);
-  --accent: hsl(225, 20%, 22%);
-  --accent-foreground: hsl(0, 0%, 85%);
+  --background: hsl(240, 10%, 3.9%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(240, 3.7%, 15.9%);
+  --muted-foreground: hsl(240, 5%, 64.9%);
+  --popover: hsl(240, 10%, 3.9%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(240, 10%, 3.9%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(240, 3.7%, 15.9%);
+  --input: hsl(240, 3.7%, 15.9%);
+  --primary: hsl(220, 90%, 56%);
+  --primary-foreground: hsl(210, 40%, 98%);
+  --secondary: hsl(240, 3.7%, 15.9%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(240, 3.7%, 15.9%);
+  --accent-foreground: hsl(0, 0%, 98%);
   --destructive: hsl(0, 62.8%, 30.6%);
-  --destructive-foreground: hsl(0, 0%, 100%);
-  --ring: hsl(0, 0%, 75%);
-  
-  /* Dark theme maritime colors */
-  --navy: hsl(225, 60%, 35%);
-  --ocean-teal: hsl(188, 50%, 35%);
-  --maritime-grey: hsl(0, 0%, 75%);
-  --duck-yellow: hsl(45, 93%, 47%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(240, 4.9%, 83.9%);
 }
 
 @layer base {
@@ -90,13 +84,9 @@
   }
 
   .gradient-bg {
-    background: linear-gradient(135deg, #dc2626 0%, #ef4444 25%, #f97316 50%, #ea580c 75%, #fb923c 100%);
+    background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 25%, #ffa500 50%, #ffd93d 75%, #ffed4e 100%);
     position: relative;
     overflow: hidden;
-  }
-
-  .dark .gradient-bg {
-    background: linear-gradient(135deg, #1e293b 0%, #334155 25%, #475569 50%, #64748b 75%, #94a3b8 100%);
   }
 
   .gradient-bg::before {

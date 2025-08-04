@@ -21,10 +21,9 @@ import { useLocation } from "@/hooks/useLocation";
 import { useLocation as useWouterLocation } from "wouter";
 import { type User } from "@/lib/auth";
 import { apiRequest } from "@/lib/queryClient";
-import { MapPin, Navigation, Ship, Satellite, Crown, ChevronUp, ChevronDown, Sun, Moon } from "lucide-react";
+import { MapPin, Navigation, Ship, Satellite, Crown, ChevronUp, ChevronDown } from "lucide-react";
 import UserDropdown from "@/components/user-dropdown";
 import BottomNav from "@/components/bottom-nav";
-import { useTheme } from "@/contexts/ThemeContext";
 import qaaqLogo from "@/assets/qaaq-logo.png";
 
 interface Post {
@@ -56,7 +55,6 @@ export default function Discover({ user }: DiscoverProps) {
   const [hasInitialized, setHasInitialized] = useState(false);
   const [mapType, setMapType] = useState<'leaflet' | 'google'>('leaflet');
   const [isPremiumMode, setIsPremiumMode] = useState(false);
-  const { theme, toggleTheme } = useTheme();
   
   // Location functionality for enhanced user discovery
   const { location, error: locationError, isLoading: locationLoading, requestDeviceLocation, updateShipLocation } = useLocation(user?.id, true);
@@ -118,8 +116,6 @@ export default function Discover({ user }: DiscoverProps) {
     }
   }, [showQBOTChat, hasInitialized]);
 
-
-
   const handleLike = async (postId: string) => {
     try {
       const token = localStorage.getItem('qaaq_token');
@@ -149,7 +145,7 @@ export default function Discover({ user }: DiscoverProps) {
   ];
 
   return (
-    <div className="h-screen bg-slate-50 dark:bg-slate-900 flex flex-col">
+    <div className="h-screen bg-slate-50 flex flex-col">
       {/* Header - Mobile Optimized */}
       <header className="gradient-bg text-white relative overflow-hidden flex-shrink-0 z-[110]">
         <div className="absolute inset-0 opacity-10">
@@ -166,27 +162,11 @@ export default function Discover({ user }: DiscoverProps) {
                 <img src={qaaqLogo} alt="QAAQ Logo" className="w-full h-full object-cover" />
               </div>
               <div>
-                <h1 className="text-lg sm:text-2xl font-bold">Qaaq</h1>
+                <h1 className="text-lg sm:text-2xl font-bold">QaaqConnect</h1>
                 <p className="text-xs sm:text-sm text-white/60 italic font-medium">1234 Koi Hai..</p>
               </div>
             </button>
             <div className="flex items-center space-x-2 sm:space-x-4">
-              <Button
-                onClick={toggleTheme}
-                variant="outline"
-                size="sm"
-                className="bg-white/20 border border-white/30 text-white hover:bg-white/30 hover:border-white/50 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 text-xs sm:text-sm px-2 sm:px-3"
-                title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-              >
-                {theme === 'dark' ? (
-                  <Sun size={16} className="text-yellow-200" />
-                ) : (
-                  <Moon size={16} className="text-blue-200" />
-                )}
-                <span className="hidden sm:inline ml-1">
-                  {theme === 'dark' ? 'Light' : 'Dark'}
-                </span>
-              </Button>
               <Button
                 onClick={() => {
                   if (!showQBOTChat) {
@@ -219,6 +199,7 @@ export default function Discover({ user }: DiscoverProps) {
           </div>
         </div>
       </header>
+      
       {/* QBOT Chat Container - Positioned below header */}
       <QBOTChatContainer 
         isOpen={showQBOTChat}
@@ -303,6 +284,7 @@ export default function Discover({ user }: DiscoverProps) {
           )}
         </div>
       </QBOTChatContainer>
+      
       {/* Main Content Area - Full Screen Map */}
       <div className="flex-1 overflow-hidden relative">
         {/* Premium Mode Notice */}
@@ -344,6 +326,7 @@ export default function Discover({ user }: DiscoverProps) {
           </div>
         )}
       </div>
+      
       {/* Bottom Navigation */}
       <BottomNav user={user} />
     </div>

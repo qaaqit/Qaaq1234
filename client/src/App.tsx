@@ -3,7 +3,6 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { ThemeProvider } from "@/contexts/ThemeContext";
 import { useEffect, useState } from "react";
 
 import Home from "@/pages/home";
@@ -41,19 +40,19 @@ function Router() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 bg-gradient-to-br from-navy to-ocean-teal rounded-2xl flex items-center justify-center mx-auto mb-4">
             <i className="fas fa-anchor text-2xl text-white"></i>
           </div>
-          <p className="text-maritime-grey dark:text-slate-300">Loading QaaqConnect...</p>
+          <p className="text-maritime-grey">Loading QaaqConnect...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+    <div className="min-h-screen bg-slate-50">
       <div className={user ? "pb-16" : ""}>
         <Switch>
           <Route path="/" component={() => user ? <Discover user={user} /> : <Home onSuccess={setUser} />} />
@@ -86,12 +85,10 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
-      </ThemeProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Router />
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }

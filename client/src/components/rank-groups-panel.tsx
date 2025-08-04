@@ -200,10 +200,21 @@ export function RankGroupsPanel() {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-2">
           <Users className="h-6 w-6" />
-          <h2 className="text-2xl font-bold">RankGroups</h2>
+          <h2 className="text-2xl font-bold">Maritime Rank Groups</h2>
           {user?.isAdmin && <Shield className="h-5 w-5 text-blue-600" />}
         </div>
+        {!user?.isAdmin && (
+          <Button 
+            onClick={() => autoAssignMutation.mutate()}
+            disabled={autoAssignMutation.isPending}
+            variant="outline"
+          >
+            <Crown className="h-4 w-4 mr-2" />
+            Auto-Assign Groups
+          </Button>
+        )}
       </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Groups List */}
         <div className="lg:col-span-1">
@@ -362,7 +373,7 @@ export function RankGroupsPanel() {
               <CardContent className="flex-1 overflow-y-auto p-4">
                 {showMembers ? (
                   /* Members List */
-                  (<div className="space-y-3">
+                  <div className="space-y-3">
                     <div className="flex items-center space-x-2 mb-4">
                       <Users className="h-5 w-5" />
                       <h3 className="font-semibold">Group Members ({membersData?.length || 0})</h3>
@@ -408,10 +419,10 @@ export function RankGroupsPanel() {
                         <p className="text-sm mt-2">Be the first to join!</p>
                       </div>
                     )}
-                  </div>)
+                  </div>
                 ) : (
                   /* Messages - WhatsApp Style */
-                  (<div className="space-y-3">
+                  <div className="space-y-3">
                     {Array.isArray(messagesData) && messagesData.length > 0 ? (
                       messagesData.map((message: GroupMessage) => (
                         <div key={message.id} className="space-y-1">
@@ -450,7 +461,7 @@ export function RankGroupsPanel() {
                         <p className="text-sm">Start the conversation in this {selectedGroupData.name} group!</p>
                       </div>
                     )}
-                  </div>)
+                  </div>
                 )}
               </CardContent>
 
