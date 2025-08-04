@@ -48,6 +48,7 @@ export default function Discover({ user }: DiscoverProps) {
   const [showNearbyCard, setShowNearbyCard] = useState(false);
   const [showWhatsAppPanel, setShowWhatsAppPanel] = useState(false);
   const [showQBOTChat, setShowQBOTChat] = useState(false);
+  const [isQBOTMinimized, setIsQBOTMinimized] = useState(false);
   const [qbotMessages, setQBotMessages] = useState<Message[]>([]);
   const [isQBotTyping, setIsQBotTyping] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
@@ -226,7 +227,11 @@ export default function Discover({ user }: DiscoverProps) {
       {/* QBOT Chat Container */}
       <QBOTChatContainer 
         isOpen={showQBOTChat}
-        onClose={() => setShowQBOTChat(false)}
+        onClose={() => {
+          setShowQBOTChat(false);
+          setIsQBOTMinimized(false);
+        }}
+        isMinimized={isQBOTMinimized}
       >
         <div className="flex flex-col h-full">
           {/* Gradient Header */}
@@ -239,31 +244,29 @@ export default function Discover({ user }: DiscoverProps) {
                 description: "Your conversation has been cleared.",
               });
             }}
-            onToggleFullscreen={() => {
-              // Fullscreen toggle would be implemented here
-              toast({
-                title: "Fullscreen Mode",
-                description: "Fullscreen mode coming soon!",
-              });
+            onToggleMinimize={() => {
+              setIsQBOTMinimized(!isQBOTMinimized);
             }}
-            isFullscreen={false}
+            isMinimized={isQBOTMinimized}
           />
           
-          {/* Chat Area with Grid Pattern */}
-          <QBOTChatArea>
-            {qbotMessages.length === 0 ? (
-              <QBOTWelcomeState />
-            ) : (
-              <>
-                <QBOTMessageList messages={qbotMessages} />
-                {isQBotTyping && <QBOTTypingIndicator />}
-              </>
-            )}
-          </QBOTChatArea>
-          
-          {/* Input Area */}
-          <QBOTInputArea 
-            onSendMessage={async (text) => {
+          {/* Chat Area with Grid Pattern - hide when minimized */}
+          {!isQBOTMinimized && (
+            <>
+              <QBOTChatArea>
+                {qbotMessages.length === 0 ? (
+                  <QBOTWelcomeState />
+                ) : (
+                  <>
+                    <QBOTMessageList messages={qbotMessages} />
+                    {isQBotTyping && <QBOTTypingIndicator />}
+                  </>
+                )}
+              </QBOTChatArea>
+              
+              {/* Input Area */}
+              <QBOTInputArea 
+                onSendMessage={async (text) => {
               const newMessage: Message = {
                 id: Date.now().toString(),
                 text,
@@ -301,6 +304,8 @@ export default function Discover({ user }: DiscoverProps) {
               }
             }}
           />
+            </>
+          )}
         </div>
       </QBOTChatContainer>
     </div>
