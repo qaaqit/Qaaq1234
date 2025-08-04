@@ -15,6 +15,8 @@ import QBOTChatHeader from "@/components/qbot-chat/QBOTChatHeader";
 import QBOTChatArea from "@/components/qbot-chat/QBOTChatArea";
 import QBOTWelcomeState from "@/components/qbot-chat/QBOTWelcomeState";
 import QBOTMessageList, { type Message } from "@/components/qbot-chat/QBOTMessageList";
+import QBOTInputArea from "@/components/qbot-chat/QBOTInputArea";
+import QBOTTypingIndicator from "@/components/qbot-chat/QBOTTypingIndicator";
 import { useLocation } from "@/hooks/useLocation";
 import { useLocation as useWouterLocation } from "wouter";
 import { type User } from "@/lib/auth";
@@ -47,6 +49,8 @@ export default function Discover({ user }: DiscoverProps) {
   const [showWhatsAppPanel, setShowWhatsAppPanel] = useState(false);
   const [showQBOTChat, setShowQBOTChat] = useState(false);
   const [qbotMessages, setQBotMessages] = useState<Message[]>([]);
+  const [isQBotTyping, setIsQBotTyping] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
   const [mapType, setMapType] = useState<'leaflet' | 'google'>('leaflet');
   const [isPremiumMode, setIsPremiumMode] = useState(false);
   
@@ -95,6 +99,20 @@ export default function Discover({ user }: DiscoverProps) {
       window.removeEventListener('hashchange', handleHashChange);
     };
   }, [refetch, location]);
+  
+  // Initialize QBOT chat with welcome message
+  useEffect(() => {
+    if (showQBOTChat && !hasInitialized) {
+      const welcomeMessage: Message = {
+        id: 'welcome',
+        text: "Welcome to QBOT! I'm your maritime assistant. I can help you find sailors nearby, navigate ports, and connect with the maritime community. How can I assist you today?",
+        sender: 'bot',
+        timestamp: new Date()
+      };
+      setQBotMessages([welcomeMessage]);
+      setHasInitialized(true);
+    }
+  }, [showQBOTChat, hasInitialized]);
 
   const handleLike = async (postId: string) => {
     try {
@@ -215,11 +233,18 @@ export default function Discover({ user }: DiscoverProps) {
           <QBOTChatHeader 
             onClear={() => {
               setQBotMessages([]);
-              console.log('Chat cleared');
+              setIsQBotTyping(false);
+              toast({
+                title: "Chat Cleared",
+                description: "Your conversation has been cleared.",
+              });
             }}
             onToggleFullscreen={() => {
-              // TODO: Toggle fullscreen mode
-              console.log('Toggle fullscreen');
+              // Fullscreen toggle would be implemented here
+              toast({
+                title: "Fullscreen Mode",
+                description: "Fullscreen mode coming soon!",
+              });
             }}
             isFullscreen={false}
           />
@@ -227,50 +252,55 @@ export default function Discover({ user }: DiscoverProps) {
           {/* Chat Area with Grid Pattern */}
           <QBOTChatArea>
             {qbotMessages.length === 0 ? (
-              <>
-                <QBOTWelcomeState />
-                {/* Temporary test button - remove after integration */}
-                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-                  <button
-                    onClick={() => {
-                      const testMessages: Message[] = [
-                        {
-                          id: '1',
-                          text: 'Hello QBOT, I need help finding nearby sailors in Mumbai port.',
-                          sender: 'user',
-                          timestamp: new Date(Date.now() - 300000)
-                        },
-                        {
-                          id: '2',
-                          text: 'Hello! I can help you find sailors near Mumbai port. Let me search for maritime professionals in your area.',
-                          sender: 'bot',
-                          timestamp: new Date(Date.now() - 240000)
-                        },
-                        {
-                          id: '3',
-                          text: 'Great! Can you show me who is currently at anchor?',
-                          sender: 'user',
-                          timestamp: new Date(Date.now() - 180000)
-                        },
-                        {
-                          id: '4',
-                          text: 'I found 5 sailors currently at anchor near Mumbai port. Would you like me to show their details?',
-                          sender: 'bot',
-                          timestamp: new Date(Date.now() - 120000)
-                        }
-                      ];
-                      setQBotMessages(testMessages);
-                    }}
-                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
-                  >
-                    Test Messages
-                  </button>
-                </div>
-              </>
+              <QBOTWelcomeState />
             ) : (
-              <QBOTMessageList messages={qbotMessages} />
+              <>
+                <QBOTMessageList messages={qbotMessages} />
+                {isQBotTyping && <QBOTTypingIndicator />}
+              </>
             )}
           </QBOTChatArea>
+          
+          {/* Input Area */}
+          <QBOTInputArea 
+            onSendMessage={async (text) => {
+              const newMessage: Message = {
+                id: Date.now().toString(),
+                text,
+                sender: 'user',
+                timestamp: new Date()
+              };
+              setQBotMessages([...qbotMessages, newMessage]);
+              
+              // Show typing indicator
+              setIsQBotTyping(true);
+              
+              // Call QBOT API
+              try {
+                const response = await apiRequest('/api/qbot/message', 'POST', { message: text });
+                const data = await response.json();
+                
+                const botResponse: Message = {
+                  id: (Date.now() + 1).toString(),
+                  text: data.response,
+                  sender: 'bot',
+                  timestamp: new Date(data.timestamp)
+                };
+                setQBotMessages(prev => [...prev, botResponse]);
+              } catch (error) {
+                console.error('Error sending message to QBOT:', error);
+                const errorResponse: Message = {
+                  id: (Date.now() + 1).toString(),
+                  text: 'Sorry, I encountered an error. Please try again.',
+                  sender: 'bot',
+                  timestamp: new Date()
+                };
+                setQBotMessages(prev => [...prev, errorResponse]);
+              } finally {
+                setIsQBotTyping(false);
+              }
+            }}
+          />
         </div>
       </QBOTChatContainer>
     </div>

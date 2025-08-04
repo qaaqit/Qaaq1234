@@ -46,7 +46,7 @@ export default function QBOTChatContainer({ isOpen, onClose, children }: QBOTCha
           inset-0 sm:inset-auto
           sm:w-[400px] sm:h-[600px] sm:rounded-lg
           w-full h-full
-          bg-white shadow-xl
+          bg-white shadow-xl sm:border sm:border-gray-200
           flex flex-col
           animate-in fade-in slide-in-from-bottom-5 sm:slide-in-from-bottom-0 sm:zoom-in-95"
         onClick={(e) => e.stopPropagation()}

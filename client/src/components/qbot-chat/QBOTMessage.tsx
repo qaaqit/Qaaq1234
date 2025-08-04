@@ -10,7 +10,7 @@ export default function QBOTMessage({ message }: QBOTMessageProps) {
   
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
-      <div className={`max-w-[80%] ${isUser ? 'order-2' : 'order-1'}`}>
+      <div className={`max-w-[80%] ${isUser ? 'order-2' : 'order-1'} animate-in zoom-in-95 duration-200`}>
         {/* Message Bubble */}
         <div 
           className={`

@@ -432,6 +432,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // QBOT Chat API endpoint
+  app.post("/api/qbot/message", authenticateToken, async (req: any, res) => {
+    try {
+      const { message } = req.body;
+      const userId = req.userId;
+
+      if (!message || !message.trim()) {
+        return res.status(400).json({ message: "Message is required" });
+      }
+
+      // Here we would integrate with the actual WhatsApp bot service
+      // For now, we'll simulate a response
+      const responses = [
+        "I can help you find sailors nearby. Which port are you interested in?",
+        "Looking for maritime professionals in your area. Let me search the database.",
+        "I found several sailors at anchor near your location. Would you like their details?",
+        "You can use the 'Koi Hai?' feature to discover nearby maritime professionals.",
+        "I can assist with port navigation and finding crew members. What do you need help with?"
+      ];
+
+      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+      
+      // In production, this would call the WhatsApp bot service
+      // const whatsappService = await import('./whatsapp-bot');
+      // const response = await whatsappService.sendMessage(userId, message);
+
+      res.json({
+        response: randomResponse,
+        timestamp: new Date()
+      });
+
+    } catch (error) {
+      console.error("Error processing QBOT message:", error);
+      res.status(500).json({ message: "Failed to process message" });
+    }
+  });
+
 
 
   // Admin middleware
