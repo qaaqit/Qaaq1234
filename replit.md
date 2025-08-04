@@ -1,9 +1,10 @@
-# QaaqConnect - Maritime Community Platform
+# QaaqConnect Mariana - Maritime Community Platform
 
 ## Overview
 QaaqConnect is a comprehensive maritime networking platform designed to enhance shore leaves, simplify shopping for sailors, and facilitate social connections. It enables sailors to discover nearby peers and locals, access a curated marketplace for maritime essentials, and engage in location-based discussions. The platform aims to foster an authentic maritime community experience by integrating proximity-based user discovery, real-time location mapping, direct communication tools, and a structured content navigation system.
 
 ## Recent Major Changes
+- **January 2025 - QaaqConnect Mariana**: Fixed critical mobile responsiveness issue on landing page. The login form now displays correctly across all screen sizes with improved viewport handling, proper fallback backgrounds, and enhanced visibility on mobile devices. Profile dropdown z-index conflicts resolved.
 - **January 2025**: Completely removed AIS (Automatic Identification System) API integration for real-time ship tracking. The system now focuses solely on user-based location discovery without external ship tracking capabilities.
 - **January 2025**: Enabled Google Maps for all users (previously restricted to admin only). Completely removed Leaflet Maps integration. All users now have access to map type controls (Road/Satellite/Hybrid views).
 - **August 2025**: Updated application logo from anchor icon to official QAAQ golden duck logo. Integrated WhatsApp profile data (profile pictures and display names) from QBOT scavenged data for enhanced user identification.
