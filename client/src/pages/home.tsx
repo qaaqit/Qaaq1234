@@ -69,10 +69,10 @@ export default function Home({ onSuccess }: HomeProps) {
       </div>
       {/* Overlay for better contrast */}
       <div className="absolute inset-0 z-10 bg-black/20"></div>
-      {/* Translucent Login Box - Always positioned at top */}
-      <div className={`absolute z-20 top-4 right-4 left-4 flex justify-center transition-all duration-500`}>
+      {/* Translucent Login Box - Mobile Responsive */}
+      <div className={`absolute z-20 top-2 sm:top-4 right-2 sm:right-4 left-2 sm:left-4 flex justify-center transition-all duration-500`}>
         <div 
-          className="backdrop-blur-lg border border-white/30 shadow-2xl rounded-xl relative transition-all duration-500 p-6 w-full max-w-md bg-[#f5e9e900]"
+          className="backdrop-blur-md sm:backdrop-blur-lg border border-white/30 shadow-2xl rounded-xl relative transition-all duration-500 p-4 sm:p-6 w-full max-w-[calc(100vw-1rem)] sm:max-w-md bg-white/10 sm:bg-[#f5e9e900]"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Chevron toggle button in top-right corner */}
@@ -90,21 +90,21 @@ export default function Home({ onSuccess }: HomeProps) {
           
           {/* Header */}
           <div className={`transition-all duration-500 ${
-            isMinimized ? 'flex items-center space-x-3 mb-0' : 'text-center mb-6'
+            isMinimized ? 'flex items-center space-x-3 mb-0' : 'text-center mb-4 sm:mb-6'
           }`}>
             <div className={`bg-ocean-teal/20 rounded-full flex items-center justify-center transition-all duration-500 ${
               isMinimized 
                 ? 'w-8 h-8 flex-shrink-0' 
-                : 'w-12 h-12 mx-auto mb-3'
+                : 'w-10 sm:w-12 h-10 sm:h-12 mx-auto mb-2 sm:mb-3'
             }`}>
               <i className={`fas fa-anchor text-ocean-teal transition-all duration-500 ${
-                isMinimized ? 'text-sm' : 'text-xl'
+                isMinimized ? 'text-sm' : 'text-lg sm:text-xl'
               }`}></i>
             </div>
             {!isMinimized && (
               <>
-                <h1 className="text-2xl font-bold text-navy-blue">QaaqConnect</h1>
-                <p className="text-gray-600 text-sm">Maritime Community Login</p>
+                <h1 className="text-xl sm:text-2xl font-bold text-navy-blue">QaaqConnect</h1>
+                <p className="text-gray-600 text-xs sm:text-sm">Maritime Community Login</p>
               </>
             )}
             {isMinimized && (
@@ -118,9 +118,9 @@ export default function Home({ onSuccess }: HomeProps) {
           {/* Login Form */}
           {!isMinimized && (
             <>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="userId" className="text-sm font-medium text-gray-700">
+              <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+                <div className="space-y-1 sm:space-y-2">
+                  <Label htmlFor="userId" className="text-xs sm:text-sm font-medium text-gray-700">
                     USER NAME (This may be ur country code +91 & whatsapp number )
                   </Label>
                   <Input
@@ -129,20 +129,20 @@ export default function Home({ onSuccess }: HomeProps) {
                     value={formData.userId}
                     onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
                     placeholder="Enter your name, email, or phone number"
-                    className="bg-white/90 border-gray-200 focus:border-ocean-teal focus:bg-white"
+                    className="bg-white/90 border-gray-200 focus:border-ocean-teal focus:bg-white text-sm sm:text-base"
                     disabled={loading}
                   />
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm font-medium text-gray-700">Password (This may be ur city example mumbai)</Label>
+                <div className="space-y-1 sm:space-y-2">
+                  <Label htmlFor="password" className="text-xs sm:text-sm font-medium text-gray-700">Password (This may be ur city example mumbai)</Label>
                   <Input
                     id="password"
                     type="password"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     placeholder="Enter your password"
-                    className="bg-white/90 border-gray-200 focus:border-ocean-teal focus:bg-white"
+                    className="bg-white/90 border-gray-200 focus:border-ocean-teal focus:bg-white text-sm sm:text-base"
                     disabled={loading}
                   />
                 </div>
