@@ -66,6 +66,23 @@
 }
 
 @layer utilities {
+  /* Bottom navigation safe area */
+  .pb-safe {
+    padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+  }
+  
+  /* Ensure proper viewport handling on mobile */
+  html {
+    height: 100%;
+    height: -webkit-fill-available;
+  }
+  
+  body {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
   .gradient-bg {
     background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 25%, #ffa500 50%, #ffd93d 75%, #ffed4e 100%);
     position: relative;

@@ -33,8 +33,8 @@ export default function BottomNav({ user }: BottomNavProps) {
   const navItems = baseNavItems;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-red-50 to-yellow-50 border-t-2 border-orange-300 shadow-lg z-50">
-      <div className="flex items-center justify-around py-2 relative">
+    <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-red-50 to-yellow-50 border-t-2 border-orange-300 shadow-lg z-50 pb-safe">
+      <div className="flex items-center justify-around py-3 px-2 relative min-h-[70px]">
         <div className="absolute inset-0 bg-gradient-to-r from-red-400/10 via-orange-400/10 to-yellow-400/10 animate-pulse"></div>
         {navItems.map((item) => (
           <Button
@@ -42,27 +42,27 @@ export default function BottomNav({ user }: BottomNavProps) {
             variant="ghost"
             size="sm"
             onClick={() => setLocation(item.path)}
-            className={`relative flex flex-col items-center p-3 transition-all duration-300 ${
+            className={`relative flex flex-col items-center p-2 transition-all duration-300 ${
               item.active 
                 ? "text-orange-600 bg-gradient-to-br from-yellow-200/50 to-orange-200/50 shadow-md scale-105" 
                 : "text-red-500 hover:text-orange-500 hover:bg-yellow-100/50"
-            } rounded-xl`}
+            } rounded-xl min-w-[60px]`}
           >
-            <i className={`${item.icon} text-xl mb-1 ${
+            <i className={`${item.icon} text-lg mb-1 ${
               item.active ? "animate-bounce" : ""
             }`}></i>
-            <div className="text-xs font-bold text-center leading-tight">
-              <div className={`${item.active ? "text-orange-700" : ""}`}>
+            <div className="text-[10px] font-bold text-center leading-tight max-w-full">
+              <div className={`${item.active ? "text-orange-700" : ""} truncate`}>
                 {Array.isArray(item.label) ? item.label[0] : item.label}
               </div>
               {Array.isArray(item.label) && (
-                <div className={`${item.active ? "text-yellow-600" : "text-red-400"}`}>
+                <div className={`${item.active ? "text-yellow-600" : "text-red-400"} truncate`}>
                   {item.label[1]}
                 </div>
               )}
             </div>
             {item.active && (
-              <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-8 h-1 bg-gradient-to-r from-orange-400 to-yellow-400 rounded-full"></div>
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-8 h-1 bg-gradient-to-r from-orange-400 to-yellow-400 rounded-full"></div>
             )}
           </Button>
         ))}
