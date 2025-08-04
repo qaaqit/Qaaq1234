@@ -23,6 +23,7 @@ import { type User } from "@/lib/auth";
 import { apiRequest } from "@/lib/queryClient";
 import { MapPin, Navigation, Ship, Satellite, Crown } from "lucide-react";
 import UserDropdown from "@/components/user-dropdown";
+import BottomNav from "@/components/bottom-nav";
 import qaaqLogo from "@/assets/qaaq-logo.png";
 
 interface Post {
@@ -167,11 +168,18 @@ export default function Discover({ user }: DiscoverProps) {
             </button>
             <div className="flex items-center space-x-2 sm:space-x-4">
               <Button
-                onClick={() => setShowQBOTChat(true)}
+                onClick={() => {
+                  if (!showQBOTChat) {
+                    setShowQBOTChat(true);
+                    setIsQBOTMinimized(false);
+                  } else {
+                    setIsQBOTMinimized(!isQBOTMinimized);
+                  }
+                }}
                 variant="outline"
                 size="sm"
                 className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-xs sm:text-sm px-2 sm:px-3"
-                title="QBOT - Maritime Assistant"
+                title={showQBOTChat ? (isQBOTMinimized ? "Expand QBOT" : "Minimize QBOT") : "Open QBOT - Maritime Assistant"}
               >
                 <i className="fab fa-whatsapp mr-1 sm:mr-2"></i>
                 <span className="hidden sm:inline">QBOT</span>
@@ -269,7 +277,7 @@ export default function Discover({ user }: DiscoverProps) {
       </QBOTChatContainer>
       
       {/* Main Content Area - Full Screen Map */}
-      <div className={`flex-1 overflow-hidden relative ${showQBOTChat && !isQBOTMinimized ? 'h-0' : ''}`}>
+      <div className="flex-1 overflow-hidden relative">
         {/* Premium Mode Notice */}
         {isPremiumMode && !user.isAdmin && (
           <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 bg-yellow-50 border border-yellow-200 rounded-lg p-4 shadow-lg max-w-sm">
@@ -309,6 +317,9 @@ export default function Discover({ user }: DiscoverProps) {
           </div>
         )}
       </div>
+      
+      {/* Bottom Navigation */}
+      <BottomNav user={user} />
     </div>
   );
 }
