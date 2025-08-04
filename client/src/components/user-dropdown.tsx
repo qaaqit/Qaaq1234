@@ -218,9 +218,9 @@ export default function UserDropdown({ user, className = "" }: UserDropdownProps
               <button
                 key={index}
                 onClick={item.onClick}
-                className="w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-slate-700 transition-colors text-white"
+                className="w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-orange-50 transition-colors text-gray-700"
               >
-                <item.icon className="w-5 h-5 text-slate-400" />
+                <item.icon className="w-5 h-5 text-orange-600" />
                 <span className="text-sm">{item.label}</span>
               </button>
             ))}
@@ -228,7 +228,7 @@ export default function UserDropdown({ user, className = "" }: UserDropdownProps
             {/* Logout Button */}
             <button
               onClick={handleLogout}
-              className="w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-red-600/20 transition-colors text-red-400 border-t border-slate-700 mt-2"
+              className="w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-red-50 transition-colors text-red-600 border-t border-orange-200 mt-2"
             >
               <LogOut className="w-5 h-5" />
               <span className="text-sm">Sign Out</span>
