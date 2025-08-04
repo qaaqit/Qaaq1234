@@ -48,6 +48,7 @@ export default function Discover({ user }: DiscoverProps) {
   const [showNearbyCard, setShowNearbyCard] = useState(false);
   const [showWhatsAppPanel, setShowWhatsAppPanel] = useState(false);
   const [showQBOTChat, setShowQBOTChat] = useState(false);
+  const [isQBOTMinimized, setIsQBOTMinimized] = useState(false);
   const [qbotMessages, setQBotMessages] = useState<Message[]>([]);
   const [isQBotTyping, setIsQBotTyping] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
@@ -145,7 +146,7 @@ export default function Discover({ user }: DiscoverProps) {
   return (
     <div className="h-screen bg-slate-50 flex flex-col">
       {/* Header - Mobile Optimized */}
-      <header className="gradient-bg text-white relative overflow-hidden flex-shrink-0 z-[9998]">
+      <header className="gradient-bg text-white relative overflow-hidden flex-shrink-0 z-[110]">
         <div className="absolute inset-0 opacity-10">
           <div className="w-full h-full bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Cpath%20d%3D%22M20%2050h60m-50-20h40m-30%2040h20%22%20stroke%3D%22white%22%20stroke-width%3D%221%22%20fill%3D%22none%22%2F%3E%3C%2Fsvg%3E')] bg-[length:50px_50px]"></div>
         </div>
@@ -181,8 +182,94 @@ export default function Discover({ user }: DiscoverProps) {
           </div>
         </div>
       </header>
+      
+      {/* QBOT Chat Container - Positioned below header */}
+      <QBOTChatContainer 
+        isOpen={showQBOTChat}
+        onClose={() => {
+          setShowQBOTChat(false);
+          setIsQBOTMinimized(false);
+        }}
+        isMinimized={isQBOTMinimized}
+      >
+        <div className="flex flex-col h-full">
+          {/* Gradient Header */}
+          <QBOTChatHeader 
+            onClear={() => {
+              setQBotMessages([]);
+              setIsQBotTyping(false);
+              toast({
+                title: "Chat Cleared",
+                description: "Your conversation has been cleared.",
+              });
+            }}
+            onToggleMinimize={() => {
+              setIsQBOTMinimized(!isQBOTMinimized);
+            }}
+            isMinimized={isQBOTMinimized}
+          />
+          
+          {/* Chat Area with Grid Pattern - hide when minimized */}
+          {!isQBOTMinimized && (
+            <>
+              <QBOTChatArea>
+                {qbotMessages.length === 0 ? (
+                  <QBOTWelcomeState />
+                ) : (
+                  <>
+                    <QBOTMessageList messages={qbotMessages} />
+                    {isQBotTyping && <QBOTTypingIndicator />}
+                  </>
+                )}
+              </QBOTChatArea>
+              
+              {/* Input Area */}
+              <QBOTInputArea 
+                onSendMessage={async (text) => {
+              const newMessage: Message = {
+                id: Date.now().toString(),
+                text,
+                sender: 'user',
+                timestamp: new Date()
+              };
+              setQBotMessages([...qbotMessages, newMessage]);
+              
+              // Show typing indicator
+              setIsQBotTyping(true);
+              
+              // Call QBOT API
+              try {
+                const response = await apiRequest('/api/qbot/message', 'POST', { message: text });
+                const data = await response.json();
+                
+                const botResponse: Message = {
+                  id: (Date.now() + 1).toString(),
+                  text: data.response,
+                  sender: 'bot',
+                  timestamp: new Date(data.timestamp)
+                };
+                setQBotMessages(prev => [...prev, botResponse]);
+              } catch (error) {
+                console.error('Error sending message to QBOT:', error);
+                const errorResponse: Message = {
+                  id: (Date.now() + 1).toString(),
+                  text: 'Sorry, I encountered an error. Please try again.',
+                  sender: 'bot',
+                  timestamp: new Date()
+                };
+                setQBotMessages(prev => [...prev, errorResponse]);
+              } finally {
+                setIsQBotTyping(false);
+              }
+            }}
+          />
+            </>
+          )}
+        </div>
+      </QBOTChatContainer>
+      
       {/* Main Content Area - Full Screen Map */}
-      <div className="flex-1 overflow-hidden relative">
+      <div className={`flex-1 overflow-hidden relative ${showQBOTChat && !isQBOTMinimized ? 'h-0' : ''}`}>
         {/* Premium Mode Notice */}
         {isPremiumMode && !user.isAdmin && (
           <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 bg-yellow-50 border border-yellow-200 rounded-lg p-4 shadow-lg max-w-sm">
@@ -222,87 +309,6 @@ export default function Discover({ user }: DiscoverProps) {
           </div>
         )}
       </div>
-
-      {/* QBOT Chat Container */}
-      <QBOTChatContainer 
-        isOpen={showQBOTChat}
-        onClose={() => setShowQBOTChat(false)}
-      >
-        <div className="flex flex-col h-full">
-          {/* Gradient Header */}
-          <QBOTChatHeader 
-            onClear={() => {
-              setQBotMessages([]);
-              setIsQBotTyping(false);
-              toast({
-                title: "Chat Cleared",
-                description: "Your conversation has been cleared.",
-              });
-            }}
-            onToggleFullscreen={() => {
-              // Fullscreen toggle would be implemented here
-              toast({
-                title: "Fullscreen Mode",
-                description: "Fullscreen mode coming soon!",
-              });
-            }}
-            isFullscreen={false}
-          />
-          
-          {/* Chat Area with Grid Pattern */}
-          <QBOTChatArea>
-            {qbotMessages.length === 0 ? (
-              <QBOTWelcomeState />
-            ) : (
-              <>
-                <QBOTMessageList messages={qbotMessages} />
-                {isQBotTyping && <QBOTTypingIndicator />}
-              </>
-            )}
-          </QBOTChatArea>
-          
-          {/* Input Area */}
-          <QBOTInputArea 
-            onSendMessage={async (text) => {
-              const newMessage: Message = {
-                id: Date.now().toString(),
-                text,
-                sender: 'user',
-                timestamp: new Date()
-              };
-              setQBotMessages([...qbotMessages, newMessage]);
-              
-              // Show typing indicator
-              setIsQBotTyping(true);
-              
-              // Call QBOT API
-              try {
-                const response = await apiRequest('/api/qbot/message', 'POST', { message: text });
-                const data = await response.json();
-                
-                const botResponse: Message = {
-                  id: (Date.now() + 1).toString(),
-                  text: data.response,
-                  sender: 'bot',
-                  timestamp: new Date(data.timestamp)
-                };
-                setQBotMessages(prev => [...prev, botResponse]);
-              } catch (error) {
-                console.error('Error sending message to QBOT:', error);
-                const errorResponse: Message = {
-                  id: (Date.now() + 1).toString(),
-                  text: 'Sorry, I encountered an error. Please try again.',
-                  sender: 'bot',
-                  timestamp: new Date()
-                };
-                setQBotMessages(prev => [...prev, errorResponse]);
-              } finally {
-                setIsQBotTyping(false);
-              }
-            }}
-          />
-        </div>
-      </QBOTChatContainer>
     </div>
   );
 }
