@@ -391,7 +391,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                 placeholder="Sailors/ Ships/ Company"
                 value={searchQuery}
                 onChange={(e) => handleSearchInput(e.target.value)}
-                className="w-full pl-8 sm:pl-10 pr-8 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-8 sm:pl-10 pr-8 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
               <Search size={14} className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               {searchQuery && (
@@ -426,7 +426,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                         id="onlineOnly"
                         checked={showOnlineOnly}
                         onChange={(e) => setShowOnlineOnly(e.target.checked)}
-                        className="w-4 h-4 text-blue-600"
+                        className="w-4 h-4 text-orange-600"
                       />
                       <label htmlFor="onlineOnly" className="text-sm">Online Only</label>
                     </div>
@@ -441,7 +441,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                             setShowFilterDropdown(false);
                           }}
                           className={`w-full text-left px-2 py-1 rounded text-sm ${
-                            selectedRankCategory === category.id ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50'
+                            selectedRankCategory === category.id ? 'bg-orange-50 text-orange-700' : 'hover:bg-gray-50'
                           }`}
                         >
                           {category.label}
@@ -506,7 +506,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
           {/* Right side - Search Results/Status */}
           <div className="flex items-center space-x-2">
             {searchQuery.trim() ? (
-              <div className="px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-xs font-medium text-blue-700">
+              <div className="px-3 py-2 bg-orange-50 border border-orange-200 rounded-lg text-xs font-medium text-orange-700">
                 {isLoading ? '🔍 Searching...' : `📊 ${allUsers.length} results for "${searchQuery.trim()}" • Showing ${filteredUsers.length} on map`}
               </div>
             ) : (
