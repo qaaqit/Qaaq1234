@@ -1,15 +1,15 @@
-import { Trash2, ChevronUp, ChevronDown } from 'lucide-react';
+import { Trash2, Maximize2, Minimize2 } from 'lucide-react';
 
 interface QBOTChatHeaderProps {
   onClear?: () => void;
-  onToggleMinimize?: () => void;
-  isMinimized?: boolean;
+  onToggleFullscreen?: () => void;
+  isFullscreen?: boolean;
 }
 
 export default function QBOTChatHeader({ 
   onClear, 
-  onToggleMinimize, 
-  isMinimized = false 
+  onToggleFullscreen, 
+  isFullscreen = false 
 }: QBOTChatHeaderProps) {
   return (
     <div className="relative h-[60px] bg-gradient-to-r from-red-500 to-orange-500 shadow-lg flex items-center justify-between px-4 sm:rounded-t-lg">
@@ -28,17 +28,17 @@ export default function QBOTChatHeader({
         QBOT AI
       </h2>
 
-      {/* Right: Minimize Toggle Icon */}
+      {/* Right: Fullscreen Toggle Icon */}
       <button
-        onClick={onToggleMinimize}
+        onClick={onToggleFullscreen}
         className="p-2 rounded-full hover:bg-white/10 transition-colors"
-        aria-label={isMinimized ? "Expand chat" : "Minimize chat"}
-        title={isMinimized ? "Expand chat" : "Minimize chat"}
+        aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+        title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
       >
-        {isMinimized ? (
-          <ChevronUp size={20} className="text-white" />
+        {isFullscreen ? (
+          <Minimize2 size={20} className="text-white" />
         ) : (
-          <ChevronDown size={20} className="text-white" />
+          <Maximize2 size={20} className="text-white" />
         )}
       </button>
     </div>
