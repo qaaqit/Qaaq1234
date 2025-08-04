@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { authApi, setStoredToken, setStoredUser, type User } from "@/lib/auth";
-import UsersMapDual from "@/components/users-map-dual";
+// import UsersMapDual from "@/components/users-map-dual";
 
 interface HomeProps {
   onSuccess?: (user: User) => void;
@@ -60,19 +60,15 @@ export default function Home({ onSuccess }: HomeProps) {
 
   return (
     <div 
-      className="min-h-screen relative overflow-hidden cursor-pointer"
+      className="min-h-screen relative overflow-hidden cursor-pointer bg-gray-100"
       onClick={() => setIsMinimized(false)}
     >
-      {/* Full Screen Map Background */}
-      <div className="absolute inset-0 z-0">
-        <UsersMapDual showNearbyCard={false} />
-      </div>
-      {/* Overlay for better contrast */}
-      <div className="absolute inset-0 z-10 bg-black/20"></div>
+      {/* Simple gradient background instead of map */}
+      <div className="absolute inset-0 z-0 bg-gradient-to-br from-blue-50 to-gray-100"></div>
       {/* Translucent Login Box - Always positioned at top */}
-      <div className={`absolute z-20 top-4 right-4 left-4 flex justify-center transition-all duration-500`}>
+      <div className={`absolute z-10 top-4 right-4 left-4 flex justify-center transition-all duration-500`}>
         <div 
-          className="backdrop-blur-lg border border-white/30 shadow-2xl rounded-xl relative transition-all duration-500 p-6 w-full max-w-md bg-[#f5e9e900]"
+          className="backdrop-blur-lg border border-gray-200 shadow-2xl rounded-xl relative transition-all duration-500 p-6 w-full max-w-md bg-white/80"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Chevron toggle button in top-right corner */}
