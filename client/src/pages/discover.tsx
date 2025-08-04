@@ -145,11 +145,11 @@ export default function Discover({ user }: DiscoverProps) {
                 variant="outline"
                 size="sm"
                 className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-xs sm:text-sm px-2 sm:px-3"
-                title="Discover Bot - Maritime Assistant"
+                title="QBOT - Maritime Assistant"
               >
                 <i className="fab fa-whatsapp mr-1 sm:mr-2"></i>
-                <span className="hidden sm:inline">Discover</span>
-                <span className="sm:hidden">Bot</span>
+                <span className="hidden sm:inline">QBOT</span>
+                <span className="sm:hidden">QBOT</span>
               </Button>
               <UserDropdown user={user} />
             </div>
