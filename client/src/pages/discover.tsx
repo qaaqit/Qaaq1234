@@ -192,7 +192,7 @@ export default function Discover({ user }: DiscoverProps) {
                   <ChevronDown size={14} className="ml-1 text-yellow-200" />
                 )}
               </Button>
-              <UserDropdown user={user} />
+              <UserDropdown user={user} onLogout={() => window.location.reload()} />
             </div>
           </div>
         </div>

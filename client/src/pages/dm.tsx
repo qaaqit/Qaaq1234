@@ -226,7 +226,7 @@ export default function DMPage() {
                   <p className="text-sm text-orange-600 italic font-medium">direct message</p>
                 </div>
               </button>
-              {user && <UserDropdown user={user} />}
+              {user && <UserDropdown user={user} onLogout={() => window.location.reload()} />}
             </div>
           </div>
         </header>

@@ -552,7 +552,7 @@ export default function Post({ user }: PostProps) {
                   <p className="text-sm text-orange-600 italic font-medium">group chat</p>
                 </div>
               </button>
-              {user && <UserDropdown user={user} />}
+              {user && <UserDropdown user={user} onLogout={() => window.location.reload()} />}
             </div>
           </div>
         </header>
