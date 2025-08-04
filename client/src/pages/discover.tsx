@@ -13,6 +13,7 @@ import CPSSNavigator from "@/components/cpss-navigator";
 import QBOTChatContainer from "@/components/qbot-chat/QBOTChatContainer";
 import QBOTChatHeader from "@/components/qbot-chat/QBOTChatHeader";
 import QBOTChatArea from "@/components/qbot-chat/QBOTChatArea";
+import QBOTWelcomeState from "@/components/qbot-chat/QBOTWelcomeState";
 import { useLocation } from "@/hooks/useLocation";
 import { useLocation as useWouterLocation } from "wouter";
 import { type User } from "@/lib/auth";
@@ -223,9 +224,8 @@ export default function Discover({ user }: DiscoverProps) {
           
           {/* Chat Area with Grid Pattern */}
           <QBOTChatArea>
-            <div className="h-full flex items-center justify-center">
-              <p className="text-gray-500">QBOT Chat - Implementation in progress...</p>
-            </div>
+            {/* Welcome State - shown when no messages */}
+            <QBOTWelcomeState />
           </QBOTChatArea>
         </div>
       </QBOTChatContainer>
