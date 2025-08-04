@@ -11,6 +11,7 @@ import Verify from "@/pages/verify";
 import Discover from "@/pages/discover";
 import Post from "@/pages/post";
 import Admin from "@/pages/admin";
+import BotRulesAdmin from "@/pages/admin/bot-rules";
 import ChatPage from "@/pages/chat";
 import DMPage from "@/pages/dm";
 import UserProfile from "@/pages/user-profile";
@@ -70,6 +71,7 @@ function Router() {
           <Route path="/share/question/:id" component={() => user ? <QuestionPage /> : <Home />} />
           <Route path="/rank-groups" component={() => user ? <RankGroupsPanel /> : <Home />} />
           <Route path="/admin" component={() => user ? <Admin /> : <Home />} />
+          <Route path="/admin/bot-rules" component={() => user ? <BotRulesAdmin /> : <Home />} />
 
           <Route component={NotFound} />
         </Switch>

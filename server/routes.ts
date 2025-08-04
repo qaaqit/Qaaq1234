@@ -445,6 +445,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`JWT decoded user ID: ${userId}`);
       console.log(`Set req.userId to: ${userId}`);
 
+      // Load current QBOT rules from database
+      let activeRules = null;
+      try {
+        const rulesResult = await pool.query(`
+          SELECT content FROM bot_rules WHERE name = 'QBOTRULESV1' AND status = 'active'
+        `);
+        if (rulesResult.rows.length > 0) {
+          activeRules = rulesResult.rows[0].content;
+          console.log('📋 Loaded QBOT rules from database');
+        }
+      } catch (error) {
+        console.log('⚠️ Failed to load QBOT rules from database, using defaults');
+      }
+
       // Get user for context - allow QBOT to work even without full user registration
       let user;
       try {
@@ -492,7 +506,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       // Commandment I: AI-powered technical responses
       else if (isQuestionMessage(message) || isTechnicalMessage(message)) {
-        response = await generateAIResponse(message, category, user);
+        response = await generateAIResponse(message, category, user, activeRules);
       }
       // Location/proximity requests (Commandment VI)
       else if (isLocationQuery(message)) {
@@ -504,7 +518,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       // Default AI response for all other messages (Commandment I)
       else {
-        response = await generateAIResponse(message, category, user);
+        response = await generateAIResponse(message, category, user, activeRules);
       }
 
       // Commandment II: Ensure message uniqueness (simplified for API)
@@ -624,7 +638,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return followUps[Math.floor(Math.random() * followUps.length)];
   }
 
-  async function generateAIResponse(message: string, category: string, user: any): Promise<string> {
+  async function generateAIResponse(message: string, category: string, user: any, activeRules?: string): Promise<string> {
     // Commandment I: AI-powered responses for all messages
     try {
       if (!process.env.OPENAI_API_KEY) {
@@ -639,10 +653,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userRank = user?.maritimeRank || 'Maritime Professional';
       const userShip = user?.shipName ? `aboard ${user.shipName}` : 'shore-based';
       
-      const systemPrompt = `You are QBOT, an expert maritime engineering assistant specializing in ${category}. 
+      let systemPrompt = `You are QBOT, an expert maritime engineering assistant specializing in ${category}. 
       Provide technical, practical advice for maritime professionals. Keep responses concise and actionable.
       User context: ${userRank} ${userShip}.
       Always prioritize safety and follow maritime regulations.`;
+      
+      // Include active rules context if available
+      if (activeRules) {
+        systemPrompt += `\n\nCurrent bot rules: Follow these guidelines from the active bot documentation:\n${activeRules.substring(0, 1000)}...`;
+      }
 
       const response = await openai.chat.completions.create({
         model: "gpt-3.5-turbo",
@@ -872,6 +891,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching country analytics:", error);
       res.status(500).json({ message: "Failed to fetch country analytics" });
+    }
+  });
+
+  // ==== BOT RULES MANAGEMENT ENDPOINTS ====
+  
+  // Get specific bot rule by name
+  app.get('/api/admin/bot-rules/:name', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      const { name } = req.params;
+      
+      const result = await pool.query(`
+        SELECT * FROM bot_rules WHERE name = $1
+      `, [name]);
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ message: 'Bot rule not found' });
+      }
+
+      res.json(result.rows[0]);
+    } catch (error) {
+      console.error('Error fetching bot rule:', error);
+      res.status(500).json({ message: 'Failed to fetch bot rule' });
+    }
+  });
+
+  // Update specific bot rule by name
+  app.put('/api/admin/bot-rules/:name', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      const { name } = req.params;
+      const { content, version } = req.body;
+      const userId = req.userId;
+
+      if (!content || !version) {
+        return res.status(400).json({ message: 'Content and version are required' });
+      }
+
+      const result = await pool.query(`
+        UPDATE bot_rules 
+        SET content = $1, version = $2, updated_at = NOW(), created_by = $3
+        WHERE name = $4
+        RETURNING *
+      `, [content, version, userId, name]);
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ message: 'Bot rule not found' });
+      }
+
+      console.log(`🤖 Bot rule ${name} updated by admin ${userId} to version ${version}`);
+      res.json(result.rows[0]);
+    } catch (error) {
+      console.error('Error updating bot rule:', error);
+      res.status(500).json({ message: 'Failed to update bot rule' });
+    }
+  });
+
+  // Get all bot rules
+  app.get('/api/admin/bot-rules', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      const result = await pool.query(`
+        SELECT * FROM bot_rules ORDER BY updated_at DESC
+      `);
+      
+      res.json(result.rows);
+    } catch (error) {
+      console.error('Error fetching bot rules:', error);
+      res.status(500).json({ message: 'Failed to fetch bot rules' });
     }
   });
 

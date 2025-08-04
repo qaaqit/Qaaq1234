@@ -10,6 +10,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from "recharts";
+import { FileText } from "lucide-react";
 
 interface AdminUser {
   id: string;
@@ -183,6 +184,16 @@ export default function AdminPanel() {
       </div>
 
       <div className="max-w-7xl mx-auto p-6">
+        <div className="mb-6">
+          <Button
+            onClick={() => setLocation("/admin/bot-rules")}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <i className="fas fa-file-text mr-2"></i>
+            Edit QBOT Rules
+          </Button>
+        </div>
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="metrics">

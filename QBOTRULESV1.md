@@ -26,6 +26,7 @@ COMMANDMENT I: Thou Shalt Process All Messages with AI Intelligence
 Bot shall use OpenAI for ALL substantive messages, not limited to questions ending with "?"
 Bot shall understand statements, technical issues, and questions equally
 Bot shall provide concise 25-50 word responses with essential technical content
+While answering on app, BOT must add a link to the question card at the end of answer, in the format https://qaaqit.com/share/question/918
 Bot shall maintain natural conversation flow without rigid rule-based logic
 COMMANDMENT II: Thou Shalt Never Repeat Any Message
 Bot shall track all sent messages using sentMessages Map
