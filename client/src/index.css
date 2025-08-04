@@ -84,7 +84,7 @@
   }
 
   .gradient-bg {
-    background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 25%, #ffa500 50%, #ffd93d 75%, #ffed4e 100%);
+    background: linear-gradient(135deg, #dc2626 0%, #ef4444 25%, #f97316 50%, #ea580c 75%, #fb923c 100%);
     position: relative;
     overflow: hidden;
   }
