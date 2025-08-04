@@ -285,7 +285,7 @@ export function QuestionsTab() {
                     {question.author_name}
                   </h4>
                   {question.author_rank && (
-                    <p className="text-sm text-gray-600">{formatRank(question.author_rank)}</p>
+                    <p className="text-sm text-[#f7fafc]">{formatRank(question.author_rank)}</p>
                   )}
                 </div>
               </div>
@@ -459,12 +459,11 @@ export function QuestionsTab() {
           </div>
         </CardHeader>
       </Card>
-
       {/* Questions List */}
       <div className="space-y-4">
         {status === 'pending' ? (
           // Loading skeletons
-          Array.from({ length: 5 }).map((_, i) => (
+          (Array.from({ length: 5 }).map((_, i) => (
             <Card key={i} className="border-2 border-gray-200">
               <CardContent className="p-4">
                 <Skeleton className="h-4 w-3/4 mb-2" />
@@ -472,7 +471,7 @@ export function QuestionsTab() {
                 <Skeleton className="h-16 w-full" />
               </CardContent>
             </Card>
-          ))
+          )))
         ) : status === 'error' ? (
           <Card className="border-2 border-red-200">
             <CardContent className="p-8 text-center">
