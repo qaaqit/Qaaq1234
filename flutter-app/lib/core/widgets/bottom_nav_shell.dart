@@ -24,9 +24,19 @@ class _BottomNavShellState extends State<BottomNavShell> {
       route: '/discovery',
     ),
     BottomNavItem(
-      icon: LucideIcons.messageCircle,
-      label: 'Chats',
-      route: '/chat',
+      icon: LucideIcons.bot,
+      label: 'QBOT',
+      route: '/qbot',
+    ),
+    BottomNavItem(
+      icon: LucideIcons.helpCircle,
+      label: 'Ch13',
+      route: '/questions',
+    ),
+    BottomNavItem(
+      icon: LucideIcons.users,
+      label: 'Groups',
+      route: '/groups',
     ),
     BottomNavItem(
       icon: LucideIcons.user,

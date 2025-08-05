@@ -8,6 +8,9 @@ import '../../features/discovery/presentation/pages/discovery_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/chat/presentation/pages/chat_list_page.dart';
 import '../../features/chat/presentation/pages/chat_page.dart';
+import '../../features/qbot/presentation/pages/qbot_chat_page.dart';
+import '../../features/questions/presentation/pages/questions_page.dart';
+import '../../features/groups/presentation/pages/groups_page.dart';
 import '../widgets/bottom_nav_shell.dart';
 
 class AppRouter {
@@ -44,6 +47,24 @@ class AppRouter {
           GoRoute(
             path: '/discovery',
             builder: (context, state) => const DiscoveryPage(),
+          ),
+          
+          // QBOT Chat Page
+          GoRoute(
+            path: '/qbot',
+            builder: (context, state) => const QBOTChatPage(),
+          ),
+          
+          // Questions Page (Channel 13)
+          GoRoute(
+            path: '/questions',
+            builder: (context, state) => const QuestionsPage(),
+          ),
+          
+          // Groups Page
+          GoRoute(
+            path: '/groups',
+            builder: (context, state) => const GroupsPage(),
           ),
           
           // Chat List Page
