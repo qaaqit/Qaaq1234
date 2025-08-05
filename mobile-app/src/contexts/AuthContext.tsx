@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authApi } from '../utils/api';
 
 interface User {
@@ -51,11 +52,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const checkAuthStatus = async () => {
     try {
-      // TODO: Add AsyncStorage token check when dependency is resolved
-      // For now, just set loading to false
-      setIsLoading(false);
+      const token = await AsyncStorage.getItem('auth_token');
+      if (token) {
+        const userData = await authApi.getCurrentUser();
+        setUser(userData);
+      }
     } catch (error) {
       console.error('Auth check failed:', error);
+      await AsyncStorage.removeItem('auth_token');
+    } finally {
       setIsLoading(false);
     }
   };
@@ -65,7 +70,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const response = await authApi.login({ username, password });
       
       if (response.token) {
-        // TODO: Store token in AsyncStorage when dependency is resolved
+        await AsyncStorage.setItem('auth_token', response.token);
         setUser(response.user);
       } else {
         throw new Error('No token received');
@@ -82,7 +87,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } catch (error) {
       console.error('Logout API failed:', error);
     } finally {
-      // TODO: Remove token from AsyncStorage when dependency is resolved
+      await AsyncStorage.removeItem('auth_token');
       setUser(null);
     }
   };

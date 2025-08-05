@@ -2,7 +2,7 @@
   "expo": {
     "name": "QaaqConnect Mariana",
     "slug": "qaaqconnect-mariana",
-    "version": "2.0.0",
+    "version": "2.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -41,7 +41,16 @@
     },
     "plugins": [
       "expo-location",
-      "expo-camera"
-    ]
+      "expo-camera",
+      "expo-font"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "qaaq-connect-mariana"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    }
   }
 }
