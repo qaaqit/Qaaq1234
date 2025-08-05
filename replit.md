@@ -4,6 +4,8 @@
 QaaqConnect is a comprehensive maritime networking platform designed to enhance shore leaves, simplify shopping for sailors, and facilitate social connections. It enables sailors to discover nearby peers and locals, access a curated marketplace for maritime essentials, and engage in location-based discussions. The platform aims to foster an authentic maritime community experience by integrating proximity-based user discovery, real-time location mapping, direct communication tools, and a structured content navigation system.
 
 ## Recent Major Changes
+- **August 2025 - UI Color Scheme Fixed**: Corrected mobile app color scheme to use proper orange (#ea580c), red (#dc2626), and white colors instead of incorrect blue/teal colors. Updated all UI elements including header, buttons, search controls, map markers, and user cards to match the authentic QAAQ branding. Added missing crown icon in search bar and filter/map/radar icons on right side. Fixed QAAQ logo assets in mobile app.
+- **August 2025 - Mobile App Scripts Added**: Enhanced mobile app package.json with proper dev/start scripts (expo start, expo start --dev-client) for easy development. Added missing QAAQ logo assets to mobile app assets folder.
 - **January 2025 - Complete Mobile App with Full Web Parity**: Created comprehensive React Native Expo mobile application with 100% feature parity to web platform. Includes exact UI design matching web app, dynamic data integration (no static content), complete functionality including: GPS-powered "Koi Hai?" discovery with exact map controls, QBOT AI chat interface, Channel 13 Q&A system, Groups/CPSS Navigator, QAAQ Store e-commerce, Admin Panel, WhatsApp bot management, and all interactive features. Built with TypeScript, React Navigation, React Native Maps, TanStack Query, and comprehensive API integration. Features authentic database connectivity to 670+ maritime professionals, real-time location services, and exact visual design matching web platform.
 - **January 2025 - Database Connection Issue Resolved**: Fixed critical authentication flow where login was returning UUID instead of actual database phone number IDs. Authentication now properly maps email logins (mushy.piyush@gmail.com) to actual database IDs (+919029010070). Profile endpoint successfully returns complete maritime professional data from parent QAAQ database. Fixed name display issue where user profiles showed "Maritime User" instead of actual names - now correctly combines first_name and last_name fields from database (e.g., +919439115367 now shows "Harsh Agrawal" instead of generic placeholder). **Database User Count Fixed**: Removed location filtering constraint that was limiting users to 672 - now correctly displays all 948+ maritime professionals from parent QAAQ database.
 - **January 2025 - QaaqConnect Mariana Mobile App SEALED**: Completed and sealed React Native Expo mobile app (v2.0.0) ready for iOS App Store and Google Play Store submission. Features include GPS-powered "Koi Hai?" discovery, direct messaging, profile management, and authentication. Built with TypeScript, React Navigation, React Native Maps, and TanStack Query. Optimized for maritime professionals with ocean-themed UI and touch-friendly interface. App package includes complete documentation, deployment guides, and app store submission materials. Database connectivity resolved with test maritime users. Next development phase: Qaaq 2.0.
@@ -16,6 +18,9 @@ QaaqConnect is a comprehensive maritime networking platform designed to enhance 
 Preferred communication style: Simple, everyday language.
 Username field label: "USER NAME (This may be ur country code +91 & whatsapp number )"
 Primary focus: "Koi Hai?" (Who's there?) discovery - helping sailors find who's nearby in ports
+Color Scheme: Orange (#ea580c), Red (#dc2626), and White - NOT blue/teal colors
+Search Interface: Crown icon must be present in search bar, filter/map/radar icons on right side of search bar
+Header Design: White header with QAAQ logo, admin shield, and QBOT button
 Map display: Full screen with light grey theme initially, becomes colorful when user searches
 Map behavior: Shows empty grey map on load, displays pins only when "Koi Hai?" button is pressed
 Proximity feature: Shows nearest 10 users when searching without text input
@@ -28,7 +33,7 @@ Header visibility: Show white header only for admin users, regular users should 
 Premium mode: Crown icon in search box toggles premium Google Maps features, requires premium plan for non-admin users
 WhatsApp Bot: Moved from map overlay to header button next to logout for cleaner map interface
 Google Maps Controls: Transparent icon-only buttons positioned in bottom-left corner (Road/Satellite/Hybrid view toggles)
-Home Reset Button: Blue "Home" button in top-left corner resets search, filters, and returns to base map view
+Home Reset Button: Red "Home" button in top-left corner resets search, filters, and returns to base map view
 User Card Interactions: Profile photo circles are clickable for chat, clicking card body centers map on user location
 Onboard Search: Special "onboard" keyword search filters for sailing users and displays ship name & IMO number prominently
 

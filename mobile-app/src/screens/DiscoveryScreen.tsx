@@ -9,6 +9,7 @@ import {
   Alert,
   Animated,
   Dimensions,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, { Marker, Circle } from 'react-native-maps';
@@ -167,9 +168,11 @@ export default function DiscoveryScreen() {
       {/* Custom Header - Matches Web App Design */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <View style={styles.logo}>
-            <Icon name="anchor" size={16} color="white" />
-          </View>
+          <Image 
+            source={require('../../assets/qaaq-logo.png')} 
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
           <Text style={styles.headerTitle}>QaaqConnect</Text>
         </View>
         
@@ -406,13 +409,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  logo: {
+  logoImage: {
     width: 32,
     height: 32,
-    backgroundColor: '#dc2626', // Red background
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
     marginRight: 8,
   },
   headerTitle: {
