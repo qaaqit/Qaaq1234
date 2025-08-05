@@ -145,7 +145,7 @@ export default function DiscoveryScreen() {
 
   const getMarkerColor = (user: MapUser) => {
     if (user.deviceLatitude && user.deviceLongitude) return '#22c55e'; // Green for online
-    return user.userType === 'sailor' ? '#1e3a8a' : '#0891b2'; // Navy or teal
+    return user.userType === 'sailor' ? '#dc2626' : '#ea580c'; // Red or orange
   };
 
   const resetView = () => {
@@ -217,28 +217,43 @@ export default function DiscoveryScreen() {
 
         {/* Enhanced Search Bar - Matches Web App */}
         <View style={styles.searchContainer}>
-          <View style={styles.searchBar}>
-            <Icon name="search" size={16} color="#6b7280" style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Sailors/ Ships/ Company"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholderTextColor="#9ca3af"
-            />
-            {/* Premium Crown Icon */}
-            <TouchableOpacity style={styles.premiumIcon}>
-              <Icon name="crown" size={16} color="#fbbf24" />
-            </TouchableOpacity>
-            {/* Clear Search Button */}
-            {searchQuery.length > 0 && (
-              <TouchableOpacity 
-                style={styles.clearButton}
-                onPress={() => setSearchQuery('')}
-              >
-                <Icon name="times" size={14} color="#6b7280" />
+          <View style={styles.searchRow}>
+            <View style={styles.searchBar}>
+              <Icon name="search" size={16} color="#6b7280" style={styles.searchIcon} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Sailors/ Ships/ Company"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholderTextColor="#9ca3af"
+              />
+              {/* Premium Crown Icon */}
+              <TouchableOpacity style={styles.premiumIcon}>
+                <Icon name="crown" size={16} color="#fbbf24" />
               </TouchableOpacity>
-            )}
+              {/* Clear Search Button */}
+              {searchQuery.length > 0 && (
+                <TouchableOpacity 
+                  style={styles.clearButton}
+                  onPress={() => setSearchQuery('')}
+                >
+                  <Icon name="times" size={14} color="#6b7280" />
+                </TouchableOpacity>
+              )}
+            </View>
+            
+            {/* Right Side Controls - Filter, Map, Radar */}
+            <View style={styles.searchControls}>
+              <TouchableOpacity style={styles.controlButton}>
+                <Icon name="filter" size={16} color="#ea580c" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.controlButton}>
+                <Icon name="map" size={16} color="#ea580c" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.controlButton}>
+                <Icon name="radar-alt" size={16} color="#ea580c" />
+              </TouchableOpacity>
+            </View>
           </View>
           
           <TouchableOpacity 
@@ -394,7 +409,7 @@ const styles = StyleSheet.create({
   logo: {
     width: 32,
     height: 32,
-    backgroundColor: '#1e3a8a', // Navy blue gradient
+    backgroundColor: '#dc2626', // Red background
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -403,19 +418,19 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#1e3a8a',
+    color: '#dc2626', // Red text
   },
   adminButton: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: '#f0f9ff',
+    backgroundColor: '#fff7ed',
     borderRadius: 8,
   },
   adminText: {
     marginLeft: 6,
-    color: '#0891b2',
+    color: '#ea580c', // Orange text
     fontWeight: '500',
   },
   qbotButton: {
@@ -423,7 +438,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: '#fb923c', // Orange gradient like web app
+    backgroundColor: '#ea580c', // Orange background
     borderRadius: 8,
     gap: 4,
   },
@@ -446,7 +461,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 16,
     left: 16,
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#dc2626', // Red background
     padding: 12,
     borderRadius: 8,
     zIndex: 1000,
@@ -476,7 +491,7 @@ const styles = StyleSheet.create({
   activeMapType: {
     backgroundColor: 'white',
     borderWidth: 2,
-    borderColor: '#0891b2',
+    borderColor: '#ea580c', // Orange border
   },
   searchContainer: {
     position: 'absolute',
@@ -485,14 +500,34 @@ const styles = StyleSheet.create({
     left: 80,
     zIndex: 1000,
   },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    gap: 8,
+  },
   searchBar: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'white',
     borderRadius: 25,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  searchControls: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  controlButton: {
+    backgroundColor: 'white',
+    padding: 12,
+    borderRadius: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -517,7 +552,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   koihaiButton: {
-    backgroundColor: '#0891b2',
+    backgroundColor: '#dc2626', // Red background
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 25,
@@ -550,8 +585,8 @@ const styles = StyleSheet.create({
     borderColor: '#d1d5db',
   },
   activeFilterChip: {
-    backgroundColor: '#0891b2',
-    borderColor: '#0891b2',
+    backgroundColor: '#ea580c', // Orange background
+    borderColor: '#ea580c',
   },
   filterText: {
     fontSize: 12,

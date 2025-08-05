@@ -105,7 +105,7 @@ export default function UserCard({ user, onChat, onClose }: UserCardProps) {
                 style={styles.profileImage}
               />
             ) : (
-              <View style={[styles.profilePlaceholder, { backgroundColor: user.userType === 'sailor' ? '#1e3a8a' : '#0891b2' }]}>
+              <View style={[styles.profilePlaceholder, { backgroundColor: user.userType === 'sailor' ? '#dc2626' : '#ea580c' }]}>
                 <Icon name="user" size={24} color="white" />
               </View>
             )}
@@ -126,7 +126,7 @@ export default function UserCard({ user, onChat, onClose }: UserCardProps) {
             
             {user.rank && (
               <View style={styles.rankContainer}>
-                <View style={[styles.rankBadge, { backgroundColor: user.userType === 'sailor' ? '#1e3a8a' : '#0891b2' }]}>
+                <View style={[styles.rankBadge, { backgroundColor: user.userType === 'sailor' ? '#dc2626' : '#ea580c' }]}>
                   <Text style={styles.rankText}>
                     {getRankAbbreviation(user.rank)}
                   </Text>
@@ -164,7 +164,7 @@ export default function UserCard({ user, onChat, onClose }: UserCardProps) {
         {user.shipName && (
           <View style={styles.shipInfo}>
             <View style={styles.shipHeader}>
-              <Icon name="ship" size={14} color="#0891b2" />
+              <Icon name="ship" size={14} color="#ea580c" />
               <Text style={styles.shipName} numberOfLines={1}>
                 {user.shipName}
               </Text>
@@ -216,7 +216,7 @@ export default function UserCard({ user, onChat, onClose }: UserCardProps) {
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.profileButton}>
-            <Icon name="user" size={16} color="#0891b2" />
+            <Icon name="user" size={16} color="#ea580c" />
             <Text style={styles.profileButtonText}>Profile</Text>
           </TouchableOpacity>
         </View>
