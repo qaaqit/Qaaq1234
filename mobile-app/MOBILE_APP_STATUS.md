@@ -126,7 +126,7 @@ api.ts                   // Complete API integration
 ### **Real Database Connectivity**
 ```typescript
 // All data comes from authentic QAAQ database
-✅ 670+ Maritime Professionals
+✅ 948+ Maritime Professionals
 ✅ Real user profiles with photos
 ✅ Actual Q&A content
 ✅ Live location data

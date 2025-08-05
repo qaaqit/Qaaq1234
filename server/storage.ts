@@ -538,13 +538,12 @@ export class DatabaseStorage implements IStorage {
 
   async getUsersWithLocation(): Promise<User[]> {
     try {
-      console.log('Fetching users directly from PostgreSQL database');
+      console.log('Fetching ALL users directly from PostgreSQL database');
       
-      // Get all users directly from PostgreSQL using raw query
+      // Get ALL users from PostgreSQL without filtering by location
       const result = await pool.query(`
         SELECT * FROM users 
-        WHERE current_latitude IS NOT NULL OR city IS NOT NULL OR current_city IS NOT NULL
-        LIMIT 1000
+        ORDER BY created_at DESC
       `);
       
       console.log(`Retrieved ${result.rows.length} users from PostgreSQL database`);
