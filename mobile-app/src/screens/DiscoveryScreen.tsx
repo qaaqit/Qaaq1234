@@ -351,7 +351,7 @@ export default function DiscoveryScreen() {
                 onPress={() => handleUserPress(user.id)}
               >
                 <View style={[styles.customMarker, { backgroundColor: getMarkerColor(user) }]}>
-                  <Icon name="anchor" size={12} color="white" />
+                  <FontAwesome5 name="anchor" size={12} color="white" />
                 </View>
               </Marker>
             ))}

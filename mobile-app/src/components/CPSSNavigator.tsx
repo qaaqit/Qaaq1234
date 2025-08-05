@@ -7,7 +7,7 @@ import {
   FlatList,
   ActivityIndicator,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome5';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { cpssApi } from '../utils/api';
 
@@ -148,10 +148,10 @@ export default function CPSSNavigator() {
       <View style={styles.itemContent}>
         <View style={styles.itemLeft}>
           <View style={styles.itemIcon}>
-            <Icon 
+            <FontAwesome5 
               name={getLevelIcon(currentLevel)} 
               size={16} 
-              color="#0891b2" 
+              color="#ea580c" 
             />
           </View>
           
@@ -177,7 +177,7 @@ export default function CPSSNavigator() {
         <View style={styles.itemRight}>
           {item.userCount !== undefined && (
             <View style={styles.userCount}>
-              <Icon name="users" size={12} color="#6b7280" />
+              <FontAwesome5 name="users" size={12} color="#6b7280" />
               <Text style={styles.userCountText}>
                 {item.userCount}
               </Text>
@@ -185,7 +185,7 @@ export default function CPSSNavigator() {
           )}
           
           {currentLevel !== 'service' && (
-            <Icon name="chevron-right" size={16} color="#d1d5db" />
+            <FontAwesome5 name="chevron-right" size={16} color="#d1d5db" />
           )}
         </View>
       </View>
@@ -195,13 +195,13 @@ export default function CPSSNavigator() {
   const renderBreadcrumbs = () => (
     <View style={styles.breadcrumbContainer}>
       <TouchableOpacity style={styles.breadcrumbItem} onPress={goHome}>
-        <Icon name="home" size={14} color="#0891b2" />
+        <FontAwesome5 name="home" size={14} color="#ea580c" />
         <Text style={styles.breadcrumbText}>Home</Text>
       </TouchableOpacity>
 
       {breadcrumbs.map((crumb, index) => (
         <React.Fragment key={crumb.id}>
-          <Icon name="chevron-right" size={12} color="#9ca3af" />
+          <FontAwesome5 name="chevron-right" size={12} color="#9ca3af" />
           <TouchableOpacity
             style={styles.breadcrumbItem}
             onPress={() => handleBreadcrumbPress(index)}
@@ -220,7 +220,7 @@ export default function CPSSNavigator() {
 
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
-      <Icon name="map-marked-alt" size={64} color="#d1d5db" />
+      <FontAwesome5 name="map-marked-alt" size={64} color="#d1d5db" />
       <Text style={styles.emptyTitle}>No {getLevelTitle(currentLevel).toLowerCase()} found</Text>
       <Text style={styles.emptySubtitle}>
         This location may not have any {getLevelTitle(currentLevel).toLowerCase()} available yet.
@@ -233,13 +233,13 @@ export default function CPSSNavigator() {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Icon name="map-marked-alt" size={20} color="#0891b2" />
+          <FontAwesome5 name="map-marked-alt" size={20} color="#ea580c" />
           <Text style={styles.headerTitle}>CPSS Navigator</Text>
         </View>
         
         {breadcrumbs.length > 0 && (
           <TouchableOpacity style={styles.backButton} onPress={goBack}>
-            <Icon name="arrow-left" size={16} color="#6b7280" />
+            <FontAwesome5 name="arrow-left" size={16} color="#6b7280" />
           </TouchableOpacity>
         )}
       </View>
@@ -249,7 +249,7 @@ export default function CPSSNavigator() {
 
       {/* Current Level Title */}
       <View style={styles.levelHeader}>
-        <Icon name={getLevelIcon(currentLevel)} size={18} color="#374151" />
+        <FontAwesome5 name={getLevelIcon(currentLevel)} size={18} color="#374151" />
         <Text style={styles.levelTitle}>
           {getLevelTitle(currentLevel)}
         </Text>
@@ -261,7 +261,7 @@ export default function CPSSNavigator() {
       {/* Content */}
       {isLoading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#0891b2" />
+          <ActivityIndicator size={40} color="#ea580c" />
           <Text style={styles.loadingText}>
             Loading {getLevelTitle(currentLevel).toLowerCase()}...
           </Text>
