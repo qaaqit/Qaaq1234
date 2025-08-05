@@ -1,4 +1,12 @@
-# QaaqConnect Mobile App - React Native
+# QaaqConnect Mariana - Mobile App (SEALED FOR APP STORE SUBMISSION)
+
+## 🎯 **PRODUCTION READY - VERSION 2.0.0**
+
+**Status**: SEALED FOR APP STORE SUBMISSION  
+**App Name**: QaaqConnect Mariana  
+**Version**: 2.0.0  
+**Target**: iOS App Store + Google Play Store  
+**Next Version**: Qaaq 2.0 (Future Development)
 
 ## Overview
 QaaqConnect Mobile is a React Native Expo app that mirrors the functionality of your QaaqConnect30 web application. It provides maritime professionals with mobile access to "Koi Hai?" discovery, direct messaging, and profile management.
