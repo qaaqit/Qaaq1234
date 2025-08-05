@@ -1,6 +1,11 @@
 class AppConfig {
   // API Configuration
-  static const String baseUrl = 'http://localhost:5000';
+  // For Android emulator: use 10.0.2.2 instead of localhost
+  // For iOS simulator: use localhost or 127.0.0.1
+  // For real device: use the actual IP address of your development machine
+  static const String baseUrl = 'http://10.0.2.2:5000'; // Android emulator
+  // static const String baseUrl = 'http://localhost:5000'; // iOS simulator
+  // static const String baseUrl = 'http://192.168.1.XXX:5000'; // Real device (replace XXX with your IP)
   static const String apiVersion = '/api';
   static const String apiBaseUrl = '$baseUrl$apiVersion';
   
