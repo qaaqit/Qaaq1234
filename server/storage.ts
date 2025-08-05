@@ -75,10 +75,13 @@ export class DatabaseStorage implements IStorage {
       }
       
       const user = result.rows[0];
-      const fullName = user.full_name || user.email || 'Maritime User';
+      const fullName = [user.first_name, user.middle_name, user.last_name].filter(Boolean).join(' ') || user.full_name || user.email || 'Maritime User';
       console.log(`Raw user data:`, {
         id: user.id,
+        first_name: user.first_name,
+        last_name: user.last_name,
         full_name: user.full_name,
+        computed_full_name: fullName,
         city: user.city || user.current_city,
         current_latitude: user.current_latitude,
         current_longitude: user.current_longitude
@@ -348,7 +351,7 @@ export class DatabaseStorage implements IStorage {
           const result = await pool.query('SELECT * FROM users WHERE id = $1 LIMIT 1', ["+919029010070"]);
           if (result.rows.length > 0) {
             const user = result.rows[0];
-            const fullName = user.full_name || user.email || 'Admin User';
+            const fullName = [user.first_name, user.middle_name, user.last_name].filter(Boolean).join(' ') || user.full_name || user.email || 'Admin User';
             const adminUser = {
               id: user.id,
               fullName: fullName,
@@ -411,6 +414,7 @@ export class DatabaseStorage implements IStorage {
       try {
         console.log(`Searching database for user: ${userId}`);
         let result = await pool.query(`SELECT * FROM users WHERE id = $1 LIMIT 1`, [userId]);
+        console.log(`Found ${result.rows.length} users for ID ${userId}`);
         
         if (result.rows.length === 0) {
           console.log(`No user found with ID ${userId}, trying by email...`);
@@ -427,7 +431,7 @@ export class DatabaseStorage implements IStorage {
         
         if (result.rows.length > 0) {
           const user = result.rows[0];
-          const fullName = user.full_name || user.email || 'Maritime User';
+          const fullName = [user.first_name, user.middle_name, user.last_name].filter(Boolean).join(' ') || user.full_name || user.email || 'Maritime User';
           
           // Get default coordinates
           const defaultCoords = this.getCityCoordinates(user.city || user.current_city || 'mumbai', user.current_country || 'india');
@@ -466,6 +470,12 @@ export class DatabaseStorage implements IStorage {
           } as User;
           
           console.log(`Created user object for login: ${userObj.id} - ${userObj.fullName}`);
+          console.log(`User data details:`, {
+            first_name: user.first_name,
+            last_name: user.last_name,
+            full_name: user.full_name,
+            computed_full_name: fullName
+          });
           return userObj;
         }
       } catch (dbError) {
