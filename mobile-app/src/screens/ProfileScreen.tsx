@@ -44,11 +44,54 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
   const loadUserData = async () => {
     try {
       const userString = await AsyncStorage.getItem('user_data');
-      if (userString) {
-        setUser(JSON.parse(userString));
+      const token = await AsyncStorage.getItem('auth_token');
+      
+      if (userString && token) {
+        const userData = JSON.parse(userString);
+        setUser(userData);
+      } else {
+        // If no stored user data, fetch from backend
+        await fetchUserProfile();
       }
     } catch (error) {
       console.error('Error loading user data:', error);
+    }
+  };
+
+  const fetchUserProfile = async () => {
+    try {
+      const token = await AsyncStorage.getItem('auth_token');
+      if (!token) {
+        navigation.replace('Login');
+        return;
+      }
+
+      const API_BASE_URL = __DEV__ ? 'http://localhost:5000' : 'https://your-replit-url.replit.app';
+      const response = await fetch(`${API_BASE_URL}/api/profile`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+        console.log('Fetched user profile:', userData);
+        await AsyncStorage.setItem('user_data', JSON.stringify(userData));
+        setUser(userData);
+      } else if (response.status === 401) {
+        // Token expired, redirect to login
+        console.log('Token expired, redirecting to login');
+        await AsyncStorage.removeItem('auth_token');
+        await AsyncStorage.removeItem('user_data');
+        navigation.replace('Login');
+      } else {
+        console.error('Failed to fetch user profile, status:', response.status);
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
     }
   };
 

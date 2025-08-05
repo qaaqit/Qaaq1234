@@ -15,7 +15,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 
-const API_BASE_URL = 'https://your-qaaqconnect-api.replit.app'; // Replace with your actual API URL
+// API Base URL - automatically detects development vs production
+const API_BASE_URL = __DEV__ ? 'http://localhost:5000' : 'https://your-replit-url.replit.app';
 
 interface LoginScreenProps {
   navigation: any;
