@@ -237,9 +237,11 @@ const styles = StyleSheet.create({
     padding: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
     elevation: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
   },
   closeButton: {
     position: 'absolute',
@@ -261,6 +263,8 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
+    borderWidth: 2,
+    borderColor: '#e5e7eb',
   },
   profilePlaceholder: {
     width: 56,
@@ -268,6 +272,8 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'white',
   },
   onlineIndicator: {
     position: 'absolute',
@@ -302,6 +308,8 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 12,
     marginRight: 8,
+    minWidth: 40,
+    alignItems: 'center',
   },
   rankText: {
     color: 'white',

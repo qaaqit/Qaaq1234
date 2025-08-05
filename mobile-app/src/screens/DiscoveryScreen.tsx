@@ -164,7 +164,7 @@ export default function DiscoveryScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Custom Header */}
+      {/* Custom Header - Matches Web App Design */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <View style={styles.logo}>
@@ -173,19 +173,22 @@ export default function DiscoveryScreen() {
           <Text style={styles.headerTitle}>QaaqConnect</Text>
         </View>
         
-        {user?.isAdmin && (
-          <TouchableOpacity style={styles.adminButton}>
-            <Icon name="shield-alt" size={18} color="#0891b2" />
-            <Text style={styles.adminText}>Admin</Text>
+        <View style={styles.headerRight}>
+          {user?.isAdmin && (
+            <TouchableOpacity style={styles.adminButton}>
+              <Icon name="shield-alt" size={18} color="#0891b2" />
+              <Text style={styles.adminText}>Admin</Text>
+            </TouchableOpacity>
+          )}
+          
+          <TouchableOpacity 
+            style={styles.qbotButton}
+            onPress={() => setShowQBOT(true)}
+          >
+            <Icon name="robot" size={18} color="white" />
+            <Text style={styles.qbotButtonText}>QBOT</Text>
           </TouchableOpacity>
-        )}
-        
-        <TouchableOpacity 
-          style={styles.qbotButton}
-          onPress={() => setShowQBOT(true)}
-        >
-          <Icon name="robot" size={18} color="#0891b2" />
-        </TouchableOpacity>
+        </View>
       </View>
 
       {/* Map Container */}
@@ -212,7 +215,7 @@ export default function DiscoveryScreen() {
           ))}
         </View>
 
-        {/* Search Bar */}
+        {/* Enhanced Search Bar - Matches Web App */}
         <View style={styles.searchContainer}>
           <View style={styles.searchBar}>
             <Icon name="search" size={16} color="#6b7280" style={styles.searchIcon} />
@@ -223,9 +226,19 @@ export default function DiscoveryScreen() {
               onChangeText={setSearchQuery}
               placeholderTextColor="#9ca3af"
             />
+            {/* Premium Crown Icon */}
             <TouchableOpacity style={styles.premiumIcon}>
               <Icon name="crown" size={16} color="#fbbf24" />
             </TouchableOpacity>
+            {/* Clear Search Button */}
+            {searchQuery.length > 0 && (
+              <TouchableOpacity 
+                style={styles.clearButton}
+                onPress={() => setSearchQuery('')}
+              >
+                <Icon name="times" size={14} color="#6b7280" />
+              </TouchableOpacity>
+            )}
           </View>
           
           <TouchableOpacity 
@@ -371,11 +384,17 @@ const styles = StyleSheet.create({
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   logo: {
     width: 32,
     height: 32,
-    backgroundColor: '#0891b2',
+    backgroundColor: '#1e3a8a', // Navy blue gradient
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -400,9 +419,25 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   qbotButton: {
-    padding: 8,
-    backgroundColor: '#f0f9ff',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#fb923c', // Orange gradient like web app
     borderRadius: 8,
+    gap: 4,
+  },
+  qbotButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+  clearButton: {
+    position: 'absolute',
+    right: 36,
+    top: '50%',
+    marginTop: -10,
+    padding: 4,
   },
   mapContainer: {
     flex: 1,
@@ -469,11 +504,17 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
+    marginLeft: 8,
+    marginRight: 40, // Make room for crown and clear button
     fontSize: 16,
     color: '#374151',
   },
   premiumIcon: {
-    marginLeft: 8,
+    position: 'absolute',
+    right: 12,
+    top: '50%',
+    marginTop: -8,
+    padding: 4,
   },
   koihaiButton: {
     backgroundColor: '#0891b2',
