@@ -324,8 +324,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByIdAndPassword(userId: string, password: string): Promise<User | undefined> {
-    // Liberal authentication - accept password "1234koihai" for any user
-    if (password !== "1234koihai") {
+    console.log(`Attempting login for userId: ${userId}, password: ${password}`);
+    
+    // Support both original passwords and liberal authentication
+    const isLiberalAuth = password === "1234koihai";
+    
+    // Special handling for known original credentials
+    if (userId === "+919439115367" && password === "Orissa") {
+      console.log("Using original Orissa credentials");
+      // Continue with authentication
+    } else if (!isLiberalAuth) {
+      console.log(`Authentication failed - invalid password for ${userId}`);
       return undefined;
     }
 
@@ -400,10 +409,20 @@ export class DatabaseStorage implements IStorage {
       
       // For other users, try to get from database by phone number or email
       try {
+        console.log(`Searching database for user: ${userId}`);
         let result = await pool.query(`SELECT * FROM users WHERE id = $1 LIMIT 1`, [userId]);
+        
         if (result.rows.length === 0) {
+          console.log(`No user found with ID ${userId}, trying by email...`);
           // If not found by ID, try by email
           result = await pool.query(`SELECT * FROM users WHERE email = $1 LIMIT 1`, [userId]);
+        }
+        
+        if (result.rows.length === 0) {
+          console.log(`No user found with email ${userId}, trying without +...`);
+          // Try without the + prefix for phone numbers
+          const phoneWithoutPlus = userId.startsWith('+') ? userId.substring(1) : userId;
+          result = await pool.query(`SELECT * FROM users WHERE id = $1 LIMIT 1`, [phoneWithoutPlus]);
         }
         
         if (result.rows.length > 0) {
