@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './src/contexts/AuthContext';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import Icon from 'react-native-vector-icons/FontAwesome5';
+import { FontAwesome5 } from '@expo/vector-icons';
 
 // Screens
 import LoginScreen from './src/screens/LoginScreen';
@@ -56,14 +56,14 @@ function MainTabs() {
               iconName = 'circle';
           }
           
-          return <Icon name={iconName} size={size} color={color} />;
+          return <FontAwesome5 name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#0891b2',
+        tabBarActiveTintColor: '#ea580c',
         tabBarInactiveTintColor: '#6b7280',
         tabBarStyle: {
           backgroundColor: 'white',
           borderTopWidth: 2,
-          borderTopColor: '#fb923c',
+          borderTopColor: '#ea580c',
           paddingBottom: 5,
           height: 70,
         },
@@ -72,7 +72,7 @@ function MainTabs() {
           fontWeight: 'bold',
         },
         headerStyle: {
-          backgroundColor: '#0891b2',
+          backgroundColor: '#ea580c',
         },
         headerTintColor: 'white',
         headerTitleStyle: {
@@ -110,7 +110,7 @@ function MainTabs() {
           title: 'Profile',
           headerRight: () => (
             user?.isAdmin ? (
-              <Icon 
+              <FontAwesome5 
                 name="shield-alt" 
                 size={20} 
                 color="white" 

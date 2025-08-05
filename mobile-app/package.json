@@ -8,10 +8,14 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "tunnel": "expo start --tunnel",
+    "clear": "expo start --clear",
     "build:android": "eas build --platform android",
     "build:ios": "eas build --platform ios",
     "submit:android": "eas submit --platform android", 
-    "submit:ios": "eas submit --platform ios"
+    "submit:ios": "eas submit --platform ios",
+    "lint": "expo lint",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.3",

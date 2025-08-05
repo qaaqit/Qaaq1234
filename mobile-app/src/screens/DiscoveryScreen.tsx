@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, { Marker, Circle } from 'react-native-maps';
 import * as Location from 'expo-location';
-import Icon from 'react-native-vector-icons/FontAwesome5';
+import { Ionicons, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
 import { apiRequest } from '../utils/api';
@@ -179,7 +179,7 @@ export default function DiscoveryScreen() {
         <View style={styles.headerRight}>
           {user?.isAdmin && (
             <TouchableOpacity style={styles.adminButton}>
-              <Icon name="shield-alt" size={18} color="#0891b2" />
+              <FontAwesome5 name="shield-alt" size={18} color="#ea580c" />
               <Text style={styles.adminText}>Admin</Text>
             </TouchableOpacity>
           )}
@@ -188,7 +188,7 @@ export default function DiscoveryScreen() {
             style={styles.qbotButton}
             onPress={() => setShowQBOT(true)}
           >
-            <Icon name="robot" size={18} color="white" />
+            <FontAwesome5 name="robot" size={18} color="white" />
             <Text style={styles.qbotButtonText}>QBOT</Text>
           </TouchableOpacity>
         </View>
@@ -198,7 +198,7 @@ export default function DiscoveryScreen() {
       <View style={styles.mapContainer}>
         {/* Home Reset Button */}
         <TouchableOpacity style={styles.homeButton} onPress={resetView}>
-          <Icon name="home" size={20} color="white" />
+          <FontAwesome5 name="home" size={20} color="white" />
         </TouchableOpacity>
 
         {/* Map Type Controls */}
@@ -209,10 +209,10 @@ export default function DiscoveryScreen() {
               style={[styles.mapTypeButton, mapType === type && styles.activeMapType]}
               onPress={() => setMapType(type)}
             >
-              <Icon 
+              <FontAwesome5 
                 name={type === 'standard' ? 'map' : type === 'satellite' ? 'globe' : 'layer-group'} 
                 size={16} 
-                color={mapType === type ? '#0891b2' : '#6b7280'} 
+                color={mapType === type ? '#ea580c' : '#6b7280'} 
               />
             </TouchableOpacity>
           ))}
@@ -222,7 +222,7 @@ export default function DiscoveryScreen() {
         <View style={styles.searchContainer}>
           <View style={styles.searchRow}>
             <View style={styles.searchBar}>
-              <Icon name="search" size={16} color="#6b7280" style={styles.searchIcon} />
+              <FontAwesome5 name="search" size={16} color="#6b7280" style={styles.searchIcon} />
               <TextInput
                 style={styles.searchInput}
                 placeholder="Sailors/ Ships/ Company"
@@ -232,7 +232,7 @@ export default function DiscoveryScreen() {
               />
               {/* Premium Crown Icon */}
               <TouchableOpacity style={styles.premiumIcon}>
-                <Icon name="crown" size={16} color="#fbbf24" />
+                <FontAwesome5 name="crown" size={16} color="#fbbf24" />
               </TouchableOpacity>
               {/* Clear Search Button */}
               {searchQuery.length > 0 && (
@@ -240,7 +240,7 @@ export default function DiscoveryScreen() {
                   style={styles.clearButton}
                   onPress={() => setSearchQuery('')}
                 >
-                  <Icon name="times" size={14} color="#6b7280" />
+                  <FontAwesome5 name="times" size={14} color="#6b7280" />
                 </TouchableOpacity>
               )}
             </View>
@@ -248,13 +248,13 @@ export default function DiscoveryScreen() {
             {/* Right Side Controls - Filter, Map, Radar */}
             <View style={styles.searchControls}>
               <TouchableOpacity style={styles.controlButton}>
-                <Icon name="filter" size={16} color="#ea580c" />
+                <FontAwesome5 name="filter" size={16} color="#ea580c" />
               </TouchableOpacity>
               <TouchableOpacity style={styles.controlButton}>
-                <Icon name="map" size={16} color="#ea580c" />
+                <FontAwesome5 name="map" size={16} color="#ea580c" />
               </TouchableOpacity>
               <TouchableOpacity style={styles.controlButton}>
-                <Icon name="radar-alt" size={16} color="#ea580c" />
+                <FontAwesome5 name="broadcast-tower" size={16} color="#ea580c" />
               </TouchableOpacity>
             </View>
           </View>

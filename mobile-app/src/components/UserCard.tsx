@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome5';
+import { FontAwesome5 } from '@expo/vector-icons';
 
 interface User {
   id: string;
@@ -92,7 +92,7 @@ export default function UserCard({ user, onChat, onClose }: UserCardProps) {
       <View style={styles.card}>
         {/* Close Button */}
         <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-          <Icon name="times" size={16} color="#6b7280" />
+          <FontAwesome5 name="times" size={16} color="#6b7280" />
         </TouchableOpacity>
 
         {/* Header */}
@@ -106,7 +106,7 @@ export default function UserCard({ user, onChat, onClose }: UserCardProps) {
               />
             ) : (
               <View style={[styles.profilePlaceholder, { backgroundColor: user.userType === 'sailor' ? '#dc2626' : '#ea580c' }]}>
-                <Icon name="user" size={24} color="white" />
+                <FontAwesome5 name="user" size={24} color="white" />
               </View>
             )}
             
@@ -139,7 +139,7 @@ export default function UserCard({ user, onChat, onClose }: UserCardProps) {
             
             {/* Location */}
             <View style={styles.locationContainer}>
-              <Icon name="map-marker-alt" size={12} color="#6b7280" />
+              <FontAwesome5 name="map-marker-alt" size={12} color="#6b7280" />
               <Text style={styles.locationText} numberOfLines={1}>
                 {location}
               </Text>
@@ -148,7 +148,7 @@ export default function UserCard({ user, onChat, onClose }: UserCardProps) {
             {/* Distance */}
             {user.distance && (
               <View style={styles.distanceContainer}>
-                <Icon name="route" size={12} color="#6b7280" />
+                <FontAwesome5 name="route" size={12} color="#6b7280" />
                 <Text style={styles.distanceText}>
                   {user.distance < 1 
                     ? `${(user.distance * 1000).toFixed(0)}m away`
@@ -164,7 +164,7 @@ export default function UserCard({ user, onChat, onClose }: UserCardProps) {
         {user.shipName && (
           <View style={styles.shipInfo}>
             <View style={styles.shipHeader}>
-              <Icon name="ship" size={14} color="#ea580c" />
+              <FontAwesome5 name="ship" size={14} color="#ea580c" />
               <Text style={styles.shipName} numberOfLines={1}>
                 {user.shipName}
               </Text>
@@ -194,13 +194,13 @@ export default function UserCard({ user, onChat, onClose }: UserCardProps) {
         {(user.questionCount || user.answerCount) && (
           <View style={styles.statsContainer}>
             <View style={styles.stat}>
-              <Icon name="question-circle" size={14} color="#6b7280" />
+              <FontAwesome5 name="question-circle" size={14} color="#6b7280" />
               <Text style={styles.statText}>
                 {user.questionCount || 0} questions
               </Text>
             </View>
             <View style={styles.stat}>
-              <Icon name="comment" size={14} color="#6b7280" />
+              <FontAwesome5 name="comment" size={14} color="#6b7280" />
               <Text style={styles.statText}>
                 {user.answerCount || 0} answers
               </Text>
@@ -211,12 +211,12 @@ export default function UserCard({ user, onChat, onClose }: UserCardProps) {
         {/* Action Buttons */}
         <View style={styles.actions}>
           <TouchableOpacity style={styles.chatButton} onPress={onChat}>
-            <Icon name="comment" size={16} color="white" />
+            <FontAwesome5 name="comment" size={16} color="white" />
             <Text style={styles.chatButtonText}>Chat</Text>
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.profileButton}>
-            <Icon name="user" size={16} color="#ea580c" />
+            <FontAwesome5 name="user" size={16} color="#ea580c" />
             <Text style={styles.profileButtonText}>Profile</Text>
           </TouchableOpacity>
         </View>
