@@ -75,11 +75,10 @@ export class DatabaseStorage implements IStorage {
       }
       
       const user = result.rows[0];
-      const fullName = [user.first_name, user.middle_name, user.last_name].filter(Boolean).join(' ') || user.email || 'Maritime User';
+      const fullName = user.full_name || user.email || 'Maritime User';
       console.log(`Raw user data:`, {
         id: user.id,
-        first_name: user.first_name,
-        last_name: user.last_name,
+        full_name: user.full_name,
         city: user.city || user.current_city,
         current_latitude: user.current_latitude,
         current_longitude: user.current_longitude
@@ -336,11 +335,11 @@ export class DatabaseStorage implements IStorage {
       // For admin users, get from database to ensure Present City data is available
       if (userId === "mushy.piyush@gmail.com" || userId === "+919029010070") {
         try {
-          // Use direct database query to avoid recursion
-          const result = await pool.query('SELECT * FROM users WHERE id = $1 LIMIT 1', ["5791e66f-9cc1-4be4-bd4b-7fc1bd2e258e"]);
+          // Look up the admin user by phone number first
+          const result = await pool.query('SELECT * FROM users WHERE id = $1 LIMIT 1', ["+919029010070"]);
           if (result.rows.length > 0) {
             const user = result.rows[0];
-            const fullName = [user.first_name, user.middle_name, user.last_name].filter(Boolean).join(' ') || user.email || 'Admin User';
+            const fullName = user.full_name || user.email || 'Admin User';
             const adminUser = {
               id: user.id,
               fullName: fullName,
@@ -374,9 +373,9 @@ export class DatabaseStorage implements IStorage {
           console.log('Failed to load admin user from database, using fallback:', error);
         }
         
-        // Fallback admin profile if database lookup fails
+        // Fallback admin profile if database lookup fails - use the actual phone number ID
         return {
-          id: "5791e66f-9cc1-4be4-bd4b-7fc1bd2e258e",
+          id: "+919029010070",
           fullName: "Admin User",
           email: "mushy.piyush@gmail.com",
           password: '',
@@ -399,16 +398,56 @@ export class DatabaseStorage implements IStorage {
         } as User;
       }
       
-      // For other users, try to get from database or create basic profile
+      // For other users, try to get from database by phone number or email
       try {
-        const result = await pool.query(`SELECT id, email FROM users WHERE email = $1 LIMIT 1`, [userId]);
+        let result = await pool.query(`SELECT * FROM users WHERE id = $1 LIMIT 1`, [userId]);
+        if (result.rows.length === 0) {
+          // If not found by ID, try by email
+          result = await pool.query(`SELECT * FROM users WHERE email = $1 LIMIT 1`, [userId]);
+        }
+        
         if (result.rows.length > 0) {
-          const user = await this.getUser(result.rows[0].id);
-          // If this is the admin user from database, make sure isAdmin is set
-          if (user && (user.email === "mushy.piyush@gmail.com" || user.id === "5791e66f-9cc1-4be4-bd4b-7fc1bd2e258e")) {
-            user.isAdmin = true;
-          }
-          return user;
+          const user = result.rows[0];
+          const fullName = user.full_name || user.email || 'Maritime User';
+          
+          // Get default coordinates
+          const defaultCoords = this.getCityCoordinates(user.city || user.current_city || 'mumbai', user.current_country || 'india');
+          
+          // Create properly structured user object
+          const userObj = {
+            id: user.id,
+            fullName: fullName,
+            email: user.email || '',
+            password: '',
+            userType: user.current_ship_name ? 'sailor' : 'local',
+            isAdmin: user.is_platform_admin || (user.email === "mushy.piyush@gmail.com") || false,
+            nickname: '',
+            rank: user.maritime_rank || user.rank || '',
+            shipName: user.current_ship_name || user.last_ship || user.ship_name || '',
+            imoNumber: user.current_ship_imo || user.imo_number || '',
+            port: user.last_port_visited || user.port || user.city || user.current_city || '',
+            visitWindow: user.visit_window || '',
+            city: user.city || user.current_city || 'Mumbai',
+            country: user.current_country || user.country || 'India',
+            latitude: parseFloat(user.current_latitude) || parseFloat(user.latitude) || defaultCoords.lat,
+            longitude: parseFloat(user.current_longitude) || parseFloat(user.longitude) || defaultCoords.lng,
+            deviceLatitude: parseFloat(user.device_latitude) || parseFloat(user.current_latitude) || null,
+            deviceLongitude: parseFloat(user.device_longitude) || parseFloat(user.current_longitude) || null,
+            locationSource: user.location_source || (user.current_latitude ? 'device' : 'city'),
+            locationUpdatedAt: user.location_updated_at || new Date(),
+            isVerified: user.is_verified || user.has_completed_onboarding || true,
+            loginCount: user.login_count || 1,
+            lastLogin: user.last_login || new Date(),
+            createdAt: user.created_at || new Date(),
+            questionCount: user.question_count || 0,
+            answerCount: user.answer_count || 0,
+            whatsAppNumber: user.whatsapp_number || null,
+            whatsAppProfilePictureUrl: user.whatsapp_profile_picture_url || null,
+            whatsAppDisplayName: user.whatsapp_display_name || null,
+          } as User;
+          
+          console.log(`Created user object for login: ${userObj.id} - ${userObj.fullName}`);
+          return userObj;
         }
       } catch (dbError) {
         console.log('Database lookup failed, creating basic profile');
