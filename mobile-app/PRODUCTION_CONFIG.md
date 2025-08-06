@@ -12,8 +12,13 @@ The mobile app has been configured with the production Replit API URL for Play S
 
 ### Production URL
 ```
-https://mushypiyush-workspace.replit.app
+https://qaaqconnect.replit.app (Placeholder - Replace with actual deployment URL)
 ```
+
+**⚠️ IMPORTANT**: The current URL is a placeholder. You need to:
+1. Deploy the backend to Replit production
+2. Get the actual deployment URL
+3. Replace the placeholder URLs in the mobile app configuration
 
 ### Environment Detection
 The app automatically detects the environment:

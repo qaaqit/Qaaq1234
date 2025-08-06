@@ -4,7 +4,7 @@
 const DEV_API_URL = 'http://localhost:5000';
 
 // For production - replace with your actual Replit app URL
-const PROD_API_URL = 'https://mushypiyush-workspace.replit.app';
+const PROD_API_URL = 'https://qaaqconnect.replit.app'; // Replace with actual deployment URL
 
 // Auto-detect environment
 export const API_BASE_URL = __DEV__ ? DEV_API_URL : PROD_API_URL;

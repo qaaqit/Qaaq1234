@@ -19,7 +19,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width, height } = Dimensions.get('window');
-const API_BASE_URL = 'https://mushypiyush-workspace.replit.app'; // Production Replit URL
+const API_BASE_URL = 'https://qaaqconnect.replit.app'; // Production Replit URL (Replace with actual deployment URL)
 
 interface User {
   id: string;
