@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_BASE_URL = __DEV__ 
   ? 'http://localhost:5000' // Development URL
-  : 'https://your-production-url.com'; // Replace with your production URL
+  : 'https://mushypiyush-workspace.replit.app'; // Production Replit URL
 
 interface ApiRequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
