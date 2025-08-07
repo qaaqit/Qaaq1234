@@ -616,56 +616,7 @@ export default function DMPage() {
           </CardContent>
         </Card>
 
-        {/* Sent Requests */}
-        {sentRequests.length > 0 && (
-          <Card className="border-2 border-gray-200">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2 text-gray-700">
-                <Clock size={20} />
-                <span>Sent Requests ({sentRequests.length})</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {sentRequests.map((connection) => {
-                  const otherUser = getOtherUser(connection);
-                  if (!otherUser) return null;
-                  return (
-                    <div key={connection.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="w-10 h-10 border-2 border-gray-300">
-                          {(otherUser.whatsAppProfilePictureUrl || otherUser.profilePictureUrl) && (
-                            <img 
-                              src={otherUser.whatsAppProfilePictureUrl || otherUser.profilePictureUrl} 
-                              alt={`${otherUser.whatsAppDisplayName || otherUser.fullName}'s profile`}
-                              className="w-full h-full rounded-full object-cover"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.style.display = 'none';
-                              }}
-                            />
-                          )}
-                          <AvatarFallback className="bg-gray-200 text-gray-600 font-bold text-sm">
-                            {getInitials(otherUser.whatsAppDisplayName || otherUser.fullName)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <h4 className="font-medium text-gray-900">{otherUser.fullName}</h4>
-                          {otherUser.rank && (
-                            <p className="text-sm text-gray-600">{otherUser.rank}</p>
-                          )}
-                        </div>
-                      </div>
-                      <Badge variant="outline" className="text-gray-600">
-                        Waiting for response
-                      </Badge>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+
 
 
           </TabsContent>
