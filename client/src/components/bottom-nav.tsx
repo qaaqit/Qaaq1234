@@ -11,6 +11,9 @@ interface BottomNavProps {
 
 export default function BottomNav({ user, onLogout, showQBOTChat = false, isQBOTMinimized = false }: BottomNavProps) {
   const [location, setLocation] = useLocation();
+  
+  // Debug: Check QBOT state
+  const isQBOTMaximized = showQBOTChat && !isQBOTMinimized;
 
   const handleMapRadarClick = () => {
     if (location === "/" || location === "/discover") {
@@ -41,7 +44,7 @@ export default function BottomNav({ user, onLogout, showQBOTChat = false, isQBOT
       path: "/", 
       icon: "fas fa-map-marked-alt", 
       label: ["Map", "Radar"],
-      active: (location === "/" || location === "/discover" || location === "/users") && (!showQBOTChat || isQBOTMinimized),
+      active: (location === "/" || location === "/discover" || location === "/users") && !isQBOTMaximized,
       onClick: handleMapRadarClick
     }
   ];
