@@ -329,6 +329,127 @@ export default function DMPage() {
           </Button>
         </div>
 
+        {/* Search Results - Show only when searching */}
+        {searchQuery.trim() && (
+          <Card className="border-2 border-ocean-teal/20">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-navy">
+                <Navigation size={20} />
+                <span>Search Results ({filteredUsers.length})</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {filteredUsers.length === 0 ? (
+                <div className="text-center py-8">
+                  <div className="mx-auto w-16 h-16 bg-gradient-to-r from-navy to-blue-800 rounded-full flex items-center justify-center mb-4">
+                    <User size={32} className="text-white" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">No Results Found</h3>
+                  <p className="text-gray-600">
+                    Try adjusting your search terms or search by WhatsApp number, name, or rank
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {filteredUsers.map((userProfile) => {
+                    const existingConnection = connections.find(conn => 
+                      (conn.senderId === user?.id && conn.receiverId === userProfile.id) ||
+                      (conn.receiverId === user?.id && conn.senderId === userProfile.id)
+                    );
+
+                    return (
+                      <Card 
+                        key={userProfile.id} 
+                        className="border border-gray-200 hover:shadow-lg transition-shadow cursor-pointer"
+                        onClick={() => setLocation(`/user/${userProfile.id}`)}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-start space-x-3 mb-3">
+                            <div className="relative">
+                              <Avatar className="w-12 h-12 border-2 border-ocean-teal/30">
+                                {(userProfile.whatsAppProfilePictureUrl || userProfile.profilePictureUrl) ? (
+                                  <img 
+                                    src={userProfile.whatsAppProfilePictureUrl || userProfile.profilePictureUrl} 
+                                    alt={`${userProfile.whatsAppDisplayName || userProfile.fullName}'s profile`}
+                                    className="w-full h-full rounded-full object-cover"
+                                    onError={(e) => {
+                                      const target = e.target as HTMLImageElement;
+                                      target.style.display = 'none';
+                                    }}
+                                  />
+                                ) : (
+                                  <AvatarFallback className="bg-gradient-to-r from-ocean-teal/20 to-cyan-200 text-gray-700 font-bold">
+                                    {getInitials(userProfile.whatsAppDisplayName || userProfile.fullName)}
+                                  </AvatarFallback>
+                                )}
+                              </Avatar>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-gray-900 truncate">
+                                {userProfile.whatsAppDisplayName || userProfile.fullName}
+                              </h4>
+                              <p className="text-sm text-gray-600 truncate">
+                                {userProfile.rank} • {userProfile.city}
+                              </p>
+                              {userProfile.shipName && (
+                                <p className="text-xs text-ocean-teal truncate">
+                                  {userProfile.shipName}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                              <Badge variant="outline" className="text-xs">
+                                Q: {userProfile.questionCount || 0}
+                              </Badge>
+                              {userProfile.distance !== undefined && (
+                                <Badge variant="secondary" className="text-xs">
+                                  {formatDistance(userProfile.distance)}
+                                </Badge>
+                              )}
+                            </div>
+                            {existingConnection ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled
+                                className={`text-xs ${
+                                  existingConnection.status === 'accepted' 
+                                    ? 'border-green-300 text-green-600' 
+                                    : 'border-gray-300 text-gray-500'
+                                }`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                }}
+                              >
+                                {existingConnection.status === 'accepted' ? 'Connected' : 
+                                 existingConnection.status === 'pending' ? 'Request Sent' : 'Connection Declined'}
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                className="text-xs bg-gradient-to-r from-ocean-teal to-cyan-600 hover:from-cyan-600 hover:to-ocean-teal text-white"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleConnectUser(userProfile.id);
+                                }}
+                                disabled={createConnectionMutation.isPending}
+                              >
+                                {createConnectionMutation.isPending ? 'Connecting...' : 'Connect'}
+                              </Button>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         {/* Active Conversations - Unified Chat Management */}
         <Card className="border-2 border-green-200">
           <CardHeader>
@@ -489,8 +610,9 @@ export default function DMPage() {
 
 
 
-        {/* Discover Maritime Professionals */}
-        <Card className="border-2 border-ocean-teal/20">
+        {/* Top Q Professionals - Show only when NOT searching */}
+        {!searchQuery.trim() && (
+          <Card className="border-2 border-ocean-teal/20">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2 text-navy">
               <Navigation size={20} />
@@ -621,9 +743,7 @@ export default function DMPage() {
             )}
           </CardContent>
         </Card>
-
-
-
+        )}
 
           </TabsContent>
         </Tabs>
