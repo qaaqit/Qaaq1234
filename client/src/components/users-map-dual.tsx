@@ -382,106 +382,8 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       {/* Mobile-Optimized Header with Touch-Friendly Controls */}
       <div className="absolute top-0 left-0 right-0 z-[1000] bg-white/95 backdrop-blur-sm border-b border-gray-200">
         <div className="flex flex-col space-y-2 px-2 sm:px-4 py-2 sm:py-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-          {/* Control Row - Filter and Location buttons only */}
+          {/* Empty left side - controls moved to right edge */}
           <div className="flex items-center space-x-1 sm:space-x-2">
-
-
-            {/* Filter Dropdown - Touch-friendly */}
-            <div className="relative dropdown-container">
-              <button
-                onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-                className="flex items-center space-x-1 px-2 sm:px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto justify-center"
-                title="Filter options"
-              >
-                <Filter size={16} />
-                <ChevronDown size={14} className={`transition-transform ${showFilterDropdown ? 'rotate-180' : ''} hidden sm:block`} />
-              </button>
-              
-              {showFilterDropdown && (
-                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[200px] z-[500]">
-                  <div className="p-3 space-y-3">
-                    {/* Online Toggle */}
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        id="onlineOnly"
-                        checked={showOnlineOnly}
-                        onChange={(e) => setShowOnlineOnly(e.target.checked)}
-                        className="w-4 h-4 text-orange-600"
-                      />
-                      <label htmlFor="onlineOnly" className="text-sm">Online Only</label>
-                    </div>
-                    
-                    {/* Rank Categories */}
-                    <div className="space-y-1">
-                      {MARITIME_RANK_CATEGORIES.map((category) => (
-                        <button
-                          key={category.id}
-                          onClick={() => {
-                            setSelectedRankCategory(category.id);
-                            setShowFilterDropdown(false);
-                          }}
-                          className={`w-full text-left px-2 py-1 rounded text-sm ${
-                            selectedRankCategory === category.id ? 'bg-orange-50 text-orange-700' : 'hover:bg-gray-50'
-                          }`}
-                        >
-                          {category.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Location Dropdown - Touch-friendly */}
-            <div className="relative dropdown-container">
-              <button
-                onClick={() => setShowLocationDropdown(!showLocationDropdown)}
-                className="flex items-center space-x-1 px-2 sm:px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto justify-center"
-                title="Location settings"
-              >
-                <MapPin size={16} />
-                <ChevronDown size={14} className={`transition-transform ${showLocationDropdown ? 'rotate-180' : ''} hidden sm:block`} />
-              </button>
-              
-              {showLocationDropdown && (
-                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[200px] z-[500]">
-                  <div className="p-3">
-                    {selectedUser ? (
-                      <div>
-                        <div className="text-sm font-medium">{selectedUser.fullName}</div>
-                        <div className="font-mono text-xs text-gray-500 mt-1">
-                          {selectedUser.latitude.toFixed(6)}, {selectedUser.longitude.toFixed(6)}
-                        </div>
-                      </div>
-                    ) : userLocation ? (
-                      <div>
-                        <div className="text-sm font-medium">Your Location</div>
-                        <div className="font-mono text-xs text-gray-500 mt-1">
-                          {userLocation.lat.toFixed(6)}, {userLocation.lng.toFixed(6)}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-sm text-gray-500">Location Loading...</div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Radar Toggle Button */}
-            <button
-              onClick={() => setShowScanElements(!showScanElements)}
-              className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors ${
-                showScanElements 
-                  ? 'bg-green-100 text-green-700 hover:bg-green-200' 
-                  : 'bg-gray-100 hover:bg-gray-200'
-              }`}
-              title="Toggle radar scan"
-            >
-              <Radar size={16} className={showScanElements ? 'animate-spin' : ''} />
-            </button>
           </div>
 
           {/* Right side - Search Results/Status */}
@@ -532,68 +434,163 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
           radiusKm={radiusKm}
         />
 
-        {/* Map Controls - Top Right Corner Below Maximize Square */}
-        <div className="absolute top-4 right-4 z-[500]">
-            <div className="relative dropdown-container">
-              <button
-                onClick={() => setShowMapTypeDropdown(!showMapTypeDropdown)}
-                className="flex items-center space-x-1 px-3 py-2 bg-white/90 backdrop-blur-sm hover:bg-white rounded-lg shadow-lg border border-gray-200 transition-colors"
-                title="Map view options"
-              >
-                {mapType === 'roadmap' ? <Map size={16} /> : <Satellite size={16} />}
-                <ChevronDown size={14} className={`transition-transform ${showMapTypeDropdown ? 'rotate-180' : ''}`} />
-              </button>
-              
-              {showMapTypeDropdown && (
-                <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[140px] z-[501]">
-                  <div className="p-1">
-                    <button
-                      onClick={() => {
-                        setMapType('roadmap');
-                        setShowMapTypeDropdown(false);
-                      }}
-                      className={`w-full flex items-center space-x-2 px-3 py-2 rounded-md text-sm transition-colors ${
-                        mapType === 'roadmap' 
-                          ? 'bg-orange-50 text-orange-700 font-medium' 
-                          : 'hover:bg-gray-50 text-gray-700'
-                      }`}
-                    >
-                      <Map size={16} />
-                      <span>Map</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setMapType('satellite');
-                        setShowMapTypeDropdown(false);
-                      }}
-                      className={`w-full flex items-center space-x-2 px-3 py-2 rounded-md text-sm transition-colors ${
-                        mapType === 'satellite' 
-                          ? 'bg-orange-50 text-orange-700 font-medium' 
-                          : 'hover:bg-gray-50 text-gray-700'
-                      }`}
-                    >
-                      <Satellite size={16} />
-                      <span>Satellite</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setMapType('hybrid');
-                        setShowMapTypeDropdown(false);
-                      }}
-                      className={`w-full flex items-center space-x-2 px-3 py-2 rounded-md text-sm transition-colors ${
-                        mapType === 'hybrid' 
-                          ? 'bg-orange-50 text-orange-700 font-medium' 
-                          : 'hover:bg-gray-50 text-gray-700'
-                      }`}
-                    >
-                      <div className="w-4 h-4 rounded border border-gray-300 bg-gradient-to-br from-green-100 to-blue-100"></div>
-                      <span>Hybrid</span>
-                    </button>
+        {/* Right Side Control Panel - Vertical Stack */}
+        <div className="absolute top-4 right-4 z-[500] flex flex-col space-y-2">
+          {/* Map Controls */}
+          <div className="relative dropdown-container">
+            <button
+              onClick={() => setShowMapTypeDropdown(!showMapTypeDropdown)}
+              className="flex items-center space-x-1 px-3 py-2 bg-white/90 backdrop-blur-sm hover:bg-white rounded-lg shadow-lg border border-gray-200 transition-colors w-12 h-12 justify-center"
+              title="Map view options"
+            >
+              {mapType === 'roadmap' ? <Map size={16} /> : <Satellite size={16} />}
+            </button>
+            
+            {showMapTypeDropdown && (
+              <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[140px] z-[501]">
+                <div className="p-1">
+                  <button
+                    onClick={() => {
+                      setMapType('roadmap');
+                      setShowMapTypeDropdown(false);
+                    }}
+                    className={`w-full flex items-center space-x-2 px-3 py-2 rounded-md text-sm transition-colors ${
+                      mapType === 'roadmap' 
+                        ? 'bg-orange-50 text-orange-700 font-medium' 
+                        : 'hover:bg-gray-50 text-gray-700'
+                    }`}
+                  >
+                    <Map size={16} />
+                    <span>Map</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMapType('satellite');
+                      setShowMapTypeDropdown(false);
+                    }}
+                    className={`w-full flex items-center space-x-2 px-3 py-2 rounded-md text-sm transition-colors ${
+                      mapType === 'satellite' 
+                        ? 'bg-orange-50 text-orange-700 font-medium' 
+                        : 'hover:bg-gray-50 text-gray-700'
+                    }`}
+                  >
+                    <Satellite size={16} />
+                    <span>Satellite</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMapType('hybrid');
+                      setShowMapTypeDropdown(false);
+                    }}
+                    className={`w-full flex items-center space-x-2 px-3 py-2 rounded-md text-sm transition-colors ${
+                      mapType === 'hybrid' 
+                        ? 'bg-orange-50 text-orange-700 font-medium' 
+                        : 'hover:bg-gray-50 text-gray-700'
+                    }`}
+                  >
+                    <div className="w-4 h-4 rounded border border-gray-300 bg-gradient-to-br from-green-100 to-blue-100"></div>
+                    <span>Hybrid</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Filter Control */}
+          <div className="relative dropdown-container">
+            <button
+              onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+              className="flex items-center justify-center w-12 h-12 bg-white/90 backdrop-blur-sm hover:bg-white rounded-lg shadow-lg border border-gray-200 transition-colors"
+              title="Filter options"
+            >
+              <Filter size={16} />
+            </button>
+            
+            {showFilterDropdown && (
+              <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[200px] z-[501]">
+                <div className="p-3 space-y-3">
+                  {/* Online Toggle */}
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="onlineOnly"
+                      checked={showOnlineOnly}
+                      onChange={(e) => setShowOnlineOnly(e.target.checked)}
+                      className="w-4 h-4 text-orange-600"
+                    />
+                    <label htmlFor="onlineOnly" className="text-sm">Online Only</label>
+                  </div>
+                  
+                  {/* Rank Categories */}
+                  <div className="space-y-1">
+                    {MARITIME_RANK_CATEGORIES.map((category) => (
+                      <button
+                        key={category.id}
+                        onClick={() => {
+                          setSelectedRankCategory(category.id);
+                          setShowFilterDropdown(false);
+                        }}
+                        className={`w-full text-left px-2 py-1 rounded text-sm ${
+                          selectedRankCategory === category.id ? 'bg-orange-50 text-orange-700' : 'hover:bg-gray-50'
+                        }`}
+                      >
+                        {category.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
+
+          {/* Location Control */}
+          <div className="relative dropdown-container">
+            <button
+              onClick={() => setShowLocationDropdown(!showLocationDropdown)}
+              className="flex items-center justify-center w-12 h-12 bg-white/90 backdrop-blur-sm hover:bg-white rounded-lg shadow-lg border border-gray-200 transition-colors"
+              title="Location settings"
+            >
+              <MapPin size={16} />
+            </button>
+            
+            {showLocationDropdown && (
+              <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[200px] z-[501]">
+                <div className="p-3">
+                  {selectedUser ? (
+                    <div>
+                      <div className="text-sm font-medium">{selectedUser.fullName}</div>
+                      <div className="font-mono text-xs text-gray-500 mt-1">
+                        {selectedUser.latitude.toFixed(6)}, {selectedUser.longitude.toFixed(6)}
+                      </div>
+                    </div>
+                  ) : userLocation ? (
+                    <div>
+                      <div className="text-sm font-medium">Your Location</div>
+                      <div className="font-mono text-xs text-gray-500 mt-1">
+                        {userLocation.lat.toFixed(6)}, {userLocation.lng.toFixed(6)}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-500">Location Loading...</div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Radar Control */}
+          <button
+            onClick={() => setShowScanElements(!showScanElements)}
+            className={`flex items-center justify-center w-12 h-12 rounded-lg shadow-lg border border-gray-200 transition-colors ${
+              showScanElements 
+                ? 'bg-green-100 text-green-700 hover:bg-green-200' 
+                : 'bg-white/90 backdrop-blur-sm hover:bg-white'
+            }`}
+            title="Toggle radar scan"
+          >
+            <Radar size={16} className={showScanElements ? 'animate-spin' : ''} />
+          </button>
+        </div>
 
         {/* Koi Hai Animation at 6 o'clock position - only show during search, not when results are displayed */}
         {showScanElements && userLocation && nearestUsers.length === 0 && (
