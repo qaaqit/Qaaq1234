@@ -1336,8 +1336,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Apply text-based search if query provided
       if (searchQuery && searchQuery.trim()) {
-        const query = searchQuery.toLowerCase().trim();
-        console.log(`Searching for: "${query}"`);
+        // Clean the query by removing invisible characters and normalizing
+        const cleanQuery = searchQuery.replace(/[\u200B-\u200D\uFEFF\u2060-\u206F]/g, '').trim();
+        const query = cleanQuery.toLowerCase();
+        console.log(`Searching for: "${query}" (cleaned from: "${searchQuery}")`);
         
         // Special handling for "onboard" search - show only sailing users with ship info
         if (query === 'onboard') {
@@ -1353,8 +1355,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } else {
           // Regular text search across multiple fields including user ID
           filteredUsers = allUsers.filter(user => {
+            // Create multiple search formats for user ID to handle WhatsApp vs regular formats
+            const userId = user.id || '';
+            const userIdVariants = [
+              userId,                                    // Original: wa_917385010771 or +917385010771
+              userId.replace(/^wa_/, '+'),              // wa_917385010771 -> +917385010771
+              userId.replace(/^wa_/, '+91'),            // wa_917385010771 -> +91917385010771 (if starts with 91)
+              userId.replace(/^\+/, 'wa_'),             // +917385010771 -> wa_917385010771
+              userId.replace(/^wa_91?/, ''),            // wa_917385010771 -> 7385010771
+              userId.replace(/^\+91?/, ''),             // +917385010771 -> 7385010771
+            ];
+            
             const searchableText = [
-              user.id || '',                // User ID search capability
+              ...userIdVariants,                        // All user ID variants
               user.fullName || '',
               user.rank || '',
               user.shipName || '',
