@@ -39,11 +39,11 @@ export default function UserDropdown({ user, className = "", onLogout }: UserDro
       }
     }
 
-    // Calculate dropdown position when opened
+    // Calculate dropdown position when opened - moved 10 rows down (240px)
     if (isOpen && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
       setDropdownPosition({
-        top: rect.bottom + 8,
+        top: rect.bottom + 248, // Original 8px + 240px (10 rows * 24px line height)
         right: window.innerWidth - rect.right
       });
     }
