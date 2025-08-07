@@ -8,17 +8,17 @@ import { useEffect, useState } from "react";
 import Home from "@/pages/home";
 import Register from "@/pages/register";
 import Verify from "@/pages/verify";
-import Radar from "@/pages/radar";
+import Discover from "@/pages/discover";
 import Post from "@/pages/post";
 import Admin from "@/pages/admin";
 import BotRulesAdmin from "@/pages/admin/bot-rules";
 import ChatPage from "@/pages/chat";
-import Ch13Page from "@/pages/ch13";
+import DMPage from "@/pages/dm";
 import UserProfile from "@/pages/user-profile";
 import Profile from "@/pages/profile";
 import MyQuestions from "@/pages/my-questions";
 import QuestionPage from "@/pages/question";
-import Ch16Page from "@/pages/ch16";
+import RankGroupsPage from "@/pages/rank-groups";
 
 import NotFound from "@/pages/not-found";
 import BottomNav from "@/components/bottom-nav";
@@ -59,24 +59,21 @@ function Router() {
     <div className="min-h-screen bg-slate-50">
       <div className={user ? "pb-16" : ""}>
         <Switch>
-          <Route path="/" component={() => user ? <Radar user={user} /> : <Home onSuccess={setUser} />} />
+          <Route path="/" component={() => user ? <Discover user={user} /> : <Home onSuccess={setUser} />} />
           <Route path="/register" component={() => <Register onSuccess={setUser} />} />
           <Route path="/verify" component={() => <Verify onSuccess={setUser} />} />
-          <Route path="/discover" component={() => user ? <Radar user={user} /> : <Home />} />
-          <Route path="/radar" component={() => user ? <Radar user={user} /> : <Home />} />
+          <Route path="/discover" component={() => user ? <Discover user={user} /> : <Home />} />
           <Route path="/post" component={() => user ? <Post user={user} /> : <Home />} />
           <Route path="/chat" component={() => user ? <ChatPage /> : <Home />} />
-          <Route path="/chat/:userId" component={() => user ? <Ch13Page /> : <Home />} />
-          <Route path="/dm" component={() => user ? <Ch13Page /> : <Home />} />
-          <Route path="/ch13" component={() => user ? <Ch13Page /> : <Home />} />
-          <Route path="/qhf" component={() => user ? <Ch13Page /> : <Home />} />
+          <Route path="/chat/:userId" component={() => user ? <DMPage /> : <Home />} />
+          <Route path="/dm" component={() => user ? <DMPage /> : <Home />} />
+          <Route path="/qhf" component={() => user ? <DMPage /> : <Home />} />
           <Route path="/user/:userId" component={() => user ? <UserProfile /> : <Home />} />
           <Route path="/user-profile/:userId" component={() => user ? <UserProfile /> : <Home />} />
           <Route path="/profile" component={() => user ? <Profile /> : <Home />} />
           <Route path="/my-questions" component={() => user ? <MyQuestions /> : <Home />} />
           <Route path="/share/question/:id" component={() => user ? <QuestionPage /> : <Home />} />
-          <Route path="/rank-groups" component={() => user ? <Ch16Page /> : <Home />} />
-          <Route path="/ch16" component={() => user ? <Ch16Page /> : <Home />} />
+          <Route path="/rank-groups" component={() => user ? <RankGroupsPage /> : <Home />} />
           <Route path="/admin" component={() => user ? <Admin /> : <Home />} />
           <Route path="/admin/bot-rules" component={() => user ? <BotRulesAdmin /> : <Home />} />
 
