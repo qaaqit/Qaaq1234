@@ -186,8 +186,11 @@ export default function UserDropdown({ user, className = "", onLogout }: UserDro
                 <h3 className="text-gray-800 font-bold truncate">
                   {user.fullName || user.id}
                 </h3>
-                <p className="text-sm text-gray-600 mb-2">
+                <p className="text-sm text-gray-600 mb-1">
                   Welcome{user.fullName && !user.fullName.startsWith('+') ? `, ${user.fullName.split(' ')[0]}` : ''}!
+                </p>
+                <p className="text-xs text-gray-500 mb-2 font-mono bg-gray-50 px-2 py-1 rounded border">
+                  User ID: {user.id}
                 </p>
                 <div className="flex items-center space-x-2">
                   {(user.company || user.userType === 'sailor') && (
