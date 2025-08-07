@@ -34,7 +34,7 @@ export default function BottomNav({ user, onLogout }: BottomNavProps) {
   const navItems = baseNavItems;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-orange-400 shadow-lg z-50 pb-safe">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-orange-400 shadow-lg z-[1001] pb-safe">
       <div className="flex items-center justify-around py-3 px-2 relative min-h-[70px]">
         <div className="absolute inset-0 bg-gradient-to-r from-orange-50 to-yellow-50"></div>
         {navItems.map((item) => (
