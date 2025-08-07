@@ -6,7 +6,7 @@ import MarineChatButton from './marine-chat-button';
 import SingleMessageChat from './single-message-chat';
 import MessageNotificationDot from './message-notification-dot';
 import GoogleMap from './google-map';
-import { ChevronDown, ChevronUp, Filter, MapPin, Radar, Search, Home, Map, Satellite } from 'lucide-react';
+import { ChevronDown, ChevronUp, Filter, MapPin, Radar, Search, Home, Map, Satellite, Crown } from 'lucide-react';
 
 interface MapUser {
   id: string;
@@ -382,27 +382,8 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       {/* Mobile-Optimized Header with Touch-Friendly Controls */}
       <div className="absolute top-0 left-0 right-0 z-[1000] bg-white/95 backdrop-blur-sm border-b border-gray-200">
         <div className="flex flex-col space-y-2 px-2 sm:px-4 py-2 sm:py-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-          {/* Search Row - Full width on mobile */}
+          {/* Control Row - Filter and Location buttons only */}
           <div className="flex items-center space-x-1 sm:space-x-2">
-            {/* Search Input - Responsive width */}
-            <div className="relative flex-1 sm:w-48 lg:w-64">
-              <input
-                type="text"
-                placeholder="Sailors/ Ships/ Company"
-                value={searchQuery}
-                onChange={(e) => handleSearchInput(e.target.value)}
-                className="w-full pl-8 sm:pl-10 pr-8 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              />
-              <Search size={14} className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 text-lg"
-                >
-                  ×
-                </button>
-              )}
-            </div>
 
 
             {/* Filter Dropdown - Touch-friendly */}
@@ -861,6 +842,36 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
           </div>
         </div>
       )}
+
+      {/* Floating Search Bar - Positioned above bottom navigation */}
+      <div className="fixed bottom-16 left-2 right-2 z-[1002] bg-white/95 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg">
+        <div className="flex items-center px-3 py-2">
+          {/* Search Input */}
+          <div className="relative flex-1">
+            <input
+              type="text"
+              placeholder="Sailors/ Ships/ Company"
+              value={searchQuery}
+              onChange={(e) => handleSearchInput(e.target.value)}
+              className="w-full pl-8 pr-8 py-2 text-sm border-0 bg-transparent focus:outline-none focus:ring-0"
+            />
+            <Search size={16} className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 text-lg"
+              >
+                ×
+              </button>
+            )}
+          </div>
+          
+          {/* Crown Icon for Premium */}
+          <div className="ml-2 text-yellow-500">
+            <Crown size={16} />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
