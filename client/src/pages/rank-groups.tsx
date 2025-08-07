@@ -1,4 +1,7 @@
+import { useState } from "react";
 import { useLocation } from "wouter";
+import { Button } from "@/components/ui/button";
+import { ChevronUp, ChevronDown } from "lucide-react";
 import { RankGroupsPanel } from "@/components/rank-groups-panel";
 import UserDropdown from "@/components/user-dropdown";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,6 +10,8 @@ import qaaqLogo from "@/assets/qaaq-logo.png";
 export default function RankGroupsPage() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
+  const [showQBOTChat, setShowQBOTChat] = useState(false);
+  const [isQBOTMinimized, setIsQBOTMinimized] = useState(false);
 
   // Return early if user is not authenticated
   if (!user) {
@@ -48,7 +53,36 @@ export default function RankGroupsPage() {
                   <p className="text-sm text-orange-600 italic font-medium">maritime groups</p>
                 </div>
               </button>
-              {user && <UserDropdown user={user} onLogout={() => window.location.reload()} />}
+              <div className="flex items-center space-x-2 sm:space-x-4">
+                <Button
+                  onClick={() => {
+                    if (!showQBOTChat) {
+                      setShowQBOTChat(true);
+                      setIsQBOTMinimized(false);
+                    } else {
+                      setIsQBOTMinimized(!isQBOTMinimized);
+                    }
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="bg-gradient-to-r from-orange-500 to-yellow-500 border-2 border-red-400 text-white hover:from-red-500 hover:to-orange-500 hover:border-red-500 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 text-xs sm:text-sm px-2 sm:px-3 font-bold"
+                  title={showQBOTChat ? (isQBOTMinimized ? "Expand QBOT" : "Minimize QBOT") : "Open QBOT - Maritime Assistant"}
+                >
+                  <i className="fas fa-robot mr-1 sm:mr-2 text-yellow-200"></i>
+                  <span className="hidden sm:inline">QBOT</span>
+                  <span className="sm:hidden">QBOT</span>
+                  {showQBOTChat ? (
+                    isQBOTMinimized ? (
+                      <ChevronUp size={14} className="ml-1 text-yellow-200" />
+                    ) : (
+                      <ChevronDown size={14} className="ml-1 text-yellow-200" />
+                    )
+                  ) : (
+                    <ChevronDown size={14} className="ml-1 text-yellow-200" />
+                  )}
+                </Button>
+                {user && <UserDropdown user={user} onLogout={() => window.location.reload()} />}
+              </div>
             </div>
           </div>
         </header>
