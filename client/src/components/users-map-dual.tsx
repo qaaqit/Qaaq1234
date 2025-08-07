@@ -6,7 +6,7 @@ import MarineChatButton from './marine-chat-button';
 import SingleMessageChat from './single-message-chat';
 import MessageNotificationDot from './message-notification-dot';
 import GoogleMap from './google-map';
-import { ChevronDown, ChevronUp, Filter, MapPin, Radar, Search, Home, Map, Satellite } from 'lucide-react';
+import { ChevronDown, ChevronUp, Filter, MapPin, Radar, Search, Home, Map, Satellite, Users, Clock } from 'lucide-react';
 
 interface MapUser {
   id: string;
@@ -27,6 +27,7 @@ interface MapUser {
   locationUpdatedAt?: Date | string | null;
   questionCount?: number;
   answerCount?: number;
+  profilePictureUrl?: string | null;
 }
 
 const getRankAbbreviation = (rank: string): string => {
@@ -137,6 +138,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
   const [searchQuery, setSearchQuery] = useState(''); // User search input
   const [shipSearchResult, setShipSearchResult] = useState<any>(null); // Ship search result
   const [searchType, setSearchType] = useState<'users' | 'ships'>('users'); // Search type
+  const [showPendingRequests, setShowPendingRequests] = useState(false); // Show pending requests panel
 
   // Stable zoom change handler to prevent map re-initialization
   const handleZoomChange = useCallback((zoom: number) => {
@@ -144,6 +146,26 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
   }, []);
 
 
+
+  // Fetch pending chat connection requests
+  const { data: pendingConnections = [], isLoading: pendingLoading } = useQuery({
+    queryKey: ['/api/chat/connections'],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const response = await fetch('/api/chat/connections');
+      if (!response.ok) throw new Error('Failed to fetch connections');
+      const connections = await response.json();
+      // Filter for pending requests where current user is the receiver
+      return connections.filter((conn: any) => 
+        conn.status === 'pending' && conn.receiverId === user.id
+      );
+    },
+    enabled: !!user?.id,
+    staleTime: 30000,
+  });
+
+  // Count of pending requests
+  const pendingCount = pendingConnections.length;
 
   // Fetch all users with comprehensive search functionality
   const { data: allUsers = [], isLoading } = useQuery<MapUser[]>({
@@ -382,6 +404,27 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       {/* Mobile-Optimized Header with Touch-Friendly Controls */}
       <div className="absolute top-0 left-0 right-0 z-[1001] bg-white/95 backdrop-blur-sm border-b border-gray-200">
         <div className="flex flex-col space-y-2 px-2 sm:px-4 py-2 sm:py-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+          {/* Pending Requests Bar - Only show if there are pending requests */}
+          {pendingCount > 0 && (
+            <div className="w-full mb-2 sm:mb-0">
+              <button
+                onClick={() => setShowPendingRequests(!showPendingRequests)}
+                className="w-full flex items-center justify-between px-3 py-2 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 transition-colors"
+              >
+                <div className="flex items-center space-x-2">
+                  <Clock size={14} className="text-orange-600" />
+                  <span className="text-sm font-medium text-orange-700">
+                    Pending Requests ({pendingCount})
+                  </span>
+                </div>
+                <ChevronDown 
+                  size={14} 
+                  className={`text-orange-600 transition-transform ${showPendingRequests ? 'rotate-180' : ''}`} 
+                />
+              </button>
+            </div>
+          )}
+          
           {/* Search Row - Full width on mobile */}
           <div className="flex items-center space-x-1 sm:space-x-2">
             {/* Search Input - Responsive width */}
@@ -520,6 +563,89 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
 
 
       </div>
+
+      {/* Pending Requests Panel - Show when clicked */}
+      {showPendingRequests && pendingCount > 0 && (
+        <div className="absolute top-[120px] left-2 right-2 z-[1002] bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 max-h-[300px] overflow-y-auto">
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-gray-800 flex items-center space-x-2">
+                <Users size={16} />
+                <span>Pending Connection Requests</span>
+              </h3>
+              <button
+                onClick={() => setShowPendingRequests(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ×
+              </button>
+            </div>
+            
+            {pendingLoading ? (
+              <div className="text-center py-4 text-gray-500">Loading requests...</div>
+            ) : (
+              <div className="space-y-3">
+                {pendingConnections.map((connection: any) => (
+                  <div key={connection.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">
+                        {connection.sender?.fullName || 'Unknown User'}
+                      </div>
+                      {connection.sender?.rank && (
+                        <div className="text-sm text-blue-600">
+                          {connection.sender.rank}
+                        </div>
+                      )}
+                      <div className="text-xs text-gray-500 mt-1">
+                        {new Date(connection.createdAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                    
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={async () => {
+                          try {
+                            const response = await fetch(`/api/chat/accept/${connection.id}`, {
+                              method: 'POST'
+                            });
+                            if (response.ok) {
+                              // Refresh the connections list
+                              window.location.reload();
+                            }
+                          } catch (error) {
+                            console.error('Error accepting connection:', error);
+                          }
+                        }}
+                        className="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600"
+                      >
+                        Accept
+                      </button>
+                      <button
+                        onClick={async () => {
+                          try {
+                            const response = await fetch(`/api/chat/reject/${connection.id}`, {
+                              method: 'POST'
+                            });
+                            if (response.ok) {
+                              // Refresh the connections list
+                              window.location.reload();
+                            }
+                          } catch (error) {
+                            console.error('Error rejecting connection:', error);
+                          }
+                        }}
+                        className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Dual Map System: Google Maps for Admin, Leaflet for Users */}
       <div className={`absolute top-[80px] sm:top-[60px] left-0 right-0 ${

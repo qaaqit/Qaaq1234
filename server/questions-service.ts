@@ -72,8 +72,8 @@ export async function getQuestions(page: number = 1, limit: number = 20): Promis
           WHEN q.is_from_whatsapp THEN 'WhatsApp Q&A'
           ELSE 'General Discussion'
         END as category_name,
-        (SELECT COUNT(*) FROM answers a WHERE a.question_id = q.id) as answer_count
-      FROM questions q
+        (SELECT COUNT(*) FROM qaaq_answers a WHERE a.question_id = q.id) as answer_count
+      FROM qaaq_questions q
       LEFT JOIN users u ON u.id = q.author_id
       WHERE q.is_archived = false AND q.is_hidden = false
       ORDER BY q.created_at DESC
@@ -83,7 +83,7 @@ export async function getQuestions(page: number = 1, limit: number = 20): Promis
     // Get total count
     const countResult = await client.query(`
       SELECT COUNT(*) as total 
-      FROM questions 
+      FROM qaaq_questions 
       WHERE is_archived = false AND is_hidden = false
     `);
     
@@ -148,10 +148,10 @@ export async function getQuestionById(questionId: number): Promise<Question | nu
           WHEN q.is_from_whatsapp THEN 'WhatsApp Q&A'
           ELSE 'General Discussion'
         END as category,
-        (SELECT COUNT(*) FROM answers a WHERE a.question_id = q.id) as answer_count,
+        (SELECT COUNT(*) FROM qaaq_answers a WHERE a.question_id = q.id) as answer_count,
         false as is_anonymous,
         CASE WHEN q.is_from_whatsapp THEN 'whatsapp' ELSE 'web' END as source
-      FROM questions q
+      FROM qaaq_questions q
       LEFT JOIN users u ON u.id = q.author_id
       WHERE q.id = $1 AND q.is_archived = false AND q.is_hidden = false
     `, [questionId]);
@@ -256,8 +256,8 @@ export async function searchQuestions(query: string, page: number = 1, limit: nu
           WHEN q.is_from_whatsapp THEN 'WhatsApp Q&A'
           ELSE 'General Discussion'
         END as category_name,
-        (SELECT COUNT(*) FROM answers a WHERE a.question_id = q.id) as answer_count
-      FROM questions q
+        (SELECT COUNT(*) FROM qaaq_answers a WHERE a.question_id = q.id) as answer_count
+      FROM qaaq_questions q
       LEFT JOIN users u ON u.id = q.author_id
       WHERE q.is_archived = false 
         AND q.is_hidden = false
@@ -276,7 +276,7 @@ export async function searchQuestions(query: string, page: number = 1, limit: nu
     
     const countResult = await client.query(`
       SELECT COUNT(*) as total 
-      FROM questions q
+      FROM qaaq_questions q
       LEFT JOIN users u ON u.id = q.author_id
       WHERE q.is_archived = false 
         AND q.is_hidden = false
