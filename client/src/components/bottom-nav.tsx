@@ -5,9 +5,11 @@ import type { User } from "@/lib/auth";
 interface BottomNavProps {
   user: User;
   onLogout?: () => void;
+  showQBOTChat?: boolean;
+  isQBOTMinimized?: boolean;
 }
 
-export default function BottomNav({ user, onLogout }: BottomNavProps) {
+export default function BottomNav({ user, onLogout, showQBOTChat = false, isQBOTMinimized = false }: BottomNavProps) {
   const [location, setLocation] = useLocation();
 
   const handleMapRadarClick = () => {
@@ -39,7 +41,7 @@ export default function BottomNav({ user, onLogout }: BottomNavProps) {
       path: "/", 
       icon: "fas fa-map-marked-alt", 
       label: ["Map", "Radar"],
-      active: location === "/" || location === "/discover" || location === "/users",
+      active: (location === "/" || location === "/discover" || location === "/users") && (!showQBOTChat || isQBOTMinimized),
       onClick: handleMapRadarClick
     }
   ];
