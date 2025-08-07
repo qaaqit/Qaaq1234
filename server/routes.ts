@@ -1180,16 +1180,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send message
       const chatMessage = await storage.sendMessage(connection.id, senderId, message.trim());
 
+      // Debug: Check if receiver can see this connection
+      const receiverConnections = await storage.getUserChatConnections(receiverId);
+      console.log(`🔍 Receiver ${receiverId} has ${receiverConnections.length} connections`);
+      const hasConnection = receiverConnections.some(conn => conn.id === connection.id);
+      console.log(`🔍 Receiver can see this connection: ${hasConnection}`);
+
       res.json({ 
         success: true, 
         connectionId: connection.id, 
         messageId: chatMessage.id,
+        receiverConnectionsCount: receiverConnections.length,
+        receiverCanSeeConnection: hasConnection,
         message: "Test message sent successfully!" 
       });
 
     } catch (error) {
       console.error('Test message error:', error);
       res.status(500).json({ message: "Failed to send test message" });
+    }
+  });
+
+  // Debug endpoint to check user's connections
+  app.get('/api/chat/debug-connections/:userId', async (req, res) => {
+    try {
+      const { userId } = req.params;
+      console.log(`🔍 Debug connections for user: ${userId}`);
+      
+      const connections = await storage.getUserChatConnections(userId);
+      console.log(`🔍 Found ${connections.length} connections for user ${userId}`);
+      
+      const connectionsWithDetails = await Promise.all(connections.map(async (conn) => {
+        const messages = await storage.getChatMessages(conn.id);
+        return {
+          ...conn,
+          messageCount: messages.length,
+          lastMessage: messages[messages.length - 1]
+        };
+      }));
+
+      res.json({
+        userId,
+        totalConnections: connections.length,
+        connections: connectionsWithDetails
+      });
+    } catch (error) {
+      console.error('Debug connections error:', error);
+      res.status(500).json({ message: "Failed to debug connections" });
     }
   });
 
