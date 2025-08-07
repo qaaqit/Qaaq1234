@@ -48,7 +48,7 @@ export default function Discover({ user }: DiscoverProps) {
   const [showUsers, setShowUsers] = useState(true); // Always show anchor pins from start
   const [showNearbyCard, setShowNearbyCard] = useState(false);
   const [showWhatsAppPanel, setShowWhatsAppPanel] = useState(false);
-  const [showQBOTChat, setShowQBOTChat] = useState(false);
+  const [showQBOTChat, setShowQBOTChat] = useState(true);
   const [isQBOTMinimized, setIsQBOTMinimized] = useState(false);
   const [qbotMessages, setQBotMessages] = useState<Message[]>([]);
   const [isQBotTyping, setIsQBotTyping] = useState(false);
