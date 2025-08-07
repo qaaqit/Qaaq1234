@@ -286,7 +286,7 @@ export default function DMPage() {
                   description: "QBOT conversation has been reset",
                 });
               }}
-              onMinimize={() => setIsQBOTMinimized(!isQBOTMinimized)}
+              onToggleMinimize={() => setIsQBOTMinimized(!isQBOTMinimized)}
               isMinimized={isQBOTMinimized}
               messages={qBotMessages}
               isTyping={isQBotTyping}

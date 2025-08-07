@@ -12,12 +12,12 @@ export default function QBOTChatHeader({
   isMinimized = false 
 }: QBOTChatHeaderProps) {
   return (
-    <div className="relative z-10 h-[60px] bg-gradient-to-r from-red-500 to-orange-500 shadow-lg flex items-center justify-between px-4 flex-shrink-0">
+    <div className="relative z-10 h-[60px] bg-gradient-to-r from-red-500 to-orange-500 shadow-lg flex items-center justify-between px-4 flex-shrink-0 pointer-events-none">
       {/* Left: Clear/Trash Icon - Hide when minimized */}
       {!isMinimized && (
         <button
           onClick={onClear}
-          className="p-2 rounded-full hover:bg-white/10 transition-colors"
+          className="p-2 rounded-full hover:bg-white/10 transition-colors pointer-events-auto"
           aria-label="Clear chat"
           title="Clear chat history"
         >
@@ -34,7 +34,7 @@ export default function QBOTChatHeader({
       {/* Right: Minimize Toggle Icon */}
       <button
         onClick={onToggleMinimize}
-        className="p-2 rounded-full hover:bg-white/10 transition-colors z-20"
+        className="p-2 rounded-full hover:bg-white/10 transition-colors z-20 pointer-events-auto"
         aria-label={isMinimized ? "Expand chat" : "Minimize chat"}
         title={isMinimized ? "Expand chat" : "Minimize chat"}
       >
