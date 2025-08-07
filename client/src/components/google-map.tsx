@@ -257,11 +257,11 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
         title: user.fullName,
         icon: {
           path: window.google.maps.SymbolPath.CIRCLE,
-          scale: 3, // Reduced from 15 to 3 (1/5th size)
+          scale: 6, // Doubled from 3 to 6 for larger visibility
           fillColor: color,
           fillOpacity: 1,
           strokeColor: '#ffffff',
-          strokeWeight: 0.5, // Reduced stroke weight proportionally
+          strokeWeight: 1, // Increased stroke weight proportionally
         },
         optimized: true, // Enable marker optimization to reduce flickering
         clickable: true,
