@@ -334,11 +334,7 @@ export default function Discover({ user }: DiscoverProps) {
       </div>
       
       {/* Bottom Navigation */}
-      <BottomNav 
-        user={user} 
-        showQBOTChat={showQBOTChat}
-        isQBOTMinimized={isQBOTMinimized}
-      />
+      <BottomNav user={user} />
     </div>
   );
 }
