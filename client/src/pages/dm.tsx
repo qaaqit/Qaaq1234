@@ -17,7 +17,6 @@ import UserDropdown from "@/components/user-dropdown";
 import { QuestionsTab } from "@/components/questions-tab";
 import MessageNotificationDot from "@/components/message-notification-dot";
 import QBOTChatContainer from "@/components/qbot-chat/QBOTChatContainer";
-import QBOTChatHeader from "@/components/qbot-chat/QBOTChatHeader";
 import QBOTChatArea from "@/components/qbot-chat/QBOTChatArea";
 import QBOTWelcomeState from "@/components/qbot-chat/QBOTWelcomeState";
 import QBOTMessageList from "@/components/qbot-chat/QBOTMessageList";
@@ -288,22 +287,6 @@ export default function DMPage() {
           isMinimized={isQBOTMinimized}
         >
           <div className="flex flex-col h-full">
-            {/* Gradient Header */}
-            <QBOTChatHeader 
-              onClear={() => {
-                setQBotMessages([]);
-                setIsQBotTyping(false);
-                toast({
-                  title: "Chat Cleared",
-                  description: "Your conversation has been cleared.",
-                });
-              }}
-              onToggleMinimize={() => {
-                setIsQBOTMinimized(!isQBOTMinimized);
-              }}
-              isMinimized={isQBOTMinimized}
-            />
-            
             {/* Chat Area with Grid Pattern - hide when minimized */}
             {!isQBOTMinimized && (
               <>
