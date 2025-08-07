@@ -623,7 +623,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       {nearestUsers.length > 0 && (
         <div className={`absolute left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 z-[1000] transition-all duration-300 ease-in-out ${
           searchPanelState === 'minimized'
-            ? 'bottom-0 h-[60px]'
+            ? 'bottom-0 h-[100px] sm:h-[110px]'
             : searchPanelState === 'half'
             ? 'bottom-0 h-1/2'
             : searchQuery.trim() 
@@ -673,12 +673,12 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             </div>
             <div className={`${
               searchPanelState === 'minimized' 
-                ? 'hidden' 
+                ? 'flex gap-2 sm:gap-3 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 pb-2 h-[calc(100%-2rem)]' 
                 : searchQuery.trim() 
                 ? 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 overflow-y-auto h-[calc(100%-3rem)] scrollbar-thin scrollbar-thumb-gray-300 pr-2' 
                 : 'flex gap-2 sm:gap-3 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 pb-2'
             }`}>
-              {nearestUsers.map((user) => (
+              {(searchPanelState === 'minimized' ? nearestUsers.slice(0, 1) : nearestUsers).map((user) => (
                 <div
                   key={user.id}
                   className={`bg-white rounded-lg border border-gray-200 p-2 sm:p-3 hover:bg-gray-50 transition-colors touch-manipulation ${
