@@ -33,7 +33,7 @@ Scope Focus: Core "Koi Hai?" discovery functionality - CPSS navigation and socia
 Mobile Optimization: Responsive layout with touch-friendly controls and compact design
 Enhanced Search: Updated placeholder to "Sailors/ Ships/ Company" for better user guidance
 Admin shield location: Keep admin shield in header top right corner (not in bottom navigation)
-Header visibility: Show white header only for admin users, regular users should not see the header. For non-admin users, QBOT and profile controls are positioned as floating elements in top-right corner
+Header visibility: Show white header only for admin users, regular users should not see the header
 Premium mode: Crown icon in search box toggles premium Google Maps features, requires premium plan for non-admin users
 WhatsApp Bot: Moved from map overlay to header button next to logout for cleaner map interface
 Google Maps Controls: Transparent icon-only buttons positioned in bottom-left corner (Road/Satellite/Hybrid view toggles)
