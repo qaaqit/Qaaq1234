@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import type { User } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
-import { ChevronUp, ChevronDown } from "lucide-react";
 import UserDropdown from "@/components/user-dropdown";
 import QBOTChatContainer from "@/components/qbot-chat/QBOTChatContainer";
 import QBOTChatHeader from "@/components/qbot-chat/QBOTChatHeader";
@@ -82,33 +81,6 @@ export default function QBOTPage({ user }: QBOTPageProps) {
               </div>
             </button>
             <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
-              <Button
-                onClick={() => {
-                  if (!showQBOTChat) {
-                    setShowQBOTChat(true);
-                    setIsQBOTMinimized(false);
-                  } else {
-                    setIsQBOTMinimized(!isQBOTMinimized);
-                  }
-                }}
-                variant="outline"
-                size="sm"
-                className="bg-gradient-to-r from-orange-500 to-yellow-500 border-2 border-red-400 text-white hover:from-red-500 hover:to-orange-500 hover:border-red-500 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 text-xs px-1 sm:px-2 font-bold flex-shrink-0"
-                title={showQBOTChat ? (isQBOTMinimized ? "Expand QBOT" : "Minimize QBOT") : "Open QBOT - Maritime Assistant"}
-              >
-                <i className="fas fa-robot mr-1 sm:mr-2 text-yellow-200"></i>
-                <span className="hidden sm:inline">QBOT</span>
-                <span className="sm:hidden">QBOT</span>
-                {showQBOTChat ? (
-                  isQBOTMinimized ? (
-                    <ChevronUp size={14} className="ml-1 text-yellow-200" />
-                  ) : (
-                    <ChevronDown size={14} className="ml-1 text-yellow-200" />
-                  )
-                ) : (
-                  <ChevronDown size={14} className="ml-1 text-yellow-200" />
-                )}
-              </Button>
               <UserDropdown user={user} onLogout={() => window.location.reload()} />
             </div>
           </div>
