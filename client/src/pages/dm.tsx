@@ -298,77 +298,163 @@ export default function DMPage() {
           </TabsContent>
 
           <TabsContent value="users" className="space-y-6">
-            {/* Pending Connection Requests */}
-        {pendingConnections.length > 0 && (
-          <Card className="border-2 border-duck-yellow/50 bg-duck-yellow/5">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2 text-duck-yellow">
-                <Clock size={20} />
-                <span>Pending Requests ({pendingConnections.length})</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {pendingConnections.map((connection) => {
+        {/* Active Conversations - Unified Chat Management */}
+        <Card className="border-2 border-green-200">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2 text-green-700">
+              <MessageCircle size={20} />
+              <span>Active Conversations ({connections.length})</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {connections.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="mx-auto w-16 h-16 bg-gradient-to-r from-green-100 to-green-200 rounded-full flex items-center justify-center mb-4">
+                  <MessageCircle size={32} className="text-green-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Conversations</h3>
+                <p className="text-gray-600">
+                  Connect with maritime professionals to start chatting
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {connections.map((connection) => {
                   const otherUser = getOtherUser(connection);
                   if (!otherUser) return null;
+                  
+                  const isAccepted = connection.status === 'accepted';
+                  const isPending = connection.status === 'pending';
+                  const isIncoming = isPending && connection.receiverId === user?.id;
+                  const isOutgoing = isPending && connection.senderId === user?.id;
+                  
                   return (
-                    <div key={connection.id} className="flex items-center justify-between p-4 bg-white rounded-lg border border-duck-yellow/30">
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="w-12 h-12 border-2 border-duck-yellow/30">
-                          {(otherUser.whatsAppProfilePictureUrl || otherUser.profilePictureUrl) && (
-                            <img 
-                              src={otherUser.whatsAppProfilePictureUrl || otherUser.profilePictureUrl} 
-                              alt={`${otherUser.whatsAppDisplayName || otherUser.fullName}'s profile`}
-                              className="w-full h-full rounded-full object-cover"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.style.display = 'none';
-                              }}
-                            />
-                          )}
-                          <AvatarFallback className="bg-duck-yellow/20 text-duck-yellow font-bold">
-                            {getInitials(otherUser.whatsAppDisplayName || otherUser.fullName)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
+                    <div key={connection.id} className={`flex items-center justify-between p-4 rounded-lg border transition-shadow ${
+                      isAccepted ? 'bg-white border-green-200 hover:shadow-md' : 
+                      isIncoming ? 'bg-duck-yellow/5 border-duck-yellow/30' : 
+                      'bg-gray-50 border-gray-200'
+                    }`}>
+                      <div className="flex items-center space-x-3 flex-1">
+                        <div className="relative">
+                          <Avatar className={`w-12 h-12 border-2 ${
+                            isAccepted ? 'border-green-300' : 
+                            isIncoming ? 'border-duck-yellow/30' : 
+                            'border-gray-300'
+                          }`}>
+                            {(otherUser.whatsAppProfilePictureUrl || otherUser.profilePictureUrl) && (
+                              <img 
+                                src={otherUser.whatsAppProfilePictureUrl || otherUser.profilePictureUrl} 
+                                alt={`${otherUser.whatsAppDisplayName || otherUser.fullName}'s profile`}
+                                className="w-full h-full rounded-full object-cover"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                }}
+                              />
+                            )}
+                            <AvatarFallback className={`font-bold ${
+                              isAccepted ? 'bg-green-100 text-green-700' : 
+                              isIncoming ? 'bg-duck-yellow/20 text-duck-yellow' : 
+                              'bg-gray-200 text-gray-600'
+                            }`}>
+                              {getInitials(otherUser.whatsAppDisplayName || otherUser.fullName)}
+                            </AvatarFallback>
+                          </Avatar>
+                          {isAccepted && <MessageNotificationDot userId={otherUser.id} />}
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
                           <h4 className="font-semibold text-gray-900">{otherUser.fullName}</h4>
                           {otherUser.rank && (
                             <p className="text-sm text-gray-600">{otherUser.rank}</p>
                           )}
+                          <div className="flex items-center justify-between mt-1">
+                            <div className="text-xs text-gray-500">
+                              {isAccepted && (
+                                <span>Connected {formatDistanceToNow(new Date(connection.acceptedAt || connection.createdAt || new Date()))} ago</span>
+                              )}
+                              {isIncoming && (
+                                <span className="text-duck-yellow font-medium">Wants to connect with you</span>
+                              )}
+                              {isOutgoing && (
+                                <span className="text-gray-500">Connection request sent</span>
+                              )}
+                            </div>
+                            
+                            {/* WhatsApp-style tick indicators */}
+                            <div className="flex items-center space-x-1">
+                              {isOutgoing && (
+                                <div className="text-gray-400" title="Message sent">
+                                  <svg width="16" height="12" viewBox="0 0 16 12" className="inline">
+                                    <path d="m5.229 6.427-1.14-1.14-1.415 1.414 2.555 2.555 7.074-7.074-1.414-1.414z" fill="currentColor"/>
+                                  </svg>
+                                </div>
+                              )}
+                              {isAccepted && (
+                                <div className="text-green-500" title="Message delivered and accepted">
+                                  <svg width="16" height="12" viewBox="0 0 16 12" className="inline">
+                                    <path d="m0.229 6.427-1.14-1.14-1.415 1.414 2.555 2.555 7.074-7.074-1.414-1.414z" fill="currentColor"/>
+                                    <path d="m5.229 6.427-1.14-1.14-1.415 1.414 2.555 2.555 7.074-7.074-1.414-1.414z" fill="currentColor"/>
+                                  </svg>
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex space-x-2">
-                        <Button
-                          size="sm"
-                          className="bg-ocean-teal hover:bg-cyan-600 text-white"
-                          onClick={() => {
-                            // Accept connection logic would go here
-                            toast({
-                              title: "Feature Coming Soon",
-                              description: "Accept/reject functionality will be implemented next.",
-                            });
-                          }}
-                        >
-                          Accept
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="border-red-300 text-red-600 hover:bg-red-50"
-                        >
-                          Decline
-                        </Button>
+                      
+                      <div className="flex space-x-2 ml-4">
+                        {isAccepted && (
+                          <Button
+                            size="sm"
+                            className="bg-gradient-to-r from-ocean-teal to-cyan-600 text-white hover:from-cyan-600 hover:to-ocean-teal"
+                            onClick={() => {
+                              openChat(connection);
+                              if (connection.id) {
+                                websocketService.markMessagesAsRead(connection.id);
+                              }
+                            }}
+                          >
+                            Open Chat
+                          </Button>
+                        )}
+                        {isIncoming && (
+                          <>
+                            <Button
+                              size="sm"
+                              className="bg-ocean-teal hover:bg-cyan-600 text-white"
+                              onClick={() => {
+                                // Accept connection logic would go here
+                                toast({
+                                  title: "Feature Coming Soon",
+                                  description: "Accept functionality will be implemented next.",
+                                });
+                              }}
+                            >
+                              Accept
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-red-300 text-red-600 hover:bg-red-50"
+                            >
+                              Decline
+                            </Button>
+                          </>
+                        )}
+                        {isOutgoing && (
+                          <Badge variant="outline" className="text-gray-600">
+                            Waiting
+                          </Badge>
+                        )}
                       </div>
                     </div>
                   );
                 })}
               </div>
-            </CardContent>
-          </Card>
-        )}
-
-
+            )}
+          </CardContent>
+        </Card>
 
         {/* Search Users Bar */}
         <Card className="border-2 border-ocean-teal/20">
