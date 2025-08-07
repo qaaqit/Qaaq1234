@@ -134,7 +134,7 @@ export default function UserDropdown({ user, className = "", onLogout }: UserDro
   }
 
   return (
-    <div className={`relative z-[999999] ${className}`} ref={dropdownRef}>
+    <div className={`relative z-[2147483647] ${className}`} ref={dropdownRef}>
       {/* User Avatar Button */}
       <Button
         ref={buttonRef}
@@ -166,7 +166,7 @@ export default function UserDropdown({ user, className = "", onLogout }: UserDro
       {/* Dropdown Menu */}
       {isOpen && (
         <div 
-          className="user-dropdown-menu w-80 bg-white rounded-lg shadow-xl border-2 border-orange-400 overflow-hidden z-[999999] animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200"
+          className="user-dropdown-menu w-80 bg-white rounded-lg shadow-xl border-2 border-orange-400 overflow-hidden z-[2147483647] animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200"
           style={{
             position: 'fixed',
             top: `${dropdownPosition.top}px`,
