@@ -67,9 +67,21 @@ export default function DMPage() {
     }
   }, [user, queryClient, toast]);
   
-  // Get the target user ID from URL parameters
+  // Get the target user ID from URL parameters  
   const urlParams = new URLSearchParams(window.location.search);
   const targetUserId = urlParams.get('user');
+
+  // Fetch target user details if provided
+  const { data: targetUser } = useQuery<UserType>({
+    queryKey: ['/api/users/profile', targetUserId],
+    queryFn: async () => {
+      if (!targetUserId) throw new Error('No target user ID');
+      const response = await fetch(`/api/users/profile/${targetUserId}`);
+      if (!response.ok) throw new Error('Failed to fetch user profile');
+      return response.json();
+    },
+    enabled: !!targetUserId,
+  });
 
   // Fetch user's chat connections
   const { data: connections = [], isLoading: connectionsLoading } = useQuery<ExtendedChatConnection[]>({
@@ -158,9 +170,9 @@ export default function DMPage() {
 
   // Auto-open chat for specific user if specified in URL
   useEffect(() => {
-    console.log('🔍 DM Auto-connect check:', { targetUserId, connectionsCount: connections.length, nearbyUsersCount: nearbyUsers.length });
+    console.log('🔍 DM Auto-connect check:', { targetUserId, targetUser: targetUser?.fullName, connectionsCount: connections.length });
     
-    if (targetUserId && connections.length >= 0 && nearbyUsers.length >= 0) {
+    if (targetUserId && (targetUser || connections.length > 0)) {
       // Check if there's already an existing connection
       const existingConnection = connections.find(conn => {
         const otherUser = getOtherUser(conn);
@@ -171,19 +183,14 @@ export default function DMPage() {
       if (existingConnection && existingConnection.status === 'accepted') {
         console.log('✅ Opening existing chat with:', targetUserId);
         openChat(existingConnection);
-      } else if (!existingConnection) {
-        // Find the user in nearby users and auto-connect
-        const targetUser = nearbyUsers.find(u => u.id === targetUserId);
-        console.log('🔍 Target user found in nearby:', !!targetUser, targetUser?.fullName);
-        if (targetUser) {
-          console.log('🚀 Auto-connecting to user:', targetUserId);
-          handleConnectUser(targetUserId);
-        }
+      } else if (!existingConnection && targetUser) {
+        console.log('🚀 Auto-connecting to user:', targetUserId, targetUser.fullName);
+        handleConnectUser(targetUserId);
       } else {
-        console.log('⏳ Connection exists but not accepted yet:', existingConnection.status);
+        console.log('⏳ Connection exists but not accepted yet:', existingConnection?.status);
       }
     }
-  }, [targetUserId, connections, nearbyUsers]);
+  }, [targetUserId, targetUser, connections]);
 
   // Filter users based on search query
   const filteredUsers = nearbyUsers.filter(user =>

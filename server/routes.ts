@@ -1322,6 +1322,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user profile by ID endpoint
+  app.get('/api/users/profile/:userId', authenticateToken, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      console.log(`Fetching profile for user: ${userId}`);
+
+      // Query user from PostgreSQL database
+      const result = await neonClient.query(
+        'SELECT * FROM users WHERE id = $1',
+        [userId]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      const user = result.rows[0];
+      console.log(`Found user profile: ${user.full_name}`);
+
+      // Return user profile data
+      res.json({
+        id: user.id,
+        fullName: user.full_name,
+        email: user.email,
+        userType: user.user_type,
+        rank: user.rank,
+        shipName: user.ship_name,
+        imoNumber: user.imo_number,
+        port: user.port,
+        city: user.city,
+        country: user.country,
+        company: user.company,
+        profilePictureUrl: user.profile_picture_url,
+        isVerified: user.is_verified,
+        latitude: user.latitude,
+        longitude: user.longitude,
+        questionCount: user.question_count,
+        answerCount: user.answer_count
+      });
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      res.status(500).json({ error: 'Failed to fetch user profile' });
+    }
+  });
+
   // Search all users with comprehensive text search functionality
   app.get("/api/users/search", async (req, res) => {
     try {

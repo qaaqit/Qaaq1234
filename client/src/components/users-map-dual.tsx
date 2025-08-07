@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useLocation } from 'wouter';
+import { useLocation, useRouter } from 'wouter';
 import { useAuth } from '@/hooks/useAuth';
 import MarineChatButton from './marine-chat-button';
 import SingleMessageChat from './single-message-chat';
@@ -116,7 +116,7 @@ interface UsersMapDualProps {
 
 export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: UsersMapDualProps) {
   const { user } = useAuth();
-  const [, navigate] = useLocation();
+  const { navigate } = useRouter();
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [hoveredUser, setHoveredUser] = useState<MapUser | null>(null);
   const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null);
@@ -672,9 +672,8 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                     searchQuery.trim() ? 'w-full' : 'min-w-[140px] sm:min-w-[160px] flex-shrink-0'
                   }`}
                   onClick={() => {
-                    // Center map on user's location
-                    setSelectedUser(user);
-                    setHoveredUser(null);
+                    // Navigate to Ch13 DM page with selected user
+                    navigate(`/dm?user=${encodeURIComponent(user.id)}`);
                   }}
                 >
                   <div className="flex items-center space-x-2 mb-1 sm:mb-2">
