@@ -89,10 +89,23 @@ export default function DMPage() {
     refetchInterval: 5000, // Poll every 5 seconds for new connections
   });
 
-  // Fetch nearby users with distance
+  // Fetch users - use search API when searching, nearby API otherwise
   const { data: nearbyUsers = [], isLoading: usersLoading } = useQuery<UserWithDistance[]>({
-    queryKey: ['/api/users/nearby'],
-    refetchInterval: 30000, // Refresh every 30 seconds
+    queryKey: searchQuery.trim() ? ['/api/users/search', searchQuery] : ['/api/users/nearby'],
+    queryFn: async () => {
+      if (searchQuery.trim()) {
+        // Use search API for comprehensive search including WhatsApp numbers and user IDs
+        const response = await fetch(`/api/users/search?q=${encodeURIComponent(searchQuery)}&limit=100`);
+        if (!response.ok) throw new Error('Failed to search users');
+        return response.json();
+      } else {
+        // Use nearby API for default top Q users
+        const response = await fetch('/api/users/nearby');
+        if (!response.ok) throw new Error('Failed to fetch nearby users');
+        return response.json();
+      }
+    },
+    refetchInterval: searchQuery.trim() ? false : 30000, // Don't auto-refresh search results, but refresh nearby users
   });
 
   // Create chat connection mutation
@@ -192,13 +205,8 @@ export default function DMPage() {
     }
   }, [targetUserId, targetUser, connections]);
 
-  // Filter users based on search query
-  const filteredUsers = nearbyUsers.filter(user =>
-    user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.rank?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.shipName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.city?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Users are already filtered by the backend search API when searchQuery is provided
+  const filteredUsers = nearbyUsers;
 
   // Return early if user is not authenticated (after all hooks)
   if (!user) {
@@ -303,7 +311,7 @@ export default function DMPage() {
           <div className="flex-1 relative">
             <Input
               type="text"
-              placeholder="Search users by name, rank, ship, location..."
+              placeholder="Search users by name, rank, ship, location, WhatsApp number..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pr-12 border-ocean-teal/30 focus:border-ocean-teal"
