@@ -210,25 +210,25 @@ export default function DMPage() {
         <header className="bg-white text-black shadow-md relative overflow-hidden flex-shrink-0 z-[110] border-b-2 border-orange-400 rounded-t-lg mb-6">
           <div className="absolute inset-0 bg-gradient-to-r from-red-50 via-orange-50 to-yellow-50 opacity-50"></div>
           
-          <div className="relative z-10 px-3 py-2 sm:px-4 sm:py-4">
-            <div className="flex items-center justify-between">
+          <div className="relative z-10 px-2 py-2 sm:px-4 sm:py-3">
+            <div className="flex items-center justify-between gap-2">
               <button 
                 onClick={() => setLocation('/')}
-                className="flex items-center space-x-3 hover:bg-orange-100 rounded-lg p-2 transition-colors"
+                className="flex items-center space-x-2 sm:space-x-3 hover:bg-orange-100 rounded-lg p-1 sm:p-2 transition-colors min-w-0 flex-shrink-0"
               >
-                <div className="w-10 h-10 bg-gradient-to-r from-orange-400 to-red-500 rounded-full flex items-center justify-center overflow-hidden shadow-lg">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-orange-400 to-red-500 rounded-full flex items-center justify-center overflow-hidden shadow-lg flex-shrink-0">
                   <img 
                     src={qaaqLogo} 
                     alt="QAAQ Logo" 
-                    className="w-8 h-8 object-contain"
+                    className="w-6 h-6 sm:w-8 sm:h-8 object-contain"
                   />
                 </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-800">QaaqConnect</h1>
-                  <p className="text-sm text-orange-600 italic font-medium">direct message</p>
+                <div className="min-w-0">
+                  <h1 className="text-base sm:text-xl font-bold text-gray-800 whitespace-nowrap">QaaqConnect</h1>
+                  <p className="text-xs sm:text-sm text-orange-600 italic font-medium whitespace-nowrap">direct message</p>
                 </div>
               </button>
-              <div className="flex items-center space-x-2 sm:space-x-4">
+              <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
                 <Button
                   onClick={() => {
                     if (!showQBOTChat) {
@@ -240,7 +240,7 @@ export default function DMPage() {
                   }}
                   variant="outline"
                   size="sm"
-                  className="bg-gradient-to-r from-orange-500 to-yellow-500 border-2 border-red-400 text-white hover:from-red-500 hover:to-orange-500 hover:border-red-500 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 text-xs sm:text-sm px-2 sm:px-3 font-bold"
+                  className="bg-gradient-to-r from-orange-500 to-yellow-500 border-2 border-red-400 text-white hover:from-red-500 hover:to-orange-500 hover:border-red-500 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 text-xs px-1 sm:px-2 font-bold flex-shrink-0"
                   title={showQBOTChat ? (isQBOTMinimized ? "Expand QBOT" : "Minimize QBOT") : "Open QBOT - Maritime Assistant"}
                 >
                   <i className="fas fa-robot mr-1 sm:mr-2 text-yellow-200"></i>
