@@ -132,6 +132,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate JWT token for authenticated user
       const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '30d' });
       
+      console.log(`✅ User login successful: ${user.fullName} (Q:${user.questionCount || 0}, A:${user.answerCount || 0})`);
+      
       res.json({
         user: {
           id: user.id,
@@ -150,6 +152,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           longitude: user.longitude,
           isVerified: user.isVerified,
           loginCount: (user.loginCount || 0) + 1,
+          questionCount: user.questionCount || 0,
+          answerCount: user.answerCount || 0,
           profilePictureUrl: user.profilePictureUrl,
           whatsAppProfilePictureUrl: user.whatsAppProfilePictureUrl,
           whatsAppDisplayName: user.whatsAppDisplayName
@@ -1253,6 +1257,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Debug accept connection error:', error);
       res.status(500).json({ message: "Failed to accept connection" });
+    }
+  });
+
+  // Debug endpoint to check user data retrieval
+  app.get('/api/debug/user/:userId', async (req, res) => {
+    try {
+      const { userId } = req.params;
+      console.log(`🔍 Debug user lookup: ${userId}`);
+      
+      // Try to get user using storage method
+      const user = await storage.getUserById(userId);
+      console.log(`🔍 User found via storage:`, user ? `${user.fullName} (${user.id})` : 'null');
+      
+      // Also try direct database query
+      const dbResult = await pool.query(`
+        SELECT id, first_name, last_name, full_name, email, question_count, answer_count, 
+               current_city, current_country, current_latitude, current_longitude
+        FROM users 
+        WHERE id = $1 OR id = $2 
+        LIMIT 1
+      `, [userId, userId.startsWith('+') ? userId.substring(1) : `+${userId}`]);
+      
+      console.log(`🔍 Direct DB query results:`, dbResult.rows.length > 0 ? dbResult.rows[0] : 'No rows found');
+      
+      res.json({
+        userId,
+        storageUser: user,
+        dbResult: dbResult.rows[0] || null,
+        dbRowCount: dbResult.rows.length
+      });
+    } catch (error) {
+      console.error('Debug user lookup error:', error);
+      res.status(500).json({ message: "Failed to debug user lookup" });
     }
   });
 
