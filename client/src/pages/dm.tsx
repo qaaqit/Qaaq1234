@@ -320,6 +320,14 @@ export default function DMPage() {
                 
                 {/* Input Area */}
                 <QBOTInputArea 
+                  onClearHistory={() => {
+                    setQBotMessages([]);
+                    setIsQBotTyping(false);
+                    toast({
+                      title: "Chat Cleared",
+                      description: "Your conversation has been cleared.",
+                    });
+                  }}
                   onSendMessage={async (text) => {
                     const newMessage: Message = {
                       id: Date.now().toString(),
