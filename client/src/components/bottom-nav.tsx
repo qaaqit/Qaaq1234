@@ -10,24 +10,37 @@ interface BottomNavProps {
 export default function BottomNav({ user, onLogout }: BottomNavProps) {
   const [location, setLocation] = useLocation();
 
+  const handleMapRadarClick = () => {
+    if (location === "/" || location === "/discover") {
+      // If already on the main page, just trigger the map radar action
+      window.location.hash = "#map-radar";
+    } else {
+      // Navigate to main page first, then trigger map radar
+      setLocation("/#map-radar");
+    }
+  };
+
   const baseNavItems = [
     { 
       path: "/dm", 
       icon: "fas fa-comments", 
       label: ["Ch13", "DM"],
-      active: location === "/qhf" || location === "/dm" || location === "/chat"
+      active: location === "/qhf" || location === "/dm" || location === "/chat",
+      onClick: () => setLocation("/dm")
     },
     { 
       path: "/rank-groups", 
       icon: "fas fa-users", 
       label: ["Ch16", "Groups"],
-      active: location === "/rank-groups"
+      active: location === "/rank-groups",
+      onClick: () => setLocation("/rank-groups")
     },
     { 
       path: "/", 
       icon: "fas fa-map-marked-alt", 
       label: ["Map", "Radar"],
-      active: location === "/" || location === "/discover" || location === "/users"
+      active: location === "/" || location === "/discover" || location === "/users",
+      onClick: handleMapRadarClick
     }
   ];
 
@@ -42,7 +55,7 @@ export default function BottomNav({ user, onLogout }: BottomNavProps) {
             key={item.path}
             variant="ghost"
             size="sm"
-            onClick={() => setLocation(item.path)}
+            onClick={item.onClick}
             className={`relative flex flex-col items-center p-2 transition-all duration-300 ${
               item.active 
                 ? "text-white bg-gradient-to-r from-red-500 to-orange-500 shadow-lg scale-105" 

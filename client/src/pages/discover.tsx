@@ -74,7 +74,7 @@ export default function Discover({ user }: DiscoverProps) {
     refetch();
   };
 
-  // Listen for hash changes to trigger user search
+  // Listen for hash changes to trigger user search and QBot controls
   useEffect(() => {
     const handleHashChange = () => {
       if (window.location.hash.includes('koi-hai')) {
@@ -88,6 +88,14 @@ export default function Discover({ user }: DiscoverProps) {
           console.log(`Fetching nearby users for location: ${location.latitude}, ${location.longitude}`);
           // The UsersMap component will handle the API call with proximity mode
         }
+      }
+      
+      if (window.location.hash.includes('map-radar')) {
+        console.log('Map Radar clicked - minimizing QBot and focusing on map');
+        setIsQBOTMinimized(true);
+        setShowUsers(true);
+        // Clear the hash after processing
+        window.history.replaceState({}, '', window.location.pathname);
       }
     };
 
