@@ -368,61 +368,7 @@ export default function DMPage() {
           </Card>
         )}
 
-        {/* Active Conversations */}
-        {activeConnections.length > 0 && (
-          <Card className="border-2 border-green-200">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2 text-green-700">
-                <MessageCircle size={20} />
-                <span>Active Conversations ({activeConnections.length})</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 md:grid-cols-2">
-                {activeConnections.map((connection) => {
-                  const otherUser = getOtherUser(connection);
-                  if (!otherUser) return null;
-                  return (
-                    <div key={connection.id} className="flex items-center justify-between p-4 bg-white rounded-lg border border-green-200 hover:shadow-md transition-shadow">
-                      <div className="flex items-center space-x-3">
-                        <div className="relative">
-                          <Avatar className="w-12 h-12 border-2 border-green-300">
-                            <AvatarFallback className="bg-green-100 text-green-700 font-bold">
-                              {getInitials(otherUser.fullName)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <MessageNotificationDot userId={otherUser.id} />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-gray-900">{otherUser.fullName}</h4>
-                          {otherUser.rank && (
-                            <p className="text-sm text-gray-600">{otherUser.rank}</p>
-                          )}
-                          <p className="text-xs text-gray-500">
-                            Connected {formatDistanceToNow(new Date(connection.acceptedAt || connection.createdAt || new Date()))} ago
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        size="sm"
-                        className="bg-gradient-to-r from-ocean-teal to-cyan-600 text-white hover:from-cyan-600 hover:to-ocean-teal"
-                        onClick={() => {
-                          openChat(connection);
-                          // Mark messages as read when opening chat
-                          if (connection.id) {
-                            websocketService.markMessagesAsRead(connection.id);
-                          }
-                        }}
-                      >
-                        Open Chat
-                      </Button>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+
 
         {/* Search Users Bar */}
         <Card className="border-2 border-ocean-teal/20">
@@ -627,6 +573,62 @@ export default function DMPage() {
                       <Badge variant="outline" className="text-gray-600">
                         Waiting for response
                       </Badge>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Active Conversations */}
+        {activeConnections.length > 0 && (
+          <Card className="border-2 border-green-200">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-green-700">
+                <MessageCircle size={20} />
+                <span>Active Conversations ({activeConnections.length})</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-2">
+                {activeConnections.map((connection) => {
+                  const otherUser = getOtherUser(connection);
+                  if (!otherUser) return null;
+                  return (
+                    <div key={connection.id} className="flex items-center justify-between p-4 bg-white rounded-lg border border-green-200 hover:shadow-md transition-shadow">
+                      <div className="flex items-center space-x-3">
+                        <div className="relative">
+                          <Avatar className="w-12 h-12 border-2 border-green-300">
+                            <AvatarFallback className="bg-green-100 text-green-700 font-bold">
+                              {getInitials(otherUser.fullName)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <MessageNotificationDot userId={otherUser.id} />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-gray-900">{otherUser.fullName}</h4>
+                          {otherUser.rank && (
+                            <p className="text-sm text-gray-600">{otherUser.rank}</p>
+                          )}
+                          <p className="text-xs text-gray-500">
+                            Connected {formatDistanceToNow(new Date(connection.acceptedAt || connection.createdAt || new Date()))} ago
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        className="bg-gradient-to-r from-ocean-teal to-cyan-600 text-white hover:from-cyan-600 hover:to-ocean-teal"
+                        onClick={() => {
+                          openChat(connection);
+                          // Mark messages as read when opening chat
+                          if (connection.id) {
+                            websocketService.markMessagesAsRead(connection.id);
+                          }
+                        }}
+                      >
+                        Open Chat
+                      </Button>
                     </div>
                   );
                 })}
