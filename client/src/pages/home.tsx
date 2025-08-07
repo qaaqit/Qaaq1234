@@ -60,7 +60,7 @@ export default function Home({ onSuccess }: HomeProps) {
 
   return (
     <div 
-      className="min-h-screen relative overflow-hidden cursor-pointer bg-gray-100"
+      className="h-screen w-screen fixed inset-0 overflow-hidden cursor-pointer bg-gray-100"
       onClick={() => setIsMinimized(false)}
     >
       {/* Full Screen Map Background with Error Boundary */}

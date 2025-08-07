@@ -44,7 +44,7 @@ function Router() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="h-screen w-screen fixed inset-0 bg-slate-50 flex items-center justify-center overflow-hidden">
         <div className="text-center">
           <div className="w-16 h-16 bg-gradient-to-br from-navy to-ocean-teal rounded-2xl flex items-center justify-center mx-auto mb-4">
             <i className="fas fa-anchor text-2xl text-white"></i>
@@ -56,7 +56,7 @@ function Router() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="h-screen w-screen fixed inset-0 bg-slate-50 overflow-hidden">
       <div className={user ? "pb-16" : ""}>
         <Switch>
           <Route path="/" component={() => user ? <Discover user={user} /> : <Home onSuccess={setUser} />} />
