@@ -114,12 +114,15 @@ export default function DMPage() {
     mutationFn: async (receiverId: string) => {
       return apiRequest('/api/chat/connect', 'POST', { receiverId });
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/chat/connections'] });
       toast({
-        title: "Connection Request Sent",
-        description: "Your chat request has been sent successfully!",
+        title: "Chat Started",
+        description: "Connection request sent! Chat appears in Active Conversations with single tick.",
       });
+      
+      // Switch to Users tab to show Active Conversations
+      setActiveTab("users");
     },
     onError: (error: any) => {
       toast({
