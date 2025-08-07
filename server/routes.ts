@@ -1155,6 +1155,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test message endpoint (temporary for testing)
+  app.post('/api/chat/send-test', async (req, res) => {
+    try {
+      const { senderId, receiverId, message } = req.body;
+      
+      if (!senderId || !receiverId || !message) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      console.log(`📱 Test message: ${senderId} -> ${receiverId}: ${message}`);
+
+      // Check if connection exists, create if not
+      let connection = await storage.getChatConnection(senderId, receiverId);
+      
+      if (!connection) {
+        // Create new connection
+        connection = await storage.createChatConnection(senderId, receiverId);
+        console.log(`✅ Created connection: ${connection.id}`);
+      } else {
+        console.log(`✅ Using existing connection: ${connection.id}`);
+      }
+
+      // Send message
+      const chatMessage = await storage.sendMessage(connection.id, senderId, message.trim());
+
+      res.json({ 
+        success: true, 
+        connectionId: connection.id, 
+        messageId: chatMessage.id,
+        message: "Test message sent successfully!" 
+      });
+
+    } catch (error) {
+      console.error('Test message error:', error);
+      res.status(500).json({ message: "Failed to send test message" });
+    }
+  });
+
   // Send initial message when creating connection (one message limit)
   app.post('/api/chat/send-initial', authenticateToken, async (req, res) => {
     try {
