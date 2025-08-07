@@ -123,7 +123,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
   const [selectedUser, setSelectedUser] = useState<MapUser | null>(null);
   const [openChatUserId, setOpenChatUserId] = useState<string | null>(null);
   const [showOnlineOnly, setShowOnlineOnly] = useState(true);
-  const [searchPanelState, setSearchPanelState] = useState<'full' | 'half' | 'quarter' | 'minimized'>('full');
+  const [searchPanelState, setSearchPanelState] = useState<'full' | 'half'>('full');
   const [selectedRankCategory, setSelectedRankCategory] = useState<string>('everyone');
   const [showRankDropdown, setShowRankDropdown] = useState(false);
 
@@ -619,14 +619,10 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
 
 
 
-      {/* Search Results - Expandable Panel with Four States */}
+      {/* Search Results - Expandable Panel with Two States */}
       {nearestUsers.length > 0 && (
         <div className={`absolute left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 z-[1000] transition-all duration-300 ease-in-out ${
-          searchPanelState === 'minimized'
-            ? 'bottom-0 h-[100px] sm:h-[110px]'
-            : searchPanelState === 'quarter'
-            ? 'bottom-0 h-1/4'
-            : searchPanelState === 'half'
+          searchPanelState === 'half'
             ? 'bottom-0 h-1/2'
             : searchQuery.trim() 
             ? 'top-[35%] bottom-0' 
@@ -648,10 +644,6 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                   onClick={() => {
                     if (searchPanelState === 'full') {
                       setSearchPanelState('half');
-                    } else if (searchPanelState === 'half') {
-                      setSearchPanelState('quarter');
-                    } else if (searchPanelState === 'quarter') {
-                      setSearchPanelState('minimized');
                     } else {
                       setSearchPanelState('full');
                     }
@@ -660,19 +652,11 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                   title={
                     searchPanelState === 'full' 
                       ? "Minimize to half screen" 
-                      : searchPanelState === 'half'
-                      ? "Minimize to quarter screen"
-                      : searchPanelState === 'quarter'
-                      ? "Minimize to bottom bar"
                       : "Expand to full screen"
                   }
                 >
-                  {searchPanelState === 'minimized' ? (
+                  {searchPanelState === 'half' ? (
                     <ChevronUp size={16} />
-                  ) : searchPanelState === 'quarter' ? (
-                    <ChevronDown size={16} />
-                  ) : searchPanelState === 'half' ? (
-                    <ChevronDown size={16} />
                   ) : (
                     <ChevronDown size={16} />
                   )}
@@ -680,15 +664,11 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
               )}
             </div>
             <div className={`${
-              searchPanelState === 'minimized' 
-                ? 'flex gap-2 sm:gap-3 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 pb-2 h-[calc(100%-2rem)]' 
-                : searchPanelState === 'quarter'
-                ? 'grid grid-cols-1 sm:grid-cols-2 gap-3 overflow-y-auto h-[calc(100%-3rem)] scrollbar-thin scrollbar-thumb-gray-300 pr-2'
-                : searchQuery.trim() 
+              searchQuery.trim() 
                 ? 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 overflow-y-auto h-[calc(100%-3rem)] scrollbar-thin scrollbar-thumb-gray-300 pr-2' 
                 : 'flex gap-2 sm:gap-3 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 pb-2'
             }`}>
-              {(searchPanelState === 'minimized' ? nearestUsers.slice(0, 1) : nearestUsers).map((user) => (
+              {nearestUsers.map((user) => (
                 <div
                   key={user.id}
                   className={`bg-white rounded-lg border border-gray-200 p-2 sm:p-3 hover:bg-gray-50 transition-colors touch-manipulation ${
