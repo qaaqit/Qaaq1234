@@ -380,7 +380,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
   return (
     <div className="w-full h-full overflow-hidden bg-gray-100 relative">
       {/* Mobile-Optimized Header with Touch-Friendly Controls */}
-      <div className="absolute top-0 left-0 right-0 z-[1000] bg-white/95 backdrop-blur-sm border-b border-gray-200">
+      <div className="absolute top-0 left-0 right-0 z-[1001] bg-white/95 backdrop-blur-sm border-b border-gray-200">
         <div className="flex flex-col space-y-2 px-2 sm:px-4 py-2 sm:py-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           {/* Search Row - Full width on mobile */}
           <div className="flex items-center space-x-1 sm:space-x-2">
