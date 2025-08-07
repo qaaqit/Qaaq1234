@@ -43,6 +43,8 @@ export interface IStorage {
   sendMessage(connectionId: string, senderId: string, message: string): Promise<ChatMessage>;
   getChatMessages(connectionId: string): Promise<ChatMessage[]>;
   markMessagesAsRead(connectionId: string, userId: string): Promise<void>;
+  markMessageAsRead(messageId: string, userId: string): Promise<void>;
+  getUnreadMessageCounts(userId: string): Promise<Record<string, number>>;
 
 }
 
@@ -895,6 +897,14 @@ export class DatabaseStorage implements IStorage {
       SET is_read = true
       WHERE connection_id = $1 AND sender_id != $2
     `, [connectionId, userId]);
+  }
+
+  async markMessageAsRead(messageId: string, userId: string): Promise<void> {
+    await pool.query(`
+      UPDATE qaaq_chat_messages
+      SET is_read = true
+      WHERE id = $1 AND sender_id != $2
+    `, [messageId, userId]);
   }
 
   async getUnreadMessageCounts(userId: string): Promise<Record<string, number>> {

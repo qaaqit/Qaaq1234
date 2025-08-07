@@ -25,6 +25,8 @@ import QBOTTypingIndicator from "@/components/qbot-chat/QBOTTypingIndicator";
 import QBOTInputArea from "@/components/qbot-chat/QBOTInputArea";
 import qaaqLogo from "@/assets/qaaq-logo.png";
 import type { ChatConnection, User as UserType } from "@shared/schema";
+import ChatConnectionsList from "@/components/chat/ChatConnectionsList";
+import { websocketService } from "@/services/websocket";
 
 interface ExtendedChatConnection extends ChatConnection {
   sender: { id: string; fullName: string; rank?: string };
@@ -56,6 +58,31 @@ export default function DMPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
+
+  // Initialize WebSocket connection for real-time messaging
+  useEffect(() => {
+    if (user) {
+      websocketService.connect();
+      
+      // Handle incoming messages
+      const handleNewMessage = (data: any) => {
+        // Refresh chat connections when new messages arrive
+        queryClient.invalidateQueries({ queryKey: ['/api/chat/connections'] });
+        
+        // Show toast notification for new messages
+        toast({
+          title: "New Message",
+          description: `You have a new message from ${data.senderName || 'a user'}`,
+        });
+      };
+      
+      websocketService.onMessage('new_message', handleNewMessage);
+      
+      return () => {
+        websocketService.offMessage('new_message');
+      };
+    }
+  }, [user, queryClient, toast]);
   
   // Get the target user ID from URL parameters
   const urlParams = new URLSearchParams(window.location.search);
@@ -499,7 +526,13 @@ export default function DMPage() {
                       <Button
                         size="sm"
                         className="bg-gradient-to-r from-ocean-teal to-cyan-600 text-white hover:from-cyan-600 hover:to-ocean-teal"
-                        onClick={() => openChat(connection)}
+                        onClick={() => {
+                          openChat(connection);
+                          // Mark messages as read when opening chat
+                          if (connection.id) {
+                            websocketService.markMessagesAsRead(connection.id);
+                          }
+                        }}
                       >
                         Open Chat
                       </Button>
@@ -724,7 +757,7 @@ export default function DMPage() {
           </TabsContent>
         </Tabs>
       </div>
-      {/* QChat Window */}
+      {/* Real-time Chat Window - Enhanced QChat with WebSocket */}
       {selectedConnection && (
         <QChatWindow
           isOpen={isChatOpen}

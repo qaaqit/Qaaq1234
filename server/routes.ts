@@ -1,5 +1,6 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
+import ws from 'ws';
 import jwt from 'jsonwebtoken';
 import { storage } from "./storage";
 import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, insertChatConnectionSchema, insertChatMessageSchema, insertRankGroupSchema, insertRankGroupMemberSchema, insertRankGroupMessageSchema } from "@shared/schema";
@@ -1193,6 +1194,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Mark individual message as read
+  app.post('/api/chat/messages/:messageId/read', authenticateToken, async (req, res) => {
+    try {
+      const { messageId } = req.params;
+      const userId = req.userId!;
+      
+      await storage.markMessageAsRead(messageId, userId);
+      res.json({ message: "Message marked as read" });
+    } catch (error) {
+      console.error('Mark message as read error:', error);
+      res.status(500).json({ message: "Failed to mark message as read" });
+    }
+  });
+
   app.get('/api/chat/unread-counts', authenticateToken, async (req, res) => {
     try {
       const unreadCounts = await storage.getUnreadMessageCounts(req.userId!);
@@ -2303,6 +2318,145 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
+
+  // Add WebSocket server for real-time messaging
+  const wss = new ws.Server({ server: httpServer, path: '/ws' });
+  
+  // Store active connections
+  const activeConnections = new Map<string, ws>();
+  
+  wss.on('connection', (ws, request) => {
+    console.log('New WebSocket connection established');
+    
+    // Handle authentication
+    let userId: string | null = null;
+    let isAuthenticated = false;
+    
+    ws.on('message', async (message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        console.log('WebSocket message received:', data.type);
+        
+        if (data.type === 'auth') {
+          // Authenticate user with JWT token
+          try {
+            const decoded = jwt.verify(data.token, JWT_SECRET) as { userId: string };
+            userId = decoded.userId;
+            isAuthenticated = true;
+            activeConnections.set(userId, ws);
+            console.log(`User ${userId} authenticated and connected via WebSocket`);
+            
+            ws.send(JSON.stringify({
+              type: 'auth_success',
+              message: 'Authentication successful'
+            }));
+          } catch (error) {
+            console.error('WebSocket authentication failed:', error);
+            ws.send(JSON.stringify({
+              type: 'auth_error',
+              message: 'Authentication failed'
+            }));
+            ws.close();
+          }
+        } else if (data.type === 'send_message' && isAuthenticated && userId) {
+          // Handle sending messages
+          const { connectionId, message: messageText } = data;
+          
+          if (!connectionId || !messageText) {
+            ws.send(JSON.stringify({
+              type: 'error',
+              message: 'Missing required fields'
+            }));
+            return;
+          }
+          
+          try {
+            // Store message in database
+            const chatMessage = await storage.sendMessage(connectionId, userId, messageText);
+            
+            // Get connection details to find receiver
+            const connections = await storage.getUserChatConnections(userId);
+            const connection = connections.find(c => c.id === connectionId);
+            
+            if (connection) {
+              const receiverId = connection.senderId === userId ? connection.receiverId : connection.senderId;
+              const receiverWs = activeConnections.get(receiverId);
+              
+              // Send to receiver if online
+              if (receiverWs && receiverWs.readyState === ws.OPEN) {
+                receiverWs.send(JSON.stringify({
+                  type: 'new_message',
+                  message: chatMessage,
+                  connectionId,
+                  senderId: userId
+                }));
+              }
+              
+              // Send confirmation to sender
+              ws.send(JSON.stringify({
+                type: 'message_sent',
+                message: chatMessage,
+                connectionId
+              }));
+            }
+          } catch (error) {
+            console.error('Error sending message:', error);
+            ws.send(JSON.stringify({
+              type: 'error',
+              message: 'Failed to send message'
+            }));
+          }
+        } else if (data.type === 'typing' && isAuthenticated && userId) {
+          // Handle typing indicators
+          const { connectionId, isTyping } = data;
+          
+          try {
+            const connections = await storage.getUserChatConnections(userId);
+            const connection = connections.find(c => c.id === connectionId);
+            
+            if (connection) {
+              const receiverId = connection.senderId === userId ? connection.receiverId : connection.senderId;
+              const receiverWs = activeConnections.get(receiverId);
+              
+              if (receiverWs && receiverWs.readyState === ws.OPEN) {
+                receiverWs.send(JSON.stringify({
+                  type: 'user_typing',
+                  connectionId,
+                  userId,
+                  isTyping
+                }));
+              }
+            }
+          } catch (error) {
+            console.error('Error handling typing indicator:', error);
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
+        ws.send(JSON.stringify({
+          type: 'error',
+          message: 'Invalid message format'
+        }));
+      }
+    });
+    
+    ws.on('close', () => {
+      if (userId && activeConnections.get(userId) === ws) {
+        activeConnections.delete(userId);
+        console.log(`User ${userId} disconnected from WebSocket`);
+      }
+    });
+    
+    ws.on('error', (error) => {
+      console.error('WebSocket error:', error);
+      if (userId && activeConnections.get(userId) === ws) {
+        activeConnections.delete(userId);
+      }
+    });
+  });
+
+  console.log('WebSocket server setup complete on path /ws');
+
   return httpServer;
 }
 

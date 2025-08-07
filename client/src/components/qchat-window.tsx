@@ -10,6 +10,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { formatDistanceToNow } from "date-fns";
 import type { ChatConnection, ChatMessage } from "@shared/schema";
+import { websocketService } from "@/services/websocket";
 
 interface QChatWindowProps {
   isOpen: boolean;
@@ -23,11 +24,19 @@ interface QChatWindowProps {
 export default function QChatWindow({ isOpen, onClose, connection }: QChatWindowProps) {
   const [message, setMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [otherUserTyping, setOtherUserTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const otherUser = connection?.sender?.id === user?.id ? connection?.receiver : connection?.sender;
+
+  // Initialize WebSocket connection when chat opens
+  useEffect(() => {
+    if (isOpen && user) {
+      websocketService.connect();
+    }
+  }, [isOpen, user]);
 
   // Get messages for this connection
   const { data: messages = [], isLoading } = useQuery<ChatMessage[]>({
@@ -42,13 +51,19 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
     refetchInterval: 2000, // Poll for new messages every 2 seconds
   });
 
-  // Send message mutation
+  // Enhanced send message function using WebSocket
   const sendMessageMutation = useMutation({
     mutationFn: async (messageText: string) => {
+      if (!connection?.id) throw new Error('No connection ID');
+      
+      // Send via WebSocket for real-time delivery
+      websocketService.sendMessage(connection.id, messageText);
+      
+      // Also send via HTTP for reliability
       const response = await fetch('/api/chat/message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ connectionId: connection?.id, message: messageText })
+        body: JSON.stringify({ connectionId: connection.id, message: messageText })
       });
       if (!response.ok) throw new Error('Failed to send message');
       return response.json();
@@ -79,14 +94,44 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Simulate typing indicator
+  // Real-time WebSocket message handling
   useEffect(() => {
-    if (message.length > 0) {
-      setIsTyping(true);
-      const timer = setTimeout(() => setIsTyping(false), 1000);
-      return () => clearTimeout(timer);
+    if (isOpen && connection?.id) {
+      // Listen for new messages
+      const handleNewMessage = (data: any) => {
+        if (data.connectionId === connection.id) {
+          queryClient.invalidateQueries({ queryKey: ['/api/chat/messages', connection.id] });
+        }
+      };
+
+      // Listen for typing indicators
+      const handleTyping = (data: any) => {
+        if (data.connectionId === connection.id && data.userId !== user?.id) {
+          setOtherUserTyping(data.isTyping);
+          if (data.isTyping) {
+            // Auto-hide typing indicator after 3 seconds
+            setTimeout(() => setOtherUserTyping(false), 3000);
+          }
+        }
+      };
+
+      websocketService.onMessage('new_message', handleNewMessage);
+      websocketService.onMessage('user_typing', handleTyping);
+
+      return () => {
+        websocketService.offMessage('new_message');
+        websocketService.offMessage('user_typing');
+      };
     }
-  }, [message]);
+  }, [isOpen, connection?.id, queryClient, user?.id]);
+
+  // Send typing indicator
+  useEffect(() => {
+    if (connection?.id && user) {
+      const isTypingNow = message.length > 0;
+      websocketService.sendTypingIndicator(connection.id, isTypingNow);
+    }
+  }, [message, connection?.id, user]);
 
   const handleSendMessage = () => {
     if (message.trim() && connection?.status === 'accepted') {
@@ -248,6 +293,23 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
                   );
                 })
               )}
+              
+              {/* Other user typing indicator */}
+              {otherUserTyping && (
+                <div className="flex justify-start">
+                  <div className="max-w-[70%] p-3 rounded-2xl rounded-bl-md bg-white border border-gray-200 text-gray-800">
+                    <div className="flex items-center space-x-2">
+                      <div className="flex space-x-1">
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                      </div>
+                      <span className="text-xs text-gray-500">{otherUser?.fullName} is typing...</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               <div ref={messagesEndRef} />
             </div>
           </div>
@@ -256,6 +318,11 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
         {/* Message Input */}
         {connection.status === 'accepted' && (
           <div className="p-4 border-t border-gray-200 bg-white">
+            {otherUserTyping && (
+              <div className="text-xs text-gray-500 mb-2 px-1">
+                {otherUser?.fullName} is typing...
+              </div>
+            )}
             <div className="flex items-center space-x-2">
               <div className="flex-1 relative">
                 <Input
@@ -266,15 +333,6 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
                   className="pr-12 border-gray-300 focus:border-navy focus:ring-navy/20"
                   disabled={sendMessageMutation.isPending}
                 />
-                {isTyping && (
-                  <div className="absolute right-3 top-3">
-                    <div className="flex space-x-1">
-                      <div className="w-1 h-1 bg-ocean-teal rounded-full animate-bounce" />
-                      <div className="w-1 h-1 bg-ocean-teal rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
-                      <div className="w-1 h-1 bg-ocean-teal rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-                    </div>
-                  </div>
-                )}
               </div>
               <Button
                 onClick={handleSendMessage}
