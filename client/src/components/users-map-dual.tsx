@@ -398,7 +398,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
               </button>
               
               {showFilterDropdown && (
-                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[200px] z-[1001]">
+                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[200px] z-[500]">
                   <div className="p-3 space-y-3">
                     {/* Online Toggle */}
                     <div className="flex items-center space-x-2">
@@ -446,7 +446,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
               </button>
               
               {showLocationDropdown && (
-                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[200px] z-[1001]">
+                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[200px] z-[500]">
                   <div className="p-3">
                     {selectedUser ? (
                       <div>
@@ -533,7 +533,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
         />
 
         {/* Map Controls - Top Left Corner with Chevron Dropdown */}
-        <div className="absolute top-4 left-4 z-[1001]">
+        <div className="absolute top-4 left-4 z-[500]">
             <div className="relative dropdown-container">
               <button
                 onClick={() => setShowMapTypeDropdown(!showMapTypeDropdown)}
@@ -545,7 +545,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
               </button>
               
               {showMapTypeDropdown && (
-                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[140px] z-[1002]">
+                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[140px] z-[501]">
                   <div className="p-1">
                     <button
                       onClick={() => {
