@@ -298,6 +298,29 @@ export default function DMPage() {
           </TabsContent>
 
           <TabsContent value="users" className="space-y-6">
+        {/* Minimalistic Search Users Bar */}
+        <div className="flex items-center space-x-2">
+          <div className="flex-1 relative">
+            <Input
+              type="text"
+              placeholder="Search users by name, rank, ship, location..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pr-12 border-ocean-teal/30 focus:border-ocean-teal"
+            />
+          </div>
+          <Button 
+            size="sm"
+            variant="outline"
+            className="px-3 border-ocean-teal/30 hover:bg-ocean-teal hover:text-white"
+            onClick={() => {
+              // Search activation logic if needed
+            }}
+          >
+            <Search size={16} />
+          </Button>
+        </div>
+
         {/* Active Conversations - Unified Chat Management */}
         <Card className="border-2 border-green-200">
           <CardHeader>
@@ -456,32 +479,7 @@ export default function DMPage() {
           </CardContent>
         </Card>
 
-        {/* Search Users Bar */}
-        <Card className="border-2 border-ocean-teal/20">
-          <CardHeader>
-            <div className="flex flex-col space-y-4">
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center space-x-2 text-navy">
-                  <User size={20} />
-                  <span>Search Users</span>
-                  <Badge variant="secondary" className="ml-2">
-                    {filteredUsers.length} Users
-                  </Badge>
-                </CardTitle>
-              </div>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                <Input
-                  type="text"
-                  placeholder="Search users by name, rank, ship, location..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 border-ocean-teal/30 focus:border-ocean-teal"
-                />
-              </div>
-            </div>
-          </CardHeader>
-        </Card>
+
 
         {/* Discover Maritime Professionals */}
         <Card className="border-2 border-ocean-teal/20">
