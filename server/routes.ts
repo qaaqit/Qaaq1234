@@ -1351,9 +1351,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
           console.log(`Found ${filteredUsers.length} sailors currently onboard ships`);
         } else {
-          // Regular text search across multiple fields
+          // Regular text search across multiple fields including user ID
           filteredUsers = allUsers.filter(user => {
             const searchableText = [
+              user.id || '',                // User ID search capability
               user.fullName || '',
               user.rank || '',
               user.shipName || '',
