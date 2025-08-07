@@ -22,6 +22,13 @@ export default function BottomNav({ user, onLogout }: BottomNavProps) {
 
   const baseNavItems = [
     { 
+      path: "/qbot", 
+      icon: "fas fa-robot", 
+      label: ["QBOT", "Chat"],
+      active: location === "/qbot",
+      onClick: () => setLocation("/qbot")
+    },
+    { 
       path: "/dm", 
       icon: "fas fa-comments", 
       label: ["Ch13", "DM"],

@@ -19,6 +19,7 @@ import Profile from "@/pages/profile";
 import MyQuestions from "@/pages/my-questions";
 import QuestionPage from "@/pages/question";
 import RankGroupsPage from "@/pages/rank-groups";
+import QBOTPage from "@/pages/qbot";
 
 import NotFound from "@/pages/not-found";
 import BottomNav from "@/components/bottom-nav";
@@ -73,6 +74,7 @@ function Router() {
           <Route path="/profile" component={() => user ? <Profile /> : <Home />} />
           <Route path="/my-questions" component={() => user ? <MyQuestions /> : <Home />} />
           <Route path="/share/question/:id" component={() => user ? <QuestionPage /> : <Home />} />
+          <Route path="/qbot" component={() => user ? <QBOTPage user={user} /> : <Home />} />
           <Route path="/rank-groups" component={() => user ? <RankGroupsPage /> : <Home />} />
           <Route path="/admin" component={() => user ? <Admin /> : <Home />} />
           <Route path="/admin/bot-rules" component={() => user ? <BotRulesAdmin /> : <Home />} />

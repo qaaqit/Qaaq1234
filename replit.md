@@ -3,24 +3,9 @@
 ## Overview
 QaaqConnect is a comprehensive maritime networking platform designed to enhance shore leaves, simplify shopping for sailors, and facilitate social connections. It enables sailors to discover nearby peers and locals, access a curated marketplace for maritime essentials, and engage in location-based discussions. The platform aims to foster an authentic maritime community experience by integrating proximity-based user discovery, real-time location mapping, direct communication tools, and a structured content navigation system.
 
-## Recent Major Changes
-- **August 2025 - Z-Index Hierarchy Updated**: Chat container z-index set to 1500 for high-priority overlay layering. Profile dropdown z-index set to 5000 for maximum priority positioning while chat container uses elevated priority for proper UI hierarchy above map elements.
-- **August 2025 - Profile Dropdown Positioning**: Adjusted profile dropdown menu positioning to 104px below user button (4 rows down from original position) for optimal visual balance and accessibility.
-- **August 2025 - User ID Display Added**: Enhanced profile dropdown menu to display each user's unique database ID below the "Welcome, Name!" greeting. The ID is shown in a styled container with monospace font and clear labeling for easy identification and reference.
-- **August 2025 - Real-Time Messaging System Complete**: Implemented comprehensive WebSocket-based real-time messaging with live typing indicators, instant message delivery, read receipts, and enhanced chat experience across all pages. Users can now communicate in real-time without page refreshes.
-- **August 2025 - Advanced UI/UX Optimization Complete**: Finalized comprehensive UI consistency across all pages with optimized z-index hierarchy. Chat box header height reduced from 60px to 30px with proportional icon sizing (16px) and text adjustments. Map controls repositioned to right edge below maximize square in vertical stack including filter, location, and radar icons. All controls now avoid overlap with chat container header and maintain proper layering hierarchy. QBOT chat functionality fully integrated across Map Radar, Ch13 DM, and Ch16 Groups pages with consistent experience.
-- **August 2025 - Complete QBOT Integration Across All Pages**: Successfully implemented fully functional QBOT chat system across all pages (Map Radar, Ch13 DM, Ch16 Groups) with identical functionality including QBOTChatArea with engineering background mesh, QBOTWelcomeState, QBOTMessageList, QBOTTypingIndicator, and QBOTInputArea with "Type a message" placeholder. All pages now have identical QBOT chat experience with proper z-index layering. Header spacing optimized for mobile visibility and responsive design. **Search Bar Repositioned**: Moved "Sailors/ Ships/ Company" search bar from header to floating position above bottom navigation bar for better accessibility and mobile usability.
-- **August 2025 - Expo 53 Upgrade Complete**: Successfully upgraded mobile app from Expo 50 to Expo 53 (latest) with all dependencies updated to latest versions. React Native 0.76.5, React Navigation 7.x, AsyncStorage 2.1.0, and enhanced build configurations. Restored full AsyncStorage authentication persistence and optimized for latest React Native architecture. Mobile app ready for production deployment with all modern capabilities.
-- **August 2025 - Play Store Production Configuration**: Configured mobile app with production Replit API URL (https://mushypiyush-workspace.replit.app) for Google Play Store deployment. Updated all API configuration files, bumped version to 2.1.1, and created comprehensive Play Store deployment guide. App ready for EAS Build production release.
-- **August 2025 - UI Color Scheme Fixed**: Corrected mobile app color scheme to use proper orange (#ea580c), red (#dc2626), and white colors instead of incorrect blue/teal colors. Updated all UI elements including header, buttons, search controls, map markers, and user cards to match the authentic QAAQ branding. Added missing crown icon in search bar and filter/map/radar icons on right side. Fixed QAAQ logo assets in mobile app.
-- **August 2025 - Mobile App Scripts Added**: Enhanced mobile app package.json with proper dev/start scripts (expo start, expo start --dev-client) for easy development. Added missing QAAQ logo assets to mobile app assets folder.
-- **January 2025 - Complete Mobile App with Full Web Parity**: Created comprehensive React Native Expo mobile application with 100% feature parity to web platform. Includes exact UI design matching web app, dynamic data integration (no static content), complete functionality including: GPS-powered "Koi Hai?" discovery with exact map controls, QBOT AI chat interface, Channel 13 Q&A system, Groups/CPSS Navigator, QAAQ Store e-commerce, Admin Panel, WhatsApp bot management, and all interactive features. Built with TypeScript, React Navigation, React Native Maps, TanStack Query, and comprehensive API integration. Features authentic database connectivity to 670+ maritime professionals, real-time location services, and exact visual design matching web platform.
-- **January 2025 - Database Connection Issue Resolved**: Fixed critical authentication flow where login was returning UUID instead of actual database phone number IDs. Authentication now properly maps email logins (mushy.piyush@gmail.com) to actual database IDs (+919029010070). Profile endpoint successfully returns complete maritime professional data from parent QAAQ database. Fixed name display issue where user profiles showed "Maritime User" instead of actual names - now correctly combines first_name and last_name fields from database (e.g., +919439115367 now shows "Harsh Agrawal" instead of generic placeholder). **Database User Count Fixed**: Removed location filtering constraint that was limiting users to 672 - now correctly displays all 948+ maritime professionals from parent QAAQ database.
-- **January 2025 - QaaqConnect Mariana Mobile App SEALED**: Completed and sealed React Native Expo mobile app (v2.0.0) ready for iOS App Store and Google Play Store submission. Features include GPS-powered "Koi Hai?" discovery, direct messaging, profile management, and authentication. Built with TypeScript, React Navigation, React Native Maps, and TanStack Query. Optimized for maritime professionals with ocean-themed UI and touch-friendly interface. App package includes complete documentation, deployment guides, and app store submission materials. Database connectivity resolved with test maritime users. Next development phase: Qaaq 2.0.
-- **January 2025 - QaaqConnect Mariana**: Fixed critical mobile responsiveness issue on landing page. The login form now displays correctly across all screen sizes with improved viewport handling, proper fallback backgrounds, and enhanced visibility on mobile devices. Profile dropdown z-index conflicts resolved.
-- **January 2025**: Completely removed AIS (Automatic Identification System) API integration for real-time ship tracking. The system now focuses solely on user-based location discovery without external ship tracking capabilities.
-- **January 2025**: Enabled Google Maps for all users (previously restricted to admin only). Completely removed Leaflet Maps integration. All users now have access to map type controls (Road/Satellite/Hybrid views).
-- **August 2025**: Updated application logo from anchor icon to official QAAQ golden duck logo. Integrated WhatsApp profile data (profile pictures and display names) from QBOT scavenged data for enhanced user identification.
+Business Vision: To be the leading platform for maritime professionals, fostering genuine connections and simplifying life at sea and ashore.
+Market Potential: Tapping into the global maritime industry, connecting a vast network of sailors, ship companies, and related businesses.
+Project Ambitions: To create a vibrant, self-sustaining community where maritime professionals can thrive personally and professionally.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -49,13 +34,14 @@ Onboard Search: Special "onboard" keyword search filters for sailing users and d
 
 ### Frontend Architecture
 - **Web Framework**: React 18 with TypeScript
-- **Mobile Framework**: React Native with Expo SDK 50
+- **Mobile Framework**: React Native with Expo SDK 53
 - **Routing**: Wouter (web), React Navigation (mobile)
 - **UI Framework**: Shadcn/ui with Radix UI primitives (web), React Native Paper (mobile)
 - **Styling**: Tailwind CSS with custom maritime theme (web), StyleSheet API (mobile)
 - **State Management**: TanStack Query for server state, local React state for UI
 - **Build Tool**: Vite (web), Expo CLI (mobile)
 - **Maps**: Google Maps JavaScript API (web), React Native Maps (mobile)
+- **UI/UX Decisions**: QAAQ branding with orange, red, and white color scheme. Consistent UI across web and mobile. Optimized z-index hierarchy for UI elements. QBOT chat interface with consistent design across all pages. Mobile-first responsive design with bottom navigation.
 
 ### Backend Architecture
 - **Runtime**: Node.js with Express.js
@@ -63,33 +49,21 @@ Onboard Search: Special "onboard" keyword search filters for sailing users and d
 - **Database**: PostgreSQL with Drizzle ORM
 - **Database Provider**: Shared QAAQ Admin Database
 - **Authentication**: JWT-based with email verification
-- **Email Service**: Gmail SMTP via nodemailer
 - **Session Management**: Express sessions with PostgreSQL storage
 
 ### Bot Integration Architecture
-- **QBOT**: WhatsApp bot for maritime networking assistance, location discovery, and QAAQ Store services
-- **QOI GPT**: WhatsApp bot for Q&A functionality, professional experience sharing, and maritime guidance
-- **Shared Service**: Both bots serve QAAQ, QaaqConnect, and other Replit apps through unified WhatsApp interface
-- **Database Access**: Direct access to shared QAAQ database
-- **Bot Documentation Storage**: Bot rules and documentation stored in `bot_documentation` table
+- **QBOT**: WhatsApp bot for maritime networking assistance, location discovery, and QAAQ Store services.
+- **QOI GPT**: WhatsApp bot for Q&A functionality, professional experience sharing, and maritime guidance.
+- **Shared Service**: Both bots serve QAAQ, QaaqConnect, and other Replit apps through unified WhatsApp interface.
+- **Database Access**: Direct access to shared QAAQ database.
+- **Bot Documentation Storage**: Bot rules and documentation stored in `bot_documentation` table.
 
-### Database Design
-- **Users Table**: Stores user profiles with sailor/local distinction, verification status, and login tracking.
-- **Posts Table**: Social content with categories, location tagging, and author display preferences.
-- **Likes Table**: User engagement tracking for posts.
-- **Verification Codes Table**: Time-limited email verification system.
-- **Shared Q&A System**: Centralized `qaaq_questions`, `qaaq_answers` tables for all sister apps.
-- **CPSS Group System**: `cpss_groups`, `cpss_group_members`, `cpss_group_posts` tables for hierarchical location-based groups.
-- **Bot Rules Storage**: `bot_documentation` table for storing bot rules.
-
-### Key Components
+### System Design Choices
 - **Authentication System**: QAAQ User ID and Password authentication (dummy password "1234koihai"), JWT tokens, user type distinction. Cross-platform compatibility between web and mobile.
 - **Social Features**: Post creation with content categories and location tagging, like/unlike functionality, author display options.
-- **CPSS Navigation System**: Hierarchical Country → Port → Suburb → Service navigation, SEMM-like interface with content cards, endless scroll, breadcrumb navigation, and card carousels.
 - **Discovery System**: Interactive world map with light grey theme, proximity-based user discovery showing nearest users, city-based location display for sailors and locals, color-coded map pins. Mobile GPS integration for real-time location.
-- **UI/UX Design**: Maritime-themed color palette (#0891b2 ocean-teal, #1e3a8a navy-blue), mobile-first responsive design with bottom navigation, PWA features, consistent component library. Native mobile interface with touch-optimized controls.
-- **QChat DM Page**: Dedicated DM page with existing chat cards and distance-sorted user cards, distance-based discovery, chat connection workflow. Real-time messaging interface on mobile.
-- **Mobile App Architecture**: React Native Expo app with native navigation, GPS location services, offline capabilities, push notification support, and app store deployment readiness.
+- **Real-Time Messaging**: WebSocket-based real-time messaging with live typing indicators, instant message delivery, and read receipts.
+- **QBOT Integration**: Fully functional QBOT chat system integrated across all pages (Map Radar, Ch13 DM, Ch16 Groups) with consistent functionality and UI.
 
 ## External Dependencies
 - **Shared QAAQ Database**: PostgreSQL database for authentic maritime user data.
