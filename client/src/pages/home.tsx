@@ -149,7 +149,7 @@ export default function Home({ onSuccess }: HomeProps) {
                 
                 <Button 
                   type="submit" 
-                  className="w-full bg-ocean-teal hover:bg-cyan-600 text-white font-semibold py-2"
+                  className="w-full bg-ocean-teal hover:bg-cyan-600 text-[#afb3b5] font-semibold py-2"
                   disabled={loading}
                 >
                   {loading ? (
