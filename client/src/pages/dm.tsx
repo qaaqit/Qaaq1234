@@ -582,15 +582,25 @@ export default function DMPage() {
         )}
 
         {/* Active Conversations */}
-        {activeConnections.length > 0 && (
-          <Card className="border-2 border-green-200">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2 text-green-700">
-                <MessageCircle size={20} />
-                <span>Active Conversations ({activeConnections.length})</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+        <Card className="border-2 border-green-200">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2 text-green-700">
+              <MessageCircle size={20} />
+              <span>Active Conversations ({activeConnections.length})</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {activeConnections.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="mx-auto w-16 h-16 bg-gradient-to-r from-green-100 to-green-200 rounded-full flex items-center justify-center mb-4">
+                  <MessageCircle size={32} className="text-green-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Active Conversations</h3>
+                <p className="text-gray-600">
+                  Connect with maritime professionals to start chatting
+                </p>
+              </div>
+            ) : (
               <div className="grid gap-4 md:grid-cols-2">
                 {activeConnections.map((connection) => {
                   const otherUser = getOtherUser(connection);
@@ -633,9 +643,9 @@ export default function DMPage() {
                   );
                 })}
               </div>
-            </CardContent>
-          </Card>
-        )}
+            )}
+          </CardContent>
+        </Card>
           </TabsContent>
         </Tabs>
       </div>
