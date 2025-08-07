@@ -4,14 +4,20 @@ import { Button } from "@/components/ui/button";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { RankGroupsPanel } from "@/components/rank-groups-panel";
 import UserDropdown from "@/components/user-dropdown";
+import QBOTChatContainer from "@/components/qbot-chat/QBOTChatContainer";
+import QBOTChatHeader from "@/components/qbot-chat/QBOTChatHeader";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 import qaaqLogo from "@/assets/qaaq-logo.png";
 
 export default function RankGroupsPage() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
+  const { toast } = useToast();
   const [showQBOTChat, setShowQBOTChat] = useState(false);
   const [isQBOTMinimized, setIsQBOTMinimized] = useState(false);
+  const [qBotMessages, setQBotMessages] = useState<Array<{id: string; text: string; sender: 'user' | 'bot'; timestamp: Date}>>([]);
+  const [isQBotTyping, setIsQBotTyping] = useState(false);
 
   // Return early if user is not authenticated
   if (!user) {
@@ -86,6 +92,65 @@ export default function RankGroupsPage() {
             </div>
           </div>
         </header>
+
+        {/* QBOT Chat Container */}
+        <QBOTChatContainer 
+          isOpen={showQBOTChat}
+          onClose={() => {
+            setShowQBOTChat(false);
+            setIsQBOTMinimized(false);
+          }}
+          isMinimized={isQBOTMinimized}
+        >
+          <div className="flex flex-col h-full">
+            {/* Gradient Header */}
+            <QBOTChatHeader 
+              onClear={() => {
+                setQBotMessages([]);
+                setIsQBotTyping(false);
+                toast({
+                  title: "Chat Cleared",
+                  description: "QBOT conversation has been reset",
+                });
+              }}
+              onMinimize={() => setIsQBOTMinimized(!isQBOTMinimized)}
+              isMinimized={isQBOTMinimized}
+              messages={qBotMessages}
+              isTyping={isQBotTyping}
+              onSendMessage={async (message: string) => {
+                const newMessage = {
+                  id: Date.now().toString(),
+                  text: message,
+                  sender: 'user' as const,
+                  timestamp: new Date()
+                };
+                setQBotMessages(prev => [...prev, newMessage]);
+                setIsQBotTyping(true);
+
+                try {
+                  // Simulate QBOT response
+                  setTimeout(() => {
+                    const botResponse = {
+                      id: (Date.now() + 1).toString(),
+                      text: `Hello! I'm QBOT, your maritime assistant. You asked: "${message}". How can I help you with your maritime needs today?`,
+                      sender: 'bot' as const,
+                      timestamp: new Date()
+                    };
+                    setQBotMessages(prev => [...prev, botResponse]);
+                    setIsQBotTyping(false);
+                  }, 1500);
+                } catch (error) {
+                  setIsQBotTyping(false);
+                  toast({
+                    title: "QBOT Error",
+                    description: "Failed to get response from QBOT",
+                    variant: "destructive",
+                  });
+                }
+              }}
+            />
+          </div>
+        </QBOTChatContainer>
 
         {/* Rank Groups Panel Content */}
         <div className="bg-white rounded-lg shadow-sm">
