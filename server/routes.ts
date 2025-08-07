@@ -1230,6 +1230,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Debug endpoint to accept connection without authentication
+  app.post('/api/chat/debug-accept/:connectionId', async (req, res) => {
+    try {
+      const { connectionId } = req.params;
+      console.log(`🔍 Debug accepting connection: ${connectionId}`);
+      
+      await storage.acceptChatConnection(connectionId);
+      console.log(`✅ Connection accepted: ${connectionId}`);
+      
+      // Verify the update worked
+      const result = await pool.query(`SELECT status, accepted_at FROM chat_connections WHERE id = $1`, [connectionId]);
+      console.log(`🔍 Connection status after update:`, result.rows[0]);
+      
+      res.json({ 
+        success: true,
+        connectionId,
+        status: result.rows[0]?.status,
+        acceptedAt: result.rows[0]?.accepted_at,
+        message: "Connection accepted successfully" 
+      });
+    } catch (error) {
+      console.error('Debug accept connection error:', error);
+      res.status(500).json({ message: "Failed to accept connection" });
+    }
+  });
+
   // Send initial message when creating connection (one message limit)
   app.post('/api/chat/send-initial', authenticateToken, async (req, res) => {
     try {
