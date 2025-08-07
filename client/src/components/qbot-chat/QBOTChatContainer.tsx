@@ -32,7 +32,7 @@ export default function QBOTChatContainer({ isOpen, onClose, isMinimized = false
     <div 
       className={`fixed top-16 left-0 right-0 z-[21470000] transition-all duration-300 transform
         ${isMinimized 
-          ? 'h-[60px] overflow-hidden'
+          ? 'h-[30px] overflow-hidden'
           : 'h-[calc(100vh-4rem-70px)] overflow-visible'
         }
         bg-white shadow-xl border-b-2 border-orange-400
