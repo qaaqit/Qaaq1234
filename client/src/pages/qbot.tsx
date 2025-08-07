@@ -21,8 +21,6 @@ interface QBOTPageProps {
 export default function QBOTPage({ user }: QBOTPageProps) {
   const [qBotMessages, setQBotMessages] = useState<Message[]>([]);
   const [isQBotTyping, setIsQBotTyping] = useState(false);
-  const [showQBOTChat, setShowQBOTChat] = useState(true);
-  const [isQBOTMinimized, setIsQBOTMinimized] = useState(false);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
@@ -87,50 +85,35 @@ export default function QBOTPage({ user }: QBOTPageProps) {
         </div>
       </header>
       
-      {/* Full Screen QBOT Chat Container - Exactly Same as Maximized */}
+      {/* Always Maximized QBOT Chat Container */}
       <div className="flex-1 pb-16">
-        <QBOTChatContainer 
-          isOpen={showQBOTChat}
-          onClose={() => {
-            setShowQBOTChat(false);
-            setIsQBOTMinimized(false);
-          }}
-          isMinimized={isQBOTMinimized}
-        >
+        <QBOTChatContainer>
           <div className="flex flex-col h-full">
             {/* Gradient Header */}
             <QBOTChatHeader 
               onClear={handleClearQBotChat}
-              onToggleMinimize={() => {
-                setIsQBOTMinimized(!isQBOTMinimized);
-              }}
-              isMinimized={isQBOTMinimized}
             />
             
-            {/* Chat Area with Engineering Background - hide when minimized */}
-            {!isQBOTMinimized && (
-              <>
-                <QBOTChatArea>
-                  <div className="flex flex-col h-full">
-                    {/* Messages or Welcome State */}
-                    {qBotMessages.length === 0 ? (
-                      <QBOTWelcomeState />
-                    ) : (
-                      <>
-                        <QBOTMessageList messages={qBotMessages} />
-                        {isQBotTyping && <QBOTTypingIndicator />}
-                      </>
-                    )}
-                  </div>
-                </QBOTChatArea>
-                
-                {/* Input Area */}
-                <QBOTInputArea 
-                  onSendMessage={handleSendQBotMessage}
-                  disabled={isQBotTyping}
-                />
-              </>
-            )}
+            {/* Chat Area with Engineering Background - Always Visible */}
+            <QBOTChatArea>
+              <div className="flex flex-col h-full">
+                {/* Messages or Welcome State */}
+                {qBotMessages.length === 0 ? (
+                  <QBOTWelcomeState />
+                ) : (
+                  <>
+                    <QBOTMessageList messages={qBotMessages} />
+                    {isQBotTyping && <QBOTTypingIndicator />}
+                  </>
+                )}
+              </div>
+            </QBOTChatArea>
+            
+            {/* Input Area */}
+            <QBOTInputArea 
+              onSendMessage={handleSendQBotMessage}
+              disabled={isQBotTyping}
+            />
           </div>
         </QBOTChatContainer>
       </div>
