@@ -33,6 +33,7 @@ interface UserWithDistance extends UserType {
 }
 
 export default function DMPage() {
+  const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedConnection, setSelectedConnection] = useState<ExtendedChatConnection | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -312,21 +313,40 @@ export default function DMPage() {
             <Input
               type="text"
               placeholder="Search users by name, rank, ship, location, WhatsApp number..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               className="pr-12 border-ocean-teal/30 focus:border-ocean-teal"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  setSearchQuery(searchInput.trim());
+                }
+              }}
             />
           </div>
-          <Button 
-            size="sm"
-            variant="outline"
-            className="px-3 border-ocean-teal/30 hover:bg-ocean-teal hover:text-white"
-            onClick={() => {
-              // Search activation logic if needed
-            }}
-          >
-            <Search size={16} />
-          </Button>
+          {searchQuery.trim() ? (
+            <Button 
+              size="sm"
+              variant="outline"
+              className="px-3 border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
+              onClick={() => {
+                setSearchQuery("");
+                setSearchInput("");
+              }}
+            >
+              Clear
+            </Button>
+          ) : (
+            <Button 
+              size="sm"
+              variant="outline"
+              className="px-3 border-ocean-teal/30 hover:bg-ocean-teal hover:text-white"
+              onClick={() => {
+                setSearchQuery(searchInput.trim());
+              }}
+            >
+              <Search size={16} />
+            </Button>
+          )}
         </div>
 
         {/* Search Results - Show only when searching */}
