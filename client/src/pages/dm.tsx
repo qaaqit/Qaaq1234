@@ -16,13 +16,7 @@ import QChatWindow from "@/components/qchat-window";
 import UserDropdown from "@/components/user-dropdown";
 import { QuestionsTab } from "@/components/questions-tab";
 import MessageNotificationDot from "@/components/message-notification-dot";
-import QBOTChatContainer from "@/components/qbot-chat/QBOTChatContainer";
-import QBOTChatHeader from "@/components/qbot-chat/QBOTChatHeader";
-import QBOTChatArea from "@/components/qbot-chat/QBOTChatArea";
-import QBOTWelcomeState from "@/components/qbot-chat/QBOTWelcomeState";
-import QBOTMessageList from "@/components/qbot-chat/QBOTMessageList";
-import QBOTTypingIndicator from "@/components/qbot-chat/QBOTTypingIndicator";
-import QBOTInputArea from "@/components/qbot-chat/QBOTInputArea";
+
 import qaaqLogo from "@/assets/qaaq-logo.png";
 import type { ChatConnection, User as UserType } from "@shared/schema";
 import ChatConnectionsList from "@/components/chat/ChatConnectionsList";
@@ -43,17 +37,6 @@ export default function DMPage() {
   const [selectedConnection, setSelectedConnection] = useState<ExtendedChatConnection | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("questions");
-  const [showQBOTChat, setShowQBOTChat] = useState(false);
-  const [isQBOTMinimized, setIsQBOTMinimized] = useState(false);
-  const [qbotMessages, setQBotMessages] = useState<Array<{id: string; text: string; sender: 'user' | 'bot'; timestamp: Date}>>([]);
-  const [isQBotTyping, setIsQBotTyping] = useState(false);
-
-  interface Message {
-    id: string;
-    text: string;
-    sender: 'user' | 'bot';
-    timestamp: Date;
-  }
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -278,90 +261,7 @@ export default function DMPage() {
           </div>
         </header>
 
-        {/* QBOT Chat Container */}
-        <QBOTChatContainer 
-          isOpen={showQBOTChat}
-          onClose={() => {
-            setShowQBOTChat(false);
-            setIsQBOTMinimized(false);
-          }}
-          isMinimized={isQBOTMinimized}
-        >
-          <div className="flex flex-col h-full">
-            {/* Gradient Header */}
-            <QBOTChatHeader 
-              onClear={() => {
-                setQBotMessages([]);
-                setIsQBotTyping(false);
-                toast({
-                  title: "Chat Cleared",
-                  description: "Your conversation has been cleared.",
-                });
-              }}
-              onToggleMinimize={() => {
-                setIsQBOTMinimized(!isQBOTMinimized);
-              }}
-              isMinimized={isQBOTMinimized}
-            />
-            
-            {/* Chat Area with Grid Pattern - hide when minimized */}
-            {!isQBOTMinimized && (
-              <>
-                <QBOTChatArea>
-                  {qbotMessages.length === 0 ? (
-                    <QBOTWelcomeState />
-                  ) : (
-                    <>
-                      <QBOTMessageList messages={qbotMessages} />
-                      {isQBotTyping && <QBOTTypingIndicator />}
-                    </>
-                  )}
-                </QBOTChatArea>
-                
-                {/* Input Area */}
-                <QBOTInputArea 
-                  onSendMessage={async (text) => {
-                    const newMessage: Message = {
-                      id: Date.now().toString(),
-                      text,
-                      sender: 'user',
-                      timestamp: new Date()
-                    };
-                    setQBotMessages([...qbotMessages, newMessage]);
-                    
-                    // Show typing indicator
-                    setIsQBotTyping(true);
-                    
-                    // Call QBOT API
-                    try {
-                      const response = await apiRequest('/api/qbot/message', 'POST', { message: text });
-                      const data = await response.json();
-                      
-                      const botResponse: Message = {
-                        id: (Date.now() + 1).toString(),
-                        text: data.response,
-                        sender: 'bot',
-                        timestamp: new Date(data.timestamp)
-                      };
-                      setQBotMessages(prev => [...prev, botResponse]);
-                    } catch (error) {
-                      console.error('Error sending message to QBOT:', error);
-                      const errorResponse: Message = {
-                        id: (Date.now() + 1).toString(),
-                        text: 'Sorry, I encountered an error. Please try again.',
-                        sender: 'bot',
-                        timestamp: new Date()
-                      };
-                      setQBotMessages(prev => [...prev, errorResponse]);
-                    } finally {
-                      setIsQBotTyping(false);
-                    }
-                  }}
-                />
-              </>
-            )}
-          </div>
-        </QBOTChatContainer>
+
 
 
 

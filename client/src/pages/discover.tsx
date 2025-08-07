@@ -10,13 +10,7 @@ import UsersMapDual from "@/components/users-map-dual";
 import GoogleMaps from "@/components/google-maps";
 import WhatsAppBotControl from "@/components/whatsapp-bot-control";
 import CPSSNavigator from "@/components/cpss-navigator";
-import QBOTChatContainer from "@/components/qbot-chat/QBOTChatContainer";
-import QBOTChatHeader from "@/components/qbot-chat/QBOTChatHeader";
-import QBOTChatArea from "@/components/qbot-chat/QBOTChatArea";
-import QBOTWelcomeState from "@/components/qbot-chat/QBOTWelcomeState";
-import QBOTMessageList, { type Message } from "@/components/qbot-chat/QBOTMessageList";
-import QBOTInputArea from "@/components/qbot-chat/QBOTInputArea";
-import QBOTTypingIndicator from "@/components/qbot-chat/QBOTTypingIndicator";
+
 import { useLocation } from "@/hooks/useLocation";
 import { useLocation as useWouterLocation } from "wouter";
 import { type User } from "@/lib/auth";
@@ -48,11 +42,6 @@ export default function Discover({ user }: DiscoverProps) {
   const [showUsers, setShowUsers] = useState(true); // Always show anchor pins from start
   const [showNearbyCard, setShowNearbyCard] = useState(false);
   const [showWhatsAppPanel, setShowWhatsAppPanel] = useState(false);
-  const [showQBOTChat, setShowQBOTChat] = useState(true);
-  const [isQBOTMinimized, setIsQBOTMinimized] = useState(false);
-  const [qbotMessages, setQBotMessages] = useState<Message[]>([]);
-  const [isQBotTyping, setIsQBotTyping] = useState(false);
-  const [hasInitialized, setHasInitialized] = useState(false);
   const [mapType, setMapType] = useState<'leaflet' | 'google'>('leaflet');
   const [isPremiumMode, setIsPremiumMode] = useState(false);
   
@@ -91,8 +80,7 @@ export default function Discover({ user }: DiscoverProps) {
       }
       
       if (window.location.hash.includes('map-radar')) {
-        console.log('Map Radar clicked - minimizing QBot and focusing on map');
-        setIsQBOTMinimized(true);
+        console.log('Map Radar clicked - focusing on map');
         setShowUsers(true);
         // Clear the hash after processing
         window.history.replaceState({}, '', window.location.pathname);
@@ -110,19 +98,7 @@ export default function Discover({ user }: DiscoverProps) {
     };
   }, [refetch, location]);
   
-  // Initialize QBOT chat with welcome message
-  useEffect(() => {
-    if (showQBOTChat && !hasInitialized) {
-      const welcomeMessage: Message = {
-        id: 'welcome',
-        text: "Welcome to QBOT! I'm your maritime assistant. I can help you find sailors nearby, navigate ports, and connect with the maritime community. How can I assist you today?",
-        sender: 'bot',
-        timestamp: new Date()
-      };
-      setQBotMessages([welcomeMessage]);
-      setHasInitialized(true);
-    }
-  }, [showQBOTChat, hasInitialized]);
+
 
   const handleLike = async (postId: string) => {
     try {
@@ -179,90 +155,7 @@ export default function Discover({ user }: DiscoverProps) {
         </div>
       </header>
       
-      {/* QBOT Chat Container - Positioned below header */}
-      <QBOTChatContainer 
-        isOpen={showQBOTChat}
-        onClose={() => {
-          setShowQBOTChat(false);
-          setIsQBOTMinimized(false);
-        }}
-        isMinimized={isQBOTMinimized}
-      >
-        <div className="flex flex-col h-full">
-          {/* Gradient Header */}
-          <QBOTChatHeader 
-            onClear={() => {
-              setQBotMessages([]);
-              setIsQBotTyping(false);
-              toast({
-                title: "Chat Cleared",
-                description: "Your conversation has been cleared.",
-              });
-            }}
-            onToggleMinimize={() => {
-              setIsQBOTMinimized(!isQBOTMinimized);
-            }}
-            isMinimized={isQBOTMinimized}
-          />
-          
-          {/* Chat Area with Grid Pattern - hide when minimized */}
-          {!isQBOTMinimized && (
-            <>
-              <QBOTChatArea>
-                {qbotMessages.length === 0 ? (
-                  <QBOTWelcomeState />
-                ) : (
-                  <>
-                    <QBOTMessageList messages={qbotMessages} />
-                    {isQBotTyping && <QBOTTypingIndicator />}
-                  </>
-                )}
-              </QBOTChatArea>
-              
-              {/* Input Area */}
-              <QBOTInputArea 
-                onSendMessage={async (text) => {
-              const newMessage: Message = {
-                id: Date.now().toString(),
-                text,
-                sender: 'user',
-                timestamp: new Date()
-              };
-              setQBotMessages([...qbotMessages, newMessage]);
-              
-              // Show typing indicator
-              setIsQBotTyping(true);
-              
-              // Call QBOT API
-              try {
-                const response = await apiRequest('/api/qbot/message', 'POST', { message: text });
-                const data = await response.json();
-                
-                const botResponse: Message = {
-                  id: (Date.now() + 1).toString(),
-                  text: data.response,
-                  sender: 'bot',
-                  timestamp: new Date(data.timestamp)
-                };
-                setQBotMessages(prev => [...prev, botResponse]);
-              } catch (error) {
-                console.error('Error sending message to QBOT:', error);
-                const errorResponse: Message = {
-                  id: (Date.now() + 1).toString(),
-                  text: 'Sorry, I encountered an error. Please try again.',
-                  sender: 'bot',
-                  timestamp: new Date()
-                };
-                setQBotMessages(prev => [...prev, errorResponse]);
-              } finally {
-                setIsQBotTyping(false);
-              }
-            }}
-          />
-            </>
-          )}
-        </div>
-      </QBOTChatContainer>
+
       
       {/* Main Content Area - Full Screen Map */}
       <div className="flex-1 overflow-hidden relative">
