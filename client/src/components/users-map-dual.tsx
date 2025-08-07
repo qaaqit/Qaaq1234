@@ -843,8 +843,8 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
         </div>
       )}
 
-      {/* Floating Search Bar - Positioned above bottom navigation */}
-      <div className="fixed bottom-16 left-2 right-2 z-[1002] bg-white/95 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg">
+      {/* Floating Search Bar - Positioned above bottom navigation with sufficient gap */}
+      <div className="fixed bottom-24 left-2 right-2 z-[1002] bg-white/95 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg">
         <div className="flex items-center px-3 py-2">
           {/* Search Input */}
           <div className="relative flex-1">
