@@ -644,9 +644,9 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
           searchPanelState === 'minimized'
             ? 'bottom-0 h-[60px]'
             : searchPanelState === 'half'
-            ? 'bottom-0 h-[50vh]'
+            ? 'bottom-0 h-1/2'
             : searchQuery.trim() 
-            ? 'top-[30%] bottom-0' 
+            ? 'top-[35%] bottom-0' 
             : 'bottom-0 h-[160px] sm:h-[180px]'
         }`}>
           <div className="p-2 sm:p-4 h-full">
@@ -694,8 +694,8 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
               searchPanelState === 'minimized' 
                 ? 'hidden' 
                 : searchQuery.trim() 
-                ? 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 overflow-y-auto h-[calc(100vh-240px)] sm:h-[calc(100vh-220px)] scrollbar-hide' 
-                : 'flex gap-2 sm:gap-3 overflow-x-auto scrollbar-hide pb-2'
+                ? 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 overflow-y-auto h-[calc(100%-3rem)] scrollbar-thin scrollbar-thumb-gray-300 pr-2' 
+                : 'flex gap-2 sm:gap-3 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 pb-2'
             }`}>
               {nearestUsers.map((user) => (
                 <div
@@ -720,9 +720,9 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                         }}
                         title="Tap to open chat"
                       >
-                        {(user as any).profilePictureUrl ? (
+                        {user.profilePictureUrl ? (
                           <img 
-                            src={(user as any).profilePictureUrl} 
+                            src={user.profilePictureUrl} 
                             alt={`${user.fullName}'s profile`}
                             className="w-full h-full object-cover"
                             onError={(e) => {
@@ -733,7 +733,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                             }}
                           />
                         ) : null}
-                        <span className={`text-xs font-medium text-blue-600 ${(user as any).profilePictureUrl ? 'hidden' : 'flex'} items-center justify-center w-full h-full`}>
+                        <span className={`text-xs font-medium text-blue-600 ${user.profilePictureUrl ? 'hidden' : 'flex'} items-center justify-center w-full h-full`}>
                           {user.fullName.split(' ').map(n => n[0]).join('').substring(0, 2)}
                         </span>
                       </div>
