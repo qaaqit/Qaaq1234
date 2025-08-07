@@ -147,7 +147,7 @@ export default function Discover({ user }: DiscoverProps) {
   return (
     <div className="h-screen bg-gradient-to-br from-orange-50 via-white to-yellow-50 flex flex-col">
       {/* Header - Mobile Optimized */}
-      <header className="bg-white text-black shadow-md relative overflow-hidden flex-shrink-0 z-[110] border-b-2 border-orange-400">
+      <header className="bg-white text-black shadow-md relative overflow-hidden flex-shrink-0 z-[1002] border-b-2 border-orange-400">
         <div className="absolute inset-0 bg-gradient-to-r from-red-50 via-orange-50 to-yellow-50 opacity-50"></div>
         
         <div className="relative z-10 px-3 py-2 sm:px-4 sm:py-4">
