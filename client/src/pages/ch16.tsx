@@ -15,7 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import qaaqLogo from "@/assets/qaaq-logo.png";
 
-export default function RankGroupsPage() {
+export default function Ch16Page() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();

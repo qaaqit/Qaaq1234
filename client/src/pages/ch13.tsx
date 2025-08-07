@@ -35,7 +35,7 @@ interface UserWithDistance extends UserType {
   company?: string;
 }
 
-export default function DMPage() {
+export default function Ch13Page() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedConnection, setSelectedConnection] = useState<ExtendedChatConnection | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);

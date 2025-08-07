@@ -35,11 +35,11 @@ interface Post {
   createdAt: string;
 }
 
-interface DiscoverProps {
+interface RadarProps {
   user: User;
 }
 
-export default function Discover({ user }: DiscoverProps) {
+export default function Radar({ user }: RadarProps) {
   const { toast } = useToast();
   const [, setLocation] = useWouterLocation();
 
