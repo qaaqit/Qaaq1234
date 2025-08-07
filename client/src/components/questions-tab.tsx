@@ -434,6 +434,29 @@ export function QuestionsTab() {
   return (
     <div className="space-y-4">
       {/* Search and Header */}
+      {/* Minimalistic Search Questions Bar */}
+      <div className="flex items-center space-x-2 mb-6">
+        <div className="flex-1 relative">
+          <Input
+            type="text"
+            placeholder="Search questions..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pr-12 border-ocean-teal/30 focus:border-ocean-teal"
+          />
+        </div>
+        <Button 
+          size="sm"
+          variant="outline"
+          className="px-3 border-ocean-teal/30 hover:bg-ocean-teal hover:text-white"
+          onClick={() => {
+            // Search activation logic if needed
+          }}
+        >
+          <Search size={16} />
+        </Button>
+      </div>
+
       <Card className="border-2 border-ocean-teal/20">
         <CardHeader>
           <div className="flex flex-col space-y-4">
@@ -445,16 +468,6 @@ export function QuestionsTab() {
                   {totalQuestions} Questions
                 </Badge>
               </CardTitle>
-            </div>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-              <Input
-                type="text"
-                placeholder="Search questions..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
             </div>
           </div>
         </CardHeader>
