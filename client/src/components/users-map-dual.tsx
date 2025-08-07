@@ -532,8 +532,8 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
           radiusKm={radiusKm}
         />
 
-        {/* Map Controls - Top Left Corner with Chevron Dropdown */}
-        <div className="absolute top-4 left-4 z-[500]">
+        {/* Map Controls - Top Right Corner Below Maximize Square */}
+        <div className="absolute top-4 right-4 z-[500]">
             <div className="relative dropdown-container">
               <button
                 onClick={() => setShowMapTypeDropdown(!showMapTypeDropdown)}
@@ -545,7 +545,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
               </button>
               
               {showMapTypeDropdown && (
-                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[140px] z-[501]">
+                <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[140px] z-[501]">
                   <div className="p-1">
                     <button
                       onClick={() => {
