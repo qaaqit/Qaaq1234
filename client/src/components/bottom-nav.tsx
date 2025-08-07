@@ -22,11 +22,11 @@ export default function BottomNav({ user, onLogout }: BottomNavProps) {
 
   const baseNavItems = [
     { 
-      path: "/qbot", 
+      path: "/", 
       icon: "fas fa-robot", 
       label: ["QBOT", "Chat"],
-      active: location === "/qbot",
-      onClick: () => setLocation("/qbot")
+      active: location === "/" || location === "/qbot",
+      onClick: () => setLocation("/")
     },
     { 
       path: "/dm", 
@@ -43,11 +43,11 @@ export default function BottomNav({ user, onLogout }: BottomNavProps) {
       onClick: () => setLocation("/rank-groups")
     },
     { 
-      path: "/", 
+      path: "/discover", 
       icon: "fas fa-map-marked-alt", 
       label: ["Map", "Radar"],
-      active: location === "/" || location === "/discover" || location === "/users",
-      onClick: handleMapRadarClick
+      active: location === "/discover" || location === "/users",
+      onClick: () => setLocation("/discover")
     }
   ];
 

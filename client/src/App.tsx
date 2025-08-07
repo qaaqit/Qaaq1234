@@ -60,10 +60,11 @@ function Router() {
     <div className="min-h-screen bg-slate-50">
       <div className={user ? "pb-16" : ""}>
         <Switch>
-          <Route path="/" component={() => user ? <Discover user={user} /> : <Home onSuccess={setUser} />} />
+          <Route path="/" component={() => user ? <QBOTPage user={user} /> : <Home onSuccess={setUser} />} />
           <Route path="/register" component={() => <Register onSuccess={setUser} />} />
           <Route path="/verify" component={() => <Verify onSuccess={setUser} />} />
           <Route path="/discover" component={() => user ? <Discover user={user} /> : <Home />} />
+          <Route path="/qbot" component={() => user ? <QBOTPage user={user} /> : <Home />} />
           <Route path="/post" component={() => user ? <Post user={user} /> : <Home />} />
           <Route path="/chat" component={() => user ? <ChatPage /> : <Home />} />
           <Route path="/chat/:userId" component={() => user ? <DMPage /> : <Home />} />
