@@ -3,32 +3,19 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Prevent scrollbars and ensure full viewport */
-html, body {
-  height: 100vh;
-  width: 100vw;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  background-color: #f3f4f6;
-}
-
-#root {
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
-  background-color: #f3f4f6;
-}
-
 /* Ensure minimum viewport height on mobile */
 @supports (-webkit-touch-callout: none) {
   /* iOS Safari specific fixes */
-  html, body, #root {
-    height: -webkit-fill-available;
-  }
   .min-h-screen {
     min-height: -webkit-fill-available;
   }
+}
+
+/* Prevent white screen on resize */
+html, body, #root {
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  background-color: #f3f4f6;
 }
 
 :root {
