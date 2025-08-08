@@ -62,9 +62,17 @@ export default function Home({ onSuccess }: HomeProps) {
       <div className="w-full h-screen flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 lg:p-12">
         <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl bg-white border border-gray-200 rounded-2xl shadow-xl p-6 sm:p-8 md:p-10 lg:p-12 xl:p-16">
           <div className="text-center mb-8 sm:mb-10 md:mb-12">
-            <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 bg-gradient-to-br from-orange-500 to-red-600 rounded-3xl flex items-center justify-center mx-auto mb-6 sm:mb-8">
-              <i className="fas fa-anchor text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white"></i>
+            <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 flex items-center justify-center mx-auto mb-6 sm:mb-8">
+              <img 
+                src="/attached_assets/ICON_1754684848613.png" 
+                alt="QAAQ Logo" 
+                className="w-full h-full object-contain"
+                style={{
+                  animation: 'float 3s ease-in-out infinite'
+                }}
+              />
             </div>
+
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-2 sm:mb-3">Welcome to Qaaq</h2>
             <p className="text-sm sm:text-base md:text-lg text-gray-600">Maritime Knowledge Hub</p>
           </div>

@@ -48,6 +48,16 @@ html, body, #root {
   --white-primary: hsl(0, 0%, 100%);
 }
 
+/* Float animation for logo */
+@keyframes float {
+  0%, 100% { 
+    transform: translateY(0px); 
+  }
+  50% { 
+    transform: translateY(-10px); 
+  }
+}
+
 .dark {
   --background: hsl(240, 10%, 3.9%);
   --foreground: hsl(0, 0%, 98%);
