@@ -447,20 +447,7 @@ export function QuestionsTab() {
               </div>
             )}
 
-            {/* Footer Stats and Actions */}
-            <div className="flex items-center justify-start text-sm text-gray-700 mb-3 font-medium">
-              <div className="flex items-center space-x-4">
-                <span className="flex items-center space-x-1">
-                  <MessageCircle size={16} className="text-orange-600" />
-                  <span>{question.answer_count || 0} answers</span>
-                </span>
-                {question.category_name && (
-                  <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-800 border-orange-300">
-                    {question.category_name}
-                  </Badge>
-                )}
-              </div>
-            </div>
+
 
 
           </CardContent>
