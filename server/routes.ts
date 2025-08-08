@@ -981,6 +981,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Chat metrics endpoint - Daily growth of web chat vs WhatsApp questions
+  app.get('/api/admin/analytics/chat-metrics', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      const result = await pool.query(`
+        WITH daily_questions AS (
+          SELECT 
+            DATE(created_at) as date,
+            CASE 
+              WHEN content LIKE '%[QBOT Q&A%' OR content LIKE '%[QBOT CHAT%' OR content LIKE '%via QBOT%' THEN 'webchat'
+              WHEN content LIKE '%WhatsApp%' OR content LIKE '%via WhatsApp%' THEN 'whatsapp'
+              ELSE 'other'
+            END as source_type
+          FROM questions 
+          WHERE created_at >= NOW() - INTERVAL '30 days'
+        ),
+        grouped_data AS (
+          SELECT 
+            date,
+            source_type,
+            COUNT(*) as question_count
+          FROM daily_questions
+          WHERE source_type IN ('webchat', 'whatsapp')
+          GROUP BY date, source_type
+        ),
+        date_range AS (
+          SELECT generate_series(
+            CURRENT_DATE - INTERVAL '29 days',
+            CURRENT_DATE,
+            '1 day'::interval
+          )::date as date
+        )
+        SELECT 
+          dr.date,
+          COALESCE(SUM(CASE WHEN gd.source_type = 'webchat' THEN gd.question_count END), 0) as webchat_count,
+          COALESCE(SUM(CASE WHEN gd.source_type = 'whatsapp' THEN gd.question_count END), 0) as whatsapp_count
+        FROM date_range dr
+        LEFT JOIN grouped_data gd ON dr.date = gd.date
+        GROUP BY dr.date
+        ORDER BY dr.date
+      `);
+
+      const chatMetrics = result.rows.map(row => ({
+        date: row.date.toISOString().split('T')[0], // Format as YYYY-MM-DD
+        webchat: parseInt(row.webchat_count) || 0,
+        whatsapp: parseInt(row.whatsapp_count) || 0
+      }));
+
+      res.json(chatMetrics);
+    } catch (error) {
+      console.error("Error fetching chat metrics:", error);
+      res.status(500).json({ message: "Failed to fetch chat metrics" });
+    }
+  });
+
   // ==== BOT RULES MANAGEMENT ENDPOINTS ====
   
   // Get specific bot rule by name

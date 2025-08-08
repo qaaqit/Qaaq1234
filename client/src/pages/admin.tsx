@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, LineChart, Line } from "recharts";
 import { FileText } from "lucide-react";
 import AdminAnalytics from "@/components/admin/AdminAnalytics";
 
@@ -45,6 +45,12 @@ interface CountryAnalytics {
   verifiedCount: number;
   activeCount: number;
   totalHits: number;
+}
+
+interface ChatMetrics {
+  date: string;
+  webchat: number;
+  whatsapp: number;
 }
 
 // Helper function to generate time series data from real stats
@@ -111,6 +117,11 @@ export default function AdminPanel() {
   // Fetch country analytics
   const { data: countryAnalytics, isLoading: countryLoading } = useQuery<CountryAnalytics[]>({
     queryKey: ["/api/admin/analytics/countries"],
+  });
+
+  // Fetch chat metrics
+  const { data: chatMetrics, isLoading: chatMetricsLoading } = useQuery<ChatMetrics[]>({
+    queryKey: ["/api/admin/analytics/chat-metrics"],
   });
 
   // Fetch QBOT rules from database
@@ -442,6 +453,83 @@ export default function AdminPanel() {
                     <div className="text-center py-8 text-gray-500">
                       <i className="fas fa-chart-bar text-3xl mb-4"></i>
                       <p>No country data available</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Chat Metrics Line Chart */}
+            <div className="mt-8">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg font-semibold text-gray-800 flex items-center">
+                    <i className="fas fa-comments mr-2 text-orange-600"></i>
+                    Daily Chat Questions Growth
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">Web Chat vs WhatsApp questions over the last 30 days</p>
+                </CardHeader>
+                <CardContent>
+                  {chatMetrics && chatMetrics.length > 0 && !chatMetricsLoading ? (
+                    <ChartContainer
+                      config={{
+                        webchat: {
+                          label: "Web Chat",
+                          color: "#ea580c",
+                        },
+                        whatsapp: {
+                          label: "WhatsApp",
+                          color: "#25d366",
+                        },
+                      }}
+                      className="h-[400px]"
+                    >
+                      <LineChart data={chatMetrics}>
+                        <XAxis 
+                          dataKey="date" 
+                          tick={{ fontSize: 12 }}
+                          tickFormatter={(value) => {
+                            const date = new Date(value);
+                            return `${date.getMonth() + 1}/${date.getDate()}`;
+                          }}
+                        />
+                        <YAxis tick={{ fontSize: 12 }} />
+                        <ChartTooltip 
+                          content={<ChartTooltipContent />}
+                          labelFormatter={(value) => {
+                            const date = new Date(value);
+                            return date.toLocaleDateString();
+                          }}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="webchat" 
+                          stroke="#ea580c" 
+                          strokeWidth={3}
+                          dot={{ fill: "#ea580c", strokeWidth: 2, r: 4 }}
+                          activeDot={{ r: 6, stroke: "#ea580c", strokeWidth: 2 }}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="whatsapp" 
+                          stroke="#25d366" 
+                          strokeWidth={3}
+                          dot={{ fill: "#25d366", strokeWidth: 2, r: 4 }}
+                          activeDot={{ r: 6, stroke: "#25d366", strokeWidth: 2 }}
+                        />
+                      </LineChart>
+                    </ChartContainer>
+                  ) : chatMetricsLoading ? (
+                    <div className="flex items-center justify-center h-[400px]">
+                      <div className="text-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto mb-4"></div>
+                        <p className="text-gray-400">Loading chat metrics...</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-16 text-gray-500">
+                      <i className="fas fa-chart-line text-4xl mb-4"></i>
+                      <p>No chat metrics data available</p>
                     </div>
                   )}
                 </CardContent>
