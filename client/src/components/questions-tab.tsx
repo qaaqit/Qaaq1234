@@ -544,9 +544,7 @@ export function QuestionsTab() {
               <span className="text-sm text-orange-600">Searching...</span>
             )}
           </div>
-          <p className="text-xs text-orange-600 mt-1">
-            Results sorted by relevance: exact matches first, then similar matches
-          </p>
+          
         </div>
       )}
 
