@@ -427,3 +427,78 @@ export type InsertSearchKeyword = z.infer<typeof insertSearchKeywordSchema>;
 export type SearchKeyword = typeof searchKeywords.$inferSelect;
 export type InsertUserSearchHistory = z.infer<typeof insertUserSearchHistorySchema>;
 export type UserSearchHistory = typeof userSearchHistory.$inferSelect;
+
+// Questions table (existing QAAQ questions database)
+export const questions = pgTable("questions", {
+  id: integer("id").primaryKey(),
+  content: text("content").notNull(),
+  machineId: integer("machine_id"),
+  authorId: varchar("author_id").notNull(),
+  tags: text("tags").array().default([]),
+  attachments: jsonb("attachments").$type<string[]>().default([]),
+  imageUrls: text("image_urls").array().default([]),
+  views: integer("views").default(0),
+  isResolved: boolean("is_resolved").default(false),
+  acceptedAnswerId: integer("accepted_answer_id"),
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`),
+  fileSizeMb: integer("file_size_mb").default(0),
+  isArchived: boolean("is_archived").default(false),
+  engagementScore: integer("engagement_score").default(0),
+  categoryId: integer("category_id"),
+  isFromWhatsapp: boolean("is_from_whatsapp").default(false),
+  whatsappGroupId: varchar("whatsapp_group_id"),
+  isHidden: boolean("is_hidden").default(false),
+  hiddenReason: text("hidden_reason"),
+  hiddenAt: timestamp("hidden_at"),
+  hiddenBy: varchar("hidden_by"),
+  flagCount: integer("flag_count").default(0),
+  visibility: varchar("visibility").default("public"),
+  allowComments: boolean("allow_comments").default(true),
+  allowAnswers: boolean("allow_answers").default(true),
+  equipmentName: varchar("equipment_name"),
+  isOpenToAll: boolean("is_open_to_all").default(true),
+});
+
+// Questions with attachments tracking table
+export const questionAttachments = pgTable("question_attachments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  questionId: integer("question_id").notNull().references(() => questions.id, { onDelete: "cascade" }),
+  attachmentType: text("attachment_type").notNull(), // 'image', 'document', 'video', etc.
+  attachmentUrl: text("attachment_url").notNull(),
+  fileName: text("file_name"),
+  fileSize: integer("file_size"), // in bytes
+  mimeType: text("mime_type"),
+  isProcessed: boolean("is_processed").default(false),
+  processedAt: timestamp("processed_at"),
+  createdAt: timestamp("created_at").default(sql`now()`),
+});
+
+// Relations for questions
+export const questionsRelations = relations(questions, ({ one, many }) => ({
+  attachments: many(questionAttachments),
+  author: one(users, {
+    fields: [questions.authorId],
+    references: [users.id],
+  }),
+}));
+
+export const questionAttachmentsRelations = relations(questionAttachments, ({ one }) => ({
+  question: one(questions, {
+    fields: [questionAttachments.questionId],
+    references: [questions.id],
+  }),
+}));
+
+// Insert schemas for questions
+export const insertQuestionSchema = createInsertSchema(questions)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+
+export const insertQuestionAttachmentSchema = createInsertSchema(questionAttachments)
+  .omit({ id: true, createdAt: true, processedAt: true });
+
+// Types for questions
+export type InsertQuestion = z.infer<typeof insertQuestionSchema>;
+export type Question = typeof questions.$inferSelect;
+export type InsertQuestionAttachment = z.infer<typeof insertQuestionAttachmentSchema>;
+export type QuestionAttachment = typeof questionAttachments.$inferSelect;
