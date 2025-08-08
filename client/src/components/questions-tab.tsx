@@ -60,7 +60,7 @@ export function QuestionsTab() {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [expandedQuestions, setExpandedQuestions] = useState<Set<number>>(new Set());
-  const [showOnlyWithImages, setShowOnlyWithImages] = useState(false);
+
   const observer = useRef<IntersectionObserver | null>(null);
   const lastQuestionRef = useRef<HTMLDivElement | null>(null);
 
@@ -84,13 +84,12 @@ export function QuestionsTab() {
     status,
     error
   } = useInfiniteQuery({
-    queryKey: ['/api/questions', debouncedSearch, showOnlyWithImages],
+    queryKey: ['/api/questions', debouncedSearch],
     queryFn: async ({ pageParam = 1 }) => {
       const params = new URLSearchParams({
         page: pageParam.toString(),
         limit: '20',
-        ...(debouncedSearch && { search: debouncedSearch }),
-        ...(showOnlyWithImages && { withImages: 'true' })
+        ...(debouncedSearch && { search: debouncedSearch })
       });
       const response = await apiRequest(`/api/questions?${params}`);
       if (!response.ok) {
@@ -176,16 +175,7 @@ export function QuestionsTab() {
     }
   }, [error]);
   
-  // Log questions with images for debugging
-  useEffect(() => {
-    if (allQuestions.length > 0) {
-      const questionsWithImages = allQuestions.filter(q => q.image_urls && q.image_urls.length > 0);
-      console.log(`Found ${questionsWithImages.length} questions with images out of ${allQuestions.length} total questions`);
-      if (showOnlyWithImages) {
-        console.log('Image filter is active - showing only questions with images');
-      }
-    }
-  }, [allQuestions, showOnlyWithImages]);
+
 
   // Answer Card Component
   const AnswerCard = ({ answer }: { answer: Answer }) => (
@@ -496,24 +486,10 @@ export function QuestionsTab() {
                 <MessageCircle size={20} />
                 <span>Maritime Q&A</span>
                 <Badge variant="secondary" className="ml-2">
-                  {showOnlyWithImages ? filteredQuestions.length : totalQuestions} Questions
+                  {totalQuestions} Questions
                 </Badge>
               </CardTitle>
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="imageFilter"
-                  checked={showOnlyWithImages}
-                  onCheckedChange={(checked) => setShowOnlyWithImages(checked as boolean)}
-                  className="border-ocean-teal/50 data-[state=checked]:bg-ocean-teal data-[state=checked]:border-ocean-teal"
-                />
-                <label 
-                  htmlFor="imageFilter" 
-                  className="text-sm font-medium text-gray-700 cursor-pointer flex items-center space-x-1"
-                >
-                  <ImageIcon size={16} className="text-ocean-teal" />
-                  <span>Show only with pictures</span>
-                </label>
-              </div>
+
             </div>
           </div>
         </CardHeader>
@@ -545,11 +521,9 @@ export function QuestionsTab() {
                 <MessageCircle size={32} className="text-gray-400" />
               </div>
               <p className="text-gray-600">
-                {showOnlyWithImages 
-                  ? 'No questions with pictures found.' 
-                  : debouncedSearch 
-                    ? 'No questions found matching your search.' 
-                    : 'No questions available yet.'}
+                {debouncedSearch 
+                  ? 'No questions found matching your search.' 
+                  : 'No questions available yet.'}
               </p>
             </CardContent>
           </Card>
@@ -572,7 +546,7 @@ export function QuestionsTab() {
         {/* End of list */}
         {!hasNextPage && filteredQuestions.length > 0 && (
           <div className="text-center p-4 text-gray-600">
-            <p>You've reached the end of {showOnlyWithImages ? `${filteredQuestions.length} questions with pictures` : `${totalQuestions} questions`}</p>
+            <p>You've reached the end of {totalQuestions} questions</p>
           </div>
         )}
       </div>
