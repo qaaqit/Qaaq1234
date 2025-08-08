@@ -2252,22 +2252,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const limit = parseInt(req.query.limit as string) || 20;
       const search = req.query.search as string;
       
-      // Import shared Q&A service to get real questions from QAAQ database
+      // Import both shared DB and QAAQ Notion services to get all 1228 questions
       const { getAllQuestionsFromSharedDB, searchQuestionsInSharedDB } = await import('./shared-qa-service');
+      const { getAllQAAQQuestions } = await import('./qa-service');
       
       console.log(`Fetching real questions from QAAQ database - page ${page}, limit ${limit}, search: ${search || 'none'}`);
       
-      // Get questions from the shared QAAQ database (1228 questions total)
-      let allQuestions;
+      // Get questions from both sources to reach 1228 total
+      let sharedQuestions = [];
+      let qaaqQuestions = [];
+      
       if (search && search.trim() !== '') {
         console.log(`Searching for questions with term: "${search}"`);
-        allQuestions = await searchQuestionsInSharedDB(search);
+        sharedQuestions = await searchQuestionsInSharedDB(search);
+        // TODO: Add search capability to QAAQ Notion service
+        qaaqQuestions = await getAllQAAQQuestions();
+        qaaqQuestions = qaaqQuestions.filter(q => 
+          q.question?.toLowerCase().includes(search.toLowerCase()) ||
+          q.category?.toLowerCase().includes(search.toLowerCase()) ||
+          q.tags?.some(tag => tag.toLowerCase().includes(search.toLowerCase()))
+        );
       } else {
-        console.log('Fetching all questions from QAAQ database...');
-        allQuestions = await getAllQuestionsFromSharedDB();
+        console.log('Fetching all questions from both databases...');
+        sharedQuestions = await getAllQuestionsFromSharedDB();
+        qaaqQuestions = await getAllQAAQQuestions();
       }
       
-      console.log(`Retrieved ${allQuestions.length} questions from QAAQ database`);
+      // Combine both sources
+      let allQuestions = [...sharedQuestions];
+      
+      // Add QAAQ Notion questions, converting format if needed
+      qaaqQuestions.forEach((q, index) => {
+        allQuestions.push({
+          id: `qaaq_${index}`,
+          questionText: q.question || q.content || '',
+          userId: q.author_id || '',
+          userName: q.author_name || 'Maritime Professional',
+          questionCategory: q.category || 'General Discussion',
+          askedDate: new Date(q.created_at || Date.now()),
+          source: 'qaaq',
+          answerCount: q.answer_count || 0,
+          isResolved: q.is_resolved || false,
+          urgency: 'normal',
+          tags: q.tags || [],
+          location: q.location || '',
+          createdAt: new Date(q.created_at || Date.now()),
+          updatedAt: new Date(q.updated_at || q.created_at || Date.now())
+        });
+      });
+      
+      console.log(`Retrieved ${sharedQuestions.length} from shared DB + ${qaaqQuestions.length} from QAAQ Notion = ${allQuestions.length} total questions`);
       
       // Transform the questions to match the expected frontend format
       const transformedQuestions = allQuestions.map((q, index) => ({
