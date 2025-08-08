@@ -24,7 +24,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
-  const handleSendQBotMessage = async (messageText: string) => {
+  const handleSendQBotMessage = async (messageText: string, attachments?: string[]) => {
     const newMessage: Message = {
       id: Date.now().toString(),
       text: messageText,
@@ -37,13 +37,13 @@ export default function QBOTPage({ user }: QBOTPageProps) {
 
     try {
       // Call QBOT API for AI-powered response
-      const response = await fetch('/api/qbot/chat', {
+      const response = await fetch('/api/qbot/message', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify({ message: messageText })
+        body: JSON.stringify({ message: messageText, attachments: attachments || [] })
       });
 
       if (response.ok) {
@@ -105,7 +105,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
 
     try {
       // Park chat history in database before clearing
-      const response = await fetch('/api/qbot/clear-chat', {
+      const response = await fetch('/api/qbot/clear', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -22,6 +22,7 @@ import { populateRankGroupsWithUsers } from "./populate-rank-groups";
 import { bulkAssignUsersToRankGroups } from "./bulk-assign-users";
 import { setupMergeRoutes } from "./merge-interface";
 import { robustAuth } from "./auth-system";
+import { ObjectStorageService } from "./objectStorage";
 
 // Extend Express Request type
 declare global {
@@ -69,6 +70,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Setup merge routes for robust authentication
   setupMergeRoutes(app);
+  
+  // Object storage upload endpoint
+  app.post("/api/objects/upload", async (req, res) => {
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+      res.json({ uploadURL });
+    } catch (error) {
+      console.error('Error generating upload URL:', error);
+      res.status(500).json({ error: 'Failed to generate upload URL' });
+    }
+  });
   
   // Register new user
   app.post("/api/register", async (req, res) => {
@@ -487,7 +500,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // QBOT Chat API endpoint - Implementing 13 Commandments
   app.post("/api/qbot/message", authenticateToken, async (req: any, res) => {
     try {
-      const { message, image } = req.body;
+      const { message, attachments, image } = req.body;
       const userId = req.userId;
 
       if (!message || !message.trim()) {
@@ -496,6 +509,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`JWT decoded user ID: ${userId}`);
       console.log(`Set req.userId to: ${userId}`);
+      
+      // Log attachments if present
+      if (attachments && attachments.length > 0) {
+        console.log(`📎 Message includes ${attachments.length} attachment(s)`);
+      }
 
       // Load current QBOT rules from database
       let activeRules = null;
