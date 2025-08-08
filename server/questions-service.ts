@@ -41,11 +41,14 @@ export async function getQuestions(page: number = 1, limit: number = 20): Promis
   total: number;
   hasMore: boolean;
 }> {
+  let client;
   try {
-    const client = await pool.connect();
-    const offset = (page - 1) * limit;
+    console.log(`🔍 Questions Service: Starting connection to database...`);
+    client = await pool.connect();
+    console.log(`✅ Questions Service: Connected successfully`);
     
-    console.log(`Fetching questions page ${page} with limit ${limit}...`);
+    const offset = (page - 1) * limit;
+    console.log(`🔍 Questions Service: Fetching questions page ${page} with limit ${limit}, offset ${offset}...`);
     
     // Get questions with author information
     const questionsResult = await client.query(`
@@ -106,7 +109,9 @@ export async function getQuestions(page: number = 1, limit: number = 20): Promis
     
     console.log(`Retrieved ${questions.length} questions, total: ${total}, hasMore: ${hasMore}`);
     
-    client.release();
+    if (client) {
+      client.release();
+    }
     
     return {
       questions,
@@ -115,8 +120,11 @@ export async function getQuestions(page: number = 1, limit: number = 20): Promis
     };
     
   } catch (error) {
-    console.error('Error fetching questions:', error);
-    throw new Error('Failed to fetch questions');
+    console.error('❌ Questions Service Error:', error);
+    if (client) {
+      client.release();
+    }
+    throw new Error(`Failed to fetch questions: ${error.message}`);
   }
 }
 
