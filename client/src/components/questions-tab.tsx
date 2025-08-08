@@ -344,7 +344,9 @@ export function QuestionsTab() {
             {/* Author Attribution with Share */}
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center space-x-2 text-sm text-gray-600">
-                <span>- {question.author_whatsapp_display_name || question.author_name}</span>
+                <span>
+                  - {question.author_whatsapp_display_name || question.author_name} ({format(new Date(question.created_at), 'dMMMyyy').replace(/(\d{4})/, (match) => match.slice(-2))})
+                </span>
                 {question.author_rank && (
                   <Badge variant="outline" className="text-xs">
                     {formatRank(question.author_rank)}
@@ -446,7 +448,7 @@ export function QuestionsTab() {
             )}
 
             {/* Footer Stats and Actions */}
-            <div className="flex items-center justify-between text-sm text-gray-700 mb-3 font-medium">
+            <div className="flex items-center justify-start text-sm text-gray-700 mb-3 font-medium">
               <div className="flex items-center space-x-4">
                 <span className="flex items-center space-x-1">
                   <MessageCircle size={16} className="text-orange-600" />
@@ -458,10 +460,6 @@ export function QuestionsTab() {
                   </Badge>
                 )}
               </div>
-              <span className="flex items-center space-x-1">
-                <Calendar size={16} className="text-orange-600" />
-                <span>{format(new Date(question.created_at), 'MMM d, yyyy')}</span>
-              </span>
             </div>
 
 
