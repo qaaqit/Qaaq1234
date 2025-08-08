@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useEffect, useState } from "react";
 
-import Home from "@/pages/home";
+import Home from "@/pages/home-old";
 import Register from "@/pages/register";
 import Verify from "@/pages/verify";
 import Discover from "@/pages/discover";
@@ -89,7 +89,7 @@ function Router() {
           <Route path="/auth-test" component={AuthTestPage} />
           <Route path="/set-password" component={SetPasswordPage} />
           <Route path="/password-demo" component={PasswordDemoPage} />
-          <Route path="/home" component={() => <Home onSuccess={setUser} />} />
+          <Route path="/home-old" component={() => <Home onSuccess={setUser} />} />
 
           <Route component={NotFound} />
         </Switch>
