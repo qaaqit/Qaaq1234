@@ -62,7 +62,7 @@ export default function Home({ onSuccess }: HomeProps) {
         setStoredToken(robustResult.token);
         setStoredUser(robustResult.user);
         if (onSuccess) onSuccess(robustResult.user);
-        setLocation("/discover");
+        setLocation("/");
         toast({
           title: "Welcome back!",
           description: "You're all set to explore",
@@ -78,7 +78,7 @@ export default function Home({ onSuccess }: HomeProps) {
         setStoredUser(result.user);
         if (onSuccess) onSuccess(result.user);
       }
-      setLocation("/discover");
+      setLocation("/");
       toast({
         title: "Welcome back!",
         description: "You're all set to explore",
@@ -248,7 +248,7 @@ export default function Home({ onSuccess }: HomeProps) {
             onSuccess={(user) => {
               setShowSignUp(false);
               if (onSuccess) onSuccess(user);
-              setLocation("/discover");
+              setLocation("/");
               toast({
                 title: "Welcome to QaaqConnect!",
                 description: "Your account has been created successfully",
