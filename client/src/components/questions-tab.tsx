@@ -317,7 +317,7 @@ export function QuestionsTab() {
         key={question.id}
         ref={index === allQuestions.length - 1 ? lastQuestionCallback : null}
       >
-        <Card className="border-2 border-gray-200 hover:border-ocean-teal/40 transition-colors">
+        <Card className="border-2 border-gray-200 hover:border-ocean-teal/40 transition-colors cursor-pointer" onClick={() => window.location.href = `/questions/${question.id}`}>
           <CardContent className="p-4">
             {/* Question Content */}
             <div className="flex items-start justify-between mb-3">
@@ -473,19 +473,8 @@ export function QuestionsTab() {
               </span>
             </div>
 
-            {/* View Full Question Link and Share */}
-            <div className="pt-3 border-t border-orange-200 flex items-center justify-between">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  window.location.href = `/questions/${question.id}`;
-                }}
-                className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 font-medium"
-              >
-                View Full Question & All Answers
-              </Button>
+            {/* Share Button */}
+            <div className="pt-3 border-t border-orange-200 flex justify-end">
               <Button
                 variant="ghost"
                 size="sm"
