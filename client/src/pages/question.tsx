@@ -284,7 +284,7 @@ export default function QuestionPage() {
                       <div className="flex items-center justify-between mb-2">
                         <div>
                           <h4 className="font-medium text-gray-900">
-                            {answer.author_name === 'QG' || answer.author_name === 'QAAQ GPT' ? 'Assistant' : answer.author_name}
+                            {answer.author_name === 'QG' || answer.author_name === 'QAAQ GPT' ? 'Ans:' : answer.author_name}
                           </h4>
                           <p className="text-sm text-gray-600">
                             {formatRank(answer.author_rank)} • {formatDate(answer.created_at)}

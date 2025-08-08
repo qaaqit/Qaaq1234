@@ -433,7 +433,7 @@ export function QuestionsTab() {
                       <h6 className="font-semibold text-orange-900 text-sm">
                         {(() => {
                           const authorName = botAnswer.author_whatsapp_display_name || botAnswer.author_name;
-                          return authorName === 'QG' || authorName === 'QAAQ GPT' ? 'Assistant' : authorName;
+                          return authorName === 'QG' || authorName === 'QAAQ GPT' ? 'Ans:' : authorName;
                         })()}
                       </h6>
                     </div>
