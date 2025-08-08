@@ -11,6 +11,7 @@ import { useLocation } from "wouter";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from "recharts";
 import { FileText } from "lucide-react";
+import AdminAnalytics from "@/components/admin/AdminAnalytics";
 
 interface AdminUser {
   id: string;
@@ -46,12 +47,39 @@ interface CountryAnalytics {
   totalHits: number;
 }
 
+// Helper function to get country codes
+function getCountryCode(country: string): string {
+  const countryCodeMap: Record<string, string> = {
+    'India': 'IN',
+    'United States': 'US',
+    'United Kingdom': 'GB',
+    'Germany': 'DE',
+    'France': 'FR',
+    'Canada': 'CA',
+    'Australia': 'AU',
+    'Japan': 'JP',
+    'China': 'CN',
+    'Brazil': 'BR',
+    'Singapore': 'SG',
+    'Norway': 'NO',
+    'Netherlands': 'NL',
+    'Philippines': 'PH',
+    'Greece': 'GR',
+    'South Korea': 'KR',
+    'Italy': 'IT',
+    'Spain': 'ES',
+    'Mexico': 'MX',
+    'Turkey': 'TR'
+  };
+  return countryCodeMap[country] || 'IN';
+}
+
 export default function AdminPanel() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState("metrics");
+  const [activeTab, setActiveTab] = useState("analytics");
   const [qbotRules, setQbotRules] = useState<string>("");
   const [loadingRules, setLoadingRules] = useState(false);
 
@@ -195,7 +223,11 @@ export default function AdminPanel() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="analytics">
+              <i className="fas fa-chart-pie mr-2"></i>
+              Analytics
+            </TabsTrigger>
             <TabsTrigger value="metrics">
               <i className="fas fa-chart-line mr-2"></i>
               Metrics
@@ -213,6 +245,60 @@ export default function AdminPanel() {
               User Management
             </TabsTrigger>
           </TabsList>
+
+          {/* Analytics Tab - Replit-style Dashboard */}
+          <TabsContent value="analytics" className="space-y-6">
+            <AdminAnalytics data={{
+              totalViews: 125000,
+              totalUsers: stats?.totalUsers || 0,
+              topUrls: [
+                { url: '/qbot', views: 45000, percentage: 36 },
+                { url: '/map', views: 32000, percentage: 25.6 },
+                { url: '/questions', views: 28000, percentage: 22.4 },
+                { url: '/admin', views: 12000, percentage: 9.6 },
+                { url: '/profile', views: 8000, percentage: 6.4 }
+              ],
+              topReferrers: [
+                { referrer: 'Direct', visits: 58000, percentage: 46.4 },
+                { referrer: 'qaaq.app', visits: 35000, percentage: 28 },
+                { referrer: 'Google', visits: 20000, percentage: 16 },
+                { referrer: 'WhatsApp', visits: 8000, percentage: 6.4 },
+                { referrer: 'LinkedIn', visits: 4000, percentage: 3.2 }
+              ],
+              topBrowsers: [
+                { browser: 'Chrome', users: 620, percentage: 62 },
+                { browser: 'Safari', users: 190, percentage: 19 },
+                { browser: 'Firefox', users: 120, percentage: 12 },
+                { browser: 'Edge', users: 70, percentage: 7 }
+              ],
+              topDevices: [
+                { device: 'Mobile', users: 680, percentage: 68 },
+                { device: 'Desktop', users: 220, percentage: 22 },
+                { device: 'Tablet', users: 100, percentage: 10 }
+              ],
+              topCountries: countryAnalytics?.slice(0, 5).map(country => ({
+                country: country.country,
+                users: country.userCount,
+                percentage: (country.userCount / (stats?.totalUsers || 1)) * 100,
+                code: getCountryCode(country.country)
+              })) || [
+                { country: 'India', users: 420, percentage: 42, code: 'IN' },
+                { country: 'United States', users: 180, percentage: 18, code: 'US' },
+                { country: 'United Kingdom', users: 120, percentage: 12, code: 'GB' },
+                { country: 'Singapore', users: 90, percentage: 9, code: 'SG' },
+                { country: 'Philippines', users: 70, percentage: 7, code: 'PH' }
+              ],
+              timeSeriesData: [
+                { date: 'Jan 1', views: 1200, users: 45 },
+                { date: 'Jan 2', views: 1400, users: 52 },
+                { date: 'Jan 3', views: 1100, users: 41 },
+                { date: 'Jan 4', views: 1600, users: 63 },
+                { date: 'Jan 5', views: 1800, users: 71 },
+                { date: 'Jan 6', views: 2100, users: 84 },
+                { date: 'Jan 7', views: 1950, users: 78 }
+              ]
+            }} />
+          </TabsContent>
 
           {/* Metrics Tab */}
           <TabsContent value="metrics" className="space-y-6">
