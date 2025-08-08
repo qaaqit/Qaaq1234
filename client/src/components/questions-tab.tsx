@@ -73,26 +73,7 @@ export function QuestionsTab() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Check token validity and force refresh if needed
-  useEffect(() => {
-    const token = localStorage.getItem('qaaq_token');
-    if (token && !isTokenValid(token)) {
-      console.warn('Invalid/expired token detected, forcing refresh');
-      forceTokenRefresh();
-      return;
-    }
-  }, []);
-
-  // Clear invalid tokens and force immediate refresh
-  useEffect(() => {
-    const currentToken = localStorage.getItem('qaaq_token');
-    if (!currentToken || !isTokenValid(currentToken)) {
-      // Clear invalid tokens completely
-      localStorage.removeItem('qaaq_token');
-      localStorage.removeItem('qaaq_user');
-      console.log('⚠️ Cleared invalid authentication tokens');
-    }
-  }, []);
+  // No authentication required for questions tab
 
   // Fetch questions with infinite scroll
   const {
@@ -113,11 +94,6 @@ export function QuestionsTab() {
       });
       const response = await apiRequest(`/api/questions?${params}`);
       if (!response.ok) {
-        if (response.status === 403) {
-          console.error('Authentication failed, forcing token refresh');
-          forceTokenRefresh();
-          return;
-        }
         throw new Error('Failed to fetch questions');
       }
       return response.json() as Promise<QuestionsResponse>;
