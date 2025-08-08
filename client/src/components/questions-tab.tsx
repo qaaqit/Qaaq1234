@@ -341,15 +341,29 @@ export function QuestionsTab() {
               </p>
             </div>
 
-            {/* Author Attribution */}
-            <p className="text-sm text-gray-600 mb-3 flex items-center space-x-2">
-              <span>- {question.author_whatsapp_display_name || question.author_name}</span>
-              {question.author_rank && (
-                <Badge variant="outline" className="text-xs">
-                  {formatRank(question.author_rank)}
-                </Badge>
-              )}
-            </p>
+            {/* Author Attribution with Share */}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center space-x-2 text-sm text-gray-600">
+                <span>- {question.author_whatsapp_display_name || question.author_name}</span>
+                {question.author_rank && (
+                  <Badge variant="outline" className="text-xs">
+                    {formatRank(question.author_rank)}
+                  </Badge>
+                )}
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleShare(question);
+                }}
+                className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 p-2"
+                title="Share this question"
+              >
+                <Share2 size={16} />
+              </Button>
+            </div>
 
             {/* Question Images */}
             {question.image_urls && question.image_urls.length > 0 && (
@@ -454,21 +468,7 @@ export function QuestionsTab() {
               </span>
             </div>
 
-            {/* Share Button */}
-            <div className="pt-3 border-t border-orange-200 flex justify-end">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleShare(question);
-                }}
-                className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 p-2"
-                title="Share this question"
-              >
-                <Share2 size={16} />
-              </Button>
-            </div>
+
           </CardContent>
         </Card>
       </div>
