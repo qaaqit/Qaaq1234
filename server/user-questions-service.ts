@@ -58,7 +58,7 @@ export async function getQuestionsByUserId(userId: string): Promise<{
           WHEN q.is_from_whatsapp THEN 'WhatsApp Q&A'
           ELSE 'General Discussion'
         END as category_name,
-        (SELECT COUNT(*) FROM qaaq_answers a WHERE a.question_id = q.id) as answer_count
+        (SELECT COUNT(*) FROM answers a WHERE a.question_id = q.id) as answer_count
       FROM questions q
       LEFT JOIN users u ON u.id = q.author_id
       WHERE q.author_id = $1 AND q.is_archived = false AND q.is_hidden = false

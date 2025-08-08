@@ -3,14 +3,12 @@ import { apiRequest } from "./queryClient";
 export interface User {
   id: string;
   fullName: string;
-  email?: string;
-  userType?: 'sailor' | 'local';
+  email: string;
+  userType: 'sailor' | 'local';
   isAdmin?: boolean;
   nickname?: string;
-  isVerified?: boolean;
-  loginCount?: number;
-  profilePictureUrl?: string;
-  company?: string;
+  isVerified: boolean;
+  loginCount: number;
 }
 
 export interface AuthResponse {
@@ -53,25 +51,6 @@ export const getStoredToken = (): string | null => {
 
 export const setStoredToken = (token: string): void => {
   localStorage.setItem('qaaq_token', token);
-};
-
-export const getCurrentUser = (): User | null => {
-  const userStr = localStorage.getItem('qaaq_user');
-  if (!userStr) return null;
-  
-  try {
-    const user = JSON.parse(userStr);
-    // Ensure email is provided with fallback
-    return {
-      ...user,
-      email: user.email || user.id,
-      fullName: user.fullName || user.id,
-      isVerified: user.isVerified ?? true,
-      loginCount: user.loginCount ?? 0
-    };
-  } catch {
-    return null;
-  }
 };
 
 export const removeStoredToken = (): void => {

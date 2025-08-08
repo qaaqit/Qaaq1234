@@ -10,8 +10,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { MessageCircle, Search, Calendar, Eye, CheckCircle, Clock, Hash, ChevronDown, ChevronUp, Image as ImageIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { apiRequest } from '@/lib/queryClient';
-import { isTokenValid, forceTokenRefresh } from '@/utils/auth';
-import { AuthFix } from './auth-fix';
 
 interface Question {
   id: number;
@@ -73,27 +71,6 @@ export function QuestionsTab() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Check token validity and force refresh if needed
-  useEffect(() => {
-    const token = localStorage.getItem('qaaq_token');
-    if (token && !isTokenValid(token)) {
-      console.warn('Invalid/expired token detected, forcing refresh');
-      forceTokenRefresh();
-      return;
-    }
-  }, []);
-
-  // Clear invalid tokens and force immediate refresh
-  useEffect(() => {
-    const currentToken = localStorage.getItem('qaaq_token');
-    if (!currentToken || !isTokenValid(currentToken)) {
-      // Clear invalid tokens completely
-      localStorage.removeItem('qaaq_token');
-      localStorage.removeItem('qaaq_user');
-      console.log('⚠️ Cleared invalid authentication tokens');
-    }
-  }, []);
-
   // Fetch questions with infinite scroll
   const {
     data,
@@ -103,21 +80,15 @@ export function QuestionsTab() {
     status,
     error
   } = useInfiniteQuery({
-    queryKey: ['/api/questions', debouncedSearch, showOnlyWithImages],
+    queryKey: ['/api/questions', debouncedSearch],
     queryFn: async ({ pageParam = 1 }) => {
       const params = new URLSearchParams({
         page: pageParam.toString(),
         limit: '20',
-        ...(debouncedSearch && { search: debouncedSearch }),
-        ...(showOnlyWithImages && { withImages: 'true' })
+        ...(debouncedSearch && { search: debouncedSearch })
       });
       const response = await apiRequest(`/api/questions?${params}`);
       if (!response.ok) {
-        if (response.status === 403) {
-          console.error('Authentication failed, forcing token refresh');
-          forceTokenRefresh();
-          return;
-        }
         throw new Error('Failed to fetch questions');
       }
       return response.json() as Promise<QuestionsResponse>;
@@ -187,29 +158,10 @@ export function QuestionsTab() {
   const allQuestions = data?.pages.flatMap(page => page.questions) || [];
   const totalQuestions = data?.pages[0]?.total || 0;
   
-  // Since filtering is now done server-side, we don't need client-side filtering
-  const filteredQuestions = allQuestions;
-  
-  // Check if auth tokens are working
-  const [needsAuthFix, setNeedsAuthFix] = useState(false);
-  
-  useEffect(() => {
-    if (error && error.message.includes('403')) {
-      console.log('🚨 403 Authentication error detected, showing auth fix');
-      setNeedsAuthFix(true);
-    }
-  }, [error]);
-  
-  // Log questions with images for debugging
-  useEffect(() => {
-    if (allQuestions.length > 0) {
-      const questionsWithImages = allQuestions.filter(q => q.image_urls && q.image_urls.length > 0);
-      console.log(`Found ${questionsWithImages.length} questions with images out of ${allQuestions.length} total questions`);
-      if (showOnlyWithImages) {
-        console.log('Image filter is active - showing only questions with images');
-      }
-    }
-  }, [allQuestions, showOnlyWithImages]);
+  // Filter questions based on image filter
+  const filteredQuestions = showOnlyWithImages 
+    ? allQuestions.filter(q => q.image_urls && q.image_urls.length > 0)
+    : allQuestions;
 
   // Answer Card Component
   const AnswerCard = ({ answer }: { answer: Answer }) => (
