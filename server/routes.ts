@@ -34,44 +34,21 @@ declare global {
 
 const JWT_SECRET = process.env.JWT_SECRET || 'qaaq_jwt_secret_key_2024_secure';
 
-// Middleware to authenticate JWT token
+// Disabled authentication middleware - all routes open
 const authenticateToken = async (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token) {
-    return res.status(401).json({ message: 'Access token required' });
-  }
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
-    console.log('JWT decoded user ID:', decoded.userId);
-    req.user = { id: decoded.userId, userId: decoded.userId };
-    req.userId = decoded.userId; // Ensure req.userId is set for backward compatibility
-    console.log('Set req.userId to:', req.userId);
-    next();
-  } catch (error: unknown) {
-    console.error('JWT verification failed:', error);
-    res.status(403).json({ message: 'Invalid token' });
-  }
+  // Set a mock user for all requests
+  req.user = { id: 'demo-user', userId: 'demo-user' };
+  req.userId = 'demo-user';
+  console.log('Authentication disabled - using mock user');
+  next();
 };
 
-// Optional authentication middleware (doesn't require token)
+// Disabled optional authentication - all routes open
 const optionalAuth = async (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (token) {
-    try {
-      const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
-      req.user = { id: decoded.userId, userId: decoded.userId };
-      req.userId = decoded.userId;
-    } catch (error) {
-      // Invalid token, but continue without authentication
-      console.log('Invalid token provided, continuing without auth');
-    }
-  }
-  
+  // Set a mock user for all requests
+  req.user = { id: 'demo-user', userId: 'demo-user' };
+  req.userId = 'demo-user';
+  console.log('Optional authentication disabled - using mock user');
   next();
 };
 

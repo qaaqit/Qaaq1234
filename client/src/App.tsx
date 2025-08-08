@@ -60,39 +60,53 @@ function Router() {
     );
   }
 
+  // Create a mock user for all pages
+  const mockUser: User = {
+    id: "demo-user",
+    fullName: "Demo Maritime User",
+    email: "demo@qaaq.app",
+    userType: 'sailor',
+    isAdmin: true,
+    nickname: "Demo User",
+    isVerified: true,
+    loginCount: 1
+  };
+
+  const currentUser = user || mockUser;
+
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className={user ? "pb-16" : ""}>
+      <div className="pb-16">
         <Switch>
-          <Route path="/" component={() => user ? <QBOTPage user={user} /> : <Home onSuccess={setUser} />} />
+          <Route path="/" component={() => <QBOTPage user={currentUser} />} />
           <Route path="/register" component={() => <Register onSuccess={setUser} />} />
           <Route path="/verify" component={() => <Verify onSuccess={setUser} />} />
-          <Route path="/discover" component={() => user ? <Discover user={user} /> : <Home />} />
-          <Route path="/qbot" component={() => user ? <QBOTPage user={user} /> : <Home />} />
-          <Route path="/post" component={() => user ? <Post user={user} /> : <Home />} />
-          <Route path="/chat" component={() => user ? <ChatPage /> : <Home />} />
-          <Route path="/chat/:userId" component={() => user ? <DMPage /> : <Home />} />
-          <Route path="/dm" component={() => user ? <DMPage /> : <Home />} />
-          <Route path="/qhf" component={() => user ? <DMPage /> : <Home />} />
-          <Route path="/user/:userId" component={() => user ? <UserProfile /> : <Home />} />
-          <Route path="/user-profile/:userId" component={() => user ? <UserProfile /> : <Home />} />
-          <Route path="/profile" component={() => user ? <Profile /> : <Home />} />
-          <Route path="/my-questions" component={() => user ? <MyQuestions /> : <Home />} />
-          <Route path="/share/question/:id" component={() => user ? <QuestionPage /> : <Home />} />
-          <Route path="/qbot" component={() => user ? <QBOTPage user={user} /> : <Home />} />
-          <Route path="/rank-groups" component={() => user ? <RankGroupsPage /> : <Home />} />
-          <Route path="/admin" component={() => user ? <Admin /> : <Home />} />
-          <Route path="/admin/bot-rules" component={() => user ? <BotRulesAdmin /> : <Home />} />
+          <Route path="/discover" component={() => <Discover user={currentUser} />} />
+          <Route path="/qbot" component={() => <QBOTPage user={currentUser} />} />
+          <Route path="/post" component={() => <Post user={currentUser} />} />
+          <Route path="/chat" component={() => <ChatPage />} />
+          <Route path="/chat/:userId" component={() => <DMPage />} />
+          <Route path="/dm" component={() => <DMPage />} />
+          <Route path="/qhf" component={() => <DMPage />} />
+          <Route path="/user/:userId" component={() => <UserProfile />} />
+          <Route path="/user-profile/:userId" component={() => <UserProfile />} />
+          <Route path="/profile" component={() => <Profile />} />
+          <Route path="/my-questions" component={() => <MyQuestions />} />
+          <Route path="/share/question/:id" component={() => <QuestionPage />} />
+          <Route path="/rank-groups" component={() => <RankGroupsPage />} />
+          <Route path="/admin" component={() => <Admin />} />
+          <Route path="/admin/bot-rules" component={() => <BotRulesAdmin />} />
           <Route path="/merge-accounts/:sessionId" component={MergeAccountsPage} />
           <Route path="/auth-test" component={AuthTestPage} />
           <Route path="/set-password" component={SetPasswordPage} />
           <Route path="/password-demo" component={PasswordDemoPage} />
+          <Route path="/home" component={() => <Home onSuccess={setUser} />} />
 
           <Route component={NotFound} />
         </Switch>
       </div>
       
-      {user && <BottomNav user={user} onLogout={handleLogout} />}
+      <BottomNav user={currentUser} onLogout={handleLogout} />
     </div>
   );
 }
