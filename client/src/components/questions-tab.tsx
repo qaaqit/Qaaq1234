@@ -11,6 +11,7 @@ import { MessageCircle, Search, Calendar, Eye, CheckCircle, Clock, Hash, Chevron
 import { format } from 'date-fns';
 import { apiRequest } from '@/lib/queryClient';
 import { isTokenValid, forceTokenRefresh } from '@/utils/auth';
+import { AuthFix } from './auth-fix';
 
 interface Question {
   id: number;
@@ -82,16 +83,14 @@ export function QuestionsTab() {
     }
   }, []);
 
-  // Set fresh token for development/testing
+  // Clear invalid tokens and force immediate refresh
   useEffect(() => {
     const currentToken = localStorage.getItem('qaaq_token');
     if (!currentToken || !isTokenValid(currentToken)) {
-      // Set fresh token for development
-      const freshToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI0NDg4NTY4MyIsImlhdCI6MTc1NDY1NTAwNywiZXhwIjoxNzU1MjU5ODA3fQ.Gpn3zdOcgmJW0pho3nOC8CWVdKDjfmXHU_ct2nNPYEo';
-      localStorage.setItem('qaaq_token', freshToken);
-      localStorage.setItem('qaaq_user', JSON.stringify({id: '44885683', email: '+91 9820011223'}));
-      console.log('✓ Fresh authentication token set for development');
-      window.location.reload(); // Reload to apply new token
+      // Clear invalid tokens completely
+      localStorage.removeItem('qaaq_token');
+      localStorage.removeItem('qaaq_user');
+      console.log('⚠️ Cleared invalid authentication tokens');
     }
   }, []);
 
@@ -190,6 +189,16 @@ export function QuestionsTab() {
   
   // Since filtering is now done server-side, we don't need client-side filtering
   const filteredQuestions = allQuestions;
+  
+  // Check if auth tokens are working
+  const [needsAuthFix, setNeedsAuthFix] = useState(false);
+  
+  useEffect(() => {
+    if (error && error.message.includes('403')) {
+      console.log('🚨 403 Authentication error detected, showing auth fix');
+      setNeedsAuthFix(true);
+    }
+  }, [error]);
   
   // Log questions with images for debugging
   useEffect(() => {
