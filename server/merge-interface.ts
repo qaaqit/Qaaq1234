@@ -131,6 +131,59 @@ export function setupMergeRoutes(app: express.Application) {
       res.status(500).json({ success: false, message: 'Failed to set password' });
     }
   });
+
+  /**
+   * Request password reset via WhatsApp
+   */
+  app.post('/api/auth/forgot-password', async (req, res) => {
+    try {
+      const { userId } = req.body;
+      
+      if (!userId) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'User ID is required' 
+        });
+      }
+
+      // Check if user exists in database
+      const user = await robustAuth.findUserById(userId);
+      if (!user) {
+        return res.status(404).json({ 
+          success: false, 
+          message: 'User not found' 
+        });
+      }
+
+      const result = await robustAuth.requestPasswordReset(userId);
+      res.json(result);
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      res.status(500).json({ success: false, message: 'Failed to process password reset request' });
+    }
+  });
+
+  /**
+   * Reset password with verification code
+   */
+  app.post('/api/auth/reset-password', async (req, res) => {
+    try {
+      const { userId, resetCode, newPassword } = req.body;
+      
+      if (!userId || !resetCode || !newPassword) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'User ID, reset code, and new password are required' 
+        });
+      }
+      
+      const result = await robustAuth.resetPasswordWithCode(userId, resetCode, newPassword);
+      res.json(result);
+    } catch (error) {
+      console.error('Reset password error:', error);
+      res.status(500).json({ success: false, message: 'Failed to reset password' });
+    }
+  });
   
   /**
    * Get merge session details

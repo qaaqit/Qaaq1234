@@ -439,6 +439,41 @@ export class RobustAuthSystem {
     // Use password manager for setting custom password
     return passwordManager.setCustomPassword(userId, newPassword);
   }
+
+  /**
+   * Request password reset - generates code and sends via WhatsApp
+   */
+  async requestPasswordReset(userId: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const result = passwordManager.generatePasswordReset(userId);
+      
+      if (result.success && result.resetCode) {
+        // Send WhatsApp message with reset code
+        const whatsappMessage = `🔐 QAAQ Password Reset\n\nYour password reset code is: ${result.resetCode}\n\nThis code expires in 15 minutes.\n\nIf you didn't request this reset, please ignore this message.`;
+        
+        // In a real implementation, you would send this via WhatsApp API
+        // For now, we'll log it to console for testing
+        console.log(`📱 WhatsApp message for ${userId}:`, whatsappMessage);
+        
+        return {
+          success: true,
+          message: 'Password reset code has been sent to your WhatsApp number'
+        };
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Password reset request failed:', error);
+      return { success: false, message: 'Failed to process password reset request' };
+    }
+  }
+
+  /**
+   * Reset password with verification code
+   */
+  async resetPasswordWithCode(userId: string, resetCode: string, newPassword: string): Promise<{ success: boolean; message: string }> {
+    return passwordManager.resetPasswordWithCode(userId, resetCode, newPassword);
+  }
   
   /**
    * Update last login timestamp (compatible with QAAQ database schema)

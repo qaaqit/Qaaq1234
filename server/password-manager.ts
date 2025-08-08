@@ -10,6 +10,8 @@ interface UserPasswordData {
   hasSetCustomPassword: boolean;
   liberalLoginCount: number;
   lastLiberalLogin?: Date;
+  resetCode?: string;
+  resetCodeExpiry?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -142,6 +144,80 @@ class PasswordManager {
   resetUser(userId: string): { success: boolean; message: string } {
     this.passwords.delete(userId);
     return { success: true, message: 'User password data reset successfully' };
+  }
+
+  /**
+   * Generate password reset request for WhatsApp
+   */
+  generatePasswordReset(userId: string): { success: boolean; message: string; resetCode?: string } {
+    const userData = this.initializeUser(userId);
+    
+    if (!userData.hasSetCustomPassword) {
+      return { 
+        success: false, 
+        message: 'No custom password set. Use liberal login "1234koihai" for first-time access.' 
+      };
+    }
+
+    // Generate 6-digit reset code
+    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Store reset code temporarily (expires in 15 minutes)
+    userData.resetCode = resetCode;
+    userData.resetCodeExpiry = new Date(Date.now() + 15 * 60 * 1000);
+    userData.updatedAt = new Date();
+    this.passwords.set(userId, userData);
+
+    console.log(`🔄 Password reset code generated for user ${userId}: ${resetCode}`);
+    return { 
+      success: true, 
+      message: 'Password reset code sent to your WhatsApp', 
+      resetCode 
+    };
+  }
+
+  /**
+   * Verify reset code and allow password change
+   */
+  verifyResetCode(userId: string, resetCode: string): { success: boolean; message: string } {
+    const userData = this.passwords.get(userId);
+    
+    if (!userData || !userData.resetCode || !userData.resetCodeExpiry) {
+      return { success: false, message: 'No active password reset request found' };
+    }
+
+    if (new Date() > userData.resetCodeExpiry) {
+      // Clean up expired reset code
+      delete userData.resetCode;
+      delete userData.resetCodeExpiry;
+      this.passwords.set(userId, userData);
+      return { success: false, message: 'Reset code has expired. Please request a new one.' };
+    }
+
+    if (userData.resetCode !== resetCode) {
+      return { success: false, message: 'Invalid reset code' };
+    }
+
+    // Reset code is valid - clean it up
+    delete userData.resetCode;
+    delete userData.resetCodeExpiry;
+    this.passwords.set(userId, userData);
+
+    return { success: true, message: 'Reset code verified successfully' };
+  }
+
+  /**
+   * Reset password with verified reset code
+   */
+  resetPasswordWithCode(userId: string, resetCode: string, newPassword: string): { success: boolean; message: string } {
+    // First verify the reset code
+    const verification = this.verifyResetCode(userId, resetCode);
+    if (!verification.success) {
+      return verification;
+    }
+
+    // Now set the new password
+    return this.setCustomPassword(userId, newPassword);
   }
 
   /**

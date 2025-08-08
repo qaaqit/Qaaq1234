@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { authApi, setStoredToken, setStoredUser, type User } from "@/lib/auth";
 import UsersMapDual from "@/components/users-map-dual";
+import ForgotPasswordModal from "@/components/forgot-password-modal";
 
 interface HomeProps {
   onSuccess?: (user: User) => void;
@@ -16,6 +17,7 @@ export default function Home({ onSuccess }: HomeProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [formData, setFormData] = useState({
     userId: "",
     password: "",
@@ -196,12 +198,37 @@ export default function Home({ onSuccess }: HomeProps) {
                     </>
                   )}
                 </Button>
+
+                {/* Forgot Password Link */}
+                <div className="text-center mt-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotPassword(true)}
+                    className="text-sm text-ocean-teal hover:text-cyan-600 underline transition-colors"
+                  >
+                    Forgot your password?
+                  </button>
+                </div>
               </form>
               
               
             </>
           )}
         </div>
+
+        {/* Forgot Password Modal */}
+        {showForgotPassword && (
+          <ForgotPasswordModal 
+            onClose={() => setShowForgotPassword(false)}
+            onSuccess={() => {
+              setShowForgotPassword(false);
+              toast({
+                title: "Reset code sent",
+                description: "Check your WhatsApp for the password reset code",
+              });
+            }}
+          />
+        )}
       </div>
     </div>
   );
