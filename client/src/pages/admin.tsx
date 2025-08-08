@@ -36,6 +36,7 @@ interface AdminStats {
   verifiedUsers: number;
   activeUsers: number;
   totalLogins: number;
+  totalQuestions: number;
 }
 
 interface CountryAnalytics {
@@ -264,10 +265,10 @@ export default function AdminPanel() {
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Total Logins</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">Total Questions</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-orange-600">{stats?.totalLogins || 0}</div>
+              <div className="text-2xl font-bold text-orange-600">{stats?.totalQuestions || 0}</div>
             </CardContent>
           </Card>
             </div>

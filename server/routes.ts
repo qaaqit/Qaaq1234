@@ -822,7 +822,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin Routes
   app.get('/api/admin/stats', authenticateToken, isAdmin, async (req: any, res) => {
     try {
-      const result = await pool.query(`
+      const userResult = await pool.query(`
         SELECT 
           COUNT(*) as total_users,
           COUNT(CASE WHEN ship_name IS NOT NULL THEN 1 END) as sailors,
@@ -833,14 +833,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         FROM users
       `);
 
-      const stats = result.rows[0];
+      // Get authentic QAAQ question count from Notion databases
+      const { getAllQAAQQuestions } = await import('./qa-service');
+      const qaaqQuestions = await getAllQAAQQuestions();
+      
+      const stats = userResult.rows[0];
       res.json({
         totalUsers: parseInt(stats.total_users),
         sailors: parseInt(stats.sailors),
         locals: parseInt(stats.locals),
         verifiedUsers: parseInt(stats.verified_users),
         activeUsers: parseInt(stats.active_users),
-        totalLogins: parseInt(stats.total_logins) || 0
+        totalLogins: parseInt(stats.total_logins) || 0,
+        totalQuestions: qaaqQuestions.length // Add authentic QAAQ question count
       });
     } catch (error) {
       console.error("Error fetching admin stats:", error);
