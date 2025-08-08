@@ -167,7 +167,7 @@ export async function getAllQuestionsFromSharedDB(): Promise<SharedQuestion[]> {
 export async function searchQuestionsInSharedDB(keyword: string): Promise<SharedQuestion[]> {
   const lowerKeyword = keyword.toLowerCase().trim();
   
-  // Enhanced search query with scoring for relevance
+  // Enhanced search query with scoring for relevance - using correct column names
   const query = `
     WITH scored_questions AS (
       SELECT *,
@@ -177,32 +177,31 @@ export async function searchQuestionsInSharedDB(keyword: string): Promise<Shared
           WHEN LOWER(content) LIKE LOWER($2) THEN 900  -- Starts with keyword
           WHEN LOWER(content) LIKE LOWER($3) THEN 800  -- Ends with keyword
           
-          -- Exact word matches (high priority)
+          -- Exact word matches in content (high priority)
           WHEN LOWER(content) ~ ('\\m' || LOWER($1) || '\\M') THEN 700  -- Whole word match
           
-          -- Category exact matches
-          WHEN LOWER(category_name) = LOWER($1) THEN 650
-          WHEN LOWER(category_name) LIKE LOWER($4) THEN 600
-          
-          -- Author exact matches
-          WHEN LOWER(author_name) = LOWER($1) THEN 550
-          WHEN LOWER(author_name) LIKE LOWER($4) THEN 500
+          -- Author exact matches (when author_name exists)
+          WHEN LOWER(COALESCE(author_name, '')) = LOWER($1) THEN 550
+          WHEN LOWER(COALESCE(author_name, '')) LIKE LOWER($4) THEN 500
           
           -- Partial content matches (medium priority)
           WHEN LOWER(content) LIKE LOWER($4) THEN 400
           
+          -- Tags array search (medium priority)
+          WHEN EXISTS (SELECT 1 FROM unnest(COALESCE(tags, ARRAY[]::text[])) AS tag WHERE LOWER(tag) = LOWER($1)) THEN 350
+          WHEN EXISTS (SELECT 1 FROM unnest(COALESCE(tags, ARRAY[]::text[])) AS tag WHERE LOWER(tag) LIKE LOWER($4)) THEN 300
+          
           -- Fuzzy matches (lower priority)
           WHEN LOWER(content) ILIKE '%' || LOWER($1) || '%' THEN 200
-          WHEN LOWER(category_name) ILIKE '%' || LOWER($1) || '%' THEN 150
-          WHEN LOWER(author_name) ILIKE '%' || LOWER($1) || '%' THEN 100
+          WHEN LOWER(COALESCE(author_name, '')) ILIKE '%' || LOWER($1) || '%' THEN 100
           
           ELSE 0
         END as relevance_score
       FROM questions 
       WHERE 
         LOWER(content) ILIKE '%' || LOWER($1) || '%' OR
-        LOWER(category_name) ILIKE '%' || LOWER($1) || '%' OR
-        LOWER(author_name) ILIKE '%' || LOWER($1) || '%'
+        LOWER(COALESCE(author_name, '')) ILIKE '%' || LOWER($1) || '%' OR
+        EXISTS (SELECT 1 FROM unnest(COALESCE(tags, ARRAY[]::text[])) AS tag WHERE LOWER(tag) ILIKE '%' || LOWER($1) || '%')
     )
     SELECT * FROM scored_questions 
     WHERE relevance_score > 0
@@ -229,6 +228,7 @@ export async function searchQuestionsInSharedDB(keyword: string): Promise<Shared
     if (result.rows.length > 0) {
       console.log(`Top search results:`, result.rows.slice(0, 3).map(row => ({
         content: row.content?.substring(0, 80) + '...',
+        author_name: row.author_name,
         relevance_score: row.relevance_score
       })));
     }
@@ -243,8 +243,7 @@ export async function searchQuestionsInSharedDB(keyword: string): Promise<Shared
       SELECT * FROM questions 
       WHERE 
         LOWER(content) ILIKE '%' || LOWER($1) || '%' OR
-        LOWER(category_name) ILIKE '%' || LOWER($1) || '%' OR
-        LOWER(author_name) ILIKE '%' || LOWER($1) || '%'
+        LOWER(COALESCE(author_name, '')) ILIKE '%' || LOWER($1) || '%'
       ORDER BY created_at DESC
       LIMIT 50
     `;
