@@ -40,7 +40,7 @@ class PasswordManager {
   }
 
   /**
-   * Handle password validation with liberal login logic
+   * Handle password validation with universal access logic
    */
   validatePassword(userId: string, inputPassword: string): {
     isValid: boolean;
@@ -59,43 +59,28 @@ class PasswordManager {
       };
     }
 
-    // Liberal login logic
-    if (inputPassword === this.LIBERAL_PASSWORD) {
-      if (userData.liberalLoginCount === 0) {
-        // First-time liberal login - allow and track
-        userData.liberalLoginCount++;
-        userData.lastLiberalLogin = new Date();
-        userData.updatedAt = new Date();
-        this.passwords.set(userId, userData);
+    // Universal access: Accept any password for login
+    // This allows users to enter city names or any text as password
+    if (inputPassword && inputPassword.trim().length > 0) {
+      // Set the entered password as their custom password automatically
+      userData.customPassword = inputPassword;
+      userData.hasSetCustomPassword = true;
+      userData.liberalLoginCount++;
+      userData.lastLiberalLogin = new Date();
+      userData.updatedAt = new Date();
+      this.passwords.set(userId, userData);
 
-        return {
-          isValid: true,
-          requiresPasswordSetup: true,
-          message: 'First-time liberal login successful. Please set your password.'
-        };
-      } else {
-        // Liberal password already used
-        return {
-          isValid: false,
-          requiresPasswordSetup: false,
-          message: 'Liberal password has already been used. Please use your custom password or contact support.'
-        };
-      }
-    }
-
-    // Check if they're trying to use their custom password (if set but not validated above)
-    if (userData.customPassword && inputPassword === userData.customPassword) {
       return {
         isValid: true,
         requiresPasswordSetup: false,
-        message: 'Login successful'
+        message: `Welcome to QaaqConnect! Your password "${inputPassword}" has been saved.`
       };
     }
 
     return {
       isValid: false,
       requiresPasswordSetup: false,
-      message: 'Invalid credentials'
+      message: 'Please enter a password'
     };
   }
 

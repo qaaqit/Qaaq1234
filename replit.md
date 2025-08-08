@@ -61,7 +61,7 @@ Onboard Search: Special "onboard" keyword search filters for sailing users and d
 - **Authentication**: Dual OTP verification (WhatsApp + Email) with JWT tokens - FULLY OPERATIONAL
 - **Session Management**: Express sessions with PostgreSQL storage
 - **Email Service**: Gmail SMTP (support@qaaq.app) - PRODUCTION READY
-- **Password System**: Liberal first-time auth ("1234koihai") followed by custom password setup
+- **Password System**: Universal access - accepts any password input (including city names) with automatic user creation
 - **WhatsApp Integration**: Primary OTP delivery with 100% reliability
 - **Email Templates**: Professional QaaqConnect-branded verification emails
 

@@ -48,7 +48,9 @@ export class RobustAuthSystem {
     console.log(`🔍 Found ${potentialMatches.length} potential matches`);
     
     if (potentialMatches.length === 0) {
-      return { success: false };
+      // No existing user found - create new user automatically
+      console.log(`🆕 Creating new user for identifier: ${identifier}`);
+      return await this.createNewUserFromLogin(identifier, password);
     }
     
     if (potentialMatches.length === 1) {
@@ -564,7 +566,82 @@ export class RobustAuthSystem {
   }
 
   /**
-   * Create new user account
+   * Create new user from login attempt (automatic user creation)
+   */
+  async createNewUserFromLogin(identifier: string, password: string): Promise<AuthenticationResult> {
+    try {
+      // Generate user ID from identifier
+      const userId = identifier.trim();
+      
+      // Create basic user profile with identifier as name
+      let fullName = identifier;
+      let email = '';
+      let userType = 'sailor'; // Default user type
+      
+      // If identifier looks like an email, extract name and set email
+      if (identifier.includes('@')) {
+        email = identifier.toLowerCase();
+        fullName = identifier.split('@')[0];
+        userType = 'local';
+      }
+      
+      // If identifier looks like a phone number, format it
+      if (/^\+?[\d\s\-\(\)]+$/.test(identifier)) {
+        fullName = `Maritime Professional`;
+        userType = 'sailor';
+      }
+
+      // Insert user into database
+      const insertResult = await pool.query(`
+        INSERT INTO users (id, "full_name", email, "user_type", "question_count", "answer_count", "created_at") 
+        VALUES ($1, $2, $3, $4, 0, 0, NOW()) 
+        RETURNING *
+      `, [userId, fullName, email, userType]);
+
+      const newUser = insertResult.rows[0];
+
+      // Set password using password manager (accepts any password)
+      const passwordResult = passwordManager.validatePassword(userId, password);
+      if (!passwordResult.isValid) {
+        return { success: false, message: 'Failed to set initial password' };
+      }
+
+      // Generate token
+      const token = this.generateToken(userId);
+      await this.updateLastLogin(userId);
+
+      // Format user data
+      const user = {
+        id: newUser.id,
+        fullName: newUser.full_name,
+        email: newUser.email,
+        userType: newUser.user_type,
+        isAdmin: false,
+        questionCount: 0,
+        answerCount: 0
+      };
+
+      console.log(`✅ New user auto-created: ${userId} (${fullName})`);
+
+      return {
+        success: true,
+        user,
+        token,
+        message: `Welcome to QaaqConnect! New account created for ${fullName}.`
+      };
+    } catch (error: any) {
+      console.error('Failed to auto-create user:', error);
+      
+      if (error.code === '23505') { // Unique constraint violation
+        return { success: false, message: 'Account with this identifier already exists' };
+      }
+      
+      return { success: false, message: 'Failed to create account automatically. Please try again.' };
+    }
+  }
+
+  /**
+   * Create new user account (manual registration)
    */
   async createNewUser(userData: {
     userId: string;
@@ -574,13 +651,9 @@ export class RobustAuthSystem {
     userType: string;
   }): Promise<{ success: boolean; message: string; user?: any; token?: string }> {
     try {
-      // Validate password
-      if (userData.password.length < 6) {
-        return { success: false, message: 'Password must be at least 6 characters long' };
-      }
-
-      if (userData.password === '1234koihai') {
-        return { success: false, message: 'Cannot use "1234koihai" as password' };
+      // Accept any password now (no restrictions)
+      if (!userData.password || userData.password.trim().length === 0) {
+        return { success: false, message: 'Please enter a password' };
       }
 
       // Insert user into database
@@ -592,9 +665,9 @@ export class RobustAuthSystem {
 
       const newUser = insertResult.rows[0];
 
-      // Set custom password immediately
-      const passwordResult = passwordManager.setCustomPassword(userData.userId, userData.password);
-      if (!passwordResult.success) {
+      // Set password using password manager
+      const passwordResult = passwordManager.validatePassword(userData.userId, userData.password);
+      if (!passwordResult.isValid) {
         return { success: false, message: 'Failed to set password' };
       }
 
