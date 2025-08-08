@@ -886,12 +886,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/admin/users', authenticateToken, isAdmin, async (req: any, res) => {
     try {
       const result = await pool.query(`
-        SELECT id, full_name, nickname, email, is_admin, maritime_rank,
-               ship_name, imo_number,
-               city, country,
-               is_verified, login_count, last_login, created_at, whatsapp_number
-        FROM users 
-        ORDER BY created_at DESC
+        SELECT u.id, u.full_name, u.nickname, u.email, u.is_admin, u.maritime_rank,
+               u.ship_name, u.imo_number,
+               u.city, u.country,
+               u.is_verified, u.login_count, u.last_login, u.created_at, u.whatsapp_number,
+               COALESCE(q.question_count, 0) as question_count
+        FROM users u
+        LEFT JOIN (
+          SELECT author_id, COUNT(*) as question_count
+          FROM questions 
+          WHERE is_archived = false AND is_hidden = false
+          GROUP BY author_id
+        ) q ON CAST(u.id AS TEXT) = CAST(q.author_id AS TEXT)
+        ORDER BY u.last_login DESC NULLS LAST, u.created_at DESC
       `);
 
       const users = result.rows.map(user => ({
@@ -908,7 +915,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isVerified: user.is_verified || false,
         loginCount: user.login_count || 0,
         lastLogin: user.last_login,
-        whatsappNumber: user.whatsapp_number
+        whatsappNumber: user.whatsapp_number,
+        questionCount: parseInt(user.question_count) || 0
       }));
 
       res.json(users);

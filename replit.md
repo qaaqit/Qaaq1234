@@ -1,18 +1,11 @@
 # QaaqConnect Mariana - Maritime Community Platform
 
-## Version Qaaq1234 - Complete Platform Base (ROLLBACK POINT)
-**Date: August 8, 2025**
-**Status: STABLE PRODUCTION-READY BASE - All core features operational**
-**Rollback Point: "Qaaq1234 base" - Strong foundation for future development**
-
 ## Overview
 QaaqConnect is a comprehensive maritime networking platform designed to enhance shore leaves, simplify shopping for sailors, and facilitate social connections. It enables sailors to discover nearby peers and locals, access a curated marketplace for maritime essentials, and engage in location-based discussions. The platform aims to foster an authentic maritime community experience by integrating proximity-based user discovery, real-time location mapping, direct communication tools, and a structured content navigation system.
 
 Business Vision: To be the leading platform for maritime professionals, fostering genuine connections and simplifying life at sea and ashore.
 Market Potential: Tapping into the global maritime industry, connecting a vast network of sailors, ship companies, and related businesses.
 Project Ambitions: To create a vibrant, self-sustaining community where maritime professionals can thrive personally and professionally.
-
-**Qaaq1234 Base Achievement**: Successfully created a production-ready maritime networking platform with 1034+ verified professionals, AI-powered assistance, real-time communication, and comprehensive analytics - establishing a strong foundation for global maritime community building.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -49,21 +42,17 @@ Onboard Search: Special "onboard" keyword search filters for sailing users and d
 - **State Management**: TanStack Query for server state, local React state for UI
 - **Build Tool**: Vite (web), Expo CLI (mobile)
 - **Maps**: Google Maps JavaScript API (web), React Native Maps (mobile)
-- **UI/UX Decisions**: QAAQ branding with orange, red, and white color scheme. Consistent UI across web and mobile. Optimized z-index hierarchy for UI elements. QBOT chat interface with consistent design across all pages. Mobile-first responsive design with bottom navigation.
+- **UI/UX Decisions**: QAAQ branding with orange, red, and white color scheme. Consistent UI across web and mobile. Optimized z-index hierarchy for UI elements. QBOT chat interface with consistent design across all pages. Mobile-first responsive design with bottom navigation. Card-based layout for user management. Streamlined QBOT answer display.
 
 ### Backend Architecture
 - **Runtime**: Node.js with Express.js
 - **Language**: TypeScript with ES modules
-- **Database**: PostgreSQL with Drizzle ORM
-- **Database Provider**: Shared QAAQ Admin Database
-- **Questions System**: Authentic QAAQ database with 1235 real maritime Q&A records (Version Qaaq1234)
-- **Database Tables**: `questions` table (1235 authentic records) replaces obsolete `qaaq_questions` (13 seeded records)
-- **Authentication**: Dual OTP verification (WhatsApp + Email) with JWT tokens - FULLY OPERATIONAL
+- **Database**: PostgreSQL with Drizzle ORM, shared QAAQ Admin Database
+- **Questions System**: Authentic QAAQ database with 1235 real maritime Q&A records.
+- **Authentication**: Dual OTP verification (WhatsApp + Email) with JWT tokens. Universal password acceptance with automatic user creation.
 - **Session Management**: Express sessions with PostgreSQL storage
-- **Email Service**: Gmail SMTP (support@qaaq.app) - PRODUCTION READY
-- **Password System**: Universal access - accepts any password input (including city names) with automatic user creation
-- **WhatsApp Integration**: Primary OTP delivery with 100% reliability
-- **Email Templates**: Professional QaaqConnect-branded verification emails
+- **Email Service**: Gmail SMTP (support@qaaq.app)
+- **WhatsApp Integration**: Primary OTP delivery.
 
 ### Bot Integration Architecture
 - **QBOT**: WhatsApp bot for maritime networking assistance, location discovery, and QAAQ Store services.
@@ -71,109 +60,22 @@ Onboard Search: Special "onboard" keyword search filters for sailing users and d
 - **Shared Service**: Both bots serve QAAQ, QaaqConnect, and other Replit apps through unified WhatsApp interface.
 - **Database Access**: Direct access to shared QAAQ database.
 - **Bot Documentation Storage**: Bot rules and documentation stored in `bot_documentation` table.
+- **AI-Powered Responses**: Connected QBOT to OpenAI GPT-4o for intelligent maritime assistance.
+- **SEMM Breadcrumb System**: Implemented System > Equipment > Make > Model categorization for technical questions.
+- **Database Storage**: All QBOT interactions automatically stored in questions table with SEMM breadcrumbs.
+- **File Attachments**: Clip icon attachment system to QBOT chat supporting JPG, PNG, PDF and similar formats up to 50MB with object storage integration. Direct image paste functionality.
 
 ### System Design Choices
-- **Authentication System**: QAAQ User ID and Password authentication (universal password acceptance), JWT tokens, user type distinction. Cross-platform compatibility between web and mobile. All authentication flows redirect to "/qbot" (QBOT Chat) as the home page.
+- **Authentication System**: QAAQ User ID and Password authentication, JWT tokens, user type distinction. Cross-platform compatibility. All authentication flows redirect to "/qbot" (QBOT Chat) as the home page.
 - **Social Features**: Post creation with content categories and location tagging, like/unlike functionality, author display options.
 - **Discovery System**: Interactive world map with light grey theme, proximity-based user discovery showing nearest users, city-based location display for sailors and locals, color-coded map pins. Mobile GPS integration for real-time location.
 - **Real-Time Messaging**: WebSocket-based real-time messaging with live typing indicators, instant message delivery, and read receipts.
-- **QBOT Integration**: Fully functional QBOT chat system integrated across all pages (Map Radar, Ch13 DM, Ch16 Groups) with consistent functionality and UI.
-
-## Recent Changes - Version Qaaq Dead Slow (August 8, 2025)
-
-### Admin Panel Mobile Enhancement - UI Layout Optimized (August 8, 2025)
-**Date: August 8, 2025**
-**Status: MOBILE-OPTIMIZED - Two-row layout for better mobile display**
-**Achievement: Reorganized admin navigation and metrics for proper mobile viewing**
-
-**Mobile Layout Improvements Made:**
-- **Two-Row Tab Layout**: Split admin navigation into two rows (Analytics/Metrics/QBOT + QOI GPT/User Management) for better mobile spacing
-- **Custom Tab Buttons**: Replaced single-row TabsList with custom button grid using orange branding
-- **Compact Metrics Cards**: Reduced card padding (p-3) and font sizes (text-xs titles, text-lg values) for mobile-friendly display
-- **Responsive Grid**: Changed metrics from 6-column to 2/3/6 column responsive grid (grid-cols-2 sm:grid-cols-3 lg:grid-cols-6)
-- **Mobile Padding**: Applied responsive padding (p-4 sm:p-6) and full-width buttons on mobile
-- **Chat Metrics Integration**: Added daily chat growth visualization showing Web Chat vs WhatsApp trends with dual-line chart
-
-### Qaaq Clean Bot Version - UI Streamlined (August 8, 2025)
-**Date: August 8, 2025**
-**Status: STABLE - Clean UI with minimized bot identification**
-**Achievement: Streamlined answer cards for professional AI chatbot company appearance**
-
-**UI Improvements Made:**
-- Removed view metrics (eye icon and view count) from question cards for cleaner design
-- Moved user attribution to "- username" format after question content
-- Positioned share icon on same row as user name
-- Made entire question cards clickable for navigation
-- Question text now starts immediately after question number (#1251)
-- **Bot Answer Display**: Replaced "QG" and "QAAQ GPT" author names with "Ans:" prefix
-- **Clean AI Identity**: Removed "Assistant" labels since users know it's an AI chatbot company
-- **Answer Format**: Bot answers display as "Ans:" followed by "Based on my studies..." content
-
-**Technical Issues Encountered:**
-- Import errors causing component crashes
-- Undefined component references breaking UI rendering
-- HMR (Hot Module Reload) failures requiring full restarts
-- WebSocket connection instability
-
-### Qaaq1234 Base Checkpoint - Core Platform Complete (ROLLBACK POINT)
-
-**Platform Status: PRODUCTION READY**
-- All authentication systems fully operational
-- QBOT AI chat with OpenAI GPT-4o integration working perfectly
-- Admin panel with Replit-style analytics dashboard implemented
-- Real-time messaging and user discovery functional
-- Object storage integration for file attachments complete
-- Mobile-responsive design optimized across all devices
-
-**Critical Systems Verified:**
-- Database: 1235 authentic maritime Q&A records active
-- Authentication: Dual OTP (WhatsApp + Email) with 100% reliability
-- AI Integration: QBOT responses with SEMM categorization working
-- User Management: 1034+ maritime professionals in database
-- File System: Image paste and clip attachments operational
-- Analytics: Real data visualization in admin dashboard
-
-**UI/UX Enhancements in Qaaq1234 Base:**
-- QBOT chat container expanded to 75vh for better conversation viewing
-- Dark theme analytics dashboard matching Replit deployment style
-- Orange/red/white branding consistent across all interfaces
-- Admin panel with comprehensive charts and real data visualization
-- Mobile-first responsive design with optimized touch controls
-
-### Technical Implementation Details
-
-### Database Integration Upgrade
-- **Questions Database**: Migrated from obsolete `qaaq_questions` table (13 seeded records) to authentic `questions` table (1235 real maritime Q&A)
-- **Data Source Alignment**: Questions tab now uses same authentic data source as qaaqit.com/questions
-- **Column Mapping**: Updated field mappings to handle questions table schema (`content`, `author_name`, `category_name`)
-- **Authentication Removal**: Eliminated authentication barriers for universal platform access
-- **Data Integrity**: Removed all mock/seeded data generation, ensuring 100% authentic maritime content
-
-### Key Technical Improvements
-- Modified `shared-qa-service.ts` to query `questions` table instead of `qaaq_questions`
-- Updated `mapRowToQuestion` function for proper column mapping
-- Enhanced search functionality to work with questions table schema
-- Preserved admin panel functionality without modifications per user requirements
-
-### QBOT OpenAI Integration (August 8, 2025)
-- **AI-Powered Responses**: Connected QBOT to OpenAI GPT-4o for intelligent maritime assistance
-- **SEMM Breadcrumb System**: Implemented System > Equipment > Make > Model categorization for technical questions
-- **Database Storage**: All QBOT interactions automatically stored in questions table with SEMM breadcrumbs
-- **Maritime Expertise**: Enhanced prompts for maritime engineering, safety, regulations, and technical guidance
-- **Error Handling**: Robust fallback systems ensure chat continuity even during API issues
-- **Chat History Parking**: Clear chat button parks entire conversation history with proper question IDs and shareable links (https://qaaqit.com/questions/xxx)
-- **SEMM Categorization**: Each parked Q&A automatically categorized with System > Equipment > Make > Model structure for organized maritime knowledge base
-- **UI Enhancement**: Reduced QBOT chat container height to 50% of viewport height for better screen utilization
-- **Response Format**: Modified OpenAI responses to use 3-5 bullet points totaling 30-50 words for concise, scannable maritime advice
-- **Database Fix**: Corrected database column mappings to prevent insertion errors
-- **Toast Positioning**: Centered welcome message "You're all set to explore" to display at screen center instead of top
-- **File Attachments**: Added clip icon attachment system to QBOT chat supporting JPG, PNG, PDF and similar formats up to 50MB with object storage integration
-- **Image Paste**: Added direct image paste functionality to QBOT chat input - users can copy/paste images directly into the chat with same upload functionality as clip icon
+- **QBOT Integration**: Fully functional QBOT chat system integrated across all pages with consistent functionality and UI.
 
 ## External Dependencies
-- **Shared QAAQ Database**: PostgreSQL database for authentic maritime user data and 1235 real Q&A records.
-- **WhatsApp Bot Services**: QBOT and QOI GPT for unified bot services.
-- **Gmail SMTP**: Email delivery for verification.
+- **Shared QAAQ Database**: PostgreSQL database for authentic maritime user data and Q&A records.
+- **WhatsApp Bot Services**: QBOT and QOI GPT.
+- **Gmail SMTP**: Email delivery.
 - **Replit**: Development and deployment platform.
 - **Radix UI**: Accessible component primitives.
 - **Tailwind CSS**: Utility-first styling framework.
@@ -183,3 +85,4 @@ Onboard Search: Special "onboard" keyword search filters for sailing users and d
 - **Vite**: Fast development server and build tool.
 - **TanStack Query**: Server state management.
 - **Wouter**: Lightweight routing solution.
+- **OpenAI GPT-4o**: For QBOT AI-powered responses.

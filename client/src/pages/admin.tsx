@@ -29,6 +29,7 @@ interface AdminUser {
   loginCount: number;
   lastLogin: string;
   whatsappNumber?: string;
+  questionCount: number;
 }
 
 interface AdminStats {
@@ -809,115 +810,137 @@ START → Step 1 → Step 2 → Step 3/4
           {/* User Management Tab */}
           <TabsContent value="users" className="space-y-6">
             <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <i className="fas fa-users mr-2"></i>
-              User Management
-            </CardTitle>
-            <div className="flex items-center space-x-4">
-              <div className="flex-1">
-                <Input
-                  type="text"
-                  placeholder="Search users by name, email, ship, or IMO..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="max-w-md"
-                />
-              </div>
-              <Badge variant="secondary">
-                {filteredUsers.length} users found
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full table-auto">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-3 font-medium text-gray-600">User</th>
-                    <th className="text-left p-3 font-medium text-gray-600">Type</th>
-                    <th className="text-left p-3 font-medium text-gray-600">Ship/Location</th>
-                    <th className="text-left p-3 font-medium text-gray-600">Contact</th>
-                    <th className="text-left p-3 font-medium text-gray-600">Status</th>
-                    <th className="text-left p-3 font-medium text-gray-600">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <i className="fas fa-users mr-2 text-orange-600"></i>
+                  Maritime Professionals
+                </CardTitle>
+                <div className="flex items-center space-x-4">
+                  <div className="flex-1">
+                    <Input
+                      type="text"
+                      placeholder="Search users by name, email, ship, or IMO..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="max-w-md"
+                    />
+                  </div>
+                  <Badge variant="secondary">
+                    {filteredUsers.length} professionals found
+                  </Badge>
+                </div>
+                <p className="text-sm text-gray-600 mt-2">
+                  Users sorted by last login time (most recent first)
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[80vh] overflow-y-auto">
                   {filteredUsers.map((user) => (
-                    <tr key={user.id} className="border-b hover:bg-gray-50">
-                      <td className="p-3">
-                        <div>
-                          <div className="font-medium text-gray-900">{user.fullName}</div>
-                          <div className="text-sm text-gray-500">{user.email}</div>
-                          {user.rank && (
-                            <Badge variant="outline" className="text-xs mt-1">
-                              {user.rank}
+                    <Card key={user.id} className="hover:shadow-md transition-shadow border-l-4 border-l-orange-500">
+                      <CardContent className="p-4">
+                        {/* User Header */}
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <div className="font-semibold text-gray-900 text-sm truncate">
+                              {user.fullName}
+                            </div>
+                            <div className="text-xs text-gray-500 truncate">
+                              {user.email}
+                            </div>
+                            {user.rank && (
+                              <Badge variant="outline" className="text-xs mt-1 bg-blue-50 text-blue-700 border-blue-200">
+                                <i className="fas fa-anchor mr-1"></i>
+                                {user.rank}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex flex-col items-end space-y-1">
+                            <Badge 
+                              variant={user.userType === 'sailor' ? 'default' : 'secondary'}
+                              className={`text-xs ${user.userType === 'sailor' ? 'bg-blue-100 text-blue-800' : 'bg-teal-100 text-teal-800'}`}
+                            >
+                              <i className={`fas ${user.userType === 'sailor' ? 'fa-ship' : 'fa-building'} mr-1`}></i>
+                              {user.userType}
                             </Badge>
-                          )}
+                          </div>
                         </div>
-                      </td>
-                      <td className="p-3">
-                        <Badge 
-                          variant={user.userType === 'sailor' ? 'default' : 'secondary'}
-                          className={user.userType === 'sailor' ? 'bg-blue-100 text-blue-800' : 'bg-teal-100 text-teal-800'}
-                        >
-                          <i className={`fas ${user.userType === 'sailor' ? 'fa-ship' : 'fa-building'} mr-1`}></i>
-                          {user.userType}
-                        </Badge>
-                      </td>
-                      <td className="p-3">
-                        <div className="text-sm">
+
+                        {/* Maritime Info */}
+                        <div className="space-y-2 mb-3">
                           {user.shipName && (
-                            <div>
-                              <strong>Ship:</strong> {user.shipName}
-                              {user.imoNumber && <div className="text-xs text-gray-500">IMO: {user.imoNumber}</div>}
+                            <div className="bg-blue-50 p-2 rounded text-xs">
+                              <div className="font-medium text-blue-800">
+                                <i className="fas fa-ship mr-1"></i>
+                                {user.shipName}
+                              </div>
+                              {user.imoNumber && (
+                                <div className="text-blue-600">IMO: {user.imoNumber}</div>
+                              )}
                             </div>
                           )}
                           {user.city && (
-                            <div><strong>Location:</strong> {user.city}, {user.country}</div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="p-3">
-                        <div className="text-sm">
-                          <div>{user.email}</div>
-                          {user.whatsappNumber && (
-                            <div className="text-xs text-gray-500">
-                              <i className="fab fa-whatsapp mr-1"></i>
-                              {user.whatsappNumber}
+                            <div className="text-xs text-gray-600">
+                              <i className="fas fa-map-marker-alt mr-1"></i>
+                              {user.city}, {user.country}
                             </div>
                           )}
                         </div>
-                      </td>
-                      <td className="p-3">
-                        <div className="space-y-1">
+
+                        {/* Activity Stats */}
+                        <div className="grid grid-cols-2 gap-2 mb-3">
+                          <div className="bg-orange-50 p-2 rounded text-center">
+                            <div className="text-lg font-bold text-orange-600">{user.questionCount}</div>
+                            <div className="text-xs text-orange-700">Questions</div>
+                          </div>
+                          <div className="bg-green-50 p-2 rounded text-center">
+                            <div className="text-lg font-bold text-green-600">{user.loginCount}</div>
+                            <div className="text-xs text-green-700">Logins</div>
+                          </div>
+                        </div>
+
+                        {/* Status Badges */}
+                        <div className="flex flex-wrap gap-1 mb-3">
                           {user.isVerified ? (
-                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
                               <i className="fas fa-check-circle mr-1"></i>
                               Verified
                             </Badge>
                           ) : (
-                            <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                            <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200 text-xs">
                               <i className="fas fa-clock mr-1"></i>
                               Pending
                             </Badge>
                           )}
                           {user.isAdmin && (
-                            <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                            <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 text-xs">
                               <i className="fas fa-crown mr-1"></i>
                               Admin
                             </Badge>
                           )}
-                          <div className="text-xs text-gray-500">
-                            Logins: {user.loginCount}
-                          </div>
                         </div>
-                      </td>
-                      <td className="p-3">
-                        <div className="space-x-2">
+
+                        {/* Last Login */}
+                        {user.lastLogin && (
+                          <div className="text-xs text-gray-500 mb-3">
+                            <i className="fas fa-clock mr-1"></i>
+                            Last login: {new Date(user.lastLogin).toLocaleDateString()}
+                          </div>
+                        )}
+
+                        {/* WhatsApp */}
+                        {user.whatsappNumber && (
+                          <div className="text-xs text-gray-600 mb-3">
+                            <i className="fab fa-whatsapp mr-1 text-green-600"></i>
+                            {user.whatsappNumber}
+                          </div>
+                        )}
+
+                        {/* Actions */}
+                        <div className="flex gap-1">
                           <Button
                             variant="outline"
                             size="sm"
+                            className="flex-1 text-xs"
                             onClick={() => verifyUserMutation.mutate({
                               userId: user.id,
                               isVerified: !user.isVerified
@@ -930,6 +953,7 @@ START → Step 1 → Step 2 → Step 3/4
                           <Button
                             variant="outline"
                             size="sm"
+                            className="flex-1 text-xs"
                             onClick={() => toggleAdminMutation.mutate({
                               userId: user.id,
                               isAdmin: !user.isAdmin
@@ -937,16 +961,14 @@ START → Step 1 → Step 2 → Step 3/4
                             disabled={toggleAdminMutation.isPending}
                           >
                             <i className={`fas ${user.isAdmin ? 'fa-user-minus' : 'fa-user-plus'} mr-1`}></i>
-                            {user.isAdmin ? 'Remove Admin' : 'Make Admin'}
+                            {user.isAdmin ? 'Remove' : 'Admin'}
                           </Button>
                         </div>
-                      </td>
-                    </tr>
+                      </CardContent>
+                    </Card>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
+                </div>
+              </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
