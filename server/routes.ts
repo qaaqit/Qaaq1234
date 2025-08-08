@@ -2649,18 +2649,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.redirect(`/questions/${id}`);
   });
 
-  // Handle qaaqit.com/questions/:id redirects  
-  app.get('/qaaqit.com/questions/:id', (req, res) => {
-    const { id } = req.params;
-    res.redirect(`/questions/${id}`);
-  });
-
-  // Handle qaaq.app/questions/:id redirects
-  app.get('/qaaq.app/questions/:id', (req, res) => {
-    const { id } = req.params;
-    res.redirect(`/questions/${id}`);
-  });
-
   // Get user profile and questions
   app.get('/api/users/:userId/questions', authenticateToken, async (req: any, res) => {
     try {
