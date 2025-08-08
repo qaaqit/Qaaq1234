@@ -14,6 +14,19 @@ function getAuthHeaders() {
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
     console.log(`🔍 Using auth token:`, token.substring(0, 50) + '...');
+    
+    // Debug: decode token to see user ID
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      console.log(`🔍 Token contains userId:`, payload.userId);
+      const userData = localStorage.getItem('qaaq_user');
+      if (userData) {
+        const user = JSON.parse(userData);
+        console.log(`🔍 localStorage user ID:`, user.id);
+      }
+    } catch (e) {
+      console.log(`❌ Failed to decode token for debugging`);
+    }
   } else {
     console.log(`❌ No auth token found in localStorage`);
   }
