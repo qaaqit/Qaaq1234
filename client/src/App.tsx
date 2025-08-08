@@ -71,6 +71,7 @@ function Router() {
           <Route path="/qbot" component={() => user ? <QBOTPage user={user} /> : <Home />} />
           <Route path="/post" component={() => user ? <Post user={user} /> : <Home />} />
           <Route path="/chat" component={() => user ? <ChatPage /> : <Home />} />
+          <Route path="/ch13" component={() => user ? <DMPage /> : <Home />} />
           <Route path="/chat/:userId" component={() => user ? <DMPage /> : <Home />} />
           <Route path="/dm" component={() => user ? <DMPage /> : <Home />} />
           <Route path="/qhf" component={() => user ? <DMPage /> : <Home />} />
