@@ -431,7 +431,10 @@ export function QuestionsTab() {
                   <div className="flex-1">
                     <div className="flex items-center space-x-2">
                       <h6 className="font-semibold text-orange-900 text-sm">
-                        {botAnswer.author_whatsapp_display_name || botAnswer.author_name}
+                        {(() => {
+                          const authorName = botAnswer.author_whatsapp_display_name || botAnswer.author_name;
+                          return authorName === 'QG' || authorName === 'QAAQ GPT' ? 'Assistant' : authorName;
+                        })()}
                       </h6>
                     </div>
                     <p className="text-orange-800 text-sm mt-1 font-medium leading-5 overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
