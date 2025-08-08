@@ -66,7 +66,7 @@ export default function Home({ onSuccess }: HomeProps) {
               <i className="fas fa-anchor text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white"></i>
             </div>
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-2 sm:mb-3">Welcome to QaaqConnect</h2>
-            <p className="text-sm sm:text-base md:text-lg text-gray-600">Marine Engineering Knowledge Hub</p>
+            <p className="text-sm sm:text-base md:text-lg text-gray-600">Maritime Knowledge Hub</p>
           </div>
           
           <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8 w-full">
