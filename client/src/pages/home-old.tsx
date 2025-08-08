@@ -117,7 +117,7 @@ export default function Home({ onSuccess }: HomeProps) {
               ) : (
                 <>
                   <i className="fas fa-sign-in-alt mr-3"></i>
-                  Enter QaaqConnect
+                  Qaaqit
                 </>
               )}
             </Button>
