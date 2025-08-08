@@ -705,23 +705,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userRank = user?.maritimeRank || 'Maritime Professional';
       const userShip = user?.shipName ? `aboard ${user.shipName}` : 'shore-based';
       
-      let systemPrompt = `You are QBOT, an expert maritime engineering assistant specializing in ${category}. 
-      Provide technical, practical advice for maritime professionals. Keep responses concise and actionable.
-      User context: ${userRank} ${userShip}.
-      Always prioritize safety and follow maritime regulations.`;
+      let systemPrompt = `You are QBOT, an advanced maritime AI assistant and the primary chat interface for QaaqConnect. 
+      You specialize in ${category} and serve the global maritime community with expert knowledge on:
+      - Maritime engineering, maintenance, and troubleshooting
+      - Navigation, regulations, and safety procedures  
+      - Ship operations, cargo handling, and port procedures
+      - Career guidance for maritime professionals
+      - Technical specifications for maritime equipment
+      
+      User context: ${userRank} ${userShip}
+      
+      IMPORTANT GUIDELINES:
+      - Provide specific, actionable technical advice
+      - Always prioritize safety and maritime regulations (SOLAS, MARPOL, STCW)
+      - Keep responses professional but friendly, concise yet comprehensive
+      - Reference relevant IMO regulations when applicable
+      - If unsure about critical safety matters, recommend consulting senior officers or port authorities
+      - Help connect maritime professionals through shared knowledge and experience`;
       
       // Include active rules context if available
       if (activeRules) {
-        systemPrompt += `\n\nCurrent bot rules: Follow these guidelines from the active bot documentation:\n${activeRules.substring(0, 1000)}...`;
+        systemPrompt += `\n\nActive bot documentation guidelines:\n${activeRules.substring(0, 800)}`;
       }
 
       const response = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: message }
         ],
-        max_tokens: 200,
+        max_tokens: 300,
         temperature: 0.7,
       });
 
@@ -1009,6 +1022,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching bot rules:', error);
       res.status(500).json({ message: 'Failed to fetch bot rules' });
+    }
+  });
+
+  // ==== QBOT CHAT API ENDPOINTS ====
+  
+  // QBOT chat endpoint - responds to user messages with AI
+  app.post('/api/qbot/chat', optionalAuth, async (req, res) => {
+    try {
+      const { message } = req.body;
+      const userId = req.userId;
+      
+      if (!message || typeof message !== 'string') {
+        return res.status(400).json({ message: 'Message is required' });
+      }
+
+      // Get user info if authenticated
+      let user = null;
+      if (userId) {
+        try {
+          const userResult = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
+          user = userResult.rows[0];
+        } catch (error) {
+          console.log('User not found or not authenticated, proceeding without user context');
+        }
+      }
+
+      // Generate AI response using existing generateAIResponse function
+      const aiResponse = await generateAIResponse(message, 'Maritime Technical Support', user);
+      
+      console.log(`🤖 QBOT Chat - User: ${message.substring(0, 50)}... | Response: ${aiResponse.substring(0, 50)}...`);
+      
+      res.json({ 
+        response: aiResponse,
+        timestamp: new Date().toISOString()
+      });
+      
+    } catch (error) {
+      console.error('QBOT chat error:', error);
+      res.status(500).json({ 
+        message: 'Unable to generate response at this time. Please try again.',
+        error: 'QBOT_ERROR'
+      });
     }
   });
 

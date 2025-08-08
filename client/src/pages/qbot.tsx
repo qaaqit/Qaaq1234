@@ -35,18 +35,63 @@ export default function QBOTPage({ user }: QBOTPageProps) {
     setQBotMessages(prev => [...prev, newMessage]);
     setIsQBotTyping(true);
 
-    // Simulate bot response after a delay
-    setTimeout(() => {
-      const botResponse: Message = {
+    try {
+      // Call QBOT API for AI-powered response
+      const response = await fetch('/api/qbot/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ message: messageText })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const botResponse: Message = {
+          id: (Date.now() + 1).toString(),
+          text: data.response,
+          sender: 'bot',
+          timestamp: new Date()
+        };
+        
+        setQBotMessages(prev => [...prev, botResponse]);
+      } else {
+        // Fallback response if API fails
+        const fallbackResponse: Message = {
+          id: (Date.now() + 1).toString(),
+          text: "I apologize, but I'm having trouble connecting to my AI systems at the moment. Please try again in a few moments. In the meantime, feel free to check the Questions tab for maritime Q&A from our community.",
+          sender: 'bot',
+          timestamp: new Date()
+        };
+        
+        setQBotMessages(prev => [...prev, fallbackResponse]);
+        toast({
+          title: "Connection Issue",
+          description: "QBOT is temporarily unavailable. Please try again.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('QBOT API error:', error);
+      
+      // Fallback response on network error
+      const errorResponse: Message = {
         id: (Date.now() + 1).toString(),
-        text: "Thank you for your message! I'm QBOT, your maritime AI assistant. I'm here to help with maritime questions, regulations, procedures, and general seafaring knowledge. How can I assist you today?",
+        text: "I'm experiencing connection difficulties right now. Please check your internet connection and try again. You can also explore the Questions tab for maritime knowledge from our community.",
         sender: 'bot',
         timestamp: new Date()
       };
       
-      setQBotMessages(prev => [...prev, botResponse]);
+      setQBotMessages(prev => [...prev, errorResponse]);
+      toast({
+        title: "Network Error",
+        description: "Unable to reach QBOT services.",
+        variant: "destructive"
+      });
+    } finally {
       setIsQBotTyping(false);
-    }, 2000);
+    }
   };
 
   const handleClearQBotChat = () => {
