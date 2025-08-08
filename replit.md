@@ -104,6 +104,7 @@ Onboard Search: Special "onboard" keyword search filters for sailing users and d
 - **Database Fix**: Corrected database column mappings to prevent insertion errors
 - **Toast Positioning**: Centered welcome message "You're all set to explore" to display at screen center instead of top
 - **File Attachments**: Added clip icon attachment system to QBOT chat supporting JPG, PNG, PDF and similar formats up to 50MB with object storage integration
+- **Image Paste**: Added direct image paste functionality to QBOT chat input - users can copy/paste images directly into the chat with same upload functionality as clip icon
 
 ## External Dependencies
 - **Shared QAAQ Database**: PostgreSQL database for authentic maritime user data and 1235 real Q&A records.

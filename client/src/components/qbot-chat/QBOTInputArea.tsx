@@ -76,6 +76,65 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
     }
   };
 
+  const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData.items;
+    
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      
+      // Check if the pasted item is an image
+      if (item.type.indexOf('image') !== -1) {
+        e.preventDefault(); // Prevent default paste behavior for images
+        
+        const file = item.getAsFile();
+        if (!file) continue;
+        
+        // Validate file size (50MB limit)
+        if (file.size > 52428800) {
+          toast({
+            title: "Image Too Large",
+            description: "Maximum image size is 50MB",
+            variant: "destructive"
+          });
+          continue;
+        }
+        
+        try {
+          // Get upload URL
+          const { url } = await handleGetUploadParameters();
+          
+          // Upload the pasted image
+          const uploadResponse = await fetch(url, {
+            method: 'PUT',
+            body: file,
+            headers: {
+              'Content-Type': file.type || 'image/png',
+            },
+          });
+
+          if (uploadResponse.ok) {
+            const fileName = `pasted-image-${Date.now()}.${file.type.split('/')[1] || 'png'}`;
+            setAttachments(prev => [...prev, fileName]);
+            
+            toast({
+              title: "Image Pasted",
+              description: "Image uploaded successfully from clipboard",
+            });
+          } else {
+            throw new Error('Upload failed');
+          }
+        } catch (error) {
+          console.error('Error uploading pasted image:', error);
+          toast({
+            title: "Upload Error",
+            description: "Failed to upload pasted image. Please try again.",
+            variant: "destructive"
+          });
+        }
+      }
+    }
+  };
+
   const handleInput = () => {
     const textarea = textareaRef.current;
     if (textarea) {
@@ -96,7 +155,9 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
             {attachments.map((attachment, index) => (
               <div key={index} className="flex items-center gap-2 bg-white px-2 py-1 rounded border text-xs">
                 <Paperclip size={12} />
-                <span className="max-w-20 truncate">File {index + 1}</span>
+                <span className="max-w-20 truncate" title={attachment}>
+                  {attachment.startsWith('pasted-image') ? '🖼️ Pasted Image' : `📄 ${attachment}`}
+                </span>
                 <button
                   onClick={() => setAttachments(prev => prev.filter((_, i) => i !== index))}
                   className="text-red-500 hover:text-red-700"
@@ -116,7 +177,8 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
           onChange={(e) => setMessage(e.target.value)}
           onInput={handleInput}
           onKeyPress={handleKeyPress}
-          placeholder="Type a message..."
+          onPaste={handlePaste}
+          placeholder="Type a message or paste image..."
           disabled={disabled}
           className="flex-1 resize-none rounded-lg border border-gray-300 px-4 py-2 
                    focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent
