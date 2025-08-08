@@ -62,7 +62,7 @@ class _LoginFormState extends State<LoginForm> {
                 textInputAction: TextInputAction.next,
                 decoration: InputDecoration(
                   labelText: 'USER NAME (Country code +91 & WhatsApp number)',
-                  hintText: 'mushy.piyush@gmail.com or +919029010070',
+                  hintText: 'mushy.piyush@gmail.com or +91 9820011223',
                   prefixIcon: const Icon(LucideIcons.user),
                 ),
                 validator: (value) {
@@ -159,7 +159,7 @@ class _LoginFormState extends State<LoginForm> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Email: mushy.piyush@gmail.com\nPhone: +919029010070\nPassword: 1234koihai',
+                      'Email: mushy.piyush@gmail.com\nPhone: +91 9820011223\nPassword: 1234koihai',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.onBackground.withOpacity(0.8),
                         fontFamily: 'monospace',
