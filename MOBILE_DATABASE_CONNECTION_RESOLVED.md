@@ -98,7 +98,7 @@ Use these credentials in the mobile app:
 // Before: Returned UUID causing profile lookup failures
 // After: Returns actual database phone number ID
 async getUserByIdAndPassword(userId: string, password: string) {
-  // Returns user with ID: "+91 9820011223" instead of UUID
+  // Returns user with ID: "+919029010070" instead of UUID
 }
 ```
 
