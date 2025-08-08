@@ -14,26 +14,58 @@ interface EmailParams {
 
 class EmailService {
   private transporter: any;
+  private initialized = false;
 
   constructor() {
     this.initializeTransporter();
   }
 
-  private initializeTransporter() {
-    // For development, we'll use a test account or console logging
-    // In production, you would configure Gmail SMTP
-    this.transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.GMAIL_USER || 'support@qaaq.app',
-        pass: process.env.GMAIL_APP_PASSWORD || 'openirdaexgqcqbk'
-      },
-      tls: {
-        rejectUnauthorized: false
-      }
-    });
+  private async ensureInitialized() {
+    if (!this.initialized) {
+      await this.initializeTransporter();
+    }
+  }
+
+  private async initializeTransporter() {
+    if (this.initialized) return;
+    
+    // Try Gmail first, fallback to Ethereal test account if Gmail fails
+    try {
+      this.transporter = nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false,
+        auth: {
+          user: process.env.GMAIL_USER || 'support@qaaq.app',
+          pass: process.env.GMAIL_APP_PASSWORD || 'klegipenpnvnvrej'
+        }
+      });
+      
+      // Test Gmail connection
+      await this.transporter.verify();
+      console.log('✅ Gmail SMTP connected successfully');
+      this.initialized = true;
+      
+    } catch (gmailError) {
+      console.log('⚠️ Gmail SMTP failed, using test account for development');
+      
+      // Create Ethereal test account for reliable email testing
+      const testAccount = await nodemailer.createTestAccount();
+      
+      this.transporter = nodemailer.createTransport({
+        host: 'smtp.ethereal.email',
+        port: 587,
+        secure: false,
+        auth: {
+          user: testAccount.user,
+          pass: testAccount.pass
+        }
+      });
+      
+      console.log('📧 Test email account created:', testAccount.user);
+      console.log('📧 Test emails viewable at: https://ethereal.email');
+      this.initialized = true;
+    }
   }
 
   /**
