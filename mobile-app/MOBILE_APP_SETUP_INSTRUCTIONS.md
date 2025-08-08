@@ -15,7 +15,7 @@ The "Profile not found" error has been resolved. The mobile app now properly con
 4. **Authentication Flow** - Verified JWT token authentication working
 
 ### 📊 **Test Users Available:**
-- **Captain Test User** (+919029010070) - Password: "1234koihai"
+- **Captain Test User** (+91 9820011223) - Password: "1234koihai"
 - **Chief Engineer Demo** (+919920027697) - Password: "1234koihai"
 
 ---
@@ -39,7 +39,7 @@ npm start
 ### Step 3: Test Login
 1. Open Expo Go app and scan QR code
 2. Use test credentials:
-   - **User ID**: +919029010070
+   - **User ID**: +91 9820011223
    - **Password**: 1234koihai
 3. App should successfully login and show profile data
 
@@ -51,7 +51,7 @@ npm start
 ```sql
 -- Added test users to database
 INSERT INTO users (id, full_name, email, password, user_type, rank, ship_name, city, country, latitude, longitude, is_verified) VALUES 
-('+919029010070', 'Captain Test User', 'captain@qaaq.com', '1234koihai', 'sailor', 'Captain', 'MS Test Ship', 'Mumbai', 'India', 19.0760, 72.8777, true),
+('+91 9820011223', 'Captain Test User', 'captain@qaaq.com', '1234koihai', 'sailor', 'Captain', 'MS Test Ship', 'Mumbai', 'India', 19.0760, 72.8777, true),
 ('+919920027697', 'Chief Engineer Demo', 'engineer@qaaq.com', '1234koihai', 'sailor', 'Chief Engineer', 'MV Demo Vessel', 'Chennai', 'India', 13.0827, 80.2707, true);
 ```
 
@@ -109,7 +109,7 @@ INSERT INTO users (id, full_name, email, password, user_type, rank, ship_name, c
 4. **Clear App Data**: Remove app from Expo Go and reinstall
 
 ### If Login Fails:
-1. **Use Test Credentials**: +919029010070 / 1234koihai
+1. **Use Test Credentials**: +91 9820011223 / 1234koihai
 2. **Check Backend Logs**: Look for login attempt logs
 3. **Network Connection**: Ensure mobile device on same network
 

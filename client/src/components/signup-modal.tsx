@@ -193,7 +193,7 @@ export default function SignUpModal({ onClose, onSuccess }: SignUpModalProps) {
                   id="whatsappNumber"
                   value={formData.whatsappNumber}
                   onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
-                  placeholder="+919029010070"
+                  placeholder="+91 9820011223"
                 />
               </div>
 

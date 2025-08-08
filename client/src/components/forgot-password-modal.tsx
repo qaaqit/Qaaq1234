@@ -137,7 +137,7 @@ export default function ForgotPasswordModal({ onClose, onSuccess }: ForgotPasswo
                   id="userId"
                   value={formData.userId}
                   onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
-                  placeholder="e.g., +919029010070"
+                  placeholder="e.g., +91 9820011223"
                 />
               </div>
 

@@ -124,7 +124,7 @@ flutter build appbundle --release
 ### Test Credentials
 ```
 Email: mushy.piyush@gmail.com
-Phone: +919029010070
+Phone: +91 9820011223
 Password: 1234koihai
 ```
 

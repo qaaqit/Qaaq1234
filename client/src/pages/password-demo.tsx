@@ -17,7 +17,7 @@ export default function PasswordDemoPage() {
     setDemoResult(null);
     
     const results = [];
-    const testUser = '+919029010070'; // Piyush Gupta
+    const testUser = '+91 9820011223'; // Piyush Gupta
     
     try {
       // Step 1: Reset user for clean demo (in production, this wouldn't exist)

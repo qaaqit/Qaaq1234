@@ -11,10 +11,10 @@
 ## 🔧 **Technical Resolution**
 
 ### Issue Analysis
-1. **Login Flow**: User logs in with `mushy.piyush@gmail.com` or `+919029010070` 
+1. **Login Flow**: User logs in with `mushy.piyush@gmail.com` or `+91 9820011223` 
 2. **Token Generation**: JWT token was being created with UUID `5791e66f-9cc1-4be4-bd4b-7fc1bd2e258e`
 3. **Profile Lookup**: Profile endpoint tries to find UUID in database but fails
-4. **Database Structure**: Database uses phone numbers as IDs (e.g., `+919029010070`)
+4. **Database Structure**: Database uses phone numbers as IDs (e.g., `+91 9820011223`)
 
 ### Technical Fix Applied
 1. **Fixed Authentication Logic**: Modified `getUserByIdAndPassword()` to return actual database user ID
@@ -37,7 +37,7 @@ curl -X POST http://localhost:5000/api/login \
 ```json
 {
   "user": {
-    "id": "+919029010070",
+    "id": "+91 9820011223",
     "fullName": "919029010070@whatsapp.temp",
     "email": "919029010070@whatsapp.temp",
     "userType": "local",
@@ -59,7 +59,7 @@ curl -X POST http://localhost:5000/api/login \
 
 ### ✅ **Database Connection Verified**
 - **Total Users**: 666 users from parent QAAQ database
-- **Admin User**: `+919029010070` found and authenticated
+- **Admin User**: `+91 9820011223` found and authenticated
 - **Profile Data**: Complete maritime professional information loaded
 
 ---
@@ -78,7 +78,7 @@ Use these credentials in the mobile app:
 - **Result**: Should login and show admin profile with maritime data
 
 **Test Maritime User**:
-- **User ID**: `+919029010070`
+- **User ID**: `+91 9820011223`
 - **Password**: `1234koihai` 
 - **Result**: Should login and show Captain Test User profile
 
