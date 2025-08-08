@@ -1035,6 +1035,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Quick check to log question source counts to console (temp for debugging)
+  (async () => {
+    try {
+      console.log('\n=== CHECKING QUESTION SOURCE COUNTS ===');
+      const result = await pool.query(`
+        SELECT 
+          CASE 
+            WHEN content LIKE '%[QBOT Q&A%' OR content LIKE '%[QBOT CHAT%' OR content LIKE '%via QBOT%' THEN 'webchat'
+            WHEN content LIKE '%WhatsApp%' OR content LIKE '%via WhatsApp%' THEN 'whatsapp'
+            ELSE 'other'
+          END as source_type,
+          COUNT(*) as question_count
+        FROM questions 
+        GROUP BY 
+          CASE 
+            WHEN content LIKE '%[QBOT Q&A%' OR content LIKE '%[QBOT CHAT%' OR content LIKE '%via QBOT%' THEN 'webchat'
+            WHEN content LIKE '%WhatsApp%' OR content LIKE '%via WhatsApp%' THEN 'whatsapp'
+            ELSE 'other'
+          END
+        ORDER BY question_count DESC
+      `);
+
+      const totalQuestions = result.rows.reduce((sum, row) => sum + parseInt(row.question_count), 0);
+      
+      console.log(`📊 TOTAL QUESTIONS IN DATABASE: ${totalQuestions}`);
+      
+      result.rows.forEach(row => {
+        const percentage = ((parseInt(row.question_count) / totalQuestions) * 100).toFixed(1);
+        const source = row.source_type.toUpperCase();
+        console.log(`   ${source}: ${row.question_count} questions (${percentage}%)`);
+      });
+      
+      const webchat = result.rows.find(row => row.source_type === 'webchat')?.question_count || 0;
+      const whatsapp = result.rows.find(row => row.source_type === 'whatsapp')?.question_count || 0;
+      
+      console.log(`\n🤖 WEB CHAT QUESTIONS: ${webchat}`);
+      console.log(`📱 WHATSAPP QUESTIONS: ${whatsapp}`);
+      console.log('=====================================\n');
+      
+    } catch (error) {
+      console.error('❌ Error checking question sources:', error);
+    }
+  })();
+
+  // Question source counts endpoint for checking database content
+  app.get('/api/admin/question-sources', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      const result = await pool.query(`
+        SELECT 
+          CASE 
+            WHEN content LIKE '%[QBOT Q&A%' OR content LIKE '%[QBOT CHAT%' OR content LIKE '%via QBOT%' THEN 'webchat'
+            WHEN content LIKE '%WhatsApp%' OR content LIKE '%via WhatsApp%' THEN 'whatsapp'
+            ELSE 'other'
+          END as source_type,
+          COUNT(*) as question_count
+        FROM questions 
+        GROUP BY 
+          CASE 
+            WHEN content LIKE '%[QBOT Q&A%' OR content LIKE '%[QBOT CHAT%' OR content LIKE '%via QBOT%' THEN 'webchat'
+            WHEN content LIKE '%WhatsApp%' OR content LIKE '%via WhatsApp%' THEN 'whatsapp'
+            ELSE 'other'
+          END
+        ORDER BY question_count DESC
+      `);
+
+      const totalQuestions = result.rows.reduce((sum, row) => sum + parseInt(row.question_count), 0);
+      
+      const sourceCounts = result.rows.map(row => ({
+        source: row.source_type,
+        count: parseInt(row.question_count),
+        percentage: ((parseInt(row.question_count) / totalQuestions) * 100).toFixed(1)
+      }));
+
+      res.json({
+        totalQuestions,
+        sourceCounts,
+        breakdown: {
+          webchat: sourceCounts.find(s => s.source === 'webchat')?.count || 0,
+          whatsapp: sourceCounts.find(s => s.source === 'whatsapp')?.count || 0,
+          other: sourceCounts.find(s => s.source === 'other')?.count || 0
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching question sources:", error);
+      res.status(500).json({ message: "Failed to fetch question sources" });
+    }
+  });
+
   // ==== BOT RULES MANAGEMENT ENDPOINTS ====
   
   // Get specific bot rule by name
