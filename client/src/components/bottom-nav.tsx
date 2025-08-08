@@ -3,9 +3,8 @@ import { Button } from "@/components/ui/button";
 import type { User } from "@/lib/auth";
 
 interface BottomNavProps {
-  user?: User;
+  user: User;
   onLogout?: () => void;
-  currentPath?: string;
 }
 
 export default function BottomNav({ user, onLogout }: BottomNavProps) {
@@ -23,11 +22,11 @@ export default function BottomNav({ user, onLogout }: BottomNavProps) {
 
   const baseNavItems = [
     { 
-      path: "/qbot", 
+      path: "/", 
       icon: "fas fa-robot", 
       label: ["QBOT", "Chat"],
-      active: location === "/qbot",
-      onClick: () => setLocation("/qbot")
+      active: location === "/" || location === "/qbot",
+      onClick: () => setLocation("/")
     },
     { 
       path: "/dm", 

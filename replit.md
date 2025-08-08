@@ -100,9 +100,6 @@ Onboard Search: Special "onboard" keyword search filters for sailing users and d
 - **Chat History Parking**: Clear chat button parks entire conversation history with proper question IDs and shareable links (https://qaaqit.com/questions/xxx)
 - **SEMM Categorization**: Each parked Q&A automatically categorized with System > Equipment > Make > Model structure for organized maritime knowledge base
 - **UI Enhancement**: Reduced QBOT chat container height to 50% of viewport height for better screen utilization
-- **Mobile Landing Page**: Redesigned authenticated landing page with mobile-first approach, removed map and search bar from main landing
-- **Feature Navigation**: Created dedicated landing page with quick access to QBOT AI, Map Radar Discovery, and Q&A sections
-- **Responsive Design**: Optimized layout for mobile screens with card-based interface and gradient backgrounds
 - **Response Format**: Modified OpenAI responses to use 3-5 bullet points totaling 30-50 words for concise, scannable maritime advice
 - **Database Fix**: Corrected database column mappings to prevent insertion errors
 
