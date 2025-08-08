@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 
 interface QBOTChatHeaderProps {
   onClear?: () => void;
+  isAdmin?: boolean;
 }
 
 const DEFAULT_CHATBOT_INVITES = [
@@ -78,7 +79,7 @@ const DEFAULT_CHATBOT_INVITES = [
   "Too Good to Scroll Past."
 ];
 
-export default function QBOTChatHeader({ onClear }: QBOTChatHeaderProps) {
+export default function QBOTChatHeader({ onClear, isAdmin = false }: QBOTChatHeaderProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [chatbotInvites, setChatbotInvites] = useState(() => {
     const saved = localStorage.getItem('chatbotInvites');
@@ -144,18 +145,19 @@ export default function QBOTChatHeader({ onClear }: QBOTChatHeaderProps) {
           <Trash2 size={18} className="text-white" />
         </button>
 
-        {/* Chatbot Invites Dialog */}
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <button
-              onClick={handleEditInvites}
-              className="p-2 rounded-full hover:bg-white/10 transition-colors"
-              aria-label="Edit chatbot invites"
-              title="Edit chatbot invites"
-            >
-              <Upload size={18} className="text-white" />
-            </button>
-          </DialogTrigger>
+        {/* Chatbot Invites Dialog - Only for Admin */}
+        {isAdmin && (
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <button
+                onClick={handleEditInvites}
+                className="p-2 rounded-full hover:bg-white/10 transition-colors"
+                aria-label="Edit chatbot invites"
+                title="Edit chatbot invites (Admin only)"
+              >
+                <Upload size={18} className="text-white" />
+              </button>
+            </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
@@ -200,6 +202,7 @@ export default function QBOTChatHeader({ onClear }: QBOTChatHeaderProps) {
             </div>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       {/* Center: QBOT AI Text */}

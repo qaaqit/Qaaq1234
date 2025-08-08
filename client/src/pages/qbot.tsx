@@ -194,6 +194,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
             {/* Gradient Header */}
             <QBOTChatHeader 
               onClear={handleClearQBotChat}
+              isAdmin={user?.isAdmin}
             />
             
             {/* Chat Area with Engineering Background - Always Visible */}
