@@ -128,14 +128,14 @@ export async function getQuestionsByUserName(userName: string): Promise<SharedQu
  */
 export async function getAllQuestionsFromSharedDB(): Promise<SharedQuestion[]> {
   const query = `
-    SELECT * FROM qaaq_questions 
+    SELECT * FROM questions 
     ORDER BY created_at DESC
   `;
 
   try {
-    console.log('Executing query to fetch all questions from qaaq_questions table...');
+    console.log('Executing query to fetch all questions from questions table...');
     const result = await pool.query(query);
-    console.log(`Found ${result.rows.length} questions in qaaq_questions table`);
+    console.log(`Found ${result.rows.length} questions in questions table (authentic QAAQ data)`);
     
     if (result.rows.length > 0) {
       console.log('Sample raw question data:', {
@@ -166,19 +166,18 @@ export async function getAllQuestionsFromSharedDB(): Promise<SharedQuestion[]> {
  */
 export async function searchQuestionsInSharedDB(keyword: string): Promise<SharedQuestion[]> {
   const query = `
-    SELECT * FROM qaaq_questions 
+    SELECT * FROM questions 
     WHERE 
-      LOWER(question_text) LIKE LOWER($1) OR
-      LOWER(question_category) LIKE LOWER($1) OR
-      LOWER(user_name) LIKE LOWER($1) OR
-      $1 = ANY(SELECT LOWER(tag) FROM unnest(tags) as tag)
+      LOWER(content) LIKE LOWER($1) OR
+      LOWER(category_name) LIKE LOWER($1) OR
+      LOWER(author_name) LIKE LOWER($1)
     ORDER BY created_at DESC
   `;
 
   try {
     console.log(`Searching questions with keyword: "${keyword}"`);
     const result = await pool.query(query, [`%${keyword}%`]);
-    console.log(`Search found ${result.rows.length} questions`);
+    console.log(`Search found ${result.rows.length} questions in questions table`);
     return result.rows.map(mapRowToQuestion);
   } catch (error) {
     console.error('Error searching questions:', error);
@@ -313,13 +312,13 @@ export async function syncQuestionFromExternalSource(questionData: {
 function mapRowToQuestion(row: any): SharedQuestion {
   return {
     id: row.id,
-    questionId: row.question_id,
-    userId: row.user_id,
-    userName: row.user_name,
-    questionText: row.question_text,
-    questionCategory: row.question_category,
+    questionId: row.id || row.question_id,
+    userId: row.author_id || row.user_id || '',
+    userName: row.author_name || row.user_name || 'Maritime Professional',
+    questionText: row.content || row.question_text || '',
+    questionCategory: row.category_name || row.question_category || 'General Discussion',
     askedDate: new Date(row.created_at),
-    source: row.source,
+    source: row.source || 'web',
     answerCount: row.answer_count || 0,
     isResolved: row.is_resolved || false,
     urgency: row.urgency || 'normal',
