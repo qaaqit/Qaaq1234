@@ -82,25 +82,31 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
     return invites[Math.floor(Math.random() * invites.length)];
   };
 
-  // Initialize and update placeholder
+  // Initialize placeholder once per login session
   useEffect(() => {
-    setCurrentPlaceholder(getRandomPlaceholder());
+    // Check if we already have a session placeholder
+    const sessionPlaceholder = sessionStorage.getItem('qbotSessionPlaceholder');
+    
+    if (sessionPlaceholder) {
+      setCurrentPlaceholder(sessionPlaceholder);
+    } else {
+      // Generate new placeholder for this session
+      const newPlaceholder = getRandomPlaceholder();
+      setCurrentPlaceholder(newPlaceholder);
+      sessionStorage.setItem('qbotSessionPlaceholder', newPlaceholder);
+    }
 
-    // Listen for chatbot invites updates
+    // Listen for chatbot invites updates (admin changes)
     const handleInvitesUpdate = () => {
-      setCurrentPlaceholder(getRandomPlaceholder());
+      const newPlaceholder = getRandomPlaceholder();
+      setCurrentPlaceholder(newPlaceholder);
+      sessionStorage.setItem('qbotSessionPlaceholder', newPlaceholder);
     };
 
     window.addEventListener('chatbotInvitesUpdated', handleInvitesUpdate);
-    
-    // Set interval to change placeholder every 10 seconds
-    const interval = setInterval(() => {
-      setCurrentPlaceholder(getRandomPlaceholder());
-    }, 10000);
 
     return () => {
       window.removeEventListener('chatbotInvitesUpdated', handleInvitesUpdate);
-      clearInterval(interval);
     };
   }, []);
 
