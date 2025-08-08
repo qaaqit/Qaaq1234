@@ -411,22 +411,29 @@ export function QuestionsTab() {
               </div>
             )}
 
-            {/* Tags */}
-            {question.tags && question.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-3">
-                {question.tags.slice(0, 5).map((tag, i) => (
-                  <Badge key={i} variant="outline" className="text-xs">
-                    <Hash size={12} className="mr-1" />
-                    {tag}
-                  </Badge>
-                ))}
-                {question.tags.length > 5 && (
-                  <Badge variant="outline" className="text-xs">
-                    +{question.tags.length - 5} more
-                  </Badge>
-                )}
-              </div>
-            )}
+            {/* Tags - Filter out system tags */}
+            {(() => {
+              const systemTags = ['chat', 'web-chat', 'whatsapp-chat', 'api', 'bot', 'system'];
+              const displayTags = question.tags?.filter(tag => 
+                !systemTags.includes(tag.toLowerCase())
+              ) || [];
+              
+              return displayTags.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {displayTags.slice(0, 5).map((tag, i) => (
+                    <Badge key={i} variant="outline" className="text-xs">
+                      <Hash size={12} className="mr-1" />
+                      {tag}
+                    </Badge>
+                  ))}
+                  {displayTags.length > 5 && (
+                    <Badge variant="outline" className="text-xs">
+                      +{displayTags.length - 5} more
+                    </Badge>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Bot Answer Preview */}
             {botAnswer && (
