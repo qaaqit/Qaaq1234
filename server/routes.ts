@@ -218,6 +218,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Robust authentication endpoint with password management
+  app.post('/api/auth/login-robust', async (req, res) => {
+    try {
+      const { userId, password } = req.body;
+      
+      if (!userId || !password) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'User ID and password are required' 
+        });
+      }
+      
+      const result = await robustAuth.authenticateUser(userId, password);
+      res.json(result);
+    } catch (error) {
+      console.error('Robust login error:', error);
+      res.status(500).json({ success: false, message: 'Authentication failed' });
+    }
+  });
+
+  // Set custom password endpoint
+  app.post('/api/auth/set-password', async (req, res) => {
+    try {
+      const { userId, newPassword } = req.body;
+      
+      if (!userId || !newPassword) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'User ID and new password are required' 
+        });
+      }
+      
+      const result = await robustAuth.setCustomPassword(userId, newPassword);
+      res.json(result);
+    } catch (error) {
+      console.error('Set password error:', error);
+      res.status(500).json({ success: false, message: 'Failed to set password' });
+    }
+  });
+
   // Get current user profile
   app.get("/api/profile", authenticateToken, async (req, res) => {
     try {

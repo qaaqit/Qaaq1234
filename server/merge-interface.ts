@@ -81,6 +81,7 @@ export function setupMergeRoutes(app: express.Application) {
           requiresMerge: true,
           mergeSessionId: authResult.mergeSessionId,
           duplicateAccounts: authResult.duplicateAccounts,
+          requiresPasswordSetup: authResult.requiresPasswordSetup,
           message: "Multiple accounts found. Please choose how to proceed."
         });
       }
@@ -90,12 +91,13 @@ export function setupMergeRoutes(app: express.Application) {
           success: true,
           user: authResult.user,
           token: authResult.token,
-          message: "Login successful"
+          message: authResult.message || "Login successful",
+          requiresPasswordSetup: authResult.requiresPasswordSetup
         });
       } else {
         res.status(401).json({
           success: false,
-          message: "Invalid credentials"
+          message: authResult.message || "Invalid credentials"
         });
       }
       
@@ -105,6 +107,28 @@ export function setupMergeRoutes(app: express.Application) {
         success: false,
         message: "Authentication system error"
       });
+    }
+  });
+
+  /**
+   * Set custom password endpoint
+   */
+  app.post('/api/auth/set-password', async (req, res) => {
+    try {
+      const { userId, newPassword } = req.body;
+      
+      if (!userId || !newPassword) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'User ID and new password are required' 
+        });
+      }
+      
+      const result = await robustAuth.setCustomPassword(userId, newPassword);
+      res.json(result);
+    } catch (error) {
+      console.error('Set password error:', error);
+      res.status(500).json({ success: false, message: 'Failed to set password' });
     }
   });
   

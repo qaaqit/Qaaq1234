@@ -1,5 +1,6 @@
 import { pool } from './db';
 import jwt from 'jsonwebtoken';
+import { passwordManager } from './password-manager';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 
@@ -30,6 +31,8 @@ export interface AuthenticationResult {
   requiresMerge?: boolean;
   duplicateAccounts?: DuplicateUser[];
   mergeSessionId?: string;
+  requiresPasswordSetup?: boolean;
+  message?: string;
 }
 
 export class RobustAuthSystem {
@@ -49,12 +52,15 @@ export class RobustAuthSystem {
     }
     
     if (potentialMatches.length === 1) {
-      // Single account found, proceed with normal authentication
+      // Single account found, proceed with password management logic
       const user = potentialMatches[0];
-      const isValidPassword = this.validatePassword(password, user);
+      const passwordResult = await this.handlePasswordValidation(user, password);
       
-      if (!isValidPassword) {
-        return { success: false };
+      if (!passwordResult.success) {
+        return { 
+          success: false,
+          message: passwordResult.message
+        };
       }
       
       const token = this.generateToken(user.id);
@@ -63,7 +69,9 @@ export class RobustAuthSystem {
       return {
         success: true,
         user: this.sanitizeUserForResponse(user),
-        token
+        token,
+        requiresPasswordSetup: passwordResult.requiresPasswordSetup,
+        message: passwordResult.message
       };
     }
     
@@ -380,6 +388,56 @@ export class RobustAuthSystem {
    */
   private generateMergeSessionId(): string {
     return `merge_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  /**
+   * Handle password validation with liberal login logic using password manager
+   */
+  private async handlePasswordValidation(user: any, inputPassword: string): Promise<{
+    success: boolean;
+    message?: string;
+    requiresPasswordSetup?: boolean;
+  }> {
+    // Use the password manager for validation
+    const result = passwordManager.validatePassword(user.id, inputPassword);
+    
+    return {
+      success: result.isValid,
+      message: result.message,
+      requiresPasswordSetup: result.requiresPasswordSetup
+    };
+  }
+
+  /**
+   * Increment liberal login counter
+   */
+  private async incrementLiberalLoginCount(userId: string): Promise<void> {
+    try {
+      await pool.query(`
+        UPDATE users 
+        SET "liberal_login_count" = COALESCE("liberal_login_count", 0) + 1
+        WHERE id = $1
+      `, [userId]);
+    } catch (error) {
+      // Try alternative column names if schema differs
+      try {
+        await pool.query(`
+          UPDATE users 
+          SET liberal_login_count = COALESCE(liberal_login_count, 0) + 1
+          WHERE id = $1
+        `, [userId]);
+      } catch (fallbackError) {
+        console.log('Could not update liberal login count:', fallbackError);
+      }
+    }
+  }
+
+  /**
+   * Set custom password for user after first liberal login
+   */
+  async setCustomPassword(userId: string, newPassword: string): Promise<{ success: boolean; message: string }> {
+    // Use password manager for setting custom password
+    return passwordManager.setCustomPassword(userId, newPassword);
   }
   
   /**
