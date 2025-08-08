@@ -48,7 +48,7 @@ export default function Register({ onSuccess }: RegisterProps) {
           setStoredUser(result.user);
           onSuccess(result.user);
         }
-        setLocation("/");
+        setLocation("/discover");
         toast({
           title: "Welcome back! 🚢",
           description: "You're all set to explore",
@@ -83,7 +83,7 @@ export default function Register({ onSuccess }: RegisterProps) {
           onSuccess(result.user);
         }
         
-        setLocation("/");
+        setLocation("/discover");
         toast({
           title: "Welcome to QaaqConnect! 🎉",
           description: "You're ready to start exploring",

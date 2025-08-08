@@ -6,7 +6,6 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { MessageCircle, Search, Calendar, Eye, CheckCircle, Clock, Hash, ChevronDown, ChevronUp, Image as ImageIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { apiRequest } from '@/lib/queryClient';
@@ -58,7 +57,6 @@ export function QuestionsTab() {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [expandedQuestions, setExpandedQuestions] = useState<Set<number>>(new Set());
-  const [showOnlyWithImages, setShowOnlyWithImages] = useState(false);
   const observer = useRef<IntersectionObserver | null>(null);
   const lastQuestionRef = useRef<HTMLDivElement | null>(null);
 
@@ -157,11 +155,6 @@ export function QuestionsTab() {
 
   const allQuestions = data?.pages.flatMap(page => page.questions) || [];
   const totalQuestions = data?.pages[0]?.total || 0;
-  
-  // Filter questions based on image filter
-  const filteredQuestions = showOnlyWithImages 
-    ? allQuestions.filter(q => q.image_urls && q.image_urls.length > 0)
-    : allQuestions;
 
   // Answer Card Component
   const AnswerCard = ({ answer }: { answer: Answer }) => (
@@ -472,24 +465,9 @@ export function QuestionsTab() {
                 <MessageCircle size={20} />
                 <span>Maritime Q&A</span>
                 <Badge variant="secondary" className="ml-2">
-                  {showOnlyWithImages ? filteredQuestions.length : totalQuestions} Questions
+                  {totalQuestions} Questions
                 </Badge>
               </CardTitle>
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="imageFilter"
-                  checked={showOnlyWithImages}
-                  onCheckedChange={(checked) => setShowOnlyWithImages(checked as boolean)}
-                  className="border-ocean-teal/50 data-[state=checked]:bg-ocean-teal data-[state=checked]:border-ocean-teal"
-                />
-                <label 
-                  htmlFor="imageFilter" 
-                  className="text-sm font-medium text-gray-700 cursor-pointer flex items-center space-x-1"
-                >
-                  <ImageIcon size={16} className="text-ocean-teal" />
-                  <span>Show only with pictures</span>
-                </label>
-              </div>
             </div>
           </div>
         </CardHeader>
@@ -514,23 +492,19 @@ export function QuestionsTab() {
               <p className="text-red-600">Failed to load questions. Please try again.</p>
             </CardContent>
           </Card>
-        ) : filteredQuestions.length === 0 ? (
+        ) : allQuestions.length === 0 ? (
           <Card className="border-2 border-gray-200">
             <CardContent className="p-8 text-center">
               <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                 <MessageCircle size={32} className="text-gray-400" />
               </div>
               <p className="text-gray-600">
-                {showOnlyWithImages 
-                  ? 'No questions with pictures found.' 
-                  : debouncedSearch 
-                    ? 'No questions found matching your search.' 
-                    : 'No questions available yet.'}
+                {debouncedSearch ? 'No questions found matching your search.' : 'No questions available yet.'}
               </p>
             </CardContent>
           </Card>
         ) : (
-          filteredQuestions.map((question, index) => (
+          allQuestions.map((question, index) => (
             <QuestionWithAnswers key={question.id} question={question} index={index} />
           ))
         )}
@@ -546,9 +520,9 @@ export function QuestionsTab() {
         )}
 
         {/* End of list */}
-        {!hasNextPage && filteredQuestions.length > 0 && (
+        {!hasNextPage && allQuestions.length > 0 && (
           <div className="text-center p-4 text-gray-600">
-            <p>You've reached the end of {showOnlyWithImages ? `${filteredQuestions.length} questions with pictures` : `${totalQuestions} questions`}</p>
+            <p>You've reached the end of {totalQuestions} questions</p>
           </div>
         )}
       </div>
