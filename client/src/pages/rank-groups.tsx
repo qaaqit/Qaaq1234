@@ -29,10 +29,9 @@ export default function RankGroupsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-blue-50 p-6">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header with Home Logo - Same as Discover and DM Pages */}
-        <header className="bg-white text-black shadow-md relative overflow-hidden flex-shrink-0 z-[110] border-b-2 border-orange-400 rounded-t-lg mb-6">
+    <div className="h-screen bg-gradient-to-b from-slate-50 to-blue-50 flex flex-col">
+      {/* Header with Home Logo - Same as QBOT Page */}
+      <header className="bg-white text-black shadow-md relative overflow-hidden flex-shrink-0 z-[110] border-b-2 border-orange-400">
           <div className="absolute inset-0 bg-gradient-to-r from-red-50 via-orange-50 to-yellow-50 opacity-50"></div>
           
           <div className="relative z-10 px-2 py-2 sm:px-4 sm:py-3">
@@ -60,13 +59,15 @@ export default function RankGroupsPage() {
           </div>
         </header>
 
-
-
-        {/* Rank Groups Panel Content */}
-        <div className="bg-white rounded-lg shadow-sm">
-          <RankGroupsPanel />
+        {/* Content Area */}
+        <div className="flex-1 overflow-auto p-6">
+          <div className="max-w-4xl mx-auto">
+            {/* Rank Groups Panel Content */}
+            <div className="bg-white rounded-lg shadow-sm">
+              <RankGroupsPanel />
+            </div>
+          </div>
         </div>
-      </div>
     </div>
   );
 }
