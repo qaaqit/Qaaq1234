@@ -186,8 +186,8 @@ export default function QBOTPage({ user }: QBOTPageProps) {
         </div>
       </header>
       
-      {/* Always Maximized QBOT Chat Container */}
-      <div className="flex-1 pb-16">
+      {/* QBOT Chat Container - Reduced to Half Height */}
+      <div className="h-[50vh] pb-16">
         <QBOTChatContainer>
           <div className="flex flex-col h-full">
             {/* Gradient Header */}
