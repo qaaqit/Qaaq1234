@@ -237,11 +237,11 @@ export default function AdminPanel() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto p-6">
-        <div className="mb-6">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6">
+        <div className="mb-4 sm:mb-6">
           <Button
             onClick={() => setLocation("/admin/bot-rules")}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
+            className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
           >
             <i className="fas fa-file-text mr-2"></i>
             Edit QBOT Rules
@@ -249,28 +249,71 @@ export default function AdminPanel() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="analytics">
-              <i className="fas fa-chart-pie mr-2"></i>
-              Analytics
-            </TabsTrigger>
-            <TabsTrigger value="metrics">
-              <i className="fas fa-chart-line mr-2"></i>
-              Metrics
-            </TabsTrigger>
-            <TabsTrigger value="qbot">
-              <i className="fas fa-robot mr-2"></i>
-              QBOT Rules
-            </TabsTrigger>
-            <TabsTrigger value="qoi">
-              <i className="fas fa-comments mr-2"></i>
-              QOI GPT Rules
-            </TabsTrigger>
-            <TabsTrigger value="users">
-              <i className="fas fa-users mr-2"></i>
-              User Management
-            </TabsTrigger>
-          </TabsList>
+          {/* Mobile-friendly two-row layout */}
+          <div className="space-y-2">
+            {/* First Row: Analytics, Metrics, QBOT */}
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                onClick={() => setActiveTab("analytics")}
+                className={`flex items-center justify-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${
+                  activeTab === "analytics"
+                    ? "bg-orange-600 text-white shadow-sm"
+                    : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                }`}
+              >
+                <i className="fas fa-chart-pie mr-2"></i>
+                Analytics
+              </button>
+              <button
+                onClick={() => setActiveTab("metrics")}
+                className={`flex items-center justify-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${
+                  activeTab === "metrics"
+                    ? "bg-orange-600 text-white shadow-sm"
+                    : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                }`}
+              >
+                <i className="fas fa-chart-line mr-2"></i>
+                Metrics
+              </button>
+              <button
+                onClick={() => setActiveTab("qbot")}
+                className={`flex items-center justify-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${
+                  activeTab === "qbot"
+                    ? "bg-orange-600 text-white shadow-sm"
+                    : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                }`}
+              >
+                <i className="fas fa-robot mr-2"></i>
+                QBOT
+              </button>
+            </div>
+            
+            {/* Second Row: QOI, User Management */}
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => setActiveTab("qoi")}
+                className={`flex items-center justify-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${
+                  activeTab === "qoi"
+                    ? "bg-orange-600 text-white shadow-sm"
+                    : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                }`}
+              >
+                <i className="fas fa-comments mr-2"></i>
+                QOI GPT
+              </button>
+              <button
+                onClick={() => setActiveTab("users")}
+                className={`flex items-center justify-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${
+                  activeTab === "users"
+                    ? "bg-orange-600 text-white shadow-sm"
+                    : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                }`}
+              >
+                <i className="fas fa-users mr-2"></i>
+                User Management
+              </button>
+            </div>
+          </div>
 
           {/* Analytics Tab - Replit-style Dashboard */}
           <TabsContent value="analytics" className="space-y-6">
@@ -323,58 +366,58 @@ export default function AdminPanel() {
 
           {/* Metrics Tab */}
           <TabsContent value="metrics" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Total Users</CardTitle>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <Card className="p-3">
+            <CardHeader className="p-0 pb-1">
+              <CardTitle className="text-xs font-medium text-gray-600">Total Users</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-ocean-teal">{stats?.totalUsers || 0}</div>
+            <CardContent className="p-0">
+              <div className="text-lg font-bold text-ocean-teal">{stats?.totalUsers || 0}</div>
             </CardContent>
           </Card>
           
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Sailors</CardTitle>
+          <Card className="p-3">
+            <CardHeader className="p-0 pb-1">
+              <CardTitle className="text-xs font-medium text-gray-600">Sailors</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{stats?.sailors || 0}</div>
+            <CardContent className="p-0">
+              <div className="text-lg font-bold text-blue-600">{stats?.sailors || 0}</div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Local Pros</CardTitle>
+          <Card className="p-3">
+            <CardHeader className="p-0 pb-1">
+              <CardTitle className="text-xs font-medium text-gray-600">Local Pros</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-teal-600">{stats?.locals || 0}</div>
+            <CardContent className="p-0">
+              <div className="text-lg font-bold text-teal-600">{stats?.locals || 0}</div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Verified</CardTitle>
+          <Card className="p-3">
+            <CardHeader className="p-0 pb-1">
+              <CardTitle className="text-xs font-medium text-gray-600">Verified</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{stats?.verifiedUsers || 0}</div>
+            <CardContent className="p-0">
+              <div className="text-lg font-bold text-green-600">{stats?.verifiedUsers || 0}</div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Active Users</CardTitle>
+          <Card className="p-3">
+            <CardHeader className="p-0 pb-1">
+              <CardTitle className="text-xs font-medium text-gray-600">Active Users</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-purple-600">{stats?.activeUsers || 0}</div>
+            <CardContent className="p-0">
+              <div className="text-lg font-bold text-purple-600">{stats?.activeUsers || 0}</div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Total Logins</CardTitle>
+          <Card className="p-3">
+            <CardHeader className="p-0 pb-1">
+              <CardTitle className="text-xs font-medium text-gray-600">Total Logins</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-orange-600">{stats?.totalLogins || 0}</div>
+            <CardContent className="p-0">
+              <div className="text-lg font-bold text-orange-600">{stats?.totalLogins || 0}</div>
             </CardContent>
           </Card>
             </div>

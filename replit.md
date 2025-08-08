@@ -81,6 +81,19 @@ Onboard Search: Special "onboard" keyword search filters for sailing users and d
 
 ## Recent Changes - Version Qaaq Dead Slow (August 8, 2025)
 
+### Admin Panel Mobile Enhancement - UI Layout Optimized (August 8, 2025)
+**Date: August 8, 2025**
+**Status: MOBILE-OPTIMIZED - Two-row layout for better mobile display**
+**Achievement: Reorganized admin navigation and metrics for proper mobile viewing**
+
+**Mobile Layout Improvements Made:**
+- **Two-Row Tab Layout**: Split admin navigation into two rows (Analytics/Metrics/QBOT + QOI GPT/User Management) for better mobile spacing
+- **Custom Tab Buttons**: Replaced single-row TabsList with custom button grid using orange branding
+- **Compact Metrics Cards**: Reduced card padding (p-3) and font sizes (text-xs titles, text-lg values) for mobile-friendly display
+- **Responsive Grid**: Changed metrics from 6-column to 2/3/6 column responsive grid (grid-cols-2 sm:grid-cols-3 lg:grid-cols-6)
+- **Mobile Padding**: Applied responsive padding (p-4 sm:p-6) and full-width buttons on mobile
+- **Chat Metrics Integration**: Added daily chat growth visualization showing Web Chat vs WhatsApp trends with dual-line chart
+
 ### Qaaq Clean Bot Version - UI Streamlined (August 8, 2025)
 **Date: August 8, 2025**
 **Status: STABLE - Clean UI with minimized bot identification**
