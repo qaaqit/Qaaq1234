@@ -11,6 +11,7 @@ Project Ambitions: To create a vibrant, self-sustaining community where maritime
 Preferred communication style: Simple, everyday language.
 Username field label: "USER NAME (This may be ur country code +91 & whatsapp number )"
 Primary focus: "Koi Hai?" (Who's there?) discovery - helping sailors find who's nearby in ports
+Home page after login: QBOT Chat (not Map Radar) - users land on QBOT Chat immediately after authentication
 Color Scheme: Orange (#ea580c), Red (#dc2626), and White - NOT blue/teal colors
 Search Interface: Crown icon must be present in search bar, filter/map/radar icons on right side of search bar
 Header Design: White header with QAAQ logo, admin shield, and QBOT button
@@ -63,7 +64,7 @@ Onboard Search: Special "onboard" keyword search filters for sailing users and d
 - **Bot Documentation Storage**: Bot rules and documentation stored in `bot_documentation` table.
 
 ### System Design Choices
-- **Authentication System**: QAAQ User ID and Password authentication (dummy password "1234koihai"), JWT tokens, user type distinction. Cross-platform compatibility between web and mobile.
+- **Authentication System**: QAAQ User ID and Password authentication (dummy password "1234koihai"), JWT tokens, user type distinction. Cross-platform compatibility between web and mobile. All authentication flows redirect to "/" (QBOT Chat) as the home page.
 - **Social Features**: Post creation with content categories and location tagging, like/unlike functionality, author display options.
 - **Discovery System**: Interactive world map with light grey theme, proximity-based user discovery showing nearest users, city-based location display for sailors and locals, color-coded map pins. Mobile GPS integration for real-time location.
 - **Real-Time Messaging**: WebSocket-based real-time messaging with live typing indicators, instant message delivery, and read receipts.
