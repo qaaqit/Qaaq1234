@@ -72,7 +72,7 @@ export async function getQuestions(page: number = 1, limit: number = 20, withIma
           WHEN q.is_from_whatsapp THEN 'WhatsApp Q&A'
           ELSE 'General Discussion'
         END as category_name,
-        (SELECT COUNT(*) FROM qaaq_answers a WHERE CAST(a.question_id AS TEXT) = CAST(q.id AS TEXT)) as answer_count
+        (SELECT COUNT(*) FROM answers a WHERE CAST(a.question_id AS TEXT) = CAST(q.id AS TEXT)) as answer_count
       FROM questions q
       LEFT JOIN users u ON CAST(u.id AS TEXT) = CAST(q.author_id AS TEXT)
       WHERE q.is_archived = false AND q.is_hidden = false
@@ -150,7 +150,7 @@ export async function getQuestionById(questionId: number): Promise<Question | nu
           WHEN q.is_from_whatsapp THEN 'WhatsApp Q&A'
           ELSE 'General Discussion'
         END as category,
-        (SELECT COUNT(*) FROM qaaq_answers a WHERE CAST(a.question_id AS TEXT) = CAST(q.id AS TEXT)) as answer_count,
+        (SELECT COUNT(*) FROM answers a WHERE CAST(a.question_id AS TEXT) = CAST(q.id AS TEXT)) as answer_count,
         false as is_anonymous,
         CASE WHEN q.is_from_whatsapp THEN 'whatsapp' ELSE 'web' END as source
       FROM questions q
@@ -181,8 +181,8 @@ export async function getQuestionAnswers(questionId: number): Promise<any[]> {
     const result = await client.query(`
       SELECT 
         a.id,
-        a.answer_text as content,
-        a.user_id as author_id,
+        a.content,
+        a.author_id,
         u.first_name || ' ' || COALESCE(u.last_name, '') as author_name,
         u.maritime_rank as author_rank,
         u.whatsapp_profile_picture_url as author_whatsapp_profile_picture_url,
@@ -190,13 +190,13 @@ export async function getQuestionAnswers(questionId: number): Promise<any[]> {
         u.profile_image_url as author_profile_picture_url,
         a.created_at,
         CASE 
-          WHEN a.user_id LIKE 'wa_%' OR u.whatsapp_display_name IS NOT NULL THEN true
+          WHEN a.author_id LIKE 'wa_%' OR u.whatsapp_display_name IS NOT NULL THEN true
           ELSE false
         END as is_from_whatsapp,
-        false as is_best_answer
-      FROM qaaq_answers a
-      LEFT JOIN users u ON CAST(u.id AS TEXT) = CAST(a.user_id AS TEXT)
-      WHERE a.question_id = $1
+        COALESCE(a.is_accepted, false) as is_best_answer
+      FROM answers a
+      LEFT JOIN users u ON CAST(u.id AS TEXT) = CAST(a.author_id AS TEXT)
+      WHERE CAST(a.question_id AS TEXT) = CAST($1 AS TEXT)
       ORDER BY 
         a.created_at ASC
     `, [questionId]);
@@ -257,7 +257,7 @@ export async function searchQuestions(query: string, page: number = 1, limit: nu
           WHEN q.is_from_whatsapp THEN 'WhatsApp Q&A'
           ELSE 'General Discussion'
         END as category_name,
-        (SELECT COUNT(*) FROM qaaq_answers a WHERE CAST(a.question_id AS TEXT) = CAST(q.id AS TEXT)) as answer_count
+        (SELECT COUNT(*) FROM answers a WHERE CAST(a.question_id AS TEXT) = CAST(q.id AS TEXT)) as answer_count
       FROM questions q
       LEFT JOIN users u ON CAST(u.id AS TEXT) = CAST(q.author_id AS TEXT)
       WHERE q.is_archived = false 

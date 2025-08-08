@@ -239,9 +239,9 @@ export async function storeAnswer(answerData: {
  */
 export async function getAnswersForQuestion(questionId: string): Promise<SharedAnswer[]> {
   const query = `
-    SELECT * FROM qaaq_answers 
-    WHERE question_id = $1 
-    ORDER BY answered_date ASC
+    SELECT * FROM answers 
+    WHERE CAST(question_id AS TEXT) = CAST($1 AS TEXT)
+    ORDER BY created_at ASC
   `;
 
   try {
