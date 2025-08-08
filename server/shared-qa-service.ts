@@ -53,7 +53,7 @@ export async function storeQuestion(questionData: {
   const query = `
     INSERT INTO qaaq_questions (
       question_id, user_id, user_name, question_text, question_category,
-      asked_date, source, urgency, tags, location
+      created_at, source, urgency, tags, location
     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
     ON CONFLICT (question_id) 
     DO UPDATE SET 
@@ -92,7 +92,7 @@ export async function getUserQuestionsFromSharedDB(userId: string): Promise<Shar
   const query = `
     SELECT * FROM qaaq_questions 
     WHERE user_id = $1 
-    ORDER BY asked_date DESC
+    ORDER BY created_at DESC
   `;
 
   try {
@@ -111,7 +111,7 @@ export async function getQuestionsByUserName(userName: string): Promise<SharedQu
   const query = `
     SELECT * FROM qaaq_questions 
     WHERE LOWER(user_name) LIKE LOWER($1)
-    ORDER BY asked_date DESC
+    ORDER BY created_at DESC
   `;
 
   try {
@@ -129,11 +129,31 @@ export async function getQuestionsByUserName(userName: string): Promise<SharedQu
 export async function getAllQuestionsFromSharedDB(): Promise<SharedQuestion[]> {
   const query = `
     SELECT * FROM qaaq_questions 
-    ORDER BY asked_date DESC
+    ORDER BY created_at DESC
   `;
 
   try {
+    console.log('Executing query to fetch all questions from qaaq_questions table...');
     const result = await pool.query(query);
+    console.log(`Found ${result.rows.length} questions in qaaq_questions table`);
+    
+    if (result.rows.length > 0) {
+      console.log('Sample raw question data:', {
+        id: result.rows[0].id,
+        question_text: result.rows[0].question_text?.substring(0, 100) + '...',
+        user_name: result.rows[0].user_name,
+        created_at: result.rows[0].created_at,
+        all_columns: Object.keys(result.rows[0])
+      });
+      
+      const mappedSample = mapRowToQuestion(result.rows[0]);
+      console.log('Sample mapped question:', {
+        id: mappedSample.id,
+        questionText: mappedSample.questionText?.substring(0, 100) + '...',
+        userName: mappedSample.userName
+      });
+    }
+    
     return result.rows.map(mapRowToQuestion);
   } catch (error) {
     console.error('Error fetching all questions:', error);
@@ -152,11 +172,13 @@ export async function searchQuestionsInSharedDB(keyword: string): Promise<Shared
       LOWER(question_category) LIKE LOWER($1) OR
       LOWER(user_name) LIKE LOWER($1) OR
       $1 = ANY(SELECT LOWER(tag) FROM unnest(tags) as tag)
-    ORDER BY asked_date DESC
+    ORDER BY created_at DESC
   `;
 
   try {
+    console.log(`Searching questions with keyword: "${keyword}"`);
     const result = await pool.query(query, [`%${keyword}%`]);
+    console.log(`Search found ${result.rows.length} questions`);
     return result.rows.map(mapRowToQuestion);
   } catch (error) {
     console.error('Error searching questions:', error);
@@ -296,7 +318,7 @@ function mapRowToQuestion(row: any): SharedQuestion {
     userName: row.user_name,
     questionText: row.question_text,
     questionCategory: row.question_category,
-    askedDate: new Date(row.asked_date),
+    askedDate: new Date(row.created_at),
     source: row.source,
     answerCount: row.answer_count || 0,
     isResolved: row.is_resolved || false,
@@ -304,7 +326,7 @@ function mapRowToQuestion(row: any): SharedQuestion {
     tags: row.tags || [],
     location: row.location,
     createdAt: new Date(row.created_at),
-    updatedAt: new Date(row.updated_at)
+    updatedAt: new Date(row.updated_at || row.created_at)
   };
 }
 

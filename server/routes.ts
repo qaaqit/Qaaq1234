@@ -2248,15 +2248,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('Questions API called without authentication requirement');
       
-      // Return empty questions since no questions data is available
-      const emptyQuestions = {
-        questions: [],
-        total: 0,
-        hasMore: false
-      };
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const search = req.query.search as string;
       
-      console.log('API: Returning empty questions list (no data available)');
-      res.json(emptyQuestions);
+      // Import shared Q&A service to get real questions from QAAQ database
+      const { getAllQuestionsFromSharedDB, searchQuestionsInSharedDB } = await import('./shared-qa-service');
+      
+      console.log(`Fetching real questions from QAAQ database - page ${page}, limit ${limit}, search: ${search || 'none'}`);
+      
+      // Get questions from the shared QAAQ database (1228 questions total)
+      let allQuestions;
+      if (search && search.trim() !== '') {
+        console.log(`Searching for questions with term: "${search}"`);
+        allQuestions = await searchQuestionsInSharedDB(search);
+      } else {
+        console.log('Fetching all questions from QAAQ database...');
+        allQuestions = await getAllQuestionsFromSharedDB();
+      }
+      
+      console.log(`Retrieved ${allQuestions.length} questions from QAAQ database`);
+      
+      // Transform the questions to match the expected frontend format
+      const transformedQuestions = allQuestions.map((q, index) => ({
+        id: q.id || index + 1, // Use database ID if available, otherwise index
+        content: q.questionText || q.question_text || q.content || '',
+        author_id: q.userId || q.user_id || '',
+        author_name: q.userName || q.user_name || 'Anonymous',
+        author_rank: q.maritime_rank || null,
+        tags: q.tags || [],
+        views: q.view_count || 0,
+        is_resolved: q.isResolved || q.is_resolved || false,
+        created_at: q.askedDate || q.createdAt || q.created_at || new Date().toISOString(),
+        updated_at: q.updatedAt || q.updated_at || q.created_at || new Date().toISOString(),
+        image_urls: q.image_urls || [],
+        is_from_whatsapp: q.is_from_whatsapp || false,
+        engagement_score: q.engagement_score || 0,
+        flag_count: 0,
+        category_name: q.questionCategory || q.question_category || 'General Discussion',
+        answer_count: q.answerCount || q.answer_count || 0,
+        author_whatsapp_profile_picture_url: q.author_whatsapp_profile_picture_url || null,
+        author_whatsapp_display_name: q.author_whatsapp_display_name || null,
+        author_profile_picture_url: q.author_profile_picture_url || null
+      }));
+      
+      // Apply pagination
+      const offset = (page - 1) * limit;
+      const paginatedQuestions = transformedQuestions.slice(offset, offset + limit);
+      const hasMore = offset + limit < transformedQuestions.length;
+      
+      console.log(`API: Returning ${paginatedQuestions.length} questions out of ${transformedQuestions.length} total from QAAQ database (search: ${search ? 'yes' : 'no'})`);
+      
+      res.json({
+        questions: paginatedQuestions,
+        total: transformedQuestions.length,
+        hasMore: hasMore
+      });
     } catch (error) {
       console.error('Error fetching questions:', error);
       res.status(500).json({ error: 'Failed to fetch questions' });
