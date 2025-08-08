@@ -186,11 +186,11 @@ export function setupMergeRoutes(app: express.Application) {
   });
 
   /**
-   * Send signup OTP endpoint
+   * Send signup OTP endpoint (dual WhatsApp + Email)
    */
   app.post('/api/auth/send-signup-otp', async (req, res) => {
     try {
-      const { whatsappNumber } = req.body;
+      const { whatsappNumber, email } = req.body;
       
       if (!whatsappNumber) {
         return res.status(400).json({ 
@@ -207,7 +207,7 @@ export function setupMergeRoutes(app: express.Application) {
         });
       }
 
-      const result = await robustAuth.sendSignupOTP(whatsappNumber);
+      const result = await robustAuth.sendSignupOTP(whatsappNumber, email);
       res.json(result);
     } catch (error) {
       console.error('Send signup OTP error:', error);
@@ -220,7 +220,7 @@ export function setupMergeRoutes(app: express.Application) {
    */
   app.post('/api/auth/verify-signup-otp', async (req, res) => {
     try {
-      const { whatsappNumber, otpCode, email, password, fullName, userType = 'local' } = req.body;
+      const { whatsappNumber, otpCode, email, password, fullName, userType = 'local', emailOtpCode } = req.body;
       
       if (!whatsappNumber || !otpCode || !email || !password) {
         return res.status(400).json({ 
@@ -243,7 +243,8 @@ export function setupMergeRoutes(app: express.Application) {
         email,
         password,
         fullName: fullName || `User ${whatsappNumber}`,
-        userType
+        userType,
+        emailOtpCode
       });
 
       res.json(result);

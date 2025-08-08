@@ -22,7 +22,8 @@ export default function SignUpModal({ onClose, onSuccess }: SignUpModalProps) {
     password: '',
     confirmPassword: '',
     fullName: '',
-    otpCode: ''
+    otpCode: '',
+    emailOtpCode: ''
   });
   const [result, setResult] = useState<any>(null);
   const [errors, setErrors] = useState<string[]>([]);

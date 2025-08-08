@@ -476,9 +476,9 @@ export class RobustAuthSystem {
   }
 
   /**
-   * Generate and send signup OTP
+   * Generate and send dual OTP (WhatsApp + Email if provided)
    */
-  async sendSignupOTP(whatsappNumber: string): Promise<{ success: boolean; message: string }> {
+  async sendSignupOTP(whatsappNumber: string, email?: string): Promise<{ success: boolean; message: string }> {
     try {
       // Check if user already exists
       const existingUser = await this.findUserById(whatsappNumber);
@@ -489,16 +489,32 @@ export class RobustAuthSystem {
       const result = passwordManager.generateSignupOTP(whatsappNumber);
       
       if (result.success && result.otpCode) {
+        let messages = [];
+        
         // Send WhatsApp message with OTP
         const whatsappMessage = `🆕 QAAQ New User Verification\n\nYour verification code is: ${result.otpCode}\n\nThis code expires in 10 minutes.\n\nWelcome to QaaqConnect!`;
-        
-        // In a real implementation, you would send this via WhatsApp API
-        // For now, we'll log it to console for testing
         console.log(`📱 Signup OTP for ${whatsappNumber}:`, whatsappMessage);
+        messages.push('WhatsApp');
+        
+        // Send email OTP if email is provided
+        if (email) {
+          try {
+            const { emailService } = await import('./email-service');
+            const emailResult = await emailService.sendEmailOTP(email);
+            if (emailResult.success) {
+              messages.push('email');
+              console.log(`📧 Email OTP sent to ${email} with code: ${emailResult.otpCode}`);
+            } else {
+              console.log(`📧 Email OTP failed for ${email}: ${emailResult.message}`);
+            }
+          } catch (error) {
+            console.error('Email service error:', error);
+          }
+        }
         
         return {
           success: true,
-          message: 'Verification code sent to your WhatsApp number'
+          message: `Verification code sent to your ${messages.join(' and ')}`
         };
       }
       
@@ -510,7 +526,7 @@ export class RobustAuthSystem {
   }
 
   /**
-   * Verify OTP and create new user account
+   * Verify dual OTP and create new user account
    */
   async verifyOTPAndCreateUser(userData: {
     whatsappNumber: string;
@@ -519,12 +535,27 @@ export class RobustAuthSystem {
     password: string;
     fullName: string;
     userType: string;
+    emailOtpCode?: string;
   }): Promise<{ success: boolean; message: string; user?: any; token?: string }> {
     try {
-      // First verify the OTP
-      const otpVerification = passwordManager.verifySignupOTP(userData.whatsappNumber, userData.otpCode);
-      if (!otpVerification.success) {
-        return otpVerification;
+      // First verify the WhatsApp OTP
+      const whatsappOtpVerification = passwordManager.verifySignupOTP(userData.whatsappNumber, userData.otpCode);
+      if (!whatsappOtpVerification.success) {
+        return whatsappOtpVerification;
+      }
+
+      // Verify email OTP if provided
+      if (userData.email && userData.emailOtpCode) {
+        try {
+          const { emailService } = await import('./email-service');
+          const emailOtpVerification = emailService.verifyEmailOTP(userData.email, userData.emailOtpCode);
+          if (!emailOtpVerification.success) {
+            return { success: false, message: `Email verification failed: ${emailOtpVerification.message}` };
+          }
+        } catch (error) {
+          console.error('Email OTP verification error:', error);
+          return { success: false, message: 'Email verification service unavailable' };
+        }
       }
 
       // Now create the user account

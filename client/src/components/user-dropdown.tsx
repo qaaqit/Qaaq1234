@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { 
   User, 
@@ -144,19 +144,13 @@ export default function UserDropdown({ user, className = "", onLogout }: UserDro
       >
         <div className="flex items-center space-x-2">
           <Avatar className="w-10 h-10 border-2 border-white shadow-lg">
-            {user.profilePictureUrl ? (
-              <img 
-                src={user.profilePictureUrl} 
-                alt={`${user.fullName}'s profile`}
-                className="w-full h-full rounded-full object-cover"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                }}
-              />
-            ) : null}
+            <AvatarImage 
+              src="" 
+              alt={`${user.fullName || 'User'}'s profile`}
+              className="w-full h-full rounded-full object-cover"
+            />
             <AvatarFallback className="bg-white/20 text-white font-semibold">
-              {user.fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+              {user.fullName ? user.fullName.split(' ').map(n => n?.[0] || '').join('').slice(0, 2).toUpperCase() : 'U'}
             </AvatarFallback>
           </Avatar>
           <ChevronDown className={`w-4 h-4 text-yellow-100 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
@@ -179,7 +173,7 @@ export default function UserDropdown({ user, className = "", onLogout }: UserDro
             <div className="flex items-center space-x-3">
               <Avatar className="w-12 h-12">
                 <AvatarFallback className="bg-yellow-400 text-red-600 font-semibold text-lg">
-                  {user.fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                  {user.fullName ? user.fullName.split(' ').map(n => n?.[0] || '').join('').slice(0, 2).toUpperCase() : 'U'}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
@@ -187,22 +181,18 @@ export default function UserDropdown({ user, className = "", onLogout }: UserDro
                   {user.fullName || user.id}
                 </h3>
                 <p className="text-sm text-gray-600 mb-1">
-                  Welcome{user.fullName && !user.fullName.startsWith('+') ? `, ${user.fullName.split(' ')[0]}` : ''}!
+                  Welcome{user.fullName && !user.fullName.startsWith('+') ? `, ${user.fullName.split(' ')?.[0] || ''}` : ''}!
                 </p>
                 <p className="text-xs text-gray-500 mb-2 font-mono bg-gray-50 px-2 py-1 rounded border">
                   User ID: {user.id}
                 </p>
                 <div className="flex items-center space-x-2">
-                  {(user.company || user.userType === 'sailor') && (
+                  {user.userType === 'sailor' && (
                     <Badge 
                       variant="outline" 
-                      className={`text-xs ${
-                        user.company 
-                          ? 'bg-gray-200 text-gray-700 border-gray-400'
-                          : 'bg-navy/20 text-navy-300 border-navy-400'
-                      }`}
+                      className="text-xs bg-blue-100 text-blue-700 border-blue-400"
                     >
-                      {user.company || (user.userType === 'sailor' ? '🚢 Sailor' : '')}
+                      🚢 Sailor
                     </Badge>
                   )}
                   {user.isAdmin && (
