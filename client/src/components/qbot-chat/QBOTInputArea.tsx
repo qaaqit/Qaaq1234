@@ -280,7 +280,8 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
                    focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent
                    disabled:opacity-50 disabled:cursor-not-allowed
                    placeholder:text-gray-400 text-gray-700
-                   min-h-[40px] max-h-[120px] overflow-y-auto"
+                   min-h-[40px] max-h-[120px] overflow-y-hidden"
+          style={{ resize: 'none' }}
           rows={1}
         />
         
