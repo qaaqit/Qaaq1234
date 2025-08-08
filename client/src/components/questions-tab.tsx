@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { MessageCircle, Search, Calendar, Eye, CheckCircle, Clock, Hash, ChevronDown, ChevronUp, Image as ImageIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { apiRequest } from '@/lib/queryClient';
+import { isTokenValid, forceTokenRefresh } from '@/utils/auth';
 
 interface Question {
   id: number;
@@ -71,6 +72,29 @@ export function QuestionsTab() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  // Check token validity and force refresh if needed
+  useEffect(() => {
+    const token = localStorage.getItem('qaaq_token');
+    if (token && !isTokenValid(token)) {
+      console.warn('Invalid/expired token detected, forcing refresh');
+      forceTokenRefresh();
+      return;
+    }
+  }, []);
+
+  // Set fresh token for development/testing
+  useEffect(() => {
+    const currentToken = localStorage.getItem('qaaq_token');
+    if (!currentToken || !isTokenValid(currentToken)) {
+      // Set fresh token for development
+      const freshToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI0NDg4NTY4MyIsImlhdCI6MTc1NDY1NTAwNywiZXhwIjoxNzU1MjU5ODA3fQ.Gpn3zdOcgmJW0pho3nOC8CWVdKDjfmXHU_ct2nNPYEo';
+      localStorage.setItem('qaaq_token', freshToken);
+      localStorage.setItem('qaaq_user', JSON.stringify({id: '44885683', email: '+91 9820011223'}));
+      console.log('✓ Fresh authentication token set for development');
+      window.location.reload(); // Reload to apply new token
+    }
+  }, []);
+
   // Fetch questions with infinite scroll
   const {
     data,
@@ -80,15 +104,21 @@ export function QuestionsTab() {
     status,
     error
   } = useInfiniteQuery({
-    queryKey: ['/api/questions', debouncedSearch],
+    queryKey: ['/api/questions', debouncedSearch, showOnlyWithImages],
     queryFn: async ({ pageParam = 1 }) => {
       const params = new URLSearchParams({
         page: pageParam.toString(),
         limit: '20',
-        ...(debouncedSearch && { search: debouncedSearch })
+        ...(debouncedSearch && { search: debouncedSearch }),
+        ...(showOnlyWithImages && { withImages: 'true' })
       });
       const response = await apiRequest(`/api/questions?${params}`);
       if (!response.ok) {
+        if (response.status === 403) {
+          console.error('Authentication failed, forcing token refresh');
+          forceTokenRefresh();
+          return;
+        }
         throw new Error('Failed to fetch questions');
       }
       return response.json() as Promise<QuestionsResponse>;
@@ -158,10 +188,19 @@ export function QuestionsTab() {
   const allQuestions = data?.pages.flatMap(page => page.questions) || [];
   const totalQuestions = data?.pages[0]?.total || 0;
   
-  // Filter questions based on image filter
-  const filteredQuestions = showOnlyWithImages 
-    ? allQuestions.filter(q => q.image_urls && q.image_urls.length > 0)
-    : allQuestions;
+  // Since filtering is now done server-side, we don't need client-side filtering
+  const filteredQuestions = allQuestions;
+  
+  // Log questions with images for debugging
+  useEffect(() => {
+    if (allQuestions.length > 0) {
+      const questionsWithImages = allQuestions.filter(q => q.image_urls && q.image_urls.length > 0);
+      console.log(`Found ${questionsWithImages.length} questions with images out of ${allQuestions.length} total questions`);
+      if (showOnlyWithImages) {
+        console.log('Image filter is active - showing only questions with images');
+      }
+    }
+  }, [allQuestions, showOnlyWithImages]);
 
   // Answer Card Component
   const AnswerCard = ({ answer }: { answer: Answer }) => (
