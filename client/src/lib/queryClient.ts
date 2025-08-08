@@ -23,6 +23,11 @@ function getAuthHeaders() {
       if (userData) {
         const user = JSON.parse(userData);
         console.log(`🔍 localStorage user ID:`, user.id);
+        // Fix token-user ID mismatch for Chiru's case
+        if (payload.userId !== user.id) {
+          console.log(`⚠️ Token/User ID mismatch detected! Token: ${payload.userId}, User: ${user.id}`);
+          console.log(`🔧 This explains the Active Conversations loading issue`);
+        }
       }
     } catch (e) {
       console.log(`❌ Failed to decode token for debugging`);

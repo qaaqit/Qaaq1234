@@ -20,6 +20,7 @@ import MyQuestions from "@/pages/my-questions";
 import QuestionPage from "@/pages/question";
 import RankGroupsPage from "@/pages/rank-groups";
 import QBOTPage from "@/pages/qbot";
+import MergeAccountsPage from "@/pages/merge-accounts";
 
 import NotFound from "@/pages/not-found";
 import BottomNav from "@/components/bottom-nav";
@@ -79,6 +80,7 @@ function Router() {
           <Route path="/rank-groups" component={() => user ? <RankGroupsPage /> : <Home />} />
           <Route path="/admin" component={() => user ? <Admin /> : <Home />} />
           <Route path="/admin/bot-rules" component={() => user ? <BotRulesAdmin /> : <Home />} />
+          <Route path="/merge-accounts/:sessionId" component={MergeAccountsPage} />
 
           <Route component={NotFound} />
         </Switch>

@@ -1,0 +1,284 @@
+import express from 'express';
+import jwt from 'jsonwebtoken';
+import { robustAuth, DuplicateUser, MergeDecision } from './auth-system';
+
+/**
+ * Account Merge API Routes
+ * Handles the user interface for merging duplicate accounts
+ */
+
+interface MergeSession {
+  id: string;
+  userId: string;
+  duplicateAccounts: DuplicateUser[];
+  createdAt: Date;
+  expiresAt: Date;
+}
+
+class MergeSessionManager {
+  private sessions = new Map<string, MergeSession>();
+  
+  createSession(sessionId: string, duplicateAccounts: DuplicateUser[]): MergeSession {
+    const session: MergeSession = {
+      id: sessionId,
+      userId: duplicateAccounts[0]?.phone || '', // Use phone as identifier
+      duplicateAccounts,
+      createdAt: new Date(),
+      expiresAt: new Date(Date.now() + 30 * 60 * 1000) // 30 minutes
+    };
+    
+    this.sessions.set(sessionId, session);
+    return session;
+  }
+  
+  getSession(sessionId: string): MergeSession | undefined {
+    const session = this.sessions.get(sessionId);
+    if (session && session.expiresAt > new Date()) {
+      return session;
+    }
+    
+    if (session) {
+      this.sessions.delete(sessionId);
+    }
+    
+    return undefined;
+  }
+  
+  deleteSession(sessionId: string): void {
+    this.sessions.delete(sessionId);
+  }
+}
+
+export const mergeSessionManager = new MergeSessionManager();
+
+export function setupMergeRoutes(app: express.Application) {
+  
+  /**
+   * Enhanced login endpoint with duplicate detection
+   */
+  app.post('/api/auth/login-robust', async (req, res) => {
+    try {
+      const { userId, password } = req.body;
+      
+      if (!userId || !password) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "User ID and password are required" 
+        });
+      }
+      
+      const authResult = await robustAuth.authenticateUser(userId, password);
+      
+      if (authResult.requiresMerge) {
+        // Create merge session
+        const session = mergeSessionManager.createSession(
+          authResult.mergeSessionId!, 
+          authResult.duplicateAccounts!
+        );
+        
+        return res.json({
+          success: false,
+          requiresMerge: true,
+          mergeSessionId: authResult.mergeSessionId,
+          duplicateAccounts: authResult.duplicateAccounts,
+          message: "Multiple accounts found. Please choose how to proceed."
+        });
+      }
+      
+      if (authResult.success) {
+        res.json({
+          success: true,
+          user: authResult.user,
+          token: authResult.token,
+          message: "Login successful"
+        });
+      } else {
+        res.status(401).json({
+          success: false,
+          message: "Invalid credentials"
+        });
+      }
+      
+    } catch (error) {
+      console.error('Robust login error:', error);
+      res.status(500).json({
+        success: false,
+        message: "Authentication system error"
+      });
+    }
+  });
+  
+  /**
+   * Get merge session details
+   */
+  app.get('/api/auth/merge-session/:sessionId', async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      const session = mergeSessionManager.getSession(sessionId);
+      
+      if (!session) {
+        return res.status(404).json({
+          success: false,
+          message: "Merge session not found or expired"
+        });
+      }
+      
+      // Add recommendations for each account
+      const accountsWithRecommendations = session.duplicateAccounts.map(account => ({
+        ...account,
+        recommendation: generateAccountRecommendation(account, session.duplicateAccounts)
+      }));
+      
+      res.json({
+        success: true,
+        session: {
+          id: session.id,
+          accounts: accountsWithRecommendations,
+          expiresAt: session.expiresAt
+        }
+      });
+      
+    } catch (error) {
+      console.error('Get merge session error:', error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to retrieve merge session"
+      });
+    }
+  });
+  
+  /**
+   * Execute account merge
+   */
+  app.post('/api/auth/merge-accounts', async (req, res) => {
+    try {
+      const { sessionId, primaryAccountId, duplicateAccountIds, mergeStrategy } = req.body;
+      
+      const session = mergeSessionManager.getSession(sessionId);
+      if (!session) {
+        return res.status(404).json({
+          success: false,
+          message: "Merge session not found or expired"
+        });
+      }
+      
+      // Validate the merge decision
+      const validAccountIds = session.duplicateAccounts.map(acc => acc.id);
+      if (!validAccountIds.includes(primaryAccountId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid primary account ID"
+        });
+      }
+      
+      for (const dupId of duplicateAccountIds) {
+        if (!validAccountIds.includes(dupId)) {
+          return res.status(400).json({
+            success: false,
+            message: `Invalid duplicate account ID: ${dupId}`
+          });
+        }
+      }
+      
+      const mergeDecision: MergeDecision = {
+        primaryAccountId,
+        duplicateAccountIds,
+        mergeStrategy: mergeStrategy || 'merge_data'
+      };
+      
+      const authResult = await robustAuth.mergeAccounts(mergeDecision);
+      
+      // Clean up session
+      mergeSessionManager.deleteSession(sessionId);
+      
+      if (authResult.success) {
+        res.json({
+          success: true,
+          user: authResult.user,
+          token: authResult.token,
+          message: "Accounts merged successfully"
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          message: "Account merge failed"
+        });
+      }
+      
+    } catch (error) {
+      console.error('Merge accounts error:', error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to merge accounts"
+      });
+    }
+  });
+  
+  /**
+   * Skip merge and use specific account
+   */
+  app.post('/api/auth/skip-merge', async (req, res) => {
+    try {
+      const { sessionId, selectedAccountId } = req.body;
+      
+      const session = mergeSessionManager.getSession(sessionId);
+      if (!session) {
+        return res.status(404).json({
+          success: false,
+          message: "Merge session not found or expired"
+        });
+      }
+      
+      const selectedAccount = session.duplicateAccounts.find(acc => acc.id === selectedAccountId);
+      if (!selectedAccount) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid account selection"
+        });
+      }
+      
+      // Generate token for selected account using jwt
+      const token = jwt.sign({ userId: selectedAccount.id }, process.env.JWT_SECRET || 'qaaq-connect-secret-key', { expiresIn: '30d' });
+      
+      // Clean up session
+      mergeSessionManager.deleteSession(sessionId);
+      
+      res.json({
+        success: true,
+        user: selectedAccount,
+        token,
+        message: "Login successful with selected account"
+      });
+      
+    } catch (error) {
+      console.error('Skip merge error:', error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to skip merge"
+      });
+    }
+  });
+}
+
+/**
+ * Generate recommendation for each account during merge
+ */
+function generateAccountRecommendation(account: DuplicateUser, allAccounts: DuplicateUser[]): string {
+  if (account.completeness >= 80) {
+    return "RECOMMENDED - Most complete profile";
+  }
+  
+  if (account.source === 'qaaq_main' && account.questionCount > 0) {
+    return "RECOMMENDED - Active QAAQ user with Q&A history";
+  }
+  
+  if (account.loginCount > 5) {
+    return "RECOMMENDED - Frequently used account";
+  }
+  
+  if (account.completeness < 30) {
+    return "ARCHIVE - Incomplete profile, consider merging data into another account";
+  }
+  
+  return "MERGE - Consider merging data into primary account";
+}

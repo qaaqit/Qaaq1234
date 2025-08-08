@@ -20,6 +20,8 @@ import {
 } from "./rank-groups-service";
 import { populateRankGroupsWithUsers } from "./populate-rank-groups";
 import { bulkAssignUsersToRankGroups } from "./bulk-assign-users";
+import { setupMergeRoutes } from "./merge-interface";
+import { robustAuth } from "./auth-system";
 
 // Extend Express Request type
 declare global {
@@ -74,6 +76,9 @@ const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: numbe
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  
+  // Setup merge routes for robust authentication
+  setupMergeRoutes(app);
   
   // Register new user
   app.post("/api/register", async (req, res) => {

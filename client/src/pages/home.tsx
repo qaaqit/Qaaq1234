@@ -35,6 +35,38 @@ export default function Home({ onSuccess }: HomeProps) {
 
     setLoading(true);
     try {
+      // Try robust authentication first
+      const robustResponse = await fetch('/api/auth/login-robust', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: formData.userId, password: formData.password })
+      });
+      
+      const robustResult = await robustResponse.json();
+      
+      if (robustResult.requiresMerge) {
+        // Redirect to merge page
+        setLocation(`/merge-accounts/${robustResult.mergeSessionId}`);
+        toast({
+          title: "Multiple accounts found",
+          description: "Choose how to proceed with your accounts",
+        });
+        return;
+      }
+      
+      if (robustResult.success) {
+        setStoredToken(robustResult.token);
+        setStoredUser(robustResult.user);
+        if (onSuccess) onSuccess(robustResult.user);
+        setLocation("/discover");
+        toast({
+          title: "Welcome back!",
+          description: "You're all set to explore",
+        });
+        return;
+      }
+      
+      // Fallback to original authentication
       const result = await authApi.login(formData.userId, formData.password);
       
       if (result.token) {
