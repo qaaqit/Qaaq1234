@@ -80,7 +80,7 @@ export default function Home({ onSuccess }: HomeProps) {
                 value={formData.userId}
                 onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
                 placeholder="e.g. +919820012345"
-                className="h-12 sm:h-14 md:h-16 text-base sm:text-lg md:text-xl px-4 sm:px-6 rounded-xl"
+                className="h-12 sm:h-14 md:h-16 text-base sm:text-lg md:text-xl px-4 sm:px-6 rounded-xl placeholder:text-gray-400 placeholder:font-light placeholder:italic"
                 required
               />
             </div>
@@ -95,7 +95,7 @@ export default function Home({ onSuccess }: HomeProps) {
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 placeholder="this could be your city name."
-                className="h-12 sm:h-14 md:h-16 text-base sm:text-lg md:text-xl px-4 sm:px-6 rounded-xl"
+                className="h-12 sm:h-14 md:h-16 text-base sm:text-lg md:text-xl px-4 sm:px-6 rounded-xl placeholder:text-gray-400 placeholder:font-light placeholder:italic"
                 required
               />
             </div>
