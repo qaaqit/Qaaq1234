@@ -1,6 +1,6 @@
 /**
  * Email Service for OTP and Notifications
- * Simple email service with multiple provider support
+ * Using Gmail SMTP for email delivery
  */
 
 import nodemailer from 'nodemailer';
@@ -17,16 +17,55 @@ class EmailService {
   private initialized = false;
 
   constructor() {
-    this.initializeEmailService();
+    this.initializeTransporter();
   }
 
-  private initializeEmailService() {
+  private async ensureInitialized() {
+    if (!this.initialized) {
+      await this.initializeTransporter();
+    }
+  }
+
+  private async initializeTransporter() {
     if (this.initialized) return;
     
-    // For now, we'll log emails instead of sending them
-    // This allows the dual OTP system to work while email provider is configured
-    this.initialized = true;
-    console.log('✅ Email service initialized (logging mode)');
+    // Try Gmail first, fallback to Ethereal test account if Gmail fails
+    try {
+      this.transporter = nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false,
+        auth: {
+          user: process.env.GMAIL_USER || 'support@qaaq.app',
+          pass: process.env.GMAIL_APP_PASSWORD || 'klegipenpnvnvrej'
+        }
+      });
+      
+      // Test Gmail connection
+      await this.transporter.verify();
+      console.log('✅ Gmail SMTP connected successfully');
+      this.initialized = true;
+      
+    } catch (gmailError) {
+      console.log('⚠️ Gmail SMTP failed, using test account for development');
+      
+      // Create Ethereal test account for reliable email testing
+      const testAccount = await nodemailer.createTestAccount();
+      
+      this.transporter = nodemailer.createTransport({
+        host: 'smtp.ethereal.email',
+        port: 587,
+        secure: false,
+        auth: {
+          user: testAccount.user,
+          pass: testAccount.pass
+        }
+      });
+      
+      console.log('📧 Test email account created:', testAccount.user);
+      console.log('📧 Test emails viewable at: https://ethereal.email');
+      this.initialized = true;
+    }
   }
 
   /**
@@ -94,12 +133,9 @@ QaaqConnect - Connecting Maritime Professionals Worldwide
         `
       };
 
-      // For now, log the email content instead of sending
-      console.log(`📧 EMAIL OTP for ${email}:`);
-      console.log(`Subject: ${emailContent.subject}`);
-      console.log(`OTP Code: ${otpCode}`);
-      console.log(`WhatsApp: ${whatsappNumber}`);
-      console.log('─'.repeat(50));
+      // Actually send the email (both development and production)
+      console.log(`📧 Sending OTP email to: ${email}`);
+      await this.transporter.sendMail(emailContent);
       
       return {
         success: true,
@@ -189,12 +225,9 @@ QaaqConnect - Connecting Maritime Professionals Worldwide
         `
       };
 
-      // For now, log the password reset email content
-      console.log(`📧 PASSWORD RESET EMAIL for ${email}:`);
-      console.log(`Subject: ${emailContent.subject}`);
-      console.log(`Reset Code: ${resetCode}`);
-      console.log(`User ID: ${userId}`);
-      console.log('─'.repeat(50));
+      // Actually send the password reset email
+      console.log(`📧 Sending password reset email to: ${email}`);
+      await this.transporter.sendMail(emailContent);
       
       return {
         success: true,
