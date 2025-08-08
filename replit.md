@@ -102,6 +102,7 @@ Onboard Search: Special "onboard" keyword search filters for sailing users and d
 - **UI Enhancement**: Reduced QBOT chat container height to 50% of viewport height for better screen utilization
 - **Response Format**: Modified OpenAI responses to use 3-5 bullet points totaling 30-50 words for concise, scannable maritime advice
 - **Database Fix**: Corrected database column mappings to prevent insertion errors
+- **Toast Positioning**: Centered welcome message "You're all set to explore" to display at screen center instead of top
 
 ## External Dependencies
 - **Shared QAAQ Database**: PostgreSQL database for authentic maritime user data and 1235 real Q&A records.
