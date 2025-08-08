@@ -85,10 +85,24 @@ export default function DMPage() {
   });
 
   // Fetch user's chat connections
-  const { data: connections = [], isLoading: connectionsLoading } = useQuery<ExtendedChatConnection[]>({
+  const { data: connections = [], isLoading: connectionsLoading, error: connectionsError } = useQuery<ExtendedChatConnection[]>({
     queryKey: ['/api/chat/connections'],
     refetchInterval: 5000, // Poll every 5 seconds for new connections
+    enabled: !!user, // Only fetch when user is authenticated
   });
+
+  // Debug connection loading  
+  useEffect(() => {
+    console.log(`🔍 DM Auto-connect check:`, {
+      targetUserId,
+      connectionsCount: connections.length,
+      userAuthenticated: !!user,
+      userId: user?.id,
+      connectionsLoading,
+      connectionsError: connectionsError?.message,
+      connectionsData: connections
+    });
+  }, [targetUserId, connections, user, connectionsLoading, connectionsError]);
 
   // Fetch users - use search API when searching, nearby API otherwise
   const { data: nearbyUsers = [], isLoading: usersLoading } = useQuery<UserWithDistance[]>({

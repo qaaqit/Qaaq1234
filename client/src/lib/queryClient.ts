@@ -13,6 +13,9 @@ function getAuthHeaders() {
   
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
+    console.log(`🔍 Using auth token:`, token.substring(0, 50) + '...');
+  } else {
+    console.log(`❌ No auth token found in localStorage`);
   }
   
   return headers;
