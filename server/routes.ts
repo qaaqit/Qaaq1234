@@ -1796,7 +1796,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // });
 
   // Search questions
-  app.get('/api/questions/search', authenticateToken, async (req, res) => {
+  app.get('/api/questions/search', async (req, res) => {
     try {
       const { q: keyword } = req.query;
       if (!keyword || typeof keyword !== 'string') {
@@ -2225,7 +2225,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get questions with pagination
-  app.get('/api/questions', authenticateToken, async (req, res) => {
+  app.get('/api/questions', async (req, res) => {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 20;
@@ -2249,7 +2249,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get answers for a specific question
-  app.get('/api/questions/:questionId/answers', authenticateToken, async (req, res) => {
+  app.get('/api/questions/:questionId/answers', async (req, res) => {
     try {
       const questionId = parseInt(req.params.questionId);
       
@@ -2270,7 +2270,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get single question by ID
-  app.get('/api/questions/:id', authenticateToken, async (req, res) => {
+  app.get('/api/questions/:id', async (req, res) => {
     try {
       const questionId = parseInt(req.params.id);
       if (isNaN(questionId)) {
@@ -2292,7 +2292,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get answers for a question
-  app.get('/api/questions/:id/answers', authenticateToken, async (req, res) => {
+  app.get('/api/questions/:id/answers', async (req, res) => {
     try {
       const questionId = parseInt(req.params.id);
       if (isNaN(questionId)) {
