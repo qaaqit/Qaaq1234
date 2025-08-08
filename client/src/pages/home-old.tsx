@@ -79,7 +79,7 @@ export default function Home({ onSuccess }: HomeProps) {
                 type="text"  
                 value={formData.userId}
                 onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
-                placeholder="e.g. Patel, captain.li@qaaq.com, +91 9800898008"
+                placeholder="e.g. +919820012345"
                 className="h-12 sm:h-14 md:h-16 text-base sm:text-lg md:text-xl px-4 sm:px-6 rounded-xl"
                 required
               />
@@ -101,8 +101,7 @@ export default function Home({ onSuccess }: HomeProps) {
             </div>
 
             <div className="text-sm sm:text-base text-gray-600 bg-orange-50 p-4 sm:p-6 rounded-xl border border-orange-200">
-              
-              <p className="text-xs sm:text-sm mt-2 text-gray-500">New accounts are created automatically when logging in</p>
+              <p className="text-xs sm:text-sm text-gray-500">New accounts are created automatically when logging in</p>
             </div>
             
             <Button 
