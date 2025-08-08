@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { MessageCircle, Search, Calendar, CheckCircle, Clock, Hash, ChevronDown, ChevronUp, Image as ImageIcon, Share2 } from 'lucide-react';
+import { MessageCircle, Search, Calendar, CheckCircle, Clock, Hash, ChevronDown, ChevronUp, Image as ImageIcon, Share2, ArrowUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { apiRequest } from '@/lib/queryClient';
 import { isTokenValid, forceTokenRefresh } from '@/utils/auth';
@@ -60,6 +60,7 @@ export function QuestionsTab() {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [expandedQuestions, setExpandedQuestions] = useState<Set<number>>(new Set());
+  const [showScrollToTop, setShowScrollToTop] = useState(false);
 
   const observer = useRef<IntersectionObserver | null>(null);
   const lastQuestionRef = useRef<HTMLDivElement | null>(null);
@@ -72,6 +73,25 @@ export function QuestionsTab() {
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  // Handle scroll to show/hide scroll-to-top button
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      setShowScrollToTop(scrollTop > 300);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Scroll to top function
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
 
   // No authentication required for questions tab
 
@@ -567,6 +587,17 @@ export function QuestionsTab() {
           </div>
         )}
       </div>
+
+      {/* Scroll to Top Button */}
+      {showScrollToTop && (
+        <Button
+          onClick={scrollToTop}
+          className="fixed top-4 right-4 z-50 w-12 h-12 rounded-full bg-orange-600 hover:bg-orange-700 text-white shadow-lg transition-all duration-300 ease-in-out transform hover:scale-110"
+          size="icon"
+        >
+          <ArrowUp size={20} />
+        </Button>
+      )}
     </div>
   );
 }
