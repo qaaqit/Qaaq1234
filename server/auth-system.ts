@@ -474,6 +474,74 @@ export class RobustAuthSystem {
   async resetPasswordWithCode(userId: string, resetCode: string, newPassword: string): Promise<{ success: boolean; message: string }> {
     return passwordManager.resetPasswordWithCode(userId, resetCode, newPassword);
   }
+
+  /**
+   * Create new user account
+   */
+  async createNewUser(userData: {
+    userId: string;
+    email: string;
+    password: string;
+    fullName: string;
+    userType: string;
+  }): Promise<{ success: boolean; message: string; user?: any; token?: string }> {
+    try {
+      // Validate password
+      if (userData.password.length < 6) {
+        return { success: false, message: 'Password must be at least 6 characters long' };
+      }
+
+      if (userData.password === '1234koihai') {
+        return { success: false, message: 'Cannot use "1234koihai" as password' };
+      }
+
+      // Insert user into database
+      const insertResult = await pool.query(`
+        INSERT INTO users (id, "full_name", email, "user_type", "question_count", "answer_count") 
+        VALUES ($1, $2, $3, $4, 0, 0) 
+        RETURNING *
+      `, [userData.userId, userData.fullName, userData.email, userData.userType]);
+
+      const newUser = insertResult.rows[0];
+
+      // Set custom password immediately
+      const passwordResult = passwordManager.setCustomPassword(userData.userId, userData.password);
+      if (!passwordResult.success) {
+        return { success: false, message: 'Failed to set password' };
+      }
+
+      // Generate token
+      const token = this.generateToken(userData.userId);
+
+      // Format user data
+      const user = {
+        id: newUser.id,
+        fullName: newUser.full_name,
+        email: newUser.email,
+        userType: newUser.user_type,
+        isAdmin: false,
+        questionCount: 0,
+        answerCount: 0
+      };
+
+      console.log(`✅ New user created: ${userData.userId} (${userData.fullName})`);
+
+      return {
+        success: true,
+        message: 'Account created successfully',
+        user,
+        token
+      };
+    } catch (error: any) {
+      console.error('Failed to create user:', error);
+      
+      if (error.code === '23505') { // Unique constraint violation
+        return { success: false, message: 'Account with this WhatsApp number already exists' };
+      }
+      
+      return { success: false, message: 'Failed to create account. Please try again.' };
+    }
+  }
   
   /**
    * Update last login timestamp (compatible with QAAQ database schema)

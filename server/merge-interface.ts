@@ -184,6 +184,52 @@ export function setupMergeRoutes(app: express.Application) {
       res.status(500).json({ success: false, message: 'Failed to reset password' });
     }
   });
+
+  /**
+   * User sign up endpoint
+   */
+  app.post('/api/auth/signup', async (req, res) => {
+    try {
+      const { userId, email, password, fullName, userType = 'local' } = req.body;
+      
+      if (!userId || !email || !password) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'WhatsApp number, email, and password are required' 
+        });
+      }
+
+      // Validate WhatsApp number format
+      if (!/^\+\d{10,15}$/.test(userId)) {
+        return res.status(400).json({
+          success: false,
+          message: 'WhatsApp number must be in format +919xxxxxxxxx'
+        });
+      }
+
+      // Check if user already exists
+      const existingUser = await robustAuth.findUserById(userId);
+      if (existingUser) {
+        return res.status(409).json({
+          success: false,
+          message: 'Account with this WhatsApp number already exists'
+        });
+      }
+
+      const result = await robustAuth.createNewUser({
+        userId,
+        email,
+        password,
+        fullName: fullName || `User ${userId}`,
+        userType
+      });
+
+      res.json(result);
+    } catch (error) {
+      console.error('Sign up error:', error);
+      res.status(500).json({ success: false, message: 'Failed to create account' });
+    }
+  });
   
   /**
    * Get merge session details
