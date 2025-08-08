@@ -85,7 +85,7 @@ export function QuestionsTab() {
         limit: '20',
         ...(debouncedSearch && { search: debouncedSearch })
       });
-      const response = await fetch(`/api/questions?${params}`);
+      const response = await apiRequest(`/api/questions?${params}`);
       if (!response.ok) {
         throw new Error('Failed to fetch questions');
       }
@@ -143,7 +143,7 @@ export function QuestionsTab() {
     return useQuery({
       queryKey: [`/api/questions/${questionId}/answers`],
       queryFn: async () => {
-        const response = await fetch(`/api/questions/${questionId}/answers`);
+        const response = await apiRequest(`/api/questions/${questionId}/answers`);
         if (!response.ok) {
           throw new Error('Failed to fetch answers');
         }

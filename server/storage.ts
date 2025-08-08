@@ -1018,5 +1018,4 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Use new dedicated database for authentication testing
 export const storage = new DatabaseStorage();

@@ -13,27 +13,6 @@ function getAuthHeaders() {
   
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
-    console.log(`🔍 Using auth token:`, token.substring(0, 50) + '...');
-    
-    // Debug: decode token to see user ID
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      console.log(`🔍 Token contains userId:`, payload.userId);
-      const userData = localStorage.getItem('qaaq_user');
-      if (userData) {
-        const user = JSON.parse(userData);
-        console.log(`🔍 localStorage user ID:`, user.id);
-        // Fix token-user ID mismatch for Chiru's case
-        if (payload.userId !== user.id) {
-          console.log(`⚠️ Token/User ID mismatch detected! Token: ${payload.userId}, User: ${user.id}`);
-          console.log(`🔧 This explains the Active Conversations loading issue`);
-        }
-      }
-    } catch (e) {
-      console.log(`❌ Failed to decode token for debugging`);
-    }
-  } else {
-    console.log(`❌ No auth token found in localStorage`);
   }
   
   return headers;

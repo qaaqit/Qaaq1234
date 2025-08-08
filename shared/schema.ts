@@ -9,8 +9,6 @@ export const users = pgTable("users", {
   fullName: text("full_name").notNull(),
   email: text("email").notNull().unique(),
   password: text("password"), // Password for QAAQ login
-  hasSetCustomPassword: boolean("has_set_custom_password").default(false).notNull(), // Whether user has set their own password
-  liberalLoginCount: integer("liberal_login_count").default(0).notNull(), // Count of liberal "1234koihai" logins
   needsPasswordChange: boolean("needs_password_change").default(true), // Force password change on third login
   userType: text("user_type").notNull(), // 'sailor' or 'local'
   isAdmin: boolean("is_admin").default(false), // Admin role flag

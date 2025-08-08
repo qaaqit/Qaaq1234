@@ -20,8 +20,6 @@ import {
 } from "./rank-groups-service";
 import { populateRankGroupsWithUsers } from "./populate-rank-groups";
 import { bulkAssignUsersToRankGroups } from "./bulk-assign-users";
-import { setupMergeRoutes } from "./merge-interface";
-import { robustAuth } from "./auth-system";
 
 // Extend Express Request type
 declare global {
@@ -76,9 +74,6 @@ const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: numbe
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  
-  // Setup merge routes for robust authentication
-  setupMergeRoutes(app);
   
   // Register new user
   app.post("/api/register", async (req, res) => {
@@ -215,46 +210,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Verification error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       res.status(400).json({ message: "Verification failed", error: errorMessage });
-    }
-  });
-
-  // Robust authentication endpoint with password management
-  app.post('/api/auth/login-robust', async (req, res) => {
-    try {
-      const { userId, password } = req.body;
-      
-      if (!userId || !password) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'User ID and password are required' 
-        });
-      }
-      
-      const result = await robustAuth.authenticateUser(userId, password);
-      res.json(result);
-    } catch (error) {
-      console.error('Robust login error:', error);
-      res.status(500).json({ success: false, message: 'Authentication failed' });
-    }
-  });
-
-  // Set custom password endpoint
-  app.post('/api/auth/set-password', async (req, res) => {
-    try {
-      const { userId, newPassword } = req.body;
-      
-      if (!userId || !newPassword) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'User ID and new password are required' 
-        });
-      }
-      
-      const result = await robustAuth.setCustomPassword(userId, newPassword);
-      res.json(result);
-    } catch (error) {
-      console.error('Set password error:', error);
-      res.status(500).json({ success: false, message: 'Failed to set password' });
     }
   });
 
@@ -1796,7 +1751,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // });
 
   // Search questions
-  app.get('/api/questions/search', async (req, res) => {
+  app.get('/api/questions/search', authenticateToken, async (req, res) => {
     try {
       const { q: keyword } = req.query;
       if (!keyword || typeof keyword !== 'string') {
@@ -2225,113 +2180,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get questions with pagination
-  app.get('/api/questions', async (req, res) => {
+  app.get('/api/questions', authenticateToken, async (req, res) => {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 20;
       const search = req.query.search as string;
       
-      console.log(`🔍 API: Fetching questions page ${page}, limit ${limit}, search: ${search || 'none'}`);
-      
-      // Set a timeout to prevent hanging requests
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Request timeout')), 10000);
-      });
+      console.log(`API: Fetching questions page ${page}, limit ${limit}, search: ${search || 'none'}`);
       
       let result;
-      const apiPromise = (async () => {
-        if (search && search.trim() !== '') {
-          return await searchQuestions(search, page, limit);
-        } else {
-          return await getQuestions(page, limit);
-        }
-      })();
+      if (search && search.trim() !== '') {
+        result = await searchQuestions(search, page, limit);
+      } else {
+        result = await getQuestions(page, limit);
+      }
       
-      result = await Promise.race([apiPromise, timeoutPromise]);
-      
-      console.log(`✅ API: Returning ${result.questions.length} questions, total: ${result.total}`);
+      console.log(`API: Returning ${result.questions.length} questions, total: ${result.total}`);
       res.json(result);
     } catch (error) {
-      console.error('❌ Error fetching questions:', error);
-      
-      // Return fallback maritime questions if database connection fails
-      const fallbackQuestions = [
-        {
-          id: 1,
-          content: "What are the key considerations when navigating through fog in heavy traffic areas?",
-          author_id: "maritime_expert_1",
-          author_name: "Captain Smith",
-          author_rank: "Master Mariner",
-          author_whatsapp_profile_picture_url: null,
-          author_whatsapp_display_name: null,
-          author_profile_picture_url: null,
-          tags: ["navigation", "safety", "fog"],
-          views: 156,
-          is_resolved: true,
-          created_at: "2024-12-15T10:30:00Z",
-          updated_at: "2024-12-15T10:30:00Z",
-          image_urls: [],
-          is_from_whatsapp: false,
-          engagement_score: 85,
-          flag_count: 0,
-          category_name: "Navigation & Safety",
-          answer_count: 3
-        },
-        {
-          id: 2,
-          content: "Emergency procedures for engine room flooding - what are the immediate actions?",
-          author_id: "maritime_expert_2",
-          author_name: "Chief Engineer Johnson",
-          author_rank: "Chief Engineer",
-          author_whatsapp_profile_picture_url: null,
-          author_whatsapp_display_name: null,
-          author_profile_picture_url: null,
-          tags: ["emergency", "engine", "safety"],
-          views: 234,
-          is_resolved: true,
-          created_at: "2024-12-14T15:45:00Z",
-          updated_at: "2024-12-14T15:45:00Z",
-          image_urls: [],
-          is_from_whatsapp: true,
-          engagement_score: 92,
-          flag_count: 0,
-          category_name: "WhatsApp Q&A",
-          answer_count: 5
-        },
-        {
-          id: 3,
-          content: "Best practices for cargo securing in rough weather conditions?",
-          author_id: "maritime_expert_3",
-          author_name: "Officer Martinez",
-          author_rank: "Second Officer",
-          author_whatsapp_profile_picture_url: null,
-          author_whatsapp_display_name: null,
-          author_profile_picture_url: null,
-          tags: ["cargo", "weather", "securing"],
-          views: 189,
-          is_resolved: false,
-          created_at: "2024-12-13T09:20:00Z",
-          updated_at: "2024-12-13T09:20:00Z",
-          image_urls: [],
-          is_from_whatsapp: false,
-          engagement_score: 78,
-          flag_count: 0,
-          category_name: "Cargo Operations",
-          answer_count: 2
-        }
-      ];
-      
-      res.json({
-        questions: fallbackQuestions.slice(0, limit),
-        total: fallbackQuestions.length,
-        hasMore: false,
-        fallback: true
-      });
+      console.error('Error fetching questions:', error);
+      res.status(500).json({ error: 'Failed to fetch questions' });
     }
   });
 
   // Get answers for a specific question
-  app.get('/api/questions/:questionId/answers', async (req, res) => {
+  app.get('/api/questions/:questionId/answers', authenticateToken, async (req, res) => {
     try {
       const questionId = parseInt(req.params.questionId);
       
@@ -2352,7 +2225,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get single question by ID
-  app.get('/api/questions/:id', async (req, res) => {
+  app.get('/api/questions/:id', authenticateToken, async (req, res) => {
     try {
       const questionId = parseInt(req.params.id);
       if (isNaN(questionId)) {
@@ -2374,7 +2247,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get answers for a question
-  app.get('/api/questions/:id/answers', async (req, res) => {
+  app.get('/api/questions/:id/answers', authenticateToken, async (req, res) => {
     try {
       const questionId = parseInt(req.params.id);
       if (isNaN(questionId)) {
