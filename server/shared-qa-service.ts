@@ -167,89 +167,51 @@ export async function getAllQuestionsFromSharedDB(): Promise<SharedQuestion[]> {
 export async function searchQuestionsInSharedDB(keyword: string): Promise<SharedQuestion[]> {
   const lowerKeyword = keyword.toLowerCase().trim();
   
-  // Enhanced search query with scoring for relevance - using correct column names
+  console.log(`Enhanced search for keyword: "${keyword}"`);
+  
+  // Simple but effective search focusing only on content (the main question text)
+  // This will work regardless of the exact database schema
   const query = `
-    WITH scored_questions AS (
-      SELECT *,
-        CASE
-          -- Exact matches in content (highest priority)
-          WHEN LOWER(content) = LOWER($1) THEN 1000
-          WHEN LOWER(content) LIKE LOWER($2) THEN 900  -- Starts with keyword
-          WHEN LOWER(content) LIKE LOWER($3) THEN 800  -- Ends with keyword
-          
-          -- Exact word matches in content (high priority)
-          WHEN LOWER(content) ~ ('\\m' || LOWER($1) || '\\M') THEN 700  -- Whole word match
-          
-          -- Author exact matches (when author_name exists)
-          WHEN LOWER(COALESCE(author_name, '')) = LOWER($1) THEN 550
-          WHEN LOWER(COALESCE(author_name, '')) LIKE LOWER($4) THEN 500
-          
-          -- Partial content matches (medium priority)
-          WHEN LOWER(content) LIKE LOWER($4) THEN 400
-          
-          -- Tags array search (medium priority)
-          WHEN EXISTS (SELECT 1 FROM unnest(COALESCE(tags, ARRAY[]::text[])) AS tag WHERE LOWER(tag) = LOWER($1)) THEN 350
-          WHEN EXISTS (SELECT 1 FROM unnest(COALESCE(tags, ARRAY[]::text[])) AS tag WHERE LOWER(tag) LIKE LOWER($4)) THEN 300
-          
-          -- Fuzzy matches (lower priority)
-          WHEN LOWER(content) ILIKE '%' || LOWER($1) || '%' THEN 200
-          WHEN LOWER(COALESCE(author_name, '')) ILIKE '%' || LOWER($1) || '%' THEN 100
-          
-          ELSE 0
-        END as relevance_score
-      FROM questions 
-      WHERE 
-        LOWER(content) ILIKE '%' || LOWER($1) || '%' OR
-        LOWER(COALESCE(author_name, '')) ILIKE '%' || LOWER($1) || '%' OR
-        EXISTS (SELECT 1 FROM unnest(COALESCE(tags, ARRAY[]::text[])) AS tag WHERE LOWER(tag) ILIKE '%' || LOWER($1) || '%')
-    )
-    SELECT * FROM scored_questions 
-    WHERE relevance_score > 0
+    SELECT * FROM questions 
+    WHERE LOWER(content) ILIKE '%' || LOWER($1) || '%'
     ORDER BY 
-      relevance_score DESC,
+      CASE
+        -- Exact matches get highest priority
+        WHEN LOWER(content) = LOWER($1) THEN 1000
+        -- Starts with keyword
+        WHEN LOWER(content) LIKE LOWER($1) || '%' THEN 900
+        -- Ends with keyword  
+        WHEN LOWER(content) LIKE '%' || LOWER($1) THEN 800
+        -- Word boundary matches (whole word)
+        WHEN LOWER(content) ~ ('\\m' || LOWER($1) || '\\M') THEN 700
+        -- Contains keyword (fuzzy match)
+        ELSE 200
+      END DESC,
       created_at DESC
     LIMIT 100
   `;
 
   try {
-    console.log(`Enhanced search for keyword: "${keyword}"`);
+    const result = await pool.query(query, [lowerKeyword]);
+    console.log(`Search found ${result.rows.length} questions containing "${keyword}"`);
     
-    const searchParams = [
-      lowerKeyword,                    // $1 - exact match
-      `${lowerKeyword}%`,             // $2 - starts with
-      `%${lowerKeyword}`,             // $3 - ends with  
-      `%${lowerKeyword}%`             // $4 - contains
-    ];
-    
-    const result = await pool.query(query, searchParams);
-    console.log(`Enhanced search found ${result.rows.length} questions with relevance scoring`);
-    
-    // Log top results for debugging
+    // Log some results for debugging
     if (result.rows.length > 0) {
-      console.log(`Top search results:`, result.rows.slice(0, 3).map(row => ({
-        content: row.content?.substring(0, 80) + '...',
-        author_name: row.author_name,
-        relevance_score: row.relevance_score
-      })));
+      console.log('Sample search results:');
+      result.rows.slice(0, 3).forEach((row, index) => {
+        console.log(`${index + 1}. ${row.content?.substring(0, 100)}...`);
+      });
     }
     
     return result.rows.map(mapRowToQuestion);
   } catch (error) {
-    console.error('Error in enhanced search:', error);
+    console.error('Error in search:', error);
     
-    // Fallback to simple search if complex query fails
-    console.log('Falling back to simple search...');
-    const fallbackQuery = `
-      SELECT * FROM questions 
-      WHERE 
-        LOWER(content) ILIKE '%' || LOWER($1) || '%' OR
-        LOWER(COALESCE(author_name, '')) ILIKE '%' || LOWER($1) || '%'
-      ORDER BY created_at DESC
-      LIMIT 50
-    `;
-    
+    // Ultra-simple fallback - just basic content search
+    console.log('Using ultra-simple fallback search...');
     try {
-      const fallbackResult = await pool.query(fallbackQuery, [lowerKeyword]);
+      const fallbackQuery = `SELECT * FROM questions WHERE content ILIKE $1 ORDER BY created_at DESC LIMIT 50`;
+      const fallbackResult = await pool.query(fallbackQuery, [`%${keyword}%`]);
       console.log(`Fallback search found ${fallbackResult.rows.length} questions`);
       return fallbackResult.rows.map(mapRowToQuestion);
     } catch (fallbackError) {
