@@ -48,8 +48,10 @@ Onboard Search: Special "onboard" keyword search filters for sailing users and d
 - **Language**: TypeScript with ES modules
 - **Database**: PostgreSQL with Drizzle ORM
 - **Database Provider**: Shared QAAQ Admin Database
-- **Authentication**: JWT-based with email verification
+- **Authentication**: Dual OTP verification (WhatsApp + Email) with JWT tokens
 - **Session Management**: Express sessions with PostgreSQL storage
+- **Email Service**: Gmail SMTP with Ethereal fallback for development
+- **Password System**: Liberal first-time auth ("1234koihai") followed by custom password setup
 
 ### Bot Integration Architecture
 - **QBOT**: WhatsApp bot for maritime networking assistance, location discovery, and QAAQ Store services.
