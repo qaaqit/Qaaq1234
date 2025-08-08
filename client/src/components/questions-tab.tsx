@@ -319,39 +319,10 @@ export function QuestionsTab() {
       >
         <Card className="border-2 border-gray-200 hover:border-ocean-teal/40 transition-colors cursor-pointer" onClick={() => window.location.href = `/questions/${question.id}`}>
           <CardContent className="p-4">
-            {/* Question Content */}
+            {/* Question Header */}
             <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center space-x-3">
-                <Avatar className="w-10 h-10 border-2 border-ocean-teal">
-                  {(question.author_whatsapp_profile_picture_url || question.author_profile_picture_url) && (
-                    <img 
-                      src={(question.author_whatsapp_profile_picture_url || question.author_profile_picture_url) as string} 
-                      alt={`${question.author_whatsapp_display_name || question.author_name}'s profile`}
-                      className="w-full h-full rounded-full object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                      }}
-                    />
-                  )}
-                  <AvatarFallback className="bg-gradient-to-r from-ocean-teal to-cyan-600 text-white font-bold text-sm">
-                    {getInitials(question.author_whatsapp_display_name || question.author_name)}
-                  </AvatarFallback>
-                </Avatar>
-                <div onClick={(e) => {
-                  e.stopPropagation();
-                  window.location.href = `/user/${question.author_id}`;
-                }} className="cursor-pointer hover:bg-gray-50 p-1 rounded">
-                  <h4 className="font-semibold text-gray-900 text-base">
-                    <span className="text-orange-600 mr-2 font-bold">#{question.id}</span>
-                    {question.author_name}
-                  </h4>
-                  {question.author_rank && (
-                    <p className="text-sm text-gray-700 font-medium">{formatRank(question.author_rank)}</p>
-                  )}
-                </div>
-              </div>
               <div className="flex items-center space-x-2">
+                <span className="text-orange-600 font-bold text-base">#{question.id}</span>
                 {question.is_resolved && (
                   <Badge className="bg-green-100 text-green-800 border-green-300">
                     <CheckCircle size={14} className="mr-1" />
@@ -366,8 +337,18 @@ export function QuestionsTab() {
               </div>
             </div>
 
-            <p className="text-gray-800 mb-3 line-clamp-3 text-base font-medium leading-relaxed">
+            <p className="text-gray-800 mb-2 line-clamp-3 text-base font-medium leading-relaxed">
               {question.content || 'Question content not available'}
+            </p>
+
+            {/* Author Attribution */}
+            <p className="text-sm text-gray-600 mb-3 flex items-center space-x-2">
+              <span>- {question.author_whatsapp_display_name || question.author_name}</span>
+              {question.author_rank && (
+                <Badge variant="outline" className="text-xs">
+                  {formatRank(question.author_rank)}
+                </Badge>
+              )}
             </p>
 
             {/* Question Images */}
