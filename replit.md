@@ -73,7 +73,7 @@ Onboard Search: Special "onboard" keyword search filters for sailing users and d
 - **Bot Documentation Storage**: Bot rules and documentation stored in `bot_documentation` table.
 
 ### System Design Choices
-- **Authentication System**: QAAQ User ID and Password authentication (dummy password "1234koihai"), JWT tokens, user type distinction. Cross-platform compatibility between web and mobile. All authentication flows redirect to "/" (QBOT Chat) as the home page.
+- **Authentication System**: QAAQ User ID and Password authentication (universal password acceptance), JWT tokens, user type distinction. Cross-platform compatibility between web and mobile. All authentication flows redirect to "/qbot" (QBOT Chat) as the home page.
 - **Social Features**: Post creation with content categories and location tagging, like/unlike functionality, author display options.
 - **Discovery System**: Interactive world map with light grey theme, proximity-based user discovery showing nearest users, city-based location display for sailors and locals, color-coded map pins. Mobile GPS integration for real-time location.
 - **Real-Time Messaging**: WebSocket-based real-time messaging with live typing indicators, instant message delivery, and read receipts.

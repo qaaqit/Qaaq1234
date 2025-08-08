@@ -41,7 +41,7 @@ export default function Home({ onSuccess }: HomeProps) {
         setStoredUser(result.user);
         if (onSuccess) onSuccess(result.user);
       }
-      setLocation("/discover");
+      setLocation("/qbot");
       toast({
         title: "Welcome back!",
         description: "You're all set to explore",
