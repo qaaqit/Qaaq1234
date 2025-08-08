@@ -8,31 +8,21 @@ async function throwIfResNotOk(res: Response) {
 }
 
 function getAuthHeaders() {
-  let token = localStorage.getItem('qaaq_token');
+  const token = localStorage.getItem('qaaq_token');
   const headers: Record<string, string> = {};
-  
-  // Always use the correct token with proper server secret
-  const correctToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI0NDg4NTY4MyIsImlhdCI6MTc1NDY1NTUwNCwiZXhwIjoxNzU1MjYwMzA0fQ.g7WF1X5J9OFpkg_DIQ0AO-g6zHYYLv3d3k0gHi6pYNY';
-  
-  if (!token || token !== correctToken) {
-    token = correctToken;
-    localStorage.setItem('qaaq_token', token);
-    localStorage.setItem('qaaq_user', JSON.stringify({id: '44885683', email: '+91 9820011223'}));
-    console.log('🔧 Using correct JWT token with server secret match');
-  }
   
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
-    console.log(`✓ Using valid auth token:`, token.substring(0, 50) + '...');
+    console.log(`🔍 Using auth token:`, token.substring(0, 50) + '...');
     
     // Debug: decode token to see user ID
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
-      console.log(`✓ Token contains userId:`, payload.userId);
+      console.log(`🔍 Token contains userId:`, payload.userId);
       const userData = localStorage.getItem('qaaq_user');
       if (userData) {
         const user = JSON.parse(userData);
-        console.log(`✓ localStorage user ID:`, user.id);
+        console.log(`🔍 localStorage user ID:`, user.id);
         // Fix token-user ID mismatch for Chiru's case
         if (payload.userId !== user.id) {
           console.log(`⚠️ Token/User ID mismatch detected! Token: ${payload.userId}, User: ${user.id}`);

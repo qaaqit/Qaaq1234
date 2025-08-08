@@ -75,7 +75,7 @@ export function RankGroupsPanel() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('qaaq_token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
         body: JSON.stringify({ role: 'member' }),
       });
@@ -97,7 +97,7 @@ export function RankGroupsPanel() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('qaaq_token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
       });
       return response.json();
@@ -123,7 +123,7 @@ export function RankGroupsPanel() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('qaaq_token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
         body: JSON.stringify({
           groupId,
@@ -154,7 +154,7 @@ export function RankGroupsPanel() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('qaaq_token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
       });
       return response.json();

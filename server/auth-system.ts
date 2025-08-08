@@ -2,7 +2,7 @@ import { pool } from './db';
 import jwt from 'jsonwebtoken';
 import { passwordManager } from './password-manager';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'qaaq-connect-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 
 export interface DuplicateUser {
   id: string;

@@ -36,7 +36,7 @@ export interface Question {
 /**
  * Get questions with pagination and user details
  */
-export async function getQuestions(page: number = 1, limit: number = 20, withImages: boolean = false): Promise<{
+export async function getQuestions(page: number = 1, limit: number = 20): Promise<{
   questions: Question[];
   total: number;
   hasMore: boolean;
@@ -72,11 +72,10 @@ export async function getQuestions(page: number = 1, limit: number = 20, withIma
           WHEN q.is_from_whatsapp THEN 'WhatsApp Q&A'
           ELSE 'General Discussion'
         END as category_name,
-        (SELECT COUNT(*) FROM qaaq_answers a WHERE a.question_id = q.id) as answer_count
+        (SELECT COUNT(*) FROM answers a WHERE a.question_id = q.id) as answer_count
       FROM questions q
-      LEFT JOIN users u ON CAST(u.id AS TEXT) = CAST(q.author_id AS TEXT)
+      LEFT JOIN users u ON u.id = q.author_id
       WHERE q.is_archived = false AND q.is_hidden = false
-      ${withImages ? 'AND q.image_urls IS NOT NULL AND array_length(q.image_urls, 1) > 0' : ''}
       ORDER BY q.created_at DESC
       LIMIT $1 OFFSET $2
     `, [limit, offset]);
@@ -86,7 +85,6 @@ export async function getQuestions(page: number = 1, limit: number = 20, withIma
       SELECT COUNT(*) as total 
       FROM questions 
       WHERE is_archived = false AND is_hidden = false
-      ${withImages ? 'AND image_urls IS NOT NULL AND array_length(image_urls, 1) > 0' : ''}
     `);
     
     const total = parseInt(countResult.rows[0].total);
@@ -150,11 +148,11 @@ export async function getQuestionById(questionId: number): Promise<Question | nu
           WHEN q.is_from_whatsapp THEN 'WhatsApp Q&A'
           ELSE 'General Discussion'
         END as category,
-        (SELECT COUNT(*) FROM qaaq_answers a WHERE a.question_id = q.id) as answer_count,
+        (SELECT COUNT(*) FROM answers a WHERE a.question_id = q.id) as answer_count,
         false as is_anonymous,
         CASE WHEN q.is_from_whatsapp THEN 'whatsapp' ELSE 'web' END as source
       FROM questions q
-      LEFT JOIN users u ON CAST(u.id AS TEXT) = CAST(q.author_id AS TEXT)
+      LEFT JOIN users u ON u.id = q.author_id
       WHERE q.id = $1 AND q.is_archived = false AND q.is_hidden = false
     `, [questionId]);
     
@@ -196,7 +194,7 @@ export async function getQuestionAnswers(questionId: number): Promise<any[]> {
         END as is_from_whatsapp,
         false as is_best_answer
       FROM qaaq_answers a
-      LEFT JOIN users u ON CAST(u.id AS TEXT) = CAST(a.author_id AS TEXT)
+      LEFT JOIN users u ON u.id = a.author_id
       WHERE a.question_id = $1
       ORDER BY 
         a.created_at ASC
@@ -258,9 +256,9 @@ export async function searchQuestions(query: string, page: number = 1, limit: nu
           WHEN q.is_from_whatsapp THEN 'WhatsApp Q&A'
           ELSE 'General Discussion'
         END as category_name,
-        (SELECT COUNT(*) FROM qaaq_answers a WHERE a.question_id = q.id) as answer_count
+        (SELECT COUNT(*) FROM answers a WHERE a.question_id = q.id) as answer_count
       FROM questions q
-      LEFT JOIN users u ON CAST(u.id AS TEXT) = CAST(q.author_id AS TEXT)
+      LEFT JOIN users u ON u.id = q.author_id
       WHERE q.is_archived = false 
         AND q.is_hidden = false
         AND (
@@ -279,7 +277,7 @@ export async function searchQuestions(query: string, page: number = 1, limit: nu
     const countResult = await client.query(`
       SELECT COUNT(*) as total 
       FROM questions q
-      LEFT JOIN users u ON CAST(u.id AS TEXT) = CAST(q.author_id AS TEXT)
+      LEFT JOIN users u ON u.id = q.author_id
       WHERE q.is_archived = false 
         AND q.is_hidden = false
         AND (

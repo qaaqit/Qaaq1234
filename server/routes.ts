@@ -32,7 +32,7 @@ declare global {
   }
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || 'qaaq_jwt_secret_key_2024_secure';
+const JWT_SECRET = process.env.JWT_SECRET || 'qaaq-connect-secret-key';
 
 // Middleware to authenticate JWT token
 const authenticateToken = async (req: Request, res: Response, next: NextFunction) => {
@@ -2230,15 +2230,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 20;
       const search = req.query.search as string;
-      const withImages = req.query.withImages === 'true';
       
-      console.log(`API: Fetching questions page ${page}, limit ${limit}, search: ${search || 'none'}, withImages: ${withImages}`);
+      console.log(`API: Fetching questions page ${page}, limit ${limit}, search: ${search || 'none'}`);
       
       let result;
       if (search && search.trim() !== '') {
         result = await searchQuestions(search, page, limit);
       } else {
-        result = await getQuestions(page, limit, withImages);
+        result = await getQuestions(page, limit);
       }
       
       console.log(`API: Returning ${result.questions.length} questions, total: ${result.total}`);
