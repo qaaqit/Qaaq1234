@@ -281,22 +281,40 @@ export default function QuestionPage() {
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <div>
-                          <h4 className="font-medium text-gray-900">
-                            {answer.author_name === 'QG' || answer.author_name === 'QAAQ GPT' ? 'Ans:' : answer.author_name}
-                          </h4>
-                          <p className="text-sm text-gray-600">
-                            {formatRank(answer.author_rank)} • {formatDate(answer.created_at)}
-                          </p>
+{(answer.author_name === 'QG' || answer.author_name === 'QAAQ GPT') ? (
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1">
+                            <p className="text-gray-700 whitespace-pre-wrap">
+                              <span className="font-medium text-gray-900">Ans: </span>{answer.content}
+                            </p>
+                            <p className="text-sm text-gray-600 mt-1">
+                              {formatRank(answer.author_rank)} • {formatDate(answer.created_at)}
+                            </p>
+                          </div>
+                          {answer.is_best_answer && (
+                            <Badge className="bg-green-100 text-green-800 ml-2">
+                              Best Answer
+                            </Badge>
+                          )}
                         </div>
-                        {answer.is_best_answer && (
-                          <Badge className="bg-green-100 text-green-800">
-                            Best Answer
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-gray-700 whitespace-pre-wrap">{answer.content}</p>
+                      ) : (
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <div>
+                              <h4 className="font-medium text-gray-900">{answer.author_name}</h4>
+                              <p className="text-sm text-gray-600">
+                                {formatRank(answer.author_rank)} • {formatDate(answer.created_at)}
+                              </p>
+                            </div>
+                            {answer.is_best_answer && (
+                              <Badge className="bg-green-100 text-green-800">
+                                Best Answer
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-gray-700 whitespace-pre-wrap">{answer.content}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
