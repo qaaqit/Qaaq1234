@@ -60,30 +60,19 @@ function Router() {
     );
   }
 
-  // Create a mock user for all pages
-  const mockUser: User = {
-    id: "demo-user",
-    fullName: "Demo Maritime User",
-    email: "demo@qaaq.app",
-    userType: 'sailor',
-    isAdmin: true,
-    nickname: "Demo User",
-    isVerified: true,
-    loginCount: 1
-  };
-
-  const currentUser = user || mockUser;
+  // Allow access without user requirements
+  const currentUser = user;
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="pb-16">
+      <div className={currentUser ? "pb-16" : ""}>
         <Switch>
-          <Route path="/" component={() => <QBOTPage user={currentUser} />} />
+          <Route path="/" component={() => currentUser ? <QBOTPage user={currentUser} /> : <Home onSuccess={setUser} />} />
           <Route path="/register" component={() => <Register onSuccess={setUser} />} />
           <Route path="/verify" component={() => <Verify onSuccess={setUser} />} />
-          <Route path="/discover" component={() => <Discover user={currentUser} />} />
-          <Route path="/qbot" component={() => <QBOTPage user={currentUser} />} />
-          <Route path="/post" component={() => <Post user={currentUser} />} />
+          <Route path="/discover" component={() => currentUser ? <Discover user={currentUser} /> : <Home onSuccess={setUser} />} />
+          <Route path="/qbot" component={() => currentUser ? <QBOTPage user={currentUser} /> : <Home onSuccess={setUser} />} />
+          <Route path="/post" component={() => currentUser ? <Post user={currentUser} /> : <Home onSuccess={setUser} />} />
           <Route path="/chat" component={() => <ChatPage />} />
           <Route path="/chat/:userId" component={() => <DMPage />} />
           <Route path="/dm" component={() => <DMPage />} />
@@ -106,7 +95,7 @@ function Router() {
         </Switch>
       </div>
       
-      <BottomNav user={currentUser} onLogout={handleLogout} />
+      {currentUser && <BottomNav user={currentUser} onLogout={handleLogout} />}
     </div>
   );
 }
