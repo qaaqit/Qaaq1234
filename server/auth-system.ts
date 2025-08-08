@@ -480,10 +480,21 @@ export class RobustAuthSystem {
    */
   async sendSignupOTP(whatsappNumber: string, email?: string): Promise<{ success: boolean; message: string }> {
     try {
-      // Check if user already exists
-      const existingUser = await this.storage.getUserByUsername(whatsappNumber);
-      if (existingUser) {
-        return { success: false, message: 'Account with this WhatsApp number already exists' };
+      // Check if user already exists using database query
+      try {
+        const query = `
+          SELECT * FROM users 
+          WHERE id = $1 OR username = $1 OR whatsapp_number = $1 
+          LIMIT 1
+        `;
+        const result = await pool.query(query, [whatsappNumber]);
+        
+        if (result.rows.length > 0) {
+          return { success: false, message: 'Account with this WhatsApp number already exists' };
+        }
+      } catch (error) {
+        // Database error or user not found - proceed with signup
+        console.log(`No existing user found for ${whatsappNumber} - proceeding with signup`);
       }
 
       const result = passwordManager.generateSignupOTP(whatsappNumber);

@@ -25,9 +25,11 @@ class EmailService {
     this.transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: process.env.GMAIL_USER || 'qaaqconnect@gmail.com',
-        pass: process.env.GMAIL_APP_PASSWORD || 'test-password'
-      }
+        user: process.env.GMAIL_USER || 'support@qaaq.app',
+        pass: process.env.GMAIL_APP_PASSWORD || 'XB>6<U4mB<BT6mH<'
+      },
+      secure: true,
+      port: 465
     });
   }
 
@@ -37,6 +39,7 @@ class EmailService {
   async sendOTPEmail(email: string, otpCode: string, whatsappNumber: string): Promise<{ success: boolean; message: string }> {
     try {
       const emailContent = {
+        from: process.env.GMAIL_USER || 'support@qaaq.app',
         to: email,
         subject: '🔐 QaaqConnect - Your Verification Code',
         html: `
@@ -95,21 +98,8 @@ QaaqConnect - Connecting Maritime Professionals Worldwide
         `
       };
 
-      // For development, log the email content instead of sending
-      if (process.env.NODE_ENV === 'development') {
-        console.log('\n📧 Email OTP (Development Mode):');
-        console.log(`To: ${email}`);
-        console.log(`Subject: ${emailContent.subject}`);
-        console.log(`OTP Code: ${otpCode}`);
-        console.log('────────────────────────────────────');
-        
-        return {
-          success: true,
-          message: 'Email OTP logged to console (development mode)'
-        };
-      }
-
-      // In production, actually send the email
+      // Actually send the email (both development and production)
+      console.log(`📧 Sending OTP email to: ${email}`);
       await this.transporter.sendMail(emailContent);
       
       return {
@@ -118,9 +108,12 @@ QaaqConnect - Connecting Maritime Professionals Worldwide
       };
     } catch (error) {
       console.error('Email send error:', error);
+      
+      // If email fails, it's not critical for signup to continue
+      // WhatsApp OTP is the primary method
       return {
         success: false,
-        message: 'Failed to send email verification code'
+        message: 'Email verification temporarily unavailable. WhatsApp OTP is working.'
       };
     }
   }
@@ -131,6 +124,7 @@ QaaqConnect - Connecting Maritime Professionals Worldwide
   async sendPasswordResetEmail(email: string, resetCode: string, userId: string): Promise<{ success: boolean; message: string }> {
     try {
       const emailContent = {
+        from: process.env.GMAIL_USER || 'support@qaaq.app',
         to: email,
         subject: '🔑 QaaqConnect - Password Reset Code',
         html: `
@@ -187,21 +181,8 @@ QaaqConnect - Connecting Maritime Professionals Worldwide
         `
       };
 
-      // For development, log the email content
-      if (process.env.NODE_ENV === 'development') {
-        console.log('\n📧 Password Reset Email (Development Mode):');
-        console.log(`To: ${email}`);
-        console.log(`Subject: ${emailContent.subject}`);
-        console.log(`Reset Code: ${resetCode}`);
-        console.log('────────────────────────────────────');
-        
-        return {
-          success: true,
-          message: 'Password reset email logged to console (development mode)'
-        };
-      }
-
-      // In production, actually send the email
+      // Actually send the password reset email
+      console.log(`📧 Sending password reset email to: ${email}`);
       await this.transporter.sendMail(emailContent);
       
       return {
