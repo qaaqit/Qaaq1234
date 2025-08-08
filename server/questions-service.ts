@@ -188,7 +188,7 @@ export async function getQuestionAnswers(questionId: number): Promise<any[]> {
         u.whatsapp_profile_picture_url as author_whatsapp_profile_picture_url,
         u.whatsapp_display_name as author_whatsapp_display_name,
         u.profile_image_url as author_profile_picture_url,
-        a.answered_date as created_at,
+        a.created_at,
         a.image_urls,
         CASE 
           WHEN a.user_id LIKE 'wa_%' OR u.whatsapp_display_name IS NOT NULL THEN true
@@ -199,7 +199,7 @@ export async function getQuestionAnswers(questionId: number): Promise<any[]> {
       LEFT JOIN users u ON CAST(u.id AS TEXT) = CAST(a.user_id AS TEXT)
       WHERE a.question_id = $1
       ORDER BY 
-        a.answered_date ASC
+        a.created_at ASC
     `, [questionId]);
     
     const answers = result.rows.map(row => ({

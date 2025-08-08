@@ -439,7 +439,7 @@ export function QuestionsTab() {
                 size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
-                  window.location.href = `/share/question/${question.id}`;
+                  window.location.href = `/questions/${question.id}`;
                 }}
                 className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 font-medium"
               >
