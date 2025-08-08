@@ -47,17 +47,12 @@ export async function getQuestions(page: number = 1, limit: number = 20, withIma
     
     console.log(`Fetching questions page ${page} with limit ${limit}...`);
     
-    // Get questions with author information
+    // Get questions (simplified without JOIN to avoid type issues)
     const questionsResult = await client.query(`
       SELECT 
         q.id,
         q.content,
         q.author_id,
-        u.first_name || ' ' || COALESCE(u.last_name, '') as author_name,
-        u.maritime_rank as author_rank,
-        u.whatsapp_profile_picture_url as author_whatsapp_profile_picture_url,
-        u.whatsapp_display_name as author_whatsapp_display_name,
-        u.profile_image_url as author_profile_picture_url,
         q.tags,
         q.views,
         q.is_resolved,
@@ -74,7 +69,6 @@ export async function getQuestions(page: number = 1, limit: number = 20, withIma
         END as category_name,
         (SELECT COUNT(*) FROM qaaq_answers a WHERE a.question_id = q.id) as answer_count
       FROM questions q
-      LEFT JOIN users u ON CAST(u.id AS TEXT) = CAST(q.author_id AS TEXT)
       WHERE q.is_archived = false AND q.is_hidden = false
       ${withImages ? 'AND q.image_urls IS NOT NULL AND array_length(q.image_urls, 1) > 0' : ''}
       ORDER BY q.created_at DESC
@@ -92,10 +86,10 @@ export async function getQuestions(page: number = 1, limit: number = 20, withIma
     const total = parseInt(countResult.rows[0].total);
     const questions = questionsResult.rows.map(row => ({
       ...row,
-      author_name: row.author_name?.trim() || 'Anonymous',
-      author_whatsapp_profile_picture_url: row.author_whatsapp_profile_picture_url || null,
-      author_whatsapp_display_name: row.author_whatsapp_display_name || null,
-      author_profile_picture_url: row.author_profile_picture_url || null,
+      author_name: 'Maritime Professional',
+      author_whatsapp_profile_picture_url: null,
+      author_whatsapp_display_name: null,
+      author_profile_picture_url: null,
       tags: row.tags || [],
       image_urls: row.image_urls || [],
       views: row.views || 0,
@@ -106,7 +100,7 @@ export async function getQuestions(page: number = 1, limit: number = 20, withIma
     
     const hasMore = (page * limit) < total;
     
-    console.log(`Retrieved ${questions.length} questions, total: ${total}, hasMore: ${hasMore}`);
+    console.log(`✅ Retrieved ${questions.length} questions, total: ${total}, hasMore: ${hasMore}`);
     
     client.release();
     
@@ -117,7 +111,7 @@ export async function getQuestions(page: number = 1, limit: number = 20, withIma
     };
     
   } catch (error) {
-    console.error('Error fetching questions:', error);
+    console.error('❌ Error fetching questions:', error);
     throw new Error('Failed to fetch questions');
   }
 }
@@ -196,7 +190,7 @@ export async function getQuestionAnswers(questionId: number): Promise<any[]> {
         END as is_from_whatsapp,
         false as is_best_answer
       FROM qaaq_answers a
-      LEFT JOIN users u ON CAST(u.id AS TEXT) = CAST(a.author_id AS TEXT)
+      LEFT JOIN users u ON u.id = a.author_id
       WHERE a.question_id = $1
       ORDER BY 
         a.created_at ASC
