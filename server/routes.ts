@@ -1027,6 +1027,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ==== QBOT CHAT API ENDPOINTS ====
   
+  // Function to store QBOT response in Questions database with SEMM breadcrumb
+  async function storeQBOTResponseInDatabase(userMessage: string, aiResponse: string, user: any): Promise<void> {
+    try {
+      const questionId = `qbot_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const userId = user?.id || 'qbot_user';
+      const userName = user?.fullName || user?.whatsAppDisplayName || 'QBOT User';
+      const userRank = user?.maritimeRank || user?.rank || 'Maritime Professional';
+      
+      // Analyze message to determine SEMM breadcrumb categorization
+      const semmCategory = categorizeMessageWithSEMM(userMessage, aiResponse);
+      
+      // Store QBOT Q&A in questions table with SEMM breadcrumb
+      await pool.query(`
+        INSERT INTO questions (
+          content, author_name, category_name, created_at, updated_at
+        ) VALUES ($1, $2, $3, NOW(), NOW())
+      `, [
+        `[QBOT Q&A - ${semmCategory.breadcrumb}]\nQuestion: ${userMessage}\n\nAnswer: ${aiResponse}`,
+        `${userName} (via QBOT)`,
+        semmCategory.category
+      ]);
+
+      // Log for verification
+      console.log(`📚 QBOT Q&A stored in questions database:`);
+      console.log(`   User: ${userName} (${userRank})`);
+      console.log(`   SEMM: ${semmCategory.breadcrumb}`);
+      console.log(`   Category: ${semmCategory.category}`);
+      
+    } catch (error) {
+      console.error('Error storing QBOT response in database:', error);
+      // Don't throw error to avoid breaking the chat flow
+    }
+  }
+
+  // Function to categorize messages using SEMM (System > Equipment > Make > Model) structure
+  function categorizeMessageWithSEMM(message: string, response: string): {
+    system: string;
+    equipment: string;
+    make: string;
+    model: string;
+    category: string;
+    breadcrumb: string;
+  } {
+    const msgLower = message.toLowerCase();
+    const resLower = response.toLowerCase();
+    
+    // System categorization
+    let system = 'General';
+    if (msgLower.includes('engine') || msgLower.includes('propulsion') || resLower.includes('engine')) system = 'Propulsion';
+    else if (msgLower.includes('navigation') || msgLower.includes('radar') || msgLower.includes('gps')) system = 'Navigation';
+    else if (msgLower.includes('electrical') || msgLower.includes('power') || msgLower.includes('generator')) system = 'Electrical';
+    else if (msgLower.includes('cargo') || msgLower.includes('crane') || msgLower.includes('hatch')) system = 'Cargo Handling';
+    else if (msgLower.includes('safety') || msgLower.includes('fire') || msgLower.includes('lifeboat')) system = 'Safety Systems';
+    else if (msgLower.includes('hydraulic') || msgLower.includes('pump') || msgLower.includes('valve')) system = 'Hydraulic Systems';
+    else if (msgLower.includes('communication') || msgLower.includes('radio') || msgLower.includes('sat')) system = 'Communication';
+    else if (msgLower.includes('anchor') || msgLower.includes('mooring') || msgLower.includes('winch')) system = 'Deck Equipment';
+    
+    // Equipment categorization
+    let equipment = 'General Equipment';
+    if (msgLower.includes('pump')) equipment = 'Pump';
+    else if (msgLower.includes('valve')) equipment = 'Valve';
+    else if (msgLower.includes('motor') || msgLower.includes('engine')) equipment = 'Motor/Engine';
+    else if (msgLower.includes('compressor')) equipment = 'Compressor';
+    else if (msgLower.includes('generator')) equipment = 'Generator';
+    else if (msgLower.includes('radar')) equipment = 'Radar System';
+    else if (msgLower.includes('gps') || msgLower.includes('navigation')) equipment = 'Navigation Equipment';
+    else if (msgLower.includes('crane')) equipment = 'Crane';
+    else if (msgLower.includes('winch')) equipment = 'Winch';
+    
+    // Make detection (common maritime equipment manufacturers)
+    let make = 'Unknown Make';
+    if (msgLower.includes('wartsila') || resLower.includes('wartsila')) make = 'Wartsila';
+    else if (msgLower.includes('man') || msgLower.includes('man b&w')) make = 'MAN';
+    else if (msgLower.includes('caterpillar') || msgLower.includes('cat')) make = 'Caterpillar';
+    else if (msgLower.includes('volvo')) make = 'Volvo';
+    else if (msgLower.includes('cummins')) make = 'Cummins';
+    else if (msgLower.includes('sulzer')) make = 'Sulzer';
+    else if (msgLower.includes('mitsubishi')) make = 'Mitsubishi';
+    else if (msgLower.includes('yanmar')) make = 'Yanmar';
+    else if (msgLower.includes('furuno')) make = 'Furuno';
+    else if (msgLower.includes('raytheon')) make = 'Raytheon';
+    else if (msgLower.includes('sperry')) make = 'Sperry Marine';
+    
+    // Model detection (extract model numbers/names if present)
+    let model = 'General Model';
+    const modelMatch = message.match(/(?:model|type|series)\s+([A-Za-z0-9-]+)/i);
+    if (modelMatch) {
+      model = modelMatch[1];
+    } else {
+      // Look for typical maritime model patterns
+      const patternMatch = message.match(/([A-Z]{2,4}[-\s]?[0-9]{2,4}[A-Z]?)/);
+      if (patternMatch) model = patternMatch[1];
+    }
+    
+    const category = `${system} - ${equipment}`;
+    const breadcrumb = `${system} > ${equipment} > ${make} > ${model}`;
+    
+    return { system, equipment, make, model, category, breadcrumb };
+  }
+
   // QBOT chat endpoint - responds to user messages with AI
   app.post('/api/qbot/chat', optionalAuth, async (req, res) => {
     try {
@@ -1050,6 +1150,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Generate AI response using existing generateAIResponse function
       const aiResponse = await generateAIResponse(message, 'Maritime Technical Support', user);
+      
+      // Store QBOT response in Questions database with SEMM breadcrumb
+      await storeQBOTResponseInDatabase(message, aiResponse, user);
       
       console.log(`🤖 QBOT Chat - User: ${message.substring(0, 50)}... | Response: ${aiResponse.substring(0, 50)}...`);
       

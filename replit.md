@@ -91,6 +91,13 @@ Onboard Search: Special "onboard" keyword search filters for sailing users and d
 - Enhanced search functionality to work with questions table schema
 - Preserved admin panel functionality without modifications per user requirements
 
+### QBOT OpenAI Integration (August 8, 2025)
+- **AI-Powered Responses**: Connected QBOT to OpenAI GPT-4o for intelligent maritime assistance
+- **SEMM Breadcrumb System**: Implemented System > Equipment > Make > Model categorization for technical questions
+- **Database Storage**: All QBOT interactions automatically stored in questions table with SEMM breadcrumbs
+- **Maritime Expertise**: Enhanced prompts for maritime engineering, safety, regulations, and technical guidance
+- **Error Handling**: Robust fallback systems ensure chat continuity even during API issues
+
 ## External Dependencies
 - **Shared QAAQ Database**: PostgreSQL database for authentic maritime user data and 1235 real Q&A records.
 - **WhatsApp Bot Services**: QBOT and QOI GPT for unified bot services.
