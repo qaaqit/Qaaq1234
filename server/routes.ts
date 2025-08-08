@@ -2248,50 +2248,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('Questions API called without authentication requirement');
       
-      // Return mock data for now since questions table doesn't exist in current schema
-      const mockQuestions = {
-        questions: [
-          {
-            id: 1,
-            content: "How do you handle marine equipment maintenance during rough weather?",
-            author_name: "Captain Smith",
-            author_rank: "Master Mariner",
-            tags: ["maintenance", "weather", "equipment"],
-            views: 45,
-            is_resolved: false,
-            created_at: "2024-08-01T10:00:00Z",
-            updated_at: "2024-08-01T10:00:00Z",
-            image_urls: [],
-            is_from_whatsapp: false,
-            engagement_score: 12,
-            flag_count: 0,
-            category_name: "Maritime Equipment",
-            answer_count: 3
-          },
-          {
-            id: 2,
-            content: "Best practices for cargo securing in heavy seas?",
-            author_name: "Chief Officer Johnson",
-            author_rank: "Chief Officer",
-            tags: ["cargo", "safety", "heavy-seas"],
-            views: 67,
-            is_resolved: true,
-            created_at: "2024-07-30T14:30:00Z",
-            updated_at: "2024-07-30T14:30:00Z",
-            image_urls: [],
-            is_from_whatsapp: false,
-            engagement_score: 18,
-            flag_count: 0,
-            category_name: "General Discussion",
-            answer_count: 5
-          }
-        ],
-        total: 2,
+      // Return empty questions since no questions data is available
+      const emptyQuestions = {
+        questions: [],
+        total: 0,
         hasMore: false
       };
       
-      console.log(`API: Returning ${mockQuestions.questions.length} questions (mock data)`);
-      res.json(mockQuestions);
+      console.log('API: Returning empty questions list (no data available)');
+      res.json(emptyQuestions);
     } catch (error) {
       console.error('Error fetching questions:', error);
       res.status(500).json({ error: 'Failed to fetch questions' });
