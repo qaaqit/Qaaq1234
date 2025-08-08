@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useEffect, useState } from "react";
 
 import Home from "@/pages/home";
+import Landing from "@/pages/landing";
 import Register from "@/pages/register";
 import Verify from "@/pages/verify";
 import Discover from "@/pages/discover";
@@ -67,7 +68,7 @@ function Router() {
     <div className="min-h-screen bg-slate-50">
       <div className={currentUser ? "pb-16" : ""}>
         <Switch>
-          <Route path="/" component={() => currentUser ? <QBOTPage user={currentUser} /> : <Home onSuccess={setUser} />} />
+          <Route path="/" component={() => currentUser ? <Landing user={currentUser} /> : <Home onSuccess={setUser} />} />
           <Route path="/register" component={() => <Register onSuccess={setUser} />} />
           <Route path="/verify" component={() => <Verify onSuccess={setUser} />} />
           <Route path="/discover" component={() => currentUser ? <Discover user={currentUser} /> : <Home onSuccess={setUser} />} />
