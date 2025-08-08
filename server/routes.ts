@@ -822,7 +822,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin Routes
   app.get('/api/admin/stats', authenticateToken, isAdmin, async (req: any, res) => {
     try {
-      const userResult = await pool.query(`
+      const result = await pool.query(`
         SELECT 
           COUNT(*) as total_users,
           COUNT(CASE WHEN ship_name IS NOT NULL THEN 1 END) as sailors,
@@ -833,19 +833,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         FROM users
       `);
 
-      // Get authentic QAAQ question count from Notion databases
-      const { getAllQAAQQuestions } = await import('./qa-service');
-      const qaaqQuestions = await getAllQAAQQuestions();
-      
-      const stats = userResult.rows[0];
+      const stats = result.rows[0];
       res.json({
         totalUsers: parseInt(stats.total_users),
         sailors: parseInt(stats.sailors),
         locals: parseInt(stats.locals),
         verifiedUsers: parseInt(stats.verified_users),
         activeUsers: parseInt(stats.active_users),
-        totalLogins: parseInt(stats.total_logins) || 0,
-        totalQuestions: qaaqQuestions.length // Add authentic QAAQ question count
+        totalLogins: parseInt(stats.total_logins) || 0
       });
     } catch (error) {
       console.error("Error fetching admin stats:", error);
@@ -2234,50 +2229,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`Fetching real questions from QAAQ database - page ${page}, limit ${limit}, search: ${search || 'none'}`);
       
-      // Only get authentic QAAQ questions - no shared DB seeded data
-      let qaaqQuestions = [];
+      // Fetch authentic questions from the same source as qaaqit.com/questions
+      console.log('Fetching authentic questions from QAAQ shared database...');
+      
+      let allQuestions = [];
       
       if (search && search.trim() !== '') {
         console.log(`Searching for questions with term: "${search}"`);
-        qaaqQuestions = await getAllQAAQQuestions();
-        qaaqQuestions = qaaqQuestions.filter(q => 
-          q.question?.toLowerCase().includes(search.toLowerCase()) ||
-          q.category?.toLowerCase().includes(search.toLowerCase()) ||
-          q.tags?.some(tag => tag.toLowerCase().includes(search.toLowerCase()))
-        );
+        allQuestions = await searchQuestionsInSharedDB(search);
       } else {
-        console.log('Fetching authentic QAAQ questions only...');
-        qaaqQuestions = await getAllQAAQQuestions();
+        allQuestions = await getAllQuestionsFromSharedDB();
       }
       
-      // Only use authentic QAAQ questions
-      let allQuestions = [];
-      
-      // Add QAAQ Notion questions, converting format if needed
-      qaaqQuestions.forEach((q, index) => {
-        allQuestions.push({
-          id: `qaaq_${index}`,
-          questionText: q.question || q.content || '',
-          userId: q.author_id || '',
-          userName: q.author_name || 'Maritime Professional',
-          questionCategory: q.category || 'General Discussion',
-          askedDate: new Date(q.created_at || Date.now()),
-          source: 'qaaq',
-          answerCount: q.answer_count || 0,
-          isResolved: q.is_resolved || false,
-          urgency: 'normal',
-          tags: q.tags || [],
-          location: q.location || '',
-          createdAt: new Date(q.created_at || Date.now()),
-          updatedAt: new Date(q.updated_at || q.created_at || Date.now())
-        });
-      });
-      
-      console.log(`Retrieved ${qaaqQuestions.length} authentic QAAQ questions from Notion database = ${allQuestions.length} total (authentic maritime Q&A only)`);
-      
-      // Only use authentic questions from QAAQ database - no fake data generation
-      
-      console.log(`Final authentic QAAQ question count: ${allQuestions.length} (confirmed authentic maritime Q&A)`);
+      console.log(`Retrieved ${allQuestions.length} authentic questions from QAAQ shared database`);
       
       // Transform the questions to match the expected frontend format
       const transformedQuestions = allQuestions.map((q, index) => ({
