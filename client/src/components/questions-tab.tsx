@@ -319,10 +319,9 @@ export function QuestionsTab() {
       >
         <Card className="border-2 border-gray-200 hover:border-ocean-teal/40 transition-colors cursor-pointer" onClick={() => window.location.href = `/questions/${question.id}`}>
           <CardContent className="p-4">
-            {/* Question Header */}
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center space-x-2">
-                <span className="text-orange-600 font-bold text-base">#{question.id}</span>
+            {/* Question Content with ID */}
+            <div className="mb-3">
+              <div className="flex items-center justify-end space-x-2 mb-2">
                 {question.is_resolved && (
                   <Badge className="bg-green-100 text-green-800 border-green-300">
                     <CheckCircle size={14} className="mr-1" />
@@ -335,11 +334,12 @@ export function QuestionsTab() {
                   </Badge>
                 )}
               </div>
+              
+              <p className="text-gray-800 text-base font-medium leading-relaxed line-clamp-3">
+                <span className="text-orange-600 font-bold">#{question.id}</span>{' '}
+                {question.content || 'Question content not available'}
+              </p>
             </div>
-
-            <p className="text-gray-800 mb-2 line-clamp-3 text-base font-medium leading-relaxed">
-              {question.content || 'Question content not available'}
-            </p>
 
             {/* Author Attribution */}
             <p className="text-sm text-gray-600 mb-3 flex items-center space-x-2">
