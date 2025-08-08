@@ -38,6 +38,11 @@ export default function SignUpModal({ onClose, onSuccess }: SignUpModalProps) {
       validationErrors.push('WhatsApp number must be in format +919xxxxxxxxx');
     }
 
+    // Optional email validation
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      validationErrors.push('Please enter a valid email address');
+    }
+
     setErrors(validationErrors);
     return validationErrors.length === 0;
   };
@@ -90,12 +95,13 @@ export default function SignUpModal({ onClose, onSuccess }: SignUpModalProps) {
     setErrors([]);
 
     try {
-      // Send OTP to WhatsApp number
+      // Send OTP to WhatsApp number and email (if provided)
       const response = await fetch('/api/auth/send-signup-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          whatsappNumber: formData.whatsappNumber
+          whatsappNumber: formData.whatsappNumber,
+          email: formData.email || undefined // Include email if user entered it
         })
       });
 

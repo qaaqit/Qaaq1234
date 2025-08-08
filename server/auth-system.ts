@@ -476,12 +476,12 @@ export class RobustAuthSystem {
   }
 
   /**
-   * Generate and send signup OTP
+   * Generate and send signup OTP to WhatsApp and optionally email
    */
-  async sendSignupOTP(whatsappNumber: string): Promise<{ success: boolean; message: string }> {
+  async sendSignupOTP(whatsappNumber: string, email?: string): Promise<{ success: boolean; message: string }> {
     try {
       // Check if user already exists
-      const existingUser = await this.findUserById(whatsappNumber);
+      const existingUser = await this.storage.getUserByUsername(whatsappNumber);
       if (existingUser) {
         return { success: false, message: 'Account with this WhatsApp number already exists' };
       }
@@ -492,9 +492,20 @@ export class RobustAuthSystem {
         // Send WhatsApp message with OTP
         const whatsappMessage = `🆕 QAAQ New User Verification\n\nYour verification code is: ${result.otpCode}\n\nThis code expires in 10 minutes.\n\nWelcome to QaaqConnect!`;
         
-        // In a real implementation, you would send this via WhatsApp API
-        // For now, we'll log it to console for testing
         console.log(`📱 Signup OTP for ${whatsappNumber}:`, whatsappMessage);
+        
+        // Also send email if provided
+        if (email) {
+          const { emailService } = await import('./email-service');
+          const emailResult = await emailService.sendOTPEmail(email, result.otpCode, whatsappNumber);
+          
+          if (emailResult.success) {
+            return {
+              success: true,
+              message: 'Verification codes sent to your WhatsApp and email'
+            };
+          }
+        }
         
         return {
           success: true,
