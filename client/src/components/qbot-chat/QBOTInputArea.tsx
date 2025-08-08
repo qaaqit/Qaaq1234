@@ -1,7 +1,67 @@
-import { useState, useRef, KeyboardEvent } from 'react';
+import { useState, useRef, KeyboardEvent, useEffect } from 'react';
 import { Send, Paperclip } from 'lucide-react';
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { useToast } from "@/hooks/use-toast";
+
+const DEFAULT_CHATBOT_INVITES = [
+  "Trick Question or Engine Room Reality?",
+  "Brainstorm Before Rainstorm?", 
+  "Ever Heard the Chief Say This?",
+  "Guess Before It Sinks!",
+  "Bridge or Bluff?",
+  "Sailor's Pop Quiz! Ready?",
+  "Sea Logic or Ship Magic?",
+  "This One's Hotter Than E/R on Fire Watch!",
+  "Smarter Than Your 2/E? Prove It.",
+  "Don't Let the Cadet Answer First!",
+  "Main Engine Trick or Treat?",
+  "Radar's On… But Are You?",
+  "Purifier Puzzle! Swipe to Solve.",
+  "One Alarm… A Hundred Theories.",
+  "This Ain't in Your DG Approved Notes.",
+  "Ship Roll or Role Confusion?",
+  "Code 710? Or Just A Galley Rumor?",
+  "Log Book Says One Thing… Reality Another?",
+  "Can You Solve This Before UMS Buzzer Rings?",
+  "Chai Break Mein Ye Socho…",
+  "2nd Engineer Bolega: Kya Samjha Iska Matlab?",
+  "Galley Ka Chana Garam Se Tez Hai Ye Sawal!",
+  "Ustad Bole – Answer Bata, Varna Line Mein Lag.",
+  "DG Shipping Is Watching... Think Fast!",
+  "Ship Mein Wifi Nahi, Dimaag Toh On Rakho!",
+  "Aur Batao, Ye Doubt Kisko Dena Hai?",
+  "Boss Chief Asks: Can You Answer This?",
+  "No Signal? Still Got This Puzzle!",
+  "Kapag Hindi Mo Alam… Lagot Ka Sa Bosun!",
+  "Midwatch Thinking? Try This!",
+  "Before Your Karaoke Turn, Try Solving This!",
+  "Galley Gossip or Nautical Fact?",
+  "PO3 Says Only Smart Guys Know This!",
+  "Guess What?",
+  "You Think You Know?",
+  "Wait, Really?",
+  "Spot the Mistake?",
+  "Ever Wondered Why?",
+  "Sounds Easy, Right?",
+  "Let's Test That Brain!",
+  "Pop Quiz!",
+  "Not What You Think!",
+  "Challenge Accepted?",
+  "Bug or Feature?",
+  "Logic Says One Thing…",
+  "Ctrl + Z That Thought!",
+  "CPU Says No. You Say Yes?",
+  "It Works on My Machine!",
+  "One Line of Code… One Big Mess.",
+  "Compiled… But Not Complied!",
+  "This One's Hotter Than Your Maggi.",
+  "Better Than Spicy Paneer Momos.",
+  "More Twisted Than Desi Chinese.",
+  "Click Before It Gets Cold!",
+  "Masala for Your Monday.",
+  "Brain Fry > French Fry.",
+  "Too Good to Scroll Past."
+];
 
 interface QBOTInputAreaProps {
   onSendMessage: (message: string, attachments?: string[]) => void;
@@ -11,8 +71,38 @@ interface QBOTInputAreaProps {
 export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTInputAreaProps) {
   const [message, setMessage] = useState('');
   const [attachments, setAttachments] = useState<string[]>([]);
+  const [currentPlaceholder, setCurrentPlaceholder] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
+
+  // Get random placeholder from chatbot invites
+  const getRandomPlaceholder = () => {
+    const saved = localStorage.getItem('chatbotInvites');
+    const invites = saved ? JSON.parse(saved) : DEFAULT_CHATBOT_INVITES;
+    return invites[Math.floor(Math.random() * invites.length)];
+  };
+
+  // Initialize and update placeholder
+  useEffect(() => {
+    setCurrentPlaceholder(getRandomPlaceholder());
+
+    // Listen for chatbot invites updates
+    const handleInvitesUpdate = () => {
+      setCurrentPlaceholder(getRandomPlaceholder());
+    };
+
+    window.addEventListener('chatbotInvitesUpdated', handleInvitesUpdate);
+    
+    // Set interval to change placeholder every 10 seconds
+    const interval = setInterval(() => {
+      setCurrentPlaceholder(getRandomPlaceholder());
+    }, 10000);
+
+    return () => {
+      window.removeEventListener('chatbotInvitesUpdated', handleInvitesUpdate);
+      clearInterval(interval);
+    };
+  }, []);
 
   const handleSend = () => {
     if ((message.trim() || attachments.length > 0) && !disabled) {
@@ -178,7 +268,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
           onInput={handleInput}
           onKeyPress={handleKeyPress}
           onPaste={handlePaste}
-          placeholder="Type a message or paste image..."
+          placeholder={currentPlaceholder}
           disabled={disabled}
           className="flex-1 resize-none rounded-lg border border-gray-300 px-4 py-2 
                    focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent
