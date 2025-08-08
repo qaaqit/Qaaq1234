@@ -411,37 +411,52 @@ export function QuestionsTab() {
             {/* Bot Answer Preview */}
             {botAnswer && (
               <div className="bg-orange-50 border-l-4 border-orange-400 p-3 mb-3 rounded-r-lg">
-                <div className="flex items-start space-x-2 mb-2">
-                  <Avatar className="w-6 h-6">
-                    {(botAnswer.author_whatsapp_profile_picture_url || botAnswer.author_profile_picture_url) && (
-                      <img 
-                        src={(botAnswer.author_whatsapp_profile_picture_url || botAnswer.author_profile_picture_url) as string} 
-                        alt={`${botAnswer.author_whatsapp_display_name || botAnswer.author_name}'s profile`}
-                        className="w-full h-full rounded-full object-cover"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                        }}
-                      />
-                    )}
-                    <AvatarFallback className="bg-orange-500 text-white text-xs">
-                      {getInitials(botAnswer.author_whatsapp_display_name || botAnswer.author_name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <h6 className="font-semibold text-orange-900 text-sm">
-                        {(() => {
-                          const authorName = botAnswer.author_whatsapp_display_name || botAnswer.author_name;
-                          return authorName === 'QG' || authorName === 'QAAQ GPT' ? 'Ans:' : authorName;
-                        })()}
-                      </h6>
-                    </div>
-                    <p className="text-orange-800 text-sm mt-1 font-medium leading-5 overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                      {truncateToWords(botAnswer.content, 15)}
-                    </p>
-                  </div>
-                </div>
+                {(() => {
+                  const authorName = botAnswer.author_whatsapp_display_name || botAnswer.author_name;
+                  const isBot = authorName === 'QG' || authorName === 'QAAQ GPT';
+                  
+                  if (isBot) {
+                    return (
+                      <div>
+                        <p className="text-orange-800 text-sm font-medium leading-5 overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                          <span className="font-semibold text-orange-900">Ans: </span>
+                          {truncateToWords(botAnswer.content, 15)}
+                        </p>
+                      </div>
+                    );
+                  } else {
+                    return (
+                      <div className="flex items-start space-x-2 mb-2">
+                        <Avatar className="w-6 h-6">
+                          {(botAnswer.author_whatsapp_profile_picture_url || botAnswer.author_profile_picture_url) && (
+                            <img 
+                              src={(botAnswer.author_whatsapp_profile_picture_url || botAnswer.author_profile_picture_url) as string} 
+                              alt={`${botAnswer.author_whatsapp_display_name || botAnswer.author_name}'s profile`}
+                              className="w-full h-full rounded-full object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                              }}
+                            />
+                          )}
+                          <AvatarFallback className="bg-orange-500 text-white text-xs">
+                            {getInitials(authorName)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2">
+                            <h6 className="font-semibold text-orange-900 text-sm">
+                              {authorName}
+                            </h6>
+                          </div>
+                          <p className="text-orange-800 text-sm mt-1 font-medium leading-5 overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                            {truncateToWords(botAnswer.content, 15)}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  }
+                })()}
               </div>
             )}
 
