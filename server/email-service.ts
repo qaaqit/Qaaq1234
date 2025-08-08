@@ -37,7 +37,7 @@ class EmailService {
         secure: false,
         auth: {
           user: process.env.GMAIL_USER || 'support@qaaq.app',
-          pass: process.env.GMAIL_APP_PASSWORD || 'klegipenpnvnvrej'
+          pass: process.env.MAIL_APP_PASSWORD || 'klegipenpnvnvrej'
         }
       });
       
@@ -73,6 +73,7 @@ class EmailService {
    */
   async sendOTPEmail(email: string, otpCode: string, whatsappNumber: string): Promise<{ success: boolean; message: string }> {
     try {
+      await this.ensureInitialized();
       const emailContent = {
         from: process.env.GMAIL_USER || 'support@qaaq.app',
         to: email,
