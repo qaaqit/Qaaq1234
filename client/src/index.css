@@ -3,24 +3,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom scrollbar styling for QBOT chat */
-.qbot-chat-scroll::-webkit-scrollbar {
-  width: 6px;
-}
-
-.qbot-chat-scroll::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.qbot-chat-scroll::-webkit-scrollbar-thumb {
-  background: #ea580c;
-  border-radius: 3px;
-}
-
-.qbot-chat-scroll::-webkit-scrollbar-thumb:hover {
-  background: #dc2626;
-}
-
 /* Ensure minimum viewport height on mobile */
 @supports (-webkit-touch-callout: none) {
   /* iOS Safari specific fixes */

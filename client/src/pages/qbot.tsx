@@ -161,7 +161,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
   };
 
   return (
-    <div className="h-screen bg-gradient-to-br from-orange-50 via-white to-yellow-50 flex flex-col overflow-hidden">
+    <div className="h-screen bg-gradient-to-br from-orange-50 via-white to-yellow-50 flex flex-col">
       {/* Header - Exactly Same as Map Radar Page */}
       <header className="bg-white text-black shadow-md relative overflow-hidden flex-shrink-0 z-[1002] border-b-2 border-orange-400">
         <div className="absolute inset-0 bg-gradient-to-r from-red-50 via-orange-50 to-yellow-50 opacity-50"></div>
@@ -187,8 +187,8 @@ export default function QBOTPage({ user }: QBOTPageProps) {
         </div>
       </header>
       
-      {/* QBOT Chat Container - Fill remaining height without scrolling */}
-      <div className="flex-1 flex flex-col min-h-0">
+      {/* QBOT Chat Container - Increased to 75% Height */}
+      <div className="h-[75vh] pb-16">
         <QBOTChatContainer>
           <div className="flex flex-col h-full">
             {/* Gradient Header */}
@@ -220,7 +220,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
         </QBOTChatContainer>
         
         {/* Orange Bottom Border Line */}
-        <div className="w-full h-1 bg-gradient-to-r from-red-500 to-orange-500 shadow-md flex-shrink-0"></div>
+        <div className="w-full h-1 bg-gradient-to-r from-red-500 to-orange-500 shadow-md"></div>
       </div>
     </div>
   );

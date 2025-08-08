@@ -25,10 +25,11 @@ export default function QBOTMessageList({ messages }: QBOTMessageListProps) {
   return (
     <div 
       ref={containerRef}
-      className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 qbot-chat-scroll"
+      className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 scrollbar-hide"
       style={{
-        scrollbarWidth: 'thin',
-        scrollbarColor: '#ea580c transparent'
+        scrollbarWidth: 'none',
+        msOverflowStyle: 'none',
+        WebkitScrollbar: { display: 'none' }
       }}
     >
       {messages.map((message) => (
