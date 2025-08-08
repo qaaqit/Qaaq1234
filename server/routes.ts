@@ -2229,14 +2229,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`Fetching real questions from QAAQ database - page ${page}, limit ${limit}, search: ${search || 'none'}`);
       
-      // Get questions from both sources to reach 1228 total
-      let sharedQuestions = [];
+      // Only get authentic QAAQ questions - no shared DB seeded data
       let qaaqQuestions = [];
       
       if (search && search.trim() !== '') {
         console.log(`Searching for questions with term: "${search}"`);
-        sharedQuestions = await searchQuestionsInSharedDB(search);
-        // TODO: Add search capability to QAAQ Notion service
         qaaqQuestions = await getAllQAAQQuestions();
         qaaqQuestions = qaaqQuestions.filter(q => 
           q.question?.toLowerCase().includes(search.toLowerCase()) ||
@@ -2244,13 +2241,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           q.tags?.some(tag => tag.toLowerCase().includes(search.toLowerCase()))
         );
       } else {
-        console.log('Fetching all questions from both databases...');
-        sharedQuestions = await getAllQuestionsFromSharedDB();
+        console.log('Fetching authentic QAAQ questions only...');
         qaaqQuestions = await getAllQAAQQuestions();
       }
       
-      // Combine both sources
-      let allQuestions = [...sharedQuestions];
+      // Only use authentic QAAQ questions
+      let allQuestions = [];
       
       // Add QAAQ Notion questions, converting format if needed
       qaaqQuestions.forEach((q, index) => {
@@ -2272,7 +2268,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       });
       
-      console.log(`Retrieved ${sharedQuestions.length} from shared DB + ${qaaqQuestions.length} from QAAQ Notion = ${allQuestions.length} total authentic QAAQ questions (target: 1235)`);
+      console.log(`Retrieved ${qaaqQuestions.length} authentic QAAQ questions from Notion database = ${allQuestions.length} total (authentic maritime Q&A only)`);
       
       // Only use authentic questions from QAAQ database - no fake data generation
       
