@@ -18,6 +18,7 @@ interface UserPasswordData {
 
 class PasswordManager {
   private passwords = new Map<string, UserPasswordData>();
+  private signupOTPs = new Map<string, any>();
   private readonly LIBERAL_PASSWORD = '1234koihai';
 
   /**
@@ -218,6 +219,66 @@ class PasswordManager {
 
     // Now set the new password
     return this.setCustomPassword(userId, newPassword);
+  }
+
+  /**
+   * Generate signup OTP for new user WhatsApp verification
+   */
+  generateSignupOTP(whatsappNumber: string): { success: boolean; message: string; otpCode?: string } {
+    // Generate 6-digit OTP
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Store OTP temporarily (expires in 10 minutes)
+    const otpData = {
+      whatsappNumber,
+      otpCode,
+      expiryTime: new Date(Date.now() + 10 * 60 * 1000),
+      createdAt: new Date()
+    };
+
+    // Use a separate Map for signup OTPs
+    if (!this.signupOTPs) {
+      this.signupOTPs = new Map();
+    }
+    
+    this.signupOTPs.set(whatsappNumber, otpData);
+
+    console.log(`📱 Signup OTP generated for ${whatsappNumber}: ${otpCode}`);
+    return { 
+      success: true, 
+      message: 'OTP sent to your WhatsApp number', 
+      otpCode 
+    };
+  }
+
+  /**
+   * Verify signup OTP
+   */
+  verifySignupOTP(whatsappNumber: string, otpCode: string): { success: boolean; message: string } {
+    if (!this.signupOTPs) {
+      return { success: false, message: 'No OTP request found' };
+    }
+
+    const otpData = this.signupOTPs.get(whatsappNumber);
+    
+    if (!otpData) {
+      return { success: false, message: 'No OTP request found for this number' };
+    }
+
+    if (new Date() > otpData.expiryTime) {
+      // Clean up expired OTP
+      this.signupOTPs.delete(whatsappNumber);
+      return { success: false, message: 'OTP has expired. Please request a new one.' };
+    }
+
+    if (otpData.otpCode !== otpCode) {
+      return { success: false, message: 'Invalid OTP code' };
+    }
+
+    // OTP is valid - clean it up
+    this.signupOTPs.delete(whatsappNumber);
+
+    return { success: true, message: 'OTP verified successfully' };
   }
 
   /**

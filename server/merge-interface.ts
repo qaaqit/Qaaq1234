@@ -186,48 +186,70 @@ export function setupMergeRoutes(app: express.Application) {
   });
 
   /**
-   * User sign up endpoint
+   * Send signup OTP endpoint
    */
-  app.post('/api/auth/signup', async (req, res) => {
+  app.post('/api/auth/send-signup-otp', async (req, res) => {
     try {
-      const { userId, email, password, fullName, userType = 'local' } = req.body;
+      const { whatsappNumber } = req.body;
       
-      if (!userId || !email || !password) {
+      if (!whatsappNumber) {
         return res.status(400).json({ 
           success: false, 
-          message: 'WhatsApp number, email, and password are required' 
+          message: 'WhatsApp number is required' 
         });
       }
 
       // Validate WhatsApp number format
-      if (!/^\+\d{10,15}$/.test(userId)) {
+      if (!/^\+\d{10,15}$/.test(whatsappNumber)) {
         return res.status(400).json({
           success: false,
           message: 'WhatsApp number must be in format +919xxxxxxxxx'
         });
       }
 
-      // Check if user already exists
-      const existingUser = await robustAuth.findUserById(userId);
-      if (existingUser) {
-        return res.status(409).json({
-          success: false,
-          message: 'Account with this WhatsApp number already exists'
+      const result = await robustAuth.sendSignupOTP(whatsappNumber);
+      res.json(result);
+    } catch (error) {
+      console.error('Send signup OTP error:', error);
+      res.status(500).json({ success: false, message: 'Failed to send verification code' });
+    }
+  });
+
+  /**
+   * Verify OTP and create user endpoint
+   */
+  app.post('/api/auth/verify-signup-otp', async (req, res) => {
+    try {
+      const { whatsappNumber, otpCode, email, password, fullName, userType = 'local' } = req.body;
+      
+      if (!whatsappNumber || !otpCode || !email || !password) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'WhatsApp number, OTP code, email, and password are required' 
         });
       }
 
-      const result = await robustAuth.createNewUser({
-        userId,
+      // Validate OTP format
+      if (!/^\d{6}$/.test(otpCode)) {
+        return res.status(400).json({
+          success: false,
+          message: 'OTP code must be 6 digits'
+        });
+      }
+
+      const result = await robustAuth.verifyOTPAndCreateUser({
+        whatsappNumber,
+        otpCode,
         email,
         password,
-        fullName: fullName || `User ${userId}`,
+        fullName: fullName || `User ${whatsappNumber}`,
         userType
       });
 
       res.json(result);
     } catch (error) {
-      console.error('Sign up error:', error);
-      res.status(500).json({ success: false, message: 'Failed to create account' });
+      console.error('Verify OTP and signup error:', error);
+      res.status(500).json({ success: false, message: 'Failed to verify OTP and create account' });
     }
   });
   

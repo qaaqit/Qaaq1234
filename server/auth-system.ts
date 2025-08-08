@@ -476,6 +476,72 @@ export class RobustAuthSystem {
   }
 
   /**
+   * Generate and send signup OTP
+   */
+  async sendSignupOTP(whatsappNumber: string): Promise<{ success: boolean; message: string }> {
+    try {
+      // Check if user already exists
+      const existingUser = await this.findUserById(whatsappNumber);
+      if (existingUser) {
+        return { success: false, message: 'Account with this WhatsApp number already exists' };
+      }
+
+      const result = passwordManager.generateSignupOTP(whatsappNumber);
+      
+      if (result.success && result.otpCode) {
+        // Send WhatsApp message with OTP
+        const whatsappMessage = `🆕 QAAQ New User Verification\n\nYour verification code is: ${result.otpCode}\n\nThis code expires in 10 minutes.\n\nWelcome to QaaqConnect!`;
+        
+        // In a real implementation, you would send this via WhatsApp API
+        // For now, we'll log it to console for testing
+        console.log(`📱 Signup OTP for ${whatsappNumber}:`, whatsappMessage);
+        
+        return {
+          success: true,
+          message: 'Verification code sent to your WhatsApp number'
+        };
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Send signup OTP failed:', error);
+      return { success: false, message: 'Failed to send verification code' };
+    }
+  }
+
+  /**
+   * Verify OTP and create new user account
+   */
+  async verifyOTPAndCreateUser(userData: {
+    whatsappNumber: string;
+    otpCode: string;
+    email: string;
+    password: string;
+    fullName: string;
+    userType: string;
+  }): Promise<{ success: boolean; message: string; user?: any; token?: string }> {
+    try {
+      // First verify the OTP
+      const otpVerification = passwordManager.verifySignupOTP(userData.whatsappNumber, userData.otpCode);
+      if (!otpVerification.success) {
+        return otpVerification;
+      }
+
+      // Now create the user account
+      return await this.createNewUser({
+        userId: userData.whatsappNumber,
+        email: userData.email,
+        password: userData.password,
+        fullName: userData.fullName,
+        userType: userData.userType
+      });
+    } catch (error) {
+      console.error('Verify OTP and create user failed:', error);
+      return { success: false, message: 'Failed to verify OTP and create account' };
+    }
+  }
+
+  /**
    * Create new user account
    */
   async createNewUser(userData: {
