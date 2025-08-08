@@ -2114,8 +2114,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   //   }
   // });
 
-  // Search questions
-  app.get('/api/questions/search', authenticateToken, async (req, res) => {
+  // Search questions (with analytics tracking)
+  app.get('/api/questions/search', authenticateToken, async (req: any, res) => {
     try {
       const { q: keyword } = req.query;
       if (!keyword || typeof keyword !== 'string') {
@@ -2123,7 +2123,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { searchQuestionsInSharedDB } = await import('./shared-qa-service');
-      const questions = await searchQuestionsInSharedDB(keyword);
+      const questions = await searchQuestionsInSharedDB(keyword, req.userId);
       
       res.json({
         questions,
@@ -2565,7 +2565,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (search && search.trim() !== '') {
         console.log(`Searching for questions with term: "${search}"`);
-        allQuestions = await searchQuestionsInSharedDB(search);
+        // For unauthenticated endpoint, pass undefined for userId (anonymous tracking)
+        allQuestions = await searchQuestionsInSharedDB(search, undefined);
       } else {
         allQuestions = await getAllQuestionsFromSharedDB();
       }
@@ -2950,6 +2951,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error populating rank groups:', error);
       res.status(500).json({ error: 'Failed to populate rank groups' });
+    }
+  });
+
+  // ==== SEARCH ANALYTICS API ENDPOINTS ====
+  
+  // Import search analytics service
+  const { searchAnalyticsService } = await import('./search-analytics-service');
+
+  // Get top searched keywords (admin only)
+  app.get('/api/admin/search-analytics/keywords', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 50;
+      const topKeywords = await searchAnalyticsService.getTopSearchedKeywords(limit);
+      res.json(topKeywords);
+    } catch (error) {
+      console.error('Error fetching top search keywords:', error);
+      res.status(500).json({ error: 'Failed to fetch search keywords' });
+    }
+  });
+
+  // Get user's search history (authenticated users)
+  app.get('/api/search-analytics/history', authenticateToken, async (req: any, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 50;
+      const history = await searchAnalyticsService.getUserSearchHistory(req.userId, limit);
+      res.json(history);
+    } catch (error) {
+      console.error('Error fetching user search history:', error);
+      res.status(500).json({ error: 'Failed to fetch search history' });
+    }
+  });
+
+  // Get keyword statistics (admin only)
+  app.get('/api/admin/search-analytics/keyword/:keyword', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      const { keyword } = req.params;
+      const stats = await searchAnalyticsService.getKeywordStats(keyword);
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching keyword stats:', error);
+      res.status(500).json({ error: 'Failed to fetch keyword statistics' });
+    }
+  });
+
+  // Get search analytics summary (admin only)
+  app.get('/api/admin/search-analytics/summary', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      const summary = await searchAnalyticsService.getSearchAnalyticsSummary();
+      res.json(summary);
+    } catch (error) {
+      console.error('Error fetching search analytics summary:', error);
+      res.status(500).json({ error: 'Failed to fetch search analytics' });
     }
   });
 

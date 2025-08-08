@@ -12,6 +12,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, LineChart, Line } from "recharts";
 import { FileText } from "lucide-react";
 import AdminAnalytics from "@/components/admin/AdminAnalytics";
+import SearchAnalyticsPanel from "@/components/search-analytics-panel";
 
 interface AdminUser {
   id: string;
@@ -288,8 +289,19 @@ export default function AdminPanel() {
               </button>
             </div>
             
-            {/* Second Row: QOI, User Management */}
-            <div className="grid grid-cols-2 gap-2">
+            {/* Second Row: Search Analytics, QOI, User Management */}
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                onClick={() => setActiveTab("search")}
+                className={`flex items-center justify-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${
+                  activeTab === "search"
+                    ? "bg-orange-600 text-white shadow-sm"
+                    : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                }`}
+              >
+                <i className="fas fa-search mr-2"></i>
+                Search
+              </button>
               <button
                 onClick={() => setActiveTab("qoi")}
                 className={`flex items-center justify-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${
@@ -310,7 +322,7 @@ export default function AdminPanel() {
                 }`}
               >
                 <i className="fas fa-users mr-2"></i>
-                User Management
+                Users
               </button>
             </div>
           </div>
@@ -578,6 +590,11 @@ export default function AdminPanel() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* Search Analytics Tab */}
+          <TabsContent value="search" className="space-y-6">
+            <SearchAnalyticsPanel />
           </TabsContent>
 
           {/* QBOT Rules Tab */}

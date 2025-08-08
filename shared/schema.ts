@@ -384,3 +384,46 @@ export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 
 export type InsertBotRule = z.infer<typeof insertBotRuleSchema>;
 export type BotRule = typeof botRules.$inferSelect;
+
+// Search Analytics Tables
+export const searchKeywords = pgTable("search_keywords", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  keyword: text("keyword").notNull(),
+  searchCount: integer("search_count").default(1).notNull(),
+  lastSearchedAt: timestamp("last_searched_at").default(sql`now()`),
+  createdAt: timestamp("created_at").default(sql`now()`),
+});
+
+export const userSearchHistory = pgTable("user_search_history", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  keyword: text("keyword").notNull(),
+  searchContext: text("search_context"), // Where the search was performed (questions, users, etc.)
+  resultsFound: integer("results_found"), // Number of results returned
+  searchedAt: timestamp("searched_at").default(sql`now()`),
+});
+
+// Relations for search analytics
+export const searchKeywordsRelations = relations(searchKeywords, ({ many }) => ({
+  userSearches: many(userSearchHistory),
+}));
+
+export const userSearchHistoryRelations = relations(userSearchHistory, ({ one }) => ({
+  user: one(users, {
+    fields: [userSearchHistory.userId],
+    references: [users.id],
+  }),
+}));
+
+// Insert schemas for search analytics
+export const insertSearchKeywordSchema = createInsertSchema(searchKeywords)
+  .omit({ id: true, createdAt: true });
+
+export const insertUserSearchHistorySchema = createInsertSchema(userSearchHistory)
+  .omit({ id: true, searchedAt: true });
+
+// Types for search analytics
+export type InsertSearchKeyword = z.infer<typeof insertSearchKeywordSchema>;
+export type SearchKeyword = typeof searchKeywords.$inferSelect;
+export type InsertUserSearchHistory = z.infer<typeof insertUserSearchHistorySchema>;
+export type UserSearchHistory = typeof userSearchHistory.$inferSelect;

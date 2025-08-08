@@ -1,4 +1,5 @@
 import { pool } from './db';
+import { searchAnalyticsService } from './search-analytics-service';
 
 // Interfaces for shared Q&A system
 export interface SharedQuestion {
@@ -163,11 +164,12 @@ export async function getAllQuestionsFromSharedDB(): Promise<SharedQuestion[]> {
 
 /**
  * Search questions by keyword with exact matches first, then fuzzy matches
+ * Now includes search analytics tracking
  */
-export async function searchQuestionsInSharedDB(keyword: string): Promise<SharedQuestion[]> {
+export async function searchQuestionsInSharedDB(keyword: string, userId?: string): Promise<SharedQuestion[]> {
   const lowerKeyword = keyword.toLowerCase().trim();
   
-  console.log(`Enhanced search for keyword: "${keyword}"`);
+  console.log(`Enhanced search for keyword: "${keyword}" ${userId ? `by user: ${userId}` : '(anonymous)'}`);
   
   // Simple but effective search focusing only on content (the main question text)
   // This will work regardless of the exact database schema
@@ -195,6 +197,18 @@ export async function searchQuestionsInSharedDB(keyword: string): Promise<Shared
     const result = await pool.query(query, [lowerKeyword]);
     console.log(`Search found ${result.rows.length} questions containing "${keyword}"`);
     
+    // Record search analytics (async, don't wait for completion)
+    if (keyword.trim().length > 0) {
+      searchAnalyticsService.recordSearch({
+        keyword: keyword.trim(),
+        userId,
+        searchContext: 'questions',
+        resultsFound: result.rows.length
+      }).catch(err => {
+        console.error('Search analytics error (non-blocking):', err);
+      });
+    }
+    
     // Log some results for debugging
     if (result.rows.length > 0) {
       console.log('Sample search results:');
@@ -211,8 +225,21 @@ export async function searchQuestionsInSharedDB(keyword: string): Promise<Shared
     console.log('Using ultra-simple fallback search...');
     try {
       const fallbackQuery = `SELECT * FROM questions WHERE content ILIKE $1 ORDER BY created_at DESC LIMIT 50`;
-      const fallbackResult = await pool.query(fallbackQuery, [`%${keyword}%`]);
+      const fallbackResult = await pool.query(fallbackQuery, [`%${keyword}%`);
       console.log(`Fallback search found ${fallbackResult.rows.length} questions`);
+      
+      // Record search analytics for fallback search too
+      if (keyword.trim().length > 0) {
+        searchAnalyticsService.recordSearch({
+          keyword: keyword.trim(),
+          userId,
+          searchContext: 'questions',
+          resultsFound: fallbackResult.rows.length
+        }).catch(err => {
+          console.error('Search analytics error (non-blocking):', err);
+        });
+      }
+      
       return fallbackResult.rows.map(mapRowToQuestion);
     } catch (fallbackError) {
       console.error('Error in fallback search:', fallbackError);
