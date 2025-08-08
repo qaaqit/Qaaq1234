@@ -101,7 +101,7 @@ export default function Home({ onSuccess }: HomeProps) {
             </div>
 
             <div className="text-sm sm:text-base text-gray-600 bg-orange-50 p-4 sm:p-6 rounded-xl border border-orange-200">
-              <p><strong>New users:</strong> Enter any text as password (including city names)</p>
+              
               <p className="text-xs sm:text-sm mt-2 text-gray-500">New accounts are created automatically when logging in</p>
             </div>
             
