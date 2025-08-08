@@ -36,7 +36,7 @@ class EmailService {
         port: 587,
         secure: false,
         auth: {
-          user: process.env.GMAIL_USER || 'support@qaaq.app',
+          user: process.env.MAIL_USER || 'support@qaaq.app',
           pass: process.env.MAIL_APP_PASSWORD || 'klegipenpnvnvrej'
         }
       });
@@ -75,7 +75,7 @@ class EmailService {
     try {
       await this.ensureInitialized();
       const emailContent = {
-        from: process.env.GMAIL_USER || 'support@qaaq.app',
+        from: process.env.MAIL_USER || 'support@qaaq.app',
         to: email,
         subject: '🔐 QaaqConnect - Your Verification Code',
         html: `
@@ -169,7 +169,7 @@ QaaqConnect - Connecting Maritime Professionals Worldwide
   async sendPasswordResetEmail(email: string, resetCode: string, userId: string): Promise<{ success: boolean; message: string }> {
     try {
       const emailContent = {
-        from: process.env.GMAIL_USER || 'support@qaaq.app',
+        from: process.env.MAIL_USER || 'support@qaaq.app',
         to: email,
         subject: '🔑 QaaqConnect - Password Reset Code',
         html: `
