@@ -20,6 +20,8 @@ import {
 } from "./rank-groups-service";
 import { populateRankGroupsWithUsers } from "./populate-rank-groups";
 import { bulkAssignUsersToRankGroups } from "./bulk-assign-users";
+import { setupMergeRoutes } from "./merge-interface";
+import { robustAuth } from "./auth-system";
 
 // Extend Express Request type
 declare global {
@@ -30,7 +32,7 @@ declare global {
   }
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || 'qaaq-connect-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET || 'qaaq_jwt_secret_key_2024_secure';
 
 // Middleware to authenticate JWT token
 const authenticateToken = async (req: Request, res: Response, next: NextFunction) => {
@@ -74,6 +76,9 @@ const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: numbe
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  
+  // Setup merge routes for robust authentication
+  setupMergeRoutes(app);
   
   // Register new user
   app.post("/api/register", async (req, res) => {
@@ -210,6 +215,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Verification error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       res.status(400).json({ message: "Verification failed", error: errorMessage });
+    }
+  });
+
+  // Robust authentication endpoint with password management
+  app.post('/api/auth/login-robust', async (req, res) => {
+    try {
+      const { userId, password } = req.body;
+      
+      if (!userId || !password) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'User ID and password are required' 
+        });
+      }
+      
+      const result = await robustAuth.authenticateUser(userId, password);
+      res.json(result);
+    } catch (error) {
+      console.error('Robust login error:', error);
+      res.status(500).json({ success: false, message: 'Authentication failed' });
+    }
+  });
+
+  // Set custom password endpoint
+  app.post('/api/auth/set-password', async (req, res) => {
+    try {
+      const { userId, newPassword } = req.body;
+      
+      if (!userId || !newPassword) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'User ID and new password are required' 
+        });
+      }
+      
+      const result = await robustAuth.setCustomPassword(userId, newPassword);
+      res.json(result);
+    } catch (error) {
+      console.error('Set password error:', error);
+      res.status(500).json({ success: false, message: 'Failed to set password' });
     }
   });
 
@@ -2185,14 +2230,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 20;
       const search = req.query.search as string;
+      const withImages = req.query.withImages === 'true';
       
-      console.log(`API: Fetching questions page ${page}, limit ${limit}, search: ${search || 'none'}`);
+      console.log(`API: Fetching questions page ${page}, limit ${limit}, search: ${search || 'none'}, withImages: ${withImages}`);
       
       let result;
       if (search && search.trim() !== '') {
         result = await searchQuestions(search, page, limit);
       } else {
-        result = await getQuestions(page, limit);
+        result = await getQuestions(page, limit, withImages);
       }
       
       console.log(`API: Returning ${result.questions.length} questions, total: ${result.total}`);

@@ -47,7 +47,7 @@ export default function Verify({ onSuccess }: VerifyProps) {
         onSuccess(result.user);
       }
       
-      setLocation("/discover");
+      setLocation("/");
       toast({
         title: "Verified! 🎉",
         description: "Welcome to QaaqConnect",

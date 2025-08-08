@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { authApi, setStoredToken, setStoredUser, type User } from "@/lib/auth";
 import UsersMapDual from "@/components/users-map-dual";
+import ForgotPasswordModal from "@/components/forgot-password-modal";
+import SignUpModal from "@/components/signup-modal";
 
 interface HomeProps {
   onSuccess?: (user: User) => void;
@@ -16,6 +18,8 @@ export default function Home({ onSuccess }: HomeProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showSignUp, setShowSignUp] = useState(false);
   const [formData, setFormData] = useState({
     userId: "",
     password: "",
@@ -35,6 +39,38 @@ export default function Home({ onSuccess }: HomeProps) {
 
     setLoading(true);
     try {
+      // Try robust authentication first
+      const robustResponse = await fetch('/api/auth/login-robust', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: formData.userId, password: formData.password })
+      });
+      
+      const robustResult = await robustResponse.json();
+      
+      if (robustResult.requiresMerge) {
+        // Redirect to merge page
+        setLocation(`/merge-accounts/${robustResult.mergeSessionId}`);
+        toast({
+          title: "Multiple accounts found",
+          description: "Choose how to proceed with your accounts",
+        });
+        return;
+      }
+      
+      if (robustResult.success) {
+        setStoredToken(robustResult.token);
+        setStoredUser(robustResult.user);
+        if (onSuccess) onSuccess(robustResult.user);
+        setLocation("/");
+        toast({
+          title: "Welcome back!",
+          description: "You're all set to explore",
+        });
+        return;
+      }
+      
+      // Fallback to original authentication
       const result = await authApi.login(formData.userId, formData.password);
       
       if (result.token) {
@@ -42,7 +78,7 @@ export default function Home({ onSuccess }: HomeProps) {
         setStoredUser(result.user);
         if (onSuccess) onSuccess(result.user);
       }
-      setLocation("/discover");
+      setLocation("/");
       toast({
         title: "Welcome back!",
         description: "You're all set to explore",
@@ -149,7 +185,7 @@ export default function Home({ onSuccess }: HomeProps) {
                 
                 <Button 
                   type="submit" 
-                  className="w-full bg-ocean-teal hover:bg-cyan-600 text-[#afb3b5] font-semibold py-2"
+                  className="w-full bg-ocean-teal hover:bg-cyan-600 text-[#ea5910] font-semibold py-2"
                   disabled={loading}
                 >
                   {loading ? (
@@ -164,12 +200,62 @@ export default function Home({ onSuccess }: HomeProps) {
                     </>
                   )}
                 </Button>
+
+                {/* Footer Links */}
+                <div className="flex justify-between items-center mt-3 text-sm">
+                  <button
+                    type="button"
+                    onClick={() => setShowSignUp(true)}
+                    className="text-orange-600 hover:text-orange-700 font-medium transition-colors flex items-center gap-1"
+                  >
+                    <i className="fas fa-user-plus"></i>
+                    New User
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotPassword(true)}
+                    className="text-ocean-teal hover:text-cyan-600 underline transition-colors"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
               </form>
               
               
             </>
           )}
         </div>
+
+        {/* Forgot Password Modal */}
+        {showForgotPassword && (
+          <ForgotPasswordModal 
+            onClose={() => setShowForgotPassword(false)}
+            onSuccess={() => {
+              setShowForgotPassword(false);
+              toast({
+                title: "Reset code sent",
+                description: "Check your WhatsApp for the password reset code",
+              });
+            }}
+          />
+        )}
+
+        {/* Sign Up Modal */}
+        {showSignUp && (
+          <SignUpModal 
+            onClose={() => setShowSignUp(false)}
+            onSuccess={(user) => {
+              setShowSignUp(false);
+              if (onSuccess) onSuccess(user);
+              setLocation("/");
+              toast({
+                title: "Welcome to QaaqConnect!",
+                description: "Your account has been created successfully",
+              });
+            }}
+          />
+        )}
       </div>
     </div>
   );

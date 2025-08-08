@@ -37,7 +37,7 @@ export default function DMPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedConnection, setSelectedConnection] = useState<ExtendedChatConnection | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("questions");
+  const [activeTab, setActiveTab] = useState("users");
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -85,10 +85,24 @@ export default function DMPage() {
   });
 
   // Fetch user's chat connections
-  const { data: connections = [], isLoading: connectionsLoading } = useQuery<ExtendedChatConnection[]>({
+  const { data: connections = [], isLoading: connectionsLoading, error: connectionsError } = useQuery<ExtendedChatConnection[]>({
     queryKey: ['/api/chat/connections'],
     refetchInterval: 5000, // Poll every 5 seconds for new connections
+    enabled: !!user, // Only fetch when user is authenticated
   });
+
+  // Debug connection loading  
+  useEffect(() => {
+    console.log(`🔍 DM Auto-connect check:`, {
+      targetUserId,
+      connectionsCount: connections.length,
+      userAuthenticated: !!user,
+      userId: user?.id,
+      connectionsLoading,
+      connectionsError: connectionsError?.message,
+      connectionsData: connections
+    });
+  }, [targetUserId, connections, user, connectionsLoading, connectionsError]);
 
   // Fetch users - use search API when searching, nearby API otherwise
   const { data: nearbyUsers = [], isLoading: usersLoading } = useQuery<UserWithDistance[]>({
@@ -290,16 +304,16 @@ export default function DMPage() {
             <CardContent className="p-4">
               <TabsList className="grid w-full grid-cols-2 bg-gray-100/50">
                 <TabsTrigger 
-                  value="questions" 
-                  className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-600 hover:text-blue-600"
-                >
-                  Questions
-                </TabsTrigger>
-                <TabsTrigger 
                   value="users" 
                   className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-600 hover:text-blue-600"
                 >
                   Users
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="questions" 
+                  className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-600 hover:text-blue-600"
+                >
+                  Questions
                 </TabsTrigger>
               </TabsList>
             </CardContent>
