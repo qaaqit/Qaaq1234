@@ -189,7 +189,6 @@ export async function getQuestionAnswers(questionId: number): Promise<any[]> {
         u.whatsapp_display_name as author_whatsapp_display_name,
         u.profile_image_url as author_profile_picture_url,
         a.created_at,
-        a.image_urls,
         CASE 
           WHEN a.user_id LIKE 'wa_%' OR u.whatsapp_display_name IS NOT NULL THEN true
           ELSE false
