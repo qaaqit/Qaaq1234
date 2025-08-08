@@ -442,8 +442,8 @@ export function QuestionsTab() {
                         </Badge>
                       )}
                     </div>
-                    <p className="text-orange-800 text-sm mt-1 font-medium leading-relaxed">
-                      {truncateToWords(botAnswer.content, 40)}
+                    <p className="text-orange-800 text-sm mt-1 font-medium leading-5 overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                      {truncateToWords(botAnswer.content, 15)}
                     </p>
                   </div>
                 </div>
