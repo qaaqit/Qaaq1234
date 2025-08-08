@@ -715,13 +715,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       User context: ${userRank} ${userShip}
       
-      IMPORTANT GUIDELINES:
-      - Provide specific, actionable technical advice
-      - Always prioritize safety and maritime regulations (SOLAS, MARPOL, STCW)
-      - Keep responses professional but friendly, concise yet comprehensive
-      - Reference relevant IMO regulations when applicable
-      - If unsure about critical safety matters, recommend consulting senior officers or port authorities
-      - Help connect maritime professionals through shared knowledge and experience`;
+      CRITICAL RESPONSE FORMAT:
+      - ALWAYS respond in bullet point format with exactly 3-5 bullet points
+      - Keep total response between 30-50 words maximum
+      - Each bullet point should be 6-12 words maximum
+      - Use concise, technical language
+      - Prioritize safety and maritime regulations (SOLAS, MARPOL, STCW)
+      - Example format:
+        • [Action/Solution in 6-12 words]
+        • [Technical detail in 6-12 words]  
+        • [Safety consideration in 6-12 words]
+        • [Regulation reference if applicable]`;
       
       // Include active rules context if available
       if (activeRules) {
@@ -734,7 +738,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           { role: "system", content: systemPrompt },
           { role: "user", content: message }
         ],
-        max_tokens: 300,
+        max_tokens: 80,
         temperature: 0.7,
       });
 
@@ -745,13 +749,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('OpenAI API error:', error);
       
-      // Fallback to technical responses if OpenAI fails
+      // Fallback to bullet point responses if OpenAI fails
       const fallbackResponses = [
-        `For ${category.toLowerCase()}: Check the manufacturer's manual for specific troubleshooting steps. Ensure proper safety protocols are followed.`,
-        `Regarding ${category.toLowerCase()}: Common causes include mechanical wear, insufficient lubrication, or electrical faults. Inspect systematically.`,
-        `${category.toLowerCase()} issue: Verify operating parameters are within normal range. Consider environmental factors affecting performance.`,
-        `Technical analysis for ${category.toLowerCase()}: Monitor temperature, pressure, and vibration readings. Document any anomalies for further review.`,
-        `Maritime solution: Consult with senior engineer and review vessel's maintenance schedule. Safety first in all operations.`
+        `• Check manufacturer's manual first\n• Follow proper safety protocols\n• Consult senior engineer if unsure`,
+        `• Inspect for mechanical wear signs\n• Verify lubrication levels adequate\n• Test electrical connections thoroughly`,
+        `• Monitor operating parameters closely\n• Check environmental factors impact\n• Document all readings properly`,
+        `• Review temperature and pressure readings\n• Analyze vibration patterns carefully\n• Schedule preventive maintenance checks`,
+        `• Prioritize safety protocols always\n• Consult vessel maintenance schedule\n• Report findings to senior officer`
       ];
       
       return fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
@@ -1038,15 +1042,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Analyze message to determine SEMM breadcrumb categorization
       const semmCategory = categorizeMessageWithSEMM(userMessage, aiResponse);
       
-      // Store QBOT Q&A in questions table with SEMM breadcrumb
+      // Store QBOT Q&A in questions table with SEMM breadcrumb (using only existing columns)
       await pool.query(`
         INSERT INTO questions (
-          content, author_name, category_name, created_at, updated_at
-        ) VALUES ($1, $2, $3, NOW(), NOW())
+          content, created_at, updated_at
+        ) VALUES ($1, NOW(), NOW())
       `, [
-        `[QBOT Q&A - ${semmCategory.breadcrumb}]\nQuestion: ${userMessage}\n\nAnswer: ${aiResponse}`,
-        `${userName} (via QBOT)`,
-        semmCategory.category
+        `[QBOT Q&A - ${semmCategory.breadcrumb}]\nUser: ${userName} (via QBOT)\nCategory: ${semmCategory.category}\n\nQuestion: ${userMessage}\n\nAnswer: ${aiResponse}`
       ]);
 
       // Log for verification
@@ -1204,13 +1206,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Insert into questions table with proper structure for qaaqit.com compatibility
     await pool.query(`
       INSERT INTO questions (
-        id, content, author_name, category_name, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, NOW(), NOW())
+        id, content, created_at, updated_at
+      ) VALUES ($1, $2, NOW(), NOW())
     `, [
       parseInt(questionId),
-      `[QBOT CHAT - ${semmCategory.breadcrumb}]\n\nQuestion: ${userMessage}\n\nAnswer: ${aiResponse}`,
-      `${userName} (via QBOT Chat)`,
-      semmCategory.category
+      `[QBOT CHAT - ${semmCategory.breadcrumb}]\nUser: ${userName} (via QBOT Chat)\nCategory: ${semmCategory.category}\n\nQuestion: ${userMessage}\n\nAnswer: ${aiResponse}`
     ]);
 
     console.log(`📚 Parked Q&A with ID ${questionId}: ${semmCategory.breadcrumb}`);

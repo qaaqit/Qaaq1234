@@ -100,6 +100,8 @@ Onboard Search: Special "onboard" keyword search filters for sailing users and d
 - **Chat History Parking**: Clear chat button parks entire conversation history with proper question IDs and shareable links (https://qaaqit.com/questions/xxx)
 - **SEMM Categorization**: Each parked Q&A automatically categorized with System > Equipment > Make > Model structure for organized maritime knowledge base
 - **UI Enhancement**: Reduced QBOT chat container height to 50% of viewport height for better screen utilization
+- **Response Format**: Modified OpenAI responses to use 3-5 bullet points totaling 30-50 words for concise, scannable maritime advice
+- **Database Fix**: Corrected database column mappings to prevent insertion errors
 
 ## External Dependencies
 - **Shared QAAQ Database**: PostgreSQL database for authentic maritime user data and 1235 real Q&A records.
