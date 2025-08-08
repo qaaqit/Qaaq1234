@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { MessageCircle, Search, Calendar, Eye, CheckCircle, Clock, Hash, ChevronDown, ChevronUp, Image as ImageIcon } from 'lucide-react';
+import { MessageCircle, Search, Calendar, Eye, CheckCircle, Clock, Hash, ChevronDown, ChevronUp, Image as ImageIcon, Share2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { apiRequest } from '@/lib/queryClient';
 import { isTokenValid, forceTokenRefresh } from '@/utils/auth';
@@ -264,6 +264,47 @@ export function QuestionsTab() {
     return words.slice(0, wordCount).join(' ') + '...';
   };
 
+  // Share function for questions
+  const handleShare = async (question: Question) => {
+    const shareUrl = `${window.location.origin}/questions/${question.id}`;
+    const shareText = `Check out this maritime question: ${truncateToWords(question.content, 15)}\n\n`;
+    
+    const shareData = {
+      title: `Question #${question.id} - QaaqConnect`,
+      text: shareText,
+      url: shareUrl,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.log('Error sharing:', err);
+        fallbackShare(shareUrl);
+      }
+    } else {
+      fallbackShare(shareUrl);
+    }
+  };
+
+  const fallbackShare = (url: string) => {
+    navigator.clipboard.writeText(url).then(() => {
+      // Simple success indication without toast
+      const button = document.activeElement as HTMLElement;
+      if (button) {
+        const originalText = button.textContent;
+        button.textContent = 'Copied!';
+        setTimeout(() => {
+          button.textContent = originalText;
+        }, 2000);
+      }
+    }).catch(() => {
+      // If clipboard fails, try to open WhatsApp
+      const text = encodeURIComponent(`Check out this maritime question: ${url}`);
+      window.open(`https://wa.me/?text=${text}`, '_blank');
+    });
+  };
+
   // Question with Answer Previews Component  
   const QuestionWithAnswers = ({ question, index }: { question: Question; index: number }) => {
     const { data: answers, isLoading: answersLoading } = useQuestionAnswers(question.id, true);
@@ -432,8 +473,8 @@ export function QuestionsTab() {
               </span>
             </div>
 
-            {/* View Full Question Link */}
-            <div className="pt-3 border-t border-orange-200">
+            {/* View Full Question Link and Share */}
+            <div className="pt-3 border-t border-orange-200 flex items-center justify-between">
               <Button
                 variant="ghost"
                 size="sm"
@@ -444,6 +485,18 @@ export function QuestionsTab() {
                 className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 font-medium"
               >
                 View Full Question & All Answers
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleShare(question);
+                }}
+                className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 p-2"
+                title="Share this question"
+              >
+                <Share2 size={16} />
               </Button>
             </div>
           </CardContent>
