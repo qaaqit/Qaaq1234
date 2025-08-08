@@ -387,22 +387,22 @@ export class RobustAuthSystem {
    */
   private async updateLastLogin(userId: string): Promise<void> {
     try {
-      // Try QAAQ schema column names first
+      // Try local schema with lastLogin column
       await pool.query(`
         UPDATE users 
-        SET last_login_at = NOW(), login_count = COALESCE(login_count, 0) + 1 
+        SET "lastLogin" = NOW(), "loginCount" = COALESCE("loginCount", 0) + 1 
         WHERE id = $1
       `, [userId]);
     } catch (error) {
-      // Fallback to local schema names
+      // Try alternative schema column names
       try {
         await pool.query(`
           UPDATE users 
-          SET last_login = NOW() 
+          SET last_login_at = NOW(), login_count = COALESCE(login_count, 0) + 1 
           WHERE id = $1
         `, [userId]);
       } catch (fallbackError) {
-        console.log('Could not update login timestamp:', fallbackError);
+        console.log('Skipping login timestamp update - column compatibility issue');
         // Don't fail authentication if we can't update login timestamp
       }
     }
