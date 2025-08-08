@@ -8,6 +8,7 @@ import { authApi, setStoredToken, setStoredUser, type User } from "@/lib/auth";
 import UsersMapDual from "@/components/users-map-dual";
 import ForgotPasswordModal from "@/components/forgot-password-modal";
 import SignUpModal from "@/components/signup-modal";
+import MaritimeCommunicationBg from "@/components/maritime-communication-bg";
 
 interface HomeProps {
   onSuccess?: (user: User) => void;
@@ -99,14 +100,12 @@ export default function Home({ onSuccess }: HomeProps) {
       className="min-h-screen relative overflow-hidden cursor-pointer bg-gray-100"
       onClick={() => setIsMinimized(false)}
     >
-      {/* Full Screen Map Background with Error Boundary */}
-      <div className="absolute inset-0 z-0 bg-gray-100">
-        <div className="w-full h-full">
-          <UsersMapDual showNearbyCard={false} />
-        </div>
+      {/* Maritime Communication Background */}
+      <div className="absolute inset-0 z-0">
+        <MaritimeCommunicationBg />
       </div>
-      {/* Overlay for better contrast */}
-      <div className="absolute inset-0 z-10 bg-black/20 pointer-events-none"></div>
+      {/* Subtle overlay for login form contrast */}
+      <div className="absolute inset-0 z-10 bg-white/10 pointer-events-none"></div>
       {/* Translucent Login Box - Mobile Responsive */}
       <div className={`fixed sm:absolute z-20 top-2 sm:top-4 right-2 sm:right-4 left-2 sm:left-4 flex justify-center transition-all duration-500`}>
         <div 
