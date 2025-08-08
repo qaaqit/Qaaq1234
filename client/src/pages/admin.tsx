@@ -847,6 +847,12 @@ START → Step 1 → Step 2 → Step 3/4
                             <div className="text-xs text-gray-500 truncate">
                               {user.email}
                             </div>
+                            {user.whatsappNumber && (
+                              <div className="text-xs text-green-600 mt-1">
+                                <i className="fab fa-whatsapp mr-1"></i>
+                                {user.whatsappNumber}
+                              </div>
+                            )}
                             {user.rank && (
                               <Badge variant="outline" className="text-xs mt-1 bg-blue-50 text-blue-700 border-blue-200">
                                 <i className="fas fa-anchor mr-1"></i>
@@ -924,14 +930,6 @@ START → Step 1 → Step 2 → Step 3/4
                           <div className="text-xs text-gray-500 mb-3">
                             <i className="fas fa-clock mr-1"></i>
                             Last login: {new Date(user.lastLogin).toLocaleDateString()}
-                          </div>
-                        )}
-
-                        {/* WhatsApp */}
-                        {user.whatsappNumber && (
-                          <div className="text-xs text-gray-600 mb-3">
-                            <i className="fab fa-whatsapp mr-1 text-green-600"></i>
-                            {user.whatsappNumber}
                           </div>
                         )}
 
