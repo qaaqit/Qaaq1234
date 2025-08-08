@@ -72,7 +72,7 @@ export async function getQuestions(page: number = 1, limit: number = 20, withIma
           WHEN q.is_from_whatsapp THEN 'WhatsApp Q&A'
           ELSE 'General Discussion'
         END as category_name,
-        (SELECT COUNT(*) FROM qaaq_answers a WHERE a.question_id = q.id) as answer_count
+        (SELECT COUNT(*) FROM qaaq_answers a WHERE CAST(a.question_id AS TEXT) = CAST(q.id AS TEXT)) as answer_count
       FROM questions q
       LEFT JOIN users u ON CAST(u.id AS TEXT) = CAST(q.author_id AS TEXT)
       WHERE q.is_archived = false AND q.is_hidden = false
@@ -150,7 +150,7 @@ export async function getQuestionById(questionId: number): Promise<Question | nu
           WHEN q.is_from_whatsapp THEN 'WhatsApp Q&A'
           ELSE 'General Discussion'
         END as category,
-        (SELECT COUNT(*) FROM qaaq_answers a WHERE a.question_id = q.id) as answer_count,
+        (SELECT COUNT(*) FROM qaaq_answers a WHERE CAST(a.question_id AS TEXT) = CAST(q.id AS TEXT)) as answer_count,
         false as is_anonymous,
         CASE WHEN q.is_from_whatsapp THEN 'whatsapp' ELSE 'web' END as source
       FROM questions q
@@ -257,7 +257,7 @@ export async function searchQuestions(query: string, page: number = 1, limit: nu
           WHEN q.is_from_whatsapp THEN 'WhatsApp Q&A'
           ELSE 'General Discussion'
         END as category_name,
-        (SELECT COUNT(*) FROM qaaq_answers a WHERE a.question_id = q.id) as answer_count
+        (SELECT COUNT(*) FROM qaaq_answers a WHERE CAST(a.question_id AS TEXT) = CAST(q.id AS TEXT)) as answer_count
       FROM questions q
       LEFT JOIN users u ON CAST(u.id AS TEXT) = CAST(q.author_id AS TEXT)
       WHERE q.is_archived = false 
