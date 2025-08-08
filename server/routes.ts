@@ -1127,6 +1127,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return { system, equipment, make, model, category, breadcrumb };
   }
 
+  // QBOT clear chat endpoint - parks conversation in database with SEMM and creates shareable links
+  app.post('/api/qbot/clear-chat', optionalAuth, async (req, res) => {
+    try {
+      const { messages } = req.body;
+      const userId = req.userId;
+      
+      if (!messages || !Array.isArray(messages) || messages.length === 0) {
+        return res.status(400).json({ message: 'Chat messages are required' });
+      }
+
+      // Get user info if authenticated
+      let user = null;
+      if (userId) {
+        try {
+          const userResult = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
+          user = userResult.rows[0];
+        } catch (error) {
+          console.log('User not found, proceeding without user context');
+        }
+      }
+
+      const parkedQuestions = [];
+      
+      // Process each Q&A pair from the chat
+      for (let i = 0; i < messages.length - 1; i += 2) {
+        const userMessage = messages[i];
+        const botMessage = messages[i + 1];
+        
+        if (userMessage?.sender === 'user' && botMessage?.sender === 'bot') {
+          try {
+            const questionId = await parkChatQAInDatabase(userMessage.text, botMessage.text, user);
+            const shareableLink = `https://qaaqit.com/questions/${questionId}`;
+            
+            parkedQuestions.push({
+              questionId,
+              shareableLink,
+              userMessage: userMessage.text.substring(0, 100) + '...',
+              semm: categorizeMessageWithSEMM(userMessage.text, botMessage.text).breadcrumb
+            });
+          } catch (error) {
+            console.error('Error parking Q&A:', error);
+          }
+        }
+      }
+      
+      console.log(`📚 Parked ${parkedQuestions.length} QBOT Q&A pairs with shareable links`);
+      
+      res.json({ 
+        success: true,
+        parkedCount: parkedQuestions.length,
+        parkedQuestions,
+        message: `Successfully parked ${parkedQuestions.length} Q&A pairs with SEMM categorization`
+      });
+      
+    } catch (error) {
+      console.error('Error clearing and parking chat:', error);
+      res.status(500).json({ 
+        message: 'Failed to park chat history',
+        error: 'PARK_CHAT_ERROR'
+      });
+    }
+  });
+
+  // Function to park individual Q&A pair in database with proper question ID
+  async function parkChatQAInDatabase(userMessage: string, aiResponse: string, user: any): Promise<string> {
+    const userName = user?.fullName || user?.whatsAppDisplayName || 'QBOT User';
+    const userRank = user?.maritimeRank || user?.rank || 'Maritime Professional';
+    
+    // Generate proper question ID for shareable link
+    const questionId = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
+    
+    // Analyze message for SEMM categorization
+    const semmCategory = categorizeMessageWithSEMM(userMessage, aiResponse);
+    
+    // Insert into questions table with proper structure for qaaqit.com compatibility
+    await pool.query(`
+      INSERT INTO questions (
+        id, content, author_name, category_name, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, NOW(), NOW())
+    `, [
+      parseInt(questionId),
+      `[QBOT CHAT - ${semmCategory.breadcrumb}]\n\nQuestion: ${userMessage}\n\nAnswer: ${aiResponse}`,
+      `${userName} (via QBOT Chat)`,
+      semmCategory.category
+    ]);
+
+    console.log(`📚 Parked Q&A with ID ${questionId}: ${semmCategory.breadcrumb}`);
+    return questionId;
+  }
+
   // QBOT chat endpoint - responds to user messages with AI
   app.post('/api/qbot/chat', optionalAuth, async (req, res) => {
     try {

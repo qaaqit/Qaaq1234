@@ -94,13 +94,69 @@ export default function QBOTPage({ user }: QBOTPageProps) {
     }
   };
 
-  const handleClearQBotChat = () => {
-    setQBotMessages([]);
-    setIsQBotTyping(false);
-    toast({
-      title: "Chat Cleared",
-      description: "Your conversation has been cleared.",
-    });
+  const handleClearQBotChat = async () => {
+    if (qBotMessages.length === 0) {
+      toast({
+        title: "No Chat to Clear",
+        description: "There are no messages to clear.",
+      });
+      return;
+    }
+
+    try {
+      // Park chat history in database before clearing
+      const response = await fetch('/api/qbot/clear-chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ messages: qBotMessages })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Clear local chat
+        setQBotMessages([]);
+        setIsQBotTyping(false);
+        
+        toast({
+          title: "Chat History Saved",
+          description: `${data.parkedCount} Q&A pairs saved with SEMM categorization and shareable links at qaaqit.com/questions`,
+          duration: 5000
+        });
+
+        // Log shareable links to console for verification
+        console.log('📚 QBOT Chat History Parked:');
+        data.parkedQuestions?.forEach((q: any) => {
+          console.log(`   ${q.semm}: ${q.shareableLink}`);
+        });
+        
+      } else {
+        // Fallback: clear chat even if parking fails
+        setQBotMessages([]);
+        setIsQBotTyping(false);
+        
+        toast({
+          title: "Chat Cleared",
+          description: "Chat cleared locally. Unable to save to database at this time.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error parking chat history:', error);
+      
+      // Fallback: clear chat even if parking fails
+      setQBotMessages([]);
+      setIsQBotTyping(false);
+      
+      toast({
+        title: "Chat Cleared", 
+        description: "Chat cleared locally. Network error prevented database saving.",
+        variant: "destructive"
+      });
+    }
   };
 
   return (

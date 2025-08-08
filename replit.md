@@ -97,6 +97,8 @@ Onboard Search: Special "onboard" keyword search filters for sailing users and d
 - **Database Storage**: All QBOT interactions automatically stored in questions table with SEMM breadcrumbs
 - **Maritime Expertise**: Enhanced prompts for maritime engineering, safety, regulations, and technical guidance
 - **Error Handling**: Robust fallback systems ensure chat continuity even during API issues
+- **Chat History Parking**: Clear chat button parks entire conversation history with proper question IDs and shareable links (https://qaaqit.com/questions/xxx)
+- **SEMM Categorization**: Each parked Q&A automatically categorized with System > Equipment > Make > Model structure for organized maritime knowledge base
 
 ## External Dependencies
 - **Shared QAAQ Database**: PostgreSQL database for authentic maritime user data and 1235 real Q&A records.
