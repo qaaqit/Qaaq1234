@@ -156,7 +156,7 @@ export default function UserDropdown({ user, className = "", onLogout }: UserDro
               />
             ) : null}
             <AvatarFallback className="bg-white/20 text-white font-semibold">
-              {user.fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+              {user.fullName ? user.fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : user.id.slice(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <ChevronDown className={`w-4 h-4 text-yellow-100 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
@@ -179,7 +179,7 @@ export default function UserDropdown({ user, className = "", onLogout }: UserDro
             <div className="flex items-center space-x-3">
               <Avatar className="w-12 h-12">
                 <AvatarFallback className="bg-yellow-400 text-red-600 font-semibold text-lg">
-                  {user.fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                  {user.fullName ? user.fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : user.id.slice(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
