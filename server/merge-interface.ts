@@ -190,7 +190,7 @@ export function setupMergeRoutes(app: express.Application) {
    */
   app.post('/api/auth/send-signup-otp', async (req, res) => {
     try {
-      const { whatsappNumber, email } = req.body;
+      const { whatsappNumber } = req.body;
       
       if (!whatsappNumber) {
         return res.status(400).json({ 
@@ -207,15 +207,7 @@ export function setupMergeRoutes(app: express.Application) {
         });
       }
 
-      // Validate email format if provided
-      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Please enter a valid email address'
-        });
-      }
-
-      const result = await robustAuth.sendSignupOTP(whatsappNumber, email);
+      const result = await robustAuth.sendSignupOTP(whatsappNumber);
       res.json(result);
     } catch (error) {
       console.error('Send signup OTP error:', error);
