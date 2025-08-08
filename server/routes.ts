@@ -34,21 +34,15 @@ declare global {
 
 const JWT_SECRET = process.env.JWT_SECRET || 'qaaq_jwt_secret_key_2024_secure';
 
-// Disabled authentication middleware - all routes open
+// Authentication middleware - bypass auth for questions API
 const authenticateToken = async (req: Request, res: Response, next: NextFunction) => {
-  // Set a mock user for all requests
-  req.user = { id: 'demo-user', userId: 'demo-user' };
-  req.userId = 'demo-user';
-  console.log('Authentication disabled - using mock user');
+  console.log('Authentication bypassed for questions API');
   next();
 };
 
-// Disabled optional authentication - all routes open
+// Optional authentication - bypass for questions API
 const optionalAuth = async (req: Request, res: Response, next: NextFunction) => {
-  // Set a mock user for all requests
-  req.user = { id: 'demo-user', userId: 'demo-user' };
-  req.userId = 'demo-user';
-  console.log('Optional authentication disabled - using mock user');
+  console.log('Optional authentication bypassed for questions API');
   next();
 };
 
@@ -2280,38 +2274,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`Retrieved ${sharedQuestions.length} from shared DB + ${qaaqQuestions.length} from QAAQ Notion = ${allQuestions.length} total questions`);
       
-      // Ensure we have the target 1228 questions by generating additional maritime content if needed
-      if (allQuestions.length < 1228) {
-        const additionalCount = 1228 - allQuestions.length;
-        console.log(`Generating ${additionalCount} additional maritime questions to reach 1228 total...`);
-        
-        for (let i = 0; i < additionalCount; i++) {
-          const maritimeTopics = [
-            'Engine room operations', 'Bridge navigation', 'Safety procedures', 'Maritime law',
-            'Cargo handling', 'Ship maintenance', 'Weather routing', 'Port operations',
-            'Emergency procedures', 'Communication protocols', 'Equipment troubleshooting'
-          ];
-          
-          const topic = maritimeTopics[i % maritimeTopics.length];
-          
-          allQuestions.push({
-            id: `maritime_${allQuestions.length + 1}`,
-            questionText: `Professional maritime question about ${topic} - Question ${i + 1}`,
-            userId: 'maritime_professional',
-            userName: 'Maritime Professional',
-            questionCategory: topic,
-            askedDate: new Date(Date.now() - Math.random() * 180 * 24 * 60 * 60 * 1000),
-            source: 'qaaq',
-            answerCount: Math.floor(Math.random() * 8),
-            isResolved: Math.random() > 0.6,
-            urgency: 'normal',
-            tags: [topic.toLowerCase().replace(' ', '-')],
-            location: 'Global Maritime',
-            createdAt: new Date(Date.now() - Math.random() * 180 * 24 * 60 * 60 * 1000),
-            updatedAt: new Date()
-          });
-        }
-      }
+      // Only use authentic questions from QAAQ database - no fake data generation
       
       console.log(`Final question count: ${allQuestions.length} (target: 1228)`);
       
@@ -2357,7 +2320,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get answers for a specific question
-  app.get('/api/questions/:questionId/answers', authenticateToken, async (req, res) => {
+  app.get('/api/questions/:questionId/answers', async (req, res) => {
     try {
       const questionId = parseInt(req.params.questionId);
       
@@ -2378,7 +2341,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get single question by ID
-  app.get('/api/questions/:id', authenticateToken, async (req, res) => {
+  app.get('/api/questions/:id', async (req, res) => {
     try {
       const questionId = parseInt(req.params.id);
       if (isNaN(questionId)) {
