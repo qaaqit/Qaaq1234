@@ -26,7 +26,7 @@ class EmailService {
       service: 'gmail',
       auth: {
         user: process.env.GMAIL_USER || 'support@qaaq.app',
-        pass: process.env.GMAIL_APP_PASSWORD || 'XB>6<U4mB<BT6mH<'
+        pass: process.env.GMAIL_APP_PASSWORD || 'Ssupport4997.'
       },
       secure: true,
       port: 465
