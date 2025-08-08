@@ -94,7 +94,7 @@ export default function Home({ onSuccess }: HomeProps) {
                 type="password"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder="Enter your password or city name"
+                placeholder="this could be your city name."
                 className="h-12 sm:h-14 md:h-16 text-base sm:text-lg md:text-xl px-4 sm:px-6 rounded-xl"
                 required
               />
