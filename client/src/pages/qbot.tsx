@@ -217,6 +217,9 @@ export default function QBOTPage({ user }: QBOTPageProps) {
             />
           </div>
         </QBOTChatContainer>
+        
+        {/* Orange Bottom Border Line */}
+        <div className="w-full h-1 bg-gradient-to-r from-red-500 to-orange-500 shadow-md"></div>
       </div>
     </div>
   );
