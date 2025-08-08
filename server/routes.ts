@@ -1049,8 +1049,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ==== QBOT CHAT API ENDPOINTS ====
   
-  // Function to store QBOT response in Questions database with SEMM breadcrumb
-  async function storeQBOTResponseInDatabase(userMessage: string, aiResponse: string, user: any): Promise<void> {
+  // Function to store QBOT response in Questions database with SEMM breadcrumb and attachments
+  async function storeQBOTResponseInDatabase(userMessage: string, aiResponse: string, user: any, attachments?: string[]): Promise<void> {
     try {
       const questionId = `qbot_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const userId = user?.id || 'qbot_user';
@@ -1060,13 +1060,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Analyze message to determine SEMM breadcrumb categorization
       const semmCategory = categorizeMessageWithSEMM(userMessage, aiResponse);
       
-      // Store QBOT Q&A in questions table with SEMM breadcrumb (using only existing columns)
+      // Format attachments for database storage
+      let attachmentText = '';
+      if (attachments && attachments.length > 0) {
+        attachmentText = `\n\nAttachments: ${attachments.map(att => `[IMAGE: ${att}]`).join(', ')}`;
+      }
+      
+      // Store QBOT Q&A in questions table with SEMM breadcrumb and attachments (using only existing columns)
       await pool.query(`
         INSERT INTO questions (
           content, created_at, updated_at
         ) VALUES ($1, NOW(), NOW())
       `, [
-        `[QBOT Q&A - ${semmCategory.breadcrumb}]\nUser: ${userName} (via QBOT)\nCategory: ${semmCategory.category}\n\nQuestion: ${userMessage}\n\nAnswer: ${aiResponse}`
+        `[QBOT Q&A - ${semmCategory.breadcrumb}]\nUser: ${userName} (via QBOT)\nCategory: ${semmCategory.category}\n\nQuestion: ${userMessage}${attachmentText}\n\nAnswer: ${aiResponse}`
       ]);
 
       // Log for verification
@@ -1074,6 +1080,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`   User: ${userName} (${userRank})`);
       console.log(`   SEMM: ${semmCategory.breadcrumb}`);
       console.log(`   Category: ${semmCategory.category}`);
+      if (attachments && attachments.length > 0) {
+        console.log(`   Attachments: ${attachments.length} file(s)`);
+      }
       
     } catch (error) {
       console.error('Error storing QBOT response in database:', error);

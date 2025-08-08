@@ -29,7 +29,8 @@ export default function QBOTPage({ user }: QBOTPageProps) {
       id: Date.now().toString(),
       text: messageText,
       sender: 'user',
-      timestamp: new Date()
+      timestamp: new Date(),
+      attachments: attachments || []
     };
 
     setQBotMessages(prev => [...prev, newMessage]);

@@ -21,7 +21,35 @@ export default function QBOTMessage({ message }: QBOTMessageProps) {
             }
           `}
         >
-          {message.text}
+          {/* Display attachments (images) */}
+          {message.attachments && message.attachments.length > 0 && (
+            <div className="mb-2 space-y-2">
+              {message.attachments.map((attachment, index) => (
+                <div key={index} className="max-w-xs">
+                  {attachment.includes('image') || attachment.startsWith('pasted-image') ? (
+                    <img
+                      src={`/objects/${attachment}`}
+                      alt="Uploaded image"
+                      className="rounded-lg max-w-full h-auto border border-gray-200"
+                      style={{ maxHeight: '200px' }}
+                      onError={(e) => {
+                        // Fallback if image fails to load
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <div className="flex items-center gap-2 p-2 bg-gray-50 rounded text-xs">
+                      <span>📄 {attachment}</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {message.text && message.text.trim() && (
+            <div>{message.text}</div>
+          )}
         </div>
         
         {/* Timestamp */}
