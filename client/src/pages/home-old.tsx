@@ -67,7 +67,7 @@ export default function Home({ onSuccess }: HomeProps) {
               <img 
                 src={qaaqLogo} 
                 alt="QAAQ Logo" 
-                className="w-full h-full object-contain"
+                className="w-full h-full object-contain rounded-2xl shadow-2xl shadow-orange-500/30 border-2 border-orange-200/50"
                 style={{
                   animation: 'float 3s ease-in-out infinite'
                 }}
