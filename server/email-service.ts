@@ -23,13 +23,16 @@ class EmailService {
     // For development, we'll use a test account or console logging
     // In production, you would configure Gmail SMTP
     this.transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false,
       auth: {
         user: process.env.GMAIL_USER || 'support@qaaq.app',
-        pass: process.env.GMAIL_APP_PASSWORD || 'Ssupport4997.'
+        pass: process.env.GMAIL_APP_PASSWORD || 'openirdaexgqcqbk'
       },
-      secure: true,
-      port: 465
+      tls: {
+        rejectUnauthorized: false
+      }
     });
   }
 
@@ -107,10 +110,19 @@ QaaqConnect - Connecting Maritime Professionals Worldwide
         message: 'Verification code sent to your email'
       };
     } catch (error) {
-      console.error('Email send error:', error);
+      console.error('Gmail authentication failed:', error);
+      console.log('📧 Gmail App Password verification failed. Please verify:');
+      console.log('1. 2-Factor Authentication is enabled on support@qaaq.app');
+      console.log('2. App Password is correctly generated for "Mail"');
+      console.log('3. App Password format is: openirdaexgqcqbk (16 chars, no spaces)');
       
-      // If email fails, it's not critical for signup to continue
-      // WhatsApp OTP is the primary method
+      // For now, log the email content for manual sending
+      console.log('\n📧 Email content that would be sent:');
+      console.log(`To: ${email}`);
+      console.log(`Subject: 🔐 QaaqConnect - Your Verification Code`);
+      console.log(`OTP Code: ${otpCode}`);
+      console.log(`WhatsApp: ${whatsappNumber}`);
+      
       return {
         success: false,
         message: 'Email verification temporarily unavailable. WhatsApp OTP is working.'
