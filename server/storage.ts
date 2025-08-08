@@ -347,10 +347,10 @@ export class DatabaseStorage implements IStorage {
       console.log('Liberal authentication for:', userId);
       
       // For admin users, get from database to ensure Present City data is available
-      if (userId === "mushy.piyush@gmail.com" || userId === "+91 9820011223") {
+      if (userId === "mushy.piyush@gmail.com" || userId === "+919029010070") {
         try {
           // Look up the admin user by phone number first
-          const result = await pool.query('SELECT * FROM users WHERE id = $1 LIMIT 1', ["+91 9820011223"]);
+          const result = await pool.query('SELECT * FROM users WHERE id = $1 LIMIT 1', ["+919029010070"]);
           if (result.rows.length > 0) {
             const user = result.rows[0];
             const fullName = [user.first_name, user.middle_name, user.last_name].filter(Boolean).join(' ') || user.full_name || user.email || 'Admin User';
@@ -389,7 +389,7 @@ export class DatabaseStorage implements IStorage {
         
         // Fallback admin profile if database lookup fails - use the actual phone number ID
         return {
-          id: "+91 9820011223",
+          id: "+919029010070",
           fullName: "Admin User",
           email: "mushy.piyush@gmail.com",
           password: '',

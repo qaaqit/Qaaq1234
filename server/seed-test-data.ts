@@ -85,7 +85,7 @@ export async function seedTestData() {
     
     // Admin user
     {
-      id: '+91 9820011223',
+      id: '+919029010070',
       fullName: 'Piyush Gupta',
       email: 'mushy.piyush@gmail.com',
       password: '1234koihai',
@@ -101,7 +101,7 @@ export async function seedTestData() {
       longitude: 72.8777,
       currentLatitude: 19.0760,
       currentLongitude: 72.8777,
-      whatsAppNumber: '+91 9820011223',
+      whatsAppNumber: '+919029010070',
       questionCount: 45,
       answerCount: 89,
       hasCompletedOnboarding: true,

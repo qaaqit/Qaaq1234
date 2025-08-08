@@ -543,7 +543,7 @@ Rule #40: VCF File Generation Rules
 Batch Size: 100 contacts per VCF file
 Complete Batches Only: Incomplete batches not delivered
 File Naming: QBOT100.vcf, QBOT200.vcf, QBOT300.vcf...
-Admin Phone: +91 9820011223
+Admin Phone: +919029010070
 Delivery Time: 18:00 IST (scheduled delivery)
 Rule #41: User Milestone Tracking
 const checkUserMilestone = async () => {
@@ -651,7 +651,7 @@ Video Call Integration: Live technical support sessions
 Mobile App Integration: Seamless cross-platform experience
 📞 Support & Contact Information
 Technical Issues: Monitor logs in Replit console
-Admin Contact: +91 9820011223 (VCF deliveries)
+Admin Contact: +919029010070 (VCF deliveries)
 Database Issues: Check PostgreSQL connection pool
 Bot Status: Health checks every 30 seconds
 Documentation Updates: Update this file for any rule changes
