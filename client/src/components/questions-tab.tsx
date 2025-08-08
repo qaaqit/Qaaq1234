@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { MessageCircle, Search, Calendar, Eye, CheckCircle, Clock, Hash, ChevronDown, ChevronUp, Image as ImageIcon, Share2 } from 'lucide-react';
+import { MessageCircle, Search, Calendar, CheckCircle, Clock, Hash, ChevronDown, ChevronUp, Image as ImageIcon, Share2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { apiRequest } from '@/lib/queryClient';
 import { isTokenValid, forceTokenRefresh } from '@/utils/auth';
@@ -448,10 +448,6 @@ export function QuestionsTab() {
             {/* Footer Stats and Actions */}
             <div className="flex items-center justify-between text-sm text-gray-700 mb-3 font-medium">
               <div className="flex items-center space-x-4">
-                <span className="flex items-center space-x-1">
-                  <Eye size={16} className="text-orange-600" />
-                  <span>{question.views || 0} views</span>
-                </span>
                 <span className="flex items-center space-x-1">
                   <MessageCircle size={16} className="text-orange-600" />
                   <span>{question.answer_count || 0} answers</span>
