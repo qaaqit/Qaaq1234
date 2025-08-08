@@ -65,7 +65,7 @@ export default function Home({ onSuccess }: HomeProps) {
             <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 bg-gradient-to-br from-orange-500 to-red-600 rounded-3xl flex items-center justify-center mx-auto mb-6 sm:mb-8">
               <i className="fas fa-anchor text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white"></i>
             </div>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-2 sm:mb-3">Welcome to QaaqConnect</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-2 sm:mb-3">Welcome to Qaaq</h2>
             <p className="text-sm sm:text-base md:text-lg text-gray-600">Maritime Knowledge Hub</p>
           </div>
           
