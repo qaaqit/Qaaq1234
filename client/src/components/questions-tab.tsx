@@ -433,11 +433,6 @@ export function QuestionsTab() {
                       <h6 className="font-semibold text-orange-900 text-sm">
                         {botAnswer.author_whatsapp_display_name || botAnswer.author_name}
                       </h6>
-                      {botAnswer.is_from_whatsapp && (
-                        <Badge variant="secondary" className="bg-green-50 text-green-700 text-xs">
-                          QBOT
-                        </Badge>
-                      )}
                     </div>
                     <p className="text-orange-800 text-sm mt-1 font-medium leading-5 overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
                       {truncateToWords(botAnswer.content, 15)}
