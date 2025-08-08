@@ -64,7 +64,7 @@ export default function Home({ onSuccess }: HomeProps) {
           <div className="text-center mb-8 sm:mb-10 md:mb-12">
             <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 flex items-center justify-center mx-auto mb-6 sm:mb-8">
               <img 
-                src="/attached_assets/ICON_1754684848613.png" 
+                src="/attached_assets/qaaq_1754685074750.jpg" 
                 alt="QAAQ Logo" 
                 className="w-full h-full object-contain"
                 style={{
