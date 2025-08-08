@@ -498,29 +498,57 @@ export function QuestionsTab() {
 
   return (
     <div className="space-y-4">
-      {/* Search and Header */}
-      {/* Minimalistic Search Questions Bar */}
+      {/* Enhanced Search Bar */}
       <div className="flex items-center space-x-2 mb-6">
         <div className="flex-1 relative">
           <Input
             type="text"
-            placeholder="Search questions..."
+            placeholder="Search questions... (exact matches first, then fuzzy matches)"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pr-12 border-ocean-teal/30 focus:border-ocean-teal"
+            className="pr-12 border-orange-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
           />
+          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+            {status === 'pending' && debouncedSearch ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-500"></div>
+            ) : (
+              <Search size={16} className="text-gray-400" />
+            )}
+          </div>
         </div>
-        <Button 
-          size="sm"
-          variant="outline"
-          className="px-3 border-ocean-teal/30 hover:bg-ocean-teal hover:text-white"
-          onClick={() => {
-            // Search activation logic if needed
-          }}
-        >
-          <Search size={16} />
-        </Button>
+        {searchQuery && (
+          <Button 
+            size="sm"
+            variant="outline"
+            className="px-3 border-orange-300 hover:bg-orange-500 hover:text-white text-orange-600"
+            onClick={() => setSearchQuery('')}
+          >
+            Clear
+          </Button>
+        )}
       </div>
+
+      {/* Search Results Header */}
+      {debouncedSearch && (
+        <div className="mb-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-orange-800">
+              <strong>Search results for:</strong> "{debouncedSearch}"
+              {status !== 'pending' && (
+                <span className="ml-2 text-orange-600">
+                  ({totalQuestions} {totalQuestions === 1 ? 'question' : 'questions'} found)
+                </span>
+              )}
+            </span>
+            {status === 'pending' && (
+              <span className="text-sm text-orange-600">Searching...</span>
+            )}
+          </div>
+          <p className="text-xs text-orange-600 mt-1">
+            Results sorted by relevance: exact matches first, then similar matches
+          </p>
+        </div>
+      )}
 
       <Card className="border-2 border-ocean-teal/20">
         <CardHeader>
