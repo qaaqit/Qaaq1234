@@ -2620,6 +2620,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get single question by ID (for sharing)
+  app.get('/api/questions/:id', async (req, res) => {
+    try {
+      const questionId = parseInt(req.params.id);
+      if (isNaN(questionId)) {
+        return res.status(400).json({ error: 'Invalid question ID' });
+      }
+      
+      const { getQuestionById } = await import('./questions-service');
+      const question = await getQuestionById(questionId);
+      
+      if (!question) {
+        return res.status(404).json({ error: 'Question not found' });
+      }
+      
+      res.json(question);
+    } catch (error) {
+      console.error('Error fetching question:', error);
+      res.status(500).json({ error: 'Failed to fetch question' });
+    }
+  });
+
+  // Domain redirect handlers for question sharing
+  // Handle qaaq.app/share/question/:id redirects
+  app.get('/share/question/:id', (req, res) => {
+    const { id } = req.params;
+    res.redirect(`/questions/${id}`);
+  });
+
+  // Handle qaaqit.com/questions/:id redirects  
+  app.get('/qaaqit.com/questions/:id', (req, res) => {
+    const { id } = req.params;
+    res.redirect(`/questions/${id}`);
+  });
+
+  // Handle qaaq.app/questions/:id redirects
+  app.get('/qaaq.app/questions/:id', (req, res) => {
+    const { id } = req.params;
+    res.redirect(`/questions/${id}`);
+  });
+
   // Get user profile and questions
   app.get('/api/users/:userId/questions', authenticateToken, async (req: any, res) => {
     try {

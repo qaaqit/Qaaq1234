@@ -182,7 +182,7 @@ export async function getQuestionAnswers(questionId: number): Promise<any[]> {
       SELECT 
         a.id,
         a.content,
-        a.author_id,
+        a.user_id as author_id,
         u.first_name || ' ' || COALESCE(u.last_name, '') as author_name,
         u.maritime_rank as author_rank,
         u.whatsapp_profile_picture_url as author_whatsapp_profile_picture_url,
@@ -191,12 +191,12 @@ export async function getQuestionAnswers(questionId: number): Promise<any[]> {
         a.created_at,
         a.image_urls,
         CASE 
-          WHEN a.author_id LIKE 'wa_%' OR u.whatsapp_display_name IS NOT NULL THEN true
+          WHEN a.user_id LIKE 'wa_%' OR u.whatsapp_display_name IS NOT NULL THEN true
           ELSE false
         END as is_from_whatsapp,
         false as is_best_answer
       FROM qaaq_answers a
-      LEFT JOIN users u ON CAST(u.id AS TEXT) = CAST(a.author_id AS TEXT)
+      LEFT JOIN users u ON CAST(u.id AS TEXT) = CAST(a.user_id AS TEXT)
       WHERE a.question_id = $1
       ORDER BY 
         a.created_at ASC

@@ -82,6 +82,7 @@ function Router() {
           <Route path="/profile" component={() => <Profile />} />
           <Route path="/my-questions" component={() => <MyQuestions />} />
           <Route path="/share/question/:id" component={() => <QuestionPage />} />
+          <Route path="/questions/:id" component={() => <QuestionPage />} />
           <Route path="/rank-groups" component={() => <RankGroupsPage />} />
           <Route path="/admin" component={() => <Admin />} />
           <Route path="/admin/bot-rules" component={() => <BotRulesAdmin />} />
