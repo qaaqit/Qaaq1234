@@ -58,21 +58,6 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
 
-  // Check if user is admin or has premium access
-  const isAdmin = localStorage.getItem('isAdmin') === 'true';
-  const isPremium = userStatus?.isPremium || userStatus?.isSuperUser || false;
-  const canUsePrivacyMode = isAdmin || isPremium;
-
-  // Debug logging for privacy mode access
-  useEffect(() => {
-    console.log('Privacy Mode Access Debug:', {
-      isAdmin,
-      isPremium,
-      canUsePrivacyMode,
-      userStatus
-    });
-  }, [isAdmin, isPremium, canUsePrivacyMode, userStatus]);
-
   // Fetch user subscription status
   const { data: userStatus } = useQuery({
     queryKey: ['/api/user/subscription-status'],
@@ -186,7 +171,10 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
 
   // Handle privacy mode toggle (only for premium/admin users)
   const togglePrivacyMode = () => {
-    if (canUsePrivacyMode) {
+    const isUserPremium = userStatus?.isPremium || userStatus?.isSuperUser || false;
+    const isUserAdmin = localStorage.getItem('isAdmin') === 'true';
+
+    if (isUserPremium || isUserAdmin) {
       setIsPrivateMode(!isPrivateMode);
     }
   };
@@ -321,7 +309,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
             {/* Privacy and Crown icons on left side */}
             <div className="absolute left-3 top-2 flex flex-col items-center gap-1">
               {/* Privacy Shield (only for premium/admin users) */}
-              {canUsePrivacyMode && (
+              {(userStatus?.isPremium || userStatus?.isSuperUser || localStorage.getItem('isAdmin') === 'true') && (
                 <button
                   onClick={togglePrivacyMode}
                   className="p-1 rounded transition-all duration-200 text-gray-400 hover:bg-gray-100"
