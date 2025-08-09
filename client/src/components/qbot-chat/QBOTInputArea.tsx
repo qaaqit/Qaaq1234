@@ -162,11 +162,6 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
     if (!isUserPremium && !isUserAdmin) {
       // Show subscription dialog for non-premium users
       setShowSubscriptionDialog(true);
-      toast({
-        title: "Premium Feature",
-        description: "Upgrade to Premium for enhanced QBOT features",
-        variant: "default",
-      });
     } else {
       // Toggle premium mode for premium/admin users
       setIsPremiumMode(!isPremiumMode);
