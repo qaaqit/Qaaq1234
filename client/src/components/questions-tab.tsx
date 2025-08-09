@@ -370,21 +370,16 @@ export function QuestionsTab() {
             {/* Assistant Answer Preview */}
             {firstAnswer && (
               <div className="border-l-4 border-orange-500 bg-orange-50 p-4 rounded-r-lg">
-                <div className="flex items-start space-x-3">
-                  <div className="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">
-                    QG
+                <div className="flex-1">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <span className="font-medium text-gray-900 text-sm">Ans:</span>
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-1">
-                      <span className="font-medium text-gray-900 text-sm">Assistant</span>
-                    </div>
-                    <p className="text-gray-800 text-sm">
-                      {firstAnswer.content.length > 100 
-                        ? `${firstAnswer.content.substring(0, 100)}...`
-                        : firstAnswer.content
-                      }
-                    </p>
-                  </div>
+                  <p className="text-gray-800 text-sm">
+                    {firstAnswer.content.length > 100 
+                      ? `${firstAnswer.content.substring(0, 100)}...`
+                      : firstAnswer.content
+                    }
+                  </p>
                 </div>
               </div>
             )}
