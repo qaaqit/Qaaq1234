@@ -329,50 +329,23 @@ export function QuestionsTab() {
   const QuestionWithAnswers = ({ question, index }: { question: Question; index: number }) => {
     const { data: answers, isLoading: answersLoading } = useQuestionAnswers(question.id, true);
 
-    // Get the best bot answer (from WhatsApp or first answer)
-    const botAnswer = answers?.find(answer => answer.is_from_whatsapp) || answers?.[0];
+    // Get the first answer (bot/assistant answer)
+    const firstAnswer = answers?.[0];
 
     return (
       <div
         key={question.id}
         ref={index === allQuestions.length - 1 ? lastQuestionCallback : null}
+        className="mb-4"
       >
-        <Card className="border-2 border-gray-200 hover:border-ocean-teal/40 transition-colors cursor-pointer" onClick={() => window.location.href = `/questions/${question.id}`}>
-          <CardContent className="p-4">
-            {/* Question Content with ID */}
-            <div className="mb-3">
-              <div className="flex items-center justify-end space-x-2 mb-2">
-                {question.is_resolved && (
-                  <Badge className="bg-green-100 text-green-800 border-green-300">
-                    <CheckCircle size={14} className="mr-1" />
-                    Resolved
-                  </Badge>
-                )}
-                {question.is_from_whatsapp && (
-                  <Badge variant="secondary" className="bg-green-50 text-green-700">
-                    WhatsApp
-                  </Badge>
-                )}
-              </div>
-              
-              <p className="text-gray-800 text-base font-medium leading-relaxed line-clamp-3">
+        <Card className="border border-gray-200 hover:border-gray-300 transition-colors cursor-pointer bg-white" onClick={() => window.location.href = `/questions/${question.id}`}>
+          <CardContent className="p-6">
+            {/* Question Header with ID and Title */}
+            <div className="flex items-start justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 flex-1 pr-4">
                 <span className="text-orange-600 font-bold">#{question.id}</span>{' '}
                 {question.content || 'Question content not available'}
-              </p>
-            </div>
-
-            {/* Author Attribution with Share */}
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center space-x-2 text-sm text-gray-600">
-                <span>
-                  - {question.author_whatsapp_display_name || question.author_name} ({format(new Date(question.created_at), 'dMMMyyy').replace(/(\d{4})/, (match) => match.slice(-2))})
-                </span>
-                {question.author_rank && (
-                  <Badge variant="outline" className="text-xs">
-                    {formatRank(question.author_rank)}
-                  </Badge>
-                )}
-              </div>
+              </h3>
               <Button
                 variant="ghost"
                 size="sm"
@@ -380,112 +353,43 @@ export function QuestionsTab() {
                   e.stopPropagation();
                   handleShare(question);
                 }}
-                className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 p-2"
+                className="text-gray-400 hover:text-orange-600 hover:bg-orange-50 p-2 flex-shrink-0"
                 title="Share this question"
               >
                 <Share2 size={16} />
               </Button>
             </div>
 
-            {/* Question Images */}
-            {question.image_urls && question.image_urls.length > 0 && (
-              <div className="grid grid-cols-2 gap-2 mb-3">
-                {question.image_urls.slice(0, 4).map((imageUrl, imgIndex) => (
-                  <div key={imgIndex} className="relative group">
-                    <img 
-                      src={imageUrl}
-                      alt={`Question image ${imgIndex + 1}`}
-                      className="w-full h-32 object-cover rounded-lg border cursor-pointer hover:opacity-90 transition-opacity"
-                      onClick={() => window.open(imageUrl, '_blank')}
-                    />
-                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity rounded-lg flex items-center justify-center">
-                      <ImageIcon className="text-white opacity-0 group-hover:opacity-70 transition-opacity" size={24} />
+            {/* Author Attribution */}
+            <div className="flex items-center text-sm text-gray-600 mb-4">
+              <span>
+                - {question.author_whatsapp_display_name || question.author_name} ({format(new Date(question.created_at), 'dMMMyyy').replace(/(\d{4})/, (match) => match.slice(-2))})
+              </span>
+            </div>
+
+            {/* Assistant Answer Preview */}
+            {firstAnswer && (
+              <div className="border-l-4 border-orange-500 bg-orange-50 p-4 rounded-r-lg">
+                <div className="flex items-start space-x-3">
+                  <div className="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">
+                    QG
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <span className="font-medium text-gray-900 text-sm">Assistant</span>
                     </div>
+                    <p className="text-gray-800 text-sm">
+                      {firstAnswer.content.length > 100 
+                        ? `${firstAnswer.content.substring(0, 100)}...`
+                        : firstAnswer.content
+                      }
+                    </p>
                   </div>
-                ))}
-                {question.image_urls.length > 4 && (
-                  <div className="flex items-center justify-center bg-gray-200 rounded-lg h-32 text-gray-600">
-                    +{question.image_urls.length - 4} more
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Tags - Filter out system tags */}
-            {(() => {
-              const systemTags = ['chat', 'web-chat', 'whatsapp-chat', 'api', 'bot', 'system'];
-              const displayTags = question.tags?.filter(tag => 
-                !systemTags.includes(tag.toLowerCase())
-              ) || [];
-              
-              return displayTags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {displayTags.slice(0, 5).map((tag, i) => (
-                    <Badge key={i} variant="outline" className="text-xs">
-                      <Hash size={12} className="mr-1" />
-                      {tag}
-                    </Badge>
-                  ))}
-                  {displayTags.length > 5 && (
-                    <Badge variant="outline" className="text-xs">
-                      +{displayTags.length - 5} more
-                    </Badge>
-                  )}
                 </div>
-              );
-            })()}
-
-            {/* Bot Answer Preview */}
-            {botAnswer && (
-              <div className="bg-orange-50 border-l-4 border-orange-400 p-3 mb-3 rounded-r-lg">
-                {(() => {
-                  const authorName = botAnswer.author_whatsapp_display_name || botAnswer.author_name;
-                  const isBot = authorName === 'QG' || authorName === 'QAAQ GPT';
-                  
-                  if (isBot) {
-                    return (
-                      <div>
-                        <p className="text-orange-800 text-sm font-medium leading-5 overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                          <span className="font-semibold text-orange-900">Ans: </span>
-                          {truncateToWords(botAnswer.content, 15)}
-                        </p>
-                      </div>
-                    );
-                  } else {
-                    return (
-                      <div className="flex items-start space-x-2 mb-2">
-                        <Avatar className="w-6 h-6">
-                          {(botAnswer.author_whatsapp_profile_picture_url || botAnswer.author_profile_picture_url) && (
-                            <img 
-                              src={(botAnswer.author_whatsapp_profile_picture_url || botAnswer.author_profile_picture_url) as string} 
-                              alt={`${botAnswer.author_whatsapp_display_name || botAnswer.author_name}'s profile`}
-                              className="w-full h-full rounded-full object-cover"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.style.display = 'none';
-                              }}
-                            />
-                          )}
-                          <AvatarFallback className="bg-orange-500 text-white text-xs">
-                            {getInitials(authorName)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2">
-                            <h6 className="font-semibold text-orange-900 text-sm">
-                              {authorName}
-                            </h6>
-                          </div>
-                          <p className="text-orange-800 text-sm mt-1 font-medium leading-5 overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                            {truncateToWords(botAnswer.content, 15)}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  }
-                })()}
               </div>
             )}
+
+
 
 
 
