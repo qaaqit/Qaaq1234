@@ -3254,34 +3254,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      if (!['premium', 'super_user'].includes(planType)) {
+      if (!['postpaid', 'prepaid'].includes(planType)) {
         return res.status(400).json({
           success: false,
-          message: 'Invalid plan type. Must be premium or super_user'
+          message: 'Invalid plan type. Must be postpaid or prepaid'
         });
       }
 
-      // For premium plans, validate billing period
-      if (planType === 'premium') {
+      // For postpaid plans, validate billing period
+      if (planType === 'postpaid') {
         if (!billingPeriod || !['monthly', 'yearly'].includes(billingPeriod)) {
           return res.status(400).json({
             success: false,
-            message: 'Invalid billing period for premium plan. Must be monthly or yearly'
+            message: 'Invalid billing period for postpaid plan. Must be monthly or yearly'
           });
         }
       }
 
-      // For super user plans, validate topup plan
-      if (planType === 'super_user') {
+      // For prepaid plans, validate topup plan
+      if (planType === 'prepaid') {
         if (!topupPlan || !['topup_451', 'topup_902', 'topup_4510'].includes(topupPlan)) {
           return res.status(400).json({
             success: false,
-            message: 'Invalid topup plan for super user. Must be one of the available topup options'
+            message: 'Invalid topup plan for prepaid. Must be one of the available topup options'
           });
         }
       }
 
-      const result = await razorpayService.createSubscription(userId, planType, billingPeriod, topupPlan);
+      const result = await razorpayService.createSubscription(userId, planType as 'postpaid' | 'prepaid', billingPeriod, topupPlan);
       res.json({
         success: true,
         subscription: result.subscription,

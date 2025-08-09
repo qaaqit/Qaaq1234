@@ -21,7 +21,7 @@ Project Ambitions: To create a vibrant, self-sustaining community where maritime
 - **Replit-Style Chat Interface**: Paperclip and crown icons embedded inside text box, send button outside
 - **Premium Mode Feature**: Crown toggle for enhanced features with visual feedback
 - **Auto-Assignment Disabled**: Manual group joining only - no automatic user assignment to rank groups
-- **Razorpay Payment Integration**: Complete subscription system with premium subscriptions (₹451/month, ₹2,611/year) and super user pay-per-question topups (3 options: ₹451, ₹902, ₹4,510), payment processing, webhook handling, and admin analytics dashboard
+- **Razorpay Payment Integration**: Complete subscription system with Postpaid advance rental (₹451/month, ₹2,611/year) and Prepaid pay-per-question topups (3 options: ₹451, ₹902, ₹4,510), both activating Qaaq Chief BOT - the most advanced Marine GPT, payment processing, webhook handling, and admin analytics dashboard
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
