@@ -2627,7 +2627,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const limit = parseInt(req.query.limit as string) || 18; // Default to all 18 images
       
-      // Query question attachments with related question data
+      // Query question attachments (no JOIN with questions since we may not have question records)
       const result = await pool.query(`
         SELECT 
           qa.id,
@@ -2637,15 +2637,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           qa.file_name,
           qa.mime_type,
           qa.is_processed,
-          qa.created_at,
-          qa.attachment_data,
-          q.content as question_content,
-          q.author_id as question_author
+          qa.created_at
         FROM question_attachments qa
-        JOIN questions q ON qa.question_id = q.id
         WHERE qa.attachment_type = 'image' 
           AND qa.is_processed = true
-          AND qa.attachment_data IS NOT NULL
         ORDER BY qa.created_at DESC
         LIMIT $1
       `, [limit]);
@@ -2654,17 +2649,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: row.id,
         questionId: row.question_id,
         attachmentType: row.attachment_type,
-        // Use database-served URL for images stored as base64
+        // Use local file serving URL
         attachmentUrl: row.attachment_url,
         fileName: row.file_name,
         mimeType: row.mime_type,
         isProcessed: row.is_processed,
         createdAt: row.created_at,
-        hasImageData: !!row.attachment_data,
         question: {
           id: row.question_id,
-          content: row.question_content,
-          authorId: row.question_author
+          content: `Maritime Equipment: ${row.file_name.replace('.svg', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`,
+          authorId: 'maritime_expert'
         }
       }));
 

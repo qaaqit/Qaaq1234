@@ -9,40 +9,33 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Serve images from database (base64 data)
+// Serve maritime equipment images from uploads directory
 app.get('/uploads/:filename', async (req, res) => {
   try {
     const filename = req.params.filename;
+    const { readFileSync, existsSync } = await import('fs');
+    const { join } = await import('path');
     
-    // Query database for the image data
-    const result = await pool.query(`
-      SELECT attachment_data, mime_type, file_name 
-      FROM question_attachments 
-      WHERE file_name = $1 AND attachment_type = 'image'
-    `, [filename]);
+    const filePath = join('./uploads', filename);
     
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Image not found in database' });
+    if (!existsSync(filePath)) {
+      return res.status(404).json({ error: 'Maritime image not found' });
     }
     
-    const attachment = result.rows[0];
+    const fileContent = readFileSync(filePath);
+    const mimeType = filename.endsWith('.svg') ? 'image/svg+xml' : 'image/jpeg';
     
-    // If we have base64 data, serve it
-    if (attachment.attachment_data) {
-      const buffer = Buffer.from(attachment.attachment_data, 'base64');
-      res.set({
-        'Content-Type': attachment.mime_type || 'image/jpeg',
-        'Content-Length': buffer.length,
-        'Cache-Control': 'public, max-age=3600'
-      });
-      return res.send(buffer);
-    }
+    res.set({
+      'Content-Type': mimeType,
+      'Content-Length': fileContent.length,
+      'Cache-Control': 'public, max-age=3600'
+    });
     
-    // Fallback: return 404 if no data
-    res.status(404).json({ error: 'Image data not available in database' });
+    res.send(fileContent);
+    
   } catch (error) {
-    console.error('Error serving image from database:', error);
-    res.status(500).json({ error: 'Failed to serve image from database' });
+    console.error('Error serving maritime image:', error);
+    res.status(500).json({ error: 'Failed to serve maritime image' });
   }
 });
 
