@@ -3273,7 +3273,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // For super user plans, validate topup plan
       if (planType === 'super_user') {
-        if (!topupPlan || !['topup_451', 'topup_902', 'topup_1804', 'topup_2706', 'topup_4510'].includes(topupPlan)) {
+        if (!topupPlan || !['topup_451', 'topup_902', 'topup_4510'].includes(topupPlan)) {
           return res.status(400).json({
             success: false,
             message: 'Invalid topup plan for super user. Must be one of the available topup options'

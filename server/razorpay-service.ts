@@ -50,35 +50,13 @@ export const SUBSCRIPTION_PLANS = {
     topup_902: {
       planId: 'plan_super_topup_902',
       amount: 90200, // ₹902 in paise
-      name: 'Super User Basic Pack',
+      name: 'Super User Standard Pack',
       description: 'Pay per question - 200 questions included',
       displayPrice: '₹902',
       questions: 200,
       perQuestionRate: 4.51,
-      validityMonths: 2,
-      features: ['200 questions', '2 months validity', '₹4.51 per question']
-    },
-    topup_1804: {
-      planId: 'plan_super_topup_1804',
-      amount: 180400, // ₹1,804 in paise
-      name: 'Super User Standard Pack',
-      description: 'Pay per question - 400 questions included',
-      displayPrice: '₹1,804',
-      questions: 400,
-      perQuestionRate: 4.51,
-      validityMonths: 4,
-      features: ['400 questions', '4 months validity', '₹4.51 per question']
-    },
-    topup_2706: {
-      planId: 'plan_super_topup_2706',
-      amount: 270600, // ₹2,706 in paise
-      name: 'Super User Premium Pack',
-      description: 'Pay per question - 600 questions included',
-      displayPrice: '₹2,706',
-      questions: 600,
-      perQuestionRate: 4.51,
-      validityMonths: 6,
-      features: ['600 questions', '6 months validity', '₹4.51 per question']
+      validityMonths: 3,
+      features: ['200 questions', '3 months validity', '₹4.51 per question']
     },
     topup_4510: {
       planId: 'plan_super_topup_4510',
