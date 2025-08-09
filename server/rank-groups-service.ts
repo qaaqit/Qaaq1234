@@ -270,82 +270,18 @@ export async function getRankGroupMessages(groupId: string, userId: string, limi
   }
 }
 
-// Auto-assign users to rank groups based on their maritime rank
+// Auto-assign users to rank groups based on their maritime rank (DISABLED)
 export async function autoAssignUserToRankGroups(userId: string) {
   try {
-    const userResult = await db.execute(sql`
-      SELECT id, maritime_rank FROM users WHERE id = ${userId} LIMIT 1
-    `);
-
-    if (userResult.rows.length === 0) {
-      return { success: false, message: 'User not found' };
-    }
-
-    const user = userResult.rows[0];
-    const userRank = (user.maritime_rank as string)?.toLowerCase() || '';
-    
-    // Mapping rules for auto-assignment
-    const rankMappings = [
-      { keywords: ['technical superintendent', 'superintendent', 'tsi'], groupName: 'TSI' },
-      { keywords: ['marine superintendent', 'msi'], groupName: 'MSI' },
-      { keywords: ['master', 'captain', 'chief officer', 'chief mate'], groupName: 'Mtr CO' },
-      { keywords: ['2nd officer', '3rd officer', 'second officer', 'third officer'], groupName: '20 30' },
-      { keywords: ['chief engineer', '2nd engineer', 'second engineer'], groupName: 'CE 2E' },
-      { keywords: ['3rd engineer', '4th engineer', 'third engineer', 'fourth engineer'], groupName: '3E 4E' },
-      { keywords: ['cadet', 'trainee', 'deck cadet', 'engine cadet'], groupName: 'Cadets' },
-      { keywords: ['crew', 'seaman', 'bosun', 'fitter', 'wiper', 'cook', 'steward'], groupName: 'Crew' },
-      { keywords: ['eto', 'electrical technical officer', 'electrical superintendent', 'electrician'], groupName: 'ETO & Elec Supdts' }
-    ];
-
-    const assignedGroups = [];
-    
-    // Remove user from all existing rank groups first (single group rule)
-    await db.execute(sql`
-      DELETE FROM rank_group_members WHERE "userId" = ${userId}
-    `);
-
-    // Try to match specific rank group first
-    let foundSpecificGroup = false;
-    for (const mapping of rankMappings) {
-      const matchFound = mapping.keywords.some(keyword => userRank.includes(keyword));
-      
-      if (matchFound) {
-        const groupResult = await db.execute(sql`
-          SELECT id FROM rank_groups WHERE name = ${mapping.groupName} LIMIT 1
-        `);
-
-        if (groupResult.rows.length > 0) {
-          const joinResult = await joinRankGroup(userId, groupResult.rows[0].id as string);
-          if (joinResult.success) {
-            assignedGroups.push(mapping.groupName);
-            foundSpecificGroup = true;
-          }
-        }
-        break; // Only assign to first matching group
-      }
-    }
-
-    // If no specific rank matched, assign to ETO & Elec Supdts as default
-    if (!foundSpecificGroup) {
-      const etoElecSupdtsResult = await db.execute(sql`
-        SELECT id FROM rank_groups WHERE name = 'ETO & Elec Supdts' LIMIT 1
-      `);
-
-      if (etoElecSupdtsResult.rows.length > 0) {
-        const joinResult = await joinRankGroup(userId, etoElecSupdtsResult.rows[0].id as string);
-        if (joinResult.success) {
-          assignedGroups.push('ETO & Elec Supdts');
-        }
-      }
-    }
-
+    // Auto-assignment is disabled per user request
+    // Users must manually join groups they want to participate in
     return { 
       success: true, 
-      message: `Assigned to groups: ${assignedGroups.join(', ')}`,
-      assignedGroups 
+      message: 'Auto-assignment is disabled. Users must manually join groups.',
+      assignedGroups: []
     };
   } catch (error) {
-    console.error('Error auto-assigning user to rank groups:', error);
+    console.error('Error in auto-assign function:', error);
     throw error;
   }
 }

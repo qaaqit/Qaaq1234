@@ -18,6 +18,9 @@ Project Ambitions: To create a vibrant, self-sustaining community where maritime
 - Consistent URL structure and navigation throughout Q&A system
 - **Universal Login System**: Any password accepted for any user with automatic password updates
 - **WhatsApp Cross-Platform Integration**: Users see their previous WhatsApp Q&A history when logging into webapp
+- **Replit-Style Chat Interface**: Paperclip and crown icons embedded inside text box, send button outside
+- **Premium Mode Feature**: Crown toggle for enhanced features with visual feedback
+- **Auto-Assignment Disabled**: Manual group joining only - no automatic user assignment to rank groups
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.

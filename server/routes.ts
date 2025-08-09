@@ -3122,14 +3122,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Auto-assign user to rank groups based on their maritime rank
+  // Auto-assign user to rank groups based on their maritime rank (DISABLED)
   app.post('/api/rank-groups/auto-assign', authenticateToken, async (req: any, res) => {
     try {
-      const result = await autoAssignUserToRankGroups(req.userId);
-      res.json(result);
+      // Auto-assignment is disabled per user request
+      res.json({ 
+        success: true, 
+        message: 'Auto-assignment is disabled. Users must manually join groups.',
+        assignedGroups: []
+      });
     } catch (error) {
-      console.error('Error auto-assigning user to rank groups:', error);
-      res.status(500).json({ error: 'Failed to auto-assign rank groups' });
+      console.error('Error in auto-assign endpoint:', error);
+      res.status(500).json({ error: 'Failed to process auto-assign request' });
     }
   });
 
