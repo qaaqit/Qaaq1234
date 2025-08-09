@@ -103,7 +103,7 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
 
   const handleViewQuestion = (questionId: number) => {
     // Navigate to the question page for this specific maritime image
-    window.location.href = `/question/${questionId}`;
+    window.location.href = `/questions/${questionId}`;
   };
 
   const scrollNext = () => {
