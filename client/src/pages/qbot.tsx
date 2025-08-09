@@ -188,46 +188,49 @@ export default function QBOTPage({ user }: QBOTPageProps) {
         </div>
       </header>
       
-      {/* QBOT Chat Container - Reduced height to accommodate carousel */}
-      <div className="h-[calc(75vh-120px)]">
-        <QBOTChatContainer>
-          <div className="flex flex-col h-full">
-            {/* Gradient Header */}
-            <QBOTChatHeader 
-              onClear={handleClearQBotChat}
-              isAdmin={user?.isAdmin}
-            />
-            
-            {/* Chat Area with Engineering Background - Always Visible */}
-            <QBOTChatArea>
-              <div className="flex flex-col h-full">
-                {/* Messages or Welcome State */}
-                {qBotMessages.length === 0 ? (
-                  <QBOTWelcomeState />
-                ) : (
-                  <>
-                    <QBOTMessageList messages={qBotMessages} />
-                    {isQBotTyping && <QBOTTypingIndicator />}
-                  </>
-                )}
-              </div>
-            </QBOTChatArea>
-            
-            {/* Input Area */}
-            <QBOTInputArea 
-              onSendMessage={handleSendQBotMessage}
-              disabled={isQBotTyping}
-            />
-          </div>
-        </QBOTChatContainer>
-        
-        {/* Orange Bottom Border Line */}
-        <div className="w-full h-1 bg-gradient-to-r from-red-500 to-orange-500 shadow-md"></div>
-      </div>
+      {/* Main Content Area - Chat + Carousel */}
+      <div className="flex-1 flex flex-col pb-16">
+        {/* QBOT Chat Container */}
+        <div className="flex-1">
+          <QBOTChatContainer>
+            <div className="flex flex-col h-full">
+              {/* Gradient Header */}
+              <QBOTChatHeader 
+                onClear={handleClearQBotChat}
+                isAdmin={user?.isAdmin}
+              />
+              
+              {/* Chat Area with Engineering Background - Always Visible */}
+              <QBOTChatArea>
+                <div className="flex flex-col h-full">
+                  {/* Messages or Welcome State */}
+                  {qBotMessages.length === 0 ? (
+                    <QBOTWelcomeState />
+                  ) : (
+                    <>
+                      <QBOTMessageList messages={qBotMessages} />
+                      {isQBotTyping && <QBOTTypingIndicator />}
+                    </>
+                  )}
+                </div>
+              </QBOTChatArea>
+              
+              {/* Input Area */}
+              <QBOTInputArea 
+                onSendMessage={handleSendQBotMessage}
+                disabled={isQBotTyping}
+              />
+            </div>
+          </QBOTChatContainer>
+          
+          {/* Orange Bottom Border Line */}
+          <div className="w-full h-1 bg-gradient-to-r from-red-500 to-orange-500 shadow-md"></div>
+        </div>
 
-      {/* Image Carousel - Between Chat and Bottom Nav */}
-      <div className="h-[120px] mb-16">
-        <ImageCarousel className="h-full" />
+        {/* Image Carousel - Flush with chat container */}
+        <div className="h-[120px]">
+          <ImageCarousel className="h-full" />
+        </div>
       </div>
     </div>
   );
