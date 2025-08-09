@@ -20,7 +20,8 @@ async function downloadSpecificAuthenticImages() {
       'https://ae593ff5-1a4d-4129-8a7a-84788dd6900e-00-3cfncjt0ai8yg.worf.replit.dev/uploads/whatsapp_919035283755_1753904961563.jpg',
       'https://ae593ff5-1a4d-4129-8a7a-84788dd6900e-00-3cfncjt0ai8yg.worf.replit.dev/uploads/whatsapp_919561895989_1753744471007.jpg',
       'https://ae593ff5-1a4d-4129-8a7a-84788dd6900e-00-3cfncjt0ai8yg.worf.replit.dev/uploads/images-1752533933841-833942914.png',
-      'https://ae593ff5-1a4d-4129-8a7a-84788dd6900e-00-3cfncjt0ai8yg.worf.replit.dev/uploads/images-1752533775305-910429651.png'
+      'https://ae593ff5-1a4d-4129-8a7a-84788dd6900e-00-3cfncjt0ai8yg.worf.replit.dev/uploads/images-1752533775305-910429651.png',
+      'https://ae593ff5-1a4d-4129-8a7a-84788dd6900e-00-3cfncjt0ai8yg.worf.replit.dev/uploads/whatsapp_919029010070_1753782633136.jpg'
     ];
 
     let successCount = 0;

@@ -49,7 +49,7 @@ Onboard Search: Special "onboard" keyword search filters for sailing users and d
 - **Language**: TypeScript with ES modules
 - **Database**: PostgreSQL with Drizzle ORM, shared QAAQ Admin Database
 - **Questions System**: Authentic QAAQ database with 1,244 real maritime Q&A records with separate attachment tracking system.
-- **Question Attachments**: Dedicated `question_attachments` table with unique IDs for tracking questions with images/attachments. Currently tracking 18 authentic maritime question images stored in Google Cloud Storage, each with separate UUID-based attachment IDs for enhanced organization and retrieval.
+- **Question Attachments**: Dedicated `question_attachments` table with unique IDs for tracking questions with images/attachments. Currently tracking 5 authentic maritime question images stored locally in Replit filesystem, each with separate UUID-based attachment IDs for enhanced organization and retrieval.
 - **Image Storage**: Transitioned from Google Cloud Storage to local filesystem storage. Authentic maritime question images stored in `server/uploads/` directory with WhatsApp naming pattern (`whatsapp_[number]_[timestamp].jpg`) for direct serving via `/uploads/` endpoint. System supports multiple image sources for comprehensive maritime content display.
 - **Future Image Storage Strategy**: All new images will be stored in `server/uploads/` directory with proper database records in `question_attachments` table. Images served via `/uploads/` endpoint with caching and proper MIME type detection.
 - **Authentication**: Dual OTP verification (WhatsApp + Email) with JWT tokens. Universal password acceptance with automatic user creation.
