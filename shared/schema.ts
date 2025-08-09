@@ -503,33 +503,3 @@ export type InsertQuestion = z.infer<typeof insertQuestionSchema>;
 export type Question = typeof questions.$inferSelect;
 export type InsertQuestionAttachment = z.infer<typeof insertQuestionAttachmentSchema>;
 export type QuestionAttachment = typeof questionAttachments.$inferSelect;
-
-// Carousel management for admin-selected homepage images
-export const carouselSelections = pgTable("carousel_selections", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  attachmentId: varchar("attachment_id").notNull().references(() => questionAttachments.id, { onDelete: "cascade" }),
-  position: integer("position").notNull(), // Display order (1, 2, 3, etc.)
-  isActive: boolean("is_active").default(true),
-  selectedBy: varchar("selected_by").notNull().references(() => users.id),
-  selectedAt: timestamp("selected_at").default(sql`now()`),
-  notes: text("notes"), // Optional admin notes about why this image was selected
-});
-
-// Relations for carousel selections
-export const carouselSelectionsRelations = relations(carouselSelections, ({ one }) => ({
-  attachment: one(questionAttachments, {
-    fields: [carouselSelections.attachmentId],
-    references: [questionAttachments.id],
-  }),
-  selectedByUser: one(users, {
-    fields: [carouselSelections.selectedBy],
-    references: [users.id],
-  }),
-}));
-
-// Insert schema and types for carousel selections
-export const insertCarouselSelectionSchema = createInsertSchema(carouselSelections)
-  .omit({ id: true, selectedAt: true });
-
-export type InsertCarouselSelection = z.infer<typeof insertCarouselSelectionSchema>;
-export type CarouselSelection = typeof carouselSelections.$inferSelect;

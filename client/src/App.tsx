@@ -12,7 +12,6 @@ import Discover from "@/pages/discover";
 import Post from "@/pages/post";
 import Admin from "@/pages/admin";
 import BotRulesAdmin from "@/pages/admin/bot-rules";
-import AdminFiles from "@/pages/admin-files";
 import ChatPage from "@/pages/chat";
 import DMPage from "@/pages/dm";
 import UserProfile from "@/pages/user-profile";
@@ -87,7 +86,6 @@ function Router() {
           <Route path="/rank-groups" component={() => <RankGroupsPage />} />
           <Route path="/admin" component={() => <Admin />} />
           <Route path="/admin/bot-rules" component={() => <BotRulesAdmin />} />
-          <Route path="/admin/files" component={() => <AdminFiles />} />
           <Route path="/merge-accounts/:sessionId" component={MergeAccountsPage} />
           <Route path="/auth-test" component={AuthTestPage} />
           <Route path="/set-password" component={SetPasswordPage} />

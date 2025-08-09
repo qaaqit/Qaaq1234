@@ -240,20 +240,13 @@ export default function AdminPanel() {
       </div>
 
       <div className="max-w-7xl mx-auto p-4 sm:p-6">
-        <div className="mb-4 sm:mb-6 flex flex-wrap gap-3">
+        <div className="mb-4 sm:mb-6">
           <Button
             onClick={() => setLocation("/admin/bot-rules")}
             className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
           >
             <i className="fas fa-file-text mr-2"></i>
             Edit QBOT Rules
-          </Button>
-          <Button
-            onClick={() => window.open("/admin/files", "_blank")}
-            className="bg-red-600 hover:bg-red-700 text-white w-full sm:w-auto"
-          >
-            <i className="fas fa-folder-open mr-2"></i>
-            File Management
           </Button>
         </div>
 

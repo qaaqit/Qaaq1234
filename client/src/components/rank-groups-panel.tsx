@@ -147,17 +147,24 @@ export function RankGroupsPanel() {
     },
   });
 
-  // Auto-assign to groups - TEMPORARILY DISABLED
+  // Auto-assign to groups
   const autoAssignMutation = useMutation({
     mutationFn: async () => {
-      // Auto-assignment temporarily disabled
-      throw new Error('Group assignment is temporarily disabled');
+      const response = await fetch('/api/rank-groups/auto-assign', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('qaaq_token')}`,
+        },
+      });
+      return response.json();
     },
     onSuccess: (data: any) => {
-      // Disabled
+      queryClient.invalidateQueries({ queryKey: ['/api/rank-groups/my-groups'] });
+      toast({ title: `Auto-assigned to groups: ${data?.assignedGroups?.join(', ') || 'None'}` });
     },
     onError: () => {
-      toast({ title: 'Group assignment is temporarily disabled', variant: 'default' });
+      toast({ title: 'Failed to auto-assign groups', variant: 'destructive' });
     },
   });
 

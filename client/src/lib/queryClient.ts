@@ -26,7 +26,7 @@ export async function apiRequest(
   url: string,
   method: string = 'GET',
   data?: unknown | undefined,
-): Promise<any> {
+): Promise<Response> {
   const headers = {
     ...getAuthHeaders(),
     ...(data ? { "Content-Type": "application/json" } : {}),
@@ -40,7 +40,7 @@ export async function apiRequest(
   });
 
   await throwIfResNotOk(res);
-  return await res.json();
+  return res;
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";

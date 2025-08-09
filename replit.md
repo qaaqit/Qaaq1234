@@ -18,8 +18,6 @@ Project Ambitions: To create a vibrant, self-sustaining community where maritime
 - Consistent URL structure and navigation throughout Q&A system
 - **Universal Login System**: Any password accepted for any user with automatic password updates
 - **WhatsApp Cross-Platform Integration**: Users see their previous WhatsApp Q&A history when logging into webapp
-- **Carousel Management System**: Admin interface for curating homepage carousel images (database table ready, awaiting deployment)
-- **Group Assignment Disabled**: Temporarily disabled all user group assignment functionality per user request
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -34,7 +32,6 @@ Map behavior: Shows empty grey map on load, displays pins only when "Koi Hai?" b
 Proximity feature: Shows nearest 10 users when searching without text input
 User data: Connected to QAAQ parent database - contains 948+ authentic maritime professionals with real profile data
 Scope Focus: Core "Koi Hai?" discovery functionality - CPSS navigation and social features removed from roadmap
-Group Assignments: All user group assignment functionality temporarily disabled (auto-assign, switch groups, populate groups)
 Mobile Optimization: Responsive layout with touch-friendly controls and compact design
 Enhanced Search: Updated placeholder to "Sailors/ Ships/ Company" for better user guidance
 Admin shield location: Keep admin shield in header top right corner (not in bottom navigation)

@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import ws from 'ws';
 import jwt from 'jsonwebtoken';
 import { storage } from "./storage";
-import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, insertChatConnectionSchema, insertChatMessageSchema, insertRankGroupSchema, insertRankGroupMemberSchema, insertRankGroupMessageSchema, insertCarouselSelectionSchema } from "@shared/schema";
+import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, insertChatConnectionSchema, insertChatMessageSchema, insertRankGroupSchema, insertRankGroupMemberSchema, insertRankGroupMessageSchema } from "@shared/schema";
 import { sendVerificationEmail } from "./services/email";
 import { pool } from "./db";
 import { getQuestions, searchQuestions, getQuestionAnswers } from "./questions-service";
@@ -2724,9 +2724,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('Authentication bypassed for questions API');
       
-      // TODO: Re-enable carousel selections once database table is created
-      // For now, skip admin selections and use all attachments
-      console.log('Carousel selections temporarily disabled - using all attachments');
+      // Query question attachments with enhanced data for stable carousel system
+      // First, let's find attachments and try to map them to actual questions
       const result = await pool.query(`
         SELECT 
           qa.id,
@@ -2748,7 +2747,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         LIMIT $1
       `, [limit]);
       
-      console.log(`Found ${result.rows.length} image attachments in database (using fallback)`);
+      console.log(`Found ${result.rows.length} image attachments in database`);
 
       // Map attachments to valid questions or find alternative question IDs
       const attachments = await Promise.all(result.rows.map(async (row) => {
@@ -2823,182 +2822,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching question attachments:', error);
       res.status(500).json({ message: 'Failed to fetch question attachments' });
-    }
-  });
-
-  // API endpoint to get all uploaded files from both tables for admin gallery
-  app.get("/api/admin/uploaded-files", authenticateToken, async (req, res) => {
-    try {
-      // Get files from file_uploads table (parent database - 97+ images)
-      const fileUploadsResult = await pool.query(`
-        SELECT 
-          fu.id,
-          fu.filename,
-          fu.original_name,
-          fu.mime_type,
-          fu.file_size_mb,
-          fu.target_id as question_id,
-          fu.created_at,
-          'file_uploads' as source,
-          q.content as question_content
-        FROM file_uploads fu
-        LEFT JOIN questions q ON fu.target_id = q.id
-        WHERE fu.is_active = true 
-          AND fu.mime_type LIKE 'image/%'
-        ORDER BY fu.created_at DESC
-      `);
-
-      // Get files from question_attachments table (local attachments)
-      const questionAttachmentsResult = await pool.query(`
-        SELECT 
-          qa.id,
-          qa.file_name as filename,
-          qa.file_name as original_name,
-          qa.mime_type,
-          0 as file_size_mb,
-          qa.question_id,
-          qa.created_at,
-          'question_attachments' as source,
-          q.content as question_content
-        FROM question_attachments qa
-        LEFT JOIN questions q ON qa.question_id = q.id
-        WHERE qa.attachment_type = 'image'
-          AND qa.is_processed = true
-        ORDER BY qa.created_at DESC
-      `);
-
-      // Combine and format results
-      const allFiles = [
-        ...fileUploadsResult.rows.map(file => ({
-          id: `fu_${file.id}`,
-          questionId: file.question_id,
-          attachmentType: 'image',
-          attachmentUrl: `/uploads/files/${file.filename}`, // Serve from file_uploads
-          fileName: file.filename,
-          originalName: file.original_name,
-          mimeType: file.mime_type,
-          fileSize: file.file_size_mb,
-          createdAt: file.created_at,
-          source: file.source,
-          question: {
-            id: file.question_id,
-            content: file.question_content || `Maritime Question ${file.question_id}`,
-            authorId: 'unknown'
-          }
-        })),
-        ...questionAttachmentsResult.rows.map(file => ({
-          id: `qa_${file.id}`,
-          questionId: file.question_id,
-          attachmentType: 'image',
-          attachmentUrl: file.filename?.startsWith('/uploads/') ? file.filename : `/uploads/${file.filename}`,
-          fileName: file.filename,
-          originalName: file.original_name,
-          mimeType: file.mime_type,
-          fileSize: file.file_size_mb,
-          createdAt: file.created_at,
-          source: file.source,
-          question: {
-            id: file.question_id,
-            content: file.question_content || `Maritime Question ${file.question_id}`,
-            authorId: 'unknown'
-          }
-        }))
-      ];
-
-      // Sort by creation date (newest first)
-      allFiles.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-      console.log(`Found ${allFiles.length} total uploaded files (${fileUploadsResult.rows.length} from file_uploads, ${questionAttachmentsResult.rows.length} from question_attachments)`);
-      res.json(allFiles);
-    } catch (error) {
-      console.error('Error fetching uploaded files:', error);
-      res.status(500).json({ message: 'Failed to fetch uploaded files' });
-    }
-  });
-
-  // API endpoint to get admin-selected carousel images (temporarily disabled)
-  app.get("/api/admin/carousel-selections", authenticateToken, async (req, res) => {
-    try {
-      // Carousel selections temporarily disabled
-      res.json([]);
-    } catch (error) {
-      console.error('Error fetching carousel selections:', error);
-      res.status(500).json({ message: 'Carousel selections temporarily disabled' });
-    }
-  });
-
-  // API endpoint to add image to carousel selection
-  app.post("/api/admin/carousel-selections", authenticateToken, async (req, res) => {
-    try {
-      const { attachmentId, position, notes } = req.body;
-      const userId = req.userId;
-
-      if (!attachmentId || !position) {
-        return res.status(400).json({ message: 'Attachment ID and position are required' });
-      }
-
-      // Check if position is already taken
-      const existingPosition = await pool.query(
-        'SELECT id FROM carousel_selections WHERE position = $1 AND is_active = true',
-        [position]
-      );
-
-      if (existingPosition.rows.length > 0) {
-        return res.status(400).json({ message: 'Position already taken' });
-      }
-
-      // Insert new carousel selection
-      const result = await pool.query(`
-        INSERT INTO carousel_selections (attachment_id, position, selected_by, notes)
-        VALUES ($1, $2, $3, $4)
-        RETURNING *
-      `, [attachmentId, position, userId, notes || null]);
-
-      res.json({ success: true, selection: result.rows[0] });
-    } catch (error) {
-      console.error('Error adding carousel selection:', error);
-      res.status(500).json({ message: 'Failed to add carousel selection' });
-    }
-  });
-
-  // API endpoint to remove image from carousel selection
-  app.delete("/api/admin/carousel-selections/:id", authenticateToken, async (req, res) => {
-    try {
-      const { id } = req.params;
-
-      await pool.query(
-        'UPDATE carousel_selections SET is_active = false WHERE id = $1',
-        [id]
-      );
-
-      res.json({ success: true, message: 'Carousel selection removed' });
-    } catch (error) {
-      console.error('Error removing carousel selection:', error);
-      res.status(500).json({ message: 'Failed to remove carousel selection' });
-    }
-  });
-
-  // API endpoint to reorder carousel selections
-  app.put("/api/admin/carousel-selections/reorder", authenticateToken, async (req, res) => {
-    try {
-      const { selections } = req.body; // Array of { id, position }
-
-      if (!Array.isArray(selections)) {
-        return res.status(400).json({ message: 'Selections array is required' });
-      }
-
-      // Update positions for all selections
-      for (const selection of selections) {
-        await pool.query(
-          'UPDATE carousel_selections SET position = $1 WHERE id = $2',
-          [selection.position, selection.id]
-        );
-      }
-
-      res.json({ success: true, message: 'Carousel selections reordered' });
-    } catch (error) {
-      console.error('Error reordering carousel selections:', error);
-      res.status(500).json({ message: 'Failed to reorder carousel selections' });
     }
   });
 
@@ -3299,47 +3122,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Auto-assign user to rank groups based on their maritime rank - TEMPORARILY DISABLED
+  // Auto-assign user to rank groups based on their maritime rank
   app.post('/api/rank-groups/auto-assign', authenticateToken, async (req: any, res) => {
     try {
-      // Auto-assignment temporarily disabled
-      res.json({ 
-        success: false, 
-        message: 'Group assignment is temporarily disabled',
-        assignedGroups: []
-      });
+      const result = await autoAssignUserToRankGroups(req.userId);
+      res.json(result);
     } catch (error) {
-      console.error('Error in auto-assign endpoint:', error);
-      res.status(500).json({ error: 'Group assignment is temporarily disabled' });
+      console.error('Error auto-assigning user to rank groups:', error);
+      res.status(500).json({ error: 'Failed to auto-assign rank groups' });
     }
   });
 
-  // Switch user to different rank group (for promotions) - TEMPORARILY DISABLED
+  // Switch user to different rank group (for promotions)
   app.post('/api/rank-groups/switch', authenticateToken, async (req: any, res) => {
     try {
-      // Group switching temporarily disabled
-      res.json({ 
-        success: false, 
-        message: 'Group switching is temporarily disabled'
-      });
+      const { groupId } = req.body;
+      
+      if (!groupId) {
+        return res.status(400).json({ error: 'Group ID is required' });
+      }
+      
+      const result = await switchUserRankGroup(req.userId, groupId);
+      res.json(result);
     } catch (error) {
-      console.error('Error in switch endpoint:', error);
-      res.status(500).json({ error: 'Group switching is temporarily disabled' });
+      console.error('Error switching rank group:', error);
+      res.status(500).json({ error: 'Failed to switch rank group' });
     }
   });
 
-  // Auto-populate all rank groups with users based on their ranks (admin only) - TEMPORARILY DISABLED
+  // Auto-populate all rank groups with users based on their ranks (admin only)
   app.post('/api/rank-groups/populate', authenticateToken, async (req: any, res) => {
     try {
-      // Group population temporarily disabled
-      res.json({ 
-        success: false, 
-        message: 'Group population is temporarily disabled',
-        assignedCount: 0
-      });
+      // Check if user is admin
+      const userResult = await pool.query('SELECT is_platform_admin FROM users WHERE id = $1', [req.userId]);
+      const isAdmin = userResult.rows.length > 0 ? userResult.rows[0].is_platform_admin : false;
+      
+      if (!isAdmin) {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+      
+      const result = await bulkAssignUsersToRankGroups();
+      res.json(result);
     } catch (error) {
-      console.error('Error in populate endpoint:', error);
-      res.status(500).json({ error: 'Group population is temporarily disabled' });
+      console.error('Error populating rank groups:', error);
+      res.status(500).json({ error: 'Failed to populate rank groups' });
     }
   });
 
@@ -3534,9 +3360,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   console.log('WebSocket server setup complete on path /ws');
-  
-  // Setup file serving routes
-  setupFileServingRoutes(app);
 
   return httpServer;
 }
@@ -3616,72 +3439,4 @@ function generateUserQuestions(name: string, rank: string, questionCount: number
   }
 
   return questions.sort((a, b) => new Date(b.askedDate).getTime() - new Date(a.askedDate).getTime());
-}
-
-// Import required modules for file serving
-import fs from 'fs';
-import path from 'path';
-import { lookup as mimeLookup } from 'mime-types';
-
-// File serving endpoints
-export function setupFileServingRoutes(app: Express) {
-  // Serve uploaded files from the uploads directory
-  app.get('/uploads/:fileName', (req, res) => {
-    const { fileName } = req.params;
-    const filePath = path.join(process.cwd(), 'server', 'uploads', fileName);
-    
-    // Check if file exists
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: 'File not found' });
-    }
-    
-    // Serve the file with appropriate headers
-    const mimeType = mimeLookup(filePath) || 'application/octet-stream';
-    res.setHeader('Content-Type', mimeType);
-    res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
-    
-    res.sendFile(filePath);
-  });
-
-  // Serve files from file_uploads table (parent database files)
-  app.get('/uploads/files/:fileName', async (req, res) => {
-    try {
-      const { fileName } = req.params;
-      
-      // Check if file exists in file_uploads table
-      const result = await pool.query(
-        'SELECT filename, mime_type, original_name FROM file_uploads WHERE filename = $1 AND is_active = true',
-        [fileName]
-      );
-      
-      if (result.rows.length === 0) {
-        return res.status(404).json({ error: 'File not found in database' });
-      }
-      
-      const fileRecord = result.rows[0];
-      
-      // Try to serve from local uploads directory first
-      const localFilePath = path.join(process.cwd(), 'server', 'uploads', fileName);
-      
-      if (fs.existsSync(localFilePath)) {
-        const mimeType = fileRecord.mime_type || mimeLookup(localFilePath) || 'application/octet-stream';
-        res.setHeader('Content-Type', mimeType);
-        res.setHeader('Cache-Control', 'public, max-age=3600');
-        res.setHeader('Content-Disposition', `inline; filename="${fileRecord.original_name || fileName}"`);
-        return res.sendFile(localFilePath);
-      }
-      
-      // If file doesn't exist locally, return a placeholder response
-      res.status(404).json({ 
-        error: 'File not found on disk',
-        message: `File ${fileName} exists in database but not on filesystem`,
-        fileName: fileName,
-        originalName: fileRecord.original_name
-      });
-      
-    } catch (error) {
-      console.error('Error serving file from file_uploads:', error);
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  });
 }
