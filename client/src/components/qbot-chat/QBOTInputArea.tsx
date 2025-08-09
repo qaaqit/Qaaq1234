@@ -269,40 +269,40 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
               onPaste={handlePaste}
               placeholder={currentPlaceholder}
               disabled={disabled}
-              className="w-full resize-none rounded-lg border border-gray-300 pl-20 pr-4 py-3
+              className="w-full resize-none rounded-lg border border-gray-300 pl-12 pr-4 py-3
                        focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent
                        disabled:opacity-50 disabled:cursor-not-allowed
                        placeholder:text-gray-400 text-gray-700
-                       min-h-[48px] max-h-[120px] overflow-y-hidden"
+                       min-h-[64px] max-h-[120px] overflow-y-hidden"
               style={{ resize: 'none' }}
-              rows={1}
+              rows={2}
             />
             
-            {/* Left side controls inside text box */}
-            <div className="absolute left-2 bottom-2 flex items-center gap-1">
-              {/* Attachment Button */}
+            {/* Left side controls inside text box - stacked vertically */}
+            <div className="absolute left-2 bottom-2 flex flex-col items-center gap-0.5">
+              {/* Premium Mode Crown - on top */}
+              <button
+                onClick={togglePremiumMode}
+                className={`p-1 rounded transition-all duration-200 ${
+                  isPremiumMode 
+                    ? 'text-yellow-600 hover:bg-yellow-100' 
+                    : 'text-gray-400 hover:bg-gray-100'
+                }`}
+                title={isPremiumMode ? "Premium Mode Active" : "Enable Premium Mode"}
+              >
+                <Crown size={14} className={isPremiumMode ? "fill-current" : ""} />
+              </button>
+              
+              {/* Attachment Button - below crown */}
               <ObjectUploader
                 maxNumberOfFiles={5}
                 maxFileSize={52428800} // 50MB
                 onGetUploadParameters={handleGetUploadParameters}
                 onComplete={handleUploadComplete}
-                buttonClassName="p-1.5 rounded hover:bg-gray-100 transition-all duration-200"
+                buttonClassName="p-1 rounded hover:bg-gray-100 transition-all duration-200"
               >
-                <Paperclip size={16} className="text-gray-500" />
+                <Paperclip size={14} className="text-gray-500" />
               </ObjectUploader>
-              
-              {/* Premium Mode Crown */}
-              <button
-                onClick={togglePremiumMode}
-                className={`p-1.5 rounded transition-all duration-200 ${
-                  isPremiumMode 
-                    ? 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200' 
-                    : 'text-gray-500 hover:bg-gray-100'
-                }`}
-                title={isPremiumMode ? "Premium Mode Active" : "Enable Premium Mode"}
-              >
-                <Crown size={16} className={isPremiumMode ? "fill-current" : ""} />
-              </button>
             </div>
           </div>
           
