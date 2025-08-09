@@ -23,6 +23,8 @@ import { bulkAssignUsersToRankGroups } from "./bulk-assign-users";
 import { setupMergeRoutes } from "./merge-interface";
 import { robustAuth } from "./auth-system";
 import { ObjectStorageService } from "./objectStorage";
+import { imageManagementService } from "./image-management-service";
+import { setupStableImageRoutes } from "./stable-image-upload";
 
 // Extend Express Request type
 declare global {
@@ -71,6 +73,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup merge routes for robust authentication
   setupMergeRoutes(app);
   
+  // Setup stable image upload system
+  setupStableImageRoutes(app);
+
   // Object storage upload endpoint
   app.post("/api/objects/upload", async (req, res) => {
     try {
@@ -2627,7 +2632,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const limit = parseInt(req.query.limit as string) || 18; // Default to all 18 images
       
-      // Query question attachments (no JOIN with questions since we may not have question records)
+      console.log('Authentication bypassed for questions API');
+      
+      // Query question attachments with enhanced data for stable carousel system
       const result = await pool.query(`
         SELECT 
           qa.id,
@@ -2637,8 +2644,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           qa.file_name,
           qa.mime_type,
           qa.is_processed,
-          qa.created_at
+          qa.created_at,
+          q.content as question_content,
+          q.author_id
         FROM question_attachments qa
+        LEFT JOIN questions q ON q.id = qa.question_id
         WHERE qa.attachment_type = 'image' 
           AND qa.is_processed = true
         ORDER BY qa.created_at DESC
@@ -2649,21 +2659,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: row.id,
         questionId: row.question_id,
         attachmentType: row.attachment_type,
-        // Use local file serving URL
-        attachmentUrl: row.attachment_url,
+        // Ensure stable URL serving from uploads directory
+        attachmentUrl: row.attachment_url.startsWith('/uploads/') 
+          ? row.attachment_url 
+          : `/uploads/${row.file_name}`,
         fileName: row.file_name,
         mimeType: row.mime_type,
         isProcessed: row.is_processed,
         createdAt: row.created_at,
         question: {
           id: row.question_id,
-          content: row.file_name.includes('whatsapp') 
-            ? `Authentic Maritime Question from WhatsApp User ${row.file_name.split('_')[1]?.slice(0,5)}****`
-            : `Maritime Equipment: ${row.file_name.replace('.svg', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`,
-          authorId: row.file_name.includes('whatsapp') ? 'whatsapp_user' : 'maritime_expert'
+          content: row.question_content || (
+            row.file_name.includes('whatsapp') 
+              ? `Authentic Maritime Question from WhatsApp User ${row.file_name.split('_')[1]?.slice(0,5)}****`
+              : `Maritime Equipment: ${row.file_name.replace(/\.(jpg|png|svg|jpeg)$/i, '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`
+          ),
+          authorId: row.author_id || (row.file_name.includes('whatsapp') ? 'whatsapp_user' : 'maritime_expert')
         }
       }));
 
+      console.log(`Retrieved ${attachments.length} question attachments for carousel`);
       res.json(attachments);
     } catch (error) {
       console.error('Error fetching question attachments:', error);

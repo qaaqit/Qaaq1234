@@ -33,7 +33,8 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
       try {
         const response = await fetch('/api/questions/attachments?limit=18', {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
           }
         });
 
@@ -43,8 +44,11 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
           const imageAttachments = data
             .filter((att: QuestionAttachment) => att.attachmentType === 'image');
           setAttachments(imageAttachments);
+        } else if (response.status === 404) {
+          console.warn('No attachments found, using empty state');
+          setAttachments([]);
         } else {
-          console.warn('Failed to fetch attachments from API, no fallback data available');
+          console.warn('Failed to fetch attachments from API:', response.status);
           setAttachments([]);
         }
       } catch (error) {
@@ -102,8 +106,17 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
   };
 
   const handleViewQuestion = (questionId: number) => {
-    // Navigate to the question page for this specific maritime image
-    window.location.href = `/questions/${questionId}`;
+    // Navigate to the question page for this specific maritime image with proper routing
+    if (questionId && questionId > 0) {
+      window.location.href = `/questions/${questionId}`;
+    } else {
+      console.error('Invalid question ID for navigation:', questionId);
+      toast({
+        title: "Navigation Error",
+        description: "Unable to navigate to question. Invalid ID.",
+        variant: "destructive"
+      });
+    }
   };
 
   const scrollNext = () => {
