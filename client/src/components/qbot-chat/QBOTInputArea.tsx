@@ -216,6 +216,20 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
 
   return (
     <div className="border-t border-gray-200 bg-white p-4">
+      {/* Attachment Button - Top Left */}
+      <div className="flex justify-between items-center mb-2">
+        <ObjectUploader
+          maxNumberOfFiles={5}
+          maxFileSize={52428800} // 50MB
+          onGetUploadParameters={handleGetUploadParameters}
+          onComplete={handleUploadComplete}
+          buttonClassName="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-all duration-200 flex items-center gap-2"
+        >
+          <Paperclip size={16} className="text-gray-600" />
+          <span className="text-sm text-gray-600">Attach</span>
+        </ObjectUploader>
+      </div>
+
       {/* Attachments Preview */}
       {attachments.length > 0 && (
         <div className="mb-3 p-2 bg-gray-50 rounded-lg">
@@ -257,17 +271,6 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
           style={{ resize: 'none' }}
           rows={1}
         />
-        
-        {/* Attachment Button */}
-        <ObjectUploader
-          maxNumberOfFiles={5}
-          maxFileSize={52428800} // 50MB
-          onGetUploadParameters={handleGetUploadParameters}
-          onComplete={handleUploadComplete}
-          buttonClassName="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-all duration-200"
-        >
-          <Paperclip size={20} className="text-gray-600" />
-        </ObjectUploader>
         
         {/* Send Button */}
         <button
