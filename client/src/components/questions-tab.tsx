@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -63,6 +63,7 @@ export function QuestionsTab() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [expandedQuestions, setExpandedQuestions] = useState<Set<number>>(new Set());
   const [showScrollToTop, setShowScrollToTop] = useState(false);
+  const [scrollPosition, setScrollPosition] = useState(0);
 
   const observer = useRef<IntersectionObserver | null>(null);
   const lastQuestionRef = useRef<HTMLDivElement | null>(null);
@@ -76,16 +77,29 @@ export function QuestionsTab() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Handle scroll to show/hide scroll-to-top button
+  // Handle scroll to show/hide scroll-to-top button and preserve position
   useEffect(() => {
     const handleScroll = () => {
       const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
       setShowScrollToTop(scrollTop > 300);
+      setScrollPosition(scrollTop);
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Preserve scroll position during re-renders
+  useEffect(() => {
+    if (scrollPosition > 0 && !isFetchingNextPage) {
+      const timer = requestAnimationFrame(() => {
+        if (window.pageYOffset !== scrollPosition) {
+          window.scrollTo(0, scrollPosition);
+        }
+      });
+      return () => cancelAnimationFrame(timer);
+    }
+  }, [allQuestions.length, scrollPosition, isFetchingNextPage]);
 
   // Scroll to top function
   const scrollToTop = () => {
@@ -106,7 +120,7 @@ export function QuestionsTab() {
     status,
     error
   } = useInfiniteQuery({
-    queryKey: ['/api/questions', debouncedSearch],
+    queryKey: ['/api/questions', debouncedSearch || ''],
     queryFn: async ({ pageParam = 1 }) => {
       const params = new URLSearchParams({
         page: pageParam.toString(),
@@ -122,7 +136,11 @@ export function QuestionsTab() {
     getNextPageParam: (lastPage, pages) => {
       return lastPage.hasMore ? pages.length + 1 : undefined;
     },
-    initialPageParam: 1
+    initialPageParam: 1,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false
   });
 
   // Set up intersection observer for infinite scroll
@@ -135,10 +153,13 @@ export function QuestionsTab() {
       if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
         fetchNextPage();
       }
+    }, {
+      threshold: 0.1,
+      rootMargin: '100px'
     });
     
     if (node) observer.current.observe(node);
-  }, [isFetchingNextPage, hasNextPage]);
+  }, [isFetchingNextPage, hasNextPage, fetchNextPage]);
 
   const getInitials = (name: string) => {
     return name
@@ -181,7 +202,10 @@ export function QuestionsTab() {
     });
   };
 
-  const allQuestions = data?.pages.flatMap(page => page.questions) || [];
+  const allQuestions = useMemo(() => 
+    data?.pages.flatMap(page => page.questions) || [], 
+    [data]
+  );
   const totalQuestions = data?.pages[0]?.total || 0;
   
   // Since filtering is now done server-side, we don't need client-side filtering
