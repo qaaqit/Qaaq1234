@@ -11,6 +11,7 @@ import QBOTMessageList from "@/components/qbot-chat/QBOTMessageList";
 import QBOTInputArea from "@/components/qbot-chat/QBOTInputArea";
 import QBOTTypingIndicator from "@/components/qbot-chat/QBOTTypingIndicator";
 import type { Message } from "@/components/qbot-chat/QBOTMessageList";
+import ImageCarousel from "@/components/image-carousel";
 import { useToast } from "@/hooks/use-toast";
 import qaaqLogo from "@assets/qaaq-logo.png";
 
@@ -187,8 +188,8 @@ export default function QBOTPage({ user }: QBOTPageProps) {
         </div>
       </header>
       
-      {/* QBOT Chat Container - Increased to 75% Height */}
-      <div className="h-[75vh] pb-16">
+      {/* QBOT Chat Container - Reduced height to accommodate carousel */}
+      <div className="h-[calc(75vh-140px)]">
         <QBOTChatContainer>
           <div className="flex flex-col h-full">
             {/* Gradient Header */}
@@ -222,6 +223,11 @@ export default function QBOTPage({ user }: QBOTPageProps) {
         
         {/* Orange Bottom Border Line */}
         <div className="w-full h-1 bg-gradient-to-r from-red-500 to-orange-500 shadow-md"></div>
+      </div>
+
+      {/* Image Carousel - Between Chat and Bottom Nav */}
+      <div className="h-[140px] mb-16">
+        <ImageCarousel className="h-full" />
       </div>
     </div>
   );

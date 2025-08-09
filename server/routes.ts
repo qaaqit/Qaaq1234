@@ -2683,6 +2683,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // API endpoint to get question attachments for carousel
+  app.get("/api/questions/attachments", authenticateToken, async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 5;
+      
+      // Query question attachments with related question data
+      const result = await pool.query(`
+        SELECT 
+          qa.id,
+          qa.question_id,
+          qa.attachment_type,
+          qa.attachment_url,
+          qa.file_name,
+          qa.mime_type,
+          qa.is_processed,
+          qa.created_at,
+          q.content as question_content,
+          q.author_id as question_author
+        FROM question_attachments qa
+        JOIN questions q ON qa.question_id = q.id
+        WHERE qa.attachment_type = 'image' AND qa.is_processed = true
+        ORDER BY qa.created_at DESC
+        LIMIT $1
+      `, [limit]);
+
+      const attachments = result.rows.map(row => ({
+        id: row.id,
+        questionId: row.question_id,
+        attachmentType: row.attachment_type,
+        attachmentUrl: row.attachment_url,
+        fileName: row.file_name,
+        mimeType: row.mime_type,
+        isProcessed: row.is_processed,
+        createdAt: row.created_at,
+        question: {
+          id: row.question_id,
+          content: row.question_content,
+          authorId: row.question_author
+        }
+      }));
+
+      res.json(attachments);
+    } catch (error) {
+      console.error('Error fetching question attachments:', error);
+      res.status(500).json({ message: 'Failed to fetch question attachments' });
+    }
+  });
+
   // Get single question by ID (for sharing)
   app.get('/api/questions/:id', async (req, res) => {
     try {
