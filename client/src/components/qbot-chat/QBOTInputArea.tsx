@@ -1,5 +1,5 @@
 import { useState, useRef, KeyboardEvent, useEffect } from 'react';
-import { Send, Paperclip } from 'lucide-react';
+import { Paperclip } from 'lucide-react';
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { useToast } from "@/hooks/use-toast";
 
@@ -139,10 +139,11 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
   };
 
   const handleKeyPress = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey && !disabled) {
       e.preventDefault();
       handleSend();
     }
+    // Shift+Enter creates a new line (default behavior)
   };
 
   const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
@@ -253,7 +254,8 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
         </div>
       )}
       
-      <div className="flex items-end gap-2">
+      {/* Full width text area without send button */}
+      <div className="w-full">
         <textarea
           ref={textareaRef}
           value={message}
@@ -261,9 +263,9 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
           onInput={handleInput}
           onKeyPress={handleKeyPress}
           onPaste={handlePaste}
-          placeholder={currentPlaceholder}
+          placeholder={`${currentPlaceholder} (Press Enter to send, Shift+Enter for new line)`}
           disabled={disabled}
-          className="flex-1 resize-none rounded-lg border border-gray-300 px-4 py-2 
+          className="w-full resize-none rounded-lg border border-gray-300 px-4 py-2 
                    focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent
                    disabled:opacity-50 disabled:cursor-not-allowed
                    placeholder:text-gray-400 text-gray-700
@@ -271,21 +273,6 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
           style={{ resize: 'none' }}
           rows={1}
         />
-        
-        {/* Send Button */}
-        <button
-          onClick={handleSend}
-          disabled={disabled || (!message.trim() && attachments.length === 0)}
-          className={`
-            p-2 rounded-lg transition-all duration-200
-            ${(message.trim() || attachments.length > 0) && !disabled
-              ? 'bg-orange-500 text-white hover:bg-orange-600 shadow-sm' 
-              : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-            }
-          `}
-        >
-          <Send size={20} />
-        </button>
       </div>
     </div>
   );
