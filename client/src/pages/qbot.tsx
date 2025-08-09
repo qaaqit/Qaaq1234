@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import type { User } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -22,8 +22,76 @@ interface QBOTPageProps {
 export default function QBOTPage({ user }: QBOTPageProps) {
   const [qBotMessages, setQBotMessages] = useState<Message[]>([]);
   const [isQBotTyping, setIsQBotTyping] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+
+  // Fetch WhatsApp chat history when component loads
+  useEffect(() => {
+    const fetchWhatsAppHistory = async () => {
+      if (!user?.id) return;
+
+      try {
+        console.log(`📱 Fetching WhatsApp history for user: ${user.id}`);
+        const response = await fetch(`/api/whatsapp-history/${encodeURIComponent(user.id)}`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          if (data.success && data.chatHistory && data.chatHistory.length > 0) {
+            // Convert WhatsApp history to chat messages format
+            const historyMessages: Message[] = [];
+            
+            data.chatHistory.forEach((item: any, index: number) => {
+              // Add question as user message
+              historyMessages.push({
+                id: `whatsapp-q-${index}`,
+                text: item.question.content,
+                sender: 'user',
+                timestamp: new Date(item.question.timestamp),
+                attachments: []
+              });
+
+              // Add answer as bot message
+              historyMessages.push({
+                id: `whatsapp-a-${index}`,
+                text: item.answer.content,
+                sender: 'bot',
+                timestamp: new Date(item.answer.timestamp),
+                attachments: []
+              });
+            });
+
+            setQBotMessages(historyMessages);
+            
+            // Show welcome back message with history count
+            toast({
+              title: "Welcome Back!",
+              description: data.message,
+              duration: 4000
+            });
+            
+            console.log(`✅ Loaded ${data.chatHistory.length} WhatsApp Q&A pairs`);
+          } else {
+            console.log(`📱 No WhatsApp history found for user: ${user.id}`);
+            // Show welcome message for new users
+            toast({
+              title: "Welcome to QBOT!",
+              description: "Start your first conversation with our maritime AI assistant.",
+              duration: 3000
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching WhatsApp history:', error);
+        // Don't show error toast, just continue with empty history
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    };
+
+    fetchWhatsAppHistory();
+  }, [user?.id, toast]);
 
   const handleSendQBotMessage = async (messageText: string, attachments?: string[]) => {
     const newMessage: Message = {
@@ -204,10 +272,26 @@ export default function QBOTPage({ user }: QBOTPageProps) {
               <QBOTChatArea>
                 <div className="flex flex-col h-full">
                   {/* Messages or Welcome State */}
-                  {qBotMessages.length === 0 ? (
+                  {isLoadingHistory ? (
+                    <div className="flex-1 flex items-center justify-center">
+                      <div className="text-center space-y-3">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto"></div>
+                        <p className="text-gray-600">Loading your chat history...</p>
+                      </div>
+                    </div>
+                  ) : qBotMessages.length === 0 ? (
                     <QBOTWelcomeState />
                   ) : (
                     <>
+                      {/* WhatsApp History Indicator */}
+                      {qBotMessages.some(msg => msg.id.startsWith('whatsapp-')) && (
+                        <div className="px-4 py-2 bg-orange-50 border-b border-orange-100 mx-4 mt-2 rounded-lg">
+                          <p className="text-sm text-orange-700 text-center flex items-center justify-center gap-2">
+                            <span>📱</span>
+                            <span>Your previous WhatsApp conversations with QBOT</span>
+                          </p>
+                        </div>
+                      )}
                       <QBOTMessageList messages={qBotMessages} />
                       {isQBotTyping && <QBOTTypingIndicator />}
                     </>

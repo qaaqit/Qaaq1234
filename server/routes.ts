@@ -532,6 +532,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get WhatsApp chat history for user (for cross-platform continuity)
+  app.get("/api/whatsapp-history/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      console.log(`📱 Fetching WhatsApp history for user: ${userId}`);
+
+      // Query questions table for WhatsApp questions from this user
+      const whatsappQuestions = await pool.query(`
+        SELECT 
+          q.id,
+          q.content,
+          q.created_at,
+          q.author_id,
+          q.is_from_whatsapp,
+          COALESCE(
+            (SELECT content FROM answers WHERE question_id = q.id ORDER BY created_at DESC LIMIT 1),
+            'No answer available'
+          ) as answer_content,
+          (SELECT created_at FROM answers WHERE question_id = q.id ORDER BY created_at DESC LIMIT 1) as answer_created_at
+        FROM questions q
+        WHERE q.author_id = $1 
+          AND q.is_from_whatsapp = true
+        ORDER BY q.created_at DESC
+        LIMIT 20
+      `, [userId]);
+
+      const chatHistory = whatsappQuestions.rows.map(row => ({
+        type: 'qa-pair',
+        question: {
+          content: row.content,
+          timestamp: row.created_at,
+          isFromWhatsApp: true
+        },
+        answer: {
+          content: row.answer_content,
+          timestamp: row.answer_created_at || row.created_at
+        }
+      }));
+
+      console.log(`✅ Found ${chatHistory.length} WhatsApp Q&A pairs for user ${userId}`);
+      
+      res.json({
+        success: true,
+        chatHistory,
+        totalCount: chatHistory.length,
+        message: chatHistory.length > 0 
+          ? `Welcome back! Here are your ${chatHistory.length} previous WhatsApp conversations.`
+          : "Welcome! Start your first conversation with QBOT."
+      });
+
+    } catch (error) {
+      console.error('Error fetching WhatsApp history:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to fetch WhatsApp history',
+        chatHistory: []
+      });
+    }
+  });
+
   // QBOT Chat API endpoint - Implementing 13 Commandments
   app.post("/api/qbot/message", authenticateToken, async (req: any, res) => {
     try {

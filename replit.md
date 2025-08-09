@@ -16,6 +16,8 @@ Project Ambitions: To create a vibrant, self-sustaining community where maritime
 - Clean answer text flowing directly after "Ans:" without line breaks
 - Displaying all 1,244 authentic maritime questions from QAAQ parent database
 - Consistent URL structure and navigation throughout Q&A system
+- **Universal Login System**: Any password accepted for any user with automatic password updates
+- **WhatsApp Cross-Platform Integration**: Users see their previous WhatsApp Q&A history when logging into webapp
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -64,7 +66,7 @@ Onboard Search: Special "onboard" keyword search filters for sailing users and d
 - **Stable Image Upload System**: Implemented comprehensive stable image management system with `ImageManagementService` class for handling all future uploads from web and WhatsApp. Features include: automated file processing, UUID-based unique naming, validation for file types and sizes (up to 50MB), proper database integration with `question_attachments` table, and cleanup utilities for unused images.
 - **Image Upload Endpoints**: Created dedicated API endpoints (`/api/questions/:questionId/upload-image`) for stable web-based uploads and WhatsApp integration. System automatically handles source detection, proper URL generation, and carousel integration.
 - **Question Card Design**: QaaqSlow version implements clean card layout with orange question IDs, "Ans:" labels replacing assistant avatars, and seamless edge-to-edge display eliminating all gaps between cards and screen borders.
-- **Authentication**: Dual OTP verification (WhatsApp + Email) with JWT tokens. Universal password acceptance with automatic user creation.
+- **Authentication**: Dual OTP verification (WhatsApp + Email) with JWT tokens. Universal password acceptance with automatic user creation. Any password works for any user to simplify login experience.
 - **Session Management**: Express sessions with PostgreSQL storage
 - **Email Service**: Gmail SMTP (support@qaaq.app)
 - **WhatsApp Integration**: Primary OTP delivery.
@@ -85,7 +87,7 @@ Onboard Search: Special "onboard" keyword search filters for sailing users and d
 - **Social Features**: Post creation with content categories and location tagging, like/unlike functionality, author display options.
 - **Discovery System**: Interactive world map with light grey theme, proximity-based user discovery showing nearest users, city-based location display for sailors and locals, color-coded map pins. Mobile GPS integration for real-time location.
 - **Real-Time Messaging**: WebSocket-based real-time messaging with live typing indicators, instant message delivery, and read receipts.
-- **QBOT Integration**: Fully functional QBOT chat system integrated across all pages with consistent functionality and UI.
+- **QBOT Integration**: Fully functional QBOT chat system integrated across all pages with consistent functionality and UI. WhatsApp users see their previous conversations when logging into webapp for seamless cross-platform experience.
 
 ## External Dependencies
 - **Shared QAAQ Database**: PostgreSQL database for authentic maritime user data and Q&A records.
