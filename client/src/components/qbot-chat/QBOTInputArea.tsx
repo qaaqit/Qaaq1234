@@ -1,7 +1,9 @@
 import { useState, useRef, KeyboardEvent, useEffect } from 'react';
 import { Paperclip, Send, Crown } from 'lucide-react';
 import { ObjectUploader } from "@/components/ObjectUploader";
+import { PremiumSubscriptionDialog } from "@/components/PremiumSubscriptionDialog";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 
 const DEFAULT_CHATBOT_INVITES = [
   "Engine trouble? Ask away!",
@@ -51,8 +53,16 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
   const [attachments, setAttachments] = useState<string[]>([]);
   const [currentPlaceholder, setCurrentPlaceholder] = useState('');
   const [isPremiumMode, setIsPremiumMode] = useState(false);
+  const [showSubscriptionDialog, setShowSubscriptionDialog] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
+
+  // Fetch user subscription status
+  const { data: userStatus } = useQuery({
+    queryKey: ['/api/user/subscription-status'],
+    retry: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
   // Get random placeholder from chatbot invites
   const getRandomPlaceholder = () => {
@@ -144,6 +154,30 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
     }
   };
 
+  // Handle crown click for premium mode toggle
+  const togglePremiumMode = () => {
+    const isUserPremium = userStatus?.isPremium || userStatus?.isSuperUser || false;
+    const isUserAdmin = localStorage.getItem('isAdmin') === 'true';
+
+    if (!isUserPremium && !isUserAdmin) {
+      // Show subscription dialog for non-premium users
+      setShowSubscriptionDialog(true);
+      toast({
+        title: "Premium Feature",
+        description: "Upgrade to Premium for enhanced QBOT features",
+        variant: "default",
+      });
+    } else {
+      // Toggle premium mode for premium/admin users
+      setIsPremiumMode(!isPremiumMode);
+      toast({
+        title: isPremiumMode ? "Standard Mode" : "Premium Mode",
+        description: isPremiumMode ? "Switched to standard QBOT" : "Premium features activated",
+        variant: "default",
+      });
+    }
+  };
+
   const handleKeyPress = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey && !disabled) {
       e.preventDefault();
@@ -152,14 +186,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
     // Shift+Enter creates a new line (default behavior)
   };
 
-  const togglePremiumMode = () => {
-    setIsPremiumMode(!isPremiumMode);
-    toast({
-      title: isPremiumMode ? "Premium Mode Disabled" : "Premium Mode Enabled", 
-      description: isPremiumMode ? "Standard QBOT features active" : "Enhanced AI features and priority support active",
-      duration: 2000
-    });
-  };
+
 
   const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     const items = e.clipboardData.items;
@@ -318,6 +345,13 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
           </div>
         </div>
       </div>
+
+      {/* Premium Subscription Dialog */}
+      <PremiumSubscriptionDialog 
+        open={showSubscriptionDialog}
+        onOpenChange={setShowSubscriptionDialog}
+        defaultPlanType="premium"
+      />
     </div>
   );
 }

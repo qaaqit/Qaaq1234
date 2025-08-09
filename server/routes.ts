@@ -25,6 +25,7 @@ import { robustAuth } from "./auth-system";
 import { ObjectStorageService } from "./objectStorage";
 import { imageManagementService } from "./image-management-service";
 import { setupStableImageRoutes } from "./stable-image-upload";
+import { razorpayService, SUBSCRIPTION_PLANS } from "./razorpay-service";
 
 // Extend Express Request type
 declare global {
@@ -3222,6 +3223,252 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching search analytics summary:', error);
       res.status(500).json({ error: 'Failed to fetch search analytics' });
+    }
+  });
+
+  // ===== RAZORPAY PAYMENT ENDPOINTS =====
+
+  // Get subscription plans
+  app.get('/api/subscription-plans', async (req, res) => {
+    try {
+      res.json({
+        success: true,
+        plans: SUBSCRIPTION_PLANS
+      });
+    } catch (error) {
+      console.error('Error fetching subscription plans:', error);
+      res.status(500).json({ success: false, message: 'Failed to fetch subscription plans' });
+    }
+  });
+
+  // Create subscription (authenticated)
+  app.post('/api/subscriptions', authenticateToken, async (req: any, res) => {
+    try {
+      const userId = req.userId;
+      const { planType, billingPeriod } = req.body;
+
+      if (!planType || !billingPeriod) {
+        return res.status(400).json({
+          success: false,
+          message: 'Plan type and billing period are required'
+        });
+      }
+
+      if (!['premium', 'super_user'].includes(planType)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid plan type. Must be premium or super_user'
+        });
+      }
+
+      if (!['monthly', 'yearly'].includes(billingPeriod)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid billing period. Must be monthly or yearly'
+        });
+      }
+
+      const result = await razorpayService.createSubscription(userId, planType, billingPeriod);
+      res.json({
+        success: true,
+        subscription: result.subscription,
+        checkoutUrl: result.checkoutUrl,
+        razorpaySubscriptionId: result.razorpaySubscriptionId
+      });
+    } catch (error) {
+      console.error('Error creating subscription:', error);
+      res.status(500).json({
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to create subscription'
+      });
+    }
+  });
+
+  // Get user subscription status (authenticated)
+  app.get('/api/user/subscription-status', authenticateToken, async (req: any, res) => {
+    try {
+      const userId = req.userId;
+      const status = await razorpayService.checkUserPremiumStatus(userId);
+      
+      res.json({
+        success: true,
+        ...status
+      });
+    } catch (error) {
+      console.error('Error fetching subscription status:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch subscription status'
+      });
+    }
+  });
+
+  // Get user subscription history (authenticated)
+  app.get('/api/user/subscriptions', authenticateToken, async (req: any, res) => {
+    try {
+      const userId = req.userId;
+      const subscriptions = await razorpayService.getUserSubscriptions(userId);
+      
+      res.json({
+        success: true,
+        subscriptions
+      });
+    } catch (error) {
+      console.error('Error fetching user subscriptions:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch subscriptions'
+      });
+    }
+  });
+
+  // Get user payment history (authenticated)
+  app.get('/api/user/payments', authenticateToken, async (req: any, res) => {
+    try {
+      const userId = req.userId;
+      const payments = await razorpayService.getUserPayments(userId);
+      
+      res.json({
+        success: true,
+        payments
+      });
+    } catch (error) {
+      console.error('Error fetching user payments:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch payments'
+      });
+    }
+  });
+
+  // Cancel subscription (authenticated)
+  app.delete('/api/subscriptions/:subscriptionId', authenticateToken, async (req: any, res) => {
+    try {
+      const userId = req.userId;
+      const { subscriptionId } = req.params;
+
+      if (!subscriptionId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Subscription ID is required'
+        });
+      }
+
+      const result = await razorpayService.cancelSubscription(userId, subscriptionId);
+      res.json(result);
+    } catch (error) {
+      console.error('Error cancelling subscription:', error);
+      res.status(500).json({
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to cancel subscription'
+      });
+    }
+  });
+
+  // Razorpay webhook endpoint
+  app.post('/api/razorpay/webhook', async (req, res) => {
+    try {
+      const signature = req.headers['x-razorpay-signature'] as string;
+      
+      if (!signature) {
+        return res.status(400).json({
+          success: false,
+          message: 'Missing webhook signature'
+        });
+      }
+
+      await razorpayService.handleWebhook(req.body, signature);
+      
+      res.json({
+        success: true,
+        message: 'Webhook processed successfully'
+      });
+    } catch (error) {
+      console.error('Error processing webhook:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to process webhook'
+      });
+    }
+  });
+
+  // Admin: Get all subscriptions (admin only)
+  app.get('/api/admin/subscriptions', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      const result = await pool.query(`
+        SELECT 
+          s.*,
+          u.full_name as user_name,
+          u.email as user_email,
+          uss.is_premium,
+          uss.is_super_user,
+          uss.premium_expires_at,
+          uss.super_user_expires_at
+        FROM subscriptions s
+        LEFT JOIN users u ON s.user_id = u.id
+        LEFT JOIN user_subscription_status uss ON s.user_id = uss.user_id
+        ORDER BY s.created_at DESC
+        LIMIT 100
+      `);
+
+      res.json({
+        success: true,
+        subscriptions: result.rows
+      });
+    } catch (error) {
+      console.error('Error fetching admin subscriptions:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch subscriptions'
+      });
+    }
+  });
+
+  // Admin: Get payment analytics
+  app.get('/api/admin/payment-analytics', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      const result = await pool.query(`
+        WITH payment_stats AS (
+          SELECT 
+            DATE_TRUNC('month', created_at) as month,
+            subscription_type,
+            COUNT(*) as subscription_count,
+            SUM(amount) as total_revenue
+          FROM subscriptions
+          WHERE status IN ('active', 'completed')
+            AND created_at >= NOW() - INTERVAL '12 months'
+          GROUP BY DATE_TRUNC('month', created_at), subscription_type
+        ),
+        monthly_totals AS (
+          SELECT 
+            month,
+            SUM(subscription_count) as total_subscriptions,
+            SUM(total_revenue) as total_revenue
+          FROM payment_stats
+          GROUP BY month
+        )
+        SELECT 
+          ps.month,
+          ps.subscription_type,
+          ps.subscription_count,
+          ps.total_revenue,
+          mt.total_subscriptions,
+          mt.total_revenue as monthly_total_revenue
+        FROM payment_stats ps
+        JOIN monthly_totals mt ON ps.month = mt.month
+        ORDER BY ps.month DESC, ps.subscription_type
+      `);
+
+      res.json({
+        success: true,
+        analytics: result.rows
+      });
+    } catch (error) {
+      console.error('Error fetching payment analytics:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch payment analytics'
+      });
     }
   });
 

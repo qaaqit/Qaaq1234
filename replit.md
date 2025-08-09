@@ -21,6 +21,7 @@ Project Ambitions: To create a vibrant, self-sustaining community where maritime
 - **Replit-Style Chat Interface**: Paperclip and crown icons embedded inside text box, send button outside
 - **Premium Mode Feature**: Crown toggle for enhanced features with visual feedback
 - **Auto-Assignment Disabled**: Manual group joining only - no automatic user assignment to rank groups
+- **Razorpay Payment Integration**: Complete subscription system with premium and super user plans, payment processing, webhook handling, and admin analytics dashboard
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
