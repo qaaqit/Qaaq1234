@@ -2,39 +2,47 @@ import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from "http";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { pool } from "./db"; // Import database pool for image serving
 import QoiGPTBot from "./whatsapp-bot";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Serve images from Google Cloud Storage via object storage proxy
+// Serve images from database (base64 data)
 app.get('/uploads/:filename', async (req, res) => {
   try {
     const filename = req.params.filename;
     
-    // Import object storage service
-    const { ObjectStorageService } = await import('./objectStorage');
-    const objectStorage = new ObjectStorageService();
+    // Query database for the image data
+    const result = await pool.query(`
+      SELECT attachment_data, mime_type, file_name 
+      FROM question_attachments 
+      WHERE file_name = $1 AND attachment_type = 'image'
+    `, [filename]);
     
-    // Try to construct the cloud storage path for the image
-    const privateObjectDir = process.env.PRIVATE_OBJECT_DIR || '';
-    const imagePath = `${privateObjectDir}/uploads/${filename}`;
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Image not found in database' });
+    }
     
-    // Import the signObjectURL function to generate signed URL for image access
-    const { signObjectURL } = await import('./objectStorage');
+    const attachment = result.rows[0];
     
-    // For now, return a response indicating the image is in cloud storage
-    // The frontend should use the attachment URLs from the API response directly
-    res.status(302).redirect(`https://storage.googleapis.com${imagePath}`);
+    // If we have base64 data, serve it
+    if (attachment.attachment_data) {
+      const buffer = Buffer.from(attachment.attachment_data, 'base64');
+      res.set({
+        'Content-Type': attachment.mime_type || 'image/jpeg',
+        'Content-Length': buffer.length,
+        'Cache-Control': 'public, max-age=3600'
+      });
+      return res.send(buffer);
+    }
     
+    // Fallback: return 404 if no data
+    res.status(404).json({ error: 'Image data not available in database' });
   } catch (error) {
-    console.error('Error serving image:', error);
-    res.status(404).json({ 
-      error: 'Image not accessible', 
-      filename: req.params.filename,
-      message: 'Authentic question images are stored in Google Cloud Storage'
-    });
+    console.error('Error serving image from database:', error);
+    res.status(500).json({ error: 'Failed to serve image from database' });
   }
 });
 

@@ -2651,10 +2651,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: row.id,
         questionId: row.question_id,
         attachmentType: row.attachment_type,
-        // Generate signed URL for Google Cloud Storage access
-        attachmentUrl: row.attachment_url.startsWith('/uploads/') 
-          ? `https://storage.googleapis.com/repl-objstore-b2ad59ef-ca8b-42b8-bc12-f53a0b9ec0ee/.private${row.attachment_url}`
-          : row.attachment_url,
+        // Use original URL since images are now served from database
+        attachmentUrl: row.attachment_url,
         fileName: row.file_name,
         mimeType: row.mime_type,
         isProcessed: row.is_processed,
