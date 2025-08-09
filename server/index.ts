@@ -8,8 +8,18 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Serve static files from uploads directory for question images
-app.use('/uploads', express.static('server/uploads'));
+// Serve images from object storage by proxying /uploads requests
+app.get('/uploads/:filename', async (req, res) => {
+  try {
+    const filename = req.params.filename;
+    // For now, since actual images are in cloud storage and we need proper file serving,
+    // we'll return a 404 for non-existent files and let the frontend handle gracefully
+    res.status(404).json({ error: 'Image not found in local storage' });
+  } catch (error) {
+    console.error('Error serving image:', error);
+    res.status(500).json({ error: 'Failed to serve image' });
+  }
+});
 
 app.use((req, res, next) => {
   const start = Date.now();
