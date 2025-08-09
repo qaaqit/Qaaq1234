@@ -17,37 +17,79 @@ export const SUBSCRIPTION_PLANS = {
   premium: {
     monthly: {
       planId: 'plan_premium_monthly',
-      amount: 29900, // ₹299 in paise
+      amount: 45100, // ₹451 in paise
       period: 'monthly',
       interval: 1,
       name: 'Premium Monthly Plan',
-      description: 'Enhanced QBOT features and priority support'
+      description: 'Enhanced QBOT features and priority support',
+      displayPrice: '₹451'
     },
     yearly: {
       planId: 'plan_premium_yearly',
-      amount: 299900, // ₹2999 in paise (save ₹590)
+      amount: 261100, // ₹2611 in paise
       period: 'yearly',
       interval: 1,
       name: 'Premium Yearly Plan',
-      description: 'Enhanced QBOT features and priority support - Save 17%'
+      description: 'Enhanced QBOT features and priority support - Save ₹2,801',
+      displayPrice: '₹2,611',
+      savings: '₹2,801 (6+ months free)'
     }
   },
   super_user: {
-    monthly: {
-      planId: 'plan_super_monthly',
-      amount: 59900, // ₹599 in paise
-      period: 'monthly',
-      interval: 1,
-      name: 'Super User Monthly Plan',
-      description: 'All premium features plus advanced analytics and admin tools'
+    topup_451: {
+      planId: 'plan_super_topup_451',
+      amount: 45100, // ₹451 in paise (minimum topup)
+      name: 'Super User Starter Pack',
+      description: 'Pay per question - 100 questions included',
+      displayPrice: '₹451',
+      questions: 100, // ₹451 ÷ ₹4.51 = 100 questions
+      perQuestionRate: 4.51,
+      validityMonths: 1,
+      features: ['100 questions', '1 month validity', '₹4.51 per question']
     },
-    yearly: {
-      planId: 'plan_super_yearly',
-      amount: 599900, // ₹5999 in paise (save ₹1188)
-      period: 'yearly',
-      interval: 1,
-      name: 'Super User Yearly Plan',
-      description: 'All premium features plus advanced analytics and admin tools - Save 17%'
+    topup_902: {
+      planId: 'plan_super_topup_902',
+      amount: 90200, // ₹902 in paise
+      name: 'Super User Basic Pack',
+      description: 'Pay per question - 200 questions included',
+      displayPrice: '₹902',
+      questions: 200,
+      perQuestionRate: 4.51,
+      validityMonths: 2,
+      features: ['200 questions', '2 months validity', '₹4.51 per question']
+    },
+    topup_1804: {
+      planId: 'plan_super_topup_1804',
+      amount: 180400, // ₹1,804 in paise
+      name: 'Super User Standard Pack',
+      description: 'Pay per question - 400 questions included',
+      displayPrice: '₹1,804',
+      questions: 400,
+      perQuestionRate: 4.51,
+      validityMonths: 4,
+      features: ['400 questions', '4 months validity', '₹4.51 per question']
+    },
+    topup_2706: {
+      planId: 'plan_super_topup_2706',
+      amount: 270600, // ₹2,706 in paise
+      name: 'Super User Premium Pack',
+      description: 'Pay per question - 600 questions included',
+      displayPrice: '₹2,706',
+      questions: 600,
+      perQuestionRate: 4.51,
+      validityMonths: 6,
+      features: ['600 questions', '6 months validity', '₹4.51 per question']
+    },
+    topup_4510: {
+      planId: 'plan_super_topup_4510',
+      amount: 451000, // ₹4,510 in paise (maximum topup)
+      name: 'Super User Max Pack',
+      description: 'Pay per question - 1000 questions included',
+      displayPrice: '₹4,510',
+      questions: 1000, // ₹4,510 ÷ ₹4.51 = 1000 questions
+      perQuestionRate: 4.51,
+      validityMonths: 24,
+      features: ['1000 questions', '2 years validity', '₹4.51 per question', 'Maximum value pack']
     }
   }
 };
@@ -125,13 +167,25 @@ try {
 
 export class RazorpayService {
   
-  // Create a subscription for a user
-  async createSubscription(userId: string, planType: 'premium' | 'super_user', billingPeriod: 'monthly' | 'yearly') {
+  // Create a subscription or topup for a user
+  async createSubscription(userId: string, planType: 'premium' | 'super_user', billingPeriod?: 'monthly' | 'yearly', topupPlan?: string) {
     try {
-      const plan = SUBSCRIPTION_PLANS[planType][billingPeriod];
+      let plan: any;
+      
+      if (planType === 'premium') {
+        if (!billingPeriod) {
+          throw new Error('Billing period required for premium subscriptions');
+        }
+        plan = SUBSCRIPTION_PLANS.premium[billingPeriod];
+      } else if (planType === 'super_user') {
+        if (!topupPlan) {
+          throw new Error('Topup plan required for super user');
+        }
+        plan = SUBSCRIPTION_PLANS.super_user[topupPlan];
+      }
       
       if (!plan) {
-        throw new Error('Invalid plan type or billing period');
+        throw new Error('Invalid plan configuration');
       }
 
       // Get user details
@@ -140,17 +194,20 @@ export class RazorpayService {
         throw new Error('User not found');
       }
 
-      // Create subscription in Razorpay
+      // Create subscription/topup in Razorpay
       const subscriptionData = {
         plan_id: plan.planId,
         customer_notify: 1,
-        total_count: billingPeriod === 'yearly' ? 1 : 12, // 1 year for yearly, 12 months for monthly
+        total_count: planType === 'premium' && billingPeriod === 'yearly' ? 1 : 12,
         quantity: 1,
         notes: {
           userId: userId,
           planType: planType,
-          billingPeriod: billingPeriod,
-          userEmail: user.email
+          billingPeriod: billingPeriod || 'topup',
+          topupPlan: topupPlan,
+          userEmail: user.email,
+          questions: plan.questions || 0,
+          validityMonths: plan.validityMonths || (billingPeriod === 'yearly' ? 12 : 1)
         }
       };
 

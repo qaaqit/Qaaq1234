@@ -3245,12 +3245,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/subscriptions', authenticateToken, async (req: any, res) => {
     try {
       const userId = req.userId;
-      const { planType, billingPeriod } = req.body;
+      const { planType, billingPeriod, topupPlan } = req.body;
 
-      if (!planType || !billingPeriod) {
+      if (!planType) {
         return res.status(400).json({
           success: false,
-          message: 'Plan type and billing period are required'
+          message: 'Plan type is required'
         });
       }
 
@@ -3261,14 +3261,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      if (!['monthly', 'yearly'].includes(billingPeriod)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid billing period. Must be monthly or yearly'
-        });
+      // For premium plans, validate billing period
+      if (planType === 'premium') {
+        if (!billingPeriod || !['monthly', 'yearly'].includes(billingPeriod)) {
+          return res.status(400).json({
+            success: false,
+            message: 'Invalid billing period for premium plan. Must be monthly or yearly'
+          });
+        }
       }
 
-      const result = await razorpayService.createSubscription(userId, planType, billingPeriod);
+      // For super user plans, validate topup plan
+      if (planType === 'super_user') {
+        if (!topupPlan || !['topup_451', 'topup_902', 'topup_1804', 'topup_2706', 'topup_4510'].includes(topupPlan)) {
+          return res.status(400).json({
+            success: false,
+            message: 'Invalid topup plan for super user. Must be one of the available topup options'
+          });
+        }
+      }
+
+      const result = await razorpayService.createSubscription(userId, planType, billingPeriod, topupPlan);
       res.json({
         success: true,
         subscription: result.subscription,

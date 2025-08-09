@@ -15,23 +15,36 @@ import { Crown, Check, Loader2, ExternalLink, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
-interface SubscriptionPlan {
+interface PremiumPlan {
   planId: string;
   amount: number;
   period: string;
   interval: number;
   name: string;
   description: string;
+  displayPrice: string;
+  savings?: string;
+}
+
+interface SuperUserTopup {
+  planId: string;
+  amount: number;
+  name: string;
+  description: string;
+  displayPrice: string;
+  questions: number;
+  perQuestionRate: number;
+  validityMonths: number;
+  features: string[];
 }
 
 interface SubscriptionPlans {
   premium: {
-    monthly: SubscriptionPlan;
-    yearly: SubscriptionPlan;
+    monthly: PremiumPlan;
+    yearly: PremiumPlan;
   };
   super_user: {
-    monthly: SubscriptionPlan;
-    yearly: SubscriptionPlan;
+    [key: string]: SuperUserTopup;
   };
 }
 
@@ -48,6 +61,7 @@ export function PremiumSubscriptionDialog({
 }: PremiumSubscriptionDialogProps) {
   const [selectedPlan, setSelectedPlan] = useState<'premium' | 'super_user'>(defaultPlanType);
   const [selectedPeriod, setSelectedPeriod] = useState<'monthly' | 'yearly'>('monthly');
+  const [selectedTopup, setSelectedTopup] = useState<string>('topup_451');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -63,12 +77,15 @@ export function PremiumSubscriptionDialog({
     enabled: open,
   });
 
-  // Create subscription mutation
+  // Create subscription/topup mutation
   const createSubscriptionMutation = useMutation({
-    mutationFn: async ({ planType, billingPeriod }: { planType: string; billingPeriod: string }) => {
+    mutationFn: async ({ planType, billingPeriod, topupPlan }: { planType: string; billingPeriod?: string; topupPlan?: string }) => {
+      const payload = planType === 'super_user' && topupPlan 
+        ? { planType: 'super_user', topupPlan } 
+        : { planType, billingPeriod };
       return apiRequest('/api/subscriptions', {
         method: 'POST',
-        body: JSON.stringify({ planType, billingPeriod }),
+        body: JSON.stringify(payload),
       });
     },
     onSuccess: (data) => {
@@ -137,10 +154,17 @@ export function PremiumSubscriptionDialog({
   ];
 
   const handleSubscribe = () => {
-    createSubscriptionMutation.mutate({
-      planType: selectedPlan,
-      billingPeriod: selectedPeriod,
-    });
+    if (selectedPlan === 'super_user') {
+      createSubscriptionMutation.mutate({
+        planType: selectedPlan,
+        topupPlan: selectedTopup,
+      });
+    } else {
+      createSubscriptionMutation.mutate({
+        planType: selectedPlan,
+        billingPeriod: selectedPeriod,
+      });
+    }
   };
 
   return (
@@ -241,55 +265,104 @@ export function PremiumSubscriptionDialog({
           </TabsContent>
 
           <TabsContent value="super_user" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Monthly Plan */}
-              <Card className={`${selectedPeriod === 'monthly' ? 'ring-2 ring-orange-500' : ''} cursor-pointer`}
-                    onClick={() => setSelectedPeriod('monthly')}>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    Super User Monthly
-                    {selectedPeriod === 'monthly' && <Badge variant="default">Selected</Badge>}
-                  </CardTitle>
-                  <CardDescription>
-                    {formatPrice(plans.super_user?.monthly?.amount || 59900)} per month
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-
-              {/* Yearly Plan */}
-              <Card className={`${selectedPeriod === 'yearly' ? 'ring-2 ring-orange-500' : ''} cursor-pointer relative`}
-                    onClick={() => setSelectedPeriod('yearly')}>
-                <Badge className="absolute -top-2 -right-2 bg-green-500">
-                  Save {calculateSavings(plans.super_user?.yearly?.amount || 599900, plans.super_user?.monthly?.amount || 59900).percentage}%
-                </Badge>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    Super User Yearly
-                    {selectedPeriod === 'yearly' && <Badge variant="default">Selected</Badge>}
-                  </CardTitle>
-                  <CardDescription>
-                    {formatPrice(plans.super_user?.yearly?.amount || 599900)} per year
-                    <span className="block text-sm text-green-600 mt-1">
-                      Save {calculateSavings(plans.super_user?.yearly?.amount || 599900, plans.super_user?.monthly?.amount || 59900).savings}
-                    </span>
-                  </CardDescription>
-                </CardHeader>
-              </Card>
+            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <h3 className="font-semibold text-blue-800 mb-2">Pay Per Question - Prepaid Topup</h3>
+              <p className="text-sm text-blue-700">
+                Super User plans work on a prepaid topup system. Pay ₹4.51 per question with flexible validity periods.
+              </p>
             </div>
 
-            <Card>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {plans.super_user && Object.entries(plans.super_user).map(([key, topup]) => (
+                <Card 
+                  key={key}
+                  className={`${selectedTopup === key ? 'ring-2 ring-orange-500' : ''} cursor-pointer transition-all hover:shadow-md ${
+                    key === 'topup_451' ? 'border-orange-300 bg-orange-50' : 
+                    key === 'topup_4510' ? 'border-green-300 bg-green-50 relative' : ''
+                  }`}
+                  onClick={() => setSelectedTopup(key)}
+                >
+                  {key === 'topup_4510' && (
+                    <Badge className="absolute -top-2 -right-2 bg-green-500">Best Value</Badge>
+                  )}
+                  {key === 'topup_451' && (
+                    <Badge className="absolute -top-2 -right-2 bg-orange-500">Minimum</Badge>
+                  )}
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center justify-between text-lg">
+                      {topup.name}
+                      {selectedTopup === key && <Badge variant="default">Selected</Badge>}
+                    </CardTitle>
+                    <div className="space-y-1">
+                      <div className="text-2xl font-bold text-orange-600">{topup.displayPrice}</div>
+                      <div className="text-sm text-muted-foreground">{topup.description}</div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>Questions included:</span>
+                        <span className="font-semibold">{topup.questions}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Validity:</span>
+                        <span className="font-semibold">
+                          {topup.validityMonths === 1 ? '1 month' : 
+                           topup.validityMonths === 24 ? '2 years' : 
+                           `${topup.validityMonths} months`}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Per question:</span>
+                        <span className="font-semibold">₹{topup.perQuestionRate}</span>
+                      </div>
+                    </div>
+                    <div className="mt-3 pt-3 border-t">
+                      <ul className="space-y-1">
+                        {topup.features.map((feature, idx) => (
+                          <li key={idx} className="flex items-center gap-2 text-xs">
+                            <Check className="h-3 w-3 text-green-500 flex-shrink-0" />
+                            <span>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <Card className="mt-4">
               <CardHeader>
                 <CardTitle>Super User Features</CardTitle>
-                <CardDescription>All premium features plus advanced admin capabilities</CardDescription>
+                <CardDescription>Pay-per-question model with expert AI responses</CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {superUserFeatures.map((feature, index) => (
-                    <li key={index} className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      <span className="text-sm">{feature}</span>
-                    </li>
-                  ))}
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">Expert AI responses with detailed analysis</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">Priority support and faster response times</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">Advanced maritime knowledge base access</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">Technical diagrams and visual explanations</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">Question balance tracking and usage analytics</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">Extended validity periods for bulk purchases</span>
+                  </li>
                 </ul>
               </CardContent>
             </Card>
