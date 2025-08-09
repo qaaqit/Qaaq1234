@@ -2638,11 +2638,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           qa.mime_type,
           qa.is_processed,
           qa.created_at,
+          qa.attachment_data,
           q.content as question_content,
           q.author_id as question_author
         FROM question_attachments qa
         JOIN questions q ON qa.question_id = q.id
-        WHERE qa.attachment_type = 'image' AND qa.is_processed = true
+        WHERE qa.attachment_type = 'image' 
+          AND qa.is_processed = true
+          AND qa.attachment_data IS NOT NULL
         ORDER BY qa.created_at DESC
         LIMIT $1
       `, [limit]);
@@ -2651,12 +2654,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: row.id,
         questionId: row.question_id,
         attachmentType: row.attachment_type,
-        // Use original URL since images are now served from database
+        // Use database-served URL for images stored as base64
         attachmentUrl: row.attachment_url,
         fileName: row.file_name,
         mimeType: row.mime_type,
         isProcessed: row.is_processed,
         createdAt: row.created_at,
+        hasImageData: !!row.attachment_data,
         question: {
           id: row.question_id,
           content: row.question_content,
