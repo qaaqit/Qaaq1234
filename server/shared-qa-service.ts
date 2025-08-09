@@ -225,7 +225,7 @@ export async function searchQuestionsInSharedDB(keyword: string, userId?: string
     console.log('Using ultra-simple fallback search...');
     try {
       const fallbackQuery = `SELECT * FROM questions WHERE content ILIKE $1 ORDER BY created_at DESC LIMIT 50`;
-      const fallbackResult = await pool.query(fallbackQuery, [`%${keyword}%`);
+      const fallbackResult = await pool.query(fallbackQuery, [`%${keyword}%`]);
       console.log(`Fallback search found ${fallbackResult.rows.length} questions`);
       
       // Record search analytics for fallback search too
