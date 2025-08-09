@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
+import { useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -57,6 +58,7 @@ interface QuestionsResponse {
 }
 
 export function QuestionsTab() {
+  const [, navigate] = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [expandedQuestions, setExpandedQuestions] = useState<Set<number>>(new Set());
@@ -130,13 +132,13 @@ export function QuestionsTab() {
     if (observer.current) observer.current.disconnect();
     
     observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasNextPage) {
+      if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
         fetchNextPage();
       }
     });
     
     if (node) observer.current.observe(node);
-  }, [isFetchingNextPage, fetchNextPage, hasNextPage]);
+  }, [isFetchingNextPage, hasNextPage]);
 
   const getInitials = (name: string) => {
     return name
@@ -337,7 +339,7 @@ export function QuestionsTab() {
         key={question.id}
         ref={index === allQuestions.length - 1 ? lastQuestionCallback : null}
       >
-        <Card className="border-0 border-b border-gray-200 hover:border-gray-300 transition-colors cursor-pointer bg-white rounded-none" onClick={() => window.location.href = `/questions/${question.id}`}>
+        <Card className="border-0 border-b border-gray-200 hover:border-gray-300 transition-colors cursor-pointer bg-white rounded-none" onClick={() => navigate(`/questions/${question.id}`)}>
           <CardContent className="p-6">
             {/* Question Header with ID and Title */}
             <div className="flex items-start justify-between mb-4">
