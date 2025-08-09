@@ -9,33 +9,49 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Serve maritime equipment images from uploads directory
+// Serve authentic maritime images from multiple sources
 app.get('/uploads/:filename', async (req, res) => {
   try {
     const filename = req.params.filename;
     const { readFileSync, existsSync } = await import('fs');
     const { join } = await import('path');
     
-    const filePath = join('./uploads', filename);
-    
-    if (!existsSync(filePath)) {
-      return res.status(404).json({ error: 'Maritime image not found' });
+    // First try server/uploads for authentic WhatsApp images
+    const serverUploadsPath = join('./server/uploads', filename);
+    if (existsSync(serverUploadsPath)) {
+      const fileContent = readFileSync(serverUploadsPath);
+      res.set({
+        'Content-Type': 'image/jpeg',
+        'Content-Length': fileContent.length,
+        'Cache-Control': 'public, max-age=31536000'
+      });
+      return res.send(fileContent);
     }
     
-    const fileContent = readFileSync(filePath);
-    const mimeType = filename.endsWith('.svg') ? 'image/svg+xml' : 'image/jpeg';
+    // Then try root uploads directory
+    const rootUploadsPath = join('./uploads', filename);
+    if (existsSync(rootUploadsPath)) {
+      const fileContent = readFileSync(rootUploadsPath);
+      const mimeType = filename.endsWith('.svg') ? 'image/svg+xml' : 'image/jpeg';
+      res.set({
+        'Content-Type': mimeType,
+        'Content-Length': fileContent.length,
+        'Cache-Control': 'public, max-age=3600'
+      });
+      return res.send(fileContent);
+    }
     
-    res.set({
-      'Content-Type': mimeType,
-      'Content-Length': fileContent.length,
-      'Cache-Control': 'public, max-age=3600'
+    // If not found locally, return 404 but log the request
+    console.log(`📸 Image requested but not found locally: ${filename}`);
+    res.status(404).json({ 
+      error: 'Image not found locally',
+      filename: filename,
+      note: 'This may be served by another instance'
     });
     
-    res.send(fileContent);
-    
   } catch (error) {
-    console.error('Error serving maritime image:', error);
-    res.status(500).json({ error: 'Failed to serve maritime image' });
+    console.error('Error serving image:', error);
+    res.status(500).json({ error: 'Failed to serve image' });
   }
 });
 

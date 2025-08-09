@@ -2657,8 +2657,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         createdAt: row.created_at,
         question: {
           id: row.question_id,
-          content: `Maritime Equipment: ${row.file_name.replace('.svg', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`,
-          authorId: 'maritime_expert'
+          content: row.file_name.includes('whatsapp') 
+            ? `Authentic Maritime Question from WhatsApp User ${row.file_name.split('_')[1]?.slice(0,5)}****`
+            : `Maritime Equipment: ${row.file_name.replace('.svg', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`,
+          authorId: row.file_name.includes('whatsapp') ? 'whatsapp_user' : 'maritime_expert'
         }
       }));
 
