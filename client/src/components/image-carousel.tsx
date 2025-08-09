@@ -31,7 +31,7 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
   useEffect(() => {
     const fetchAttachments = async () => {
       try {
-        const response = await fetch('/api/questions/attachments', {
+        const response = await fetch('/api/questions/attachments?limit=18', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
@@ -39,76 +39,13 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
 
         if (response.ok) {
           const data = await response.json();
-          // Filter for image attachments only and limit to 5 most recent
+          // Filter for image attachments only (all available)
           const imageAttachments = data
-            .filter((att: QuestionAttachment) => att.attachmentType === 'image')
-            .slice(0, 5);
+            .filter((att: QuestionAttachment) => att.attachmentType === 'image');
           setAttachments(imageAttachments);
         } else {
-          // Fallback to mock data for demonstration
-          const mockAttachments: QuestionAttachment[] = [
-            {
-              id: '1',
-              questionId: 1051,
-              attachmentType: 'image',
-              attachmentUrl: '/uploads/images-1754477072590-596461721.png',
-              fileName: 'trophy.png',
-              question: {
-                id: 1051,
-                content: 'Are you able to see trophy?',
-                authorId: '+7203077919'
-              }
-            },
-            {
-              id: '2', 
-              questionId: 621,
-              attachmentType: 'image',
-              attachmentUrl: '/uploads/images-1754044161777-506706060.jpg',
-              fileName: 'compressor-valves.jpg',
-              question: {
-                id: 621,
-                content: 'What is the material of Main Air Compressor valves?',
-                authorId: '+9029010070'
-              }
-            },
-            {
-              id: '3',
-              questionId: 532,
-              attachmentType: 'image', 
-              attachmentUrl: '/uploads/images-1753910779704-86035902.jpg',
-              fileName: 'feeler-gauge.jpg',
-              question: {
-                id: 532,
-                content: 'What is Feeler Gauge?',
-                authorId: '+9810020033'
-              }
-            },
-            {
-              id: '4',
-              questionId: 531,
-              attachmentType: 'image',
-              attachmentUrl: '/uploads/images-1753909330525-472961591.jpg', 
-              fileName: 'sulzer-valve.jpg',
-              question: {
-                id: 531,
-                content: 'Propulsion // Can you explain how Sulzer Suction and Spill valve work for Fuel Pump?',
-                authorId: '+9810020033'
-              }
-            },
-            {
-              id: '5',
-              questionId: 530,
-              attachmentType: 'image',
-              attachmentUrl: '/uploads/images-1753909073197-384920075.jpg',
-              fileName: 'axial-ring.jpg', 
-              question: {
-                id: 530,
-                content: 'What is importance of AXIAL RING groove clearance?',
-                authorId: '+9810020033'
-              }
-            }
-          ];
-          setAttachments(mockAttachments);
+          console.warn('Failed to fetch attachments from API, no fallback data available');
+          setAttachments([]);
         }
       } catch (error) {
         console.error('Error fetching attachments:', error);

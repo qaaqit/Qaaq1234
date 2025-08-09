@@ -2625,7 +2625,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API endpoint to get question attachments for carousel - MUST BE BEFORE parameterized routes
   app.get("/api/questions/attachments", authenticateToken, async (req, res) => {
     try {
-      const limit = parseInt(req.query.limit as string) || 5;
+      const limit = parseInt(req.query.limit as string) || 18; // Default to all 18 images
       
       // Query question attachments with related question data
       const result = await pool.query(`
