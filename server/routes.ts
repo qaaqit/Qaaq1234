@@ -2635,6 +2635,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Authentication bypassed for questions API');
       
       // Query question attachments with enhanced data for stable carousel system
+      // First, let's find attachments and try to map them to actual questions
       const result = await pool.query(`
         SELECT 
           qa.id,
@@ -2646,7 +2647,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           qa.is_processed,
           qa.created_at,
           q.content as question_content,
-          q.author_id
+          q.author_id,
+          q.id as actual_question_exists
         FROM question_attachments qa
         LEFT JOIN questions q ON q.id = qa.question_id
         WHERE qa.attachment_type = 'image' 
@@ -2654,28 +2656,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ORDER BY qa.created_at DESC
         LIMIT $1
       `, [limit]);
+      
+      console.log(`Found ${result.rows.length} image attachments in database`);
 
-      const attachments = result.rows.map(row => ({
-        id: row.id,
-        questionId: row.question_id,
-        attachmentType: row.attachment_type,
-        // Ensure stable URL serving from uploads directory
-        attachmentUrl: row.attachment_url.startsWith('/uploads/') 
-          ? row.attachment_url 
-          : `/uploads/${row.file_name}`,
-        fileName: row.file_name,
-        mimeType: row.mime_type,
-        isProcessed: row.is_processed,
-        createdAt: row.created_at,
-        question: {
-          id: row.question_id,
-          content: row.question_content || (
-            row.file_name.includes('whatsapp') 
-              ? `Authentic Maritime Question from WhatsApp User ${row.file_name.split('_')[1]?.slice(0,5)}****`
-              : `Maritime Equipment: ${row.file_name.replace(/\.(jpg|png|svg|jpeg)$/i, '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`
-          ),
-          authorId: row.author_id || (row.file_name.includes('whatsapp') ? 'whatsapp_user' : 'maritime_expert')
+      // Map attachments to valid questions or find alternative question IDs
+      const attachments = await Promise.all(result.rows.map(async (row) => {
+        let finalQuestionId = row.question_id;
+        let questionContent = row.question_content;
+        let authorId = row.author_id;
+        
+        // If no linked question exists, try to find a suitable question based on the filename or create a fallback
+        if (!row.actual_question_exists) {
+          console.log(`Attachment ${row.file_name} has no linked question, trying to find suitable match...`);
+          
+          // Try to find a question that might be related based on keywords in filename
+          if (row.file_name.includes('whatsapp')) {
+            // For WhatsApp images, find any recent maritime question
+            const fallbackQuery = await pool.query(`
+              SELECT id, content, author_id 
+              FROM questions 
+              WHERE is_from_whatsapp = true 
+              ORDER BY created_at DESC 
+              LIMIT 1
+            `);
+            if (fallbackQuery.rows.length > 0) {
+              finalQuestionId = fallbackQuery.rows[0].id;
+              questionContent = fallbackQuery.rows[0].content;
+              authorId = fallbackQuery.rows[0].author_id;
+              console.log(`Mapped ${row.file_name} to WhatsApp question ${finalQuestionId}`);
+            }
+          } else {
+            // For other images, find a technical question
+            const fallbackQuery = await pool.query(`
+              SELECT id, content, author_id 
+              FROM questions 
+              WHERE content ILIKE '%engine%' OR content ILIKE '%equipment%' OR content ILIKE '%maritime%'
+              ORDER BY created_at DESC 
+              LIMIT 1
+            `);
+            if (fallbackQuery.rows.length > 0) {
+              finalQuestionId = fallbackQuery.rows[0].id;
+              questionContent = fallbackQuery.rows[0].content;
+              authorId = fallbackQuery.rows[0].author_id;
+              console.log(`Mapped ${row.file_name} to technical question ${finalQuestionId}`);
+            }
+          }
         }
+        
+        return {
+          id: row.id,
+          questionId: finalQuestionId,
+          attachmentType: row.attachment_type,
+          // Ensure stable URL serving from uploads directory
+          attachmentUrl: row.attachment_url?.startsWith('/uploads/') 
+            ? row.attachment_url 
+            : `/uploads/${row.file_name}`,
+          fileName: row.file_name,
+          mimeType: row.mime_type,
+          isProcessed: row.is_processed,
+          createdAt: row.created_at,
+          question: {
+            id: finalQuestionId,
+            content: questionContent || (
+              row.file_name.includes('whatsapp') 
+                ? `Authentic Maritime Question from WhatsApp User ${row.file_name.split('_')[1]?.slice(0,5)}****`
+                : `Maritime Equipment: ${row.file_name.replace(/\.(jpg|png|svg|jpeg)$/i, '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`
+            ),
+            authorId: authorId || (row.file_name.includes('whatsapp') ? 'whatsapp_user' : 'maritime_expert')
+          }
+        };
       }));
 
       console.log(`Retrieved ${attachments.length} question attachments for carousel`);
