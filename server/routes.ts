@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import ws from 'ws';
 import jwt from 'jsonwebtoken';
 import { storage } from "./storage";
-import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, insertChatConnectionSchema, insertChatMessageSchema, insertRankGroupSchema, insertRankGroupMemberSchema, insertRankGroupMessageSchema } from "@shared/schema";
+import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, insertChatConnectionSchema, insertChatMessageSchema, insertRankGroupSchema, insertRankGroupMemberSchema, insertRankGroupMessageSchema, insertCarouselSelectionSchema } from "@shared/schema";
 import { sendVerificationEmail } from "./services/email";
 import { pool } from "./db";
 import { getQuestions, searchQuestions, getQuestionAnswers } from "./questions-service";
@@ -2724,8 +2724,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('Authentication bypassed for questions API');
       
-      // Query question attachments with enhanced data for stable carousel system
-      // First, let's find attachments and try to map them to actual questions
+      // First check if there are admin-selected carousel images
+      const adminSelections = await pool.query(`
+        SELECT 
+          cs.position,
+          qa.id,
+          qa.question_id,
+          qa.attachment_type,
+          qa.attachment_url,
+          qa.file_name,
+          qa.mime_type,
+          qa.is_processed,
+          qa.created_at
+        FROM carousel_selections cs
+        JOIN question_attachments qa ON cs.attachment_id = qa.id
+        WHERE cs.is_active = true
+        ORDER BY cs.position ASC
+        LIMIT $1
+      `, [limit]);
+
+      if (adminSelections.rows.length > 0) {
+        console.log(`Using ${adminSelections.rows.length} admin-selected carousel images`);
+        
+        // Process admin-selected images
+        const adminAttachments = await Promise.all(adminSelections.rows.map(async (row) => {
+          let questionContent = null;
+          let authorId = null;
+          let finalQuestionId = row.question_id;
+
+          if (row.question_id) {
+            const questionQuery = await pool.query(
+              'SELECT content, author_id FROM questions WHERE id = $1',
+              [row.question_id]
+            );
+            if (questionQuery.rows.length > 0) {
+              questionContent = questionQuery.rows[0].content;
+              authorId = questionQuery.rows[0].author_id;
+            }
+          }
+
+          return {
+            id: row.id,
+            questionId: finalQuestionId,
+            attachmentType: row.attachment_type,
+            attachmentUrl: row.attachment_url?.startsWith('/uploads/') 
+              ? row.attachment_url 
+              : `/uploads/${row.file_name}`,
+            fileName: row.file_name,
+            mimeType: row.mime_type,
+            isProcessed: row.is_processed,
+            createdAt: row.created_at,
+            question: {
+              id: finalQuestionId,
+              content: questionContent || `Admin Selected: ${row.file_name.replace(/\.(jpg|png|svg|jpeg)$/i, '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`,
+              authorId: authorId || 'admin_selected'
+            }
+          };
+        }));
+
+        res.json(adminAttachments);
+        return;
+      }
+      
+      // Fallback to all question attachments if no admin selections
       const result = await pool.query(`
         SELECT 
           qa.id,
@@ -2747,7 +2808,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         LIMIT $1
       `, [limit]);
       
-      console.log(`Found ${result.rows.length} image attachments in database`);
+      console.log(`Found ${result.rows.length} image attachments in database (using fallback)`);
 
       // Map attachments to valid questions or find alternative question IDs
       const attachments = await Promise.all(result.rows.map(async (row) => {
@@ -2822,6 +2883,111 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching question attachments:', error);
       res.status(500).json({ message: 'Failed to fetch question attachments' });
+    }
+  });
+
+  // API endpoint to get admin-selected carousel images
+  app.get("/api/admin/carousel-selections", authenticateToken, async (req, res) => {
+    try {
+      const result = await pool.query(`
+        SELECT 
+          cs.id,
+          cs.position,
+          cs.notes,
+          cs.selected_at,
+          qa.id as attachment_id,
+          qa.attachment_url,
+          qa.file_name,
+          qa.question_id,
+          q.content as question_content,
+          u.full_name as selected_by_name
+        FROM carousel_selections cs
+        JOIN question_attachments qa ON cs.attachment_id = qa.id
+        LEFT JOIN questions q ON qa.question_id = q.id
+        LEFT JOIN users u ON cs.selected_by = u.id
+        WHERE cs.is_active = true
+        ORDER BY cs.position ASC
+      `);
+
+      res.json(result.rows);
+    } catch (error) {
+      console.error('Error fetching carousel selections:', error);
+      res.status(500).json({ message: 'Failed to fetch carousel selections' });
+    }
+  });
+
+  // API endpoint to add image to carousel selection
+  app.post("/api/admin/carousel-selections", authenticateToken, async (req, res) => {
+    try {
+      const { attachmentId, position, notes } = req.body;
+      const userId = req.userId;
+
+      if (!attachmentId || !position) {
+        return res.status(400).json({ message: 'Attachment ID and position are required' });
+      }
+
+      // Check if position is already taken
+      const existingPosition = await pool.query(
+        'SELECT id FROM carousel_selections WHERE position = $1 AND is_active = true',
+        [position]
+      );
+
+      if (existingPosition.rows.length > 0) {
+        return res.status(400).json({ message: 'Position already taken' });
+      }
+
+      // Insert new carousel selection
+      const result = await pool.query(`
+        INSERT INTO carousel_selections (attachment_id, position, selected_by, notes)
+        VALUES ($1, $2, $3, $4)
+        RETURNING *
+      `, [attachmentId, position, userId, notes || null]);
+
+      res.json({ success: true, selection: result.rows[0] });
+    } catch (error) {
+      console.error('Error adding carousel selection:', error);
+      res.status(500).json({ message: 'Failed to add carousel selection' });
+    }
+  });
+
+  // API endpoint to remove image from carousel selection
+  app.delete("/api/admin/carousel-selections/:id", authenticateToken, async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      await pool.query(
+        'UPDATE carousel_selections SET is_active = false WHERE id = $1',
+        [id]
+      );
+
+      res.json({ success: true, message: 'Carousel selection removed' });
+    } catch (error) {
+      console.error('Error removing carousel selection:', error);
+      res.status(500).json({ message: 'Failed to remove carousel selection' });
+    }
+  });
+
+  // API endpoint to reorder carousel selections
+  app.put("/api/admin/carousel-selections/reorder", authenticateToken, async (req, res) => {
+    try {
+      const { selections } = req.body; // Array of { id, position }
+
+      if (!Array.isArray(selections)) {
+        return res.status(400).json({ message: 'Selections array is required' });
+      }
+
+      // Update positions for all selections
+      for (const selection of selections) {
+        await pool.query(
+          'UPDATE carousel_selections SET position = $1 WHERE id = $2',
+          [selection.position, selection.id]
+        );
+      }
+
+      res.json({ success: true, message: 'Carousel selections reordered' });
+    } catch (error) {
+      console.error('Error reordering carousel selections:', error);
+      res.status(500).json({ message: 'Failed to reorder carousel selections' });
     }
   });
 
