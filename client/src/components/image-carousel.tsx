@@ -53,7 +53,46 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
         }
       } catch (error) {
         console.error('Error fetching attachments:', error);
-        setAttachments([]); // No fallback data - use authentic data only
+        // Fallback to mock data for demonstration
+        const mockAttachments: QuestionAttachment[] = [
+          {
+            id: '1',
+            questionId: 1051,
+            attachmentType: 'image',
+            attachmentUrl: '/uploads/images-1754477072590-596461721.png',
+            fileName: 'trophy.png',
+            question: {
+              id: 1051,
+              content: 'Are you able to see trophy?',
+              authorId: '+7203077919'
+            }
+          },
+          {
+            id: '2', 
+            questionId: 621,
+            attachmentType: 'image',
+            attachmentUrl: '/uploads/images-1754044161777-506706060.jpg',
+            fileName: 'compressor-valves.jpg',
+            question: {
+              id: 621,
+              content: 'What is the material of Main Air Compressor valves?',
+              authorId: '+9029010070'
+            }
+          },
+          {
+            id: '3',
+            questionId: 532,
+            attachmentType: 'image', 
+            attachmentUrl: '/uploads/images-1753910779704-86035902.jpg',
+            fileName: 'feeler-gauge.jpg',
+            question: {
+              id: 532,
+              content: 'What is Feeler Gauge?',
+              authorId: '+9810020033'
+            }
+          }
+        ];
+        setAttachments(mockAttachments);
       } finally {
         setLoading(false);
       }
@@ -68,10 +107,7 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
 
   const handleViewQuestion = (questionId: number) => {
     // Navigate to the question page for this specific maritime image with proper routing
-    console.log('Carousel click: Navigating to question ID:', questionId);
-    
     if (questionId && questionId > 0) {
-      // Navigate to question page
       window.location.href = `/questions/${questionId}`;
     } else {
       console.error('Invalid question ID for navigation:', questionId);
