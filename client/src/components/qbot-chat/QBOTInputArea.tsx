@@ -258,7 +258,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
       {/* Chat input container with Replit-style design */}
       <div className="relative">
         <div className="flex items-end gap-2">
-          {/* Text input with embedded controls */}
+          {/* Text input with crown on left side of placeholder */}
           <div className="flex-1 relative">
             <textarea
               ref={textareaRef}
@@ -269,57 +269,53 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
               onPaste={handlePaste}
               placeholder={currentPlaceholder}
               disabled={disabled}
-              className="w-full resize-none rounded-lg border border-gray-300 pl-12 pr-4 py-3
+              className="w-full resize-none rounded-lg border border-gray-300 pl-10 pr-4 py-3
                        focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent
                        disabled:opacity-50 disabled:cursor-not-allowed
                        placeholder:text-gray-400 text-gray-700
-                       min-h-[64px] max-h-[120px] overflow-y-hidden"
+                       min-h-[64px] max-h-[120px] overflow-y-auto"
               style={{ resize: 'none' }}
               rows={2}
             />
             
-            {/* Left side controls inside text box - stacked vertically */}
-            <div className="absolute left-2 bottom-2 flex flex-col items-center gap-0.5">
-              {/* Premium Mode Crown - on top */}
-              <button
-                onClick={togglePremiumMode}
-                className={`p-1 rounded transition-all duration-200 ${
-                  isPremiumMode 
-                    ? 'text-yellow-600 hover:bg-yellow-100' 
-                    : 'text-gray-400 hover:bg-gray-100'
-                }`}
-                title={isPremiumMode ? "Premium Mode Active" : "Enable Premium Mode"}
-              >
-                <Crown size={14} className={isPremiumMode ? "fill-current" : ""} />
-              </button>
-              
-              {/* Attachment Button - below crown */}
-              <ObjectUploader
-                maxNumberOfFiles={5}
-                maxFileSize={52428800} // 50MB
-                onGetUploadParameters={handleGetUploadParameters}
-                onComplete={handleUploadComplete}
-                buttonClassName="p-1 rounded hover:bg-gray-100 transition-all duration-200"
-              >
-                <Paperclip size={14} className="text-gray-500" />
-              </ObjectUploader>
-            </div>
+            {/* Crown icon on left side of placeholder text */}
+            <button
+              onClick={togglePremiumMode}
+              className="absolute left-3 top-3 p-1 rounded transition-all duration-200 text-gray-400 hover:bg-gray-100"
+              title={isPremiumMode ? "Premium Mode Active" : "Enable Premium Mode"}
+            >
+              <Crown size={16} className={isPremiumMode ? "fill-current text-yellow-600" : ""} />
+            </button>
           </div>
           
-          {/* Send Button */}
-          <button
-            onClick={handleSend}
-            disabled={disabled || (!message.trim() && attachments.length === 0)}
-            className={`
-              p-3 rounded-lg transition-all duration-200 flex-shrink-0
-              ${(message.trim() || attachments.length > 0) && !disabled
-                ? 'bg-orange-500 text-white hover:bg-orange-600 shadow-sm' 
-                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-              }
-            `}
-          >
-            <Send size={18} />
-          </button>
+          {/* Right side controls - paperclip above send button */}
+          <div className="flex flex-col items-center gap-1">
+            {/* Attachment Button - above send button */}
+            <ObjectUploader
+              maxNumberOfFiles={5}
+              maxFileSize={52428800} // 50MB
+              onGetUploadParameters={handleGetUploadParameters}
+              onComplete={handleUploadComplete}
+              buttonClassName="p-2 rounded-lg text-gray-400 hover:bg-gray-100 transition-all duration-200"
+            >
+              <Paperclip size={18} />
+            </ObjectUploader>
+            
+            {/* Send Button */}
+            <button
+              onClick={handleSend}
+              disabled={disabled || (!message.trim() && attachments.length === 0)}
+              className={`
+                p-3 rounded-lg transition-all duration-200 flex-shrink-0
+                ${(message.trim() || attachments.length > 0) && !disabled
+                  ? 'text-gray-400 hover:bg-gray-100' 
+                  : 'text-gray-300 cursor-not-allowed'
+                }
+              `}
+            >
+              <Send size={18} />
+            </button>
+          </div>
         </div>
       </div>
     </div>
