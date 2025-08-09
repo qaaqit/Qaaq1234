@@ -189,7 +189,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
       </header>
       
       {/* QBOT Chat Container - Reduced height to accommodate carousel */}
-      <div className="h-[calc(75vh-140px)]">
+      <div className="h-[calc(75vh-120px)]">
         <QBOTChatContainer>
           <div className="flex flex-col h-full">
             {/* Gradient Header */}
@@ -226,7 +226,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
       </div>
 
       {/* Image Carousel - Between Chat and Bottom Nav */}
-      <div className="h-[140px] mb-16">
+      <div className="h-[120px] mb-16">
         <ImageCarousel className="h-full" />
       </div>
     </div>

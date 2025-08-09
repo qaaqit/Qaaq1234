@@ -185,24 +185,24 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
 
   return (
     <div className={`bg-gradient-to-r from-orange-50 to-yellow-50 border-t border-orange-200 ${className}`}>
-      <div className="flex items-center justify-center space-x-4 px-4 py-4 h-full">
+      <div className="flex items-stretch justify-center space-x-3 px-4 h-full">
         {displayImages.map((attachment, index) => (
           <div 
             key={attachment.id} 
-            className="relative cursor-pointer group"
+            className="relative cursor-pointer group flex-1 max-w-[120px]"
             onClick={() => handleViewQuestion(attachment.questionId)}
           >
             {!imageError.has(attachment.id) ? (
               <img
                 src={attachment.attachmentUrl}
                 alt="Maritime Question"
-                className="w-20 h-28 object-cover rounded-lg border-2 border-white shadow-md group-hover:shadow-lg transition-shadow duration-200"
+                className="w-full h-full object-cover rounded-lg border-2 border-white shadow-md group-hover:shadow-lg transition-shadow duration-200"
                 onError={() => handleImageError(attachment.id)}
                 loading="lazy"
               />
             ) : (
-              <div className="w-20 h-28 bg-gray-100 border-2 border-white rounded-lg flex items-center justify-center shadow-md">
-                <Eye size={16} className="text-gray-400" />
+              <div className="w-full h-full bg-gray-100 border-2 border-white rounded-lg flex items-center justify-center shadow-md">
+                <Eye size={20} className="text-gray-400" />
               </div>
             )}
             
