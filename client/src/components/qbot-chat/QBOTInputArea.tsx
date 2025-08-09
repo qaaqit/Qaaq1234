@@ -165,11 +165,6 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
     } else {
       // Toggle premium mode for premium/admin users
       setIsPremiumMode(!isPremiumMode);
-      toast({
-        title: isPremiumMode ? "Standard Mode" : "Premium Mode",
-        description: isPremiumMode ? "Switched to standard QBOT" : "Premium features activated",
-        variant: "default",
-      });
     }
   };
 
