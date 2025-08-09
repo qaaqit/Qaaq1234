@@ -1,5 +1,5 @@
 import { useState, useRef, KeyboardEvent, useEffect } from 'react';
-import { Paperclip } from 'lucide-react';
+import { Paperclip, Send, Crown } from 'lucide-react';
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { useToast } from "@/hooks/use-toast";
 
@@ -41,10 +41,16 @@ interface QBOTInputAreaProps {
   disabled?: boolean;
 }
 
+interface User {
+  isAdmin?: boolean;
+  isPremium?: boolean;
+}
+
 export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTInputAreaProps) {
   const [message, setMessage] = useState('');
   const [attachments, setAttachments] = useState<string[]>([]);
   const [currentPlaceholder, setCurrentPlaceholder] = useState('');
+  const [isPremiumMode, setIsPremiumMode] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
 
@@ -146,6 +152,15 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
     // Shift+Enter creates a new line (default behavior)
   };
 
+  const togglePremiumMode = () => {
+    setIsPremiumMode(!isPremiumMode);
+    toast({
+      title: isPremiumMode ? "Premium Mode Disabled" : "Premium Mode Enabled", 
+      description: isPremiumMode ? "Standard QBOT features active" : "Enhanced AI features and priority support active",
+      duration: 2000
+    });
+  };
+
   const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     const items = e.clipboardData.items;
     
@@ -217,19 +232,6 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
 
   return (
     <div className="border-t border-gray-200 bg-white p-4">
-      {/* Attachment Button - Top Left */}
-      <div className="flex justify-between items-center mb-2">
-        <ObjectUploader
-          maxNumberOfFiles={5}
-          maxFileSize={52428800} // 50MB
-          onGetUploadParameters={handleGetUploadParameters}
-          onComplete={handleUploadComplete}
-          buttonClassName="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-all duration-200"
-        >
-          <Paperclip size={18} className="text-gray-600" />
-        </ObjectUploader>
-      </div>
-
       {/* Attachments Preview */}
       {attachments.length > 0 && (
         <div className="mb-3 p-2 bg-gray-50 rounded-lg">
@@ -253,25 +255,72 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
         </div>
       )}
       
-      {/* Full width text area without send button */}
-      <div className="w-full">
-        <textarea
-          ref={textareaRef}
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onInput={handleInput}
-          onKeyPress={handleKeyPress}
-          onPaste={handlePaste}
-          placeholder={`${currentPlaceholder} (Press Enter to send, Shift+Enter for new line)`}
-          disabled={disabled}
-          className="w-full resize-none rounded-lg border border-gray-300 px-4 py-2 
-                   focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent
-                   disabled:opacity-50 disabled:cursor-not-allowed
-                   placeholder:text-gray-400 text-gray-700
-                   min-h-[40px] max-h-[120px] overflow-y-hidden"
-          style={{ resize: 'none' }}
-          rows={1}
-        />
+      {/* Chat input container with Replit-style design */}
+      <div className="relative">
+        <div className="flex items-end gap-2">
+          {/* Text input with embedded controls */}
+          <div className="flex-1 relative">
+            <textarea
+              ref={textareaRef}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onInput={handleInput}
+              onKeyPress={handleKeyPress}
+              onPaste={handlePaste}
+              placeholder={currentPlaceholder}
+              disabled={disabled}
+              className="w-full resize-none rounded-lg border border-gray-300 pl-20 pr-4 py-3
+                       focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent
+                       disabled:opacity-50 disabled:cursor-not-allowed
+                       placeholder:text-gray-400 text-gray-700
+                       min-h-[48px] max-h-[120px] overflow-y-hidden"
+              style={{ resize: 'none' }}
+              rows={1}
+            />
+            
+            {/* Left side controls inside text box */}
+            <div className="absolute left-2 bottom-2 flex items-center gap-1">
+              {/* Attachment Button */}
+              <ObjectUploader
+                maxNumberOfFiles={5}
+                maxFileSize={52428800} // 50MB
+                onGetUploadParameters={handleGetUploadParameters}
+                onComplete={handleUploadComplete}
+                buttonClassName="p-1.5 rounded hover:bg-gray-100 transition-all duration-200"
+              >
+                <Paperclip size={16} className="text-gray-500" />
+              </ObjectUploader>
+              
+              {/* Premium Mode Crown */}
+              <button
+                onClick={togglePremiumMode}
+                className={`p-1.5 rounded transition-all duration-200 ${
+                  isPremiumMode 
+                    ? 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200' 
+                    : 'text-gray-500 hover:bg-gray-100'
+                }`}
+                title={isPremiumMode ? "Premium Mode Active" : "Enable Premium Mode"}
+              >
+                <Crown size={16} className={isPremiumMode ? "fill-current" : ""} />
+              </button>
+            </div>
+          </div>
+          
+          {/* Send Button */}
+          <button
+            onClick={handleSend}
+            disabled={disabled || (!message.trim() && attachments.length === 0)}
+            className={`
+              p-3 rounded-lg transition-all duration-200 flex-shrink-0
+              ${(message.trim() || attachments.length > 0) && !disabled
+                ? 'bg-orange-500 text-white hover:bg-orange-600 shadow-sm' 
+                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              }
+            `}
+          >
+            <Send size={18} />
+          </button>
+        </div>
       </div>
     </div>
   );
