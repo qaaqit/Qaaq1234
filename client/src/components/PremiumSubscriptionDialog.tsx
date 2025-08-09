@@ -272,13 +272,13 @@ export function PremiumSubscriptionDialog({
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Column Comparison */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {plans.super_user && Object.entries(plans.super_user).map(([key, topup]) => (
                 <Card 
                   key={key}
-                  className={`${selectedTopup === key ? 'ring-2 ring-orange-500' : ''} cursor-pointer transition-all hover:shadow-md ${
-                    key === 'topup_451' ? 'border-orange-300 bg-orange-50' : 
-                    key === 'topup_4510' ? 'border-green-300 bg-green-50 relative' : ''
+                  className={`${selectedTopup === key ? 'ring-2 ring-orange-500' : ''} cursor-pointer transition-all hover:shadow-md relative ${
+                    key === 'topup_451' ? 'border-orange-300' : 'border-green-300'
                   }`}
                   onClick={() => setSelectedTopup(key)}
                 >
@@ -286,84 +286,123 @@ export function PremiumSubscriptionDialog({
                     <Badge className="absolute -top-2 -right-2 bg-green-500">Best Value</Badge>
                   )}
                   {key === 'topup_451' && (
-                    <Badge className="absolute -top-2 -right-2 bg-orange-500">Minimum</Badge>
+                    <Badge className="absolute -top-2 -right-2 bg-orange-500">Starter</Badge>
                   )}
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center justify-between text-lg">
-                      {topup.name}
-                      {selectedTopup === key && <Badge variant="default">Selected</Badge>}
+                  
+                  <CardHeader className="text-center pb-4">
+                    <CardTitle className="text-xl mb-2">
+                      {key === 'topup_451' ? 'Starter Pack' : 'Max Pack'}
                     </CardTitle>
-                    <div className="space-y-1">
-                      <div className="text-2xl font-bold text-orange-600">{topup.displayPrice}</div>
+                    <div className="space-y-2">
+                      <div className="text-3xl font-bold text-orange-600">{topup.displayPrice}</div>
                       <div className="text-sm text-muted-foreground">{topup.description}</div>
                     </div>
+                    {selectedTopup === key && (
+                      <Badge variant="default" className="mt-2">Selected</Badge>
+                    )}
                   </CardHeader>
+                  
                   <CardContent className="pt-0">
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span>Questions included:</span>
-                        <span className="font-semibold">{topup.questions}</span>
+                    <div className="space-y-4">
+                      {/* Key Metrics */}
+                      <div className="grid grid-cols-1 gap-3 p-4 bg-gray-50 rounded-lg">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium">Questions</span>
+                          <span className="text-lg font-bold text-orange-600">{topup.questions}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium">Validity</span>
+                          <span className="text-lg font-bold text-green-600">
+                            {topup.validityMonths === 1 ? '1 Month' : '2 Years'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium">Per Question</span>
+                          <span className="text-lg font-bold">₹{topup.perQuestionRate}</span>
+                        </div>
                       </div>
-                      <div className="flex justify-between">
-                        <span>Validity:</span>
-                        <span className="font-semibold">
-                          {topup.validityMonths === 1 ? '1 month' : 
-                           topup.validityMonths === 24 ? '2 years' : 
-                           `${topup.validityMonths} months`}
-                        </span>
+
+                      {/* Pack-specific highlights */}
+                      <div className="space-y-2">
+                        {key === 'topup_451' ? (
+                          <>
+                            <div className="flex items-center gap-2 text-sm">
+                              <Check className="h-4 w-4 text-orange-500" />
+                              <span>Perfect for trying out Super User features</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm">
+                              <Check className="h-4 w-4 text-orange-500" />
+                              <span>Short-term validity for immediate needs</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm">
+                              <Check className="h-4 w-4 text-orange-500" />
+                              <span>Minimum commitment required</span>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex items-center gap-2 text-sm">
+                              <Check className="h-4 w-4 text-green-500" />
+                              <span>Maximum value with bulk questions</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm">
+                              <Check className="h-4 w-4 text-green-500" />
+                              <span>Extended 2-year validity period</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm">
+                              <Check className="h-4 w-4 text-green-500" />
+                              <span>Best for regular maritime professionals</span>
+                            </div>
+                          </>
+                        )}
                       </div>
-                      <div className="flex justify-between">
-                        <span>Per question:</span>
-                        <span className="font-semibold">₹{topup.perQuestionRate}</span>
-                      </div>
-                    </div>
-                    <div className="mt-3 pt-3 border-t">
-                      <ul className="space-y-1">
-                        {topup.features.map((feature, idx) => (
-                          <li key={idx} className="flex items-center gap-2 text-xs">
-                            <Check className="h-3 w-3 text-green-500 flex-shrink-0" />
-                            <span>{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
                     </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
 
-            <Card className="mt-4">
+            {/* Common Premium Features */}
+            <Card className="mt-6">
               <CardHeader>
-                <CardTitle>Super User Features</CardTitle>
-                <CardDescription>Pay-per-question model with expert AI responses</CardDescription>
+                <CardTitle>Common Premium Features</CardTitle>
+                <CardDescription>All Super User packs include these premium features</CardDescription>
               </CardHeader>
               <CardContent>
-                <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  <li className="flex items-center gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
                     <span className="text-sm">Expert AI responses with detailed analysis</span>
-                  </li>
-                  <li className="flex items-center gap-2">
+                  </div>
+                  <div className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
                     <span className="text-sm">Priority support and faster response times</span>
-                  </li>
-                  <li className="flex items-center gap-2">
+                  </div>
+                  <div className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
                     <span className="text-sm">Advanced maritime knowledge base access</span>
-                  </li>
-                  <li className="flex items-center gap-2">
+                  </div>
+                  <div className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
                     <span className="text-sm">Technical diagrams and visual explanations</span>
-                  </li>
-                  <li className="flex items-center gap-2">
+                  </div>
+                  <div className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
                     <span className="text-sm">Question balance tracking and usage analytics</span>
-                  </li>
-                  <li className="flex items-center gap-2">
+                  </div>
+                  <div className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Extended validity periods for bulk purchases</span>
-                  </li>
-                </ul>
+                    <span className="text-sm">Ad-free enhanced QBOT experience</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">Export chat history and responses</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">Premium maritime content library</span>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
