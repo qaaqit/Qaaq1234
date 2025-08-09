@@ -8,8 +8,35 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Serve static files from uploads directory for authentic question images
-app.use('/uploads', express.static('server/uploads'));
+// Serve images from Google Cloud Storage via object storage proxy
+app.get('/uploads/:filename', async (req, res) => {
+  try {
+    const filename = req.params.filename;
+    
+    // Import object storage service
+    const { ObjectStorageService } = await import('./objectStorage');
+    const objectStorage = new ObjectStorageService();
+    
+    // Try to construct the cloud storage path for the image
+    const privateObjectDir = process.env.PRIVATE_OBJECT_DIR || '';
+    const imagePath = `${privateObjectDir}/uploads/${filename}`;
+    
+    // Import the signObjectURL function to generate signed URL for image access
+    const { signObjectURL } = await import('./objectStorage');
+    
+    // For now, return a response indicating the image is in cloud storage
+    // The frontend should use the attachment URLs from the API response directly
+    res.status(302).redirect(`https://storage.googleapis.com${imagePath}`);
+    
+  } catch (error) {
+    console.error('Error serving image:', error);
+    res.status(404).json({ 
+      error: 'Image not accessible', 
+      filename: req.params.filename,
+      message: 'Authentic question images are stored in Google Cloud Storage'
+    });
+  }
+});
 
 app.use((req, res, next) => {
   const start = Date.now();

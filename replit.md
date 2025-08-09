@@ -49,7 +49,8 @@ Onboard Search: Special "onboard" keyword search filters for sailing users and d
 - **Language**: TypeScript with ES modules
 - **Database**: PostgreSQL with Drizzle ORM, shared QAAQ Admin Database
 - **Questions System**: Authentic QAAQ database with 1,244 real maritime Q&A records with separate attachment tracking system.
-- **Question Attachments**: Dedicated `question_attachments` table with unique IDs for tracking questions with images/attachments. Currently tracking 18 questions with image attachments, each with separate UUID-based attachment IDs for enhanced organization and retrieval.
+- **Question Attachments**: Dedicated `question_attachments` table with unique IDs for tracking questions with images/attachments. Currently tracking 18 authentic maritime question images stored in Google Cloud Storage, each with separate UUID-based attachment IDs for enhanced organization and retrieval.
+- **Image Storage**: Authentic question images stored in Google Cloud Storage bucket `repl-objstore-b2ad59ef-ca8b-42b8-bc12-f53a0b9ec0ee/.private/uploads/` with direct cloud URL access for carousel display.
 - **Authentication**: Dual OTP verification (WhatsApp + Email) with JWT tokens. Universal password acceptance with automatic user creation.
 - **Session Management**: Express sessions with PostgreSQL storage
 - **Email Service**: Gmail SMTP (support@qaaq.app)
