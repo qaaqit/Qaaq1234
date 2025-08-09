@@ -2730,10 +2730,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get answers from shared database - this might not exist for all questions
       const answersQuery = await pool.query(`
-        SELECT id, content, author_id, created_at
+        SELECT id, content, author_id, created_at, is_best_answer
         FROM answers 
         WHERE question_id = $1
-        ORDER BY created_at ASC
+        ORDER BY is_best_answer DESC, created_at ASC
       `, [questionId]);
       
       const answers = answersQuery.rows.map(row => ({
@@ -2743,7 +2743,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         author_name: row.author_id === 'QG' || row.author_id === 'QAAQ GPT' ? 'QAAQ GPT' : 'Maritime Professional',
         author_rank: row.author_id === 'QG' || row.author_id === 'QAAQ GPT' ? 'AI Assistant' : 'Maritime Expert',
         created_at: row.created_at,
-        is_best_answer: false
+        is_best_answer: row.is_best_answer || false
       }));
       
       res.json(answers);
@@ -2753,14 +2753,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Domain redirect handlers for question sharing - redirect old share URLs to questions
+  // Domain redirect handlers for question sharing
+  // Handle qaaq.app/share/question/:id redirects
   app.get('/share/question/:id', (req, res) => {
-    const { id } = req.params;
-    res.redirect(`/questions/${id}`);
-  });
-
-  // Handle old question URL format redirect
-  app.get('/question/:id', (req, res) => {
     const { id } = req.params;
     res.redirect(`/questions/${id}`);
   });
