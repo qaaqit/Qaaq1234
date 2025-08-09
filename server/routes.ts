@@ -596,7 +596,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // QBOT Chat API endpoint - Implementing 13 Commandments
   app.post("/api/qbot/message", authenticateToken, async (req: any, res) => {
     try {
-      const { message, attachments, image } = req.body;
+      const { message, attachments, image, isPrivate } = req.body;
       const userId = req.userId;
 
       if (!message || !message.trim()) {
@@ -605,6 +605,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`JWT decoded user ID: ${userId}`);
       console.log(`Set req.userId to: ${userId}`);
+      console.log(`Privacy Mode: ${isPrivate ? 'ENABLED' : 'DISABLED'}`);
       
       // Log attachments if present
       if (attachments && attachments.length > 0) {
@@ -689,6 +690,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Commandment II: Ensure message uniqueness (simplified for API)
       const responseId = `${userId}_${Date.now()}`;
+
+      // Store QBOT interaction in database unless privacy mode is enabled
+      if (!isPrivate) {
+        try {
+          await storeQBOTResponseInDatabase(message, response, user, attachments);
+          console.log(`📚 QBOT interaction stored in database (User: ${userId})`);
+        } catch (error) {
+          console.error('Error storing QBOT interaction:', error);
+          // Continue without failing the request
+        }
+      } else {
+        console.log(`🔒 QBOT interaction NOT stored (Privacy Mode enabled - User: ${userId})`);
+      }
 
       // Return response with technical camouflage if needed (Commandment XIII)
       res.json({

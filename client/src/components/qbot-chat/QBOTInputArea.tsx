@@ -1,5 +1,5 @@
 import { useState, useRef, KeyboardEvent, useEffect } from 'react';
-import { Paperclip, Send, Crown } from 'lucide-react';
+import { Paperclip, Send, Crown, Shield, ShieldCheck } from 'lucide-react';
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { PremiumSubscriptionDialog } from "@/components/PremiumSubscriptionDialog";
 import { useToast } from "@/hooks/use-toast";
@@ -39,7 +39,7 @@ const DEFAULT_CHATBOT_INVITES = [
 ];
 
 interface QBOTInputAreaProps {
-  onSendMessage: (message: string, attachments?: string[]) => void;
+  onSendMessage: (message: string, attachments?: string[], isPrivate?: boolean) => void;
   disabled?: boolean;
 }
 
@@ -53,6 +53,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
   const [attachments, setAttachments] = useState<string[]>([]);
   const [currentPlaceholder, setCurrentPlaceholder] = useState('');
   const [isPremiumMode, setIsPremiumMode] = useState(false);
+  const [isPrivateMode, setIsPrivateMode] = useState(false);
   const [showSubscriptionDialog, setShowSubscriptionDialog] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
@@ -101,7 +102,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
 
   const handleSend = () => {
     if ((message.trim() || attachments.length > 0) && !disabled) {
-      onSendMessage(message.trim() || "📎 Attachment(s) sent", attachments);
+      onSendMessage(message.trim() || "📎 Attachment(s) sent", attachments, isPrivateMode);
       setMessage('');
       setAttachments([]);
       
@@ -165,6 +166,16 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
     } else {
       // Toggle premium mode for premium/admin users
       setIsPremiumMode(!isPremiumMode);
+    }
+  };
+
+  // Handle privacy mode toggle (only for premium/admin users)
+  const togglePrivacyMode = () => {
+    const isUserPremium = userStatus?.isPremium || userStatus?.isSuperUser || false;
+    const isUserAdmin = localStorage.getItem('isAdmin') === 'true';
+
+    if (isUserPremium || isUserAdmin) {
+      setIsPrivateMode(!isPrivateMode);
     }
   };
 
@@ -286,7 +297,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
               onPaste={handlePaste}
               placeholder={currentPlaceholder}
               disabled={disabled}
-              className="w-full resize-none rounded-lg border border-gray-300 pl-10 pr-4 py-3
+              className="w-full resize-none rounded-lg border border-gray-300 pl-12 pr-4 py-3
                        focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent
                        disabled:opacity-50 disabled:cursor-not-allowed
                        placeholder:text-gray-400 text-gray-700
@@ -295,14 +306,32 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
               rows={2}
             />
             
-            {/* Crown icon on left side of placeholder text */}
-            <button
-              onClick={togglePremiumMode}
-              className="absolute left-3 top-3 p-1 rounded transition-all duration-200 text-gray-400 hover:bg-gray-100"
-              title={isPremiumMode ? "Premium Mode Active" : "Enable Premium Mode"}
-            >
-              <Crown size={16} className={isPremiumMode ? "fill-current text-yellow-600" : ""} />
-            </button>
+            {/* Privacy and Crown icons on left side */}
+            <div className="absolute left-3 top-2 flex flex-col items-center gap-1">
+              {/* Privacy Shield (only for premium/admin users) */}
+              {(userStatus?.isPremium || userStatus?.isSuperUser || localStorage.getItem('isAdmin') === 'true') && (
+                <button
+                  onClick={togglePrivacyMode}
+                  className="p-1 rounded transition-all duration-200 text-gray-400 hover:bg-gray-100"
+                  title={isPrivateMode ? "Private Mode: Chat not stored in database" : "Enable Private Mode"}
+                >
+                  {isPrivateMode ? (
+                    <ShieldCheck size={14} className="fill-current text-green-600" />
+                  ) : (
+                    <Shield size={14} className="text-gray-400" />
+                  )}
+                </button>
+              )}
+              
+              {/* Crown icon */}
+              <button
+                onClick={togglePremiumMode}
+                className="p-1 rounded transition-all duration-200 text-gray-400 hover:bg-gray-100"
+                title={isPremiumMode ? "Premium Mode Active" : "Enable Premium Mode"}
+              >
+                <Crown size={16} className={isPremiumMode ? "fill-current text-yellow-600" : ""} />
+              </button>
+            </div>
           </div>
           
           {/* Right side controls - paperclip above send button */}
