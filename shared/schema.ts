@@ -503,3 +503,111 @@ export type InsertQuestion = z.infer<typeof insertQuestionSchema>;
 export type Question = typeof questions.$inferSelect;
 export type InsertQuestionAttachment = z.infer<typeof insertQuestionAttachmentSchema>;
 export type QuestionAttachment = typeof questionAttachments.$inferSelect;
+
+// Payment subscriptions table for Razorpay integration
+export const subscriptions = pgTable("subscriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  subscriptionType: text("subscription_type").notNull(), // 'premium', 'super_user'
+  razorpaySubscriptionId: text("razorpay_subscription_id").unique(),
+  razorpayPlanId: text("razorpay_plan_id").notNull(),
+  status: text("status").notNull().default("created"), // 'created', 'active', 'halted', 'cancelled', 'completed', 'expired'
+  currentPeriodStart: timestamp("current_period_start"),
+  currentPeriodEnd: timestamp("current_period_end"),
+  nextBillingAt: timestamp("next_billing_at"),
+  totalCount: integer("total_count"), // Total billing cycles
+  paidCount: integer("paid_count").default(0), // Paid billing cycles
+  remainingCount: integer("remaining_count"), // Remaining billing cycles
+  shortUrl: text("short_url"), // Razorpay checkout short URL
+  amount: integer("amount").notNull(), // Amount in paise (smallest currency unit)
+  currency: text("currency").notNull().default("INR"),
+  notes: jsonb("notes"), // Additional metadata
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`),
+});
+
+// Payment transactions table
+export const payments = pgTable("payments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  subscriptionId: varchar("subscription_id").references(() => subscriptions.id, { onDelete: "set null" }),
+  razorpayPaymentId: text("razorpay_payment_id").unique(),
+  razorpayOrderId: text("razorpay_order_id"),
+  razorpaySignature: text("razorpay_signature"),
+  amount: integer("amount").notNull(), // Amount in paise
+  currency: text("currency").notNull().default("INR"),
+  status: text("status").notNull().default("created"), // 'created', 'authorized', 'captured', 'refunded', 'failed'
+  method: text("method"), // Payment method used (card, netbanking, wallet, etc.)
+  description: text("description"),
+  notes: jsonb("notes"),
+  failureReason: text("failure_reason"),
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`),
+});
+
+// User subscription status tracking (current active subscriptions)
+export const userSubscriptionStatus = pgTable("user_subscription_status", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().unique().references(() => users.id, { onDelete: "cascade" }),
+  isPremium: boolean("is_premium").default(false),
+  isSuperUser: boolean("is_super_user").default(false),
+  premiumExpiresAt: timestamp("premium_expires_at"),
+  superUserExpiresAt: timestamp("super_user_expires_at"),
+  currentPremiumSubscriptionId: varchar("current_premium_subscription_id").references(() => subscriptions.id),
+  currentSuperUserSubscriptionId: varchar("current_super_user_subscription_id").references(() => subscriptions.id),
+  totalSpent: integer("total_spent").default(0), // Total amount spent in paise
+  updatedAt: timestamp("updated_at").default(sql`now()`),
+});
+
+// Relations for payments
+export const subscriptionsRelations = relations(subscriptions, ({ one, many }) => ({
+  user: one(users, {
+    fields: [subscriptions.userId],
+    references: [users.id],
+  }),
+  payments: many(payments),
+}));
+
+export const paymentsRelations = relations(payments, ({ one }) => ({
+  user: one(users, {
+    fields: [payments.userId],
+    references: [users.id],
+  }),
+  subscription: one(subscriptions, {
+    fields: [payments.subscriptionId],
+    references: [subscriptions.id],
+  }),
+}));
+
+export const userSubscriptionStatusRelations = relations(userSubscriptionStatus, ({ one }) => ({
+  user: one(users, {
+    fields: [userSubscriptionStatus.userId],
+    references: [users.id],
+  }),
+  premiumSubscription: one(subscriptions, {
+    fields: [userSubscriptionStatus.currentPremiumSubscriptionId],
+    references: [subscriptions.id],
+  }),
+  superUserSubscription: one(subscriptions, {
+    fields: [userSubscriptionStatus.currentSuperUserSubscriptionId],
+    references: [subscriptions.id],
+  }),
+}));
+
+// Insert schemas for payments
+export const insertSubscriptionSchema = createInsertSchema(subscriptions)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+
+export const insertPaymentSchema = createInsertSchema(payments)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+
+export const insertUserSubscriptionStatusSchema = createInsertSchema(userSubscriptionStatus)
+  .omit({ id: true, updatedAt: true });
+
+// Types for payments
+export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
+export type Subscription = typeof subscriptions.$inferSelect;
+export type InsertPayment = z.infer<typeof insertPaymentSchema>;
+export type Payment = typeof payments.$inferSelect;
+export type InsertUserSubscriptionStatus = z.infer<typeof insertUserSubscriptionStatusSchema>;
+export type UserSubscriptionStatus = typeof userSubscriptionStatus.$inferSelect;
