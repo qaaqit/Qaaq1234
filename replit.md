@@ -7,6 +7,16 @@ Business Vision: To be the leading platform for maritime professionals, fosterin
 Market Potential: Tapping into the global maritime industry, connecting a vast network of sailors, ship companies, and related businesses.
 Project Ambitions: To create a vibrant, self-sustaining community where maritime professionals can thrive personally and professionally.
 
+## Version Milestones
+**QaaqSlow Version** (August 9, 2025) - Above Base & Deadslow versions
+- Successfully implemented redesigned question card layout with clean minimalist design
+- Orange question ID numbering system (#1251, #1250, etc.)
+- Eliminated QG circle avatars, replaced "Assistant" with "Ans:" labels
+- Edge-to-edge card layout with no gaps between cards or screen borders
+- Clean answer text flowing directly after "Ans:" without line breaks
+- Displaying all 1,244 authentic maritime questions from QAAQ parent database
+- Consistent URL structure and navigation throughout Q&A system
+
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 Username field label: "USER NAME (This may be ur country code +91 & whatsapp number )"
@@ -48,10 +58,11 @@ Onboard Search: Special "onboard" keyword search filters for sailing users and d
 - **Runtime**: Node.js with Express.js
 - **Language**: TypeScript with ES modules
 - **Database**: PostgreSQL with Drizzle ORM, shared QAAQ Admin Database
-- **Questions System**: Authentic QAAQ database with 1,244 real maritime Q&A records with separate attachment tracking system.
+- **Questions System**: Authentic QAAQ database with 1,244 real maritime Q&A records with separate attachment tracking system. QaaqSlow version features redesigned question cards with orange ID numbering, clean minimalist layout, and edge-to-edge display without gaps.
 - **Question Attachments**: Dedicated `question_attachments` table with unique IDs for tracking questions with images/attachments. Currently tracking 6 authentic maritime question images stored locally in Replit filesystem, each linked to real QAAQ technical questions from maritime professionals, with separate UUID-based attachment IDs for enhanced organization and retrieval.
 - **Image Storage**: Transitioned from Google Cloud Storage to local filesystem storage. Authentic maritime question images stored in `server/uploads/` directory with WhatsApp naming pattern (`whatsapp_[number]_[timestamp].jpg`) for direct serving via `/uploads/` endpoint. System supports multiple image sources for comprehensive maritime content display. Total storage: 2.6MB with 6 authentic maritime images.
 - **Future Image Storage Strategy**: All new images will be stored in `server/uploads/` directory with proper database records in `question_attachments` table. Images served via `/uploads/` endpoint with caching and proper MIME type detection.
+- **Question Card Design**: QaaqSlow version implements clean card layout with orange question IDs, "Ans:" labels replacing assistant avatars, and seamless edge-to-edge display eliminating all gaps between cards and screen borders.
 - **Authentication**: Dual OTP verification (WhatsApp + Email) with JWT tokens. Universal password acceptance with automatic user creation.
 - **Session Management**: Express sessions with PostgreSQL storage
 - **Email Service**: Gmail SMTP (support@qaaq.app)
