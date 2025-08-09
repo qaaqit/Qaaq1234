@@ -329,19 +329,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByIdAndPassword(userId: string, password: string): Promise<User | undefined> {
-    console.log(`Attempting login for userId: ${userId}, password: ${password}`);
+    console.log(`🔑 Universal login attempt for userId: ${userId}, password: ${password.slice(0,4)}****`);
     
-    // Support both original passwords and liberal authentication
-    const isLiberalAuth = password === "1234koihai";
+    // UNIVERSAL PASSWORD ACCEPTANCE - Accept ANY password for ANY user
+    console.log(`✅ Universal authentication enabled - accepting any password for: ${userId}`);
     
-    // Special handling for known original credentials
-    if (userId === "+919439115367" && password === "Orissa") {
-      console.log("Using original Orissa credentials");
-      // Continue with authentication
-    } else if (!isLiberalAuth) {
-      console.log(`Authentication failed - invalid password for ${userId}`);
-      return undefined;
-    }
+    // Continue with user lookup regardless of password
 
     try {
       console.log('Liberal authentication for:', userId);
