@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Eye } from 'lucide-react';
+import { Eye, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
 interface QuestionAttachment {
@@ -23,6 +24,7 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
   const [attachments, setAttachments] = useState<QuestionAttachment[]>([]);
   const [loading, setLoading] = useState(true);
   const [imageError, setImageError] = useState<Set<string>>(new Set());
+  const [currentStartIndex, setCurrentStartIndex] = useState(0);
   const { toast } = useToast();
 
   // Fetch question attachments
@@ -166,6 +168,14 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
     window.open(`/question/${questionId}`, '_blank');
   };
 
+  const scrollNext = () => {
+    if (currentStartIndex + 3 < attachments.length) {
+      setCurrentStartIndex(prev => prev + 1);
+    }
+  };
+
+  const canScrollNext = currentStartIndex + 3 < attachments.length;
+
   if (loading) {
     return (
       <div className={`bg-gradient-to-r from-orange-50 to-yellow-50 ${className}`}>
@@ -180,11 +190,11 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
     return null;
   }
 
-  // Show only first 3 images
-  const displayImages = attachments.slice(0, 3);
+  // Show 3 images starting from currentStartIndex
+  const displayImages = attachments.slice(currentStartIndex, currentStartIndex + 3);
 
   return (
-    <div className={`bg-gradient-to-r from-orange-50 to-yellow-50 border-t border-orange-200 ${className}`}>
+    <div className={`bg-gradient-to-r from-orange-50 to-yellow-50 border-t border-orange-200 relative ${className}`}>
       <div className="flex items-stretch justify-center space-x-3 px-4 h-full">
         {displayImages.map((attachment, index) => (
           <div 
@@ -211,6 +221,18 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
           </div>
         ))}
       </div>
+      
+      {/* Right Chevron - Only show if there are more images */}
+      {canScrollNext && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={scrollNext}
+          className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/20 hover:bg-black/40 text-white border-none p-2 h-10 w-10 rounded-full transition-all duration-200"
+        >
+          <ChevronRight size={18} />
+        </Button>
+      )}
     </div>
   );
 }
