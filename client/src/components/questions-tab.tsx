@@ -336,9 +336,8 @@ export function QuestionsTab() {
       <div
         key={question.id}
         ref={index === allQuestions.length - 1 ? lastQuestionCallback : null}
-        className="mb-4"
       >
-        <Card className="border border-gray-200 hover:border-gray-300 transition-colors cursor-pointer bg-white" onClick={() => window.location.href = `/questions/${question.id}`}>
+        <Card className="border-0 border-b border-gray-200 hover:border-gray-300 transition-colors cursor-pointer bg-white rounded-none" onClick={() => window.location.href = `/questions/${question.id}`}>
           <CardContent className="p-6">
             {/* Question Header with ID and Title */}
             <div className="flex items-start justify-between mb-4">
@@ -392,9 +391,9 @@ export function QuestionsTab() {
   };
 
   return (
-    <div className="space-y-4">
+    <div>
       {/* Enhanced Search Bar */}
-      <div className="flex items-center space-x-2 mb-6">
+      <div className="flex items-center space-x-2 px-4 py-4 bg-gray-50">
         <div className="flex-1 relative">
           <Input
             type="text"
@@ -425,7 +424,7 @@ export function QuestionsTab() {
 
       {/* Search Results Header */}
       {debouncedSearch && (
-        <div className="mb-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
+        <div className="mx-4 mb-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
           <div className="flex items-center justify-between">
             <span className="text-sm text-orange-800">
               <strong>Search results for:</strong> "{debouncedSearch}"
@@ -461,7 +460,7 @@ export function QuestionsTab() {
       </Card>
 
       {/* Questions List */}
-      <div className="space-y-4">
+      <div>
         {status === 'pending' ? (
           // Loading skeletons
           Array.from({ length: 5 }).map((_, i) => (
