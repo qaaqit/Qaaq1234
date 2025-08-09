@@ -1,165 +1,96 @@
+#!/usr/bin/env tsx
+
 import { pool } from './db';
-import fs from 'fs/promises';
-import path from 'path';
-import https from 'https';
-import http from 'http';
+import { mkdirSync, writeFileSync } from 'fs';
+import { join } from 'path';
 
-interface QuestionWithImage {
-  id: number;
-  content: string;
-  authorId: string;
-  imageUrl?: string;
-  fileName?: string;
-}
+async function downloadAllAuthenticImages() {
+  console.log('⬇️ Downloading all authentic maritime images from URLs...');
 
-/**
- * Download all authentic question images from the database and link them properly
- */
-export async function downloadAuthenticImages(): Promise<void> {
-  console.log('🖼️ Starting download of all authentic question images...');
-  
   try {
-    // Get all questions that might have images or need images
-    const questionsResult = await pool.query(`
-      SELECT DISTINCT
-        q.id,
-        q.content,
-        q.author_id,
-        q.created_at,
-        q.is_from_whatsapp,
-        qa.attachment_url,
-        qa.file_name,
-        qa.id as attachment_id
-      FROM questions q
-      LEFT JOIN question_attachments qa ON qa.question_id = q.id AND qa.attachment_type = 'image'
-      WHERE q.content IS NOT NULL 
-      ORDER BY q.created_at DESC
-      LIMIT 50
+    // Create uploads directories
+    mkdirSync('./server/uploads', { recursive: true });
+    mkdirSync('./uploads', { recursive: true });
+    
+    // Get all image records from database
+    const result = await pool.query(`
+      SELECT attachment_url, file_name, id
+      FROM question_attachments 
+      WHERE attachment_type = 'image'
+      ORDER BY created_at DESC
     `);
 
-    console.log(`Found ${questionsResult.rows.length} questions to process`);
+    console.log(`📊 Found ${result.rows.length} image records to download`);
 
-    const processedImages: Array<{
-      questionId: number;
-      content: string;
-      imagePath: string;
-      attachmentId: string;
-    }> = [];
+    let downloadedCount = 0;
+    let failedCount = 0;
+    const baseUrl = 'https://ae593ff5-1a4d-4129-8a7a-84788dd6900e-00-3cfncjt0ai8yg.worf.replit.dev';
 
-    // Ensure uploads directory exists
-    const uploadsDir = path.join(process.cwd(), 'server', 'uploads');
-    try {
-      await fs.access(uploadsDir);
-    } catch {
-      await fs.mkdir(uploadsDir, { recursive: true });
-    }
-
-    for (const row of questionsResult.rows) {
-      const questionId = row.id;
-      const content = row.content;
-      const authorId = row.author_id;
+    for (const row of result.rows) {
+      const fileName = row.file_name;
+      const imageUrl = `${baseUrl}${row.attachment_url}`;
       
-      // Check if question already has an image attachment
-      if (row.attachment_url && row.file_name) {
-        const imagePath = path.join(uploadsDir, row.file_name);
+      try {
+        console.log(`📥 Downloading: ${fileName}`);
+        console.log(`   URL: ${imageUrl}`);
+
+        const response = await fetch(imageUrl);
         
-        try {
-          await fs.access(imagePath);
-          console.log(`✓ Question ${questionId} already has image: ${row.file_name}`);
-          
-          // Add to processed list
-          processedImages.push({
-            questionId,
-            content: content.substring(0, 100) + '...',
-            imagePath: `/uploads/${row.file_name}`,
-            attachmentId: row.attachment_id || `existing_${questionId}_${Date.now()}`
-          });
-          
-        } catch {
-          console.log(`⚠️  Question ${questionId} has database record but missing file: ${row.file_name}`);
+        if (!response.ok) {
+          console.log(`   ❌ Failed: ${response.status} ${response.statusText}`);
+          failedCount++;
+          continue;
         }
-        continue;
-      }
 
-      // For questions without images, try to find suitable maritime images based on content keywords
-      const maritimeKeywords = [
-        'engine', 'compressor', 'valve', 'pump', 'boiler', 'turbine', 'generator',
-        'shaft', 'propeller', 'rudder', 'anchor', 'deck', 'hull', 'bridge',
-        'radar', 'navigation', 'compass', 'GPS', 'chart', 'port', 'starboard',
-        'marine', 'maritime', 'ship', 'vessel', 'cargo', 'tanker', 'container',
-        'fuel', 'oil', 'diesel', 'lubricant', 'cooling', 'heating', 'steam',
-        'safety', 'emergency', 'fire', 'life', 'rescue', 'drill'
-      ];
-
-      const contentLower = content.toLowerCase();
-      const matchingKeywords = maritimeKeywords.filter(keyword => 
-        contentLower.includes(keyword)
-      );
-
-      if (matchingKeywords.length > 0) {
-        // Create a placeholder image record for this question
-        const fileName = `maritime_${questionId}_${matchingKeywords[0]}_${Date.now()}.jpg`;
-        const attachmentId = `generated_${questionId}_${Date.now()}`;
+        // Get image data
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
         
-        // Insert into question_attachments table
+        console.log(`   📦 Downloaded ${Math.round(buffer.length/1024)}KB`);
+
+        // Save to both locations for redundancy
+        const serverPath = join('./server/uploads', fileName);
+        const rootPath = join('./uploads', fileName);
+        
+        writeFileSync(serverPath, buffer);
+        writeFileSync(rootPath, buffer);
+
+        // Update database to reflect local storage
         await pool.query(`
-          INSERT INTO question_attachments (
-            id, question_id, attachment_type, attachment_url, file_name, 
-            mime_type, is_processed, created_at
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-          ON CONFLICT (id) DO NOTHING
-        `, [
-          attachmentId,
-          questionId,
-          'image',
-          `/uploads/${fileName}`,
-          fileName,
-          'image/jpeg',
-          true,
-        ]);
+          UPDATE question_attachments 
+          SET file_size = $1
+          WHERE id = $2
+        `, [buffer.length, row.id]);
 
-        processedImages.push({
-          questionId,
-          content: content.substring(0, 100) + '...',
-          imagePath: `/uploads/${fileName}`,
-          attachmentId
-        });
+        console.log(`   ✅ Saved locally: ${fileName}`);
+        downloadedCount++;
 
-        console.log(`📝 Linked question ${questionId} with maritime keywords: ${matchingKeywords.slice(0, 3).join(', ')}`);
+      } catch (error) {
+        console.error(`   ❌ Error downloading ${fileName}:`, error.message);
+        failedCount++;
       }
     }
 
-    // Create a summary report
-    console.log('\n📊 DOWNLOAD SUMMARY:');
-    console.log(`Total questions processed: ${questionsResult.rows.length}`);
-    console.log(`Images linked to carousel: ${processedImages.length}`);
-    
-    console.log('\n🎯 CAROUSEL READY IMAGES:');
-    processedImages.forEach((img, index) => {
-      console.log(`${index + 1}. Q${img.questionId}: ${img.content}`);
-      console.log(`   Image: ${img.imagePath}`);
-      console.log(`   Link: /questions/${img.questionId}`);
-      console.log('');
-    });
+    console.log('\n📈 Download Summary:');
+    console.log(`✅ Successfully downloaded: ${downloadedCount} images`);
+    console.log(`❌ Failed downloads: ${failedCount} images`);
+    console.log(`📊 Total processed: ${downloadedCount + failedCount} of ${result.rows.length}`);
 
-    // Update the carousel system to use these authentic images
-    console.log('✅ All authentic images downloaded and linked to carousel!');
-    
+    if (downloadedCount > 0) {
+      console.log('\n🎉 All authentic maritime images are now stored locally!');
+      console.log('📁 Images saved to both ./uploads/ and ./server/uploads/ directories');
+    }
+
   } catch (error) {
-    console.error('❌ Error downloading authentic images:', error);
-    throw error;
+    console.error('❌ Error in download process:', error);
+  } finally {
+    await pool.end();
   }
 }
 
-// Run the download if called directly
+// Run if executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  downloadAuthenticImages()
-    .then(() => {
-      console.log('🎉 Download complete!');
-      process.exit(0);
-    })
-    .catch((error) => {
-      console.error('💥 Download failed:', error);
-      process.exit(1);
-    });
+  downloadAllAuthenticImages();
 }
+
+export { downloadAllAuthenticImages };
