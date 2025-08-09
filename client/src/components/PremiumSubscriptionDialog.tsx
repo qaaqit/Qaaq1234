@@ -15,7 +15,7 @@ import { Crown, Check, Loader2, ExternalLink, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
-interface PostpaidPlan {
+interface PremiumPlan {
   planId: string;
   amount: number;
   period: string;
@@ -26,7 +26,7 @@ interface PostpaidPlan {
   savings?: string;
 }
 
-interface PrepaidTopup {
+interface SuperUserTopup {
   planId: string;
   amount: number;
   name: string;
@@ -39,27 +39,27 @@ interface PrepaidTopup {
 }
 
 interface SubscriptionPlans {
-  postpaid: {
-    monthly: PostpaidPlan;
-    yearly: PostpaidPlan;
+  premium: {
+    monthly: PremiumPlan;
+    yearly: PremiumPlan;
   };
-  prepaid: {
-    [key: string]: PrepaidTopup;
+  super_user: {
+    [key: string]: SuperUserTopup;
   };
 }
 
 interface PremiumSubscriptionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  defaultPlanType?: 'postpaid' | 'prepaid';
+  defaultPlanType?: 'premium' | 'super_user';
 }
 
 export function PremiumSubscriptionDialog({ 
   open, 
   onOpenChange, 
-  defaultPlanType = 'postpaid' 
+  defaultPlanType = 'premium' 
 }: PremiumSubscriptionDialogProps) {
-  const [selectedPlan, setSelectedPlan] = useState<'postpaid' | 'prepaid'>(defaultPlanType as 'postpaid' | 'prepaid');
+  const [selectedPlan, setSelectedPlan] = useState<'premium' | 'super_user'>(defaultPlanType);
   const [selectedPeriod, setSelectedPeriod] = useState<'monthly' | 'yearly'>('monthly');
   const [selectedTopup, setSelectedTopup] = useState<string>('topup_451');
   const { toast } = useToast();
@@ -80,8 +80,8 @@ export function PremiumSubscriptionDialog({
   // Create subscription/topup mutation
   const createSubscriptionMutation = useMutation({
     mutationFn: async ({ planType, billingPeriod, topupPlan }: { planType: string; billingPeriod?: string; topupPlan?: string }) => {
-      const payload = planType === 'prepaid' && topupPlan 
-        ? { planType: 'prepaid', topupPlan } 
+      const payload = planType === 'super_user' && topupPlan 
+        ? { planType: 'super_user', topupPlan } 
         : { planType, billingPeriod };
       return apiRequest('/api/subscriptions', {
         method: 'POST',
@@ -154,7 +154,7 @@ export function PremiumSubscriptionDialog({
   ];
 
   const handleSubscribe = () => {
-    if (selectedPlan === 'prepaid') {
+    if (selectedPlan === 'super_user') {
       createSubscriptionMutation.mutate({
         planType: selectedPlan,
         topupPlan: selectedTopup,
@@ -173,10 +173,10 @@ export function PremiumSubscriptionDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-2xl">
             <Crown className="h-6 w-6 text-orange-500" />
-            Activate Qaaq Chief BOT
+            Upgrade Your QAAQ Experience
           </DialogTitle>
           <DialogDescription>
-            Choose your preferred payment method to access the most advanced Marine GPT
+            Choose the perfect plan to enhance your maritime networking and learning
           </DialogDescription>
         </DialogHeader>
 
@@ -184,9 +184,9 @@ export function PremiumSubscriptionDialog({
         {(userStatus.isPremium || userStatus.isSuperUser) && (
           <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
             <div className="flex items-center gap-2">
-              <Crown className="h-5 w-5 text-green-600" />
+              <Sparkles className="h-5 w-5 text-green-600" />
               <span className="font-semibold text-green-800">
-                Qaaq Chief BOT Active - {userStatus.isSuperUser ? 'Prepaid Plan' : 'Postpaid Plan'}
+                {userStatus.isSuperUser ? 'Super User Active' : 'Premium Active'}
               </span>
               {userStatus.premiumExpiresAt && (
                 <span className="text-sm text-green-600">
@@ -199,40 +199,28 @@ export function PremiumSubscriptionDialog({
 
         <Tabs value={selectedPlan} onValueChange={(value) => setSelectedPlan(value as any)}>
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="postpaid" className="flex items-center gap-2">
+            <TabsTrigger value="premium" className="flex items-center gap-2">
               <Crown className="h-4 w-4" />
-              Postpaid (Advance Rental)
+              Premium
             </TabsTrigger>
-            <TabsTrigger value="prepaid" className="flex items-center gap-2">
+            <TabsTrigger value="super_user" className="flex items-center gap-2">
               <Sparkles className="h-4 w-4" />
-              Prepaid (Pay per Question)
+              Super User
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="postpaid" className="space-y-4">
-            <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <h3 className="font-semibold text-green-800 mb-2 flex items-center gap-2">
-                <Crown className="h-5 w-5" />
-                Qaaq Chief BOT - Advance Rental Model
-              </h3>
-              <p className="text-sm text-green-700">
-                Unlimited access to the most advanced Marine GPT with monthly or yearly billing.
-              </p>
-            </div>
-
+          <TabsContent value="premium" className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Monthly Plan */}
               <Card className={`${selectedPeriod === 'monthly' ? 'ring-2 ring-orange-500' : ''} cursor-pointer`}
                     onClick={() => setSelectedPeriod('monthly')}>
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
-                    Postpaid Monthly
+                    Premium Monthly
                     {selectedPeriod === 'monthly' && <Badge variant="default">Selected</Badge>}
                   </CardTitle>
                   <CardDescription>
-                    {formatPrice(plans.postpaid?.monthly?.amount || 45100)} per month
-                    <br />
-                    <span className="text-orange-600 font-medium">Qaaq Chief BOT activated</span>
+                    {formatPrice(plans.premium?.monthly?.amount || 29900)} per month
                   </CardDescription>
                 </CardHeader>
               </Card>
@@ -241,19 +229,17 @@ export function PremiumSubscriptionDialog({
               <Card className={`${selectedPeriod === 'yearly' ? 'ring-2 ring-orange-500' : ''} cursor-pointer relative`}
                     onClick={() => setSelectedPeriod('yearly')}>
                 <Badge className="absolute -top-2 -right-2 bg-green-500">
-                  Save {calculateSavings(plans.postpaid?.yearly?.amount || 261100, plans.postpaid?.monthly?.amount || 45100).percentage}%
+                  Save {calculateSavings(plans.premium?.yearly?.amount || 299900, plans.premium?.monthly?.amount || 29900).percentage}%
                 </Badge>
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
-                    Postpaid Yearly
+                    Premium Yearly
                     {selectedPeriod === 'yearly' && <Badge variant="default">Selected</Badge>}
                   </CardTitle>
                   <CardDescription>
-                    {formatPrice(plans.postpaid?.yearly?.amount || 261100)} per year
-                    <br />
-                    <span className="text-orange-600 font-medium">Qaaq Chief BOT activated</span>
+                    {formatPrice(plans.premium?.yearly?.amount || 299900)} per year
                     <span className="block text-sm text-green-600 mt-1">
-                      Save {calculateSavings(plans.postpaid?.yearly?.amount || 261100, plans.postpaid?.monthly?.amount || 45100).savings}
+                      Save {calculateSavings(plans.premium?.yearly?.amount || 299900, plans.premium?.monthly?.amount || 29900).savings}
                     </span>
                   </CardDescription>
                 </CardHeader>
@@ -262,56 +248,32 @@ export function PremiumSubscriptionDialog({
 
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Crown className="h-5 w-5 text-orange-500" />
-                  Qaaq Chief BOT Features
-                </CardTitle>
-                <CardDescription>Most advanced Marine GPT with unlimited access</CardDescription>
+                <CardTitle>Premium Features</CardTitle>
+                <CardDescription>Everything you need for enhanced maritime networking</CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Unlimited Qaaq Chief responses</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Advanced Maritime AI analysis</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Priority support and faster responses</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Advanced search filters and tools</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Export chat history and reports</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Ad-free premium experience</span>
-                  </li>
+                  {premiumFeatures.map((feature, index) => (
+                    <li key={index} className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                      <span className="text-sm">{feature}</span>
+                    </li>
+                  ))}
                 </ul>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="prepaid" className="space-y-4">
+          <TabsContent value="super_user" className="space-y-4">
             <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h3 className="font-semibold text-blue-800 mb-2 flex items-center gap-2">
-                <Crown className="h-5 w-5" />
-                Qaaq Chief BOT - Pay Per Question
-              </h3>
+              <h3 className="font-semibold text-blue-800 mb-2">Pay Per Question - Prepaid Topup</h3>
               <p className="text-sm text-blue-700">
-                Prepaid plans activate Qaaq Chief BOT. Pay ₹4.51 per question with flexible validity periods.
+                Super User plans work on a prepaid topup system. Pay ₹4.51 per question with flexible validity periods.
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {plans.prepaid && Object.entries(plans.prepaid).map(([key, topup]) => (
+              {plans.super_user && Object.entries(plans.super_user).map(([key, topup]) => (
                 <Card 
                   key={key}
                   className={`${selectedTopup === key ? 'ring-2 ring-orange-500' : ''} cursor-pointer transition-all hover:shadow-md ${
@@ -359,7 +321,7 @@ export function PremiumSubscriptionDialog({
                       <ul className="space-y-1">
                         {topup.features.map((feature, idx) => (
                           <li key={idx} className="flex items-center gap-2 text-xs">
-                            <Crown className="h-3 w-3 text-orange-500 flex-shrink-0" />
+                            <Check className="h-3 w-3 text-green-500 flex-shrink-0" />
                             <span>{feature}</span>
                           </li>
                         ))}
@@ -372,36 +334,33 @@ export function PremiumSubscriptionDialog({
 
             <Card className="mt-4">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Crown className="h-5 w-5 text-orange-500" />
-                  Qaaq Chief BOT Features
-                </CardTitle>
-                <CardDescription>Pay-per-question model with the most advanced Marine GPT</CardDescription>
+                <CardTitle>Super User Features</CardTitle>
+                <CardDescription>Pay-per-question model with expert AI responses</CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <li className="flex items-center gap-2">
-                    <Crown className="h-4 w-4 text-orange-500 flex-shrink-0" />
-                    <span className="text-sm">Qaaq Chief responses with detailed analysis</span>
+                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">Expert AI responses with detailed analysis</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Crown className="h-4 w-4 text-orange-500 flex-shrink-0" />
-                    <span className="text-sm">Most advanced Marine GPT technology</span>
+                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">Priority support and faster response times</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Crown className="h-4 w-4 text-orange-500 flex-shrink-0" />
+                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
                     <span className="text-sm">Advanced maritime knowledge base access</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Crown className="h-4 w-4 text-orange-500 flex-shrink-0" />
+                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
                     <span className="text-sm">Technical diagrams and visual explanations</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Crown className="h-4 w-4 text-orange-500 flex-shrink-0" />
+                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
                     <span className="text-sm">Question balance tracking and usage analytics</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Crown className="h-4 w-4 text-orange-500 flex-shrink-0" />
+                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
                     <span className="text-sm">Extended validity periods for bulk purchases</span>
                   </li>
                 </ul>

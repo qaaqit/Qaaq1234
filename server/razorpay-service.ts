@@ -14,60 +14,60 @@ if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
 
 // Subscription plans configuration
 export const SUBSCRIPTION_PLANS = {
-  postpaid: {
+  premium: {
     monthly: {
-      planId: 'plan_postpaid_monthly',
+      planId: 'plan_premium_monthly',
       amount: 45100, // ₹451 in paise
       period: 'monthly',
       interval: 1,
-      name: 'Postpaid Monthly (Advance Rental)',
-      description: 'Qaaq Chief BOT activated - Most advanced Marine GPT with unlimited access',
+      name: 'Premium Monthly Plan',
+      description: 'Enhanced QBOT features and priority support',
       displayPrice: '₹451'
     },
     yearly: {
-      planId: 'plan_postpaid_yearly',
+      planId: 'plan_premium_yearly',
       amount: 261100, // ₹2611 in paise
       period: 'yearly',
       interval: 1,
-      name: 'Postpaid Yearly (Advance Rental)',
-      description: 'Qaaq Chief BOT activated - Most advanced Marine GPT - Save ₹2,801',
+      name: 'Premium Yearly Plan',
+      description: 'Enhanced QBOT features and priority support - Save ₹2,801',
       displayPrice: '₹2,611',
       savings: '₹2,801 (6+ months free)'
     }
   },
-  prepaid: {
+  super_user: {
     topup_451: {
-      planId: 'plan_prepaid_topup_451',
+      planId: 'plan_super_topup_451',
       amount: 45100, // ₹451 in paise (minimum topup)
-      name: 'Prepaid Starter Pack',
-      description: 'Qaaq Chief BOT activated - Pay per question, 100 questions included',
+      name: 'Super User Starter Pack',
+      description: 'Pay per question - 100 questions included',
       displayPrice: '₹451',
       questions: 100, // ₹451 ÷ ₹4.51 = 100 questions
       perQuestionRate: 4.51,
       validityMonths: 1,
-      features: ['100 Qaaq Chief responses', '1 month validity', '₹4.51 per question']
+      features: ['100 questions', '1 month validity', '₹4.51 per question']
     },
     topup_902: {
-      planId: 'plan_prepaid_topup_902',
+      planId: 'plan_super_topup_902',
       amount: 90200, // ₹902 in paise
-      name: 'Prepaid Standard Pack',
-      description: 'Qaaq Chief BOT activated - Pay per question, 200 questions included',
+      name: 'Super User Standard Pack',
+      description: 'Pay per question - 200 questions included',
       displayPrice: '₹902',
       questions: 200,
       perQuestionRate: 4.51,
       validityMonths: 3,
-      features: ['200 Qaaq Chief responses', '3 months validity', '₹4.51 per question']
+      features: ['200 questions', '3 months validity', '₹4.51 per question']
     },
     topup_4510: {
-      planId: 'plan_prepaid_topup_4510',
+      planId: 'plan_super_topup_4510',
       amount: 451000, // ₹4,510 in paise (maximum topup)
-      name: 'Prepaid Max Pack',
-      description: 'Qaaq Chief BOT activated - Pay per question, 1000 questions included',
+      name: 'Super User Max Pack',
+      description: 'Pay per question - 1000 questions included',
       displayPrice: '₹4,510',
       questions: 1000, // ₹4,510 ÷ ₹4.51 = 1000 questions
       perQuestionRate: 4.51,
       validityMonths: 24,
-      features: ['1000 Qaaq Chief responses', '2 years validity', '₹4.51 per question', 'Maximum value pack']
+      features: ['1000 questions', '2 years validity', '₹4.51 per question', 'Maximum value pack']
     }
   }
 };
@@ -146,20 +146,20 @@ try {
 export class RazorpayService {
   
   // Create a subscription or topup for a user
-  async createSubscription(userId: string, planType: 'postpaid' | 'prepaid', billingPeriod?: 'monthly' | 'yearly', topupPlan?: string) {
+  async createSubscription(userId: string, planType: 'premium' | 'super_user', billingPeriod?: 'monthly' | 'yearly', topupPlan?: string) {
     try {
       let plan: any;
       
-      if (planType === 'postpaid') {
+      if (planType === 'premium') {
         if (!billingPeriod) {
-          throw new Error('Billing period required for postpaid subscriptions');
+          throw new Error('Billing period required for premium subscriptions');
         }
-        plan = SUBSCRIPTION_PLANS.postpaid[billingPeriod];
-      } else if (planType === 'prepaid') {
+        plan = SUBSCRIPTION_PLANS.premium[billingPeriod];
+      } else if (planType === 'super_user') {
         if (!topupPlan) {
-          throw new Error('Topup plan required for prepaid');
+          throw new Error('Topup plan required for super user');
         }
-        plan = SUBSCRIPTION_PLANS.prepaid[topupPlan];
+        plan = SUBSCRIPTION_PLANS.super_user[topupPlan];
       }
       
       if (!plan) {
