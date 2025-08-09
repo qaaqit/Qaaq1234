@@ -10,13 +10,17 @@ import { apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { Star, Trash2, Eye, Crown, FileImage, Plus, ArrowUp, ArrowDown } from "lucide-react";
 
-interface QuestionAttachment {
+interface UploadedFile {
   id: string;
   questionId: number;
+  attachmentType: string;
   attachmentUrl: string;
   fileName: string;
+  originalName: string;
   mimeType: string;
+  fileSize: number;
   createdAt: string;
+  source: 'file_uploads' | 'question_attachments';
   question: {
     id: number;
     content: string;
@@ -43,10 +47,10 @@ export default function AdminFiles() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch all attachments
-  const { data: attachments, isLoading: attachmentsLoading } = useQuery({
-    queryKey: ["/api/questions/attachments"],
-    queryFn: () => apiRequest("/api/questions/attachments?limit=50"),
+  // Fetch all uploaded files (from both tables)
+  const { data: uploadedFiles, isLoading: filesLoading } = useQuery({
+    queryKey: ["/api/admin/uploaded-files"],
+    queryFn: () => apiRequest("/api/admin/uploaded-files"),
   });
 
   // Fetch current carousel selections
@@ -62,7 +66,7 @@ export default function AdminFiles() {
     onSuccess: () => {
       toast({ title: "Success", description: "Image added to carousel" });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/carousel-selections"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/questions/attachments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/uploaded-files"] });
       setSelectionNotes("");
     },
     onError: (error: any) => {
@@ -80,7 +84,7 @@ export default function AdminFiles() {
     onSuccess: () => {
       toast({ title: "Success", description: "Image removed from carousel" });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/carousel-selections"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/questions/attachments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/uploaded-files"] });
     },
     onError: (error: any) => {
       toast({ 
@@ -116,7 +120,7 @@ export default function AdminFiles() {
     });
   };
 
-  if (attachmentsLoading || selectionsLoading) {
+  if (filesLoading || selectionsLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -236,21 +240,21 @@ export default function AdminFiles() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <FileImage className="mr-2 text-blue-500" size={20} />
-              All Uploaded Images ({attachments?.length || 0})
+              All Uploaded Images ({uploadedFiles?.length || 0})
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {attachments && attachments.length > 0 ? (
+            {uploadedFiles && uploadedFiles.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {attachments.map((attachment: QuestionAttachment) => (
-                  <div key={attachment.id} className="bg-white border rounded-lg p-3 hover:shadow-md transition-shadow">
+                {uploadedFiles.map((file: UploadedFile) => (
+                  <div key={file.id} className="bg-white border rounded-lg p-3 hover:shadow-md transition-shadow">
                     <div className="relative mb-2">
                       <img
-                        src={attachment.attachmentUrl}
-                        alt={attachment.fileName}
+                        src={file.attachmentUrl}
+                        alt={file.fileName}
                         className="w-full h-32 object-cover rounded"
                       />
-                      {isInCarousel(attachment.id) && (
+                      {isInCarousel(file.id) && (
                         <div className="absolute top-2 right-2">
                           <Badge className="bg-green-600 text-white text-xs">
                             <Star size={10} className="mr-1" />
@@ -261,33 +265,35 @@ export default function AdminFiles() {
                     </div>
                     
                     <h4 className="font-medium text-sm text-gray-800 mb-1 truncate">
-                      {attachment.fileName}
+                      {file.originalName || file.fileName}
                     </h4>
                     
                     <p className="text-xs text-gray-600 mb-2 line-clamp-2">
-                      {attachment.question?.content || "No associated question"}
+                      {file.question?.content || "No associated question"}
                     </p>
                     
                     <div className="text-xs text-gray-500 mb-3">
-                      <div>Type: {attachment.mimeType}</div>
-                      <div>Added: {new Date(attachment.createdAt).toLocaleDateString()}</div>
+                      <div>Type: {file.mimeType}</div>
+                      <div>Size: {file.fileSize}MB</div>
+                      <div>Source: {file.source}</div>
+                      <div>Added: {new Date(file.createdAt).toLocaleDateString()}</div>
                     </div>
 
                     <div className="flex gap-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => window.open(attachment.attachmentUrl, '_blank')}
+                        onClick={() => window.open(file.attachmentUrl, '_blank')}
                         className="flex-1 text-xs"
                       >
                         <Eye size={14} className="mr-1" />
                         View
                       </Button>
                       
-                      {!isInCarousel(attachment.id) ? (
+                      {!isInCarousel(file.id) ? (
                         <Button
                           size="sm"
-                          onClick={() => handleAddToCarousel(attachment.id)}
+                          onClick={() => handleAddToCarousel(file.id)}
                           disabled={addToCarouselMutation.isPending}
                           className="flex-1 bg-orange-600 hover:bg-orange-700 text-xs"
                         >

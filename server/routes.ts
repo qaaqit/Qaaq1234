@@ -2826,33 +2826,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // API endpoint to get admin-selected carousel images
-  app.get("/api/admin/carousel-selections", authenticateToken, async (req, res) => {
+  // API endpoint to get all uploaded files from both tables for admin gallery
+  app.get("/api/admin/uploaded-files", authenticateToken, async (req, res) => {
     try {
-      const result = await pool.query(`
+      // Get files from file_uploads table (parent database - 97+ images)
+      const fileUploadsResult = await pool.query(`
         SELECT 
-          cs.id,
-          cs.position,
-          cs.notes,
-          cs.selected_at,
-          qa.id as attachment_id,
-          qa.attachment_url,
-          qa.file_name,
-          qa.question_id,
-          q.content as question_content,
-          u.full_name as selected_by_name
-        FROM carousel_selections cs
-        JOIN question_attachments qa ON cs.attachment_id = qa.id
-        LEFT JOIN questions q ON qa.question_id = q.id
-        LEFT JOIN users u ON cs.selected_by = u.id
-        WHERE cs.is_active = true
-        ORDER BY cs.position ASC
+          fu.id,
+          fu.filename,
+          fu.original_name,
+          fu.mime_type,
+          fu.file_size_mb,
+          fu.target_id as question_id,
+          fu.created_at,
+          'file_uploads' as source,
+          q.content as question_content
+        FROM file_uploads fu
+        LEFT JOIN questions q ON fu.target_id = q.id
+        WHERE fu.is_active = true 
+          AND fu.mime_type LIKE 'image/%'
+        ORDER BY fu.created_at DESC
       `);
 
-      res.json(result.rows);
+      // Get files from question_attachments table (local attachments)
+      const questionAttachmentsResult = await pool.query(`
+        SELECT 
+          qa.id,
+          qa.file_name as filename,
+          qa.file_name as original_name,
+          qa.mime_type,
+          0 as file_size_mb,
+          qa.question_id,
+          qa.created_at,
+          'question_attachments' as source,
+          q.content as question_content
+        FROM question_attachments qa
+        LEFT JOIN questions q ON qa.question_id = q.id
+        WHERE qa.attachment_type = 'image'
+          AND qa.is_processed = true
+        ORDER BY qa.created_at DESC
+      `);
+
+      // Combine and format results
+      const allFiles = [
+        ...fileUploadsResult.rows.map(file => ({
+          id: `fu_${file.id}`,
+          questionId: file.question_id,
+          attachmentType: 'image',
+          attachmentUrl: `/uploads/files/${file.filename}`, // Serve from file_uploads
+          fileName: file.filename,
+          originalName: file.original_name,
+          mimeType: file.mime_type,
+          fileSize: file.file_size_mb,
+          createdAt: file.created_at,
+          source: file.source,
+          question: {
+            id: file.question_id,
+            content: file.question_content || `Maritime Question ${file.question_id}`,
+            authorId: 'unknown'
+          }
+        })),
+        ...questionAttachmentsResult.rows.map(file => ({
+          id: `qa_${file.id}`,
+          questionId: file.question_id,
+          attachmentType: 'image',
+          attachmentUrl: file.filename?.startsWith('/uploads/') ? file.filename : `/uploads/${file.filename}`,
+          fileName: file.filename,
+          originalName: file.original_name,
+          mimeType: file.mime_type,
+          fileSize: file.file_size_mb,
+          createdAt: file.created_at,
+          source: file.source,
+          question: {
+            id: file.question_id,
+            content: file.question_content || `Maritime Question ${file.question_id}`,
+            authorId: 'unknown'
+          }
+        }))
+      ];
+
+      // Sort by creation date (newest first)
+      allFiles.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+      console.log(`Found ${allFiles.length} total uploaded files (${fileUploadsResult.rows.length} from file_uploads, ${questionAttachmentsResult.rows.length} from question_attachments)`);
+      res.json(allFiles);
+    } catch (error) {
+      console.error('Error fetching uploaded files:', error);
+      res.status(500).json({ message: 'Failed to fetch uploaded files' });
+    }
+  });
+
+  // API endpoint to get admin-selected carousel images (temporarily disabled)
+  app.get("/api/admin/carousel-selections", authenticateToken, async (req, res) => {
+    try {
+      // Carousel selections temporarily disabled
+      res.json([]);
     } catch (error) {
       console.error('Error fetching carousel selections:', error);
-      res.status(500).json({ message: 'Failed to fetch carousel selections' });
+      res.status(500).json({ message: 'Carousel selections temporarily disabled' });
     }
   });
 
@@ -3463,6 +3534,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   console.log('WebSocket server setup complete on path /ws');
+  
+  // Setup file serving routes
+  setupFileServingRoutes(app);
 
   return httpServer;
 }
@@ -3542,4 +3616,72 @@ function generateUserQuestions(name: string, rank: string, questionCount: number
   }
 
   return questions.sort((a, b) => new Date(b.askedDate).getTime() - new Date(a.askedDate).getTime());
+}
+
+// Import required modules for file serving
+import fs from 'fs';
+import path from 'path';
+import { lookup as mimeLookup } from 'mime-types';
+
+// File serving endpoints
+export function setupFileServingRoutes(app: Express) {
+  // Serve uploaded files from the uploads directory
+  app.get('/uploads/:fileName', (req, res) => {
+    const { fileName } = req.params;
+    const filePath = path.join(process.cwd(), 'server', 'uploads', fileName);
+    
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+    
+    // Serve the file with appropriate headers
+    const mimeType = mimeLookup(filePath) || 'application/octet-stream';
+    res.setHeader('Content-Type', mimeType);
+    res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+    
+    res.sendFile(filePath);
+  });
+
+  // Serve files from file_uploads table (parent database files)
+  app.get('/uploads/files/:fileName', async (req, res) => {
+    try {
+      const { fileName } = req.params;
+      
+      // Check if file exists in file_uploads table
+      const result = await pool.query(
+        'SELECT filename, mime_type, original_name FROM file_uploads WHERE filename = $1 AND is_active = true',
+        [fileName]
+      );
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'File not found in database' });
+      }
+      
+      const fileRecord = result.rows[0];
+      
+      // Try to serve from local uploads directory first
+      const localFilePath = path.join(process.cwd(), 'server', 'uploads', fileName);
+      
+      if (fs.existsSync(localFilePath)) {
+        const mimeType = fileRecord.mime_type || mimeLookup(localFilePath) || 'application/octet-stream';
+        res.setHeader('Content-Type', mimeType);
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+        res.setHeader('Content-Disposition', `inline; filename="${fileRecord.original_name || fileName}"`);
+        return res.sendFile(localFilePath);
+      }
+      
+      // If file doesn't exist locally, return a placeholder response
+      res.status(404).json({ 
+        error: 'File not found on disk',
+        message: `File ${fileName} exists in database but not on filesystem`,
+        fileName: fileName,
+        originalName: fileRecord.original_name
+      });
+      
+    } catch (error) {
+      console.error('Error serving file from file_uploads:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
 }
