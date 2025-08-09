@@ -103,7 +103,7 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
 
   const handleViewQuestion = (questionId: number) => {
     // Navigate to the question page for this specific maritime image
-    window.location.href = `/question/${questionId}`;
+    window.location.href = `/questions/${questionId}`;
   };
 
   const scrollNext = () => {
@@ -162,12 +162,8 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
               </div>
             )}
             
-            {/* Click indicator overlay */}
-            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity duration-200 rounded-lg flex items-center justify-center">
-              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white/90 rounded-full p-2">
-                <Eye size={16} className="text-gray-800" />
-              </div>
-            </div>
+            {/* Subtle hover overlay */}
+            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity duration-200 rounded-lg"></div>
           </div>
         ))}
       </div>
