@@ -2724,69 +2724,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('Authentication bypassed for questions API');
       
-      // First check if there are admin-selected carousel images
-      const adminSelections = await pool.query(`
-        SELECT 
-          cs.position,
-          qa.id,
-          qa.question_id,
-          qa.attachment_type,
-          qa.attachment_url,
-          qa.file_name,
-          qa.mime_type,
-          qa.is_processed,
-          qa.created_at
-        FROM carousel_selections cs
-        JOIN question_attachments qa ON cs.attachment_id = qa.id
-        WHERE cs.is_active = true
-        ORDER BY cs.position ASC
-        LIMIT $1
-      `, [limit]);
-
-      if (adminSelections.rows.length > 0) {
-        console.log(`Using ${adminSelections.rows.length} admin-selected carousel images`);
-        
-        // Process admin-selected images
-        const adminAttachments = await Promise.all(adminSelections.rows.map(async (row) => {
-          let questionContent = null;
-          let authorId = null;
-          let finalQuestionId = row.question_id;
-
-          if (row.question_id) {
-            const questionQuery = await pool.query(
-              'SELECT content, author_id FROM questions WHERE id = $1',
-              [row.question_id]
-            );
-            if (questionQuery.rows.length > 0) {
-              questionContent = questionQuery.rows[0].content;
-              authorId = questionQuery.rows[0].author_id;
-            }
-          }
-
-          return {
-            id: row.id,
-            questionId: finalQuestionId,
-            attachmentType: row.attachment_type,
-            attachmentUrl: row.attachment_url?.startsWith('/uploads/') 
-              ? row.attachment_url 
-              : `/uploads/${row.file_name}`,
-            fileName: row.file_name,
-            mimeType: row.mime_type,
-            isProcessed: row.is_processed,
-            createdAt: row.created_at,
-            question: {
-              id: finalQuestionId,
-              content: questionContent || `Admin Selected: ${row.file_name.replace(/\.(jpg|png|svg|jpeg)$/i, '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`,
-              authorId: authorId || 'admin_selected'
-            }
-          };
-        }));
-
-        res.json(adminAttachments);
-        return;
-      }
-      
-      // Fallback to all question attachments if no admin selections
+      // TODO: Re-enable carousel selections once database table is created
+      // For now, skip admin selections and use all attachments
+      console.log('Carousel selections temporarily disabled - using all attachments');
       const result = await pool.query(`
         SELECT 
           qa.id,
@@ -3288,50 +3228,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Auto-assign user to rank groups based on their maritime rank
+  // Auto-assign user to rank groups based on their maritime rank - TEMPORARILY DISABLED
   app.post('/api/rank-groups/auto-assign', authenticateToken, async (req: any, res) => {
     try {
-      const result = await autoAssignUserToRankGroups(req.userId);
-      res.json(result);
+      // Auto-assignment temporarily disabled
+      res.json({ 
+        success: false, 
+        message: 'Group assignment is temporarily disabled',
+        assignedGroups: []
+      });
     } catch (error) {
-      console.error('Error auto-assigning user to rank groups:', error);
-      res.status(500).json({ error: 'Failed to auto-assign rank groups' });
+      console.error('Error in auto-assign endpoint:', error);
+      res.status(500).json({ error: 'Group assignment is temporarily disabled' });
     }
   });
 
-  // Switch user to different rank group (for promotions)
+  // Switch user to different rank group (for promotions) - TEMPORARILY DISABLED
   app.post('/api/rank-groups/switch', authenticateToken, async (req: any, res) => {
     try {
-      const { groupId } = req.body;
-      
-      if (!groupId) {
-        return res.status(400).json({ error: 'Group ID is required' });
-      }
-      
-      const result = await switchUserRankGroup(req.userId, groupId);
-      res.json(result);
+      // Group switching temporarily disabled
+      res.json({ 
+        success: false, 
+        message: 'Group switching is temporarily disabled'
+      });
     } catch (error) {
-      console.error('Error switching rank group:', error);
-      res.status(500).json({ error: 'Failed to switch rank group' });
+      console.error('Error in switch endpoint:', error);
+      res.status(500).json({ error: 'Group switching is temporarily disabled' });
     }
   });
 
-  // Auto-populate all rank groups with users based on their ranks (admin only)
+  // Auto-populate all rank groups with users based on their ranks (admin only) - TEMPORARILY DISABLED
   app.post('/api/rank-groups/populate', authenticateToken, async (req: any, res) => {
     try {
-      // Check if user is admin
-      const userResult = await pool.query('SELECT is_platform_admin FROM users WHERE id = $1', [req.userId]);
-      const isAdmin = userResult.rows.length > 0 ? userResult.rows[0].is_platform_admin : false;
-      
-      if (!isAdmin) {
-        return res.status(403).json({ error: 'Admin access required' });
-      }
-      
-      const result = await bulkAssignUsersToRankGroups();
-      res.json(result);
+      // Group population temporarily disabled
+      res.json({ 
+        success: false, 
+        message: 'Group population is temporarily disabled',
+        assignedCount: 0
+      });
     } catch (error) {
-      console.error('Error populating rank groups:', error);
-      res.status(500).json({ error: 'Failed to populate rank groups' });
+      console.error('Error in populate endpoint:', error);
+      res.status(500).json({ error: 'Group population is temporarily disabled' });
     }
   });
 
