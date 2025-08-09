@@ -2622,68 +2622,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get answers for a specific question
-  app.get('/api/questions/:questionId/answers', async (req, res) => {
-    try {
-      const questionId = parseInt(req.params.questionId);
-      
-      if (isNaN(questionId)) {
-        return res.status(400).json({ error: 'Invalid question ID' });
-      }
-      
-      console.log(`API: Fetching answers for question ${questionId}`);
-      
-      const answers = await getQuestionAnswers(questionId);
-      
-      console.log(`API: Returning ${answers.length} answers for question ${questionId}`);
-      res.json(answers);
-    } catch (error) {
-      console.error('Error fetching question answers:', error);
-      res.status(500).json({ error: 'Failed to fetch answers' });
-    }
-  });
-
-  // Get single question by ID
-  app.get('/api/questions/:id', async (req, res) => {
-    try {
-      const questionId = parseInt(req.params.id);
-      if (isNaN(questionId)) {
-        return res.status(400).json({ error: 'Invalid question ID' });
-      }
-      
-      const { getQuestionById } = await import('./questions-service');
-      const question = await getQuestionById(questionId);
-      
-      if (!question) {
-        return res.status(404).json({ error: 'Question not found' });
-      }
-      
-      res.json(question);
-    } catch (error) {
-      console.error('Error fetching question:', error);
-      res.status(500).json({ error: 'Failed to fetch question' });
-    }
-  });
-
-  // Get answers for a question
-  app.get('/api/questions/:id/answers', authenticateToken, async (req, res) => {
-    try {
-      const questionId = parseInt(req.params.id);
-      if (isNaN(questionId)) {
-        return res.status(400).json({ error: 'Invalid question ID' });
-      }
-      
-      const { getQuestionAnswers } = await import('./questions-service');
-      const answers = await getQuestionAnswers(questionId);
-      
-      res.json(answers);
-    } catch (error) {
-      console.error('Error fetching answers:', error);
-      res.status(500).json({ error: 'Failed to fetch answers' });
-    }
-  });
-
-  // API endpoint to get question attachments for carousel
+  // API endpoint to get question attachments for carousel - MUST BE BEFORE parameterized routes
   app.get("/api/questions/attachments", authenticateToken, async (req, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 5;
