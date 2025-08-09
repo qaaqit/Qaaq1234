@@ -37,15 +37,45 @@ declare global {
 
 const JWT_SECRET = process.env.JWT_SECRET || 'qaaq_jwt_secret_key_2024_secure';
 
-// Authentication middleware - bypass auth for questions API
+// Authentication middleware - proper JWT authentication for admin routes
 const authenticateToken = async (req: Request, res: Response, next: NextFunction) => {
-  console.log('Authentication bypassed for questions API');
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+
+  if (!token) {
+    return res.status(401).json({ message: 'Access token required' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+    req.userId = decoded.userId;
+    next();
+  } catch (error) {
+    return res.status(403).json({ message: 'Invalid or expired token' });
+  }
+};
+
+// Optional authentication for questions API - checks token if present but doesn't require it
+const optionalAuth = async (req: Request, res: Response, next: NextFunction) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+      req.userId = decoded.userId;
+    } catch (error) {
+      // Token invalid but continue without authentication for questions API
+      console.log('Invalid token provided, continuing without auth for questions API');
+    }
+  }
+  
   next();
 };
 
-// Optional authentication - bypass for questions API
-const optionalAuth = async (req: Request, res: Response, next: NextFunction) => {
-  console.log('Optional authentication bypassed for questions API');
+// No authentication required - for public APIs like questions
+const noAuth = async (req: Request, res: Response, next: NextFunction) => {
+  console.log('No authentication required for public API');
   next();
 };
 
@@ -2557,7 +2587,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get questions with pagination (no authentication required)
-  app.get('/api/questions', async (req, res) => {
+  app.get('/api/questions', noAuth, async (req, res) => {
     try {
       console.log('Questions API called without authentication requirement');
       
@@ -2628,7 +2658,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // API endpoint to get question attachments for carousel - MUST BE BEFORE parameterized routes
-  app.get("/api/questions/attachments", authenticateToken, async (req, res) => {
+  app.get("/api/questions/attachments", noAuth, async (req, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 18; // Default to all 18 images
       
@@ -2736,7 +2766,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get single question by ID (for sharing and image navigation)
-  app.get('/api/questions/:id', async (req, res) => {
+  app.get('/api/questions/:id', noAuth, async (req, res) => {
     try {
       const questionId = parseInt(req.params.id);
       if (isNaN(questionId)) {
@@ -2785,7 +2815,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get answers for a specific question
-  app.get('/api/questions/:id/answers', async (req, res) => {
+  app.get('/api/questions/:id/answers', noAuth, async (req, res) => {
     try {
       const questionId = parseInt(req.params.id);
       if (isNaN(questionId)) {
