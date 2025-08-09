@@ -466,6 +466,7 @@ export const questionAttachments = pgTable("question_attachments", {
   questionId: integer("question_id").notNull().references(() => questions.id, { onDelete: "cascade" }),
   attachmentType: text("attachment_type").notNull(), // 'image', 'document', 'video', etc.
   attachmentUrl: text("attachment_url").notNull(),
+  attachmentData: text("attachment_data"), // Base64 encoded image data stored directly in database
   fileName: text("file_name"),
   fileSize: integer("file_size"), // in bytes
   mimeType: text("mime_type"),
