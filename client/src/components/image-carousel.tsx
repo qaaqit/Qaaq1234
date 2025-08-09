@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, ChevronRight } from 'lucide-react';
+import { Eye, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
@@ -174,7 +174,14 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
     }
   };
 
+  const scrollPrev = () => {
+    if (currentStartIndex > 0) {
+      setCurrentStartIndex(prev => prev - 1);
+    }
+  };
+
   const canScrollNext = currentStartIndex + 3 < attachments.length;
+  const canScrollPrev = currentStartIndex > 0;
 
   if (loading) {
     return (
@@ -222,6 +229,18 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
         ))}
       </div>
       
+      {/* Left Chevron - Only show if we can scroll back */}
+      {canScrollPrev && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={scrollPrev}
+          className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/20 hover:bg-black/40 text-white border-none p-2 h-10 w-10 rounded-full transition-all duration-200"
+        >
+          <ChevronLeft size={18} />
+        </Button>
+      )}
+
       {/* Right Chevron - Only show if there are more images */}
       {canScrollNext && (
         <Button
