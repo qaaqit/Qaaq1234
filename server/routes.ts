@@ -2671,7 +2671,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get single question by ID (for sharing)
+  // Get single question by ID (for sharing and image navigation)
   app.get('/api/questions/:id', async (req, res) => {
     try {
       const questionId = parseInt(req.params.id);
@@ -2679,17 +2679,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Invalid question ID' });
       }
       
-      const { getQuestionById } = await import('./questions-service');
-      const question = await getQuestionById(questionId);
+      // First try to get from shared QAAQ database
+      const questionQuery = await pool.query(`
+        SELECT id, content, author_id, created_at, updated_at,
+               tags, views, is_resolved, is_from_whatsapp,
+               engagement_score, equipment_name
+        FROM questions 
+        WHERE id = $1
+      `, [questionId]);
       
-      if (!question) {
+      if (questionQuery.rows.length === 0) {
         return res.status(404).json({ error: 'Question not found' });
       }
+      
+      const questionData = questionQuery.rows[0];
+      
+      // Format the question response
+      const question = {
+        id: questionData.id,
+        content: questionData.content,
+        author_id: questionData.author_id,
+        author_name: questionData.author_id.startsWith('+') ? `User ${questionData.author_id.slice(0,8)}****` : 'Maritime Professional',
+        author_rank: 'Maritime Expert',
+        created_at: questionData.created_at,
+        updated_at: questionData.updated_at,
+        category: questionData.equipment_name || 'Technical Discussion',
+        tags: questionData.tags || [],
+        view_count: questionData.views || 0,
+        answer_count: 0, // We'll calculate this
+        is_resolved: questionData.is_resolved || false,
+        is_anonymous: false,
+        is_from_whatsapp: questionData.is_from_whatsapp || false,
+        source: questionData.is_from_whatsapp ? 'WhatsApp' : 'QAAQ Platform'
+      };
       
       res.json(question);
     } catch (error) {
       console.error('Error fetching question:', error);
       res.status(500).json({ error: 'Failed to fetch question' });
+    }
+  });
+
+  // Get answers for a specific question
+  app.get('/api/questions/:id/answers', async (req, res) => {
+    try {
+      const questionId = parseInt(req.params.id);
+      if (isNaN(questionId)) {
+        return res.status(400).json({ error: 'Invalid question ID' });
+      }
+      
+      // Get answers from shared database - this might not exist for all questions
+      const answersQuery = await pool.query(`
+        SELECT id, content, author_id, created_at, is_best_answer
+        FROM answers 
+        WHERE question_id = $1
+        ORDER BY is_best_answer DESC, created_at ASC
+      `, [questionId]);
+      
+      const answers = answersQuery.rows.map(row => ({
+        id: row.id,
+        content: row.content,
+        author_id: row.author_id,
+        author_name: row.author_id === 'QG' || row.author_id === 'QAAQ GPT' ? 'QAAQ GPT' : 'Maritime Professional',
+        author_rank: row.author_id === 'QG' || row.author_id === 'QAAQ GPT' ? 'AI Assistant' : 'Maritime Expert',
+        created_at: row.created_at,
+        is_best_answer: row.is_best_answer || false
+      }));
+      
+      res.json(answers);
+    } catch (error) {
+      console.error('Error fetching answers:', error);
+      res.json([]); // Return empty array if no answers found
     }
   });
 
