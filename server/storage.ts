@@ -1092,6 +1092,52 @@ export class DatabaseStorage implements IStorage {
       return true; // Default to requiring password creation on error
     }
   }
+
+  // Google OAuth user management methods
+  async getUserByGoogleId(googleId: string): Promise<User | null> {
+    try {
+      const result = await pool.query(`
+        SELECT * FROM users WHERE google_id = $1 LIMIT 1
+      `, [googleId]);
+      
+      return result.rows.length > 0 ? result.rows[0] as User : null;
+    } catch (error) {
+      console.error(`Error getting user by Google ID ${googleId}:`, error);
+      return null;
+    }
+  }
+
+  async createGoogleUser(userData: any): Promise<User> {
+    try {
+      const result = await pool.query(`
+        INSERT INTO users (
+          id, full_name, email, google_id, google_email, 
+          google_profile_picture_url, google_display_name, 
+          auth_provider, user_type, is_verified, 
+          created_at, last_updated, last_login,
+          must_create_password, password_created_at
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW(), NOW(), true, NULL)
+        RETURNING *
+      `, [
+        userData.googleId, // Use Google ID as user ID
+        userData.fullName,
+        userData.email,
+        userData.googleId,
+        userData.googleEmail,
+        userData.googleProfilePictureUrl,
+        userData.googleDisplayName,
+        'google',
+        userData.userType || 'sailor',
+        true
+      ]);
+      
+      return result.rows[0] as User;
+    } catch (error) {
+      console.error('Error creating Google user:', error);
+      throw error;
+    }
+  }
 }
 
 // Use new dedicated database for authentication testing

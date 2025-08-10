@@ -1,92 +1,94 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { setStoredToken, setStoredUser } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 
+interface User {
+  id: string;
+  fullName: string;
+  email: string;
+  userType: string;
+  isAdmin: boolean;
+}
+
 export default function OAuthCallback() {
-  const [, setLocation] = useLocation();
+  const [, navigate] = useLocation();
   const { toast } = useToast();
+  const [processing, setProcessing] = useState(true);
 
   useEffect(() => {
-    const handleCallback = async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    const userParam = urlParams.get('user');
+    const error = urlParams.get('error');
+
+    if (error) {
+      toast({
+        title: "Authentication Failed",
+        description: `Login error: ${error}`,
+        variant: "destructive",
+      });
+      navigate('/');
+      return;
+    }
+
+    if (token && userParam) {
       try {
-        // Check URL parameters for token
-        const urlParams = new URLSearchParams(window.location.search);
-        const token = urlParams.get('token');
-        const error = urlParams.get('error');
-
-        if (error) {
-          let errorMessage = "Authentication failed";
-          switch (error) {
-            case 'google_auth_failed':
-              errorMessage = "Google authentication failed";
-              break;
-            case 'no_auth_code':
-              errorMessage = "No authorization code received";
-              break;
-            case 'auth_failed':
-              errorMessage = "Authentication process failed";
-              break;
-          }
-          
-          toast({
-            title: "Login Failed",
-            description: errorMessage,
-            variant: "destructive",
-          });
-          setLocation('/');
-          return;
-        }
-
-        if (token) {
-          // Store the token
-          setStoredToken(token);
-          
-          // Fetch user data with the token
-          const response = await fetch('/api/me', {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-          
-          if (response.ok) {
-            const user = await response.json();
-            setStoredUser(user);
-            
-            toast({
-              title: "Welcome!",
-              description: "Successfully logged in with Google",
-            });
-            
-            // Redirect to QBOT chat (user preference: home page after login)
-            setLocation('/qbot');
-          } else {
-            throw new Error('Failed to fetch user data');
-          }
-        } else {
-          throw new Error('No token received');
-        }
-      } catch (error) {
-        console.error('OAuth callback error:', error);
+        const user: User = JSON.parse(decodeURIComponent(userParam));
+        
+        // Store authentication data
+        localStorage.setItem('authToken', token);
+        localStorage.setItem('user', JSON.stringify(user));
+        
         toast({
-          title: "Login Failed",
-          description: "Something went wrong during authentication",
+          title: "Login Successful",
+          description: `Welcome back, ${user.fullName}!`,
+          variant: "default",
+        });
+        
+        // Redirect to QBOT Chat (home page as per user preference)
+        navigate('/qbot');
+        
+      } catch (parseError) {
+        console.error('Error parsing user data:', parseError);
+        toast({
+          title: "Authentication Error",
+          description: "Invalid user data received",
           variant: "destructive",
         });
-        setLocation('/');
+        navigate('/');
       }
-    };
+    } else {
+      toast({
+        title: "Authentication Error",
+        description: "Missing authentication data",
+        variant: "destructive",
+      });
+      navigate('/');
+    }
+    
+    setProcessing(false);
+  }, [navigate, toast]);
 
-    handleCallback();
-  }, [setLocation, toast]);
-
-  return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">Completing login...</h2>
-        <p className="text-gray-600">Please wait while we set up your account</p>
+  if (processing) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <i className="fas fa-anchor text-2xl text-white"></i>
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            Completing Login...
+          </h2>
+          <p className="text-gray-600">
+            Please wait while we finish setting up your account
+          </p>
+          <div className="mt-4">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+          </div>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  return null;
 }

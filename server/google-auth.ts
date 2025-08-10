@@ -1,6 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import jwt from 'jsonwebtoken';
 import { storage } from "./storage";
+import { pool } from './db';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'qaaq_jwt_secret_key_2024_secure';
 
@@ -90,13 +91,10 @@ async function findOrCreateGoogleUser(googleUser: GoogleUserInfo): Promise<any> 
     let user = await storage.getUserByGoogleId(googleUser.id);
     
     if (user) {
-      // Update user info if found
-      await storage.updateUser(user.id, {
-        googleEmail: googleUser.email,
-        googleProfilePictureUrl: googleUser.picture,
-        googleDisplayName: googleUser.name,
-        lastLogin: new Date(),
-      });
+      // Update last login time for existing Google user
+      await pool.query(`
+        UPDATE users SET last_login = NOW() WHERE google_id = $1
+      `, [googleUser.id]);
       return user;
     }
 
@@ -105,22 +103,24 @@ async function findOrCreateGoogleUser(googleUser: GoogleUserInfo): Promise<any> 
     
     if (user) {
       // Link existing account to Google
-      await storage.updateUser(user.id, {
-        googleId: googleUser.id,
-        googleEmail: googleUser.email,
-        googleProfilePictureUrl: googleUser.picture,
-        googleDisplayName: googleUser.name,
-        authProvider: 'google',
-        lastLogin: new Date(),
-      });
+      await pool.query(`
+        UPDATE users SET 
+          google_id = $1,
+          google_email = $2,
+          google_profile_picture_url = $3,
+          google_display_name = $4,
+          auth_provider = 'google',
+          last_login = NOW()
+        WHERE id = $5
+      `, [googleUser.id, googleUser.email, googleUser.picture, googleUser.name, user.id]);
       return user;
     }
 
     // Create new user
-    const newUser = await storage.createUser({
+    const newUser = await storage.createGoogleUser({
+      googleId: googleUser.id,
       fullName: googleUser.name,
       email: googleUser.email,
-      googleId: googleUser.id,
       googleEmail: googleUser.email,
       googleProfilePictureUrl: googleUser.picture,
       googleDisplayName: googleUser.name,
