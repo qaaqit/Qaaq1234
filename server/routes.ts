@@ -1834,6 +1834,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Debug endpoint to check user table schema
+  app.get('/api/debug/schema', async (req, res) => {
+    try {
+      console.log('🔍 Checking user table schema...');
+      
+      // Get column information for users table
+      const schemaResult = await pool.query(`
+        SELECT 
+          column_name, 
+          data_type, 
+          is_nullable, 
+          column_default,
+          character_maximum_length
+        FROM information_schema.columns 
+        WHERE table_name = 'users' 
+        AND table_schema = 'public'
+        ORDER BY ordinal_position;
+      `);
+      
+      // Filter authentication-related fields
+      const authFields = schemaResult.rows.filter(col => 
+        col.column_name.includes('password') || 
+        col.column_name.includes('google') || 
+        col.column_name.includes('auth') ||
+        col.column_name.includes('provider')
+      );
+      
+      console.log('🔍 Authentication fields found:', authFields);
+      
+      res.json({
+        totalColumns: schemaResult.rows.length,
+        allColumns: schemaResult.rows,
+        authenticationFields: authFields,
+        schemaAnalysis: {
+          hasPasswordField: authFields.some(f => f.column_name === 'password'),
+          hasGoogleId: authFields.some(f => f.column_name === 'google_id'),
+          hasGoogleEmail: authFields.some(f => f.column_name === 'google_email'),
+          hasAuthProvider: authFields.some(f => f.column_name === 'auth_provider'),
+          hasPasswordFlags: authFields.filter(f => f.column_name.includes('password')).length
+        }
+      });
+    } catch (error) {
+      console.error('Schema check error:', error);
+      res.status(500).json({ message: "Failed to check schema", error: error.message });
+    }
+  });
+
   // Debug endpoint to check user data retrieval
   app.get('/api/debug/user/:userId', async (req, res) => {
     try {
