@@ -249,16 +249,29 @@ export default function QBOTPage({ user }: QBOTPageProps) {
             {/* QBOT Chat Container - No padding to flush with red bar */}
             <div className="flex-1">
               <QBOTChatContainer>
-                <div className="flex flex-col h-full bg-white overflow-hidden">
-                  {/* Minimalist Header */}
-                  <QBOTChatHeader 
-                    onClear={handleClearQBotChat}
-                    isAdmin={user?.isAdmin}
-                  />
+                <div 
+                  className="flex flex-col h-full overflow-hidden"
+                  style={{
+                    backgroundImage: `
+                      linear-gradient(to right, #E5E7EB 1px, transparent 1px),
+                      linear-gradient(to bottom, #E5E7EB 1px, transparent 1px)
+                    `,
+                    backgroundSize: '20px 20px',
+                    backgroundColor: '#FFFFFF'
+                  }}
+                >
+                  <div className="absolute inset-0 bg-white/50 pointer-events-none" />
+                  {/* Minimalist Header with engineering background */}
+                  <div className="relative z-10">
+                    <QBOTChatHeader 
+                      onClear={handleClearQBotChat}
+                      isAdmin={user?.isAdmin}
+                    />
+                  </div>
                   
-                  {/* Chat Area with Clean Background */}
+                  {/* Chat Area with engineering background */}
                   <QBOTChatArea>
-                    <div className="flex flex-col h-full p-4">
+                    <div className="flex flex-col h-full p-4 relative z-10">
                       {/* Messages or Welcome State */}
                       {isLoadingHistory ? (
                         <div className="flex-1 flex items-center justify-center">
@@ -287,8 +300,8 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                     </div>
                   </QBOTChatArea>
                   
-                  {/* Input Area positioned lower with more padding */}
-                  <div className="p-4 pt-8 border-t border-gray-100 mt-4">
+                  {/* Input Area with engineering background */}
+                  <div className="p-4 pt-8 border-t border-gray-100 mt-4 relative z-10">
                     <QBOTInputArea 
                       onSendMessage={handleSendQBotMessage}
                       disabled={isQBotTyping}
