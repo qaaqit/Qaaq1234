@@ -79,10 +79,18 @@ export function QuestionsTab() {
 
   // Handle scroll to show/hide scroll-to-top button and preserve position
   useEffect(() => {
+    let ticking = false;
+    
     const handleScroll = () => {
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      setShowScrollToTop(scrollTop > 300);
-      setScrollPosition(scrollTop);
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+          setShowScrollToTop(scrollTop > 300);
+          setScrollPosition(scrollTop);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -177,7 +185,7 @@ export function QuestionsTab() {
     setExpandedQuestions(newExpanded);
   };
 
-  // Fetch answers for a specific question
+  // Fetch answers for a specific question - optimized with caching
   const useQuestionAnswers = (questionId: number, enabled: boolean) => {
     return useQuery({
       queryKey: [`/api/questions/${questionId}/answers`],
@@ -188,7 +196,11 @@ export function QuestionsTab() {
         }
         return response.json() as Promise<Answer[]>;
       },
-      enabled
+      enabled,
+      staleTime: 10 * 60 * 1000, // 10 minutes cache
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      refetchOnReconnect: false
     });
   };
 
@@ -201,17 +213,17 @@ export function QuestionsTab() {
   // Since filtering is now done server-side, we don't need client-side filtering
   const filteredQuestions = allQuestions;
 
-  // Preserve scroll position during re-renders - moved here after allQuestions definition
+  // Preserve scroll position during re-renders - optimized to prevent excessive scrolling
   useEffect(() => {
-    if (scrollPosition > 0 && !isFetchingNextPage) {
-      const timer = requestAnimationFrame(() => {
-        if (window.pageYOffset !== scrollPosition) {
+    if (scrollPosition > 0 && !isFetchingNextPage && allQuestions.length > 0) {
+      const timer = setTimeout(() => {
+        if (Math.abs(window.pageYOffset - scrollPosition) > 50) {
           window.scrollTo(0, scrollPosition);
         }
-      });
-      return () => cancelAnimationFrame(timer);
+      }, 100);
+      return () => clearTimeout(timer);
     }
-  }, [allQuestions.length, scrollPosition, isFetchingNextPage]);
+  }, [allQuestions.length]);
   
   // Check if auth tokens are working
   const [needsAuthFix, setNeedsAuthFix] = useState(false);

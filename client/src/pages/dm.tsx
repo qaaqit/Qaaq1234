@@ -87,22 +87,42 @@ export default function DMPage() {
   // Fetch user's chat connections
   const { data: connections = [], isLoading: connectionsLoading, error: connectionsError } = useQuery<ExtendedChatConnection[]>({
     queryKey: ['/api/chat/connections'],
-    refetchInterval: 5000, // Poll every 5 seconds for new connections
+    refetchInterval: (data, query) => {
+      // Disable polling if getting 403 errors to prevent excessive refreshing
+      if (query.state.error?.message?.includes('403')) {
+        console.log('🚫 Disabling chat connections polling due to authentication errors');
+        return false;
+      }
+      return 5000; // Poll every 5 seconds when authenticated
+    },
     enabled: !!user, // Only fetch when user is authenticated
+    retry: (failureCount, error) => {
+      // Stop retrying on 403 errors to prevent excessive API calls
+      if (error?.message?.includes('403')) {
+        return false;
+      }
+      return failureCount < 3;
+    },
+    staleTime: 30000, // Cache for 30 seconds to reduce requests
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
+    refetchOnMount: false, // Don't refetch on component mount if data exists
   });
 
-  // Debug connection loading  
+  // Debug connection loading - reduced frequency  
   useEffect(() => {
-    console.log(`🔍 DM Auto-connect check:`, {
-      targetUserId,
-      connectionsCount: connections.length,
-      userAuthenticated: !!user,
-      userId: user?.id,
-      connectionsLoading,
-      connectionsError: connectionsError?.message,
-      connectionsData: connections
-    });
-  }, [targetUserId, connections, user, connectionsLoading, connectionsError]);
+    // Only log when there are actual changes, not every render
+    if (targetUserId || connections.length > 0 || connectionsError) {
+      console.log(`🔍 DM Auto-connect check:`, {
+        targetUserId,
+        connectionsCount: connections.length,
+        userAuthenticated: !!user,
+        userId: user?.id,
+        connectionsLoading,
+        connectionsError: connectionsError?.message,
+        connectionsData: connections
+      });
+    }
+  }, [targetUserId, connections.length, connectionsError?.message]); // Reduced dependencies
 
   // Fetch users - use search API when searching, nearby API otherwise
   const { data: nearbyUsers = [], isLoading: usersLoading } = useQuery<UserWithDistance[]>({
