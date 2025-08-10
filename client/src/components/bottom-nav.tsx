@@ -24,28 +24,28 @@ export default function BottomNav({ user, onLogout }: BottomNavProps) {
     { 
       path: "/", 
       icon: "fas fa-robot", 
-      label: ["QBOT", "Chat"],
+      label: ["QBOT"],
       active: location === "/" || location === "/qbot",
       onClick: () => setLocation("/")
     },
     { 
       path: "/dm", 
       icon: "fas fa-comments", 
-      label: ["Ch13", "DM"],
+      label: ["Qh13"],
       active: location === "/qhf" || location === "/dm" || location === "/chat",
       onClick: () => setLocation("/dm")
     },
     { 
       path: "/rank-groups", 
       icon: "fas fa-users", 
-      label: ["Ch16", "Groups"],
+      label: ["Qh16"],
       active: location === "/rank-groups",
       onClick: () => setLocation("/rank-groups")
     },
     { 
       path: "/discover", 
       icon: "fas fa-map-marked-alt", 
-      label: ["Map", "Radar"],
+      label: ["QRadar"],
       active: location === "/discover" || location === "/users",
       onClick: () => setLocation("/discover")
     }

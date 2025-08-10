@@ -290,13 +290,7 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
                   return (
                     <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
                       <div
-                        className={`
-                          max-w-[70%] p-3 rounded-2xl shadow-sm
-                          ${isOwn 
-                            ? 'bg-gradient-to-r from-navy to-blue-800 text-white rounded-br-md' 
-                            : 'bg-white border border-gray-200 text-gray-800 rounded-bl-md'
-                          }
-                        `}
+                        className="max-w-[70%] p-3 rounded-2xl shadow-sm from-navy to-blue-800 text-white rounded-br-md bg-[#f97118]"
                       >
                         <p className="text-sm leading-relaxed">{msg.message}</p>
                         <div className={`flex items-center justify-end mt-1 space-x-1 ${isOwn ? 'text-blue-100' : 'text-gray-500'}`}>
