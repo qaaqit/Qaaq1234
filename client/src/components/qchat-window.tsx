@@ -43,7 +43,12 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
     queryKey: ['/api/chat/messages', connection?.id],
     queryFn: async () => {
       if (!connection?.id) return [];
-      const response = await fetch(`/api/chat/messages/${connection.id}`);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/chat/messages/${connection.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       if (!response.ok) throw new Error('Failed to fetch messages');
       return response.json();
     },
@@ -60,9 +65,13 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
       websocketService.sendMessage(connection.id, messageText);
       
       // Also send via HTTP for reliability
+      const token = localStorage.getItem('token');
       const response = await fetch('/api/chat/message', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ connectionId: connection.id, message: messageText })
       });
       if (!response.ok) throw new Error('Failed to send message');
@@ -77,9 +86,13 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
   // Accept connection mutation
   const acceptMutation = useMutation({
     mutationFn: async () => {
+      const token = localStorage.getItem('token');
       const response = await fetch(`/api/chat/accept/${connection?.id}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
       });
       if (!response.ok) throw new Error('Failed to accept connection');
       return response.json();
