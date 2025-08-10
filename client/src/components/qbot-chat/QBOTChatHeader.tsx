@@ -86,7 +86,7 @@ export default function QBOTChatHeader({ onClear, isAdmin = false }: QBOTChatHea
   };
 
   return (
-    <div className="relative z-10 bg-white border-b border-gray-100 flex items-center justify-end px-4 py-2 flex-shrink-0">
+    <div className="relative z-10 bg-transparent border-b border-gray-100 flex items-center justify-end px-4 py-2 flex-shrink-0">
       {/* Right: Action Icons Only */}
       <div className="flex items-center space-x-1">
         <button
