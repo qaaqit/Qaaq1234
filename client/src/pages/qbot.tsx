@@ -301,6 +301,9 @@ export default function QBOTPage({ user }: QBOTPageProps) {
               </QBOTChatContainer>
             </div>
 
+            {/* Orange line separator above carousel */}
+            <div className="border-t-2 border-orange-500"></div>
+            
             {/* Image Carousel - Flush with chat box */}
             <div className="h-[200px]">
               <ImageCarousel className="h-full" />
