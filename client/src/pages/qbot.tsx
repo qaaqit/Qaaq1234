@@ -298,16 +298,16 @@ export default function QBOTPage({ user }: QBOTPageProps) {
               </QBOTChatContainer>
             </div>
 
-            {/* Image Carousel - Positioned lower with more height */}
-            <div className="h-[200px] pt-8">
+            {/* Image Carousel - Positioned much lower with more height */}
+            <div className="h-[200px] pt-20">
               <ImageCarousel className="h-full" />
             </div>
           </TabsContent>
 
           {/* Questions Tab Content */}
           <TabsContent value="questions" className="flex-1 flex flex-col">
-            {/* Image Carousel at top - Positioned lower with more height */}
-            <div className="h-[200px] pt-8">
+            {/* Image Carousel at top - Positioned much lower with more height */}
+            <div className="h-[200px] pt-20">
               <ImageCarousel className="h-full" />
             </div>
             
