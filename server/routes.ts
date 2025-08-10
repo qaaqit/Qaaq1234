@@ -3,7 +3,8 @@ import { createServer, type Server } from "http";
 import ws from 'ws';
 import jwt from 'jsonwebtoken';
 import { storage } from "./storage";
-import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, insertChatConnectionSchema, insertChatMessageSchema, insertRankGroupSchema, insertRankGroupMemberSchema, insertRankGroupMessageSchema } from "@shared/schema";
+import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, insertChatConnectionSchema, insertChatMessageSchema, insertRankGroupSchema, insertRankGroupMemberSchema, insertRankGroupMessageSchema, subscriptions, userSubscriptionStatus } from "@shared/schema";
+import { db } from "./db";
 import { sendVerificationEmail } from "./services/email";
 import { pool } from "./db";
 import { getQuestions, searchQuestions, getQuestionAnswers } from "./questions-service";
@@ -3587,6 +3588,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({
         success: false,
         message: 'Failed to fetch payment analytics'
+      });
+    }
+  });
+
+  // Admin: Activate premium mode for admin users (admin only)
+  app.post('/api/admin/activate-premium', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      const adminUserId = req.userId;
+      
+      console.log(`🔐 Admin premium activation requested by: ${adminUserId}`);
+      
+      // Check if admin already has premium status
+      const existingStatus = await razorpayService.checkUserPremiumStatus(adminUserId);
+      
+      if (existingStatus.isPremium || existingStatus.isSuperUser) {
+        return res.json({
+          success: true,
+          message: 'Admin already has premium access',
+          status: existingStatus
+        });
+      }
+
+      // Create an admin premium subscription entry without Razorpay
+      const adminSubscription = await db.insert(subscriptions).values({
+        userId: adminUserId,
+        subscriptionType: 'premium',
+        razorpayPlanId: 'admin_premium_plan', // Admin plan ID
+        status: 'active',
+        amount: 0, // Free for admin
+        currency: 'INR',
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
+        totalCount: 1,
+        paidCount: 1,
+        remainingCount: 0,
+        notes: { adminActivated: true, activatedAt: new Date().toISOString() }
+      }).returning();
+
+      // Update user subscription status
+      await db.insert(userSubscriptionStatus).values({
+        userId: adminUserId,
+        isPremium: true,
+        isSuperUser: false,
+        premiumExpiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+        superUserExpiresAt: null,
+        currentPremiumSubscriptionId: adminSubscription[0].id,
+        currentSuperUserSubscriptionId: null,
+        totalSpent: 0,
+        updatedAt: new Date()
+      }).onConflictDoUpdate({
+        target: userSubscriptionStatus.userId,
+        set: {
+          isPremium: true,
+          premiumExpiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+          currentPremiumSubscriptionId: adminSubscription[0].id,
+          updatedAt: new Date()
+        }
+      });
+
+      console.log(`✅ Admin premium mode activated for user: ${adminUserId}`);
+
+      res.json({
+        success: true,
+        message: 'Admin premium mode activated successfully',
+        subscription: adminSubscription[0],
+        status: {
+          isPremium: true,
+          isSuperUser: false,
+          premiumExpiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+          superUserExpiresAt: null
+        }
+      });
+    } catch (error) {
+      console.error('Error activating admin premium mode:', error);
+      res.status(500).json({
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to activate admin premium mode'
       });
     }
   });
