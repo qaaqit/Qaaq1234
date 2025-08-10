@@ -224,7 +224,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
         </div>
       </header>
       {/* Main Content Area - Chat + Carousel + Questions */}
-      <div className="flex-1 flex flex-col pb-16">
+      <div className="flex-1 flex flex-col">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
           {/* Tab Navigation - Red/Orange Signature Bar */}
           <div className="bg-gradient-to-r from-red-500 to-orange-500 shadow-lg">
@@ -246,10 +246,10 @@ export default function QBOTPage({ user }: QBOTPageProps) {
 
           {/* Chat Tab Content */}
           <TabsContent value="chat" className="flex-1 flex flex-col">
-            {/* QBOT Chat Container */}
-            <div className="flex-1 p-4">
+            {/* QBOT Chat Container - No padding to flush with red bar */}
+            <div className="flex-1">
               <QBOTChatContainer>
-                <div className="flex flex-col h-full rounded-xl border border-gray-200 bg-white shadow-lg overflow-hidden">
+                <div className="flex flex-col h-full bg-white overflow-hidden">
                   {/* Minimalist Header */}
                   <QBOTChatHeader 
                     onClear={handleClearQBotChat}
@@ -298,17 +298,17 @@ export default function QBOTPage({ user }: QBOTPageProps) {
               </QBOTChatContainer>
             </div>
 
-            {/* Image Carousel - Clean spacing */}
-            <div className="h-[120px] px-4 pb-4">
-              <ImageCarousel className="h-full rounded-lg overflow-hidden shadow-sm" />
+            {/* Image Carousel - Flush with bottom navigation */}
+            <div className="h-[120px]">
+              <ImageCarousel className="h-full" />
             </div>
           </TabsContent>
 
           {/* Questions Tab Content */}
           <TabsContent value="questions" className="flex-1 flex flex-col">
-            {/* Image Carousel at top with clean spacing */}
-            <div className="h-[120px] px-4 pt-4">
-              <ImageCarousel className="h-full rounded-lg overflow-hidden shadow-sm" />
+            {/* Image Carousel at top - Flush with content */}
+            <div className="h-[120px]">
+              <ImageCarousel className="h-full" />
             </div>
             
             {/* Questions Tab below carousel with improved layout */}
