@@ -274,6 +274,12 @@ export const insertUserSchema = createInsertSchema(users).pick({
   country: true,
   latitude: true,
   longitude: true,
+  googleId: true,
+  googleEmail: true,
+  googleProfilePictureUrl: true,
+  googleDisplayName: true,
+  authProvider: true,
+  isVerified: true,
 });
 
 export const insertPostSchema = createInsertSchema(posts).pick({
