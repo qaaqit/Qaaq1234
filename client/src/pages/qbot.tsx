@@ -236,7 +236,6 @@ export default function QBOTPage({ user }: QBOTPageProps) {
           </div>
         </div>
       </header>
-      
       {/* Main Content Area - Chat + Carousel + Questions */}
       <div className="flex-1 flex flex-col pb-16">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
@@ -253,9 +252,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                 <TabsTrigger 
                   value="questions" 
                   className="data-[state=active]:bg-white data-[state=active]:text-red-600 text-white hover:bg-white/20 font-semibold transition-all duration-200 rounded-md py-2"
-                >
-                  Questions
-                </TabsTrigger>
+                >QuestionBank</TabsTrigger>
               </TabsList>
             </div>
           </div>
