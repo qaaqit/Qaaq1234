@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+
 
 interface ObjectUploaderProps {
   maxNumberOfFiles?: number;
@@ -36,7 +36,6 @@ export function ObjectUploader({
 }: ObjectUploaderProps) {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { toast } = useToast();
 
   const handleFileSelect = () => {
     fileInputRef.current?.click();
@@ -49,22 +48,14 @@ export function ObjectUploader({
     
     // Validate number of files
     if (files.length > maxNumberOfFiles) {
-      toast({
-        title: "Too Many Files",
-        description: `Maximum ${maxNumberOfFiles} files allowed`,
-        variant: "destructive"
-      });
+      console.error(`Too many files: Maximum ${maxNumberOfFiles} files allowed`);
       return;
     }
 
     // Validate file sizes
     const oversizedFiles = files.filter(file => file.size > maxFileSize);
     if (oversizedFiles.length > 0) {
-      toast({
-        title: "File Too Large",
-        description: `Maximum file size is ${Math.round(maxFileSize / 1024 / 1024)}MB`,
-        variant: "destructive"
-      });
+      console.error(`File too large: Maximum file size is ${Math.round(maxFileSize / 1024 / 1024)}MB`);
       return;
     }
 
@@ -103,11 +94,6 @@ export function ObjectUploader({
 
     } catch (error) {
       console.error('Upload error:', error);
-      toast({
-        title: "Upload Error",
-        description: "Failed to upload files. Please try again.",
-        variant: "destructive"
-      });
     } finally {
       setIsUploading(false);
       // Reset the input

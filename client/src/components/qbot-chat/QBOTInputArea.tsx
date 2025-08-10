@@ -2,7 +2,7 @@ import { useState, useRef, KeyboardEvent, useEffect } from 'react';
 import { Paperclip, Send, Crown, Shield, ShieldCheck } from 'lucide-react';
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { PremiumSubscriptionDialog } from "@/components/PremiumSubscriptionDialog";
-import { useToast } from "@/hooks/use-toast";
+
 import { useQuery } from "@tanstack/react-query";
 
 const DEFAULT_CHATBOT_INVITES = [
@@ -56,7 +56,6 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
   const [isPrivateMode, setIsPrivateMode] = useState(false);
   const [showSubscriptionDialog, setShowSubscriptionDialog] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const { toast } = useToast();
 
   // Fetch user subscription status
   const { data: userStatus } = useQuery({
@@ -134,11 +133,6 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
       }
     } catch (error) {
       console.error('Error getting upload URL:', error);
-      toast({
-        title: "Upload Error",
-        description: "Failed to prepare file upload. Please try again.",
-        variant: "destructive"
-      });
       throw error;
     }
   };
@@ -148,10 +142,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
       const fileUrls = result.successful.map((file: any) => file.name);
       setAttachments(prev => [...prev, ...fileUrls]);
       
-      toast({
-        title: "Upload Successful",
-        description: `${result.successful.length} file(s) uploaded successfully`,
-      });
+      console.log(`${result.successful.length} file(s) uploaded successfully`);
     }
   };
 
@@ -204,11 +195,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
         
         // Validate file size (50MB limit)
         if (file.size > 52428800) {
-          toast({
-            title: "Image Too Large",
-            description: "Maximum image size is 50MB",
-            variant: "destructive"
-          });
+          console.error("Image too large: Maximum image size is 50MB");
           continue;
         }
         
@@ -229,20 +216,12 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
             const fileName = `pasted-image-${Date.now()}.${file.type.split('/')[1] || 'png'}`;
             setAttachments(prev => [...prev, fileName]);
             
-            toast({
-              title: "Image Pasted",
-              description: "Image uploaded successfully from clipboard",
-            });
+            console.log("Image pasted and uploaded successfully from clipboard");
           } else {
             throw new Error('Upload failed');
           }
         } catch (error) {
           console.error('Error uploading pasted image:', error);
-          toast({
-            title: "Upload Error",
-            description: "Failed to upload pasted image. Please try again.",
-            variant: "destructive"
-          });
         }
       }
     }

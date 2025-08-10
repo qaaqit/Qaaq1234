@@ -89,17 +89,7 @@ export function QuestionsTab() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Preserve scroll position during re-renders
-  useEffect(() => {
-    if (scrollPosition > 0 && !isFetchingNextPage) {
-      const timer = requestAnimationFrame(() => {
-        if (window.pageYOffset !== scrollPosition) {
-          window.scrollTo(0, scrollPosition);
-        }
-      });
-      return () => cancelAnimationFrame(timer);
-    }
-  }, [allQuestions.length, scrollPosition, isFetchingNextPage]);
+  // This will be moved after allQuestions is defined
 
   // Scroll to top function
   const scrollToTop = () => {
@@ -210,6 +200,18 @@ export function QuestionsTab() {
   
   // Since filtering is now done server-side, we don't need client-side filtering
   const filteredQuestions = allQuestions;
+
+  // Preserve scroll position during re-renders - moved here after allQuestions definition
+  useEffect(() => {
+    if (scrollPosition > 0 && !isFetchingNextPage) {
+      const timer = requestAnimationFrame(() => {
+        if (window.pageYOffset !== scrollPosition) {
+          window.scrollTo(0, scrollPosition);
+        }
+      });
+      return () => cancelAnimationFrame(timer);
+    }
+  }, [allQuestions.length, scrollPosition, isFetchingNextPage]);
   
   // Check if auth tokens are working
   const [needsAuthFix, setNeedsAuthFix] = useState(false);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Eye, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
+
 
 interface QuestionAttachment {
   id: string;
@@ -25,7 +25,6 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
   const [loading, setLoading] = useState(true);
   const [imageError, setImageError] = useState<Set<string>>(new Set());
   const [currentStartIndex, setCurrentStartIndex] = useState(0);
-  const { toast } = useToast();
 
   // Fetch question attachments
   useEffect(() => {
@@ -60,7 +59,7 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
     };
 
     fetchAttachments();
-  }, [toast]);
+  }, []);
 
   const handleImageError = (attachmentId: string) => {
     setImageError(prev => new Set([...Array.from(prev), attachmentId]));
@@ -75,11 +74,6 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
       window.location.href = `/questions/${questionId}`;
     } else {
       console.error('Invalid question ID for navigation:', questionId);
-      toast({
-        title: "Navigation Error",
-        description: "Unable to navigate to question. Invalid ID.",
-        variant: "destructive"
-      });
     }
   };
 

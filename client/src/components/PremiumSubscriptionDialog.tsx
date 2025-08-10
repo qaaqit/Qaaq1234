@@ -173,10 +173,10 @@ export function PremiumSubscriptionDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-2xl">
             <Crown className="h-6 w-6 text-orange-500" />
-            Upgrade Your QAAQ Experience
+            QAAQ CHIEF (GPT5)
           </DialogTitle>
           <DialogDescription>
-            Choose the perfect plan to enhance your maritime networking and learning
+            Advanced reasoning model 
           </DialogDescription>
         </DialogHeader>
 

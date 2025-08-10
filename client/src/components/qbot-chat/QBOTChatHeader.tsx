@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
+
 
 interface QBOTChatHeaderProps {
   onClear?: () => void;
@@ -50,7 +50,6 @@ export default function QBOTChatHeader({ onClear, isAdmin = false }: QBOTChatHea
     return saved ? JSON.parse(saved) : DEFAULT_CHATBOT_INVITES;
   });
   const [editText, setEditText] = useState('');
-  const { toast } = useToast();
 
   const handleEditInvites = () => {
     setEditText(chatbotInvites.join('\n'));
@@ -64,11 +63,7 @@ export default function QBOTChatHeader({ onClear, isAdmin = false }: QBOTChatHea
       .filter(line => line.length > 0);
     
     if (newInvites.length === 0) {
-      toast({
-        title: "Error",
-        description: "Please add at least one chatbot invite message.",
-        variant: "destructive"
-      });
+      console.error("Please add at least one chatbot invite message.");
       return;
     }
 
@@ -76,10 +71,7 @@ export default function QBOTChatHeader({ onClear, isAdmin = false }: QBOTChatHea
     localStorage.setItem('chatbotInvites', JSON.stringify(newInvites));
     setIsDialogOpen(false);
     
-    toast({
-      title: "Success",
-      description: `Updated ${newInvites.length} chatbot invite messages.`
-    });
+    console.log(`Updated ${newInvites.length} chatbot invite messages.`);
 
     // Trigger placeholder update
     window.dispatchEvent(new Event('chatbotInvitesUpdated'));
@@ -90,10 +82,7 @@ export default function QBOTChatHeader({ onClear, isAdmin = false }: QBOTChatHea
     localStorage.setItem('chatbotInvites', JSON.stringify(DEFAULT_CHATBOT_INVITES));
     setEditText(DEFAULT_CHATBOT_INVITES.join('\n'));
     
-    toast({
-      title: "Reset Complete",
-      description: "Restored default maritime and tech chatbot invites."
-    });
+    console.log("Reset complete - restored default maritime and tech chatbot invites.");
   };
 
   return (

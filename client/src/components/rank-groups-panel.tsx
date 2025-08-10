@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
+
 
 interface RankGroup {
   id: string;
@@ -44,7 +44,6 @@ export function RankGroupsPanel() {
   const [newMessage, setNewMessage] = useState('');
   const [isAnnouncement, setIsAnnouncement] = useState(false);
   const [showMembers, setShowMembers] = useState(false);
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
@@ -83,10 +82,10 @@ export function RankGroupsPanel() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/rank-groups'] });
-      toast({ title: 'Successfully joined the group!' });
+      console.log('Successfully joined the group!');
     },
     onError: () => {
-      toast({ title: 'Failed to join group', variant: 'destructive' });
+      console.error('Failed to join group');
     },
   });
 
@@ -105,10 +104,10 @@ export function RankGroupsPanel() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/rank-groups'] });
       setSelectedGroup(null);
-      toast({ title: 'Successfully left the group!' });
+      console.log('Successfully left the group!');
     },
     onError: () => {
-      toast({ title: 'Failed to leave group', variant: 'destructive' });
+      console.error('Failed to leave group');
     },
   });
 
@@ -140,10 +139,10 @@ export function RankGroupsPanel() {
       queryClient.invalidateQueries({ 
         queryKey: ['/api/rank-groups', selectedGroup, 'messages'] 
       });
-      toast({ title: 'Message sent!' });
+      console.log('Message sent!');
     },
     onError: () => {
-      toast({ title: 'Failed to send message', variant: 'destructive' });
+      console.error('Failed to send message');
     },
   });
 
@@ -161,10 +160,10 @@ export function RankGroupsPanel() {
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['/api/rank-groups/my-groups'] });
-      toast({ title: `Auto-assigned to groups: ${data?.assignedGroups?.join(', ') || 'None'}` });
+      console.log(`Auto-assigned to groups: ${data?.assignedGroups?.join(', ') || 'None'}`);
     },
     onError: () => {
-      toast({ title: 'Failed to auto-assign groups', variant: 'destructive' });
+      console.error('Failed to auto-assign groups');
     },
   });
 

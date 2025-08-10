@@ -4,7 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Send, MessageCircle } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+
 
 interface SingleMessageChatProps {
   receiverId: string;
@@ -22,7 +22,6 @@ export default function SingleMessageChat({
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [messageSent, setMessageSent] = useState(false);
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const sendMessageMutation = useMutation({
@@ -44,12 +43,6 @@ export default function SingleMessageChat({
     onSuccess: () => {
       setMessageSent(true);
       setMessage(""); // Clear message on success
-      toast({
-        title: "Message Sent! ⚓",
-        description: `Your message has been sent to ${receiverName}. They'll see it when they accept your chat request.`,
-        duration: 5000,
-        className: "maritime-toast"
-      });
       queryClient.invalidateQueries({ queryKey: ['/api/chat/connections'] });
       
       // Auto close after successful send
@@ -60,12 +53,6 @@ export default function SingleMessageChat({
     onError: (error: any) => {
       console.error('Message send failed:', error);
       setMessage(""); // Clear message even on error to prevent it staying in box
-      toast({
-        title: "Message Failed 🌊",
-        description: error.response?.data?.message || "Unable to send message. Please try again.",
-        variant: "destructive",
-        duration: 4000
-      });
     },
     onSettled: () => {
       setIsSending(false);

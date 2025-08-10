@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
+
 import { apiRequest } from "@/lib/queryClient";
 
 interface Product {
@@ -105,7 +105,7 @@ export default function QaaqStore({ location, suburb, port, country, userShipSch
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
+
 
   useEffect(() => {
     setProducts(generateProducts(`${suburb}, ${port}`));
@@ -133,10 +133,7 @@ export default function QaaqStore({ location, suburb, port, country, userShipSch
       return [...prev, { ...product, quantity: 1 }];
     });
     
-    toast({
-      title: "Added to Cart",
-      description: `${product.name} added to your cart`,
-    });
+    // Item added silently without toast notification
   };
 
   const removeFromCart = (productId: string) => {
@@ -162,11 +159,7 @@ export default function QaaqStore({ location, suburb, port, country, userShipSch
 
   const handleCheckout = async () => {
     if (cart.length === 0) {
-      toast({
-        title: "Empty Cart",
-        description: "Please add items to cart before checkout",
-        variant: "destructive",
-      });
+      console.log("Empty cart, cannot checkout");
       return;
     }
 
@@ -195,10 +188,7 @@ export default function QaaqStore({ location, suburb, port, country, userShipSch
         description: `Pre-order delivery to ${port}`,
         order_id: razorpayOrderId,
         handler: function (response: any) {
-          toast({
-            title: "Order Successful!",
-            description: `Order will be ready for delivery when your ship arrives at ${port}`,
-          });
+          console.log("Order successful:", response);
           setCart([]);
         },
         prefill: {
@@ -214,11 +204,7 @@ export default function QaaqStore({ location, suburb, port, country, userShipSch
       razorpay.open();
 
     } catch (error) {
-      toast({
-        title: "Checkout Failed",
-        description: "Please try again or contact support",
-        variant: "destructive",
-      });
+      console.error("Checkout failed:", error);
     } finally {
       setLoading(false);
     }

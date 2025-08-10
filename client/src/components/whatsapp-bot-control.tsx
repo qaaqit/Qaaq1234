@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MessageCircle, Power, PowerOff, Smartphone } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+
 
 interface WhatsAppStatus {
   connected: boolean;
@@ -13,7 +13,6 @@ interface WhatsAppStatus {
 export default function WhatsAppBotControl() {
   const [status, setStatus] = useState<WhatsAppStatus>({ connected: false, status: 'Disconnected' });
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
 
   useEffect(() => {
     checkStatus();
@@ -38,23 +37,12 @@ export default function WhatsAppBotControl() {
       const data = await response.json();
       
       if (response.ok) {
-        toast({
-          title: "WhatsApp Bot Starting",
-          description: "Check the server console for QR code to scan with WhatsApp",
-        });
+        console.log("WhatsApp Bot Starting - check server console for QR code");
       } else {
-        toast({
-          title: "Error",
-          description: data.error || "Failed to start WhatsApp bot",
-          variant: "destructive",
-        });
+        console.error("Failed to start WhatsApp bot:", data.error);
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to start WhatsApp bot",
-        variant: "destructive",
-      });
+      console.error("Failed to start WhatsApp bot:", error);
     } finally {
       setIsLoading(false);
       setTimeout(checkStatus, 2000);
@@ -68,23 +56,12 @@ export default function WhatsAppBotControl() {
       const data = await response.json();
       
       if (response.ok) {
-        toast({
-          title: "WhatsApp Bot Stopped",
-          description: data.message,
-        });
+        console.log("WhatsApp Bot Stopped:", data.message);
       } else {
-        toast({
-          title: "Error",
-          description: data.error || "Failed to stop WhatsApp bot",
-          variant: "destructive",
-        });
+        console.error("Failed to stop WhatsApp bot:", data.error);
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to stop WhatsApp bot",
-        variant: "destructive",
-      });
+      console.error("Failed to stop WhatsApp bot:", error);
     } finally {
       setIsLoading(false);
       setTimeout(checkStatus, 1000);

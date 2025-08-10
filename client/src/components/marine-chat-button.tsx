@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { MessageCircle, Send } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+
 import { useLocation } from "wouter";
 
 interface MarineChatButtonProps {
@@ -23,7 +23,6 @@ export default function MarineChatButton({
   variant = "marine"
 }: MarineChatButtonProps) {
   const [isConnecting, setIsConnecting] = useState(false);
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [location, setLocation] = useLocation();
 
@@ -32,12 +31,6 @@ export default function MarineChatButton({
       return await apiRequest('/api/chat/connect', 'POST', { receiverId });
     },
     onSuccess: () => {
-      toast({
-        title: "Chat Request Sent! ⚓",
-        description: `Your message request has been sent to ${receiverName}. They can accept to start chatting.`,
-        duration: 5000,
-        className: "maritime-toast"
-      });
       queryClient.invalidateQueries({ queryKey: ['/api/chat/connections'] });
       // Navigate to QChat page after sending connection request
       setTimeout(() => {
@@ -45,12 +38,7 @@ export default function MarineChatButton({
       }, 500);
     },
     onError: (error: any) => {
-      toast({
-        title: "Connection Issue 🌊",
-        description: error.response?.data?.message || "Unable to send chat request. Please try again.",
-        variant: "destructive",
-        duration: 4000
-      });
+      console.error('Connection error:', error);
     },
     onSettled: () => {
       setIsConnecting(false);

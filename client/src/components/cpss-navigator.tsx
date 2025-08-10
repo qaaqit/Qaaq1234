@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -666,7 +666,7 @@ export default function CPSSNavigator({ onServiceSelect }: CPSSNavigatorProps) {
     category: '',
     tags: ''
   });
-  const { toast } = useToast();
+
   const { user } = useAuth();
   const observerRef = useRef<IntersectionObserver>();
   const lastItemRef = useRef<HTMLDivElement>(null);
@@ -774,10 +774,7 @@ export default function CPSSNavigator({ onServiceSelect }: CPSSNavigatorProps) {
     
     // Copy to clipboard
     navigator.clipboard.writeText(`${item.title} - ${item.content}`);
-    toast({
-      title: "Shared!",
-      description: "Content copied to clipboard",
-    });
+    console.log("Content copied to clipboard");
   };
 
   // Admin functions
@@ -816,20 +813,14 @@ export default function CPSSNavigator({ onServiceSelect }: CPSSNavigatorProps) {
     ));
 
     setEditingItem(null);
-    toast({
-      title: "Item Updated",
-      description: "Content has been updated successfully",
-    });
+    console.log("Item updated successfully");
   };
 
   const handleDeleteItem = (itemId: string) => {
     setDisplayedItems(prev => prev.filter(item => item.id !== itemId));
     setCurrentItems(prev => prev.filter(item => item.id !== itemId));
     
-    toast({
-      title: "Item Deleted",
-      description: "Content has been removed",
-    });
+    console.log("Item deleted");
   };
 
   const handleMoveUp = (itemId: string) => {
@@ -846,10 +837,7 @@ export default function CPSSNavigator({ onServiceSelect }: CPSSNavigatorProps) {
     setDisplayedItems(moveItemUp);
     setCurrentItems(moveItemUp);
     
-    toast({
-      title: "Item Moved Up",
-      description: "Item priority increased",
-    });
+    console.log("Item moved up");
   };
 
   const handleMoveDown = (itemId: string) => {
@@ -866,10 +854,7 @@ export default function CPSSNavigator({ onServiceSelect }: CPSSNavigatorProps) {
     setDisplayedItems(moveItemDown);
     setCurrentItems(moveItemDown);
     
-    toast({
-      title: "Item Moved Down",
-      description: "Item priority decreased",
-    });
+    console.log("Item moved down");
   };
 
   const getLevelTitle = () => {
