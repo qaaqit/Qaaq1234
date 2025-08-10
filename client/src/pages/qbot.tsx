@@ -298,16 +298,16 @@ export default function QBOTPage({ user }: QBOTPageProps) {
               </QBOTChatContainer>
             </div>
 
-            {/* Image Carousel - Flush with bottom navigation */}
-            <div className="h-[120px]">
+            {/* Image Carousel - Positioned lower with more height */}
+            <div className="h-[200px] pt-8">
               <ImageCarousel className="h-full" />
             </div>
           </TabsContent>
 
           {/* Questions Tab Content */}
           <TabsContent value="questions" className="flex-1 flex flex-col">
-            {/* Image Carousel at top - Flush with content */}
-            <div className="h-[120px]">
+            {/* Image Carousel at top - Positioned lower with more height */}
+            <div className="h-[200px] pt-8">
               <ImageCarousel className="h-full" />
             </div>
             
