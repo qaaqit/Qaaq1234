@@ -48,7 +48,7 @@ export const users = pgTable("users", {
   whatsAppDisplayName: text("whatsapp_display_name"), // WhatsApp display name from QBOT
   
   // Google OAuth fields
-  googleId: text("google_id").unique(), // Google account ID
+  googleId: text("google_id"), // Google account ID
   googleEmail: text("google_email"), // Google email address
   googleProfilePictureUrl: text("google_profile_picture_url"), // Google profile picture
   googleDisplayName: text("google_display_name"), // Google display name

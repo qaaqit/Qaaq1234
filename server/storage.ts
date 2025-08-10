@@ -129,12 +129,6 @@ export class DatabaseStorage implements IStorage {
         profilePictureUrl: user.whatsapp_profile_picture_url || null,
         whatsAppProfilePictureUrl: user.whatsapp_profile_picture_url || null,
         whatsAppDisplayName: user.whatsapp_display_name || null,
-        // Google OAuth fields
-        googleId: user.google_id || null,
-        googleEmail: user.google_email || null,
-        googleProfilePictureUrl: user.google_profile_picture_url || null,
-        googleDisplayName: user.google_display_name || null,
-        authProvider: user.auth_provider || 'qaaq',
       } as User;
       
       console.log(`User ${id} final location: city=${userObj.city}, lat=${userObj.latitude}, lng=${userObj.longitude}, deviceLat=${userObj.deviceLatitude}`);
@@ -333,141 +327,89 @@ export class DatabaseStorage implements IStorage {
     return cityCoords[cityKey] || cityCoords['default'];
   }
 
-  private convertDbUserToUser(user: any): User {
-    const fullName = [user.first_name, user.middle_name, user.last_name].filter(Boolean).join(' ') || user.full_name || user.email || 'Maritime User';
-    const defaultCoords = this.getCityCoordinates(user.city || user.current_city || 'mumbai', user.current_country || 'india');
-    
-    return {
-      id: user.id,
-      fullName: fullName,
-      email: user.email || '',
-      password: '',
-      userType: user.current_ship_name ? 'sailor' : 'local',
-      isAdmin: user.is_admin || user.is_platform_admin || (user.email === "mushy.piyush@gmail.com") || false,
-      nickname: '',
-      rank: user.maritime_rank || '',
-      shipName: user.current_ship_name || user.last_ship || '',
-      imoNumber: user.current_ship_imo || '',
-      port: user.last_port_visited || user.city || user.current_city || '',
-      visitWindow: '',
-      city: user.city || user.current_city || 'Mumbai',
-      country: user.current_country || 'India',
-      latitude: parseFloat(user.current_latitude) || defaultCoords.lat,
-      longitude: parseFloat(user.current_longitude) || defaultCoords.lng,
-      deviceLatitude: parseFloat(user.current_latitude) || null,
-      deviceLongitude: parseFloat(user.current_longitude) || null,
-      locationSource: user.current_latitude ? 'device' : 'city',
-      locationUpdatedAt: user.location_updated_at || new Date(),
-      isVerified: user.is_verified || user.has_completed_onboarding || true,
-      loginCount: user.login_count || 1,
-      lastLogin: user.last_login || user.last_login_at || new Date(),
-      createdAt: user.created_at || new Date(),
-      questionCount: user.question_count || 0,
-      answerCount: user.answer_count || 0,
-      profilePictureUrl: user.whatsapp_profile_picture_url || user.google_profile_picture_url || null,
-      whatsAppProfilePictureUrl: user.whatsapp_profile_picture_url || null,
-      whatsAppDisplayName: user.whatsapp_display_name || null,
-      // Google OAuth fields
-      googleId: user.google_id || null,
-      googleEmail: user.google_email || null,
-      googleProfilePictureUrl: user.google_profile_picture_url || null,
-      googleDisplayName: user.google_display_name || null,
-      authProvider: user.auth_provider || 'qaaq',
-    } as User;
-  }
-
-  async getUserByGoogleId(googleId: string): Promise<User | undefined> {
-    try {
-      const result = await pool.query('SELECT * FROM users WHERE google_id = $1 LIMIT 1', [googleId]);
-      if (result.rows.length === 0) return undefined;
-      
-      const user = result.rows[0];
-      return this.convertDbUserToUser(user);
-    } catch (error) {
-      console.error('Get user by Google ID error:', error);
-      return undefined;
-    }
-  }
-
-  async createGoogleUser(userData: any): Promise<User> {
-    try {
-      console.log('Creating Google user with data:', userData);
-      const result = await pool.query(`
-        INSERT INTO users (
-          google_id, full_name, email, google_email, google_profile_picture_url, 
-          google_display_name, auth_provider, user_type, is_verified, is_admin, created_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW()) 
-        RETURNING *
-      `, [
-        userData.googleId,
-        userData.fullName,
-        userData.email,
-        userData.googleEmail,
-        userData.googleProfilePictureUrl,
-        userData.googleDisplayName,
-        userData.authProvider || 'google',
-        userData.userType || 'sailor',
-        userData.isVerified || true,
-        userData.isAdmin || false
-      ]);
-      
-      console.log('Google user created successfully:', result.rows[0].id);
-      return this.convertDbUserToUser(result.rows[0]);
-    } catch (error) {
-      console.error('Create Google user error:', error);
-      throw error;
-    }
-  }
-
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.email, email));
     return user || undefined;
   }
 
-  // Stub methods for Google OAuth - minimal implementation for testing
   async getUserByGoogleId(googleId: string): Promise<User | undefined> {
     try {
+      console.log(`Looking up user by Google ID: ${googleId}`);
       const result = await pool.query('SELECT * FROM users WHERE google_id = $1 LIMIT 1', [googleId]);
-      if (result.rows.length === 0) return undefined;
+      
+      if (result.rows.length === 0) {
+        console.log(`No user found with Google ID: ${googleId}`);
+        return undefined;
+      }
       
       const user = result.rows[0];
-      return this.convertDbUserToUser(user);
+      const fullName = [user.first_name, user.middle_name, user.last_name].filter(Boolean).join(' ') || user.full_name || user.email || 'Maritime User';
+      
+      return {
+        id: user.id,
+        fullName: fullName,
+        email: user.email,
+        password: user.password,
+        userType: user.user_type || 'sailor',
+        isAdmin: user.is_admin || false,
+        nickname: user.nickname,
+        rank: user.rank,
+        maritimeRank: user.maritime_rank,
+        shipName: user.ship_name || user.current_ship_name,
+        currentShipName: user.current_ship_name,
+        imoNumber: user.imo_number || user.current_ship_imo,
+        currentShipIMO: user.current_ship_imo,
+        port: user.port,
+        visitWindow: user.visit_window,
+        city: user.city,
+        currentCity: user.current_city,
+        country: user.country,
+        nationality: user.nationality,
+        experienceLevel: user.experience_level,
+        lastCompany: user.last_company,
+        lastShip: user.last_ship,
+        onboardSince: user.onboard_since,
+        onboardStatus: user.onboard_status,
+        dateOfBirth: user.date_of_birth,
+        gender: user.gender,
+        whatsAppNumber: user.whatsapp_number,
+        whatsAppProfilePictureUrl: user.whatsapp_profile_picture_url,
+        whatsAppDisplayName: user.whatsapp_display_name,
+        googleId: user.google_id,
+        googleEmail: user.google_email,
+        googleProfilePictureUrl: user.google_profile_picture_url,
+        googleDisplayName: user.google_display_name,
+        authProvider: user.auth_provider || 'qaaq',
+        hasCompletedOnboarding: user.has_completed_onboarding || false,
+        isPlatformAdmin: user.is_platform_admin || false,
+        isBlocked: user.is_blocked || false,
+        latitude: user.latitude,
+        longitude: user.longitude,
+        currentLatitude: user.current_latitude,
+        currentLongitude: user.current_longitude,
+        deviceLatitude: user.device_latitude,
+        deviceLongitude: user.device_longitude,
+        locationSource: user.location_source || 'city',
+        locationUpdatedAt: user.location_updated_at,
+        questionCount: user.question_count || 0,
+        answerCount: user.answer_count || 0,
+        isVerified: user.is_verified || false,
+        loginCount: user.login_count || 0,
+        lastLogin: user.last_login,
+        lastUpdated: user.last_updated,
+        createdAt: user.created_at,
+        profilePictureUrl: user.google_profile_picture_url || user.whatsapp_profile_picture_url,
+        hasSetCustomPassword: false, // Default value since column doesn't exist
+        liberalLoginCount: 0, // Default value since column doesn't exist
+        needsPasswordChange: false, // Default value since column doesn't exist
+        passwordCreatedAt: null, // Default value since column doesn't exist
+        passwordRenewalDue: null, // Default value since column doesn't exist
+        mustCreatePassword: user.password ? false : true, // Infer based on password existence
+      };
     } catch (error) {
-      console.error('Get user by Google ID error:', error);
+      console.error('Error getting user by Google ID:', error);
       return undefined;
     }
-  }
-
-  // Helper method for convertDbUserToUser - fix broken structure
-  private addMissingUserFields(baseUser: any): User {
-    return {
-      ...baseUser,
-      isPlatformAdmin: baseUser.is_platform_admin || false,
-      isBlocked: baseUser.is_blocked || false,
-      latitude: baseUser.latitude,
-      longitude: baseUser.longitude,
-      currentLatitude: baseUser.current_latitude,
-      currentLongitude: baseUser.current_longitude,
-      deviceLatitude: baseUser.device_latitude,
-      deviceLongitude: baseUser.device_longitude,
-      locationSource: baseUser.location_source || 'city',
-      locationUpdatedAt: baseUser.location_updated_at,
-      questionCount: baseUser.question_count || 0,
-      answerCount: baseUser.answer_count || 0,
-      isVerified: baseUser.is_verified || false,
-      loginCount: baseUser.login_count || 0,
-      lastLogin: baseUser.last_login,
-      lastUpdated: baseUser.last_updated,
-      createdAt: baseUser.created_at,
-      profilePictureUrl: baseUser.google_profile_picture_url || baseUser.whatsapp_profile_picture_url,
-      hasSetCustomPassword: false,
-      liberalLoginCount: 0,
-      needsPasswordChange: false,
-      passwordCreatedAt: null,
-      passwordRenewalDue: null,
-      mustCreatePassword: baseUser.password ? false : true,
-      lastChatClearAt: baseUser.last_chat_clear_at || null, // Add missing required field
-    };
   }
 
   async updateUser(userId: string, updates: Partial<User>): Promise<User | undefined> {
@@ -1206,7 +1148,38 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Google OAuth user management methods - duplicate removed
 
+  async createGoogleUser(userData: any): Promise<User> {
+    try {
+      const result = await pool.query(`
+        INSERT INTO users (
+          id, full_name, email, google_id, google_email, 
+          google_profile_picture_url, google_display_name, 
+          auth_provider, user_type, is_verified, 
+          created_at, last_updated, last_login
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW(), NOW())
+        RETURNING *
+      `, [
+        userData.googleId, // Use Google ID as user ID
+        userData.fullName,
+        userData.email,
+        userData.googleId,
+        userData.googleEmail,
+        userData.googleProfilePictureUrl,
+        userData.googleDisplayName,
+        'google',
+        userData.userType || 'sailor',
+        true
+      ]);
+      
+      return result.rows[0] as User;
+    } catch (error) {
+      console.error('Error creating Google user:', error);
+      throw error;
+    }
+  }
 }
 
 // Use new dedicated database for authentication testing

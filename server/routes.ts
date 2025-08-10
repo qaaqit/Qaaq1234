@@ -3,9 +3,7 @@ import { createServer, type Server } from "http";
 import ws from 'ws';
 import jwt from 'jsonwebtoken';
 import { storage } from "./storage";
-import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, insertChatConnectionSchema, insertChatMessageSchema, insertRankGroupSchema, insertRankGroupMemberSchema, insertRankGroupMessageSchema, subscriptions, userSubscriptionStatus, users } from "@shared/schema";
-import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, insertChatConnectionSchema, insertChatMessageSchema, insertRankGroupSchema, insertRankGroupMemberSchema, insertRankGroupMessageSchema } from "@shared/schema";
 import { sendVerificationEmail } from "./services/email";
 import { pool } from "./db";
 import { getQuestions, searchQuestions, getQuestionAnswers } from "./questions-service";
@@ -46,19 +44,15 @@ const authenticateToken = async (req: Request, res: Response, next: NextFunction
   const authHeader = req.headers.authorization;
   const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
-  console.log('Auth check - Header:', !!authHeader, 'Token:', token ? token.substring(0, 20) + '...' : 'none');
-
   if (!token) {
     return res.status(401).json({ message: 'Access token required' });
   }
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
-    console.log('JWT decoded successfully for user:', decoded.userId);
     req.userId = decoded.userId;
     next();
   } catch (error) {
-    console.log('JWT verification failed:', error instanceof Error ? error.message : 'Unknown error');
     return res.status(403).json({ message: 'Invalid or expired token' });
   }
 };
@@ -3593,131 +3587,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({
         success: false,
         message: 'Failed to fetch payment analytics'
-      });
-    }
-  });
-
-  // Temporary admin elevation endpoint (for fixing auth issues)
-  app.post('/api/temp/make-admin', async (req, res) => {
-    try {
-      const { userId } = req.body;
-      
-      if (!userId) {
-        return res.status(400).json({ message: 'User ID required' });
-      }
-      
-      console.log(`🔧 Temporary admin elevation for user: ${userId}`);
-      
-      // Update user to admin in database
-      await db.update(users).set({ isAdmin: true }).where(eq(users.id, userId));
-      
-      res.json({
-        success: true,
-        message: `User ${userId} elevated to admin`,
-        userId
-      });
-      
-    } catch (error) {
-      console.error('Temp admin elevation error:', error);
-      res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
-    }
-  });
-
-  // Check current user's admin status (debug endpoint)
-  app.get('/api/debug/user-status', authenticateToken, async (req: any, res) => {
-    try {
-      const userId = req.userId;
-      const user = await storage.getUser(userId);
-      
-      res.json({
-        userId,
-        user: user ? {
-          id: user.id,
-          fullName: user.fullName,
-          email: user.email,
-          isAdmin: user.isAdmin,
-          userType: user.userType
-        } : null,
-        isAuthenticated: !!userId
-      });
-    } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
-    }
-  });
-
-  // Admin: Activate premium mode for admin users (admin only)
-  app.post('/api/admin/activate-premium', authenticateToken, isAdmin, async (req: any, res) => {
-    try {
-      const adminUserId = req.userId;
-      
-      console.log(`🔐 Admin premium activation requested by: ${adminUserId}`);
-      
-      // Check if admin already has premium status
-      const existingStatus = await razorpayService.checkUserPremiumStatus(adminUserId);
-      
-      if (existingStatus.isPremium || existingStatus.isSuperUser) {
-        return res.json({
-          success: true,
-          message: 'Admin already has premium access',
-          status: existingStatus
-        });
-      }
-
-      // Create an admin premium subscription entry without Razorpay
-      const adminSubscription = await db.insert(subscriptions).values({
-        userId: adminUserId,
-        subscriptionType: 'premium',
-        razorpayPlanId: 'admin_premium_plan', // Admin plan ID
-        status: 'active',
-        amount: 0, // Free for admin
-        currency: 'INR',
-        currentPeriodStart: new Date(),
-        currentPeriodEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
-        totalCount: 1,
-        paidCount: 1,
-        remainingCount: 0,
-        notes: { adminActivated: true, activatedAt: new Date().toISOString() }
-      }).returning();
-
-      // Update user subscription status
-      await db.insert(userSubscriptionStatus).values({
-        userId: adminUserId,
-        isPremium: true,
-        isSuperUser: false,
-        premiumExpiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-        superUserExpiresAt: null,
-        currentPremiumSubscriptionId: adminSubscription[0].id,
-        currentSuperUserSubscriptionId: null,
-        totalSpent: 0,
-        updatedAt: new Date()
-      }).onConflictDoUpdate({
-        target: userSubscriptionStatus.userId,
-        set: {
-          isPremium: true,
-          premiumExpiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-          currentPremiumSubscriptionId: adminSubscription[0].id,
-          updatedAt: new Date()
-        }
-      });
-
-      console.log(`✅ Admin premium mode activated for user: ${adminUserId}`);
-
-      res.json({
-        success: true,
-        message: 'Admin premium mode activated successfully',
-        subscription: adminSubscription[0],
-        status: {
-          isPremium: true,
-          isSuperUser: false,
-          premiumExpiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-          superUserExpiresAt: null
-        }
-      });
-    } catch (error) {
-      console.error('Error activating admin premium mode:', error);
-      res.status(500).json({
-        success: false,
-        message: error instanceof Error ? error.message : 'Failed to activate admin premium mode'
       });
     }
   });
