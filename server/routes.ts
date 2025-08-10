@@ -2484,10 +2484,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user profile for CV/Profile page
   app.get('/api/users/profile', authenticateToken, async (req, res) => {
     try {
-      const userId = req.user?.userId || req.user?.id || req.user?.email;
+      const userId = req.userId; // Use req.userId set by authenticateToken middleware
       if (!userId) {
         return res.status(400).json({ error: 'User ID not found' });
       }
+      
+      console.log(`📋 Fetching profile for user: ${userId}`);
       
       const user = await storage.getUser(userId);
       if (!user) {
@@ -2504,7 +2506,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update user profile
   app.put('/api/users/profile', authenticateToken, async (req, res) => {
     try {
-      const userId = req.user?.userId || req.user?.id || req.user?.email;
+      const userId = req.userId; // Use req.userId set by authenticateToken middleware
       if (!userId) {
         return res.status(400).json({ error: 'User ID not found' });
       }
