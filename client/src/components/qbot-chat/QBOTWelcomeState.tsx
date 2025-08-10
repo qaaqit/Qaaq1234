@@ -20,7 +20,7 @@ export default function QBOTWelcomeState() {
         
         {/* Description */}
         <p className="text-sm text-gray-500 leading-relaxed">
-          Start a conversation with our merchant navy community.
+          Start a conversation with our merchant navy AI Bot.
         </p>
       </div>
     </div>

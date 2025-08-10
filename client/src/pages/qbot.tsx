@@ -256,8 +256,8 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                     isAdmin={user?.isAdmin}
                   />
                   
-                  {/* Chat Area with Clean Background */}
-                  <QBOTChatArea>
+                  {/* Chat Area with Engineering Grid Background */}
+                  <QBOTChatArea className="engineering-grid">
                     <div className="flex flex-col h-full p-4">
                       {/* Messages or Welcome State */}
                       {isLoadingHistory ? (
@@ -287,8 +287,8 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                     </div>
                   </QBOTChatArea>
                   
-                  {/* Input Area positioned lower with more padding */}
-                  <div className="p-4 pt-8 border-t border-gray-100 mt-4">
+                  {/* Input Area positioned lower - white background without grid */}
+                  <div className="p-4 pt-8 border-t border-gray-100 mt-4 bg-white">
                     <QBOTInputArea 
                       onSendMessage={handleSendQBotMessage}
                       disabled={isQBotTyping}
