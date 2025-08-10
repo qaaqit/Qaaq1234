@@ -44,6 +44,7 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
     queryFn: async () => {
       if (!connection?.id) return [];
       const token = localStorage.getItem('token');
+      console.log('🔑 Fetching messages with token:', token ? token.substring(0, 20) + '...' : 'null');
       const response = await fetch(`/api/chat/messages/${connection.id}`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -66,6 +67,7 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
       
       // Also send via HTTP for reliability
       const token = localStorage.getItem('token');
+      console.log('🔑 Sending message with token:', token ? token.substring(0, 20) + '...' : 'null');
       const response = await fetch('/api/chat/message', {
         method: 'POST',
         headers: { 
