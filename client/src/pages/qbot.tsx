@@ -287,6 +287,9 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                     </div>
                   </QBOTChatArea>
                   
+                  {/* Orange line separator between chat area and input */}
+                  <div className="border-t-2 border-orange-500"></div>
+                  
                   {/* Input Area flush with carousel - with engineering grid background */}
                   <div className="p-4 engineering-grid">
                     <QBOTInputArea 
