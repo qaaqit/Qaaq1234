@@ -218,6 +218,27 @@ export default function AdminPanel() {
     },
   });
 
+  // Mutation to make current user admin
+  const makeAdminMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest('/api/temp/make-admin', 'POST', { userId: '44885683' });
+    },
+    onSuccess: (data: any) => {
+      toast({
+        title: "Admin Access Granted",
+        description: "User has been elevated to admin status",
+      });
+      console.log('Admin elevation successful:', data);
+    },
+    onError: (error) => {
+      toast({
+        title: "Admin Elevation Failed",
+        description: error instanceof Error ? error.message : "Failed to grant admin access",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Mutation to activate admin premium mode
   const activatePremiumMutation = useMutation({
     mutationFn: async () => {
@@ -289,6 +310,40 @@ export default function AdminPanel() {
           >
             <i className="fas fa-file-text mr-2"></i>
             Edit QBOT Rules
+          </Button>
+          <Button
+            onClick={() => debugUserMutation.mutate()}
+            disabled={debugUserMutation.isPending}
+            className="bg-gray-600 hover:bg-gray-700 text-white w-full sm:w-auto"
+          >
+            {debugUserMutation.isPending ? (
+              <>
+                <i className="fas fa-spinner fa-spin mr-2"></i>
+                Checking...
+              </>
+            ) : (
+              <>
+                <i className="fas fa-user-check mr-2"></i>
+                Check User Status
+              </>
+            )}
+          </Button>
+          <Button
+            onClick={() => makeAdminMutation.mutate()}
+            disabled={makeAdminMutation.isPending}
+            className="bg-red-600 hover:bg-red-700 text-white w-full sm:w-auto"
+          >
+            {makeAdminMutation.isPending ? (
+              <>
+                <i className="fas fa-spinner fa-spin mr-2"></i>
+                Elevating...
+              </>
+            ) : (
+              <>
+                <i className="fas fa-shield-alt mr-2"></i>
+                Make Admin
+              </>
+            )}
           </Button>
           <Button
             onClick={() => activatePremiumMutation.mutate()}

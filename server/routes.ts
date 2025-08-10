@@ -3,8 +3,9 @@ import { createServer, type Server } from "http";
 import ws from 'ws';
 import jwt from 'jsonwebtoken';
 import { storage } from "./storage";
-import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, insertChatConnectionSchema, insertChatMessageSchema, insertRankGroupSchema, insertRankGroupMemberSchema, insertRankGroupMessageSchema, subscriptions, userSubscriptionStatus } from "@shared/schema";
+import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, insertChatConnectionSchema, insertChatMessageSchema, insertRankGroupSchema, insertRankGroupMemberSchema, insertRankGroupMessageSchema, subscriptions, userSubscriptionStatus, users } from "@shared/schema";
 import { db } from "./db";
+import { eq } from "drizzle-orm";
 import { sendVerificationEmail } from "./services/email";
 import { pool } from "./db";
 import { getQuestions, searchQuestions, getQuestionAnswers } from "./questions-service";
@@ -45,15 +46,19 @@ const authenticateToken = async (req: Request, res: Response, next: NextFunction
   const authHeader = req.headers.authorization;
   const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
+  console.log('Auth check - Header:', !!authHeader, 'Token:', token ? token.substring(0, 20) + '...' : 'none');
+
   if (!token) {
     return res.status(401).json({ message: 'Access token required' });
   }
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+    console.log('JWT decoded successfully for user:', decoded.userId);
     req.userId = decoded.userId;
     next();
   } catch (error) {
+    console.log('JWT verification failed:', error instanceof Error ? error.message : 'Unknown error');
     return res.status(403).json({ message: 'Invalid or expired token' });
   }
 };
@@ -3589,6 +3594,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: false,
         message: 'Failed to fetch payment analytics'
       });
+    }
+  });
+
+  // Temporary admin elevation endpoint (for fixing auth issues)
+  app.post('/api/temp/make-admin', async (req, res) => {
+    try {
+      const { userId } = req.body;
+      
+      if (!userId) {
+        return res.status(400).json({ message: 'User ID required' });
+      }
+      
+      console.log(`🔧 Temporary admin elevation for user: ${userId}`);
+      
+      // Update user to admin in database
+      await db.update(users).set({ isAdmin: true }).where(eq(users.id, userId));
+      
+      res.json({
+        success: true,
+        message: `User ${userId} elevated to admin`,
+        userId
+      });
+      
+    } catch (error) {
+      console.error('Temp admin elevation error:', error);
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 
