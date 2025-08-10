@@ -287,8 +287,8 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                     </div>
                   </QBOTChatArea>
                   
-                  {/* Input Area positioned lower - with engineering grid background */}
-                  <div className="p-4 pt-8 border-t border-gray-100 mt-4 engineering-grid">
+                  {/* Input Area flush with carousel - with engineering grid background */}
+                  <div className="p-4 engineering-grid">
                     <QBOTInputArea 
                       onSendMessage={handleSendQBotMessage}
                       disabled={isQBotTyping}
