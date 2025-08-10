@@ -88,6 +88,17 @@ app.use((req, res, next) => {
 let whatsappBot: QoiGPTBot | null = null;
 
 (async () => {
+  console.log('🚀 Starting QAAQ Maritime Platform...');
+  const startTime = Date.now();
+  
+  // Warm up database connection early
+  try {
+    await pool.query('SELECT 1');
+    console.log('✅ Database connection warmed up');
+  } catch (error) {
+    console.error('❌ Database warmup failed:', error);
+  }
+  
   const server = await registerRoutes(app);
 
   // Add WhatsApp bot endpoints
@@ -150,13 +161,46 @@ let whatsappBot: QoiGPTBot | null = null;
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
+  
+  // Add health check endpoint for faster cold starts
+  app.get('/health', (req, res) => {
+    res.status(200).json({ 
+      status: 'ok', 
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime()
+    });
+  });
+
+  // Add readiness probe for deployment health
+  app.get('/ready', async (req, res) => {
+    try {
+      // Quick database connectivity check
+      await pool.query('SELECT 1');
+      res.status(200).json({ 
+        status: 'ready', 
+        database: 'connected',
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      res.status(503).json({ 
+        status: 'not ready', 
+        error: 'database connection failed',
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
   server.listen({
     port,
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
+    const bootTime = Date.now() - startTime;
     log(`serving on port ${port}`);
     console.log(`📱 WhatsApp Bot API available at /api/whatsapp-start`);
+    console.log(`⚡ Server ready in ${bootTime}ms`);
+    console.log(`🌍 Production URL: https://qaaq.app`);
+    console.log(`🔍 Health checks: /health | /ready`);
   });
 
   // Handle graceful shutdown
