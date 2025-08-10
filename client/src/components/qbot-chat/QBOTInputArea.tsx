@@ -284,7 +284,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
           />
           
           {/* Left side icons - Privacy and Crown */}
-          <div className="absolute left-3 top-2 flex flex-col items-center gap-1">
+          <div className="absolute left-3 top-1 flex flex-col items-center gap-1">
             {/* Privacy Shield (only for premium/admin users) */}
             {((userStatus as any)?.isPremium || (userStatus as any)?.isSuperUser || localStorage.getItem('isAdmin') === 'true') && (
               <button
@@ -311,7 +311,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
           </div>
 
           {/* Right side icons inside text box - Attach and Send */}
-          <div className="absolute right-3 top-2 flex items-center gap-1">
+          <div className="absolute right-3 top-1 flex items-center gap-1">
             {/* Attachment Button */}
             <ObjectUploader
               maxNumberOfFiles={5}
