@@ -129,6 +129,12 @@ export class DatabaseStorage implements IStorage {
         profilePictureUrl: user.whatsapp_profile_picture_url || null,
         whatsAppProfilePictureUrl: user.whatsapp_profile_picture_url || null,
         whatsAppDisplayName: user.whatsapp_display_name || null,
+        // Google OAuth fields
+        googleId: user.google_id || null,
+        googleEmail: user.google_email || null,
+        googleProfilePictureUrl: user.google_profile_picture_url || null,
+        googleDisplayName: user.google_display_name || null,
+        authProvider: user.auth_provider || 'qaaq',
       } as User;
       
       console.log(`User ${id} final location: city=${userObj.city}, lat=${userObj.latitude}, lng=${userObj.longitude}, deviceLat=${userObj.deviceLatitude}`);
@@ -325,6 +331,89 @@ export class DatabaseStorage implements IStorage {
     
     const cityKey = (city || '').toLowerCase().trim();
     return cityCoords[cityKey] || cityCoords['default'];
+  }
+
+  private convertDbUserToUser(user: any): User {
+    const fullName = [user.first_name, user.middle_name, user.last_name].filter(Boolean).join(' ') || user.full_name || user.email || 'Maritime User';
+    const defaultCoords = this.getCityCoordinates(user.city || user.current_city || 'mumbai', user.current_country || 'india');
+    
+    return {
+      id: user.id,
+      fullName: fullName,
+      email: user.email || '',
+      password: '',
+      userType: user.current_ship_name ? 'sailor' : 'local',
+      isAdmin: user.is_admin || user.is_platform_admin || (user.email === "mushy.piyush@gmail.com") || false,
+      nickname: '',
+      rank: user.maritime_rank || '',
+      shipName: user.current_ship_name || user.last_ship || '',
+      imoNumber: user.current_ship_imo || '',
+      port: user.last_port_visited || user.city || user.current_city || '',
+      visitWindow: '',
+      city: user.city || user.current_city || 'Mumbai',
+      country: user.current_country || 'India',
+      latitude: parseFloat(user.current_latitude) || defaultCoords.lat,
+      longitude: parseFloat(user.current_longitude) || defaultCoords.lng,
+      deviceLatitude: parseFloat(user.current_latitude) || null,
+      deviceLongitude: parseFloat(user.current_longitude) || null,
+      locationSource: user.current_latitude ? 'device' : 'city',
+      locationUpdatedAt: user.location_updated_at || new Date(),
+      isVerified: user.is_verified || user.has_completed_onboarding || true,
+      loginCount: user.login_count || 1,
+      lastLogin: user.last_login || user.last_login_at || new Date(),
+      createdAt: user.created_at || new Date(),
+      questionCount: user.question_count || 0,
+      answerCount: user.answer_count || 0,
+      profilePictureUrl: user.whatsapp_profile_picture_url || user.google_profile_picture_url || null,
+      whatsAppProfilePictureUrl: user.whatsapp_profile_picture_url || null,
+      whatsAppDisplayName: user.whatsapp_display_name || null,
+      // Google OAuth fields
+      googleId: user.google_id || null,
+      googleEmail: user.google_email || null,
+      googleProfilePictureUrl: user.google_profile_picture_url || null,
+      googleDisplayName: user.google_display_name || null,
+      authProvider: user.auth_provider || 'qaaq',
+    } as User;
+  }
+
+  async getUserByGoogleId(googleId: string): Promise<User | undefined> {
+    try {
+      const result = await pool.query('SELECT * FROM users WHERE google_id = $1 LIMIT 1', [googleId]);
+      if (result.rows.length === 0) return undefined;
+      
+      const user = result.rows[0];
+      return this.convertDbUserToUser(user);
+    } catch (error) {
+      console.error('Get user by Google ID error:', error);
+      return undefined;
+    }
+  }
+
+  async createGoogleUser(userData: any): Promise<User> {
+    try {
+      const result = await pool.query(`
+        INSERT INTO users (
+          google_id, full_name, email, google_email, google_profile_picture_url, 
+          google_display_name, auth_provider, user_type, is_verified, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW()) 
+        RETURNING *
+      `, [
+        userData.googleId,
+        userData.fullName,
+        userData.email,
+        userData.googleEmail,
+        userData.googleProfilePictureUrl,
+        userData.googleDisplayName,
+        userData.authProvider || 'google',
+        userData.userType || 'sailor',
+        userData.isVerified || true
+      ]);
+      
+      return this.convertDbUserToUser(result.rows[0]);
+    } catch (error) {
+      console.error('Create Google user error:', error);
+      throw error;
+    }
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {

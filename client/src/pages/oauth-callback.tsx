@@ -1,94 +1,88 @@
-import { useEffect, useState } from "react";
-import { useLocation } from "wouter";
-import { useToast } from "@/hooks/use-toast";
-
-interface User {
-  id: string;
-  fullName: string;
-  email: string;
-  userType: string;
-  isAdmin: boolean;
-}
+import { useEffect } from 'react';
+import { useLocation } from 'wouter';
+import { useToast } from '@/hooks/use-toast';
 
 export default function OAuthCallback() {
-  const [, navigate] = useLocation();
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const [processing, setProcessing] = useState(true);
 
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
-    const userParam = urlParams.get('user');
-    const error = urlParams.get('error');
-
-    if (error) {
-      toast({
-        title: "Authentication Failed",
-        description: `Login error: ${error}`,
-        variant: "destructive",
-      });
-      navigate('/');
-      return;
-    }
-
-    if (token && userParam) {
+    const handleCallback = () => {
       try {
-        const user: User = JSON.parse(decodeURIComponent(userParam));
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        const userParam = urlParams.get('user');
         
-        // Store authentication data
-        localStorage.setItem('authToken', token);
-        localStorage.setItem('user', JSON.stringify(user));
-        
+        if (token && userParam) {
+          // Store token in localStorage
+          localStorage.setItem('authToken', token);
+          
+          // Parse user data
+          const user = JSON.parse(decodeURIComponent(userParam));
+          console.log('Google OAuth successful:', user);
+          
+          // Store user data temporarily
+          localStorage.setItem('user', JSON.stringify(user));
+          
+          toast({
+            title: "Login Successful",
+            description: `Welcome back, ${user.fullName}!`,
+            variant: "default",
+          });
+          
+          // Redirect to QBOT Chat (home page per user preference)
+          setTimeout(() => {
+            setLocation('/qbot');
+          }, 1000);
+          
+        } else {
+          // Handle error cases
+          const error = urlParams.get('error');
+          let errorMessage = 'Authentication failed';
+          
+          if (error === 'google_auth_failed') {
+            errorMessage = 'Google authentication was cancelled or failed';
+          } else if (error === 'no_auth_code') {
+            errorMessage = 'No authorization code received from Google';
+          } else if (error === 'auth_failed') {
+            errorMessage = 'Authentication process failed';
+          }
+          
+          toast({
+            title: "Login Failed",
+            description: errorMessage,
+            variant: "destructive",
+          });
+          
+          // Redirect to login page
+          setTimeout(() => {
+            setLocation('/login');
+          }, 2000);
+        }
+      } catch (error) {
+        console.error('OAuth callback error:', error);
         toast({
-          title: "Login Successful",
-          description: `Welcome back, ${user.fullName}!`,
-          variant: "default",
-        });
-        
-        // Redirect to QBOT Chat (home page as per user preference)
-        navigate('/qbot');
-        
-      } catch (parseError) {
-        console.error('Error parsing user data:', parseError);
-        toast({
-          title: "Authentication Error",
-          description: "Invalid user data received",
+          title: "Login Error",
+          description: "Something went wrong during authentication",
           variant: "destructive",
         });
-        navigate('/');
+        
+        setTimeout(() => {
+          setLocation('/login');
+        }, 2000);
       }
-    } else {
-      toast({
-        title: "Authentication Error",
-        description: "Missing authentication data",
-        variant: "destructive",
-      });
-      navigate('/');
-    }
-    
-    setProcessing(false);
-  }, [navigate, toast]);
+    };
 
-  if (processing) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <i className="fas fa-anchor text-2xl text-white"></i>
-          </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            Completing Login...
-          </h2>
-          <p className="text-gray-600">
-            Please wait while we finish setting up your account
-          </p>
-          <div className="mt-4">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
-          </div>
-        </div>
+    handleCallback();
+  }, [setLocation, toast]);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-red-50">
+      <div className="text-center space-y-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto"></div>
+        <h2 className="text-xl font-semibold text-gray-700">Completing sign in...</h2>
+        <p className="text-gray-500">Please wait while we redirect you.</p>
       </div>
-    );
-  }
-
-  return null;
+    </div>
+  );
 }
