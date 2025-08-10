@@ -400,7 +400,7 @@ export function PremiumSubscriptionDialog({
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Premium maritime content library</span>
+                    <span className="text-sm">Premium maritime content download</span>
                   </div>
                 </div>
               </CardContent>
