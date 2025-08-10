@@ -67,22 +67,9 @@ export default function QBOTPage({ user }: QBOTPageProps) {
 
             setQBotMessages(historyMessages);
             
-            // Show welcome back message with history count
-            toast({
-              title: "Welcome Back!",
-              description: data.message,
-              duration: 4000
-            });
-            
             console.log(`✅ Loaded ${data.chatHistory.length} WhatsApp Q&A pairs`);
           } else {
             console.log(`📱 No WhatsApp history found for user: ${user.id}`);
-            // Show welcome message for new users
-            toast({
-              title: "Welcome to QBOT!",
-              description: "Start your first conversation with our maritime AI assistant.",
-              duration: 3000
-            });
           }
         }
       } catch (error) {
