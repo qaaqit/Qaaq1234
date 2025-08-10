@@ -280,7 +280,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
                      placeholder:text-gray-400 text-gray-700
                      min-h-[40px] max-h-[120px] overflow-y-auto"
             style={{ resize: 'none' }}
-            rows={1}
+            rows={2}
           />
           
           {/* Left side icons - Privacy and Crown */}
