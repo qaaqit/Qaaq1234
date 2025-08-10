@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { X, Send, Check, CheckCheck, Clock, Anchor, MessageCircle } from "lucide-react";
+import { X, Send, Check, CheckCheck, Clock, Anchor, MessageCircle, Navigation, Compass } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,10 +16,40 @@ interface QChatWindowProps {
   isOpen: boolean;
   onClose: () => void;
   connection?: ChatConnection & {
-    sender: { id: string; fullName: string; rank?: string; questionCount?: number; answerCount?: number };
-    receiver: { id: string; fullName: string; rank?: string; questionCount?: number; answerCount?: number };
+    sender: { id: string; fullName: string; rank?: string; questionCount?: number; answerCount?: number; currentLatitude?: number; currentLongitude?: number; city?: string };
+    receiver: { id: string; fullName: string; rank?: string; questionCount?: number; answerCount?: number; currentLatitude?: number; currentLongitude?: number; city?: string };
   };
 }
+
+// Utility functions for nautical calculations
+const toRadians = (degrees: number) => degrees * (Math.PI / 180);
+const toDegrees = (radians: number) => radians * (180 / Math.PI);
+
+const calculateNauticalDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+  const R = 3440.065; // Earth's radius in nautical miles
+  const dLat = toRadians(lat2 - lat1);
+  const dLon = toRadians(lon2 - lon1);
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+};
+
+const calculateBearing = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+  const dLon = toRadians(lon2 - lon1);
+  const y = Math.sin(dLon) * Math.cos(toRadians(lat2));
+  const x = Math.cos(toRadians(lat1)) * Math.sin(toRadians(lat2)) -
+    Math.sin(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.cos(dLon);
+  const bearing = toDegrees(Math.atan2(y, x));
+  return (bearing + 360) % 360;
+};
+
+const formatBearing = (bearing: number): string => {
+  const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+  const index = Math.round(bearing / 22.5) % 16;
+  return `${Math.round(bearing)}° ${directions[index]}`;
+};
 
 export default function QChatWindow({ isOpen, onClose, connection }: QChatWindowProps) {
   const [message, setMessage] = useState("");
@@ -30,6 +60,24 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
   const queryClient = useQueryClient();
 
   const otherUser = connection?.sender?.id === user?.id ? connection?.receiver : connection?.sender;
+  
+  // Calculate nautical distance and bearing if both users have coordinates
+  const currentUser = connection?.sender?.id === user?.id ? connection?.sender : connection?.receiver;
+  const nauticalData = useMemo(() => {
+    if (currentUser?.currentLatitude && currentUser?.currentLongitude && 
+        otherUser?.currentLatitude && otherUser?.currentLongitude) {
+      const distance = calculateNauticalDistance(
+        currentUser.currentLatitude, currentUser.currentLongitude,
+        otherUser.currentLatitude, otherUser.currentLongitude
+      );
+      const bearing = calculateBearing(
+        currentUser.currentLatitude, currentUser.currentLongitude,
+        otherUser.currentLatitude, otherUser.currentLongitude
+      );
+      return { distance: Math.round(distance * 10) / 10, bearing };
+    }
+    return null;
+  }, [currentUser, otherUser]);
 
   // Initialize WebSocket connection when chat opens
   useEffect(() => {
@@ -170,7 +218,7 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
 
   const getMessageStatus = (msg: ChatMessage) => {
     if (msg.senderId === user?.id) {
-      return msg.isRead ? <CheckCheck size={14} className="text-ocean-teal" /> : <Check size={14} className="text-gray-400" />;
+      return msg.isRead ? <CheckCheck size={14} className="text-red-200" /> : <Check size={14} className="text-red-300" />;
     }
     return null;
   };
@@ -178,57 +226,68 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
   if (!isOpen || !connection) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md h-[600px] bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 shadow-2xl border-2 border-navy/20">
-        {/* Header */}
-        <CardHeader className="bg-gradient-to-r from-navy to-blue-800 text-white p-4 rounded-t-lg">
-          <div className="flex items-center justify-between bg-[#b8935e94]">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md h-[600px] bg-white shadow-2xl border border-gray-200/50 rounded-2xl overflow-hidden">
+        {/* Sleek Chat Header with Nautical Info */}
+        <CardHeader className="bg-gradient-to-r from-red-600 via-orange-500 to-red-600 text-white p-4 relative overflow-hidden">
+          {/* Subtle pattern overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-red-600/20 via-orange-400/20 to-red-600/20 opacity-30"></div>
+          
+          <div className="relative flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <Avatar className="w-10 h-10 border-2 border-white/30">
-                {false && (
-                  <img 
-                    src=""
-                    alt={`${otherUser?.fullName}'s profile`}
-                    className="w-full h-full rounded-full object-cover"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                    }}
-                  />
-                )}
-                <AvatarFallback className="bg-ocean-teal text-white font-bold">
-                  {getInitials(otherUser?.fullName || 'U')}
+              <Avatar className="w-12 h-12 border-2 border-white/40 shadow-lg">
+                <AvatarFallback className="bg-white/20 backdrop-blur text-white font-bold text-lg">
+                  {getInitials(otherUser?.fullName || 'MP')}
                 </AvatarFallback>
               </Avatar>
-              <div>
-                <h3 className="font-semibold text-sm">{otherUser?.fullName || 'Marine Professional'}</h3>
-                <div className="flex items-center space-x-2">
+              <div className="flex-1">
+                <h3 className="font-bold text-base text-white tracking-wide">
+                  {otherUser?.fullName || 'Marine Professional'}
+                </h3>
+                <div className="flex items-center space-x-3 mt-1">
                   {otherUser?.rank && (
-                    <Badge className="bg-white/20 text-white text-xs px-2 py-0.5">
-                      {otherUser.rank} {otherUser.questionCount !== undefined && 
-                        <span className="ml-1">
-                          {otherUser.questionCount}Q
-                        </span>
-                      }
+                    <Badge className="bg-white/25 backdrop-blur text-white text-xs px-2 py-0.5 border border-white/30">
+                      {otherUser.rank.replace('_', ' ').toUpperCase()}
                     </Badge>
                   )}
-                  <span className="text-xs text-blue-100">
-                    {connection.status === 'accepted' ? 'Connected' : 'Pending'}
-                  </span>
+                  <div className="flex items-center space-x-1 text-xs text-white/90">
+                    <MessageCircle size={12} />
+                    <span>{connection.status === 'accepted' ? 'Connected' : 'Pending'}</span>
+                  </div>
                 </div>
+                
+                {/* Nautical Distance & Bearing Display */}
+                {nauticalData && (
+                  <div className="flex items-center space-x-4 mt-2 text-xs text-white/95">
+                    <div className="flex items-center space-x-1 bg-white/15 backdrop-blur px-2 py-1 rounded-full">
+                      <Navigation size={12} />
+                      <span className="font-medium">{nauticalData.distance} NM</span>
+                    </div>
+                    <div className="flex items-center space-x-1 bg-white/15 backdrop-blur px-2 py-1 rounded-full">
+                      <Compass size={12} />
+                      <span className="font-medium">{formatBearing(nauticalData.bearing)}</span>
+                    </div>
+                  </div>
+                )}
+                
+                {/* City fallback if no coordinates */}
+                {!nauticalData && (otherUser?.city || currentUser?.city) && (
+                  <div className="flex items-center space-x-1 mt-2 text-xs text-white/95">
+                    <Anchor size={12} />
+                    <span>{otherUser?.city || currentUser?.city}</span>
+                  </div>
+                )}
               </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <Anchor size={16} className="text-blue-200" />
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onClose}
-                className="text-white hover:bg-white/20 p-1"
-              >
-                <X size={18} />
-              </Button>
-            </div>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="text-white hover:bg-white/20 p-2 rounded-full transition-colors"
+            >
+              <X size={18} />
+            </Button>
           </div>
         </CardHeader>
 
@@ -237,16 +296,16 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
           <div className="h-full flex flex-col">
             {/* Connection Status */}
             {connection.status === 'pending' && connection.receiverId === user?.id && (
-              <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-200 p-4">
+              <div className="bg-gradient-to-r from-orange-50 to-red-50 border-b border-orange-200 p-4">
                 <div className="text-center">
-                  <p className="text-amber-800 text-sm mb-2">
+                  <p className="text-orange-800 text-sm mb-3">
                     <MessageCircle className="inline mr-1" size={14} />
                     {connection.sender?.fullName} wants to connect with you
                   </p>
                   <Button
                     onClick={() => acceptMutation.mutate()}
                     disabled={acceptMutation.isPending}
-                    className="bg-gradient-to-r from-navy to-blue-800 text-white hover:from-blue-800 hover:to-navy px-4 py-2 text-sm"
+                    className="bg-gradient-to-r from-red-600 to-orange-500 text-white hover:from-red-700 hover:to-orange-600 px-6 py-2 text-sm rounded-lg shadow-md transition-all duration-200"
                   >
                     {acceptMutation.isPending ? 'Accepting...' : 'Accept & Start Chatting'}
                   </Button>
@@ -255,10 +314,10 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
             )}
 
             {connection.status === 'pending' && connection.senderId === user?.id && (
-              <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b border-blue-200 p-4">
+              <div className="bg-gradient-to-r from-gray-50 to-slate-50 border-b border-gray-200 p-4">
                 <div className="text-center">
                   <Clock className="inline mr-2" size={16} />
-                  <span className="text-blue-800 text-sm">
+                  <span className="text-gray-700 text-sm">
                     Waiting for {connection.receiver?.fullName} to accept your request...
                   </span>
                 </div>
@@ -286,10 +345,14 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
                   return (
                     <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
                       <div
-                        className="max-w-[70%] p-3 rounded-2xl shadow-sm from-navy to-blue-800 text-white rounded-br-md bg-[#f97118]"
+                        className={`max-w-[70%] p-3 rounded-2xl shadow-sm ${
+                          isOwn 
+                            ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-br-md' 
+                            : 'bg-white border border-gray-200 text-gray-800 rounded-bl-md'
+                        }`}
                       >
                         <p className="text-sm leading-relaxed">{msg.message}</p>
-                        <div className={`flex items-center justify-end mt-1 space-x-1 ${isOwn ? 'text-blue-100' : 'text-gray-500'}`}>
+                        <div className={`flex items-center justify-end mt-1 space-x-1 ${isOwn ? 'text-red-100' : 'text-gray-500'}`}>
                           <span className="text-xs">
                             {msg.createdAt ? formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true }) : 'just now'}
                           </span>
@@ -322,36 +385,31 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
           </div>
         </CardContent>
 
-        {/* Message Input */}
+        {/* Sleek Message Input */}
         {connection.status === 'accepted' && (
-          <div className="p-4 border-t border-gray-200 bg-white">
-            {otherUserTyping && (
-              <div className="text-xs text-gray-500 mb-2 px-1">
-                {otherUser?.fullName} is typing...
-              </div>
-            )}
-            <div className="flex items-center space-x-2">
+          <div className="p-4 border-t border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+            <div className="flex items-center space-x-3">
               <div className="flex-1 relative">
                 <Input
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder="Type your maritime message..."
-                  className="pr-12 border-gray-300 focus:border-navy focus:ring-navy/20"
+                  placeholder="Send maritime message..."
+                  className="pr-4 h-12 rounded-xl border-2 border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 bg-white text-gray-800 placeholder-gray-500 shadow-sm transition-all duration-200"
                   disabled={sendMessageMutation.isPending}
                 />
               </div>
               <Button
                 onClick={handleSendMessage}
                 disabled={!message.trim() || sendMessageMutation.isPending}
-                className="bg-gradient-to-r from-navy to-blue-800 hover:from-blue-800 hover:to-navy text-white p-3"
+                className="h-12 w-12 rounded-xl bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-700 hover:to-orange-600 text-white shadow-lg transition-all duration-200 flex items-center justify-center"
               >
                 {sendMessageMutation.isPending ? (
                   <div className="animate-spin">
-                    <Send size={16} />
+                    <Send size={18} />
                   </div>
                 ) : (
-                  <Send size={16} />
+                  <Send size={18} />
                 )}
               </Button>
             </div>
