@@ -654,10 +654,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         success: true,
         chatHistory,
-        totalCount: chatHistory.length,
-        message: chatHistory.length > 0 
-          ? `Welcome back! Here are your ${chatHistory.length} previous WhatsApp conversations.`
-          : "Welcome! Start your first conversation with QBOT."
+        totalCount: chatHistory.length
       });
 
     } catch (error) {
