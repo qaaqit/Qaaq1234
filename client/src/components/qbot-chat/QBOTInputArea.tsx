@@ -118,7 +118,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('qaaq_token')}`
         }
       });
       

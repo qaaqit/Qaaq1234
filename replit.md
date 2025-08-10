@@ -26,6 +26,7 @@ Project Ambitions: To create a vibrant, self-sustaining community where maritime
 - **Streamlined Super User Packs**: Simplified to 2 options (₹451 Starter, ₹4,510 Max) with column-style comparison layout
 - **Silent Crown Toggle**: Removed promotional toast messages for distraction-free premium mode switching
 - **Google OAuth Authentication**: Complete Google OAuth integration with professional login button, backend authentication service, and callback handling for seamless user authentication using Google accounts
+- **Fixed Chat Authentication**: Resolved JWT token authentication issue where chat components were using incorrect localStorage key. Chat messaging now works properly with qaaq_token authentication (August 10, 2025)
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
