@@ -2513,16 +2513,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Profile update request for user:', userId, 'Data:', req.body);
 
-      // For now, just update the basic fields that exist in the current database structure
+      // Only use fields that exist in QAAQ parent database
       const allowedFields = {
-        fullName: req.body.fullName,
-        email: req.body.email,
-        nickname: req.body.nickname,
-        userType: req.body.userType,
-        rank: req.body.rank,
-        shipName: req.body.shipName,
-        city: req.body.city,
-        country: req.body.country,
+        fullName: req.body.fullName,           // Maps to full_name
+        email: req.body.email,                 // Maps to email
+        maritimeRank: req.body.rank,           // Maps to maritime_rank
+        currentShipName: req.body.shipName,    // Maps to current_ship_name
+        currentShipIMO: req.body.imoNumber,    // Maps to current_ship_imo
+        city: req.body.city,                   // Maps to current_city
+        country: req.body.country,             // Maps to current_country
       };
 
       // Filter out undefined values

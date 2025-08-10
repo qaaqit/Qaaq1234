@@ -20,15 +20,15 @@ import {
 } from "lucide-react";
 import { z } from "zod";
 
-// Simplified profile update schema for the existing QAAQ database
+// Simplified profile update schema matching QAAQ database columns
 const profileUpdateSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
-  // Only include fields that exist in QAAQ database
-  maritimeRank: z.string().optional(),
-  currentShipName: z.string().optional(),
-  city: z.string().optional(),
-  country: z.string().optional(),
+  rank: z.string().optional(),         // Will map to maritime_rank
+  shipName: z.string().optional(),     // Will map to current_ship_name  
+  imoNumber: z.string().optional(),    // Will map to current_ship_imo
+  city: z.string().optional(),         // Will map to current_city
+  country: z.string().optional(),      // Will map to current_country
 });
 
 type ProfileUpdate = z.infer<typeof profileUpdateSchema>;
@@ -51,16 +51,17 @@ export default function Profile() {
     values: profile ? {
       fullName: profile.fullName || '',
       email: profile.email || '',
-      // Only include fields that exist in QAAQ database
-      maritimeRank: profile.rank || '', // Use rank as maritime rank
-      currentShipName: profile.shipName || '',
+      rank: profile.rank || '',
+      shipName: profile.shipName || '',
+      imoNumber: profile.imoNumber || '',
       city: profile.city || '',
       country: profile.country || '',
     } : {
       fullName: '',
       email: '',
-      maritimeRank: '',
-      currentShipName: '',
+      rank: '',
+      shipName: '',
+      imoNumber: '',
       city: '',
       country: '',
     },
@@ -252,7 +253,7 @@ export default function Profile() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="maritimeRank"
+                    name="rank"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Maritime Rank</FormLabel>
@@ -266,12 +267,26 @@ export default function Profile() {
 
                   <FormField
                     control={form.control}
-                    name="currentShipName"
+                    name="shipName"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Current Ship Name</FormLabel>
                         <FormControl>
                           <Input {...field} placeholder="MV Ocean Star" disabled={!isEditing} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="imoNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>IMO Number</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="9123456" disabled={!isEditing} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

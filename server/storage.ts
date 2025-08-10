@@ -85,13 +85,13 @@ export class DatabaseStorage implements IStorage {
           console.log(`QAAQ database query with country code result: ${result.rows.length} rows found`);
         }
         
-        // Special case for UUID admin user
-        if (id === '5791e66f-9cc1-4be4-bd4b-7fc1bd2e258e') {
-          console.log(`Special admin UUID detected: ${id}, looking up admin user from QAAQ database`);
-          // Try to find admin user by phone number or email
-          result = await pool.query('SELECT * FROM users WHERE id = $1 OR email = $2 LIMIT 1', ['+91 9820011223', 'mushy.piyush@gmail.com']);
+        // For UUID-based admin users, try looking up by email or other identifiers
+        if (result.rows.length === 0 && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+          console.log(`UUID format detected: ${id}, trying email lookup for admin users`);
+          // Try to find admin user by email if this is a UUID
+          result = await pool.query('SELECT * FROM users WHERE email = $1 OR google_id = $1 LIMIT 1', ['mushy.piyush@gmail.com']);
           if (result.rows.length > 0) {
-            console.log(`Found admin user in QAAQ database for UUID: ${id}`);
+            console.log(`Found admin user by email for UUID: ${id}`);
           }
         }
         
