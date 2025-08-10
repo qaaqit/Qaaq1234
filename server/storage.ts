@@ -1034,36 +1034,25 @@ export class DatabaseStorage implements IStorage {
       const updateValues = [];
       let paramIndex = 2; // Start at 2 since $1 is userId
       
-      // Map profile fields to database columns
+      // Map profile fields to database columns (only fields that exist in QAAQ database)
       const fieldMapping = {
         fullName: 'full_name',
         email: 'email',
-        whatsAppNumber: 'whatsapp_number',
-        nationality: 'nationality',
-        dateOfBirth: 'date_of_birth',
-        gender: 'gender',
+        // Only include fields that actually exist in the QAAQ users table
         maritimeRank: 'maritime_rank',
-        experienceLevel: 'experience_level',
         currentShipName: 'current_ship_name',
         currentShipIMO: 'current_ship_imo',
         lastCompany: 'last_company',
         lastShip: 'last_ship',
-        onboardSince: 'onboard_since',
-        onboardStatus: 'onboard_status',
         currentCity: 'current_city',
-        currentLatitude: 'current_latitude',
-        currentLongitude: 'current_longitude',
-        userType: 'user_type',
-        // nickname: 'nickname', // Column doesn't exist in QAAQ database
-        rank: 'rank',
-        shipName: 'ship_name',
-        imoNumber: 'imo_number',
-        port: 'port',
-        visitWindow: 'visit_window',
         city: 'city',
-        country: 'country',
-        latitude: 'latitude',
-        longitude: 'longitude',
+        country: 'current_country',
+        // Simplified field mapping - avoiding fields that don't exist
+        // userType: 'user_type', // Column doesn't exist
+        // nickname: 'nickname', // Column doesn't exist
+        // rank: 'rank', // Column doesn't exist
+        // shipName: 'ship_name', // Column doesn't exist
+        // imoNumber: 'imo_number', // Column doesn't exist
       };
 
       // Build the SET clause dynamically

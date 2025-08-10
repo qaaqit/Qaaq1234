@@ -20,14 +20,13 @@ import {
 } from "lucide-react";
 import { z } from "zod";
 
-// Simplified profile update schema for the existing database
+// Simplified profile update schema for the existing QAAQ database
 const profileUpdateSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
-  // nickname: z.string().optional(), // Removed - column doesn't exist in QAAQ database
-  userType: z.enum(['sailor', 'local']),
-  rank: z.string().optional(),
-  shipName: z.string().optional(),
+  // Only include fields that exist in QAAQ database
+  maritimeRank: z.string().optional(),
+  currentShipName: z.string().optional(),
   city: z.string().optional(),
   country: z.string().optional(),
 });
@@ -52,16 +51,18 @@ export default function Profile() {
     values: profile ? {
       fullName: profile.fullName || '',
       email: profile.email || '',
-      // nickname: profile.nickname || '', // Removed - column doesn't exist in QAAQ database
-      userType: (profile.userType as 'sailor' | 'local') || 'sailor',
-      rank: profile.rank || '',
-      shipName: profile.shipName || '',
+      // Only include fields that exist in QAAQ database
+      maritimeRank: profile.rank || '', // Use rank as maritime rank
+      currentShipName: profile.shipName || '',
       city: profile.city || '',
       country: profile.country || '',
     } : {
       fullName: '',
       email: '',
-      userType: 'sailor' as const,
+      maritimeRank: '',
+      currentShipName: '',
+      city: '',
+      country: '',
     },
   });
 
@@ -231,27 +232,7 @@ export default function Profile() {
 
 
 
-                  <FormField
-                    control={form.control}
-                    name="userType"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>User Type</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!isEditing}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select user type" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="sailor">Maritime Professional / Sailor</SelectItem>
-                            <SelectItem value="local">Local Guide</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+
                 </div>
               </CardContent>
             </Card>
@@ -271,7 +252,7 @@ export default function Profile() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="rank"
+                    name="maritimeRank"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Maritime Rank</FormLabel>
@@ -285,7 +266,7 @@ export default function Profile() {
 
                   <FormField
                     control={form.control}
-                    name="shipName"
+                    name="currentShipName"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Current Ship Name</FormLabel>
