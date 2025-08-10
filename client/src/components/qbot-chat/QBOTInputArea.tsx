@@ -238,7 +238,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
   };
 
   return (
-    <div className="p-4">
+    <div className="p-4 bg-transparent">
       {/* Attachments Preview */}
       {attachments.length > 0 && (
         <div className="mb-3 p-2 bg-gray-50 rounded-lg">
