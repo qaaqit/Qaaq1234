@@ -333,8 +333,83 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByGoogleId(googleId: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.googleId, googleId));
-    return user || undefined;
+    try {
+      console.log(`Looking up user by Google ID: ${googleId}`);
+      const result = await pool.query('SELECT * FROM users WHERE google_id = $1 LIMIT 1', [googleId]);
+      
+      if (result.rows.length === 0) {
+        console.log(`No user found with Google ID: ${googleId}`);
+        return undefined;
+      }
+      
+      const user = result.rows[0];
+      const fullName = [user.first_name, user.middle_name, user.last_name].filter(Boolean).join(' ') || user.full_name || user.email || 'Maritime User';
+      
+      return {
+        id: user.id,
+        fullName: fullName,
+        email: user.email,
+        password: user.password,
+        userType: user.user_type || 'sailor',
+        isAdmin: user.is_admin || false,
+        nickname: user.nickname,
+        rank: user.rank,
+        maritimeRank: user.maritime_rank,
+        shipName: user.ship_name || user.current_ship_name,
+        currentShipName: user.current_ship_name,
+        imoNumber: user.imo_number || user.current_ship_imo,
+        currentShipIMO: user.current_ship_imo,
+        port: user.port,
+        visitWindow: user.visit_window,
+        city: user.city,
+        currentCity: user.current_city,
+        country: user.country,
+        nationality: user.nationality,
+        experienceLevel: user.experience_level,
+        lastCompany: user.last_company,
+        lastShip: user.last_ship,
+        onboardSince: user.onboard_since,
+        onboardStatus: user.onboard_status,
+        dateOfBirth: user.date_of_birth,
+        gender: user.gender,
+        whatsAppNumber: user.whatsapp_number,
+        whatsAppProfilePictureUrl: user.whatsapp_profile_picture_url,
+        whatsAppDisplayName: user.whatsapp_display_name,
+        googleId: user.google_id,
+        googleEmail: user.google_email,
+        googleProfilePictureUrl: user.google_profile_picture_url,
+        googleDisplayName: user.google_display_name,
+        authProvider: user.auth_provider || 'qaaq',
+        hasCompletedOnboarding: user.has_completed_onboarding || false,
+        isPlatformAdmin: user.is_platform_admin || false,
+        isBlocked: user.is_blocked || false,
+        latitude: user.latitude,
+        longitude: user.longitude,
+        currentLatitude: user.current_latitude,
+        currentLongitude: user.current_longitude,
+        deviceLatitude: user.device_latitude,
+        deviceLongitude: user.device_longitude,
+        locationSource: user.location_source || 'city',
+        locationUpdatedAt: user.location_updated_at,
+        questionCount: user.question_count || 0,
+        answerCount: user.answer_count || 0,
+        isVerified: user.is_verified || false,
+        loginCount: user.login_count || 0,
+        lastLogin: user.last_login,
+        lastUpdated: user.last_updated,
+        createdAt: user.created_at,
+        profilePictureUrl: user.google_profile_picture_url || user.whatsapp_profile_picture_url,
+        hasSetCustomPassword: false, // Default value since column doesn't exist
+        liberalLoginCount: 0, // Default value since column doesn't exist
+        needsPasswordChange: false, // Default value since column doesn't exist
+        passwordCreatedAt: null, // Default value since column doesn't exist
+        passwordRenewalDue: null, // Default value since column doesn't exist
+        mustCreatePassword: user.password ? false : true, // Infer based on password existence
+      };
+    } catch (error) {
+      console.error('Error getting user by Google ID:', error);
+      return undefined;
+    }
   }
 
   async updateUser(userId: string, updates: Partial<User>): Promise<User | undefined> {
