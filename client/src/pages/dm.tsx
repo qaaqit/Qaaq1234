@@ -89,7 +89,7 @@ export default function DMPage() {
     queryKey: ['/api/chat/connections'],
     refetchInterval: (data, query) => {
       // Disable polling if getting 403 errors to prevent excessive refreshing
-      if (query.state.error?.message?.includes('403')) {
+      if (query?.state?.error?.message?.includes('403')) {
         console.log('🚫 Disabling chat connections polling due to authentication errors');
         return false;
       }

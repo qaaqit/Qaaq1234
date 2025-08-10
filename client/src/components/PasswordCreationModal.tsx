@@ -23,10 +23,21 @@ export function PasswordCreationModal({ isOpen, onClose, userId, isRenewal = fal
 
   const createPasswordMutation = useMutation({
     mutationFn: async (data: { password: string }) => {
-      return apiRequest(`/api/users/${userId}/password`, {
+      const response = await fetch(`/api/users/${userId}/password`, {
         method: "PUT",
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('qaaq_token')}`
+        },
         body: JSON.stringify(data),
       });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Failed to create password' }));
+        throw new Error(errorData.message || 'Failed to create password');
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       toast({

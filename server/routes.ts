@@ -109,7 +109,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   setupStableImageRoutes(app);
   
   // Password management endpoints
-  app.put('/api/users/:userId/password', async (req, res) => {
+  app.put('/api/users/:userId/password', authenticateToken, async (req, res) => {
     try {
       const { userId } = req.params;
       const { password } = req.body;
