@@ -409,9 +409,7 @@ export function PremiumSubscriptionDialog({
         </Tabs>
 
         <div className="flex items-center justify-between pt-4 border-t">
-          <div className="text-sm text-muted-foreground">
-            Secure payment powered by Razorpay
-          </div>
+          <div className="text-sm text-muted-foreground">Secured  by Razorpay</div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
