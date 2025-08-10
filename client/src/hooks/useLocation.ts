@@ -52,11 +52,11 @@ export function useLocation(userId?: string, autoUpdate: boolean = true) {
         setLocation(locationData);
         setIsLoading(false);
 
-        // If userId is provided, update location on server
-        if (userId) {
+        // If userId is provided and valid, update location on server
+        if (userId && userId.trim() && locationData.latitude && locationData.longitude) {
           try {
             await apiRequest('/api/users/location/device', 'POST', {
-              userId,
+              userId: userId.trim(),
               latitude: locationData.latitude,
               longitude: locationData.longitude
             });
@@ -137,7 +137,7 @@ export function useLocation(userId?: string, autoUpdate: boolean = true) {
         setLocation(locationData);
 
         // Update server location if userId provided and location changed significantly
-        if (userId && location) {
+        if (userId && userId.trim() && location && locationData.latitude && locationData.longitude) {
           const distance = calculateDistance(
             location.latitude,
             location.longitude,
@@ -149,7 +149,7 @@ export function useLocation(userId?: string, autoUpdate: boolean = true) {
           if (distance > 0.1) {
             try {
               await apiRequest('/api/users/location/device', 'POST', {
-                userId,
+                userId: userId.trim(),
                 latitude: locationData.latitude,
                 longitude: locationData.longitude
               });

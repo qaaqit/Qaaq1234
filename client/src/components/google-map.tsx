@@ -78,7 +78,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
 
   // Initialize map
   useEffect(() => {
-    if (!isMapLoaded || !mapRef.current) return;
+    if (!isMapLoaded || !mapRef.current || !window.google?.maps) return;
 
     const defaultCenter = userLocation || { lat: 19.076, lng: 72.8777 }; // Mumbai fallback
 
@@ -209,7 +209,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
 
   // Add user markers (optimized to prevent flickering)
   useEffect(() => {
-    if (!isMapLoaded || !mapInstanceRef.current) return;
+    if (!isMapLoaded || !mapInstanceRef.current || !window.google?.maps) return;
 
     // Only clear and recreate if users array actually changed
     const currentUserIds = markersRef.current.map(m => m.userId).sort().join(',');
@@ -296,7 +296,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
 
   // Add user location marker (current user's position)
   useEffect(() => {
-    if (!isMapLoaded || !mapInstanceRef.current || !userLocation) return;
+    if (!isMapLoaded || !mapInstanceRef.current || !userLocation || !window.google?.maps) return;
 
     // Clear existing user location marker
     if (userLocationMarkerRef.current) {
@@ -341,7 +341,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
 
   // Add scan overlay elements (circle and rotating line)
   useEffect(() => {
-    if (!isMapLoaded || !mapInstanceRef.current || !userLocation || !showScanElements) {
+    if (!isMapLoaded || !mapInstanceRef.current || !userLocation || !showScanElements || !window.google?.maps) {
       // Clear existing scan elements when not needed
       if (scanCircleRef.current) {
         scanCircleRef.current.setMap(null);
