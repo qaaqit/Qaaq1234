@@ -3592,6 +3592,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Check current user's admin status (debug endpoint)
+  app.get('/api/debug/user-status', authenticateToken, async (req: any, res) => {
+    try {
+      const userId = req.userId;
+      const user = await storage.getUser(userId);
+      
+      res.json({
+        userId,
+        user: user ? {
+          id: user.id,
+          fullName: user.fullName,
+          email: user.email,
+          isAdmin: user.isAdmin,
+          userType: user.userType
+        } : null,
+        isAuthenticated: !!userId
+      });
+    } catch (error) {
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
   // Admin: Activate premium mode for admin users (admin only)
   app.post('/api/admin/activate-premium', authenticateToken, isAdmin, async (req: any, res) => {
     try {

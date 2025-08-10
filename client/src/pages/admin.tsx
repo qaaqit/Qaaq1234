@@ -197,6 +197,27 @@ export default function AdminPanel() {
     },
   });
 
+  // Mutation to check user debug status
+  const debugUserMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest('/api/debug/user-status', 'GET');
+    },
+    onSuccess: (data: any) => {
+      console.log('User debug info:', data);
+      toast({
+        title: "User Status Check",
+        description: `User ID: ${data.userId}, Admin: ${data.user?.isAdmin ? 'Yes' : 'No'}`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Debug Failed",
+        description: error instanceof Error ? error.message : "Failed to check user status",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Mutation to activate admin premium mode
   const activatePremiumMutation = useMutation({
     mutationFn: async () => {
