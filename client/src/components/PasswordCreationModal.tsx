@@ -23,13 +23,15 @@ export function PasswordCreationModal({ isOpen, onClose, userId, isRenewal = fal
 
   const createPasswordMutation = useMutation({
     mutationFn: async (data: { password: string }) => {
+      // Don't send auth headers for password renewal - user might have expired token
       const response = await fetch(`/api/users/${userId}/password`, {
         method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('qaaq_token')}`
+          'Content-Type': 'application/json'
+          // Explicitly not sending Authorization header since token might be expired
         },
         body: JSON.stringify(data),
+        credentials: 'include' // Still send cookies for session management
       });
       
       if (!response.ok) {

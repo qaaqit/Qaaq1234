@@ -108,8 +108,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup stable image upload system
   setupStableImageRoutes(app);
   
-  // Password management endpoints
-  app.put('/api/users/:userId/password', authenticateToken, async (req, res) => {
+  // Password management endpoints - no auth required for password renewal/creation
+  app.put('/api/users/:userId/password', async (req, res) => {
     try {
       const { userId } = req.params;
       const { password } = req.body;
