@@ -169,10 +169,6 @@ export default function QBOTPage({ user }: QBOTPageProps) {
 
   const handleClearQBotChat = async () => {
     if (qBotMessages.length === 0) {
-      toast({
-        title: "No Chat to Clear",
-        description: "There are no messages to clear.",
-      });
       return;
     }
 
@@ -193,12 +189,6 @@ export default function QBOTPage({ user }: QBOTPageProps) {
         // Clear local chat
         setQBotMessages([]);
         setIsQBotTyping(false);
-        
-        toast({
-          title: "Chat History Saved",
-          description: `${data.parkedCount} Q&A pairs saved with SEMM categorization and shareable links at qaaqit.com/questions`,
-          duration: 5000
-        });
 
         // Log shareable links to console for verification
         console.log('📚 QBOT Chat History Parked:');
@@ -210,12 +200,6 @@ export default function QBOTPage({ user }: QBOTPageProps) {
         // Fallback: clear chat even if parking fails
         setQBotMessages([]);
         setIsQBotTyping(false);
-        
-        toast({
-          title: "Chat Cleared",
-          description: "Chat cleared locally. Unable to save to database at this time.",
-          variant: "destructive"
-        });
       }
     } catch (error) {
       console.error('Error parking chat history:', error);
@@ -223,12 +207,6 @@ export default function QBOTPage({ user }: QBOTPageProps) {
       // Fallback: clear chat even if parking fails
       setQBotMessages([]);
       setIsQBotTyping(false);
-      
-      toast({
-        title: "Chat Cleared", 
-        description: "Chat cleared locally. Network error prevented database saving.",
-        variant: "destructive"
-      });
     }
   };
 
