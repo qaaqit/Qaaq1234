@@ -173,6 +173,17 @@ export const botRules = pgTable("bot_rules", {
   createdBy: varchar("created_by").references(() => users.id),
 });
 
+// WhatsApp Messages Storage for rank analysis
+export const whatsappMessages = pgTable("whatsapp_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  senderNumber: text("sender_number").notNull(),
+  messageBody: text("message_body").notNull(),
+  messageType: text("message_type").default("text"), // text, image, document, etc.
+  isProcessedForRank: boolean("is_processed_for_rank").default(false),
+  extractedRank: text("extracted_rank"), // Detected rank from message
+  createdAt: timestamp("created_at").default(sql`now()`),
+});
+
 
 
 // Relations
@@ -342,6 +353,12 @@ export const insertRankGroupMessageSchema = createInsertSchema(rankGroupMessages
 
 export const insertBotRuleSchema = createInsertSchema(botRules)
   .omit({ id: true, createdAt: true, updatedAt: true });
+
+export const insertWhatsappMessageSchema = createInsertSchema(whatsappMessages).pick({
+  senderNumber: true,
+  messageBody: true,
+  messageType: true,
+});
 
 export const updateProfileSchema = createInsertSchema(users).omit({
   id: true,
