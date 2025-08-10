@@ -249,7 +249,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
             {/* QBOT Chat Container - No padding to flush with red bar */}
             <div className="flex-1">
               <QBOTChatContainer>
-                <div className="flex flex-col h-full bg-white overflow-hidden">
+                <div className="flex flex-col h-full bg-white overflow-hidden border-l border-r border-orange-500">
                   {/* Minimalist Header */}
                   <QBOTChatHeader 
                     onClear={handleClearQBotChat}
@@ -299,7 +299,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
             </div>
 
             {/* Image Carousel - Positioned much lower with more height */}
-            <div className="h-[200px] pt-20">
+            <div className="h-[200px] pt-7">
               <ImageCarousel className="h-full" />
             </div>
           </TabsContent>
