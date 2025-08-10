@@ -1054,7 +1054,7 @@ export class DatabaseStorage implements IStorage {
         currentLatitude: 'current_latitude',
         currentLongitude: 'current_longitude',
         userType: 'user_type',
-        nickname: 'nickname',
+        // nickname: 'nickname', // Column doesn't exist in QAAQ database
         rank: 'rank',
         shipName: 'ship_name',
         imoNumber: 'imo_number',

@@ -24,7 +24,7 @@ import { z } from "zod";
 const profileUpdateSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
-  nickname: z.string().optional(),
+  // nickname: z.string().optional(), // Removed - column doesn't exist in QAAQ database
   userType: z.enum(['sailor', 'local']),
   rank: z.string().optional(),
   shipName: z.string().optional(),
@@ -52,7 +52,7 @@ export default function Profile() {
     values: profile ? {
       fullName: profile.fullName || '',
       email: profile.email || '',
-      nickname: profile.nickname || '',
+      // nickname: profile.nickname || '', // Removed - column doesn't exist in QAAQ database
       userType: (profile.userType as 'sailor' | 'local') || 'sailor',
       rank: profile.rank || '',
       shipName: profile.shipName || '',
@@ -229,19 +229,7 @@ export default function Profile() {
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="nickname"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nickname</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="Optional display name" disabled={!isEditing} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+
 
                   <FormField
                     control={form.control}
