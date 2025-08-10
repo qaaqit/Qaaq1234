@@ -262,60 +262,57 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
         </div>
       )}
       
-      {/* Chat input container with Replit-style design */}
+      {/* Chat input container with icons inside */}
       <div className="relative">
-        <div className="flex items-end gap-2">
-          {/* Text input with crown on left side of placeholder */}
-          <div className="flex-1 relative">
-            <textarea
-              ref={textareaRef}
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onInput={handleInput}
-              onKeyPress={handleKeyPress}
-              onPaste={handlePaste}
-              placeholder={currentPlaceholder}
-              disabled={disabled}
-              className="w-full resize-none rounded-lg border border-gray-300 pl-12 pr-4 py-3
-                       focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent
-                       disabled:opacity-50 disabled:cursor-not-allowed
-                       placeholder:text-gray-400 text-gray-700
-                       min-h-[64px] max-h-[120px] overflow-y-auto"
-              style={{ resize: 'none' }}
-              rows={2}
-            />
-            
-            {/* Privacy and Crown icons on left side */}
-            <div className="absolute left-3 top-2 flex flex-col items-center gap-1">
-              {/* Privacy Shield (only for premium/admin users) */}
-              {((userStatus as any)?.isPremium || (userStatus as any)?.isSuperUser || localStorage.getItem('isAdmin') === 'true') && (
-                <button
-                  onClick={togglePrivacyMode}
-                  className="p-1 rounded transition-all duration-200 text-gray-400 hover:bg-gray-100"
-                  title={isPrivateMode ? "Private Mode: Chat not stored in database" : "Enable Private Mode"}
-                >
-                  {isPrivateMode ? (
-                    <ShieldCheck size={14} className="fill-current text-green-600" />
-                  ) : (
-                    <Shield size={14} className="text-gray-400" />
-                  )}
-                </button>
-              )}
-              
-              {/* Crown icon */}
-              <button
-                onClick={togglePremiumMode}
-                className="p-1 rounded transition-all duration-200 text-gray-400 hover:bg-gray-100"
-                title={isPremiumMode ? "Premium Mode Active" : "Enable Premium Mode"}
-              >
-                <Crown size={16} className={isPremiumMode ? "fill-current text-yellow-600" : ""} />
-              </button>
-            </div>
-          </div>
+        <div className="relative">
+          <textarea
+            ref={textareaRef}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onInput={handleInput}
+            onKeyPress={handleKeyPress}
+            onPaste={handlePaste}
+            placeholder={currentPlaceholder}
+            disabled={disabled}
+            className="w-full resize-none rounded-lg border border-gray-300 pl-12 pr-20 py-3
+                     focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent
+                     disabled:opacity-50 disabled:cursor-not-allowed
+                     placeholder:text-gray-400 text-gray-700
+                     min-h-[64px] max-h-[120px] overflow-y-auto"
+            style={{ resize: 'none' }}
+            rows={2}
+          />
           
-          {/* Right side controls - paperclip above send button */}
-          <div className="flex flex-col items-center gap-1">
-            {/* Attachment Button - above send button */}
+          {/* Left side icons - Privacy and Crown */}
+          <div className="absolute left-3 top-2 flex flex-col items-center gap-1">
+            {/* Privacy Shield (only for premium/admin users) */}
+            {((userStatus as any)?.isPremium || (userStatus as any)?.isSuperUser || localStorage.getItem('isAdmin') === 'true') && (
+              <button
+                onClick={togglePrivacyMode}
+                className="p-1 rounded transition-all duration-200 text-gray-400 hover:bg-gray-100"
+                title={isPrivateMode ? "Private Mode: Chat not stored in database" : "Enable Private Mode"}
+              >
+                {isPrivateMode ? (
+                  <ShieldCheck size={14} className="fill-current text-green-600" />
+                ) : (
+                  <Shield size={14} className="text-gray-400" />
+                )}
+              </button>
+            )}
+            
+            {/* Crown icon */}
+            <button
+              onClick={togglePremiumMode}
+              className="p-1 rounded transition-all duration-200 text-gray-400 hover:bg-gray-100"
+              title={isPremiumMode ? "Premium Mode Active" : "Enable Premium Mode"}
+            >
+              <Crown size={16} className={isPremiumMode ? "fill-current text-yellow-600" : ""} />
+            </button>
+          </div>
+
+          {/* Right side icons inside text box - Attach and Send */}
+          <div className="absolute right-3 top-2 flex items-center gap-1">
+            {/* Attachment Button */}
             <ObjectUploader
               maxNumberOfFiles={5}
               maxFileSize={52428800} // 50MB
@@ -323,7 +320,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
               onComplete={handleUploadComplete}
               buttonClassName="p-2 rounded-lg text-gray-400 hover:bg-gray-100 transition-all duration-200"
             >
-              <Paperclip size={18} />
+              <Paperclip size={16} />
             </ObjectUploader>
             
             {/* Send Button */}
@@ -331,14 +328,14 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
               onClick={handleSend}
               disabled={disabled || (!message.trim() && attachments.length === 0)}
               className={`
-                p-3 rounded-lg transition-all duration-200 flex-shrink-0
+                p-2 rounded-lg transition-all duration-200 flex-shrink-0
                 ${(message.trim() || attachments.length > 0) && !disabled
                   ? 'text-gray-400 hover:bg-gray-100' 
                   : 'text-gray-300 cursor-not-allowed'
                 }
               `}
             >
-              <Send size={18} />
+              <Send size={16} />
             </button>
           </div>
         </div>

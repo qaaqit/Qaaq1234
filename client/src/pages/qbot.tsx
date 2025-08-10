@@ -287,8 +287,8 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                     </div>
                   </QBOTChatArea>
                   
-                  {/* Input Area with padding */}
-                  <div className="p-4 border-t border-gray-100">
+                  {/* Input Area positioned lower with more padding */}
+                  <div className="p-4 pt-8 border-t border-gray-100 mt-4">
                     <QBOTInputArea 
                       onSendMessage={handleSendQBotMessage}
                       disabled={isQBotTyping}
