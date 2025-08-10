@@ -8,7 +8,15 @@ const JWT_SECRET = process.env.JWT_SECRET || 'qaaq_jwt_secret_key_2024_secure';
 // Google OAuth configuration
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || 'http://localhost:5000/api/auth/google/callback';
+// Dynamically determine redirect URI based on environment
+const getRedirectUri = () => {
+  if (process.env.REPL_SLUG && process.env.REPL_OWNER) {
+    return `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co/api/auth/google/callback`;
+  }
+  return process.env.GOOGLE_REDIRECT_URI || 'http://localhost:5000/api/auth/google/callback';
+};
+
+const GOOGLE_REDIRECT_URI = getRedirectUri();
 
 interface GoogleTokenResponse {
   access_token: string;
@@ -32,8 +40,11 @@ export function getGoogleAuthUrl(): string {
     throw new Error('GOOGLE_CLIENT_ID environment variable is required');
   }
 
+  const currentRedirectUri = getRedirectUri();
   const scope = encodeURIComponent('openid email profile');
-  const redirectUri = encodeURIComponent(GOOGLE_REDIRECT_URI);
+  const redirectUri = encodeURIComponent(currentRedirectUri);
+  
+  console.log(`🔗 Google OAuth redirect URI: ${currentRedirectUri}`);
   
   return `https://accounts.google.com/o/oauth2/v2/auth?` +
     `client_id=${GOOGLE_CLIENT_ID}&` +
@@ -60,7 +71,7 @@ async function exchangeCodeForToken(code: string): Promise<GoogleTokenResponse> 
       client_secret: GOOGLE_CLIENT_SECRET,
       code,
       grant_type: 'authorization_code',
-      redirect_uri: GOOGLE_REDIRECT_URI,
+      redirect_uri: getRedirectUri(),
     }),
   });
 
