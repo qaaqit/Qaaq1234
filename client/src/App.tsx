@@ -24,6 +24,7 @@ import MergeAccountsPage from "@/pages/merge-accounts";
 import AuthTestPage from "@/pages/auth-test";
 import SetPasswordPage from "@/pages/set-password";
 import PasswordDemoPage from "@/pages/password-demo";
+import OAuthCallback from "@/pages/oauth-callback";
 
 import NotFound from "@/pages/not-found";
 import BottomNav from "@/components/bottom-nav";
@@ -70,6 +71,7 @@ function Router() {
           <Route path="/" component={() => currentUser ? <QBOTPage user={currentUser} /> : <Home onSuccess={setUser} />} />
           <Route path="/register" component={() => <Register onSuccess={setUser} />} />
           <Route path="/verify" component={() => <Verify onSuccess={setUser} />} />
+          <Route path="/oauth-callback" component={() => <OAuthCallback />} />
           <Route path="/discover" component={() => currentUser ? <Discover user={currentUser} /> : <Home onSuccess={setUser} />} />
           <Route path="/qbot" component={() => currentUser ? <QBOTPage user={currentUser} /> : <Home onSuccess={setUser} />} />
           <Route path="/post" component={() => currentUser ? <Post user={currentUser} /> : <Home onSuccess={setUser} />} />

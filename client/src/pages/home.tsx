@@ -8,6 +8,7 @@ import { authApi, setStoredToken, setStoredUser, type User } from "@/lib/auth";
 import UsersMapDual from "@/components/users-map-dual";
 import ForgotPasswordModal from "@/components/forgot-password-modal";
 import SignUpModal from "@/components/signup-modal";
+import { GoogleAuthButton } from "@/components/GoogleAuthButton";
 
 interface HomeProps {
   onSuccess?: (user: User) => void;
@@ -200,6 +201,25 @@ export default function Home({ onSuccess }: HomeProps) {
                     </>
                   )}
                 </Button>
+
+                {/* Divider */}
+                <div className="relative my-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-gray-300" />
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-white text-gray-500">or</span>
+                  </div>
+                </div>
+
+                {/* Google OAuth Button */}
+                <GoogleAuthButton 
+                  disabled={loading}
+                  onSuccess={(token) => {
+                    // Handle success if needed - the redirect should handle this
+                    console.log('Google auth success:', token);
+                  }}
+                />
 
                 {/* Footer Links */}
                 <div className="flex justify-between items-center mt-3 text-sm">

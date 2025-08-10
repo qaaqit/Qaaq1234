@@ -26,6 +26,7 @@ import { ObjectStorageService } from "./objectStorage";
 import { imageManagementService } from "./image-management-service";
 import { setupStableImageRoutes } from "./stable-image-upload";
 import { razorpayService, SUBSCRIPTION_PLANS } from "./razorpay-service";
+import { setupGoogleAuth } from "./google-auth";
 
 // Extend Express Request type
 declare global {
@@ -106,6 +107,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Setup stable image upload system
   setupStableImageRoutes(app);
+  
+  // Setup Google OAuth authentication
+  setupGoogleAuth(app);
 
   // Object storage upload endpoint
   app.post("/api/objects/upload", async (req, res) => {

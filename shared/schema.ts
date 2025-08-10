@@ -44,6 +44,13 @@ export const users = pgTable("users", {
   whatsAppProfilePictureUrl: text("whatsapp_profile_picture_url"), // WhatsApp profile picture from QBOT
   whatsAppDisplayName: text("whatsapp_display_name"), // WhatsApp display name from QBOT
   
+  // Google OAuth fields
+  googleId: text("google_id"), // Google account ID
+  googleEmail: text("google_email"), // Google email address
+  googleProfilePictureUrl: text("google_profile_picture_url"), // Google profile picture
+  googleDisplayName: text("google_display_name"), // Google display name
+  authProvider: text("auth_provider").default("qaaq"), // 'qaaq', 'google', 'whatsapp'
+  
   // System Fields
   hasCompletedOnboarding: boolean("has_completed_onboarding").default(false), // QAAQ field
   isPlatformAdmin: boolean("is_platform_admin").default(false), // QAAQ field
