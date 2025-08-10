@@ -72,6 +72,7 @@ export const users = pgTable("users", {
   // Q&A tracking
   questionCount: integer("question_count").default(0), // Total questions asked on QAAQ
   answerCount: integer("answer_count").default(0), // Total answers given on QAAQ
+  lastChatClearAt: timestamp("last_chat_clear_at"), // Last time user cleared their QBOT chat
   
   // System metadata
   isVerified: boolean("is_verified").default(false),

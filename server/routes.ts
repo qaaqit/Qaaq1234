@@ -584,8 +584,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { userId } = req.params;
       console.log(`📱 Fetching WhatsApp history for user: ${userId}`);
 
-      // Query questions table for WhatsApp questions from this user
-      const whatsappQuestions = await pool.query(`
+      // Get user's last chat clear timestamp
+      let lastClearAt = null;
+      try {
+        // First, ensure the column exists
+        await pool.query(`
+          ALTER TABLE users ADD COLUMN IF NOT EXISTS last_chat_clear_at TIMESTAMP
+        `);
+        
+        const userResult = await pool.query(
+          'SELECT last_chat_clear_at FROM users WHERE id = $1',
+          [userId]
+        );
+        if (userResult.rows.length > 0) {
+          lastClearAt = userResult.rows[0].last_chat_clear_at;
+        }
+      } catch (error) {
+        console.log('Could not fetch user clear timestamp, loading all history');
+      }
+
+      // Build query with optional timestamp filter
+      let query = `
         SELECT 
           q.id,
           q.content,
@@ -599,10 +618,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           (SELECT created_at FROM answers WHERE question_id = q.id ORDER BY created_at DESC LIMIT 1) as answer_created_at
         FROM questions q
         WHERE q.author_id = $1 
-          AND q.is_from_whatsapp = true
-        ORDER BY q.created_at DESC
-        LIMIT 20
-      `, [userId]);
+          AND q.is_from_whatsapp = true`;
+
+      const queryParams = [userId];
+
+      // Only load WhatsApp history from after the last clear point
+      if (lastClearAt) {
+        query += ` AND q.created_at > $2`;
+        queryParams.push(lastClearAt);
+        console.log(`📅 Loading WhatsApp history from after ${lastClearAt}`);
+      } else {
+        console.log(`📅 No previous clear timestamp, loading all WhatsApp history`);
+      }
+
+      query += ` ORDER BY q.created_at DESC LIMIT 20`;
+
+      // Query questions table for WhatsApp questions from this user
+      const whatsappQuestions = await pool.query(query, queryParams);
 
       const chatHistory = whatsappQuestions.rows.map(row => ({
         type: 'qa-pair',
@@ -1374,7 +1406,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   // QBOT clear chat endpoint - parks conversation in database with SEMM and creates shareable links
-  app.post('/api/qbot/clear-chat', optionalAuth, async (req, res) => {
+  app.post('/api/qbot/clear', optionalAuth, async (req, res) => {
     try {
       const { messages } = req.body;
       const userId = req.userId;
@@ -1420,6 +1452,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`📚 Parked ${parkedQuestions.length} QBOT Q&A pairs with shareable links`);
       
+      // Update user's last chat clear timestamp
+      if (userId) {
+        try {
+          // First, ensure the column exists
+          await pool.query(`
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS last_chat_clear_at TIMESTAMP
+          `);
+          
+          await pool.query(
+            'UPDATE users SET last_chat_clear_at = NOW() WHERE id = $1',
+            [userId]
+          );
+          console.log(`📅 Updated last chat clear timestamp for user ${userId}`);
+        } catch (error) {
+          console.error('Error updating last chat clear timestamp:', error);
+        }
+      }
+
       res.json({ 
         success: true,
         parkedCount: parkedQuestions.length,
