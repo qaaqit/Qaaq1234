@@ -167,6 +167,27 @@ export default function DMPage() {
     },
   });
 
+  // Accept connection mutation
+  const acceptConnectionMutation = useMutation({
+    mutationFn: async (connectionId: string) => {
+      return apiRequest(`/api/chat/accept/${connectionId}`, 'POST');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/chat/connections'] });
+      toast({
+        title: "Connection Accepted",
+        description: "You can now start chatting!",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to accept connection. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -607,11 +628,7 @@ export default function DMPage() {
                               size="sm"
                               className="bg-ocean-teal hover:bg-cyan-600 text-white"
                               onClick={() => {
-                                // Accept connection logic would go here
-                                toast({
-                                  title: "Feature Coming Soon",
-                                  description: "Accept functionality will be implemented next.",
-                                });
+                                acceptConnectionMutation.mutate(connection.id);
                               }}
                             >
                               Accept

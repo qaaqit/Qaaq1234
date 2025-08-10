@@ -172,19 +172,19 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
           <div className="flex items-center justify-between bg-[#b8935e94]">
             <div className="flex items-center space-x-3">
               <Avatar className="w-10 h-10 border-2 border-white/30">
-                {(otherUser?.whatsAppProfilePictureUrl || otherUser?.profilePictureUrl) ? (
+                {false && (
                   <img 
-                    src={otherUser.whatsAppProfilePictureUrl || otherUser.profilePictureUrl} 
-                    alt={`${otherUser.whatsAppDisplayName || otherUser.fullName}'s profile`}
+                    src=""
+                    alt={`${otherUser?.fullName}'s profile`}
                     className="w-full h-full rounded-full object-cover"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.style.display = 'none';
                     }}
                   />
-                ) : null}
+                )}
                 <AvatarFallback className="bg-ocean-teal text-white font-bold">
-                  {getInitials(otherUser?.whatsAppDisplayName || otherUser?.fullName || 'U')}
+                  {getInitials(otherUser?.fullName || 'U')}
                 </AvatarFallback>
               </Avatar>
               <div>
