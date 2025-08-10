@@ -18,6 +18,8 @@ export interface IStorage {
   updateUserLocation(userId: string, latitude: number, longitude: number, source: 'device' | 'ship' | 'city'): Promise<void>;
   updateUserProfile(userId: string, profileData: Partial<User>): Promise<User | undefined>;
   updateUserShipName(userId: string, shipName: string): Promise<void>;
+  updateUserPassword(userId: string, password: string): Promise<void>;
+  checkPasswordRenewalRequired(userId: string): Promise<boolean>;
   
   // Verification codes
   createVerificationCode(userId: string, code: string, expiresAt: Date): Promise<VerificationCode>;
