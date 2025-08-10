@@ -169,7 +169,7 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
       <Card className="w-full max-w-md h-[600px] bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 shadow-2xl border-2 border-navy/20">
         {/* Header */}
         <CardHeader className="bg-gradient-to-r from-navy to-blue-800 text-white p-4 rounded-t-lg">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between bg-[#b8935e94]">
             <div className="flex items-center space-x-3">
               <Avatar className="w-10 h-10 border-2 border-white/30">
                 {(otherUser?.whatsAppProfilePictureUrl || otherUser?.profilePictureUrl) ? (

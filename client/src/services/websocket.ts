@@ -150,6 +150,14 @@ export class WebSocketService {
   isConnected(): boolean {
     return this.ws?.readyState === WebSocket.OPEN;
   }
+
+  // Mark messages as read
+  markMessagesAsRead(connectionId: string) {
+    this.send({
+      type: 'mark_read',
+      connectionId
+    });
+  }
 }
 
 // Export singleton instance
