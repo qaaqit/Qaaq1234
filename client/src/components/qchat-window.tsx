@@ -43,8 +43,10 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
     queryKey: ['/api/chat/messages', connection?.id],
     queryFn: async () => {
       if (!connection?.id) return [];
-      const token = localStorage.getItem('token');
-      console.log('🔑 Fetching messages with token:', token ? token.substring(0, 20) + '...' : 'null');
+      const token = localStorage.getItem('qaaq_token');
+      console.log('🔑 LocalStorage keys:', Object.keys(localStorage));
+      console.log('🔑 Token from qaaq_token:', token ? token.substring(0, 20) + '...' : 'null');
+      console.log('🔑 Token from token:', localStorage.getItem('token') ? localStorage.getItem('token')?.substring(0, 20) + '...' : 'null');
       const response = await fetch(`/api/chat/messages/${connection.id}`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -66,7 +68,7 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
       websocketService.sendMessage(connection.id, messageText);
       
       // Also send via HTTP for reliability
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('qaaq_token');
       console.log('🔑 Sending message with token:', token ? token.substring(0, 20) + '...' : 'null');
       const response = await fetch('/api/chat/message', {
         method: 'POST',
@@ -88,7 +90,7 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
   // Accept connection mutation
   const acceptMutation = useMutation({
     mutationFn: async () => {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('qaaq_token');
       const response = await fetch(`/api/chat/accept/${connection?.id}`, {
         method: 'POST',
         headers: { 
