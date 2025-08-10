@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
+import type { User } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import UserDropdown from "@/components/user-dropdown";
 import QBOTChatContainer from "@/components/qbot-chat/QBOTChatContainer";
@@ -12,11 +13,13 @@ import QBOTTypingIndicator from "@/components/qbot-chat/QBOTTypingIndicator";
 import type { Message } from "@/components/qbot-chat/QBOTMessageList";
 import ImageCarousel from "@/components/image-carousel";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
 import qaaqLogo from "@assets/qaaq-logo.png";
 
-export default function QBOTPage() {
-  const { user } = useAuth();
+interface QBOTPageProps {
+  user: User;
+}
+
+export default function QBOTPage({ user }: QBOTPageProps) {
   const [qBotMessages, setQBotMessages] = useState<Message[]>([]);
   const [isQBotTyping, setIsQBotTyping] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);

@@ -1,13 +1,13 @@
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/useAuth";
+import type { User } from "@/lib/auth";
 
 interface BottomNavProps {
+  user: User;
   onLogout?: () => void;
 }
 
-export default function BottomNav({ onLogout }: BottomNavProps) {
-  const { user } = useAuth();
+export default function BottomNav({ user, onLogout }: BottomNavProps) {
   const [location, setLocation] = useLocation();
 
   const handleMapRadarClick = () => {
