@@ -1034,20 +1034,20 @@ export class DatabaseStorage implements IStorage {
       const updateValues = [];
       let paramIndex = 2; // Start at 2 since $1 is userId
       
-      // Map profile fields to database columns (only fields that exist in QAAQ database)
+      // Map profile fields to database columns (only fields confirmed to exist in QAAQ database)
       const fieldMapping = {
         fullName: 'full_name',
         email: 'email',
-        // Only include fields that actually exist in the QAAQ users table
+        // Only include fields that we know exist from successful queries
         maritimeRank: 'maritime_rank',
         currentShipName: 'current_ship_name',
         currentShipIMO: 'current_ship_imo',
         lastCompany: 'last_company',
         lastShip: 'last_ship',
         currentCity: 'current_city',
-        city: 'city',
+        city: 'current_city', // Map city to current_city since city column doesn't exist
         country: 'current_country',
-        // Simplified field mapping - avoiding fields that don't exist
+        // All other fields are commented out because they don't exist in QAAQ database
         // userType: 'user_type', // Column doesn't exist
         // nickname: 'nickname', // Column doesn't exist
         // rank: 'rank', // Column doesn't exist
