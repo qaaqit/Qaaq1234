@@ -56,10 +56,15 @@ export default function SetPasswordPage() {
     setResult(null);
     
     try {
+      // Don't send auth headers for password renewal - user might have expired token
       const response = await fetch('/api/auth/set-password', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, newPassword })
+        headers: { 
+          'Content-Type': 'application/json'
+          // Explicitly not sending Authorization header
+        },
+        body: JSON.stringify({ userId, newPassword }),
+        credentials: 'include' // Still send cookies for session management
       });
 
       const data = await response.json();
@@ -235,10 +240,15 @@ export function PasswordSetupModal({ userId, onPasswordSet }: SetPasswordProps) 
     setLoading(true);
     
     try {
+      // Don't send auth headers for password renewal - user might have expired token
       const response = await fetch('/api/auth/set-password', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, newPassword })
+        headers: { 
+          'Content-Type': 'application/json'
+          // Explicitly not sending Authorization header
+        },
+        body: JSON.stringify({ userId, newPassword }),
+        credentials: 'include' // Still send cookies for session management
       });
 
       const data = await response.json();
