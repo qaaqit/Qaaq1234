@@ -262,22 +262,24 @@ export default function QBOTPage({ user }: QBOTPageProps) {
       {/* Main Content Area - Chat + Carousel + Questions */}
       <div className="flex-1 flex flex-col pb-16">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-          {/* Tab Navigation */}
-          <div className="bg-white border-b border-orange-200">
-            <TabsList className="grid w-full grid-cols-2 bg-gradient-to-r from-orange-50 to-red-50 border-0">
-              <TabsTrigger 
-                value="chat" 
-                className="data-[state=active]:bg-orange-500 data-[state=active]:text-white text-orange-700 hover:text-orange-800 font-medium"
-              >
-                QBOT Chat
-              </TabsTrigger>
-              <TabsTrigger 
-                value="questions" 
-                className="data-[state=active]:bg-orange-500 data-[state=active]:text-white text-orange-700 hover:text-orange-800 font-medium"
-              >
-                Questions
-              </TabsTrigger>
-            </TabsList>
+          {/* Tab Navigation - Red/Orange Signature Bar */}
+          <div className="bg-gradient-to-r from-red-500 to-orange-500 shadow-lg">
+            <div className="px-4 py-3">
+              <TabsList className="grid w-full grid-cols-2 bg-white/10 backdrop-blur-sm border-0 rounded-lg p-1">
+                <TabsTrigger 
+                  value="chat" 
+                  className="data-[state=active]:bg-white data-[state=active]:text-red-600 text-white hover:bg-white/20 font-semibold transition-all duration-200 rounded-md py-2"
+                >
+                  QBOT Chat
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="questions" 
+                  className="data-[state=active]:bg-white data-[state=active]:text-red-600 text-white hover:bg-white/20 font-semibold transition-all duration-200 rounded-md py-2"
+                >
+                  Questions
+                </TabsTrigger>
+              </TabsList>
+            </div>
           </div>
 
           {/* Chat Tab Content */}
