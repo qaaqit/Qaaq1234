@@ -2,7 +2,7 @@ import { MessageCircle } from 'lucide-react';
 
 export default function QBOTWelcomeState() {
   return (
-    <div className="h-full flex items-center justify-center p-8 animate-in fade-in duration-500">
+    <div className="h-full flex items-start justify-center pt-16 p-8 animate-in fade-in duration-500">
       <div className="text-center max-w-sm">
         {/* Large Chat Bubble Icon */}
         <div className="flex justify-center mb-6">
