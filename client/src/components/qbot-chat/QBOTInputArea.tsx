@@ -274,7 +274,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
             onPaste={handlePaste}
             placeholder={currentPlaceholder}
             disabled={disabled}
-            className="w-full resize-none rounded-lg border border-gray-300 pl-12 pr-20 py-3
+            className="w-full resize-none rounded-lg border border-gray-300 pl-12 pr-20 pt-2 pb-3
                      focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent
                      disabled:opacity-50 disabled:cursor-not-allowed
                      placeholder:text-gray-400 text-gray-700
