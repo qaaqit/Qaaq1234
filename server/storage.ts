@@ -75,12 +75,34 @@ export class DatabaseStorage implements IStorage {
       let result = await pool.query('SELECT * FROM users WHERE id = $1 LIMIT 1', [id]);
       console.log(`QAAQ database query result: ${result.rows.length} rows found`);
       
-      // If no user found and ID looks like a phone number without country code, try with +91
-      if (result.rows.length === 0 && /^[0-9]{10}$/.test(id)) {
-        const idWithCountryCode = `+91${id}`;
-        console.log(`Trying with country code: ${idWithCountryCode}`);
-        result = await pool.query('SELECT * FROM users WHERE id = $1 LIMIT 1', [idWithCountryCode]);
-        console.log(`QAAQ database query with country code result: ${result.rows.length} rows found`);
+      // If no user found, try different lookup strategies
+      if (result.rows.length === 0) {
+        // For phone numbers without country code, try with +91
+        if (/^[0-9]{10}$/.test(id)) {
+          const idWithCountryCode = `+91${id}`;
+          console.log(`Trying with country code: ${idWithCountryCode}`);
+          result = await pool.query('SELECT * FROM users WHERE id = $1 LIMIT 1', [idWithCountryCode]);
+          console.log(`QAAQ database query with country code result: ${result.rows.length} rows found`);
+        }
+        
+        // Special case for UUID admin user
+        if (id === '5791e66f-9cc1-4be4-bd4b-7fc1bd2e258e') {
+          console.log(`Special admin UUID detected: ${id}, looking up admin user from QAAQ database`);
+          // Try to find admin user by phone number or email
+          result = await pool.query('SELECT * FROM users WHERE id = $1 OR email = $2 LIMIT 1', ['+91 9820011223', 'mushy.piyush@gmail.com']);
+          if (result.rows.length > 0) {
+            console.log(`Found admin user in QAAQ database for UUID: ${id}`);
+          }
+        }
+        
+        // For other UUID-based users, try looking up by email
+        else if (result.rows.length === 0 && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+          console.log(`UUID format detected: ${id}, trying email lookup`);
+          result = await pool.query('SELECT * FROM users WHERE google_id = $1 LIMIT 1', [id]);
+          if (result.rows.length > 0) {
+            console.log(`Found user by Google ID for UUID: ${id}`);
+          }
+        }
       }
       
       if (result.rows.length === 0) {
