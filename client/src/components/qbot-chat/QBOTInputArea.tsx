@@ -238,7 +238,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
   };
 
   return (
-    <div className="border-t border-gray-200 bg-transparent p-4">
+    <div className="border-t border-gray-200 bg-white p-4">
       {/* Attachments Preview */}
       {attachments.length > 0 && (
         <div className="mb-3 p-2 bg-gray-50 rounded-lg">
@@ -274,17 +274,17 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
             onPaste={handlePaste}
             placeholder={currentPlaceholder}
             disabled={disabled}
-            className="w-full resize-none rounded-lg border border-gray-300 pl-12 pr-20 py-2
+            className="w-full resize-none rounded-lg border border-gray-300 pl-12 pr-20 py-3
                      focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent
                      disabled:opacity-50 disabled:cursor-not-allowed
                      placeholder:text-gray-400 text-gray-700
-                     min-h-[40px] max-h-[120px] overflow-y-auto"
+                     min-h-[64px] max-h-[120px] overflow-y-auto"
             style={{ resize: 'none' }}
             rows={2}
           />
           
           {/* Left side icons - Privacy and Crown */}
-          <div className="absolute left-3 top-1.5 flex flex-col items-center gap-1">
+          <div className="absolute left-3 top-2 flex flex-col items-center gap-1">
             {/* Privacy Shield (only for premium/admin users) */}
             {((userStatus as any)?.isPremium || (userStatus as any)?.isSuperUser || localStorage.getItem('isAdmin') === 'true') && (
               <button
@@ -311,7 +311,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
           </div>
 
           {/* Right side icons inside text box - Attach and Send */}
-          <div className="absolute right-3 top-1.5 flex items-center gap-1">
+          <div className="absolute right-3 top-2 flex items-center gap-1">
             {/* Attachment Button */}
             <ObjectUploader
               maxNumberOfFiles={5}
