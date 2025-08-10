@@ -45,6 +45,7 @@ export function getGoogleAuthUrl(): string {
   const redirectUri = encodeURIComponent(currentRedirectUri);
   
   console.log(`🔗 Google OAuth redirect URI: ${currentRedirectUri}`);
+  console.log(`🔗 Make sure this EXACT URL is in Google Console: ${currentRedirectUri}`);
   
   return `https://accounts.google.com/o/oauth2/v2/auth?` +
     `client_id=${GOOGLE_CLIENT_ID}&` +
