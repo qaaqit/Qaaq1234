@@ -92,8 +92,8 @@ export default function QBOTChatHeader({ onClear, isAdmin = false }: QBOTChatHea
         <button
           onClick={onClear}
           className="p-2 rounded-lg hover:bg-gray-100 transition-colors group"
-          aria-label="Clear chat"
-          title="Clear chat history"
+          aria-label="Archive chat history"
+          title="Archive chat history"
         >
           <Trash2 size={16} className="text-gray-600 group-hover:text-red-500" />
         </button>
