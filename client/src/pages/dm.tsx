@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { MessageCircle, Anchor, Navigation, Search, MapPin, Clock, User, Ship } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import QChatWindow from "@/components/qchat-window";
 import UserDropdown from "@/components/user-dropdown";
-import { QuestionsTab } from "@/components/questions-tab";
+
 import MessageNotificationDot from "@/components/message-notification-dot";
 
 import qaaqLogo from "@/assets/qaaq-logo.png";
@@ -37,7 +37,7 @@ export default function DMPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedConnection, setSelectedConnection] = useState<ExtendedChatConnection | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("users");
+
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -316,32 +316,8 @@ export default function DMPage() {
         {/* Content Area */}
         <div className="flex-1 overflow-auto p-6">
           <div className="max-w-4xl mx-auto">
-            {/* Tab Navigation */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <Card className="border-2 border-ocean-teal/20">
-            <CardContent className="p-4">
-              <TabsList className="grid w-full grid-cols-2 bg-gray-100/50">
-                <TabsTrigger 
-                  value="users" 
-                  className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-600 hover:text-blue-600"
-                >
-                  Users
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="questions" 
-                  className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-600 hover:text-blue-600"
-                >
-                  Questions
-                </TabsTrigger>
-              </TabsList>
-            </CardContent>
-          </Card>
-
-          <TabsContent value="questions" className="space-y-6">
-            <QuestionsTab />
-          </TabsContent>
-
-          <TabsContent value="users" className="space-y-6">
+            {/* Users Section - Simplified without tabs */}
+            <div className="space-y-6">
         {/* Minimalistic Search Users Bar */}
         <div className="flex items-center space-x-2">
           <div className="flex-1 relative">
@@ -800,8 +776,7 @@ export default function DMPage() {
         </Card>
         )}
 
-          </TabsContent>
-        </Tabs>
+            </div>
           </div>
         </div>
       

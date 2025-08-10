@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import type { User } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import UserDropdown from "@/components/user-dropdown";
 import QBOTChatContainer from "@/components/qbot-chat/QBOTChatContainer";
 import QBOTChatHeader from "@/components/qbot-chat/QBOTChatHeader";
@@ -12,6 +13,7 @@ import QBOTInputArea from "@/components/qbot-chat/QBOTInputArea";
 import QBOTTypingIndicator from "@/components/qbot-chat/QBOTTypingIndicator";
 import type { Message } from "@/components/qbot-chat/QBOTMessageList";
 import ImageCarousel from "@/components/image-carousel";
+import { QuestionsTab } from "@/components/questions-tab";
 import { useToast } from "@/hooks/use-toast";
 import qaaqLogo from "@assets/qaaq-logo.png";
 
@@ -23,6 +25,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
   const [qBotMessages, setQBotMessages] = useState<Message[]>([]);
   const [isQBotTyping, setIsQBotTyping] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  const [activeTab, setActiveTab] = useState("chat");
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
@@ -256,65 +259,101 @@ export default function QBOTPage({ user }: QBOTPageProps) {
         </div>
       </header>
       
-      {/* Main Content Area - Chat + Carousel */}
+      {/* Main Content Area - Chat + Carousel + Questions */}
       <div className="flex-1 flex flex-col pb-16">
-        {/* QBOT Chat Container */}
-        <div className="flex-1">
-          <QBOTChatContainer>
-            <div className="flex flex-col h-full">
-              {/* Gradient Header */}
-              <QBOTChatHeader 
-                onClear={handleClearQBotChat}
-                isAdmin={user?.isAdmin}
-              />
-              
-              {/* Chat Area with Engineering Background - Always Visible */}
-              <QBOTChatArea>
-                <div className="flex flex-col h-full">
-                  {/* Messages or Welcome State */}
-                  {isLoadingHistory ? (
-                    <div className="flex-1 flex items-center justify-center">
-                      <div className="text-center space-y-3">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto"></div>
-                        <p className="text-gray-600">Loading your chat history...</p>
-                      </div>
-                    </div>
-                  ) : qBotMessages.length === 0 ? (
-                    <QBOTWelcomeState />
-                  ) : (
-                    <>
-                      {/* WhatsApp History Indicator */}
-                      {qBotMessages.some(msg => msg.id.startsWith('whatsapp-')) && (
-                        <div className="px-4 py-2 bg-orange-50 border-b border-orange-100 mx-4 mt-2 rounded-lg">
-                          <p className="text-sm text-orange-700 text-center flex items-center justify-center gap-2">
-                            <span>📱</span>
-                            <span>Your previous WhatsApp conversations with QBOT</span>
-                          </p>
-                        </div>
-                      )}
-                      <QBOTMessageList messages={qBotMessages} />
-                      {isQBotTyping && <QBOTTypingIndicator />}
-                    </>
-                  )}
-                </div>
-              </QBOTChatArea>
-              
-              {/* Input Area */}
-              <QBOTInputArea 
-                onSendMessage={handleSendQBotMessage}
-                disabled={isQBotTyping}
-              />
-            </div>
-          </QBOTChatContainer>
-          
-          {/* Orange Bottom Border Line */}
-          <div className="w-full h-1 bg-gradient-to-r from-red-500 to-orange-500 shadow-md"></div>
-        </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+          {/* Tab Navigation */}
+          <div className="bg-white border-b border-orange-200">
+            <TabsList className="grid w-full grid-cols-2 bg-gradient-to-r from-orange-50 to-red-50 border-0">
+              <TabsTrigger 
+                value="chat" 
+                className="data-[state=active]:bg-orange-500 data-[state=active]:text-white text-orange-700 hover:text-orange-800 font-medium"
+              >
+                QBOT Chat
+              </TabsTrigger>
+              <TabsTrigger 
+                value="questions" 
+                className="data-[state=active]:bg-orange-500 data-[state=active]:text-white text-orange-700 hover:text-orange-800 font-medium"
+              >
+                Questions
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
-        {/* Image Carousel - Flush with chat container */}
-        <div className="h-[120px]">
-          <ImageCarousel className="h-full" />
-        </div>
+          {/* Chat Tab Content */}
+          <TabsContent value="chat" className="flex-1 flex flex-col">
+            {/* QBOT Chat Container */}
+            <div className="flex-1">
+              <QBOTChatContainer>
+                <div className="flex flex-col h-full">
+                  {/* Gradient Header */}
+                  <QBOTChatHeader 
+                    onClear={handleClearQBotChat}
+                    isAdmin={user?.isAdmin}
+                  />
+                  
+                  {/* Chat Area with Engineering Background - Always Visible */}
+                  <QBOTChatArea>
+                    <div className="flex flex-col h-full">
+                      {/* Messages or Welcome State */}
+                      {isLoadingHistory ? (
+                        <div className="flex-1 flex items-center justify-center">
+                          <div className="text-center space-y-3">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto"></div>
+                            <p className="text-gray-600">Loading your chat history...</p>
+                          </div>
+                        </div>
+                      ) : qBotMessages.length === 0 ? (
+                        <QBOTWelcomeState />
+                      ) : (
+                        <>
+                          {/* WhatsApp History Indicator */}
+                          {qBotMessages.some(msg => msg.id.startsWith('whatsapp-')) && (
+                            <div className="px-4 py-2 bg-orange-50 border-b border-orange-100 mx-4 mt-2 rounded-lg">
+                              <p className="text-sm text-orange-700 text-center flex items-center justify-center gap-2">
+                                <span>📱</span>
+                                <span>Your previous WhatsApp conversations with QBOT</span>
+                              </p>
+                            </div>
+                          )}
+                          <QBOTMessageList messages={qBotMessages} />
+                          {isQBotTyping && <QBOTTypingIndicator />}
+                        </>
+                      )}
+                    </div>
+                  </QBOTChatArea>
+                  
+                  {/* Input Area */}
+                  <QBOTInputArea 
+                    onSendMessage={handleSendQBotMessage}
+                    disabled={isQBotTyping}
+                  />
+                </div>
+              </QBOTChatContainer>
+              
+              {/* Orange Bottom Border Line */}
+              <div className="w-full h-1 bg-gradient-to-r from-red-500 to-orange-500 shadow-md"></div>
+            </div>
+
+            {/* Image Carousel - Flush with chat container */}
+            <div className="h-[120px]">
+              <ImageCarousel className="h-full" />
+            </div>
+          </TabsContent>
+
+          {/* Questions Tab Content */}
+          <TabsContent value="questions" className="flex-1 flex flex-col">
+            {/* Image Carousel at top */}
+            <div className="h-[120px]">
+              <ImageCarousel className="h-full" />
+            </div>
+            
+            {/* Questions Tab below carousel */}
+            <div className="flex-1 overflow-auto bg-white">
+              <QuestionsTab />
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
