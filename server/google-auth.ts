@@ -175,10 +175,14 @@ export function setupGoogleAuth(app: Express) {
       // Generate JWT token
       const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
       
-      // Redirect to frontend with token
-      // You can redirect to different pages based on user.hasCompletedOnboarding
-      const redirectUrl = user.hasCompletedOnboarding ? '/map' : '/onboarding';
-      res.redirect(`${redirectUrl}?token=${token}`);
+      // Redirect to frontend with token - redirect to QBOT Chat as per user preference
+      res.redirect(`/oauth-callback?token=${token}&user=${encodeURIComponent(JSON.stringify({
+        id: user.id,
+        fullName: user.fullName,
+        email: user.email,
+        userType: user.userType,
+        isAdmin: user.isAdmin
+      }))}`);
       
     } catch (error) {
       console.error('Error in Google OAuth callback:', error);

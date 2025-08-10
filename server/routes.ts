@@ -108,6 +108,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup stable image upload system
   setupStableImageRoutes(app);
   
+  // Password management endpoints
+  app.put('/api/users/:userId/password', async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const { password } = req.body;
+      
+      if (!password || password.length < 6) {
+        return res.status(400).json({ 
+          message: 'Password must be at least 6 characters long' 
+        });
+      }
+      
+      await storage.updateUserPassword(userId, password);
+      
+      res.json({
+        success: true,
+        message: 'Password updated successfully'
+      });
+    } catch (error: unknown) {
+      console.error('Password update error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ message: 'Failed to update password', error: errorMessage });
+    }
+  });
+
+  app.get('/api/users/:userId/password-renewal-status', async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const requiresRenewal = await storage.checkPasswordRenewalRequired(userId);
+      
+      res.json({
+        requiresRenewal,
+        message: requiresRenewal ? 'Password creation/renewal required' : 'Password is current'
+      });
+    } catch (error: unknown) {
+      console.error('Password renewal check error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ message: 'Failed to check password status', error: errorMessage });
+    }
+  });
+
   // Setup Google OAuth authentication
   setupGoogleAuth(app);
 

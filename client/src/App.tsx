@@ -28,11 +28,16 @@ import OAuthCallback from "@/pages/oauth-callback";
 
 import NotFound from "@/pages/not-found";
 import BottomNav from "@/components/bottom-nav";
+import { PasswordCreationModal } from "@/components/PasswordCreationModal";
+import { usePasswordCheck } from "@/hooks/usePasswordCheck";
 import { getStoredToken, getStoredUser, type User } from "@/lib/auth";
 
 function Router() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Check password requirements for logged-in users
+  const { showPasswordModal, isRenewal, closeModal } = usePasswordCheck(user?.id);
 
   useEffect(() => {
     const token = getStoredToken();
@@ -99,6 +104,16 @@ function Router() {
       </div>
       
       {currentUser && <BottomNav user={currentUser} onLogout={handleLogout} />}
+      
+      {/* Mandatory Password Creation Modal */}
+      {showPasswordModal && user && (
+        <PasswordCreationModal
+          isOpen={showPasswordModal}
+          onClose={closeModal}
+          userId={user.id}
+          isRenewal={isRenewal}
+        />
+      )}
     </div>
   );
 }

@@ -1035,6 +1035,63 @@ export class DatabaseStorage implements IStorage {
       throw error;
     }
   }
+
+  async updateUserPassword(userId: string, password: string): Promise<void> {
+    try {
+      const now = new Date();
+      const renewalDate = new Date(now.getTime() + (12 * 30 * 24 * 60 * 60 * 1000)); // 12 months from now
+      
+      await pool.query(`
+        UPDATE users 
+        SET password = $1, 
+            has_set_custom_password = true,
+            must_create_password = false,
+            password_created_at = $2,
+            password_renewal_due = $3,
+            last_updated = NOW()
+        WHERE id = $4
+      `, [password, now, renewalDate, userId]);
+      
+      console.log(`✅ Password updated for user ${userId}, renewal due: ${renewalDate.toISOString()}`);
+    } catch (error) {
+      console.error(`Error updating password for user ${userId}:`, error as Error);
+      throw error;
+    }
+  }
+
+  async checkPasswordRenewalRequired(userId: string): Promise<boolean> {
+    try {
+      const result = await pool.query(`
+        SELECT 
+          must_create_password,
+          password_renewal_due,
+          has_set_custom_password
+        FROM users 
+        WHERE id = $1
+      `, [userId]);
+      
+      if (result.rows.length === 0) {
+        return true; // User not found, require password creation
+      }
+      
+      const user = result.rows[0];
+      
+      // Check if user must create password (first time)
+      if (user.must_create_password || !user.has_set_custom_password) {
+        return true;
+      }
+      
+      // Check if password renewal is due (12 months)
+      if (user.password_renewal_due && new Date() > new Date(user.password_renewal_due)) {
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error(`Error checking password renewal for user ${userId}:`, error as Error);
+      return true; // Default to requiring password creation on error
+    }
+  }
 }
 
 // Use new dedicated database for authentication testing
