@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Crown, Check, Loader2, ExternalLink, Sparkles } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+
 import { apiRequest } from "@/lib/queryClient";
 
 interface PremiumPlan {
@@ -62,7 +62,7 @@ export function PremiumSubscriptionDialog({
   const [selectedPlan, setSelectedPlan] = useState<'premium' | 'super_user'>(defaultPlanType);
   const [selectedPeriod, setSelectedPeriod] = useState<'monthly' | 'yearly'>('monthly');
   const [selectedTopup, setSelectedTopup] = useState<string>('topup_451');
-  const { toast } = useToast();
+
   const queryClient = useQueryClient();
 
   // Fetch subscription plans
@@ -92,19 +92,12 @@ export function PremiumSubscriptionDialog({
       // Open Razorpay checkout URL
       if (data.checkoutUrl) {
         window.open(data.checkoutUrl, '_blank');
-        toast({
-          title: "Checkout Opened",
-          description: "Please complete your payment in the new tab.",
-        });
+        console.log("Checkout opened - Please complete your payment in the new tab.");
       }
       queryClient.invalidateQueries({ queryKey: ['/api/user/subscription-status'] });
     },
     onError: (error: any) => {
-      toast({
-        title: "Subscription Error",
-        description: error?.message || "Failed to create subscription",
-        variant: "destructive",
-      });
+      console.error("Subscription Error:", error?.message || "Failed to create subscription");
     },
   });
 
@@ -169,7 +162,7 @@ export function PremiumSubscriptionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-4xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-2xl">
             <Crown className="h-6 w-6 text-orange-500" />
@@ -372,7 +365,7 @@ export function PremiumSubscriptionDialog({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Expert AI responses with detailed analysis</span>
+                    <span className="text-sm">Expert AI- detailed analysis</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
@@ -408,8 +401,8 @@ export function PremiumSubscriptionDialog({
           </TabsContent>
         </Tabs>
 
-        <div className="flex items-center justify-between pt-4 border-t">
-          <div className="text-sm text-muted-foreground">Secured  by Razorpay</div>
+        <div className="flex items-center justify-between pt-4 pb-8 border-t mt-6 mb-4">
+          <div className="text-sm text-muted-foreground">Secured by Razorpay</div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
