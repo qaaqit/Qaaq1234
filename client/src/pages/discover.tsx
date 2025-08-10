@@ -30,11 +30,8 @@ interface Post {
   createdAt: string;
 }
 
-interface DiscoverProps {
-  user: User;
-}
-
-export default function Discover({ user }: DiscoverProps) {
+export default function Discover() {
+  const { user } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useWouterLocation();
 

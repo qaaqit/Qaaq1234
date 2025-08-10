@@ -1,4 +1,4 @@
-import { users, posts, likes, verificationCodes, chatConnections, chatMessages, type User, type InsertUser, type Post, type InsertPost, type VerificationCode, type Like, type ChatConnection, type ChatMessage, type InsertChatConnection, type InsertChatMessage } from "@shared/schema";
+import { users, posts, likes, verificationCodes, chatConnections, chatMessages, type User, type InsertUser, type UpsertUser, type Post, type InsertPost, type VerificationCode, type Like, type ChatConnection, type ChatMessage, type InsertChatConnection, type InsertChatMessage } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, desc, and, ilike, or, sql, isNotNull } from "drizzle-orm";
 import { testDatabaseConnection } from "./test-db";
@@ -10,6 +10,7 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByIdAndPassword(userId: string, password: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  upsertUser(user: UpsertUser): Promise<User>; // For Replit Auth
   updateUserVerification(userId: string, isVerified: boolean): Promise<void>;
   incrementLoginCount(userId: string): Promise<void>;
   getUsersWithLocation(): Promise<User[]>;
@@ -516,6 +517,89 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return user;
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    try {
+      console.log('Upserting user with Replit Auth data:', userData);
+      
+      // First, try to find existing user by Replit ID or email
+      let existingUser: User | undefined;
+      
+      if (userData.id) {
+        existingUser = await this.getUser(userData.id);
+      }
+      
+      if (!existingUser && userData.email) {
+        existingUser = await this.getUserByEmail(userData.email);
+      }
+
+      if (existingUser) {
+        // Update existing user with Replit Auth data
+        const [updatedUser] = await db
+          .update(users)
+          .set({
+            firstName: userData.firstName,
+            lastName: userData.lastName,
+            profileImageUrl: userData.profileImageUrl,
+            updatedAt: new Date(),
+            // Update fullName if Replit provides names
+            fullName: userData.firstName && userData.lastName 
+              ? `${userData.firstName} ${userData.lastName}` 
+              : existingUser.fullName,
+          })
+          .where(eq(users.id, existingUser.id))
+          .returning();
+        
+        console.log('User updated successfully with Replit Auth data:', updatedUser.id);
+        return updatedUser;
+      } else {
+        // Create new user with Replit Auth data
+        const [newUser] = await db
+          .insert(users)
+          .values({
+            id: userData.id,
+            email: userData.email,
+            firstName: userData.firstName,
+            lastName: userData.lastName,
+            profileImageUrl: userData.profileImageUrl,
+            fullName: userData.firstName && userData.lastName 
+              ? `${userData.firstName} ${userData.lastName}` 
+              : userData.email?.split('@')[0] || 'Maritime Professional',
+            userType: 'sailor', // Default for new Replit Auth users
+            hasSetCustomPassword: true, // Replit Auth users don't need password setup
+            liberalLoginCount: 0,
+            needsPasswordChange: false, // No password needed for Replit Auth
+            isAdmin: false,
+            isVerified: true, // Replit Auth users are pre-verified
+            hasCompletedOnboarding: false,
+            isPlatformAdmin: false,
+            isBlocked: false,
+            loginCount: 1,
+            questionCount: 0,
+            answerCount: 0,
+            locationSource: 'city',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .onConflictDoUpdate({
+            target: users.id,
+            set: {
+              firstName: userData.firstName,
+              lastName: userData.lastName,
+              profileImageUrl: userData.profileImageUrl,
+              updatedAt: new Date(),
+            },
+          })
+          .returning();
+
+        console.log('User created/updated successfully with Replit Auth:', newUser.id);
+        return newUser;
+      }
+    } catch (error) {
+      console.error('Error upserting user with Replit Auth:', error);
+      throw error;
+    }
   }
 
   async updateUserVerification(userId: string, isVerified: boolean): Promise<void> {

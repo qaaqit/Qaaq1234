@@ -26,6 +26,7 @@ import { ObjectStorageService } from "./objectStorage";
 import { imageManagementService } from "./image-management-service";
 import { setupStableImageRoutes } from "./stable-image-upload";
 import { razorpayService, SUBSCRIPTION_PLANS } from "./razorpay-service";
+import { setupAuth, isAuthenticated } from "./replitAuth";
 
 // Extend Express Request type
 declare global {
@@ -100,6 +101,9 @@ const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: numbe
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  
+  // Setup Replit Auth middleware
+  await setupAuth(app);
   
   // Setup merge routes for robust authentication
   setupMergeRoutes(app);
@@ -209,6 +213,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Login error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       res.status(400).json({ message: "Login failed", error: errorMessage });
+    }
+  });
+
+  // Replit Auth user route
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
     }
   });
 

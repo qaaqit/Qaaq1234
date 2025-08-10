@@ -3,9 +3,10 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 import Home from "@/pages/home-old";
+import Landing from "@/pages/Landing";
 import Register from "@/pages/register";
 import Verify from "@/pages/verify";
 import Discover from "@/pages/discover";
@@ -27,27 +28,11 @@ import PasswordDemoPage from "@/pages/password-demo";
 
 import NotFound from "@/pages/not-found";
 import BottomNav from "@/components/bottom-nav";
-import { getStoredToken, getStoredUser, type User } from "@/lib/auth";
 
 function Router() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { isAuthenticated, isLoading } = useAuth();
 
-  useEffect(() => {
-    const token = getStoredToken();
-    const storedUser = getStoredUser();
-    
-    if (token && storedUser) {
-      setUser(storedUser);
-    }
-    setLoading(false);
-  }, []);
-
-  const handleLogout = () => {
-    setUser(null);
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
@@ -60,43 +45,48 @@ function Router() {
     );
   }
 
-  // Allow access without user requirements
-  const currentUser = user;
-
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className={currentUser ? "pb-16" : ""}>
+      <div className={isAuthenticated ? "pb-16" : ""}>
         <Switch>
-          <Route path="/" component={() => currentUser ? <QBOTPage user={currentUser} /> : <Home onSuccess={setUser} />} />
-          <Route path="/register" component={() => <Register onSuccess={setUser} />} />
-          <Route path="/verify" component={() => <Verify onSuccess={setUser} />} />
-          <Route path="/discover" component={() => currentUser ? <Discover user={currentUser} /> : <Home onSuccess={setUser} />} />
-          <Route path="/qbot" component={() => currentUser ? <QBOTPage user={currentUser} /> : <Home onSuccess={setUser} />} />
-          <Route path="/post" component={() => currentUser ? <Post user={currentUser} /> : <Home onSuccess={setUser} />} />
-          <Route path="/chat" component={() => <ChatPage />} />
-          <Route path="/chat/:userId" component={() => <DMPage />} />
-          <Route path="/dm" component={() => <DMPage />} />
-          <Route path="/qhf" component={() => <DMPage />} />
-          <Route path="/user/:userId" component={() => <UserProfile />} />
-          <Route path="/user-profile/:userId" component={() => <UserProfile />} />
-          <Route path="/profile" component={() => <Profile />} />
-          <Route path="/my-questions" component={() => <MyQuestions />} />
-          <Route path="/share/question/:id" component={() => <QuestionPage />} />
-          <Route path="/questions/:id" component={() => <QuestionPage />} />
-          <Route path="/rank-groups" component={() => <RankGroupsPage />} />
-          <Route path="/admin" component={() => <Admin />} />
-          <Route path="/admin/bot-rules" component={() => <BotRulesAdmin />} />
-          <Route path="/merge-accounts/:sessionId" component={MergeAccountsPage} />
-          <Route path="/auth-test" component={AuthTestPage} />
-          <Route path="/set-password" component={SetPasswordPage} />
-          <Route path="/password-demo" component={PasswordDemoPage} />
-          <Route path="/home-old" component={() => <Home onSuccess={setUser} />} />
-
+          {isLoading || !isAuthenticated ? (
+            <Route path="/" component={Landing} />
+          ) : (
+            <>
+              <Route path="/" component={QBOTPage} />
+              <Route path="/discover" component={Discover} />
+              <Route path="/qbot" component={QBOTPage} />
+              <Route path="/post" component={Post} />
+              <Route path="/chat" component={ChatPage} />
+              <Route path="/chat/:userId" component={DMPage} />
+              <Route path="/dm" component={DMPage} />
+              <Route path="/qhf" component={DMPage} />
+              <Route path="/user/:userId" component={UserProfile} />
+              <Route path="/user-profile/:userId" component={UserProfile} />
+              <Route path="/profile" component={Profile} />
+              <Route path="/my-questions" component={MyQuestions} />
+              <Route path="/share/question/:id" component={QuestionPage} />
+              <Route path="/questions/:id" component={QuestionPage} />
+              <Route path="/rank-groups" component={RankGroupsPage} />
+              <Route path="/admin" component={Admin} />
+              <Route path="/admin/bot-rules" component={BotRulesAdmin} />
+              <Route path="/merge-accounts/:sessionId" component={MergeAccountsPage} />
+              <Route path="/auth-test" component={AuthTestPage} />
+              <Route path="/set-password" component={SetPasswordPage} />
+              <Route path="/password-demo" component={PasswordDemoPage} />
+              <Route path="/home-old" component={Home} />
+            </>
+          )}
+          
+          {/* Public routes available to non-authenticated users */}
+          <Route path="/register" component={Register} />
+          <Route path="/verify" component={Verify} />
+          
           <Route component={NotFound} />
         </Switch>
       </div>
       
-      {currentUser && <BottomNav user={currentUser} onLogout={handleLogout} />}
+      {isAuthenticated && <BottomNav onLogout={() => window.location.href = "/api/logout"} />}
     </div>
   );
 }
