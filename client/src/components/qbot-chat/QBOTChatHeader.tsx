@@ -86,16 +86,16 @@ export default function QBOTChatHeader({ onClear, isAdmin = false }: QBOTChatHea
   };
 
   return (
-    <div className="relative z-10 h-[50px] bg-gradient-to-r from-red-500 to-orange-500 shadow-lg flex items-center justify-between px-4 flex-shrink-0">
-      {/* Left: Action Icons */}
-      <div className="flex items-center space-x-2">
+    <div className="relative z-10 bg-white border-b border-gray-100 flex items-center justify-end px-4 py-2 flex-shrink-0">
+      {/* Right: Action Icons Only */}
+      <div className="flex items-center space-x-1">
         <button
           onClick={onClear}
-          className="p-2 rounded-full hover:bg-white/10 transition-colors"
+          className="p-2 rounded-lg hover:bg-gray-100 transition-colors group"
           aria-label="Clear chat"
           title="Clear chat history"
         >
-          <Trash2 size={18} className="text-white" />
+          <Trash2 size={16} className="text-gray-600 group-hover:text-red-500" />
         </button>
 
         {/* Chatbot Invites Dialog - Only for Admin */}
@@ -104,11 +104,11 @@ export default function QBOTChatHeader({ onClear, isAdmin = false }: QBOTChatHea
             <DialogTrigger asChild>
               <button
                 onClick={handleEditInvites}
-                className="p-2 rounded-full hover:bg-white/10 transition-colors"
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors group"
                 aria-label="Edit chatbot invites"
                 title="Edit chatbot invites (Admin only)"
               >
-                <Upload size={18} className="text-white" />
+                <Upload size={16} className="text-gray-600 group-hover:text-orange-500" />
               </button>
             </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
@@ -157,14 +157,6 @@ export default function QBOTChatHeader({ onClear, isAdmin = false }: QBOTChatHea
         </Dialog>
         )}
       </div>
-
-      {/* Center: QBOT AI Text */}
-      <h2 className="text-white font-bold text-lg tracking-wide">
-        QBOT AI Assistant
-      </h2>
-
-      {/* Right: Spacer for symmetry */}
-      <div className="w-10" />
     </div>
   );
 }

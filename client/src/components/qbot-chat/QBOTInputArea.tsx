@@ -148,7 +148,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
 
   // Handle crown click for premium mode toggle
   const togglePremiumMode = () => {
-    const isUserPremium = userStatus?.isPremium || userStatus?.isSuperUser || false;
+    const isUserPremium = (userStatus as any)?.isPremium || (userStatus as any)?.isSuperUser || false;
     const isUserAdmin = localStorage.getItem('isAdmin') === 'true';
 
     if (!isUserPremium && !isUserAdmin) {
@@ -162,7 +162,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
 
   // Handle privacy mode toggle (only for premium/admin users)
   const togglePrivacyMode = () => {
-    const isUserPremium = userStatus?.isPremium || userStatus?.isSuperUser || false;
+    const isUserPremium = (userStatus as any)?.isPremium || (userStatus as any)?.isSuperUser || false;
     const isUserAdmin = localStorage.getItem('isAdmin') === 'true';
 
     if (isUserPremium || isUserAdmin) {
@@ -288,7 +288,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
             {/* Privacy and Crown icons on left side */}
             <div className="absolute left-3 top-2 flex flex-col items-center gap-1">
               {/* Privacy Shield (only for premium/admin users) */}
-              {(userStatus?.isPremium || userStatus?.isSuperUser || localStorage.getItem('isAdmin') === 'true') && (
+              {((userStatus as any)?.isPremium || (userStatus as any)?.isSuperUser || localStorage.getItem('isAdmin') === 'true') && (
                 <button
                   onClick={togglePrivacyMode}
                   className="p-1 rounded transition-all duration-200 text-gray-400 hover:bg-gray-100"

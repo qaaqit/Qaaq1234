@@ -283,18 +283,18 @@ export default function QBOTPage({ user }: QBOTPageProps) {
           {/* Chat Tab Content */}
           <TabsContent value="chat" className="flex-1 flex flex-col">
             {/* QBOT Chat Container */}
-            <div className="flex-1">
+            <div className="flex-1 p-4">
               <QBOTChatContainer>
-                <div className="flex flex-col h-full">
-                  {/* Gradient Header */}
+                <div className="flex flex-col h-full rounded-xl border border-gray-200 bg-white shadow-lg overflow-hidden">
+                  {/* Minimalist Header */}
                   <QBOTChatHeader 
                     onClear={handleClearQBotChat}
                     isAdmin={user?.isAdmin}
                   />
                   
-                  {/* Chat Area with Engineering Background - Always Visible */}
+                  {/* Chat Area with Clean Background */}
                   <QBOTChatArea>
-                    <div className="flex flex-col h-full">
+                    <div className="flex flex-col h-full p-4">
                       {/* Messages or Welcome State */}
                       {isLoadingHistory ? (
                         <div className="flex-1 flex items-center justify-center">
@@ -309,7 +309,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                         <>
                           {/* WhatsApp History Indicator */}
                           {qBotMessages.some(msg => msg.id.startsWith('whatsapp-')) && (
-                            <div className="px-4 py-2 bg-orange-50 border-b border-orange-100 mx-4 mt-2 rounded-lg">
+                            <div className="px-4 py-2 bg-orange-50 border border-orange-100 rounded-lg mb-4">
                               <p className="text-sm text-orange-700 text-center flex items-center justify-center gap-2">
                                 <span>📱</span>
                                 <span>Your previous WhatsApp conversations with QBOT</span>
@@ -323,34 +323,35 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                     </div>
                   </QBOTChatArea>
                   
-                  {/* Input Area */}
-                  <QBOTInputArea 
-                    onSendMessage={handleSendQBotMessage}
-                    disabled={isQBotTyping}
-                  />
+                  {/* Input Area with padding */}
+                  <div className="p-4 border-t border-gray-100">
+                    <QBOTInputArea 
+                      onSendMessage={handleSendQBotMessage}
+                      disabled={isQBotTyping}
+                    />
+                  </div>
                 </div>
               </QBOTChatContainer>
-              
-              {/* Orange Bottom Border Line */}
-              <div className="w-full h-1 bg-gradient-to-r from-red-500 to-orange-500 shadow-md"></div>
             </div>
 
-            {/* Image Carousel - Flush with chat container */}
-            <div className="h-[120px]">
-              <ImageCarousel className="h-full" />
+            {/* Image Carousel - Clean spacing */}
+            <div className="h-[120px] px-4 pb-4">
+              <ImageCarousel className="h-full rounded-lg overflow-hidden shadow-sm" />
             </div>
           </TabsContent>
 
           {/* Questions Tab Content */}
           <TabsContent value="questions" className="flex-1 flex flex-col">
-            {/* Image Carousel at top */}
-            <div className="h-[120px]">
-              <ImageCarousel className="h-full" />
+            {/* Image Carousel at top with clean spacing */}
+            <div className="h-[120px] px-4 pt-4">
+              <ImageCarousel className="h-full rounded-lg overflow-hidden shadow-sm" />
             </div>
             
-            {/* Questions Tab below carousel */}
-            <div className="flex-1 overflow-auto bg-white">
-              <QuestionsTab />
+            {/* Questions Tab below carousel with improved layout */}
+            <div className="flex-1 overflow-auto bg-white px-4 py-4">
+              <div className="max-w-6xl mx-auto">
+                <QuestionsTab />
+              </div>
             </div>
           </TabsContent>
         </Tabs>
