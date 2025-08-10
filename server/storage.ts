@@ -579,7 +579,7 @@ export class DatabaseStorage implements IStorage {
         
         // Add realistic geographic scatter within city area (±0.1 degrees ≈ ±11km)
         const userId = user.id.toString();
-        const hashSeed = userId.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+        const hashSeed = userId.split('').reduce((a: number, b: string) => a + b.charCodeAt(0), 0);
         const latOffset = ((hashSeed % 200) - 100) / 1000; // ±0.1 degrees
         const lngOffset = (((hashSeed * 7) % 200) - 100) / 1000; // ±0.1 degrees
         
@@ -1038,14 +1038,14 @@ export class DatabaseStorage implements IStorage {
 
   async updateUserPassword(userId: string, password: string): Promise<void> {
     try {
-      // Use current_city column for password storage
+      // Use password column for password storage
       await pool.query(`
         UPDATE users 
-        SET current_city = $1
+        SET password = $1
         WHERE id = $2
       `, [password, userId]);
       
-      console.log(`✅ Password updated for user ${userId} (stored in current_city column)`);
+      console.log(`✅ Password updated for user ${userId}`);
     } catch (error) {
       console.error(`Error updating password for user ${userId}:`, error as Error);
       throw error;
@@ -1054,39 +1054,26 @@ export class DatabaseStorage implements IStorage {
 
   async checkPasswordRenewalRequired(userId: string): Promise<boolean> {
     try {
-      // Use current_city column for password storage
+      // Check password column
       const result = await pool.query(`
-        SELECT current_city FROM users WHERE id = $1
+        SELECT password FROM users WHERE id = $1
       `, [userId]);
       
       if (result.rows.length === 0) {
-        return false; // User not found, no password requirement
+        return true; // User not found, require password creation
       }
       
       const user = result.rows[0];
       
-      // For now, don't require mandatory password creation
-      // This can be enabled later when database schema supports it
-      return false;
+      // Require password creation if password is null or empty
+      return !user.password || user.password.trim() === '';
     } catch (error) {
       console.error(`Error checking password renewal for user ${userId}:`, error as Error);
       return false; // Don't require password creation on error
     }
   }
 
-  // Google OAuth user management methods
-  async getUserByGoogleId(googleId: string): Promise<User | null> {
-    try {
-      const result = await pool.query(`
-        SELECT * FROM users WHERE google_id = $1 LIMIT 1
-      `, [googleId]);
-      
-      return result.rows.length > 0 ? result.rows[0] as User : null;
-    } catch (error) {
-      console.error(`Error getting user by Google ID ${googleId}:`, error);
-      return null;
-    }
-  }
+  // Google OAuth user management methods - duplicate removed
 
   async createGoogleUser(userData: any): Promise<User> {
     try {
