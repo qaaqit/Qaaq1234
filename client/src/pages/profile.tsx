@@ -16,7 +16,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { 
   UserIcon, Ship, MapPin, Calendar, 
-  Anchor, Clock, Award, Users, ArrowLeft, Save, RefreshCw, HelpCircle 
+  Anchor, Clock, Award, Users, ArrowLeft, Save, RefreshCw, HelpCircle, Eye, EyeOff 
 } from "lucide-react";
 import { z } from "zod";
 
@@ -24,6 +24,7 @@ import { z } from "zod";
 const profileUpdateSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
+  password: z.string().min(1, "Password is required"),     // Password field
   rank: z.string().optional(),         // Will map to maritime_rank
   shipName: z.string().optional(),     // Will map to current_ship_name  
   imoNumber: z.string().optional(),    // Will map to current_ship_imo
@@ -38,6 +39,7 @@ export default function Profile() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [isEditing, setIsEditing] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Always call useQuery hook
   const { data: profile, isLoading: profileLoading } = useQuery<User>({
@@ -51,6 +53,7 @@ export default function Profile() {
     values: profile ? {
       fullName: profile.fullName || '',
       email: profile.email || '',
+      password: profile.password || '',
       rank: profile.rank || '',
       shipName: profile.shipName || '',
       imoNumber: profile.imoNumber || '',
@@ -59,6 +62,7 @@ export default function Profile() {
     } : {
       fullName: '',
       email: '',
+      password: '',
       rank: '',
       shipName: '',
       imoNumber: '',
@@ -230,10 +234,45 @@ export default function Profile() {
                       </FormItem>
                     )}
                   />
+                </div>
 
-
-
-
+                {/* Password field - full width */}
+                <div className="w-full">
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Password *</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input 
+                              {...field} 
+                              type={showPassword ? "text" : "password"}
+                              disabled={!isEditing}
+                              placeholder="Enter your password"
+                              className="pr-10"
+                            />
+                            {isEditing && (
+                              <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                tabIndex={-1}
+                              >
+                                {showPassword ? (
+                                  <EyeOff size={18} />
+                                ) : (
+                                  <Eye size={18} />
+                                )}
+                              </button>
+                            )}
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
               </CardContent>
             </Card>
