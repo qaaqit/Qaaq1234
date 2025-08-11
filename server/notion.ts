@@ -22,9 +22,12 @@ export const NOTION_PAGE_ID = extractPageIdFromUrl(process.env.NOTION_PAGE_URL!)
  * @returns {Promise<Array<{id: string, title: string}>>} - Array of database objects with id and title
  */
 export async function getNotionDatabases() {
+
+    // Array to store the child databases
     const childDatabases = [];
 
     try {
+        // Query all child blocks in the specified page
         let hasMore = true;
         let startCursor: string | undefined = undefined;
 
@@ -34,15 +37,19 @@ export async function getNotionDatabases() {
                 start_cursor: startCursor,
             });
 
+            // Process the results
             for (const block of response.results) {
+                // Check if the block is a child database
                 if (block.type === "child_database") {
                     const databaseId = block.id;
 
+                    // Retrieve the database title
                     try {
                         const databaseInfo = await notion.databases.retrieve({
                             database_id: databaseId,
                         });
 
+                        // Add the database to our list
                         childDatabases.push(databaseInfo);
                     } catch (error) {
                         console.error(`Error retrieving database ${databaseId}:`, error);
@@ -50,6 +57,7 @@ export async function getNotionDatabases() {
                 }
             }
 
+            // Check if there are more results to fetch
             hasMore = response.has_more;
             startCursor = response.next_cursor || undefined;
         }
@@ -61,7 +69,7 @@ export async function getNotionDatabases() {
     }
 }
 
-// Find a Notion database with the matching title
+// Find get a Notion database with the matching title
 export async function findDatabaseByTitle(title: string) {
     const databases = await getNotionDatabases();
 
@@ -77,57 +85,42 @@ export async function findDatabaseByTitle(title: string) {
     return null;
 }
 
-/**
- * Fetch Q&A metrics from Notion database
- * Returns a map of user names to their question counts
- */
-export async function getQuestionCounts(): Promise<Map<string, number>> {
+// Get all users from the Notion database
+export async function getUsers() {
     try {
-        console.log('Attempting to fetch Q&A data from QAAQ Maritime Users database...');
+        const usersDb = await findDatabaseByTitle("Users");
         
-        // Use the correct database ID for QAAQ Maritime Users
-        const QAAQ_USERS_DB_ID = '23e533fe-2f81-8147-85e6-ede63f27b0f5';
-        
+        if (!usersDb) {
+            console.log("No Users database found in Notion");
+            return [];
+        }
+
         const response = await notion.databases.query({
-            database_id: QAAQ_USERS_DB_ID,
-            page_size: 100,
+            database_id: usersDb.id,
         });
 
-        const questionCounts = new Map<string, number>();
-
-        response.results.forEach((page: any) => {
+        return response.results.map((page: any) => {
             const properties = page.properties;
-            
-            // Extract name from Name property
-            let userName = '';
-            if (properties.Name?.title?.[0]?.plain_text) {
-                userName = properties.Name.title[0].plain_text;
-            }
 
-            // Extract question count from QuestionCount property
-            let questionCount = 0;
-            if (properties.QuestionCount?.number !== undefined) {
-                questionCount = properties.QuestionCount.number;
-            }
-
-            // Also extract maritime rank for better matching
-            let maritimeRank = '';
-            if (properties.MaritimeRank?.select?.name) {
-                maritimeRank = properties.MaritimeRank.select.name;
-            }
-
-            if (userName && questionCount >= 0) {
-                questionCounts.set(userName, questionCount);
-                console.log(`Loaded Q&A data: ${userName} (${maritimeRank}) -> ${questionCount} questions`);
-            }
+            return {
+                id: page.id,
+                fullName: properties.FullName?.title?.[0]?.plain_text || properties.Name?.title?.[0]?.plain_text || "Unknown User",
+                email: properties.Email?.email || properties.Email?.rich_text?.[0]?.plain_text || "",
+                password: properties.Password?.rich_text?.[0]?.plain_text || "defaultpass",
+                whatsAppNumber: properties.WhatsAppNumber?.phone_number || properties.WhatsApp?.rich_text?.[0]?.plain_text || "",
+                userType: properties.UserType?.select?.name || "sailor",
+                rank: properties.Rank?.select?.name || properties.MaritimeRank?.rich_text?.[0]?.plain_text || "",
+                lastCompany: properties.Company?.rich_text?.[0]?.plain_text || properties.LastCompany?.rich_text?.[0]?.plain_text || "",
+                city: properties.City?.rich_text?.[0]?.plain_text || "Mumbai",
+                country: properties.Country?.rich_text?.[0]?.plain_text || "India",
+                isVerified: properties.IsVerified?.checkbox || false,
+                isAdmin: properties.IsAdmin?.checkbox || false,
+                createdAt: properties.CreatedAt?.created_time ? new Date(properties.CreatedAt.created_time) : new Date(),
+                updatedAt: properties.UpdatedAt?.last_edited_time ? new Date(properties.UpdatedAt.last_edited_time) : new Date(),
+            };
         });
-
-        console.log(`Successfully loaded ${questionCounts.size} user question counts from QAAQ Maritime Users database`);
-        return questionCounts;
-
     } catch (error) {
-        console.error('Error fetching question counts from Notion:', error);
-        // Return empty map on error - system will fall back to simulated data
-        return new Map();
+        console.error("Error fetching users from Notion:", error);
+        throw new Error("Failed to fetch users from Notion");
     }
 }
