@@ -401,9 +401,6 @@ export default function Home({ onSuccess }: HomeProps) {
           </div>
 
           {/* Logo and Title */}
-          <div className="w-16 h-16 bg-gradient-to-br from-orange-600 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Anchor className="text-2xl text-white" size={28} />
-          </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Join QaaqConnect</h1>
           <p className="text-gray-600">Maritime Professional Registration</p>
         </div>
