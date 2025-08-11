@@ -427,7 +427,7 @@ export default function Home({ onSuccess }: HomeProps) {
 
           {/* Logo and Title */}
           <h1 className="text-3xl font-bold text-gray-900 mb-2">MV QaaqConnect</h1>
-          <p className="text-gray-600">Maritime Professional Registration</p>
+          <p className="text-gray-600">Welcome to our Gangway!</p>
         </div>
 
         {/* Registration Form */}
