@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { authApi, setStoredToken, setStoredUser, type User } from "@/lib/auth";
-import UsersMapDual from "@/components/users-map-dual";
 import ForgotPasswordModal from "@/components/forgot-password-modal";
 import SignUpModal from "@/components/signup-modal";
 import { GoogleAuthButton } from "@/components/GoogleAuthButton";
@@ -19,7 +18,6 @@ export default function Home({ onSuccess }: HomeProps) {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [showSignUp, setShowSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -116,201 +114,126 @@ export default function Home({ onSuccess }: HomeProps) {
   };
 
   return (
-    <div 
-      className="min-h-screen relative overflow-hidden cursor-pointer bg-gray-100"
-      onClick={() => setIsMinimized(false)}
-    >
-      {/* Full Screen Map Background with Error Boundary */}
-      <div className="absolute inset-0 z-0 bg-gray-100">
-        <div className="w-full h-full">
-          <UsersMapDual showNearbyCard={false} />
-        </div>
-      </div>
-      {/* Overlay for better contrast */}
-      <div className="absolute inset-0 z-10 bg-black/20 pointer-events-none"></div>
-      {/* Translucent Login Box - Mobile Responsive */}
-      <div className={`fixed sm:absolute z-20 top-2 sm:top-4 right-2 sm:right-4 left-2 sm:left-4 flex justify-center transition-all duration-500`}>
-        <div 
-          className="backdrop-blur-sm sm:backdrop-blur-lg border border-white/40 shadow-2xl rounded-xl relative transition-all duration-500 p-4 sm:p-6 w-full max-w-[calc(100vw-1rem)] sm:max-w-md bg-white/80 sm:bg-white/60"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Chevron toggle button in top-right corner */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsMinimized(!isMinimized);
-            }}
-            className="absolute right-3 hover:bg-white/90 rounded-full flex items-center justify-center hover:text-cyan-600 transition-all duration-200 shadow-sm z-30 border border-ocean-teal/20 top-3 w-8 h-8 bg-[#afb3b5] text-[#1e53a6]"
-          >
-            <i className={`fas ${isMinimized ? 'fa-chevron-down' : 'fa-chevron-up'} font-bold ${
-              isMinimized ? 'text-xs' : 'text-sm'
-            }`}></i>
-          </button>
-          
-          {/* Header */}
-          <div className={`transition-all duration-500 ${
-            isMinimized ? 'flex items-center space-x-3 mb-0' : 'text-center mb-4 sm:mb-6'
-          }`}>
-            <div className={`bg-ocean-teal/20 rounded-full flex items-center justify-center transition-all duration-500 ${
-              isMinimized 
-                ? 'w-8 h-8 flex-shrink-0' 
-                : 'w-10 sm:w-12 h-10 sm:h-12 mx-auto mb-2 sm:mb-3'
-            }`}>
-              <i className={`fas fa-anchor text-ocean-teal transition-all duration-500 ${
-                isMinimized ? 'text-sm' : 'text-lg sm:text-xl'
-              }`}></i>
-            </div>
-            {!isMinimized && (
-              <>
-                <h1 className="text-xl sm:text-2xl font-bold text-navy-blue">QaaqConnect</h1>
-                <p className="text-gray-600 text-xs sm:text-sm">Maritime Community Login</p>
-              </>
-            )}
-            {isMinimized && (
-              <div className="flex-grow">
-                <h1 className="text-sm font-bold text-navy-blue">QaaqConnect</h1>
-                <p className="text-xs text-gray-500">Click to login</p>
-              </div>
-            )}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <i className="fas fa-anchor text-2xl text-white"></i>
           </div>
-
-          {/* Login Form */}
-          {!isMinimized && (
-            <>
-              <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
-                <div className="space-y-1 sm:space-y-2">
-                  <Label htmlFor="userId" className="text-xs sm:text-sm font-medium text-gray-700">USER NAME (may be ur country code +91 & whatsapp number )</Label>
-                  <Input
-                    id="userId"
-                    type="text"
-                    value={formData.userId}
-                    onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
-                    placeholder="Enter your name, email, or phone number"
-                    className="bg-white/90 border-gray-200 focus:border-ocean-teal focus:bg-white text-sm sm:text-base"
-                    disabled={loading}
-                  />
-                </div>
-                
-                <div className="space-y-1 sm:space-y-2">
-                  <Label htmlFor="password" className="text-xs sm:text-sm font-medium text-gray-700">Password (This may be ur city example mumbai)</Label>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      placeholder="Enter your password"
-                      className="bg-white/90 border-gray-200 focus:border-ocean-teal focus:bg-white text-sm sm:text-base pr-10"
-                      disabled={loading}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                      title={showPassword ? "Hide password" : "Show password"}
-                    >
-                      {showPassword ? (
-                        <EyeOff size={18} />
-                      ) : (
-                        <Eye size={18} />
-                      )}
-                    </button>
-                  </div>
-                </div>
-                
-                <Button 
-                  type="submit" 
-                  className="w-full bg-ocean-teal hover:bg-cyan-600 text-[#ea5910] font-semibold py-2"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <i className="fas fa-spinner fa-spin mr-2"></i>
-                      Logging in...
-                    </>
-                  ) : (
-                    <>
-                      <i className="fas fa-sign-in-alt mr-2"></i>
-                      Login to QaaqConnect
-                    </>
-                  )}
-                </Button>
-
-                {/* Divider */}
-                <div className="relative my-4">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-gray-300" />
-                  </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-white text-gray-500">or</span>
-                  </div>
-                </div>
-
-                {/* Google OAuth Button */}
-                <GoogleAuthButton 
-                  disabled={loading}
-                  onSuccess={(token) => {
-                    // Handle success if needed - the redirect should handle this
-                    console.log('Google auth success:', token);
-                  }}
-                />
-
-                {/* Footer Links */}
-                <div className="flex justify-between items-center mt-3 text-sm">
-                  <button
-                    type="button"
-                    onClick={() => setShowSignUp(true)}
-                    className="text-orange-600 hover:text-orange-700 font-medium transition-colors flex items-center gap-1"
-                  >
-                    <i className="fas fa-user-plus"></i>
-                    New User
-                  </button>
-                  
-                  <button
-                    type="button"
-                    onClick={() => setShowForgotPassword(true)}
-                    className="text-ocean-teal hover:text-cyan-600 underline transition-colors"
-                  >
-                    Forgot password?
-                  </button>
-                </div>
-              </form>
-              
-              
-            </>
-          )}
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">QaaqConnect</h1>
+          <p className="text-gray-600">Maritime Community Login</p>
         </div>
 
-        {/* Forgot Password Modal */}
-        {showForgotPassword && (
-          <ForgotPasswordModal 
-            onClose={() => setShowForgotPassword(false)}
-            onSuccess={() => {
-              setShowForgotPassword(false);
-              toast({
-                title: "Reset code sent",
-                description: "Check your WhatsApp for the password reset code",
-              });
-            }}
-          />
-        )}
+        {/* Login Form */}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <Label htmlFor="userId" className="text-sm font-medium text-gray-700 mb-2 block">
+              User Name (Country code + WhatsApp number)
+            </Label>
+            <Input
+              id="userId"
+              type="text"
+              value={formData.userId}
+              onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
+              placeholder="e.g. +919820012345"
+              className="w-full h-12 text-base"
+              disabled={loading}
+              required
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="password" className="text-sm font-medium text-gray-700 mb-2 block">
+              Password (Your city name)
+            </Label>
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                placeholder="e.g. mumbai"
+                className="w-full h-12 text-base pr-10"
+                disabled={loading}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
+          </div>
+          
+          <Button 
+            type="submit" 
+            className="w-full h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold"
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <i className="fas fa-spinner fa-spin mr-2"></i>
+                Logging in...
+              </>
+            ) : (
+              "Login to QaaqConnect"
+            )}
+          </Button>
+        </form>
 
-        {/* Sign Up Modal */}
-        {showSignUp && (
-          <SignUpModal 
-            onClose={() => setShowSignUp(false)}
-            onSuccess={(user) => {
-              setShowSignUp(false);
-              if (onSuccess) onSuccess(user);
-              setLocation("/");
-              toast({
-                title: "Welcome to QaaqConnect!",
-                description: "Your account has been created successfully",
-              });
-            }}
-          />
-        )}
+        {/* Google Sign In */}
+        <div className="mt-6">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">Or continue with</span>
+            </div>
+          </div>
+          <div className="mt-4">
+            <GoogleAuthButton />
+          </div>
+        </div>
+
+        {/* Footer Links */}
+        <div className="mt-8 text-center space-y-4">
+          <div className="space-x-4">
+            <button
+              type="button"
+              onClick={() => setShowForgotPassword(true)}
+              className="text-sm text-blue-600 hover:text-blue-500"
+            >
+              Forgot Password?
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowSignUp(true)}
+              className="text-sm text-blue-600 hover:text-blue-500"
+            >
+              Sign Up
+            </button>
+          </div>
+          <p className="text-xs text-gray-500">
+            Maritime professionals connecting worldwide
+          </p>
+        </div>
       </div>
+
+      {/* Modals */}
+      <ForgotPasswordModal
+        isOpen={showForgotPassword}
+        onClose={() => setShowForgotPassword(false)}
+      />
+      
+      <SignUpModal
+        isOpen={showSignUp}
+        onClose={() => setShowSignUp(false)}
+        onSuccess={onSuccess}
+      />
     </div>
   );
 }
