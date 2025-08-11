@@ -422,25 +422,29 @@ export function QuestionsTab() {
               </Button>
             </div>
 
-            {/* Author Attribution */}
-            <div className="flex items-center text-sm text-gray-600 mb-4">
-              <span>
-                - {question.author_whatsapp_display_name || question.author_name} ({format(new Date(question.created_at), 'dMMMyyy').replace(/(\d{4})/, (match) => match.slice(-2))})
-              </span>
-            </div>
-
             {/* Assistant Answer Preview */}
             {firstAnswer && (
-              <div className="border-l-4 border-orange-500 bg-orange-50 p-4 rounded-r-lg">
-                <p className="text-gray-800 text-sm">
-                  <span className="font-medium text-gray-900">Ans: </span>
-                  {firstAnswer.content.length > 100 
-                    ? `${firstAnswer.content.substring(0, 100)}...`
+              <div className="border-l-4 border-orange-500 bg-orange-50 p-4 rounded-r-lg mb-3">
+                <p className="text-gray-800 text-sm leading-relaxed">
+                  <span className="font-bold text-orange-600">Ans: </span>
+                  {firstAnswer.content.split(' ').length > 20 
+                    ? `${firstAnswer.content.split(' ').slice(0, 20).join(' ')}...`
                     : firstAnswer.content
                   }
                 </p>
               </div>
             )}
+
+            {/* Author Attribution - moved below answer */}
+            <div className="flex items-center text-sm text-gray-500">
+              <span className="font-medium">
+                - {question.author_whatsapp_display_name || question.author_name}
+              </span>
+              <span className="mx-2">•</span>
+              <span>
+                {format(new Date(question.created_at), 'dd MMM yyyy')}
+              </span>
+            </div>
 
 
 
