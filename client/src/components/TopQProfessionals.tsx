@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Crown, MessageSquare, Award, MapPin, Ship } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 interface TopProfessional {
   id: string;
@@ -28,19 +27,13 @@ interface TopProfessionalsResponse {
   message: string;
 }
 
-const RANK_COLORS = {
-  'chief_engineer': '#ea580c', // Orange
-  'chief_officer': '#dc2626', // Red
-  'captain': '#991b1b', // Dark red
-  'second_engineer': '#f97316', // Light orange
-  'third_engineer': '#fb923c', // Lighter orange
-  'fourth_engineer': '#fed7aa', // Very light orange
-  'junior_engineer': '#fef3c7', // Pale orange
-  'other': '#6b7280', // Gray
-  'default': '#9ca3af' // Light gray
+const getRankBadgeColor = (rank: string) => {
+  const rankLower = rank.toLowerCase();
+  if (rankLower.includes('chief') || rankLower.includes('captain')) return 'bg-orange-100 text-orange-800 border-orange-300';
+  if (rankLower.includes('engineer')) return 'bg-red-100 text-red-800 border-red-300';
+  if (rankLower.includes('officer')) return 'bg-blue-100 text-blue-800 border-blue-300';
+  return 'bg-gray-100 text-gray-800 border-gray-300';
 };
-
-const PIE_COLORS = ['#ea580c', '#dc2626', '#f97316', '#fb923c', '#fed7aa', '#fef3c7', '#6b7280', '#9ca3af', '#475569'];
 
 export function TopQProfessionals() {
   const { data, isLoading, error } = useQuery<TopProfessionalsResponse>({
@@ -89,132 +82,20 @@ export function TopQProfessionals() {
   }
 
   const professionals = data.professionals || [];
-  
-  // Prepare chart data
-  const chartData = professionals.map((prof, index) => ({
-    name: prof.fullName || prof.email || `Professional ${index + 1}`,
-    questions: prof.questionCount,
-    answers: prof.answerCount,
-    rank: prof.maritimeRank || 'other'
-  }));
-
-  // Prepare pie chart data for rank distribution
-  const rankDistribution = professionals.reduce((acc, prof) => {
-    const rank = prof.maritimeRank || 'other';
-    acc[rank] = (acc[rank] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
-  const pieData = Object.entries(rankDistribution).map(([rank, count]) => ({
-    name: rank.replace('_', ' ').toUpperCase(),
-    value: count,
-    color: RANK_COLORS[rank as keyof typeof RANK_COLORS] || RANK_COLORS.default
-  }));
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="text-center">
-        <div className="flex items-center justify-center gap-3 mb-4">
-          <Crown className="h-8 w-8 text-orange-600" />
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-            Top Q Professionals
-          </h1>
-        </div>
-        <p className="text-gray-600">Leading maritime experts ranked by their question contributions</p>
+    <div className="space-y-6">
+      {/* Simple Header */}
+      <div className="flex items-center gap-3 mb-6">
+        <Crown className="h-6 w-6 text-orange-600" />
+        <h2 className="text-2xl font-bold text-gray-800">Top Q Professionals</h2>
+        <Badge variant="outline" className="ml-auto">
+          {professionals.length} Professionals
+        </Badge>
       </div>
 
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-orange-700">{professionals.length}</div>
-            <div className="text-sm text-orange-600">Top Professionals</div>
-          </CardContent>
-        </Card>
-        <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200">
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-red-700">
-              {professionals.reduce((sum, p) => sum + p.questionCount, 0)}
-            </div>
-            <div className="text-sm text-red-600">Total Questions</div>
-          </CardContent>
-        </Card>
-        <Card className="bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200">
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-gray-700">
-              {professionals.reduce((sum, p) => sum + p.answerCount, 0)}
-            </div>
-            <div className="text-sm text-gray-600">Total Answers</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        {/* Bar Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart className="h-5 w-5 text-orange-600" />
-              Question Count Distribution
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="name" 
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
-                  fontSize={12}
-                />
-                <YAxis />
-                <Tooltip 
-                  formatter={(value, name) => [value, name === 'questions' ? 'Questions' : 'Answers']}
-                  labelFormatter={(label) => `Professional: ${label}`}
-                />
-                <Bar dataKey="questions" fill="#ea580c" name="questions" />
-                <Bar dataKey="answers" fill="#dc2626" name="answers" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Pie Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Award className="h-5 w-5 text-orange-600" />
-              Rank Distribution
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  dataKey="value"
-                  label={({ name, value }) => `${name}: ${value}`}
-                >
-                  {pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Professionals Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Simple User Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {professionals.map((professional, index) => (
           <Card 
             key={professional.id} 
@@ -244,11 +125,7 @@ export function TopQProfessionals() {
                     <div className="flex items-center gap-1 mt-1">
                       <Badge 
                         variant="secondary" 
-                        className="text-xs"
-                        style={{ 
-                          backgroundColor: RANK_COLORS[professional.maritimeRank as keyof typeof RANK_COLORS] || RANK_COLORS.default,
-                          color: 'white'
-                        }}
+                        className={`text-xs ${getRankBadgeColor(professional.maritimeRank || 'other')}`}
                       >
                         {professional.maritimeRank?.replace('_', ' ').toUpperCase() || 'PROFESSIONAL'}
                       </Badge>
