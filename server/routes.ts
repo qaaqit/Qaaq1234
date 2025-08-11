@@ -2832,28 +2832,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`Retrieved ${allQuestions.length} authentic questions from QAAQ shared database`);
       
-      // Transform the questions to match the expected frontend format
-      const transformedQuestions = allQuestions.map((q, index) => ({
-        id: q.id || index + 1, // Use database ID if available, otherwise index
-        content: q.questionText || q.question_text || q.content || '',
-        author_id: q.userId || q.user_id || '',
-        author_name: q.userName || q.user_name || 'Anonymous',
-        author_rank: q.maritime_rank || null,
-        tags: q.tags || [],
-        views: q.view_count || 0,
-        is_resolved: q.isResolved || q.is_resolved || false,
-        created_at: q.askedDate || q.createdAt || q.created_at || new Date().toISOString(),
-        updated_at: q.updatedAt || q.updated_at || q.created_at || new Date().toISOString(),
-        image_urls: q.image_urls || [],
-        is_from_whatsapp: q.is_from_whatsapp || false,
-        engagement_score: q.engagement_score || 0,
-        flag_count: 0,
-        category_name: q.questionCategory || q.question_category || 'General Discussion',
-        answer_count: q.answerCount || q.answer_count || 0,
-        author_whatsapp_profile_picture_url: q.author_whatsapp_profile_picture_url || null,
-        author_whatsapp_display_name: q.author_whatsapp_display_name || null,
-        author_profile_picture_url: q.author_profile_picture_url || null
-      }));
+      // Transform the questions to match the expected frontend format and filter out hidden ones
+      const transformedQuestions = allQuestions
+        .filter(q => !q.is_hidden && !q.isHidden) // Filter out hidden questions
+        .map((q, index) => ({
+          id: q.id || index + 1, // Use database ID if available, otherwise index
+          content: q.questionText || q.question_text || q.content || '',
+          author_id: q.userId || q.user_id || '',
+          author_name: q.userName || q.user_name || 'Anonymous',
+          author_rank: q.maritime_rank || null,
+          tags: q.tags || [],
+          views: q.view_count || 0,
+          is_resolved: q.isResolved || q.is_resolved || false,
+          created_at: q.askedDate || q.createdAt || q.created_at || new Date().toISOString(),
+          updated_at: q.updatedAt || q.updated_at || q.created_at || new Date().toISOString(),
+          image_urls: q.image_urls || [],
+          is_from_whatsapp: q.is_from_whatsapp || false,
+          engagement_score: q.engagement_score || 0,
+          flag_count: 0,
+          category_name: q.questionCategory || q.question_category || 'General Discussion',
+          answer_count: q.answerCount || q.answer_count || 0,
+          author_whatsapp_profile_picture_url: q.author_whatsapp_profile_picture_url || null,
+          author_whatsapp_display_name: q.author_whatsapp_display_name || null,
+          author_profile_picture_url: q.author_profile_picture_url || null
+        }));
       
       // Apply pagination
       const offset = (page - 1) * limit;
@@ -2978,6 +2980,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching question attachments:', error);
       res.status(500).json({ message: 'Failed to fetch question attachments' });
+    }
+  });
+
+  // Admin-only endpoint to hide a question from QuestionBank
+  app.post('/api/questions/:id/hide', authenticateToken, async (req: any, res) => {
+    try {
+      const questionId = parseInt(req.params.id);
+      const { hidden = true, hidden_reason = 'Admin removal' } = req.body;
+      
+      // Check if user is admin
+      const user = await storage.getUserById(req.userId);
+      if (!user?.isAdmin && req.userId !== '5791e66f-9cc1-4be4-bd4b-7fc1bd2e258e') {
+        return res.status(403).json({ 
+          success: false, 
+          message: 'Admin access required to hide questions' 
+        });
+      }
+
+      // Update the question in the database to mark as hidden
+      const result = await pool.query(`
+        UPDATE questions 
+        SET is_hidden = $1, 
+            hidden_reason = $2, 
+            hidden_at = NOW(),
+            hidden_by = $3
+        WHERE id = $4
+        RETURNING id, is_hidden
+      `, [hidden, hidden_reason, req.userId, questionId]);
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ 
+          success: false, 
+          message: 'Question not found' 
+        });
+      }
+
+      console.log(`Admin ${req.userId} ${hidden ? 'hid' : 'unhid'} question ${questionId}: ${hidden_reason}`);
+      
+      res.json({
+        success: true,
+        message: `Question ${hidden ? 'hidden' : 'shown'} successfully`,
+        question: result.rows[0]
+      });
+    } catch (error) {
+      console.error('Error hiding/unhiding question:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to update question visibility' 
+      });
     }
   });
 

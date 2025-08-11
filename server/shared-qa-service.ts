@@ -130,6 +130,7 @@ export async function getQuestionsByUserName(userName: string): Promise<SharedQu
 export async function getAllQuestionsFromSharedDB(): Promise<SharedQuestion[]> {
   const query = `
     SELECT * FROM questions 
+    WHERE is_hidden IS NOT TRUE OR is_hidden IS NULL
     ORDER BY created_at DESC
   `;
 
@@ -176,6 +177,7 @@ export async function searchQuestionsInSharedDB(keyword: string, userId?: string
   const query = `
     SELECT * FROM questions 
     WHERE LOWER(content) ILIKE '%' || LOWER($1) || '%'
+      AND (is_hidden IS NOT TRUE OR is_hidden IS NULL)
     ORDER BY 
       CASE
         -- Exact matches get highest priority

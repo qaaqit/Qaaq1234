@@ -8,11 +8,12 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { MessageCircle, Search, Calendar, CheckCircle, Clock, Hash, ChevronDown, ChevronUp, Image as ImageIcon, Share2, ArrowUp } from 'lucide-react';
+import { MessageCircle, Search, Calendar, CheckCircle, Clock, Hash, ChevronDown, ChevronUp, Image as ImageIcon, Share2, ArrowUp, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { apiRequest } from '@/lib/queryClient';
 import { isTokenValid, forceTokenRefresh } from '@/utils/auth';
 import { AuthFix } from './auth-fix';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Question {
   id: number;
@@ -64,6 +65,10 @@ export function QuestionsTab() {
   const [expandedQuestions, setExpandedQuestions] = useState<Set<number>>(new Set());
   const [showScrollToTop, setShowScrollToTop] = useState(false);
   const [scrollPosition, setScrollPosition] = useState(0);
+  const { user } = useAuth();
+  
+  // Check if user is admin
+  const isAdmin = user?.isAdmin || user?.fullName === '+919029010070';
 
   const observer = useRef<IntersectionObserver | null>(null);
   const lastQuestionRef = useRef<HTMLDivElement | null>(null);
@@ -388,6 +393,39 @@ export function QuestionsTab() {
     });
   };
 
+  // Admin-only delete question function
+  const handleDeleteQuestion = async (questionId: number) => {
+    if (!isAdmin) {
+      console.warn('Unauthorized: Only admins can delete questions');
+      return;
+    }
+
+    if (!confirm('Are you sure you want to hide this question from the QuestionBank? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const response = await apiRequest(`/api/questions/${questionId}/hide`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('qaaq_token')}`
+        },
+        body: JSON.stringify({ hidden: true, hidden_reason: 'Admin removal from QuestionBank' })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to hide question');
+      }
+
+      // Refresh questions list
+      window.location.reload();
+    } catch (error) {
+      console.error('Error hiding question:', error);
+      alert('Failed to hide question. Please try again.');
+    }
+  };
+
   // Question with Answer Previews Component  
   const QuestionWithAnswers = ({ question, index }: { question: Question; index: number }) => {
     const { data: answers, isLoading: answersLoading } = useQuestionAnswers(question.id, true);
@@ -408,18 +446,35 @@ export function QuestionsTab() {
                 <span className="text-orange-600 font-bold">#{question.id}</span>{' '}
                 {cleanQuestionContent(question.content)}
               </h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleShare(question);
-                }}
-                className="text-gray-400 hover:text-orange-600 hover:bg-orange-50 p-2 flex-shrink-0"
-                title="Share this question"
-              >
-                <Share2 size={16} />
-              </Button>
+              <div className="flex flex-col gap-1 flex-shrink-0">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleShare(question);
+                  }}
+                  className="text-gray-400 hover:text-orange-600 hover:bg-orange-50 p-2"
+                  title="Share this question"
+                >
+                  <Share2 size={16} />
+                </Button>
+                {/* Admin Only Delete Button */}
+                {isAdmin && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteQuestion(question.id);
+                    }}
+                    className="text-gray-400 hover:text-red-600 hover:bg-red-50 p-2"
+                    title="Admin: Hide question from QuestionBank"
+                  >
+                    <Trash2 size={16} />
+                  </Button>
+                )}
+              </div>
             </div>
 
             {/* Answer Section with Orange Background - Updated */}
