@@ -274,7 +274,6 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
           </div>
         </div>
       )}
-      
       {/* Crown icon positioned above input area */}
       <div className="flex justify-start mb-2">
         <button
@@ -285,7 +284,6 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
           <Crown size={18} className={isPremiumMode ? "fill-current text-yellow-600" : ""} />
         </button>
       </div>
-
       {/* Chat input container */}
       <div className="flex items-end gap-3">
         {/* Input area with attach icon inside */}
@@ -299,11 +297,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
             onPaste={handlePaste}
             placeholder={currentPlaceholder}
             disabled={disabled}
-            className="w-full resize-none rounded-lg border border-gray-300 pl-12 pr-4 pt-3 pb-3
-                     focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent
-                     disabled:opacity-50 disabled:cursor-not-allowed
-                     placeholder:text-gray-400 text-gray-700
-                     min-h-[48px] max-h-[120px] overflow-y-auto"
+            className="w-full resize-none rounded-lg border border-gray-300 pl-12 pr-4 pt-3 pb-3 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed placeholder:text-gray-400 text-gray-700 min-h-[48px] max-h-[120px] overflow-y-auto mt-[-5px] mb-[-5px]"
             style={{ resize: 'none' }}
             rows={1}
           />
@@ -317,7 +311,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
               onComplete={handleUploadComplete}
               buttonClassName="p-1 rounded text-gray-400 hover:bg-gray-100 transition-all duration-200"
             >
-              <Paperclip size={16} />
+              <Paperclip size={20} />
             </ObjectUploader>
           </div>
 
@@ -339,22 +333,21 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
           )}
         </div>
 
-        {/* Right side send button with orange background - matching text entry height */}
+        {/* Right side send button with orange background */}
         <button
           onClick={handleSend}
           disabled={disabled || (!message.trim() && attachments.length === 0)}
           className={`
-            px-4 py-3 rounded-lg transition-all duration-200 flex-shrink-0 h-[48px] flex items-center justify-center
+            p-3 rounded-lg transition-all duration-200 flex-shrink-0 min-h-[55px]
             ${(message.trim() || attachments.length > 0) && !disabled
               ? 'bg-orange-500 text-white hover:bg-orange-600' 
               : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }
           `}
         >
-          <Send size={18} />
+          <Send size={20} />
         </button>
       </div>
-
       {/* Premium Subscription Dialog */}
       <PremiumSubscriptionDialog 
         open={showSubscriptionDialog}
