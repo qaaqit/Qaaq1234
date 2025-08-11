@@ -9,6 +9,7 @@ import UsersMapDual from "@/components/users-map-dual";
 import ForgotPasswordModal from "@/components/forgot-password-modal";
 import SignUpModal from "@/components/signup-modal";
 import { GoogleAuthButton } from "@/components/GoogleAuthButton";
+import { Eye, EyeOff } from "lucide-react";
 
 interface HomeProps {
   onSuccess?: (user: User) => void;
@@ -21,6 +22,7 @@ export default function Home({ onSuccess }: HomeProps) {
   const [isMinimized, setIsMinimized] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [showSignUp, setShowSignUp] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     userId: "",
     password: "",
@@ -173,15 +175,29 @@ export default function Home({ onSuccess }: HomeProps) {
                 
                 <div className="space-y-1 sm:space-y-2">
                   <Label htmlFor="password" className="text-xs sm:text-sm font-medium text-gray-700">Password (This may be ur city example mumbai)</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    placeholder="Enter your password"
-                    className="bg-white/90 border-gray-200 focus:border-ocean-teal focus:bg-white text-sm sm:text-base"
-                    disabled={loading}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      placeholder="Enter your password"
+                      className="bg-white/90 border-gray-200 focus:border-ocean-teal focus:bg-white text-sm sm:text-base pr-10"
+                      disabled={loading}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      title={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? (
+                        <EyeOff size={18} />
+                      ) : (
+                        <Eye size={18} />
+                      )}
+                    </button>
+                  </div>
                 </div>
                 
                 <Button 
