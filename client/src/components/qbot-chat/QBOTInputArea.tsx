@@ -288,20 +288,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
 
       {/* Chat input container */}
       <div className="flex items-end gap-3">
-        {/* Left side attach icon - outside the input */}
-        <div className="flex-shrink-0">
-          <ObjectUploader
-            maxNumberOfFiles={5}
-            maxFileSize={52428800} // 50MB
-            onGetUploadParameters={handleGetUploadParameters}
-            onComplete={handleUploadComplete}
-            buttonClassName="p-3 rounded-lg text-gray-400 hover:bg-gray-100 transition-all duration-200"
-          >
-            <Paperclip size={20} />
-          </ObjectUploader>
-        </div>
-
-        {/* Input area */}
+        {/* Input area with attach icon inside */}
         <div className="relative flex-1">
           <textarea
             ref={textareaRef}
@@ -312,7 +299,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
             onPaste={handlePaste}
             placeholder={currentPlaceholder}
             disabled={disabled}
-            className="w-full resize-none rounded-lg border border-gray-300 pl-4 pr-4 pt-3 pb-3
+            className="w-full resize-none rounded-lg border border-gray-300 pl-12 pr-4 pt-3 pb-3
                      focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent
                      disabled:opacity-50 disabled:cursor-not-allowed
                      placeholder:text-gray-400 text-gray-700
@@ -320,6 +307,19 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
             style={{ resize: 'none' }}
             rows={1}
           />
+
+          {/* Attach icon inside text box on left */}
+          <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+            <ObjectUploader
+              maxNumberOfFiles={5}
+              maxFileSize={52428800} // 50MB
+              onGetUploadParameters={handleGetUploadParameters}
+              onComplete={handleUploadComplete}
+              buttonClassName="p-1 rounded text-gray-400 hover:bg-gray-100 transition-all duration-200"
+            >
+              <Paperclip size={16} />
+            </ObjectUploader>
+          </div>
 
           {/* Privacy Shield (only for premium/admin users) - positioned top right */}
           {((userStatus as any)?.isPremium || (userStatus as any)?.isSuperUser || localStorage.getItem('isAdmin') === 'true') && (
