@@ -154,7 +154,11 @@ export default function UserProfile() {
                 
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4" />
-                  <span>{user.current_city || user.city}, {user.current_country || user.country}</span>
+                  {user.company ? (
+                    <span>🏢 {user.company}</span>
+                  ) : (
+                    <span>{user.current_city || user.city}, {user.current_country || user.country}</span>
+                  )}
                 </div>
                 
                 {/* Phone number hidden for public profile */}

@@ -179,10 +179,12 @@ export default function SuburbUsersDisplay({ suburb, port, country }: SuburbUser
                 </div>
               )}
 
-              <div className="flex items-center space-x-2 text-sm text-gray-600 mb-3">
-                <MapPin className="w-4 h-4" />
-                <span>{user.port || user.city}, {user.country}</span>
-              </div>
+              {user.company && (
+                <div className="flex items-center space-x-2 text-sm text-gray-600 mb-3">
+                  <MapPin className="w-4 h-4" />
+                  <span>🏢 {user.company}</span>
+                </div>
+              )}
 
               <Button 
                 onClick={() => handleConnectUser(user)}

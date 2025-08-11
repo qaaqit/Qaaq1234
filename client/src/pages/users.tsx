@@ -358,6 +358,13 @@ export default function UsersPage() {
                     </div>
                   )}
 
+                  {user.company && (
+                    <div className="flex items-center">
+                      <span className="font-medium mr-2">Company:</span>
+                      <span className="truncate">🏢 {user.company}</span>
+                    </div>
+                  )}
+
                   {user.port && (
                     <div className="flex items-center">
                       <span className="font-medium mr-2">Port:</span>
