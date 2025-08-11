@@ -59,36 +59,28 @@ export class DatabaseStorage implements IStorage {
     console.log(`✅ Universal authentication enabled - accepting any password for: ${userId}`);
     
     try {
-      // Use Drizzle ORM instead of raw SQL to handle schema properly
-      let userResult;
+      // Try direct lookup by user_id first
+      let result = await pool.query('SELECT * FROM users WHERE user_id = $1 LIMIT 1', [userId]);
       
-      // Try by ID (primary key)
-      userResult = await db.select().from(users).where(eq(users.id, userId)).limit(1);
-      
-      if (userResult.length === 0) {
-        // Try by user_id (the readable user ID)
-        userResult = await db.select().from(users).where(eq(users.userId, userId)).limit(1);
+      if (result.rows.length === 0) {
+        // Fallback: try by email
+        result = await pool.query('SELECT * FROM users WHERE email = $1 LIMIT 1', [userId]);
       }
       
-      if (userResult.length === 0) {
-        // Try by email
-        userResult = await db.select().from(users).where(eq(users.email, userId)).limit(1);
+      if (result.rows.length === 0) {
+        // Fallback: try by id (primary key)
+        result = await pool.query('SELECT * FROM users WHERE id = $1 LIMIT 1', [userId]);
       }
       
-      if (userResult.length === 0) {
-        // Try by full name (partial match)
-        userResult = await db.select().from(users).where(sql`${users.fullName} ILIKE ${`%${userId}%`}`).limit(1);
-      }
-      
-      if (userResult.length === 0) {
+      if (result.rows.length === 0) {
         console.log(`❌ No user found for ID: ${userId}`);
         return undefined;
       }
       
-      const user = userResult[0];
-      console.log(`✅ User found: ${user.fullName} (${user.email})`);
+      const user = result.rows[0];
+      console.log(`✅ User found: ${user.full_name || user.email} (${user.email})`);
       
-      return user;
+      return this.convertDbUserToAppUser(user);
     } catch (error) {
       console.error('Error in getUserByIdAndPassword:', error);
       return undefined;
@@ -231,7 +223,7 @@ export class DatabaseStorage implements IStorage {
     
     return {
       id: dbUser.id,
-      userId: dbUser.id, // Database ID column is the user ID
+      userId: dbUser.user_id || dbUser.id, // Use user_id column, fallback to id
       fullName: fullName,
       email: dbUser.email || '',
       password: dbUser.password || '',
