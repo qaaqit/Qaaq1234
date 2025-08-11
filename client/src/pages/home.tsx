@@ -26,6 +26,7 @@ export default function Home({ onSuccess }: HomeProps) {
   const [otpSent, setOtpSent] = useState(false);
   const [otpCountdown, setOtpCountdown] = useState(0);
   const [showOtherCompany, setShowOtherCompany] = useState(false);
+  const [telegraphPosition, setTelegraphPosition] = useState(0);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -63,6 +64,28 @@ export default function Home({ onSuccess }: HomeProps) {
       return () => clearTimeout(timer);
     }
   }, [otpCountdown]);
+
+  // Telegraph lever positions and animations
+  const telegraphPositions = [
+    { id: 0, label: "Blow Through", angle: -90, color: "#dc2626" },
+    { id: 1, label: "STBY", angle: -45, color: "#f59e0b" },
+    { id: 2, label: "Dead Slow", angle: 0, color: "#10b981" },
+    { id: 3, label: "Slow", angle: 30, color: "#10b981" },
+    { id: 4, label: "Half", angle: 60, color: "#10b981" },
+    { id: 5, label: "Full Ahead", angle: 90, color: "#10b981" }
+  ];
+
+  // Telegraph animation effect
+  useEffect(() => {
+    if (loading || otpLoading) {
+      const interval = setInterval(() => {
+        setTelegraphPosition((prev) => (prev + 1) % telegraphPositions.length);
+      }, 800);
+      return () => clearInterval(interval);
+    } else {
+      setTelegraphPosition(otpSent ? 5 : 1); // Full Ahead when verified, STBY when ready
+    }
+  }, [loading, otpLoading, otpSent]);
 
   // Send email OTP
   const sendEmailOTP = async () => {
@@ -472,33 +495,94 @@ export default function Home({ onSuccess }: HomeProps) {
             </div>
           )}
 
-          {/* Submit Button */}
-          <Button 
-            type="submit" 
-            className={`w-full h-12 font-semibold ${
-              otpSent
-                ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700'
-                : 'bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700'
-            } text-white`}
-            disabled={loading || otpLoading || (otpSent && otpCountdown <= 0)}
-          >
-            {loading || otpLoading ? (
-              <>
-                <i className="fas fa-spinner fa-spin mr-2"></i>
-                {otpLoading ? 'Sending verification...' : 'Completing registration...'}
-              </>
-            ) : otpSent ? (
-              <>
-                <Shield className="w-4 h-4 mr-2" />
-                Verify & Complete Registration
-              </>
-            ) : (
-              <>
-                <UserIcon className="w-4 h-4 mr-2" />
-                Send Verification Code
-              </>
-            )}
-          </Button>
+          {/* Telegraph Lever Submit Button */}
+          <div className="relative">
+            <button
+              type="submit"
+              className={`w-full h-20 relative overflow-hidden rounded-2xl font-bold text-white text-lg transition-all duration-300 transform hover:scale-105 ${
+                otpSent
+                  ? 'bg-gradient-to-br from-green-600 via-emerald-600 to-green-700 shadow-lg shadow-green-500/25'
+                  : 'bg-gradient-to-br from-orange-600 via-red-600 to-orange-700 shadow-lg shadow-orange-500/25'
+              } ${loading || otpLoading ? 'animate-pulse' : ''}`}
+              disabled={loading || otpLoading || (otpSent && otpCountdown <= 0)}
+            >
+              {/* Telegraph Background Pattern */}
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent transform -skew-x-12 animate-pulse"></div>
+              </div>
+              
+              {/* Telegraph Lever Visual */}
+              <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+                <div className="relative w-12 h-12">
+                  {/* Telegraph Base */}
+                  <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-8 h-3 bg-gray-800 rounded-full shadow-inner"></div>
+                  
+                  {/* Telegraph Lever */}
+                  <div 
+                    className="absolute bottom-1 left-1/2 transform -translate-x-1/2 origin-bottom transition-transform duration-500 ease-in-out"
+                    style={{
+                      transform: `translateX(-50%) rotate(${telegraphPositions[telegraphPosition].angle}deg)`,
+                    }}
+                  >
+                    <div className="w-1 h-8 bg-gradient-to-t from-gray-600 to-gray-300 rounded-full shadow-md"></div>
+                    <div 
+                      className="absolute -top-1 -left-1 w-3 h-3 rounded-full shadow-lg transition-colors duration-300"
+                      style={{ backgroundColor: telegraphPositions[telegraphPosition].color }}
+                    ></div>
+                  </div>
+                  
+                  {/* Position Markers */}
+                  <div className="absolute inset-0">
+                    {telegraphPositions.map((pos, index) => (
+                      <div
+                        key={pos.id}
+                        className={`absolute w-1 h-1 rounded-full transition-all duration-300 ${
+                          index === telegraphPosition ? 'bg-white scale-150' : 'bg-gray-400 scale-75'
+                        }`}
+                        style={{
+                          bottom: '12px',
+                          left: '50%',
+                          transform: `translateX(-50%) rotate(${pos.angle}deg) translateY(-16px)`,
+                        }}
+                      ></div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Button Content */}
+              <div className="flex items-center justify-center space-x-3 ml-8">
+                {loading || otpLoading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>{otpLoading ? 'SENDING SIGNAL...' : 'PROCESSING...'}</span>
+                  </>
+                ) : otpSent ? (
+                  <>
+                    <Shield className="w-5 h-5" />
+                    <span>FULL AHEAD - VERIFY & REGISTER</span>
+                  </>
+                ) : (
+                  <>
+                    <Anchor className="w-5 h-5" />
+                    <span>SEND VERIFICATION SIGNAL</span>
+                  </>
+                )}
+              </div>
+
+              {/* Telegraph Position Label */}
+              <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                <div className="text-xs font-mono opacity-80">
+                  {telegraphPositions[telegraphPosition].label}
+                </div>
+              </div>
+            </button>
+
+            {/* Telegraph Position Indicator */}
+            <div className="absolute -bottom-6 left-4 text-xs text-gray-500 font-mono">
+              Engine: {telegraphPositions[telegraphPosition].label}
+            </div>
+          </div>
 
           {/* Resend OTP */}
           {otpSent && otpCountdown <= 0 && (
@@ -534,7 +618,7 @@ export default function Home({ onSuccess }: HomeProps) {
         </div>
 
         {/* Footer */}
-        <div className="mt-6 text-center">
+        <div className="mt-10 text-center">
           <p className="text-xs text-gray-500">
             Join the global maritime professional community
           </p>
