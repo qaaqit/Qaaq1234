@@ -25,14 +25,12 @@ import AuthTestPage from "@/pages/auth-test";
 import SetPasswordPage from "@/pages/set-password";
 import PasswordDemoPage from "@/pages/password-demo";
 import OAuthCallback from "@/pages/oauth-callback";
-import SidebarDemo from "@/pages/sidebar-demo";
 
 import NotFound from "@/pages/not-found";
 import BottomNav from "@/components/bottom-nav";
 import { PasswordCreationModal } from "@/components/PasswordCreationModal";
 import { usePasswordCheck } from "@/hooks/usePasswordCheck";
 import { getStoredToken, getStoredUser, type User } from "@/lib/auth";
-import AppLayout from "@/components/AppLayout";
 
 function Router() {
   const [user, setUser] = useState<User | null>(null);
@@ -99,7 +97,6 @@ function Router() {
           <Route path="/auth-test" component={AuthTestPage} />
           <Route path="/set-password" component={SetPasswordPage} />
           <Route path="/password-demo" component={PasswordDemoPage} />
-          <Route path="/sidebar-demo" component={SidebarDemo} />
           <Route path="/home-old" component={() => <Home onSuccess={setUser} />} />
 
           <Route component={NotFound} />
