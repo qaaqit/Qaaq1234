@@ -69,6 +69,9 @@ function Router() {
   // Allow access without user requirements
   const currentUser = user;
 
+  console.log('Current user:', currentUser);
+  console.log('Current URL:', window.location.pathname);
+  
   return (
     <div className="min-h-screen bg-slate-50">
       <div className={currentUser ? "pb-16" : ""}>
