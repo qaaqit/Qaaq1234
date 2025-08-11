@@ -65,14 +65,14 @@ export default function Home({ onSuccess }: HomeProps) {
     }
   }, [otpCountdown]);
 
-  // Telegraph lever positions and animations
+  // Telegraph lever positions and animations (semicircle layout)
   const telegraphPositions = [
-    { id: 0, label: "Blow Through", angle: -90, color: "#dc2626" },
-    { id: 1, label: "STBY", angle: -45, color: "#f59e0b" },
-    { id: 2, label: "Dead Slow", angle: 0, color: "#10b981" },
-    { id: 3, label: "Slow", angle: 30, color: "#10b981" },
-    { id: 4, label: "Half", angle: 60, color: "#10b981" },
-    { id: 5, label: "Full Ahead", angle: 90, color: "#10b981" }
+    { id: 0, label: "FULL ASTERN", angle: 0, color: "#dc2626" },
+    { id: 1, label: "HALF ASTERN", angle: 30, color: "#ea580c" },
+    { id: 2, label: "SLOW ASTERN", angle: 60, color: "#f59e0b" },
+    { id: 3, label: "STOP", angle: 90, color: "#6b7280" },
+    { id: 4, label: "SLOW AHEAD", angle: 120, color: "#10b981" },
+    { id: 5, label: "FULL AHEAD", angle: 150, color: "#059669" }
   ];
 
   // Telegraph position based on form completion
@@ -304,97 +304,122 @@ export default function Home({ onSuccess }: HomeProps) {
       <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
         {/* Header with Telegraph */}
         <div className="text-center mb-8">
-          {/* Classic Maritime Telegraph Display */}
+          {/* Semicircle Maritime Telegraph Display */}
           <div className="mb-6">
-            <div className="relative w-32 h-32 mx-auto">
-              {/* Brass Outer Ring */}
-              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-yellow-600 via-yellow-500 to-yellow-700 shadow-2xl border-4 border-yellow-800"></div>
+            <div className="relative w-48 h-24 mx-auto">
+              {/* Telegraph Base Platform */}
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-40 h-6 bg-gradient-to-b from-gray-600 to-gray-800 rounded shadow-lg"></div>
               
-              {/* Inner Brass Ring */}
-              <div className="absolute inset-2 rounded-full bg-gradient-to-br from-yellow-500 via-yellow-400 to-yellow-600 shadow-inner"></div>
-              
-              {/* Black Face */}
-              <div className="absolute inset-4 rounded-full bg-black shadow-inner">
-                {/* Telegraph Sections */}
-                <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100">
-                  {/* Section Dividers */}
-                  {telegraphPositions.map((pos, index) => (
-                    <g key={pos.id}>
-                      <line
-                        x1="50"
-                        y1="10"
-                        x2="50"
-                        y2="25"
-                        stroke="white"
-                        strokeWidth="1"
-                        transform={`rotate(${pos.angle + 90} 50 50)`}
-                      />
-                      {/* Section Labels */}
-                      <text
-                        x="50"
-                        y="20"
-                        fill="white"
-                        fontSize="6"
-                        fontWeight="bold"
-                        textAnchor="middle"
-                        fontFamily="monospace"
-                        transform={`rotate(${pos.angle + 90} 50 50)`}
-                      >
-                        {pos.label.split(' ').map((word, i) => (
-                          <tspan key={i} x="50" dy={i === 0 ? 0 : "6"}>
-                            {word}
-                          </tspan>
-                        ))}
-                      </text>
-                    </g>
-                  ))}
-                  
-                  {/* Center Text */}
-                  <text x="50" y="45" fill="white" fontSize="5" fontWeight="bold" textAnchor="middle" fontFamily="serif">
-                    ENGINE ROOM
-                  </text>
-                  <text x="50" y="52" fill="white" fontSize="5" fontWeight="bold" textAnchor="middle" fontFamily="serif">
-                    TELEGRAPH
-                  </text>
-                  
-                  {/* Anchor Symbol */}
-                  <text x="50" y="62" fill="white" fontSize="8" textAnchor="middle">⚓</text>
-                </svg>
-              </div>
-              
-              {/* Telegraph Lever */}
+              {/* Semicircle Brass Frame */}
               <div 
-                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 origin-center transition-transform duration-700 ease-out z-20"
+                className="absolute bottom-3 left-1/2 transform -translate-x-1/2 w-36 h-18 bg-gradient-to-br from-yellow-600 via-yellow-500 to-yellow-700 shadow-2xl border-4 border-yellow-800"
                 style={{
-                  transform: `translate(-50%, -50%) rotate(${telegraphPositions[telegraphPosition].angle}deg)`,
+                  borderRadius: '180px 180px 0 0',
+                  height: '72px'
                 }}
               >
-                {/* Lever Shaft */}
-                <div className="w-1 h-12 bg-gradient-to-t from-yellow-700 via-yellow-500 to-yellow-400 rounded-full shadow-lg transform -translate-x-1/2"></div>
-                
-                {/* Lever Handle */}
-                <div className="absolute -top-2 -left-3 w-6 h-4 bg-gradient-to-br from-yellow-500 to-yellow-700 rounded shadow-lg">
-                  <div className="absolute inset-1 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded"></div>
+                {/* Inner Brass Ring */}
+                <div 
+                  className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-32 h-16 bg-gradient-to-br from-yellow-500 via-yellow-400 to-yellow-600 shadow-inner border-2 border-yellow-700"
+                  style={{
+                    borderRadius: '160px 160px 0 0'
+                  }}
+                >
+                  {/* Black Face Semicircle */}
+                  <div 
+                    className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-28 h-14 bg-black shadow-inner"
+                    style={{
+                      borderRadius: '140px 140px 0 0'
+                    }}
+                  >
+                    {/* Telegraph Sections SVG */}
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 112 56">
+                      {/* Section Dividers and Labels */}
+                      {telegraphPositions.map((pos, index) => {
+                        const angleRad = (pos.angle * Math.PI) / 180;
+                        const x1 = 56 + Math.cos(angleRad) * 45;
+                        const y1 = 56 - Math.sin(angleRad) * 45;
+                        const x2 = 56 + Math.cos(angleRad) * 35;
+                        const y2 = 56 - Math.sin(angleRad) * 35;
+                        const textX = 56 + Math.cos(angleRad) * 25;
+                        const textY = 56 - Math.sin(angleRad) * 25;
+                        
+                        return (
+                          <g key={pos.id}>
+                            {/* Divider Line */}
+                            <line
+                              x1={x1}
+                              y1={y1}
+                              x2={x2}
+                              y2={y2}
+                              stroke="white"
+                              strokeWidth="1"
+                            />
+                            {/* Position Indicator Dot */}
+                            <circle
+                              cx={x1}
+                              cy={y1}
+                              r={index === telegraphPosition ? "2" : "1"}
+                              fill={index === telegraphPosition ? pos.color : "#666"}
+                              className="transition-all duration-300"
+                            />
+                            {/* Section Labels */}
+                            <text
+                              x={textX}
+                              y={textY + 2}
+                              fill="white"
+                              fontSize="4"
+                              fontWeight="bold"
+                              textAnchor="middle"
+                              fontFamily="Arial, sans-serif"
+                            >
+                              {pos.label.split(' ').map((word, i) => (
+                                <tspan key={i} x={textX} dy={i === 0 ? 0 : "4"}>
+                                  {word}
+                                </tspan>
+                              ))}
+                            </text>
+                          </g>
+                        );
+                      })}
+                      
+                      {/* Center Text */}
+                      <text x="56" y="45" fill="white" fontSize="3" fontWeight="bold" textAnchor="middle" fontFamily="serif">
+                        ENGINE TELEGRAPH
+                      </text>
+                    </svg>
+                  </div>
                 </div>
               </div>
               
-              {/* Center Hub */}
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-gradient-to-br from-yellow-400 to-yellow-700 rounded-full shadow-lg border-2 border-yellow-800 z-10"></div>
-              
-              {/* Position Indicator Arrow */}
+              {/* Telegraph Lever Handle (Protruding) */}
               <div 
-                className="absolute top-1 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 border-r-2 border-b-4 border-transparent border-b-red-500 transition-transform duration-700"
+                className="absolute bottom-3 left-1/2 transform-gpu transition-transform duration-700 ease-out z-20"
                 style={{
-                  transform: `translateX(-50%) rotate(${telegraphPositions[telegraphPosition].angle}deg)`,
+                  transformOrigin: '0 72px',
+                  transform: `translateX(-50%) rotate(${telegraphPositions[telegraphPosition].angle - 90}deg)`,
                 }}
-              ></div>
+              >
+                {/* Lever Shaft */}
+                <div className="w-3 h-16 bg-gradient-to-t from-gray-800 via-gray-600 to-gray-500 rounded-full shadow-lg"></div>
+                
+                {/* Lever Handle (Chrome Knob) */}
+                <div className="absolute -top-3 -left-1 w-5 h-6 bg-gradient-to-br from-gray-300 via-gray-200 to-gray-400 rounded-full shadow-lg border-2 border-gray-500">
+                  <div className="absolute inset-1 bg-gradient-to-br from-white to-gray-300 rounded-full"></div>
+                  {/* Chrome Highlight */}
+                  <div className="absolute top-0.5 left-0.5 w-2 h-2 bg-white rounded-full opacity-80"></div>
+                </div>
+              </div>
+              
+              {/* Center Pivot */}
+              <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-gradient-to-br from-yellow-400 to-yellow-700 rounded-full shadow-lg border border-yellow-800 z-10"></div>
             </div>
             
             {/* Telegraph Status Panel */}
             <div className="mt-4">
-              <div className="bg-gradient-to-br from-yellow-600 to-yellow-800 text-white text-sm font-bold px-4 py-2 rounded border-2 border-yellow-900 shadow-lg">
+              <div className="bg-gradient-to-br from-gray-700 to-gray-900 text-white text-sm font-bold px-4 py-2 rounded border-2 border-gray-600 shadow-lg">
                 <div className="text-center font-mono">
-                  ENGINE: {telegraphPositions[telegraphPosition].label}
+                  {telegraphPositions[telegraphPosition].label}
                 </div>
               </div>
             </div>
