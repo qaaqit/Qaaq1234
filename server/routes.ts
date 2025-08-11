@@ -591,6 +591,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Standard login endpoint
+  app.post('/api/auth/login', async (req, res) => {
+    try {
+      const { userId, password } = req.body;
+      
+      if (!userId || !password) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'User ID and password are required' 
+        });
+      }
+      
+      console.log(`🔐 Login attempt for userId: ${userId}`);
+      
+      // Use universal authentication
+      const user = await storage.getUserByIdAndPassword(userId, password);
+      
+      if (!user) {
+        return res.status(401).json({ 
+          success: false, 
+          message: 'Invalid credentials' 
+        });
+      }
+      
+      // Create JWT token
+      const token = jwt.sign(
+        { userId: user.id, email: user.email },
+        JWT_SECRET,
+        { expiresIn: '24h' }
+      );
+      
+      // Increment login count
+      await storage.incrementLoginCount(user.id);
+      
+      console.log(`✅ Login successful for: ${user.fullName}`);
+      
+      res.json({
+        success: true,
+        user: {
+          id: user.id,
+          userId: user.userId,
+          fullName: user.fullName,
+          email: user.email,
+          userType: user.userType,
+          isAdmin: user.isAdmin,
+          isVerified: user.isVerified,
+          loginCount: user.loginCount || 0
+        },
+        token,
+        message: 'Login successful'
+      });
+    } catch (error) {
+      console.error('Login error:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Authentication failed' 
+      });
+    }
+  });
+
   // Robust authentication endpoint with password management
   app.post('/api/auth/login-robust', async (req, res) => {
     try {
