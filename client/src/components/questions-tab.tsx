@@ -422,28 +422,32 @@ export function QuestionsTab() {
               </Button>
             </div>
 
-            {/* Assistant Answer Preview */}
+            {/* Answer Section with Orange Background - Updated */}
             {firstAnswer && (
               <div className="border-l-4 border-orange-500 bg-orange-50 p-4 rounded-r-lg mb-3">
-                <p className="text-gray-800 text-sm leading-relaxed">
-                  <span className="font-bold text-orange-600">Ans: </span>
-                  {firstAnswer.content.split(' ').length > 20 
-                    ? `${firstAnswer.content.split(' ').slice(0, 20).join(' ')}...`
-                    : firstAnswer.content
-                  }
-                </p>
+                <div className="text-gray-800 text-sm leading-relaxed">
+                  <span className="font-bold text-orange-600 text-base">Ans: </span>
+                  <span className="text-gray-700">
+                    {firstAnswer.content.split(' ').length > 20 
+                      ? `${firstAnswer.content.split(' ').slice(0, 20).join(' ')}...`
+                      : firstAnswer.content
+                    }
+                  </span>
+                </div>
               </div>
             )}
 
-            {/* Author Attribution - moved below answer */}
-            <div className="flex items-center text-sm text-gray-500">
-              <span className="font-medium">
-                - {question.author_whatsapp_display_name || question.author_name}
-              </span>
-              <span className="mx-2">•</span>
-              <span>
-                {format(new Date(question.created_at), 'dd MMM yyyy')}
-              </span>
+            {/* User Attribution at Bottom - Updated */}
+            <div className="flex items-center justify-between text-xs text-gray-500 mt-3 pt-2 border-t border-gray-100">
+              <div className="flex items-center">
+                <span className="font-medium text-gray-600">
+                  - {question.author_whatsapp_display_name || question.author_name}
+                </span>
+                <span className="mx-2 text-gray-400">•</span>
+                <span className="text-gray-500">
+                  {format(new Date(question.created_at), 'dd MMM yyyy')}
+                </span>
+              </div>
             </div>
 
 
