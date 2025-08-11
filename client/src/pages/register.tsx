@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { authApi, setStoredToken, setStoredUser, type User } from "@/lib/auth";
 import { GoogleAuthButton } from "@/components/GoogleAuthButton";
 import { Eye, EyeOff, Mail, Shield, Clock, User as UserIcon, Briefcase, Anchor, ArrowLeft } from "lucide-react";
+import qaaqLogoPath from "@assets/ICON_1754950288816.png";
 
 interface RegisterProps {
   onSuccess: (user: User) => void;
@@ -206,7 +207,10 @@ export default function Register({ onSuccess }: RegisterProps) {
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
-            <h1 className="font-bold text-gray-900 text-[24px]">MV QaaqConnect</h1>
+            <div className="flex items-center justify-center gap-2">
+              <img src={qaaqLogoPath} alt="QAAQ" className="w-8 h-8" />
+              <h1 className="font-bold text-gray-900 text-[24px]">QaaqConnect</h1>
+            </div>
           </div>
           <p className="text-xs text-gray-600 mb-3">Welcome to our Gangway!</p>
           
