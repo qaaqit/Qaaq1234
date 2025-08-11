@@ -726,22 +726,23 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                         {user.imoNumber && (
                           <div className="text-xs text-gray-600 truncate">IMO: {user.imoNumber}</div>
                         )}
-                        <div className="text-xs text-gray-500">
-                          📍 {user.city}, {user.country}
-                        </div>
+                        {user.company && (
+                          <div className="text-xs text-gray-600">🏢 {user.company}</div>
+                        )}
                       </>
                     ) : (
                       <>
                         {user.shipName && (
                           <div className="text-xs text-gray-600 truncate">🚢 {user.shipName}</div>
                         )}
-                        <div className="text-xs text-gray-500">
-                          {searchQuery.trim() && user.distance ? 
-                            `📍 ${user.distance.toFixed(1)}km away` : 
-                            searchQuery.trim() ? 
-                            `📍 ${user.city}, ${user.country}` : 
-                            `📍 ${user.distance?.toFixed(1)}km away`}
-                        </div>
+                        {user.company && (
+                          <div className="text-xs text-gray-600 truncate">🏢 {user.company}</div>
+                        )}
+                        {searchQuery.trim() && user.distance && (
+                          <div className="text-xs text-gray-500">
+                            📍 {user.distance.toFixed(1)}km away
+                          </div>
+                        )}
                       </>
                     )}
                     {user.questionCount && user.answerCount && (
@@ -798,10 +799,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
               </p>
             )}
             
-            {/* Location */}
-            <p className="text-gray-600 text-xs">
-              <strong>Location:</strong> {hoveredUser.city}, {hoveredUser.country}
-            </p>
+
           </div>
         </div>
       )}

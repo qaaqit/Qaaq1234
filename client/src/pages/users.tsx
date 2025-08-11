@@ -365,10 +365,7 @@ export default function UsersPage() {
                     </div>
                   )}
 
-                  <div className="flex items-center">
-                    <span className="font-medium mr-2">Location:</span>
-                    <span className="truncate">📍 {user.city}, {user.country}</span>
-                  </div>
+
 
                   {user.distance && (
                     <div className="flex items-center">
