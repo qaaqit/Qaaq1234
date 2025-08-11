@@ -19,9 +19,7 @@ export default function QBOTWelcomeState() {
         </h3>
         
         {/* Description */}
-        <p className="text-gray-500 leading-relaxed">
-          Start a conversation with our merchant navy community.
-        </p>
+        <p className="text-gray-500 leading-relaxed">Got any questions/ doubts. Shoot them on our marine Bot.</p>
       </div>
     </div>
   );
