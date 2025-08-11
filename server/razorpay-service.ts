@@ -9,7 +9,7 @@ const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
 const RAZORPAY_WEBHOOK_SECRET = process.env.RAZORPAY_WEBHOOK_SECRET;
 
 if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
-  console.warn('⚠️ Razorpay credentials not found. Payment features will be disabled.');
+  throw new Error('Razorpay credentials are required. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET environment variables.');
 }
 
 // Subscription plans configuration
@@ -62,82 +62,45 @@ export const SUBSCRIPTION_PLANS = {
   }
 };
 
-// Mock Razorpay client for development (will be replaced with real client when package is installed)
-const createMockRazorpayClient = () => ({
-  plans: {
-    create: async (planData: any) => ({
-      id: `plan_mock_${Date.now()}`,
-      entity: 'plan',
-      interval: planData.interval,
-      period: planData.period,
-      item: planData.item,
-      notes: planData.notes,
-      created_at: Math.floor(Date.now() / 1000)
-    }),
-    fetch: async (planId: string) => ({
-      id: planId,
-      entity: 'plan',
-      interval: 1,
-      period: 'monthly',
-      item: { name: 'Mock Plan', amount: 29900, currency: 'INR' }
-    })
-  },
-  subscriptions: {
-    create: async (subscriptionData: any) => ({
-      id: `sub_mock_${Date.now()}`,
-      entity: 'subscription',
-      status: 'created',
-      current_start: Math.floor(Date.now() / 1000),
-      current_end: Math.floor((Date.now() + 30 * 24 * 60 * 60 * 1000) / 1000),
-      plan_id: subscriptionData.plan_id,
-      customer_id: subscriptionData.customer_id,
-      short_url: `https://rzp.io/mock_${Date.now()}`,
-      notes: subscriptionData.notes
-    }),
-    fetch: async (subscriptionId: string) => ({
-      id: subscriptionId,
-      entity: 'subscription',
-      status: 'active',
-      current_start: Math.floor(Date.now() / 1000),
-      current_end: Math.floor((Date.now() + 30 * 24 * 60 * 60 * 1000) / 1000)
-    }),
-    cancel: async (subscriptionId: string) => ({
-      id: subscriptionId,
-      entity: 'subscription',
-      status: 'cancelled'
-    })
-  },
-  payments: {
-    fetch: async (paymentId: string) => ({
-      id: paymentId,
-      entity: 'payment',
-      status: 'captured',
-      amount: 29900,
-      currency: 'INR',
-      method: 'card'
-    })
-  }
-});
 
-// Initialize Razorpay client
-let razorpayClient: any;
-try {
-  // This will work when razorpay package is properly installed
-  const Razorpay = require('razorpay');
-  razorpayClient = new Razorpay({
-    key_id: RAZORPAY_KEY_ID,
-    key_secret: RAZORPAY_KEY_SECRET,
-  });
-} catch (error) {
-  console.log('📦 Using mock Razorpay client for development');
-  razorpayClient = createMockRazorpayClient();
+
+// Initialize Razorpay client with real credentials
+let razorpayClient: any = null;
+
+async function initializeRazorpay() {
+  try {
+    const Razorpay = (await import('razorpay')).default;
+    razorpayClient = new Razorpay({
+      key_id: RAZORPAY_KEY_ID!,
+      key_secret: RAZORPAY_KEY_SECRET!,
+    });
+    console.log('✅ Razorpay client initialized with real credentials');
+    return razorpayClient;
+  } catch (error) {
+    console.error('❌ Failed to initialize Razorpay client:', error);
+    throw new Error('Razorpay package not installed or configured properly. Payment features will be unavailable.');
+  }
 }
+
+// Initialize on module load
+initializeRazorpay().catch(() => {
+  console.warn('⚠️ Razorpay initialization failed. Payment features disabled.');
+});
 
 export class RazorpayService {
   
   // Create a subscription or topup for a user
   async createSubscription(userId: string, planType: 'premium' | 'super_user', billingPeriod?: 'monthly' | 'yearly', topupPlan?: string) {
     try {
+      // Ensure Razorpay is initialized
+      if (!razorpayClient) {
+        await initializeRazorpay();
+      }
+      
+      if (!razorpayClient) {
+        throw new Error('Razorpay client not available. Please check credentials and package installation.');
+      }
+
       let plan: any;
       
       if (planType === 'premium') {
