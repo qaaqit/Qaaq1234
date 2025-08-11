@@ -393,7 +393,7 @@ export default function Register({ onSuccess }: RegisterProps) {
                 type="text"
                 value={formData.firstName}
                 onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                placeholder="John"
+                placeholder="Krish"
                 className="w-full h-8 text-sm"
                 disabled={loading || otpLoading}
                 required
@@ -408,7 +408,7 @@ export default function Register({ onSuccess }: RegisterProps) {
                 type="text"
                 value={formData.lastName}
                 onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                placeholder="Smith"
+                placeholder="Kapoor"
                 className="w-full h-8 text-sm"
                 disabled={loading || otpLoading}
                 required
@@ -442,7 +442,7 @@ export default function Register({ onSuccess }: RegisterProps) {
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              placeholder="john.smith@example.com"
+              placeholder="krish.kapoor@example.com"
               className="w-full h-8 text-sm"
               disabled={loading || otpLoading || otpSent}
               required
