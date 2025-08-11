@@ -50,6 +50,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
   const scanLineRef = useRef<any>(null);
   const [boundsUpdateTrigger, setBoundsUpdateTrigger] = useState(0);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const [mapError, setMapError] = useState<string | null>(null);
 
   // Load Google Maps API
   useEffect(() => {
@@ -87,6 +88,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
     // Add error handling
     script.onerror = () => {
       console.error('Failed to load Google Maps API. Please check your API key and network connection.');
+      setMapError('Failed to load Google Maps. Please check your internet connection.');
     };
 
     // Add onload handler
@@ -512,6 +514,32 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
     }
 
   }, [isMapLoaded, userLocation, showScanElements, scanAngle, boundsUpdateTrigger]);
+
+  // Show error message if map failed to load
+  if (mapError) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-gray-100">
+        <div className="text-center p-8 max-w-md">
+          <div className="text-red-500 text-4xl mb-4">⚠️</div>
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">Google Maps Error</h3>
+          <p className="text-gray-600 mb-4">{mapError}</p>
+          <p className="text-sm text-gray-500">Please check your internet connection and try refreshing the page.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading state while map is loading
+  if (!isMapLoaded) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mb-4"></div>
+          <p className="text-gray-600">Loading Google Maps...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full h-full relative">

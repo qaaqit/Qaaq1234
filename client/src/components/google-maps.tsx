@@ -154,6 +154,7 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
       // Add error handling
       script.onerror = () => {
         console.error('Failed to load Google Maps API. Please check your API key and network connection.');
+        // You could add error state handling here if needed
       };
 
       script.onload = () => {
