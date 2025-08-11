@@ -26,6 +26,7 @@ import AuthTestPage from "@/pages/auth-test";
 import SetPasswordPage from "@/pages/set-password";
 import PasswordDemoPage from "@/pages/password-demo";
 import OAuthCallback from "@/pages/oauth-callback";
+import TopQProfessionalsPage from "@/pages/TopQProfessionalsPage";
 
 import NotFound from "@/pages/not-found";
 import BottomNav from "@/components/bottom-nav";
@@ -99,6 +100,7 @@ function Router() {
           <Route path="/auth-test" component={AuthTestPage} />
           <Route path="/set-password" component={SetPasswordPage} />
           <Route path="/password-demo" component={PasswordDemoPage} />
+          <Route path="/top-professionals" component={TopQProfessionalsPage} />
           <Route path="/home-old" component={() => <Login onSuccess={setUser} />} />
 
           <Route component={NotFound} />

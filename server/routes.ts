@@ -870,6 +870,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get Top Q Professionals - New API endpoint for Top Professionals feature
+  app.get("/api/users/top-professionals", async (req, res) => {
+    try {
+      console.log('🏆 API route /api/users/top-professionals called');
+      
+      // Query top 9 professionals by question count
+      const topProfessionals = await pool.query(`
+        SELECT 
+          id,
+          id as user_id,
+          full_name,
+          email,
+          maritime_rank,
+          current_ship_name as ship_name,
+          port,
+          country,
+          question_count,
+          answer_count,
+          user_type,
+          subscription_status,
+          profile_picture_url,
+          whatsapp_profile_picture_url,
+          whatsapp_display_name,
+          true as is_top_professional
+        FROM users 
+        WHERE question_count > 0 
+        ORDER BY question_count DESC, answer_count DESC 
+        LIMIT 9
+      `);
+
+      const professionals = topProfessionals.rows.map(row => ({
+        id: row.id,
+        userId: row.user_id,
+        fullName: row.full_name,
+        email: row.email,
+        maritimeRank: row.maritime_rank,
+        shipName: row.ship_name,
+        port: row.port,
+        country: row.country,
+        questionCount: row.question_count || 0,
+        answerCount: row.answer_count || 0,
+        userType: row.user_type || 'Free',
+        subscriptionStatus: row.subscription_status || 'inactive',
+        profilePictureUrl: row.profile_picture_url,
+        whatsAppProfilePictureUrl: row.whatsapp_profile_picture_url,
+        whatsAppDisplayName: row.whatsapp_display_name,
+        isTopProfessional: row.is_top_professional
+      }));
+
+      console.log(`✅ Found ${professionals.length} top professionals`);
+      if (professionals.length > 0) {
+        console.log(`🥇 Top professional: ${professionals[0].fullName || professionals[0].email} with ${professionals[0].questionCount} questions`);
+      }
+
+      res.json({
+        success: true,
+        professionals: professionals,
+        total: professionals.length,
+        message: `Found ${professionals.length} top Q professionals`
+      });
+    } catch (error) {
+      console.error('Get top professionals error:', error);
+      res.status(500).json({ 
+        success: false,
+        professionals: [],
+        total: 0,
+        message: "Failed to get top professionals" 
+      });
+    }
+  });
+
   // Update user's device location (GPS from mobile/browser)
   app.post("/api/users/location/device", async (req, res) => {
     try {
