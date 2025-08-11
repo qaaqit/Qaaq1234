@@ -8,16 +8,10 @@ const JWT_SECRET = process.env.JWT_SECRET || 'qaaq_jwt_secret_key_2024_secure';
 // Google OAuth configuration
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-// Dynamically determine redirect URI based on environment
+// Use custom domain qaaq.app as the official redirect URI
 const getRedirectUri = () => {
-  if (process.env.REPLIT_DOMAINS) {
-    const domain = process.env.REPLIT_DOMAINS.split(',')[0];
-    return `https://${domain}/api/auth/google/callback`;
-  }
-  if (process.env.REPL_SLUG && process.env.REPL_OWNER) {
-    return `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co/api/auth/google/callback`;
-  }
-  return process.env.GOOGLE_REDIRECT_URI || 'http://localhost:5000/api/auth/google/callback';
+  // Always use the custom domain for production Google OAuth
+  return 'https://qaaq.app/api/auth/google/callback';
 };
 
 const GOOGLE_REDIRECT_URI = getRedirectUri();
