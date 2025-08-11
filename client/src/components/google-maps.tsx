@@ -125,10 +125,43 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
         return;
       }
 
+      // Check if script is already loading
+      const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
+      if (existingScript) {
+        // Wait for existing script to load
+        const checkLoaded = () => {
+          if (window.google) {
+            initializeMap();
+          } else {
+            setTimeout(checkLoaded, 100);
+          }
+        };
+        checkLoaded();
+        return;
+      }
+
+      const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+      if (!apiKey) {
+        console.error('Google Maps API key not found. Please check VITE_GOOGLE_MAPS_API_KEY environment variable.');
+        return;
+      }
+
       const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&callback=initMap&libraries=geometry`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geometry,places`;
       script.async = true;
       script.defer = true;
+      
+      // Add error handling
+      script.onerror = () => {
+        console.error('Failed to load Google Maps API. Please check your API key and network connection.');
+      };
+
+      script.onload = () => {
+        if (window.google) {
+          console.log('✅ Google Maps API loaded successfully');
+          initializeMap();
+        }
+      };
       
       window.initMap = initializeMap;
       document.head.appendChild(script);
