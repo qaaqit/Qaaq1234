@@ -3055,6 +3055,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get Top Q Professionals - Top 9 users with highest question counts
+  app.get('/api/users/top-professionals', optionalAuth, async (req, res) => {
+    try {
+      console.log('🏆 Fetching top Q professionals...');
+      
+      const result = await pool.query(`
+        SELECT 
+          id,
+          user_id,
+          full_name,
+          email,
+          maritime_rank,
+          rank,
+          ship_name,
+          current_ship_name,
+          port,
+          city,
+          country,
+          question_count,
+          answer_count,
+          user_type,
+          subscription_status,
+          whatsapp_number,
+          experience_level,
+          last_company,
+          google_profile_picture_url,
+          whatsapp_profile_picture_url
+        FROM users 
+        WHERE question_count > 0 
+        ORDER BY question_count DESC, answer_count DESC 
+        LIMIT 9
+      `);
+      
+      const professionals = result.rows.map(row => ({
+        id: row.id,
+        userId: row.user_id || row.id,
+        fullName: row.full_name || row.email || 'Maritime Professional',
+        email: row.email,
+        maritimeRank: row.maritime_rank || row.rank || 'Professional',
+        shipName: row.current_ship_name || row.ship_name || '',
+        port: row.port || row.city || '',
+        country: row.country || '',
+        questionCount: row.question_count || 0,
+        answerCount: row.answer_count || 0,
+        userType: row.user_type || 'Free',
+        subscriptionStatus: row.subscription_status || 'free',
+        experienceLevel: row.experience_level,
+        lastCompany: row.last_company,
+        profilePictureUrl: row.google_profile_picture_url || row.whatsapp_profile_picture_url,
+        isTopProfessional: true
+      }));
+      
+      console.log(`✅ Found ${professionals.length} top professionals`);
+      
+      res.json({ 
+        success: true,
+        professionals,
+        total: professionals.length,
+        message: 'Top Q Professionals retrieved successfully'
+      });
+      
+    } catch (error) {
+      console.error('❌ Error fetching top professionals:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to fetch top professionals',
+        error: error.message 
+      });
+    }
+  });
+
   // Get group posts
   app.get('/api/cpss/groups/:groupId/posts', authenticateToken, async (req, res) => {
     try {
