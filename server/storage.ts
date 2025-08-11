@@ -20,6 +20,7 @@ export interface IStorage {
   updateUserShipName(userId: string, shipName: string): Promise<void>;
   updateUserPassword(userId: string, password: string): Promise<void>;
   checkPasswordRenewalRequired(userId: string): Promise<boolean>;
+  generateUserId(fullName: string, rank: string): Promise<string>;
   
   // Verification codes
   createVerificationCode(userId: string, code: string, expiresAt: Date): Promise<VerificationCode>;
@@ -1172,6 +1173,60 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error(`Error checking password renewal for user ${userId}:`, error as Error);
       return false; // Don't require password creation on error
+    }
+  }
+
+  async generateUserId(fullName: string, rank: string): Promise<string> {
+    try {
+      // Extract rank prefix for USER ID
+      const rankPrefixes: Record<string, string> = {
+        'Cap/CO': 'CAP',
+        'Captain': 'CAP',
+        'Chief Officer': 'CO',
+        '2O': '2O',
+        '3O': '3O',
+        'CE': 'CE',
+        'Chief Engineer': 'CE',
+        '2E': '2E', 
+        '3E': '3E',
+        '4E': '4E',
+        'Cadet': 'CAD',
+        'Student': 'STU',
+        'ETO': 'ETO',
+        'ElecSupdt': 'ELS',
+        'TSI': 'TSI',
+        'MSI': 'MSI',
+        'FM': 'FM',
+        'Maritime professional': 'MAR'
+      };
+
+      const prefix = rankPrefixes[rank] || 'QAAQ';
+      
+      // Generate random 3-digit number
+      let attempts = 0;
+      let userId = '';
+      
+      while (attempts < 10) {
+        const randomNum = Math.floor(Math.random() * 900) + 100; // 100-999
+        userId = `${prefix}${randomNum}`;
+        
+        // Check if this ID already exists
+        const [existingUser] = await db.select().from(users).where(eq(users.userId, userId));
+        if (!existingUser) {
+          return userId;
+        }
+        attempts++;
+      }
+      
+      // Fallback: use timestamp-based ID
+      const timestamp = Date.now().toString().slice(-4);
+      return `${prefix}${timestamp}`;
+      
+    } catch (error) {
+      console.error('Error generating user ID:', error);
+      // Ultimate fallback
+      const timestamp = Date.now().toString().slice(-6);
+      return `QAAQ${timestamp}`;
     }
   }
 

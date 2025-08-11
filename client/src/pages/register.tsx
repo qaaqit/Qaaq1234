@@ -208,7 +208,7 @@ export default function Register({ onSuccess }: RegisterProps) {
               <ArrowLeft className="w-4 h-4" />
             </button>
             <div className="flex items-center justify-center gap-2">
-              <img src={qaaqLogoPath} alt="QAAQ" className="w-8 h-8" />
+              <img src={qaaqLogoPath} alt="QAAQ" className="w-10 h-10" />
               <h1 className="font-bold text-gray-900 text-[24px]">QaaqConnect</h1>
             </div>
           </div>

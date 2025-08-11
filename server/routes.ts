@@ -277,6 +277,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "User already exists with this email" });
       }
 
+      // Generate unique user ID based on rank
+      const fullName = `${firstName} ${lastName}`;
+      const userId = await storage.generateUserId(fullName, maritimeRank);
+
       // Generate verification token
       const verificationToken = randomBytes(32).toString('hex');
       const expiresAt = new Date();
@@ -291,7 +295,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         maritimeRank,
         company,
         password,
-        userType: 'sailor' // Default to sailor
+        userType: 'sailor', // Default to sailor
+        userId: userId // Include generated user ID
       };
 
       // Save verification token to database
@@ -305,9 +310,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const emailResult = await emailService.sendVerificationEmail(email, verificationToken, userData);
       
       if (emailResult.success) {
+        console.log(`✅ Registration initiated for ${email} with User ID: ${userId}`);
         res.json({
           success: true,
-          message: "Verification email sent successfully. Please check your inbox."
+          message: "Verification email sent successfully. Please check your inbox.",
+          userId: userId
         });
       } else {
         res.status(500).json({
@@ -414,6 +421,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lastCompany: userData.company,
         password: userData.password,
         userType: userData.userType,
+        userId: userData.userId, // Include generated user ID
         isVerified: true
       });
 
@@ -426,7 +434,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate JWT token
       const jwtToken = jwt.sign({ userId: newUser.id }, JWT_SECRET, { expiresIn: '30d' });
 
-      console.log(`✅ User verified and registered: ${newUser.fullName} (${newUser.email})`);
+      console.log(`✅ User verified and registered: ${newUser.fullName} (${newUser.email}) - User ID: ${userData.userId}`);
 
       // Redirect to login with success message
       res.send(`
@@ -466,6 +474,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               <h1 style="color: #ea580c;">⚓ QaaqConnect</h1>
               <h2 class="success">✅ Email Verified Successfully!</h2>
               <p>Welcome aboard, <strong>${userData.firstName}</strong>!</p>
+              <p>Your User ID: <strong>${userData.userId}</strong></p>
               <p>Your maritime professional account has been created and verified.</p>
               <a href="/login" class="btn">Continue to Login</a>
             </div>
