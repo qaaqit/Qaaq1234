@@ -437,7 +437,7 @@ export function QuestionsTab() {
         <div className="flex-1 relative">
           <Input
             type="text"
-            placeholder="Search questions... (exact matches first, then fuzzy matches)"
+            placeholder="Search Purifier or Anode or any keyword"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pr-12 border-orange-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
