@@ -239,60 +239,60 @@ export default function Register({ onSuccess }: RegisterProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-100 flex items-center justify-center p-2">
+      <div className="w-full max-w-md bg-white rounded-xl shadow-2xl p-4 border border-gray-200 overflow-hidden">
         {/* Back Button */}
-        <div className="flex items-center mb-6">
+        <div className="flex items-center mb-3">
           <button
             onClick={() => setLocation('/login')}
-            className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
+            className="flex items-center text-gray-500 hover:text-gray-700 transition-colors"
           >
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            <span className="text-sm font-medium">Back to Login</span>
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            <span className="text-xs font-medium">Back</span>
           </button>
         </div>
 
         {/* Header with Telegraph */}
-        <div className="text-center mb-8">
-          {/* Semicircle Maritime Telegraph Display */}
-          <div className="mb-6">
-            <div className="relative w-48 h-24 mx-auto">
+        <div className="text-center mb-4">
+          {/* Compact Maritime Telegraph Display */}
+          <div className="mb-3">
+            <div className="relative w-32 h-16 mx-auto">
               {/* Telegraph Base Platform */}
-              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-40 h-6 bg-gradient-to-b from-gray-600 to-gray-800 rounded shadow-lg"></div>
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-24 h-3 bg-gradient-to-b from-gray-600 to-gray-800 rounded shadow-lg"></div>
               
               {/* Semicircle Brass Frame */}
               <div 
-                className="absolute bottom-3 left-1/2 transform -translate-x-1/2 w-36 h-18 bg-gradient-to-br from-yellow-600 via-yellow-500 to-yellow-700 shadow-2xl border-4 border-yellow-800"
+                className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-22 h-11 bg-gradient-to-br from-yellow-600 via-yellow-500 to-yellow-700 shadow-xl border-2 border-yellow-800"
                 style={{
-                  borderRadius: '180px 180px 0 0',
-                  height: '72px'
+                  borderRadius: '120px 120px 0 0',
+                  height: '44px'
                 }}
               >
                 {/* Inner Brass Ring */}
                 <div 
-                  className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-32 h-16 bg-gradient-to-br from-yellow-500 via-yellow-400 to-yellow-600 shadow-inner border-2 border-yellow-700"
+                  className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-20 h-10 bg-gradient-to-br from-yellow-500 via-yellow-400 to-yellow-600 shadow-inner border border-yellow-700"
                   style={{
-                    borderRadius: '160px 160px 0 0'
+                    borderRadius: '100px 100px 0 0'
                   }}
                 >
                   {/* Black Face Semicircle */}
                   <div 
-                    className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-28 h-14 bg-black shadow-inner"
+                    className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-18 h-9 bg-black shadow-inner"
                     style={{
-                      borderRadius: '140px 140px 0 0'
+                      borderRadius: '90px 90px 0 0'
                     }}
                   >
                     {/* Telegraph Sections SVG */}
-                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 112 56">
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 72 36">
                       {/* Section Dividers and Labels */}
                       {telegraphPositions.map((pos, index) => {
                         const angleRad = (pos.angle * Math.PI) / 180;
-                        const x1 = 56 + Math.cos(angleRad) * 45;
-                        const y1 = 56 - Math.sin(angleRad) * 45;
-                        const x2 = 56 + Math.cos(angleRad) * 35;
-                        const y2 = 56 - Math.sin(angleRad) * 35;
-                        const textX = 56 + Math.cos(angleRad) * 25;
-                        const textY = 56 - Math.sin(angleRad) * 25;
+                        const x1 = 36 + Math.cos(angleRad) * 28;
+                        const y1 = 36 - Math.sin(angleRad) * 28;
+                        const x2 = 36 + Math.cos(angleRad) * 22;
+                        const y2 = 36 - Math.sin(angleRad) * 22;
+                        const textX = 36 + Math.cos(angleRad) * 16;
+                        const textY = 36 - Math.sin(angleRad) * 16;
                         
                         return (
                           <g key={pos.id}>
@@ -316,15 +316,15 @@ export default function Register({ onSuccess }: RegisterProps) {
                             {/* Section Labels */}
                             <text
                               x={textX}
-                              y={textY + 2}
+                              y={textY + 1}
                               fill="white"
-                              fontSize="4"
+                              fontSize="2.5"
                               fontWeight="bold"
                               textAnchor="middle"
                               fontFamily="Arial, sans-serif"
                             >
                               {pos.label.split(' ').map((word, i) => (
-                                <tspan key={i} x={textX} dy={i === 0 ? 0 : "4"}>
+                                <tspan key={i} x={textX} dy={i === 0 ? 0 : "2.5"}>
                                   {word}
                                 </tspan>
                               ))}
@@ -334,7 +334,7 @@ export default function Register({ onSuccess }: RegisterProps) {
                       })}
                       
                       {/* Center Text */}
-                      <text x="56" y="45" fill="white" fontSize="3" fontWeight="bold" textAnchor="middle" fontFamily="serif">
+                      <text x="36" y="28" fill="white" fontSize="2" fontWeight="bold" textAnchor="middle" fontFamily="serif">
                         ENGINE TELEGRAPH
                       </text>
                     </svg>
@@ -344,30 +344,30 @@ export default function Register({ onSuccess }: RegisterProps) {
               
               {/* Telegraph Lever Handle (Protruding) */}
               <div 
-                className="absolute bottom-3 left-1/2 transform-gpu transition-transform duration-700 ease-out z-20"
+                className="absolute bottom-1 left-1/2 transform-gpu transition-transform duration-700 ease-out z-20"
                 style={{
-                  transformOrigin: '0 72px',
+                  transformOrigin: '0 44px',
                   transform: `translateX(-50%) rotate(${telegraphPositions[telegraphPosition].angle - 90}deg)`,
                 }}
               >
                 {/* Lever Shaft */}
-                <div className="w-3 h-16 bg-gradient-to-t from-gray-800 via-gray-600 to-gray-500 rounded-full shadow-lg"></div>
+                <div className="w-2 h-10 bg-gradient-to-t from-gray-800 via-gray-600 to-gray-500 rounded-full shadow-lg"></div>
                 
                 {/* Lever Handle (Chrome Knob) */}
-                <div className="absolute -top-3 -left-1 w-5 h-6 bg-gradient-to-br from-gray-300 via-gray-200 to-gray-400 rounded-full shadow-lg border-2 border-gray-500">
-                  <div className="absolute inset-1 bg-gradient-to-br from-white to-gray-300 rounded-full"></div>
+                <div className="absolute -top-2 -left-0.5 w-3 h-4 bg-gradient-to-br from-gray-300 via-gray-200 to-gray-400 rounded-full shadow-lg border border-gray-500">
+                  <div className="absolute inset-0.5 bg-gradient-to-br from-white to-gray-300 rounded-full"></div>
                   {/* Chrome Highlight */}
-                  <div className="absolute top-0.5 left-0.5 w-2 h-2 bg-white rounded-full opacity-80"></div>
+                  <div className="absolute top-0.5 left-0.5 w-1 h-1 bg-white rounded-full opacity-80"></div>
                 </div>
               </div>
               
               {/* Center Pivot */}
-              <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-gradient-to-br from-yellow-400 to-yellow-700 rounded-full shadow-lg border border-yellow-800 z-10"></div>
+              <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gradient-to-br from-yellow-400 to-yellow-700 rounded-full shadow-lg border border-yellow-800 z-10"></div>
             </div>
             
             {/* Telegraph Status Panel */}
-            <div className="mt-4">
-              <div className="bg-gradient-to-br from-gray-700 to-gray-900 text-white text-sm font-bold px-4 py-2 rounded border-2 border-gray-600 shadow-lg">
+            <div className="mt-2">
+              <div className="bg-gradient-to-br from-gray-700 to-gray-900 text-white text-xs font-bold px-2 py-1 rounded border border-gray-600 shadow-lg">
                 <div className="text-center font-mono">
                   {telegraphPositions[telegraphPosition].label}
                 </div>
@@ -376,16 +376,16 @@ export default function Register({ onSuccess }: RegisterProps) {
           </div>
 
           {/* Logo and Title */}
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Join QaaqConnect</h1>
-          <p className="text-gray-600">Maritime Professional Registration</p>
+          <h1 className="text-xl font-bold text-gray-900 mb-1">Join QaaqConnect</h1>
+          <p className="text-xs text-gray-600">Maritime Professional Registration</p>
         </div>
 
         {/* Registration Form */}
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-3">
           {/* Name Fields */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             <div>
-              <Label htmlFor="firstName" className="text-sm font-medium text-gray-700 mb-2 block">
+              <Label htmlFor="firstName" className="text-xs font-medium text-gray-700 mb-1 block">
                 First Name *
               </Label>
               <Input
@@ -394,13 +394,13 @@ export default function Register({ onSuccess }: RegisterProps) {
                 value={formData.firstName}
                 onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                 placeholder="John"
-                className="w-full h-11 text-base"
+                className="w-full h-8 text-sm"
                 disabled={loading || otpLoading}
                 required
               />
             </div>
             <div>
-              <Label htmlFor="lastName" className="text-sm font-medium text-gray-700 mb-2 block">
+              <Label htmlFor="lastName" className="text-xs font-medium text-gray-700 mb-1 block">
                 Last Name *
               </Label>
               <Input
@@ -409,7 +409,7 @@ export default function Register({ onSuccess }: RegisterProps) {
                 value={formData.lastName}
                 onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                 placeholder="Smith"
-                className="w-full h-11 text-base"
+                className="w-full h-8 text-sm"
                 disabled={loading || otpLoading}
                 required
               />
@@ -418,7 +418,7 @@ export default function Register({ onSuccess }: RegisterProps) {
 
           {/* WhatsApp Number */}
           <div>
-            <Label htmlFor="whatsapp" className="text-sm font-medium text-gray-700 mb-2 block">
+            <Label htmlFor="whatsapp" className="text-xs font-medium text-gray-700 mb-1 block">
               WhatsApp Number
             </Label>
             <Input
@@ -427,14 +427,14 @@ export default function Register({ onSuccess }: RegisterProps) {
               value={formData.whatsapp}
               onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
               placeholder="+919820012345"
-              className="w-full h-11 text-base"
+              className="w-full h-8 text-sm"
               disabled={loading || otpLoading}
             />
           </div>
 
           {/* Email */}
           <div>
-            <Label htmlFor="email" className="text-sm font-medium text-gray-700 mb-2 block">
+            <Label htmlFor="email" className="text-xs font-medium text-gray-700 mb-1 block">
               Email Address *
             </Label>
             <Input
@@ -443,7 +443,7 @@ export default function Register({ onSuccess }: RegisterProps) {
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               placeholder="john.smith@example.com"
-              className="w-full h-11 text-base"
+              className="w-full h-8 text-sm"
               disabled={loading || otpLoading || otpSent}
               required
             />
@@ -451,7 +451,7 @@ export default function Register({ onSuccess }: RegisterProps) {
 
           {/* Maritime Rank */}
           <div>
-            <Label htmlFor="maritimeRank" className="text-sm font-medium text-gray-700 mb-2 block">
+            <Label htmlFor="maritimeRank" className="text-xs font-medium text-gray-700 mb-1 block">
               Maritime Rank *
             </Label>
             <Select 
@@ -460,7 +460,7 @@ export default function Register({ onSuccess }: RegisterProps) {
               disabled={loading || otpLoading}
               required
             >
-              <SelectTrigger className="w-full h-11">
+              <SelectTrigger className="w-full h-8 text-sm">
                 <SelectValue placeholder="Select your rank" />
               </SelectTrigger>
               <SelectContent>
@@ -486,7 +486,7 @@ export default function Register({ onSuccess }: RegisterProps) {
 
           {/* Company */}
           <div>
-            <Label htmlFor="company" className="text-sm font-medium text-gray-700 mb-2 block">
+            <Label htmlFor="company" className="text-xs font-medium text-gray-700 mb-1 block">
               Company *
             </Label>
             <Select 
@@ -498,7 +498,7 @@ export default function Register({ onSuccess }: RegisterProps) {
               disabled={loading || otpLoading}
               required
             >
-              <SelectTrigger className="w-full h-11">
+              <SelectTrigger className="w-full h-8 text-sm">
                 <SelectValue placeholder="Select your company" />
               </SelectTrigger>
               <SelectContent>
@@ -522,7 +522,7 @@ export default function Register({ onSuccess }: RegisterProps) {
                 value={formData.otherCompany}
                 onChange={(e) => setFormData({ ...formData, otherCompany: e.target.value })}
                 placeholder="Enter your company name"
-                className="w-full h-11 text-base mt-2"
+                className="w-full h-8 text-sm mt-1"
                 disabled={loading || otpLoading}
                 required
               />
@@ -531,7 +531,7 @@ export default function Register({ onSuccess }: RegisterProps) {
 
           {/* Password */}
           <div>
-            <Label htmlFor="password" className="text-sm font-medium text-gray-700 mb-2 block">
+            <Label htmlFor="password" className="text-xs font-medium text-gray-700 mb-1 block">
               Password *
             </Label>
             <div className="relative">
@@ -541,16 +541,16 @@ export default function Register({ onSuccess }: RegisterProps) {
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 placeholder="Create a secure password"
-                className="w-full h-11 text-base pr-10"
+                className="w-full h-8 text-sm pr-8"
                 disabled={loading || otpLoading}
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
               </button>
             </div>
           </div>
@@ -558,7 +558,7 @@ export default function Register({ onSuccess }: RegisterProps) {
           {/* OTP Code (if email verification is required) */}
           {otpSent && (
             <div>
-              <Label htmlFor="otpCode" className="text-sm font-medium text-gray-700 mb-2 block">
+              <Label htmlFor="otpCode" className="text-xs font-medium text-gray-700 mb-1 block">
                 Email Verification Code *
               </Label>
               <Input
@@ -567,14 +567,14 @@ export default function Register({ onSuccess }: RegisterProps) {
                 value={formData.otpCode}
                 onChange={(e) => setFormData({ ...formData, otpCode: e.target.value.replace(/\D/g, '').slice(0, 6) })}
                 placeholder="Enter 6-digit code"
-                className="w-full h-11 text-base text-center text-xl font-mono tracking-widest"
+                className="w-full h-8 text-sm text-center font-mono tracking-widest"
                 disabled={loading}
                 maxLength={6}
                 required
               />
               {otpCountdown > 0 && (
-                <div className="flex items-center justify-center mt-2 text-sm text-gray-500">
-                  <Clock className="w-4 h-4 mr-1" />
+                <div className="flex items-center justify-center mt-1 text-xs text-gray-500">
+                  <Clock className="w-3 h-3 mr-1" />
                   Code expires in {Math.floor(otpCountdown / 60)}:{(otpCountdown % 60).toString().padStart(2, '0')}
                 </div>
               )}
@@ -584,7 +584,7 @@ export default function Register({ onSuccess }: RegisterProps) {
           {/* Submit Button */}
           <Button 
             type="submit" 
-            className={`w-full h-12 font-semibold transition-all duration-300 ${
+            className={`w-full h-9 text-sm font-semibold transition-all duration-300 ${
               otpSent
                 ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700'
                 : 'bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700'
