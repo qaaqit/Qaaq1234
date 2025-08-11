@@ -257,7 +257,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                   />
                   
                   {/* Chat Area with Engineering Grid Background */}
-                  <QBOTChatArea className="engineering-grid">
+                  <QBOTChatArea>
                     <div className="flex flex-col h-full p-4">
                       {/* Messages or Welcome State */}
                       {isLoadingHistory ? (
@@ -291,7 +291,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                   <div className="border-t-2 border-orange-500"></div>
                   
                   {/* Input Area flush with carousel - with engineering grid background */}
-                  <div className="p-4 engineering-grid">
+                  <div>
                     <QBOTInputArea 
                       onSendMessage={handleSendQBotMessage}
                       disabled={isQBotTyping}
