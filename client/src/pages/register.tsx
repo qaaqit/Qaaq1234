@@ -254,45 +254,45 @@ export default function Register({ onSuccess }: RegisterProps) {
 
         {/* Header with Telegraph */}
         <div className="text-center mb-4">
-          {/* Compact Maritime Telegraph Display */}
+          {/* Maritime Telegraph Display */}
           <div className="mb-3">
-            <div className="relative w-32 h-16 mx-auto">
+            <div className="relative w-64 h-32 mx-auto">
               {/* Telegraph Base Platform */}
-              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-24 h-3 bg-gradient-to-b from-gray-600 to-gray-800 rounded shadow-lg"></div>
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-48 h-6 bg-gradient-to-b from-gray-600 to-gray-800 rounded shadow-lg"></div>
               
               {/* Semicircle Brass Frame */}
               <div 
-                className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-22 h-11 bg-gradient-to-br from-yellow-600 via-yellow-500 to-yellow-700 shadow-xl border-2 border-yellow-800"
+                className="absolute bottom-3 left-1/2 transform -translate-x-1/2 w-44 h-22 bg-gradient-to-br from-yellow-600 via-yellow-500 to-yellow-700 shadow-xl border-4 border-yellow-800"
                 style={{
-                  borderRadius: '120px 120px 0 0',
-                  height: '44px'
+                  borderRadius: '240px 240px 0 0',
+                  height: '88px'
                 }}
               >
                 {/* Inner Brass Ring */}
                 <div 
-                  className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-20 h-10 bg-gradient-to-br from-yellow-500 via-yellow-400 to-yellow-600 shadow-inner border border-yellow-700"
+                  className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-40 h-20 bg-gradient-to-br from-yellow-500 via-yellow-400 to-yellow-600 shadow-inner border-2 border-yellow-700"
                   style={{
-                    borderRadius: '100px 100px 0 0'
+                    borderRadius: '200px 200px 0 0'
                   }}
                 >
                   {/* Black Face Semicircle */}
                   <div 
-                    className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-18 h-9 bg-black shadow-inner"
+                    className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-36 h-18 bg-black shadow-inner"
                     style={{
-                      borderRadius: '90px 90px 0 0'
+                      borderRadius: '180px 180px 0 0'
                     }}
                   >
                     {/* Telegraph Sections SVG */}
-                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 72 36">
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 144 72">
                       {/* Section Dividers and Labels */}
                       {telegraphPositions.map((pos, index) => {
                         const angleRad = (pos.angle * Math.PI) / 180;
-                        const x1 = 36 + Math.cos(angleRad) * 28;
-                        const y1 = 36 - Math.sin(angleRad) * 28;
-                        const x2 = 36 + Math.cos(angleRad) * 22;
-                        const y2 = 36 - Math.sin(angleRad) * 22;
-                        const textX = 36 + Math.cos(angleRad) * 16;
-                        const textY = 36 - Math.sin(angleRad) * 16;
+                        const x1 = 72 + Math.cos(angleRad) * 56;
+                        const y1 = 72 - Math.sin(angleRad) * 56;
+                        const x2 = 72 + Math.cos(angleRad) * 44;
+                        const y2 = 72 - Math.sin(angleRad) * 44;
+                        const textX = 72 + Math.cos(angleRad) * 32;
+                        const textY = 72 - Math.sin(angleRad) * 32;
                         
                         return (
                           <g key={pos.id}>
@@ -316,15 +316,15 @@ export default function Register({ onSuccess }: RegisterProps) {
                             {/* Section Labels */}
                             <text
                               x={textX}
-                              y={textY + 1}
+                              y={textY + 2}
                               fill="white"
-                              fontSize="2.5"
+                              fontSize="5"
                               fontWeight="bold"
                               textAnchor="middle"
                               fontFamily="Arial, sans-serif"
                             >
                               {pos.label.split(' ').map((word, i) => (
-                                <tspan key={i} x={textX} dy={i === 0 ? 0 : "2.5"}>
+                                <tspan key={i} x={textX} dy={i === 0 ? 0 : "5"}>
                                   {word}
                                 </tspan>
                               ))}
@@ -334,7 +334,7 @@ export default function Register({ onSuccess }: RegisterProps) {
                       })}
                       
                       {/* Center Text */}
-                      <text x="36" y="28" fill="white" fontSize="2" fontWeight="bold" textAnchor="middle" fontFamily="serif">
+                      <text x="72" y="56" fill="white" fontSize="4" fontWeight="bold" textAnchor="middle" fontFamily="serif">
                         ENGINE TELEGRAPH
                       </text>
                     </svg>
@@ -344,30 +344,30 @@ export default function Register({ onSuccess }: RegisterProps) {
               
               {/* Telegraph Lever Handle (Protruding) */}
               <div 
-                className="absolute bottom-1 left-1/2 transform-gpu transition-transform duration-700 ease-out z-20"
+                className="absolute bottom-3 left-1/2 transform-gpu transition-transform duration-700 ease-out z-20"
                 style={{
-                  transformOrigin: '0 44px',
+                  transformOrigin: '0 88px',
                   transform: `translateX(-50%) rotate(${telegraphPositions[telegraphPosition].angle - 90}deg)`,
                 }}
               >
                 {/* Lever Shaft */}
-                <div className="w-2 h-10 bg-gradient-to-t from-gray-800 via-gray-600 to-gray-500 rounded-full shadow-lg"></div>
+                <div className="w-4 h-20 bg-gradient-to-t from-gray-800 via-gray-600 to-gray-500 rounded-full shadow-lg"></div>
                 
                 {/* Lever Handle (Chrome Knob) */}
-                <div className="absolute -top-2 -left-0.5 w-3 h-4 bg-gradient-to-br from-gray-300 via-gray-200 to-gray-400 rounded-full shadow-lg border border-gray-500">
-                  <div className="absolute inset-0.5 bg-gradient-to-br from-white to-gray-300 rounded-full"></div>
+                <div className="absolute -top-4 -left-1 w-6 h-8 bg-gradient-to-br from-gray-300 via-gray-200 to-gray-400 rounded-full shadow-lg border-2 border-gray-500">
+                  <div className="absolute inset-1 bg-gradient-to-br from-white to-gray-300 rounded-full"></div>
                   {/* Chrome Highlight */}
-                  <div className="absolute top-0.5 left-0.5 w-1 h-1 bg-white rounded-full opacity-80"></div>
+                  <div className="absolute top-1 left-1 w-2 h-2 bg-white rounded-full opacity-80"></div>
                 </div>
               </div>
               
               {/* Center Pivot */}
-              <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gradient-to-br from-yellow-400 to-yellow-700 rounded-full shadow-lg border border-yellow-800 z-10"></div>
+              <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-gradient-to-br from-yellow-400 to-yellow-700 rounded-full shadow-lg border-2 border-yellow-800 z-10"></div>
             </div>
             
             {/* Telegraph Status Panel */}
-            <div className="mt-2">
-              <div className="bg-gradient-to-br from-gray-700 to-gray-900 text-white text-xs font-bold px-2 py-1 rounded border border-gray-600 shadow-lg">
+            <div className="mt-4">
+              <div className="bg-gradient-to-br from-gray-700 to-gray-900 text-white text-sm font-bold px-4 py-2 rounded border-2 border-gray-600 shadow-lg">
                 <div className="text-center font-mono">
                   {telegraphPositions[telegraphPosition].label}
                 </div>
