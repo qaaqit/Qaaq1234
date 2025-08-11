@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useEffect, useState } from "react";
 
 import Home from "@/pages/home";
+import Login from "@/pages/login";
 import Register from "@/pages/register";
 import Verify from "@/pages/verify";
 import Discover from "@/pages/discover";
@@ -73,14 +74,14 @@ function Router() {
     <div className="min-h-screen bg-slate-50">
       <div className={currentUser ? "pb-16" : ""}>
         <Switch>
-          <Route path="/" component={() => currentUser ? <QBOTPage user={currentUser} /> : <Home onSuccess={setUser} />} />
-          <Route path="/login" component={() => <Home onSuccess={setUser} />} />
+          <Route path="/" component={() => currentUser ? <QBOTPage user={currentUser} /> : <Login onSuccess={setUser} />} />
+          <Route path="/login" component={() => <Login onSuccess={setUser} />} />
           <Route path="/register" component={() => <Register onSuccess={setUser} />} />
           <Route path="/verify" component={() => <Verify onSuccess={setUser} />} />
           <Route path="/oauth-callback" component={() => <OAuthCallback />} />
-          <Route path="/discover" component={() => currentUser ? <Discover user={currentUser} /> : <Home onSuccess={setUser} />} />
-          <Route path="/qbot" component={() => currentUser ? <QBOTPage user={currentUser} /> : <Home onSuccess={setUser} />} />
-          <Route path="/post" component={() => currentUser ? <Post user={currentUser} /> : <Home onSuccess={setUser} />} />
+          <Route path="/discover" component={() => currentUser ? <Discover user={currentUser} /> : <Login onSuccess={setUser} />} />
+          <Route path="/qbot" component={() => currentUser ? <QBOTPage user={currentUser} /> : <Login onSuccess={setUser} />} />
+          <Route path="/post" component={() => currentUser ? <Post user={currentUser} /> : <Login onSuccess={setUser} />} />
           <Route path="/chat" component={() => <ChatPage />} />
           <Route path="/chat/:userId" component={() => <DMPage />} />
           <Route path="/dm" component={() => <DMPage />} />
@@ -98,7 +99,7 @@ function Router() {
           <Route path="/auth-test" component={AuthTestPage} />
           <Route path="/set-password" component={SetPasswordPage} />
           <Route path="/password-demo" component={PasswordDemoPage} />
-          <Route path="/home-old" component={() => <Home onSuccess={setUser} />} />
+          <Route path="/home-old" component={() => <Login onSuccess={setUser} />} />
 
           <Route component={NotFound} />
         </Switch>

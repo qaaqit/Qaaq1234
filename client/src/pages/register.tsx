@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { authApi, setStoredToken, setStoredUser, type User } from "@/lib/auth";
+import { GoogleAuthButton } from "@/components/GoogleAuthButton";
+import { Eye, EyeOff, Mail, Shield, Clock, User as UserIcon, Briefcase, Anchor } from "lucide-react";
 
 interface RegisterProps {
   onSuccess: (user: User) => void;
@@ -15,235 +17,640 @@ export default function Register({ onSuccess }: RegisterProps) {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [isLogin, setIsLogin] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCountdown, setOtpCountdown] = useState(0);
+  const [showOtherCompany, setShowOtherCompany] = useState(false);
+  const [telegraphPosition, setTelegraphPosition] = useState(0);
   const [formData, setFormData] = useState({
-    fullName: "",
+    firstName: "",
+    lastName: "",
+    whatsapp: "",
     email: "",
-    userId: "",
+    maritimeRank: "",
+    company: "",
+    otherCompany: "",
     password: "",
-    userType: "" as "sailor" | "local" | "",
+    otpCode: "",
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Check for authentication errors in URL parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const error = urlParams.get('error');
     
-    if (isLogin) {
-      // Login flow
-      if (!formData.userId || !formData.password) {
-        toast({
-          title: "Login details required",
-          description: "Please enter both User ID and Password",
-          variant: "destructive",
-        });
-        return;
-      }
+    if (error === 'auth_failed') {
+      toast({
+        title: "Authentication Failed",
+        description: "Google sign-in was not successful. Please try again or use your regular login.",
+        variant: "destructive",
+      });
+      
+      // Clean up the URL by removing the error parameter
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+    }
+  }, [toast]);
 
-      setLoading(true);
-      try {
-        const result = await authApi.login(formData.userId, formData.password);
-        
-        // QAAQ login provides immediate access
-        if (result.token) {
-          setStoredToken(result.token);
-          setStoredUser(result.user);
-          onSuccess(result.user);
-        }
-        setLocation("/");
-        toast({
-          title: "Welcome back! 🚢",
-          description: "You're all set to explore",
-        });
-      } catch (error) {
-        toast({
-          title: "Login failed",
-          description: error instanceof Error ? error.message : "Please try again",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
+  // OTP countdown timer
+  useEffect(() => {
+    if (otpCountdown > 0) {
+      const timer = setTimeout(() => setOtpCountdown(otpCountdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [otpCountdown]);
+
+  // Telegraph lever positions and animations (semicircle layout)
+  const telegraphPositions = [
+    { id: 0, label: "FULL ASTERN", angle: 0, color: "#dc2626" },
+    { id: 1, label: "HALF ASTERN", angle: 30, color: "#ea580c" },
+    { id: 2, label: "SLOW ASTERN", angle: 60, color: "#f59e0b" },
+    { id: 3, label: "STOP", angle: 90, color: "#6b7280" },
+    { id: 4, label: "SLOW AHEAD", angle: 120, color: "#10b981" },
+    { id: 5, label: "FULL AHEAD", angle: 150, color: "#059669" }
+  ];
+
+  // Telegraph position based on form completion
+  useEffect(() => {
+    if (loading || otpLoading) {
+      const interval = setInterval(() => {
+        setTelegraphPosition((prev) => (prev + 1) % telegraphPositions.length);
+      }, 600);
+      return () => clearInterval(interval);
     } else {
-      // Registration flow
-      if (!formData.fullName || !formData.email || !formData.userType) {
-        toast({
-          title: "Missing information",
-          description: "Please fill in all fields",
-          variant: "destructive",
-        });
-        return;
+      // Calculate form completion and set telegraph position accordingly
+      const fields = [
+        formData.firstName,
+        formData.lastName, 
+        formData.email,
+        formData.maritimeRank,
+        formData.company,
+        formData.password
+      ];
+      
+      const filledFields = fields.filter(field => field.trim() !== '').length;
+      const completionPosition = Math.min(filledFields, 5); // Max position is 5 (Full Ahead)
+      
+      if (otpSent) {
+        setTelegraphPosition(5); // Full Ahead when OTP sent
+      } else {
+        setTelegraphPosition(completionPosition);
       }
+    }
+  }, [loading, otpLoading, otpSent, formData.firstName, formData.lastName, formData.email, formData.maritimeRank, formData.company, formData.password]);
 
-      setLoading(true);
-      try {
-        const result = await authApi.register(formData);
-        
-        if (result.token) {
-          setStoredToken(result.token);
-          setStoredUser(result.user);
-          onSuccess(result.user);
-        }
-        
-        setLocation("/");
+  // Send email OTP
+  const sendEmailOTP = async () => {
+    if (!formData.email || !formData.email.includes('@')) {
+      toast({
+        title: "Email Required",
+        description: "Please enter a valid email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setOtpLoading(true);
+    try {
+      const response = await fetch('/api/auth/send-email-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setOtpSent(true);
+        setOtpCountdown(300); // 5 minutes
         toast({
-          title: "Welcome to QaaqConnect! 🎉",
-          description: "You're ready to start exploring",
+          title: "Verification Code Sent!",
+          description: `Check your email at ${formData.email}`,
         });
-      } catch (error) {
+      } else {
         toast({
-          title: "Registration failed",
-          description: error instanceof Error ? error.message : "Please try again",
+          title: "Failed to Send Code",
+          description: data.error || "Unable to send verification code. Please try again.",
           variant: "destructive",
         });
-      } finally {
-        setLoading(false);
       }
+    } catch (error) {
+      console.error('Email OTP error:', error);
+      toast({
+        title: "Email Error",
+        description: "Unable to send verification code. Please check your internet connection.",
+        variant: "destructive",
+      });
+    } finally {
+      setOtpLoading(false);
     }
   };
 
-  const selectUserType = (type: "sailor" | "local") => {
-    setFormData({ ...formData, userType: type });
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Validation
+    if (!formData.firstName || !formData.lastName || !formData.email || 
+        !formData.maritimeRank || !formData.company || !formData.password) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // If OTP not sent yet, send it first
+    if (!otpSent) {
+      await sendEmailOTP();
+      return;
+    }
+
+    // If OTP sent but not entered
+    if (!formData.otpCode || formData.otpCode.length !== 6) {
+      toast({
+        title: "Verification Required",
+        description: "Please enter the 6-digit verification code sent to your email",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Verify OTP and complete registration
+      const response = await fetch('/api/auth/complete-registration', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          firstName: formData.firstName.trim(),
+          lastName: formData.lastName.trim(),
+          whatsapp: formData.whatsapp.trim(),
+          email: formData.email.trim(),
+          maritimeRank: formData.maritimeRank,
+          company: formData.company === "Other" ? formData.otherCompany.trim() : formData.company,
+          password: formData.password,
+          otpCode: formData.otpCode,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Store token and user data
+        setStoredToken(data.token);
+        setStoredUser(data.user);
+        
+        onSuccess(data.user);
+        
+        toast({
+          title: "Welcome to QaaqConnect! 🚢",
+          description: `Registration successful! Welcome aboard, ${formData.firstName}`,
+        });
+        
+        setLocation('/qbot');
+      } else {
+        toast({
+          title: "Registration Failed",
+          description: data.error || "Unable to complete registration. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      toast({
+        title: "Registration Error",
+        description: "Unable to connect to server. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <Card className="w-full max-w-md maritime-shadow">
-        <CardHeader className="text-center">
-          <div className="w-16 h-16 gradient-bg rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <i className="fas fa-anchor text-2xl text-white"></i>
-          </div>
-          <CardTitle className="text-2xl font-bold text-gray-900">
-            {isLogin ? "Welcome Back" : "Join QaaqConnect"}
-          </CardTitle>
-          <p className="text-gray-600">
-            {isLogin ? "Connect with maritime professionals worldwide" : "Super quick registration - get started in seconds"}
-          </p>
-        </CardHeader>
-
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {!isLogin && (
-              <div>
-                <Label htmlFor="fullName" className="text-sm font-medium text-gray-700">
-                  USER NAME (This may be ur country code +91 & whatsapp number )
-                </Label>
-                <Input
-                  id="fullName"
-                  type="text"
-                  value={formData.fullName}
-                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  placeholder="e.g. +91 9876543210"
-                  className="mt-2"
-                  required
-                />
-              </div>
-            )}
-
-            {isLogin ? (
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="userId" className="text-sm font-medium text-gray-700">
-                    USER NAME (This may be ur country code +91 & whatsapp number )
-                  </Label>
-                  <Input
-                    id="userId"
-                    type="text"  
-                    value={formData.userId}
-                    onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
-                    placeholder="e.g. Patel, captain.li@qaaq.com, +91 9800898008"
-                    className="mt-2"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="password" className="text-sm font-medium text-gray-700">
-                    Password
-                  </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    placeholder="Enter your password"
-                    className="mt-2"
-                    required
-                  />
-                </div>
-                <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
-                  <p><strong>New users:</strong> Default password is <code className="bg-blue-100 px-1 rounded">1234koihai</code></p>
-                  <p className="text-xs mt-1">You'll need to change this at your 3rd login.</p>
-                </div>
-              </div>
-            ) : (
-              <>
-                <div>
-                  <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                    Email
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="your.email@example.com"
-                    className="mt-2"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="userType" className="text-sm font-medium text-gray-700">
-                    Are you a sailor or local maritime professional?
-                  </Label>
-                  <div className="mt-2 relative">
-                    <select
-                      id="userType"
-                      value={formData.userType}
-                      onChange={(e) => setFormData({ ...formData, userType: e.target.value as "sailor" | "local" })}
-                      className="w-full bg-gray-100 bg-opacity-50 backdrop-blur-sm border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ocean-teal focus:border-transparent appearance-none"
-                      required
-                    >
-                      <option value="">Select your role...</option>
-                      <option value="sailor">🚢 Sailor (working on ships)</option>
-                      <option value="local">🏠 Local (port agent, supplier, etc.)</option>
-                    </select>
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                      <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-100 flex items-center justify-center p-4">
+      <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
+        {/* Header with Telegraph */}
+        <div className="text-center mb-8">
+          {/* Semicircle Maritime Telegraph Display */}
+          <div className="mb-6">
+            <div className="relative w-48 h-24 mx-auto">
+              {/* Telegraph Base Platform */}
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-40 h-6 bg-gradient-to-b from-gray-600 to-gray-800 rounded shadow-lg"></div>
+              
+              {/* Semicircle Brass Frame */}
+              <div 
+                className="absolute bottom-3 left-1/2 transform -translate-x-1/2 w-36 h-18 bg-gradient-to-br from-yellow-600 via-yellow-500 to-yellow-700 shadow-2xl border-4 border-yellow-800"
+                style={{
+                  borderRadius: '180px 180px 0 0',
+                  height: '72px'
+                }}
+              >
+                {/* Inner Brass Ring */}
+                <div 
+                  className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-32 h-16 bg-gradient-to-br from-yellow-500 via-yellow-400 to-yellow-600 shadow-inner border-2 border-yellow-700"
+                  style={{
+                    borderRadius: '160px 160px 0 0'
+                  }}
+                >
+                  {/* Black Face Semicircle */}
+                  <div 
+                    className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-28 h-14 bg-black shadow-inner"
+                    style={{
+                      borderRadius: '140px 140px 0 0'
+                    }}
+                  >
+                    {/* Telegraph Sections SVG */}
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 112 56">
+                      {/* Section Dividers and Labels */}
+                      {telegraphPositions.map((pos, index) => {
+                        const angleRad = (pos.angle * Math.PI) / 180;
+                        const x1 = 56 + Math.cos(angleRad) * 45;
+                        const y1 = 56 - Math.sin(angleRad) * 45;
+                        const x2 = 56 + Math.cos(angleRad) * 35;
+                        const y2 = 56 - Math.sin(angleRad) * 35;
+                        const textX = 56 + Math.cos(angleRad) * 25;
+                        const textY = 56 - Math.sin(angleRad) * 25;
+                        
+                        return (
+                          <g key={pos.id}>
+                            {/* Divider Line */}
+                            <line
+                              x1={x1}
+                              y1={y1}
+                              x2={x2}
+                              y2={y2}
+                              stroke="white"
+                              strokeWidth="1"
+                            />
+                            {/* Position Indicator Dot */}
+                            <circle
+                              cx={x1}
+                              cy={y1}
+                              r={index === telegraphPosition ? "2" : "1"}
+                              fill={index === telegraphPosition ? pos.color : "#666"}
+                              className="transition-all duration-300"
+                            />
+                            {/* Section Labels */}
+                            <text
+                              x={textX}
+                              y={textY + 2}
+                              fill="white"
+                              fontSize="4"
+                              fontWeight="bold"
+                              textAnchor="middle"
+                              fontFamily="Arial, sans-serif"
+                            >
+                              {pos.label.split(' ').map((word, i) => (
+                                <tspan key={i} x={textX} dy={i === 0 ? 0 : "4"}>
+                                  {word}
+                                </tspan>
+                              ))}
+                            </text>
+                          </g>
+                        );
+                      })}
+                      
+                      {/* Center Text */}
+                      <text x="56" y="45" fill="white" fontSize="3" fontWeight="bold" textAnchor="middle" fontFamily="serif">
+                        ENGINE TELEGRAPH
+                      </text>
+                    </svg>
                   </div>
                 </div>
+              </div>
+              
+              {/* Telegraph Lever Handle (Protruding) */}
+              <div 
+                className="absolute bottom-3 left-1/2 transform-gpu transition-transform duration-700 ease-out z-20"
+                style={{
+                  transformOrigin: '0 72px',
+                  transform: `translateX(-50%) rotate(${telegraphPositions[telegraphPosition].angle - 90}deg)`,
+                }}
+              >
+                {/* Lever Shaft */}
+                <div className="w-3 h-16 bg-gradient-to-t from-gray-800 via-gray-600 to-gray-500 rounded-full shadow-lg"></div>
+                
+                {/* Lever Handle (Chrome Knob) */}
+                <div className="absolute -top-3 -left-1 w-5 h-6 bg-gradient-to-br from-gray-300 via-gray-200 to-gray-400 rounded-full shadow-lg border-2 border-gray-500">
+                  <div className="absolute inset-1 bg-gradient-to-br from-white to-gray-300 rounded-full"></div>
+                  {/* Chrome Highlight */}
+                  <div className="absolute top-0.5 left-0.5 w-2 h-2 bg-white rounded-full opacity-80"></div>
+                </div>
+              </div>
+              
+              {/* Center Pivot */}
+              <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-gradient-to-br from-yellow-400 to-yellow-700 rounded-full shadow-lg border border-yellow-800 z-10"></div>
+            </div>
+            
+            {/* Telegraph Status Panel */}
+            <div className="mt-4">
+              <div className="bg-gradient-to-br from-gray-700 to-gray-900 text-white text-sm font-bold px-4 py-2 rounded border-2 border-gray-600 shadow-lg">
+                <div className="text-center font-mono">
+                  {telegraphPositions[telegraphPosition].label}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Logo and Title */}
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Join QaaqConnect</h1>
+          <p className="text-gray-600">Maritime Professional Registration</p>
+        </div>
+
+        {/* Registration Form */}
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Name Fields */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="firstName" className="text-sm font-medium text-gray-700 mb-2 block">
+                First Name *
+              </Label>
+              <Input
+                id="firstName"
+                type="text"
+                value={formData.firstName}
+                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                placeholder="John"
+                className="w-full h-11 text-base"
+                disabled={loading || otpLoading}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="lastName" className="text-sm font-medium text-gray-700 mb-2 block">
+                Last Name *
+              </Label>
+              <Input
+                id="lastName"
+                type="text"
+                value={formData.lastName}
+                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                placeholder="Smith"
+                className="w-full h-11 text-base"
+                disabled={loading || otpLoading}
+                required
+              />
+            </div>
+          </div>
+
+          {/* WhatsApp Number */}
+          <div>
+            <Label htmlFor="whatsapp" className="text-sm font-medium text-gray-700 mb-2 block">
+              WhatsApp Number
+            </Label>
+            <Input
+              id="whatsapp"
+              type="tel"
+              value={formData.whatsapp}
+              onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+              placeholder="+919820012345"
+              className="w-full h-11 text-base"
+              disabled={loading || otpLoading}
+            />
+          </div>
+
+          {/* Email */}
+          <div>
+            <Label htmlFor="email" className="text-sm font-medium text-gray-700 mb-2 block">
+              Email Address *
+            </Label>
+            <Input
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              placeholder="john.smith@example.com"
+              className="w-full h-11 text-base"
+              disabled={loading || otpLoading || otpSent}
+              required
+            />
+          </div>
+
+          {/* Maritime Rank */}
+          <div>
+            <Label htmlFor="maritimeRank" className="text-sm font-medium text-gray-700 mb-2 block">
+              Maritime Rank *
+            </Label>
+            <Select 
+              value={formData.maritimeRank} 
+              onValueChange={(value) => setFormData({ ...formData, maritimeRank: value })}
+              disabled={loading || otpLoading}
+              required
+            >
+              <SelectTrigger className="w-full h-11">
+                <SelectValue placeholder="Select your rank" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Cap">Captain</SelectItem>
+                <SelectItem value="CO">Chief Officer</SelectItem>
+                <SelectItem value="2O">Second Officer</SelectItem>
+                <SelectItem value="3O">Third Officer</SelectItem>
+                <SelectItem value="CE">Chief Engineer</SelectItem>
+                <SelectItem value="2E">Second Engineer</SelectItem>
+                <SelectItem value="3E">Third Engineer</SelectItem>
+                <SelectItem value="4E">Fourth Engineer</SelectItem>
+                <SelectItem value="Cadet">Cadet</SelectItem>
+                <SelectItem value="Student">Student</SelectItem>
+                <SelectItem value="ETO">Electro Technical Officer</SelectItem>
+                <SelectItem value="ElecSupdt">Electrical Superintendent</SelectItem>
+                <SelectItem value="TSI">Technical Superintendent</SelectItem>
+                <SelectItem value="MSI">Marine Superintendent</SelectItem>
+                <SelectItem value="FM">Fleet Manager</SelectItem>
+                <SelectItem value="Maritime professional">Maritime Professional</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Company */}
+          <div>
+            <Label htmlFor="company" className="text-sm font-medium text-gray-700 mb-2 block">
+              Company *
+            </Label>
+            <Select 
+              value={formData.company} 
+              onValueChange={(value) => {
+                setFormData({ ...formData, company: value, otherCompany: "" });
+                setShowOtherCompany(value === "Other");
+              }}
+              disabled={loading || otpLoading}
+              required
+            >
+              <SelectTrigger className="w-full h-11">
+                <SelectValue placeholder="Select your company" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Anglo">Anglo Eastern</SelectItem>
+                <SelectItem value="GESCO">GESCO</SelectItem>
+                <SelectItem value="MSC">MSC</SelectItem>
+                <SelectItem value="Maersk">Maersk</SelectItem>
+                <SelectItem value="BSM">BSM</SelectItem>
+                <SelectItem value="Fleet Mgmt">Fleet Management</SelectItem>
+                <SelectItem value="SCI">Shipping Corporation of India</SelectItem>
+                <SelectItem value="Synergy">Synergy</SelectItem>
+                <SelectItem value="Scorpio">Scorpio</SelectItem>
+                <SelectItem value="VGroup">V.Group</SelectItem>
+                <SelectItem value="Other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            {showOtherCompany && (
+              <Input
+                type="text"
+                value={formData.otherCompany}
+                onChange={(e) => setFormData({ ...formData, otherCompany: e.target.value })}
+                placeholder="Enter your company name"
+                className="w-full h-11 text-base mt-2"
+                disabled={loading || otpLoading}
+                required
+              />
+            )}
+          </div>
+
+          {/* Password */}
+          <div>
+            <Label htmlFor="password" className="text-sm font-medium text-gray-700 mb-2 block">
+              Password *
+            </Label>
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                placeholder="Create a secure password"
+                className="w-full h-11 text-base pr-10"
+                disabled={loading || otpLoading}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </div>
+
+          {/* OTP Code (if email verification is required) */}
+          {otpSent && (
+            <div>
+              <Label htmlFor="otpCode" className="text-sm font-medium text-gray-700 mb-2 block">
+                Email Verification Code *
+              </Label>
+              <Input
+                id="otpCode"
+                type="text"
+                value={formData.otpCode}
+                onChange={(e) => setFormData({ ...formData, otpCode: e.target.value.replace(/\D/g, '').slice(0, 6) })}
+                placeholder="Enter 6-digit code"
+                className="w-full h-11 text-base text-center text-xl font-mono tracking-widest"
+                disabled={loading}
+                maxLength={6}
+                required
+              />
+              {otpCountdown > 0 && (
+                <div className="flex items-center justify-center mt-2 text-sm text-gray-500">
+                  <Clock className="w-4 h-4 mr-1" />
+                  Code expires in {Math.floor(otpCountdown / 60)}:{(otpCountdown % 60).toString().padStart(2, '0')}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Submit Button */}
+          <Button 
+            type="submit" 
+            className={`w-full h-12 font-semibold transition-all duration-300 ${
+              otpSent
+                ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700'
+                : 'bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700'
+            } text-white`}
+            disabled={loading || otpLoading || (otpSent && otpCountdown <= 0)}
+          >
+            {loading || otpLoading ? (
+              <>
+                <i className="fas fa-spinner fa-spin mr-2"></i>
+                {otpLoading ? 'Sending verification...' : 'Completing registration...'}
+              </>
+            ) : otpSent ? (
+              <>
+                <Shield className="w-4 h-4 mr-2" />
+                Verify & Complete Registration
+              </>
+            ) : (
+              <>
+                <Mail className="w-4 h-4 mr-2" />
+                Send Verification Code
               </>
             )}
+          </Button>
 
-
-
+          {/* Resend OTP */}
+          {otpSent && otpCountdown <= 0 && (
             <Button
-              type="submit"
-              disabled={loading}
-              className="w-full gradient-bg text-white hover:shadow-lg transition-all transform hover:scale-[1.02]"
+              type="button"
+              onClick={() => {
+                setOtpSent(false);
+                setFormData({ ...formData, otpCode: "" });
+                sendEmailOTP();
+              }}
+              variant="outline"
+              className="w-full h-10 text-sm"
+              disabled={otpLoading}
             >
-              {loading ? (
-                <i className="fas fa-spinner fa-spin mr-2"></i>
-              ) : null}
-              {isLogin ? "Sign In" : "Let's Go! 🚀"}
+              Resend Verification Code
             </Button>
-          </form>
+          )}
+        </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-500">
-              {isLogin ? "New to QaaqConnect?" : "Already have an account?"}
-              <Button
-                variant="link"
-                onClick={() => setIsLogin(!isLogin)}
-                className="ocean-teal font-medium p-0 ml-1"
-              >
-                {isLogin ? "Join now" : "Sign in"}
-              </Button>
-            </p>
+        {/* Google Sign In */}
+        <div className="mt-6">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">Or continue with</span>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+          <div className="mt-4">
+            <GoogleAuthButton />
+          </div>
+        </div>
+
+        {/* Login Link */}
+        <div className="mt-8 text-center">
+          <p className="text-sm text-gray-600">
+            Already have an account?{" "}
+            <button
+              onClick={() => setLocation('/login')}
+              className="text-orange-600 hover:text-orange-800 font-semibold"
+            >
+              Sign In
+            </button>
+          </p>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-10 text-center">
+          <p className="text-xs text-gray-500">
+            Join the global maritime professional community
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
