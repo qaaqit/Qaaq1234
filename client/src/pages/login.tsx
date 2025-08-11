@@ -156,9 +156,7 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* QAAQ ID */}
           <div>
-            <Label htmlFor="qaaqId" className="text-sm font-medium text-gray-700 mb-2 block">
-              QAAQ ID / Username *
-            </Label>
+            <Label htmlFor="qaaqId" className="text-sm font-medium text-gray-700 mb-2 block">UserID *</Label>
             <div className="relative">
               <Input
                 id="qaaqId"
