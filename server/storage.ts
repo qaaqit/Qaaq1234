@@ -59,23 +59,36 @@ export class DatabaseStorage implements IStorage {
     console.log(`✅ Universal authentication enabled - accepting any password for: ${userId}`);
     
     try {
-      // Try direct lookup by email first (most common login method)
-      let result = await pool.query('SELECT * FROM users WHERE email = $1 LIMIT 1', [userId]);
+      // Use Drizzle ORM instead of raw SQL to handle schema properly
+      let userResult;
       
-      if (result.rows.length === 0) {
-        // Fallback: try by username if it exists
-        result = await pool.query('SELECT * FROM users WHERE full_name ILIKE $1 LIMIT 1', [`%${userId}%`]);
+      // Try by ID (primary key)
+      userResult = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+      
+      if (userResult.length === 0) {
+        // Try by user_id (the readable user ID)
+        userResult = await db.select().from(users).where(eq(users.userId, userId)).limit(1);
       }
       
-      if (result.rows.length === 0) {
+      if (userResult.length === 0) {
+        // Try by email
+        userResult = await db.select().from(users).where(eq(users.email, userId)).limit(1);
+      }
+      
+      if (userResult.length === 0) {
+        // Try by full name (partial match)
+        userResult = await db.select().from(users).where(sql`${users.fullName} ILIKE ${`%${userId}%`}`).limit(1);
+      }
+      
+      if (userResult.length === 0) {
         console.log(`❌ No user found for ID: ${userId}`);
         return undefined;
       }
       
-      const user = result.rows[0];
-      console.log(`✅ User found: ${user.full_name} (${user.email})`);
+      const user = userResult[0];
+      console.log(`✅ User found: ${user.fullName} (${user.email})`);
       
-      return this.convertDbUserToAppUser(user);
+      return user;
     } catch (error) {
       console.error('Error in getUserByIdAndPassword:', error);
       return undefined;
@@ -218,7 +231,7 @@ export class DatabaseStorage implements IStorage {
     
     return {
       id: dbUser.id,
-      userId: dbUser.user_id,
+      userId: dbUser.id, // Database ID column is the user ID
       fullName: fullName,
       email: dbUser.email || '',
       password: dbUser.password || '',
