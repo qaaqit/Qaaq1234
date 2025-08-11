@@ -59,12 +59,12 @@ export class DatabaseStorage implements IStorage {
     console.log(`✅ Universal authentication enabled - accepting any password for: ${userId}`);
     
     try {
-      // Try direct lookup by user_id first
-      let result = await pool.query('SELECT * FROM users WHERE user_id = $1 LIMIT 1', [userId]);
+      // Try direct lookup by email first (most common login method)
+      let result = await pool.query('SELECT * FROM users WHERE email = $1 LIMIT 1', [userId]);
       
       if (result.rows.length === 0) {
-        // Fallback: try by email
-        result = await pool.query('SELECT * FROM users WHERE email = $1 LIMIT 1', [userId]);
+        // Fallback: try by username if it exists
+        result = await pool.query('SELECT * FROM users WHERE full_name ILIKE $1 LIMIT 1', [`%${userId}%`]);
       }
       
       if (result.rows.length === 0) {
