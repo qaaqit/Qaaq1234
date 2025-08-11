@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { authApi, setStoredToken, setStoredUser, type User } from "@/lib/auth";
 import { GoogleAuthButton } from "@/components/GoogleAuthButton";
-import { Eye, EyeOff, Mail, Shield, Clock, User as UserIcon, Briefcase, Anchor } from "lucide-react";
+import { Eye, EyeOff, Mail, Shield, Clock, User as UserIcon, Briefcase, Anchor, ArrowLeft } from "lucide-react";
 
 interface RegisterProps {
   onSuccess: (user: User) => void;
@@ -241,6 +241,17 @@ export default function Register({ onSuccess }: RegisterProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-100 flex items-center justify-center p-4">
       <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
+        {/* Back Button */}
+        <div className="flex items-center mb-6">
+          <button
+            onClick={() => setLocation('/login')}
+            className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 mr-2" />
+            <span className="text-sm font-medium">Back to Login</span>
+          </button>
+        </div>
+
         {/* Header with Telegraph */}
         <div className="text-center mb-8">
           {/* Semicircle Maritime Telegraph Display */}
