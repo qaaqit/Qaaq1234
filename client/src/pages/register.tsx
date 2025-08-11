@@ -256,7 +256,7 @@ export default function Register({ onSuccess }: RegisterProps) {
         <div className="text-center mb-4">
           {/* Title */}
           <h1 className="text-xl font-bold text-gray-900 mb-1">Join QaaqConnect</h1>
-          <p className="text-xs text-gray-600 mb-3">Maritime Professional Registration</p>
+          <p className="text-xs text-gray-600 mb-3">Welcome to our Gangway!</p>
           
           {/* Maritime Telegraph Display */}
           <div className="mb-3">
