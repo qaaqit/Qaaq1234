@@ -55,6 +55,8 @@ export interface IStorage {
   getWhatsappMessages(senderNumber?: string, limit?: number): Promise<WhatsappMessage[]>;
   scanMessagesForRanks(): Promise<{ phoneNumber: string; extractedRank: string }[]>;
   updateUserRankFromPhone(phoneNumber: string, rank: string): Promise<void>;
+  getUserByGoogleId(googleId: string): Promise<User | undefined>;
+  createGoogleUser(user: InsertUser): Promise<User>;
 
 }
 
@@ -1171,6 +1173,168 @@ export class DatabaseStorage implements IStorage {
       console.error(`Error checking password renewal for user ${userId}:`, error as Error);
       return false; // Don't require password creation on error
     }
+  }
+
+  // WhatsApp message storage methods for rank analysis
+  async storeWhatsappMessage(message: InsertWhatsappMessage): Promise<WhatsappMessage> {
+    const [newMessage] = await db.insert(whatsappMessages).values(message).returning();
+    return newMessage;
+  }
+
+  async getWhatsappMessages(senderNumber?: string, limit: number = 100): Promise<WhatsappMessage[]> {
+    let query = db.select().from(whatsappMessages);
+    
+    if (senderNumber) {
+      query = query.where(eq(whatsappMessages.senderNumber, senderNumber));
+    }
+    
+    return query.orderBy(desc(whatsappMessages.createdAt)).limit(limit);
+  }
+
+  async scanMessagesForRanks(): Promise<{ phoneNumber: string; extractedRank: string }[]> {
+    // Get all WhatsApp messages
+    const messages = await db.select().from(whatsappMessages);
+    const rankMatches: { phoneNumber: string; extractedRank: string }[] = [];
+    
+    // Regex patterns to match phone numbers before "engineer" keyword
+    const engineerPatterns = [
+      /(\+?\d{10,15})\s+.*?engineer/gi,
+      /(\+?\d{10,15}).*?engineer/gi,
+      /(\d{10,15})\s+.*?engineer/gi
+    ];
+    
+    for (const message of messages) {
+      const content = message.content;
+      
+      for (const pattern of engineerPatterns) {
+        const matches = content.matchAll(pattern);
+        
+        for (const match of matches) {
+          const phoneNumber = match[1];
+          
+          // Determine rank based on context
+          let extractedRank = 'Engineer'; // Default
+          
+          if (content.toLowerCase().includes('4th engineer') || content.toLowerCase().includes('4e')) {
+            extractedRank = 'Fourth Engineer';
+          } else if (content.toLowerCase().includes('3rd engineer') || content.toLowerCase().includes('3e')) {
+            extractedRank = 'Third Engineer';
+          } else if (content.toLowerCase().includes('2nd engineer') || content.toLowerCase().includes('2e')) {
+            extractedRank = 'Second Engineer';
+          } else if (content.toLowerCase().includes('chief engineer') || content.toLowerCase().includes('ce')) {
+            extractedRank = 'Chief Engineer';
+          } else if (content.toLowerCase().includes('cadet')) {
+            extractedRank = 'Cadet Engineer';
+          }
+          
+          rankMatches.push({
+            phoneNumber: phoneNumber,
+            extractedRank: extractedRank
+          });
+        }
+      }
+    }
+    
+    return rankMatches;
+  }
+
+  async updateUserRankFromPhone(phoneNumber: string, rank: string): Promise<void> {
+    // Generate phone number variations for matching
+    const variations = this.generatePhoneVariations(phoneNumber);
+    
+    for (const variation of variations) {
+      try {
+        await pool.query('UPDATE users SET maritime_rank = $1 WHERE id = $2', [rank, variation]);
+      } catch (error) {
+        // Continue with other variations if one fails
+        console.log(`Failed to update rank for variation ${variation}:`, error);
+      }
+    }
+  }
+
+  private generatePhoneVariations(phone: string): string[] {
+    const variations = new Set<string>();
+    
+    // Original
+    variations.add(phone);
+    
+    // Remove/add country code
+    if (phone.startsWith('+91')) {
+      variations.add(phone.substring(3)); // Remove +91
+      variations.add('91' + phone.substring(3)); // Replace + with nothing
+    } else if (phone.startsWith('91') && phone.length === 12) {
+      variations.add('+' + phone); // Add +
+      variations.add('+91' + phone.substring(2)); // Add +91
+    } else if (phone.length === 10) {
+      variations.add('+91' + phone); // Add +91
+      variations.add('91' + phone); // Add 91
+    }
+    
+    // Remove any non-digit characters
+    const digitsOnly = phone.replace(/\D/g, '');
+    if (digitsOnly.length >= 10) {
+      variations.add(digitsOnly);
+      variations.add('+91' + digitsOnly.slice(-10));
+    }
+    
+    return Array.from(variations);
+  }
+
+  async getUserByGoogleId(googleId: string): Promise<User | undefined> {
+    try {
+      const result = await pool.query('SELECT * FROM users WHERE google_id = $1 LIMIT 1', [googleId]);
+      if (result.rows.length === 0) {
+        return undefined;
+      }
+      
+      const user = result.rows[0];
+      return this.convertDbUserToAppUser(user);
+    } catch (error) {
+      console.error('Error getting user by Google ID:', error);
+      return undefined;
+    }
+  }
+
+  private convertDbUserToAppUser(dbUser: any): User {
+    const fullName = [dbUser.first_name, dbUser.middle_name, dbUser.last_name].filter(Boolean).join(' ') || dbUser.full_name || dbUser.email || 'User';
+    const defaultCoords = this.getCityCoordinates(dbUser.city || dbUser.current_city || 'mumbai', dbUser.current_country || 'india');
+    
+    return {
+      id: dbUser.id,
+      fullName: fullName,
+      email: dbUser.email || '',
+      password: '',
+      userType: dbUser.current_ship_name ? 'sailor' : 'local',
+      isAdmin: dbUser.is_platform_admin || (dbUser.email === "mushy.piyush@gmail.com") || false,
+      nickname: dbUser.nickname || '',
+      rank: dbUser.maritime_rank || dbUser.rank || '',
+      shipName: dbUser.current_ship_name || dbUser.last_ship || dbUser.ship_name || '',
+      imoNumber: dbUser.current_ship_imo || dbUser.imo_number || '',
+      port: dbUser.last_port_visited || dbUser.port || dbUser.city || dbUser.current_city || '',
+      visitWindow: dbUser.visit_window || '',
+      city: dbUser.city || dbUser.current_city || 'Mumbai',
+      country: dbUser.current_country || dbUser.country || 'India',
+      latitude: parseFloat(dbUser.current_latitude) || parseFloat(dbUser.latitude) || defaultCoords.lat,
+      longitude: parseFloat(dbUser.current_longitude) || parseFloat(dbUser.longitude) || defaultCoords.lng,
+      deviceLatitude: parseFloat(dbUser.device_latitude) || parseFloat(dbUser.current_latitude) || null,
+      deviceLongitude: parseFloat(dbUser.device_longitude) || parseFloat(dbUser.current_longitude) || null,
+      locationSource: dbUser.location_source || (dbUser.current_latitude ? 'device' : 'city'),
+      locationUpdatedAt: dbUser.location_updated_at || new Date(),
+      isVerified: dbUser.is_verified || dbUser.has_completed_onboarding || true,
+      loginCount: dbUser.login_count || 1,
+      lastLogin: dbUser.last_login || new Date(),
+      createdAt: dbUser.created_at || new Date(),
+      questionCount: dbUser.question_count || 0,
+      answerCount: dbUser.answer_count || 0,
+      whatsAppNumber: dbUser.whatsapp_number || null,
+      whatsAppProfilePictureUrl: dbUser.whatsapp_profile_picture_url || null,
+      whatsAppDisplayName: dbUser.whatsapp_display_name || null,
+      googleId: dbUser.google_id || null,
+      googleEmail: dbUser.google_email || null,
+      googleProfilePictureUrl: dbUser.google_profile_picture_url || null,
+      googleDisplayName: dbUser.google_display_name || null,
+      authProvider: dbUser.auth_provider || 'password'
+    } as User;
   }
 
   // Google OAuth user management methods - duplicate removed
