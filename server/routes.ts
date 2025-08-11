@@ -27,6 +27,7 @@ import { imageManagementService } from "./image-management-service";
 import { setupStableImageRoutes } from "./stable-image-upload";
 import { razorpayService, SUBSCRIPTION_PLANS } from "./razorpay-service";
 import { setupGoogleAuth } from "./google-auth";
+import { PasswordManager } from "./password-manager";
 
 // Extend Express Request type
 declare global {
@@ -38,6 +39,9 @@ declare global {
 }
 
 const JWT_SECRET = process.env.JWT_SECRET || 'qaaq_jwt_secret_key_2024_secure';
+
+// Initialize password manager for email OTP functionality
+const passwordManager = new PasswordManager();
 
 // Authentication middleware - proper JWT authentication for admin routes
 const authenticateToken = async (req: Request, res: Response, next: NextFunction) => {
@@ -152,6 +156,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Setup Google OAuth authentication
   setupGoogleAuth(app);
+
+  // Email OTP Routes
+  app.post('/api/auth/send-email-otp', async (req, res) => {
+    try {
+      const { email, whatsappNumber } = req.body;
+      
+      if (!email || !email.includes('@')) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Valid email address is required' 
+        });
+      }
+      
+      const result = await passwordManager.generateEmailOTP(email, whatsappNumber);
+      
+      if (result.success) {
+        console.log(`📧 Email OTP sent successfully to ${email}`);
+        res.json({
+          success: true,
+          message: result.message
+        });
+      } else {
+        res.status(400).json({
+          success: false,
+          message: result.message
+        });
+      }
+    } catch (error: unknown) {
+      console.error('Email OTP generation error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to send verification email',
+        error: errorMessage 
+      });
+    }
+  });
+
+  app.post('/api/auth/verify-email-otp', async (req, res) => {
+    try {
+      const { email, otpCode } = req.body;
+      
+      if (!email || !otpCode) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Email and OTP code are required' 
+        });
+      }
+      
+      const result = passwordManager.verifyEmailOTP(email, otpCode);
+      
+      if (result.success) {
+        console.log(`✅ Email OTP verified successfully for ${email}`);
+        res.json({
+          success: true,
+          message: result.message
+        });
+      } else {
+        res.status(400).json({
+          success: false,
+          message: result.message
+        });
+      }
+    } catch (error: unknown) {
+      console.error('Email OTP verification error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to verify OTP',
+        error: errorMessage 
+      });
+    }
+  });
 
   // Object storage upload endpoint
   app.post("/api/objects/upload", async (req, res) => {

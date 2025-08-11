@@ -244,4 +244,5 @@ QaaqConnect - Connecting Maritime Professionals Worldwide
   }
 }
 
+export { EmailService };
 export const emailService = new EmailService();

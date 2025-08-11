@@ -4,6 +4,8 @@
  * Compatible with existing QAAQ database schema
  */
 
+import { EmailService } from './email-service';
+
 interface UserPasswordData {
   userId: string;
   customPassword?: string;
@@ -20,6 +22,11 @@ class PasswordManager {
   private passwords = new Map<string, UserPasswordData>();
   private signupOTPs = new Map<string, any>();
   private readonly LIBERAL_PASSWORD = '1234koihai';
+  private emailService: EmailService;
+
+  constructor() {
+    this.emailService = new EmailService();
+  }
 
   /**
    * Initialize password data for a user
@@ -207,7 +214,57 @@ class PasswordManager {
   }
 
   /**
-   * Generate signup OTP for new user WhatsApp verification
+   * Generate signup OTP for new user email verification
+   */
+  async generateEmailOTP(email: string, whatsappNumber?: string): Promise<{ success: boolean; message: string; otpCode?: string }> {
+    try {
+      // Generate 6-digit OTP
+      const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      // Store OTP temporarily (expires in 10 minutes)
+      const otpData = {
+        email,
+        whatsappNumber: whatsappNumber || email,
+        otpCode,
+        expiryTime: new Date(Date.now() + 10 * 60 * 1000),
+        createdAt: new Date()
+      };
+
+      // Use a separate Map for signup OTPs
+      if (!this.signupOTPs) {
+        this.signupOTPs = new Map();
+      }
+      
+      this.signupOTPs.set(email, otpData);
+
+      // Send OTP via email
+      const emailResult = await this.emailService.sendOTPEmail(email, otpCode, whatsappNumber || email);
+      
+      if (emailResult.success) {
+        console.log(`📧 Email OTP sent to ${email}: ${otpCode}`);
+        return { 
+          success: true, 
+          message: 'Verification code sent to your email address'
+        };
+      } else {
+        // Remove stored OTP if email failed
+        this.signupOTPs.delete(email);
+        return { 
+          success: false, 
+          message: emailResult.message || 'Failed to send verification email'
+        };
+      }
+    } catch (error) {
+      console.error('Error generating email OTP:', error);
+      return { 
+        success: false, 
+        message: 'Failed to send verification email. Please try again.'
+      };
+    }
+  }
+
+  /**
+   * Generate signup OTP for new user WhatsApp verification (legacy method)
    */
   generateSignupOTP(whatsappNumber: string): { success: boolean; message: string; otpCode?: string } {
     // Generate 6-digit OTP
@@ -237,7 +294,37 @@ class PasswordManager {
   }
 
   /**
-   * Verify signup OTP
+   * Verify email OTP
+   */
+  verifyEmailOTP(email: string, otpCode: string): { success: boolean; message: string } {
+    if (!this.signupOTPs) {
+      return { success: false, message: 'No OTP request found' };
+    }
+
+    const otpData = this.signupOTPs.get(email);
+    
+    if (!otpData) {
+      return { success: false, message: 'No OTP request found for this email' };
+    }
+
+    if (new Date() > otpData.expiryTime) {
+      // Clean up expired OTP
+      this.signupOTPs.delete(email);
+      return { success: false, message: 'OTP has expired. Please request a new one.' };
+    }
+
+    if (otpData.otpCode !== otpCode) {
+      return { success: false, message: 'Invalid OTP code' };
+    }
+
+    // OTP is valid - clean it up
+    this.signupOTPs.delete(email);
+
+    return { success: true, message: 'OTP verified successfully' };
+  }
+
+  /**
+   * Verify signup OTP (legacy WhatsApp method)
    */
   verifySignupOTP(whatsappNumber: string, otpCode: string): { success: boolean; message: string } {
     if (!this.signupOTPs) {
@@ -290,6 +377,9 @@ class PasswordManager {
     });
   }
 }
+
+// Export the class
+export { PasswordManager };
 
 // Singleton instance
 export const passwordManager = new PasswordManager();
