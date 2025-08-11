@@ -1,7 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Crown, MessageSquare, Award, MapPin, Ship } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Crown, MessageSquare, Award, MapPin, Ship, MessageCircle } from 'lucide-react';
+import { useState } from 'react';
+import QChatWindow from '@/components/qchat-window';
+import { useAuth } from '@/hooks/useAuth';
 
 interface TopProfessional {
   id: string;
@@ -36,6 +40,10 @@ const getRankBadgeColor = (rank: string) => {
 };
 
 export function TopQProfessionals() {
+  const [selectedUser, setSelectedUser] = useState<TopProfessional | null>(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const { user } = useAuth();
+  
   const { data, isLoading, error } = useQuery<TopProfessionalsResponse>({
     queryKey: ['/api/users/top-professionals'],
     queryFn: async () => {
@@ -46,6 +54,19 @@ export function TopQProfessionals() {
       return response.json();
     },
   });
+
+  const handleStartConversation = (professional: TopProfessional) => {
+    if (user?.id === professional.id) {
+      return; // Don't allow chat with self
+    }
+    setSelectedUser(professional);
+    setIsChatOpen(true);
+  };
+
+  const handleCloseChat = () => {
+    setIsChatOpen(false);
+    setSelectedUser(null);
+  };
 
   if (isLoading) {
     return (
@@ -193,6 +214,20 @@ export function TopQProfessionals() {
                     Rank #{index + 1} of {professionals.length}
                   </div>
                 </div>
+
+                {/* Start Conversation Button */}
+                {user && user.id !== professional.id && (
+                  <div className="pt-3 border-t border-gray-100 mt-3">
+                    <Button
+                      onClick={() => handleStartConversation(professional)}
+                      size="sm"
+                      className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white border-0"
+                    >
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Start Conversation
+                    </Button>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -208,6 +243,24 @@ export function TopQProfessionals() {
           </p>
         </CardContent>
       </Card>
+
+      {/* Chat Window */}
+      {isChatOpen && selectedUser && user && (
+        <QChatWindow
+          isOpen={isChatOpen}
+          onClose={handleCloseChat}
+          currentUser={user}
+          targetUser={{
+            id: selectedUser.id,
+            fullName: selectedUser.fullName || selectedUser.email || 'Maritime Professional',
+            rank: selectedUser.maritimeRank,
+            ship: selectedUser.shipName,
+            location: selectedUser.port && selectedUser.country ? 
+              `${selectedUser.port}, ${selectedUser.country}` : 
+              selectedUser.port || selectedUser.country || '',
+          }}
+        />
+      )}
     </div>
   );
 }
