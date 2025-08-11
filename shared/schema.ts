@@ -419,6 +419,9 @@ export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 export type InsertBotRule = z.infer<typeof insertBotRuleSchema>;
 export type BotRule = typeof botRules.$inferSelect;
 
+export type InsertWhatsappMessage = z.infer<typeof insertWhatsappMessageSchema>;
+export type WhatsappMessage = typeof whatsappMessages.$inferSelect;
+
 // Search Analytics Tables
 export const searchKeywords = pgTable("search_keywords", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

@@ -1,4 +1,4 @@
-import { users, posts, likes, verificationCodes, chatConnections, chatMessages, type User, type InsertUser, type Post, type InsertPost, type VerificationCode, type Like, type ChatConnection, type ChatMessage, type InsertChatConnection, type InsertChatMessage } from "@shared/schema";
+import { users, posts, likes, verificationCodes, chatConnections, chatMessages, whatsappMessages, type User, type InsertUser, type Post, type InsertPost, type VerificationCode, type Like, type ChatConnection, type ChatMessage, type InsertChatConnection, type InsertChatMessage, type WhatsappMessage, type InsertWhatsappMessage } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, desc, and, ilike, or, sql, isNotNull } from "drizzle-orm";
 import { testDatabaseConnection } from "./test-db";
@@ -49,6 +49,12 @@ export interface IStorage {
   markMessagesAsRead(connectionId: string, userId: string): Promise<void>;
   markMessageAsRead(messageId: string, userId: string): Promise<void>;
   getUnreadMessageCounts(userId: string): Promise<Record<string, number>>;
+  
+  // WhatsApp message storage for rank analysis
+  storeWhatsappMessage(message: InsertWhatsappMessage): Promise<WhatsappMessage>;
+  getWhatsappMessages(senderNumber?: string, limit?: number): Promise<WhatsappMessage[]>;
+  scanMessagesForRanks(): Promise<{ phoneNumber: string; extractedRank: string }[]>;
+  updateUserRankFromPhone(phoneNumber: string, rank: string): Promise<void>;
 
 }
 
