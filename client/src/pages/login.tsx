@@ -53,7 +53,7 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          qaaqId: formData.qaaqId.trim(),
+          userId: formData.qaaqId.trim(),
           password: formData.password,
         }),
       });
@@ -110,7 +110,7 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          qaaqId: formData.qaaqId.trim()
+          userId: formData.qaaqId.trim()
         }),
       });
 
