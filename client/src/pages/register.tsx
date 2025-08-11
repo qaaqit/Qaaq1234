@@ -264,43 +264,27 @@ export default function Register({ onSuccess }: RegisterProps) {
                 className="w-full h-full object-contain"
               />
               
-              {/* Indicator Lights Overlay */}
-              <div className="absolute inset-0">
-                {/* Position indicator lights based on the image */}
-                {telegraphPositions.map((pos, index) => {
-                  // Calculate light positions based on the image layout
-                  const lightPositions = [
-                    { x: '18%', y: '45%' }, // FULL ASTERN
-                    { x: '22%', y: '35%' }, // HALF ASTERN  
-                    { x: '28%', y: '28%' }, // SLOW ASTERN
-                    { x: '38%', y: '22%' }, // DEAD SLOW ASTERN
-                    { x: '50%', y: '20%' }, // STOP
-                    { x: '62%', y: '22%' }, // DEAD SLOW AHEAD
-                    { x: '72%', y: '28%' }, // SLOW AHEAD
-                    { x: '78%', y: '35%' }, // HALF AHEAD
-                    { x: '82%', y: '45%' }  // FULL AHEAD
-                  ];
-                  
-                  const lightPos = lightPositions[index];
-                  const isActive = index === telegraphPosition;
-                  
-                  return (
-                    <div
-                      key={index}
-                      className={`absolute w-3 h-3 rounded-full transition-all duration-300 ${
-                        isActive 
-                          ? `${pos.color === '#ef4444' ? 'bg-red-500' : pos.color === '#eab308' ? 'bg-yellow-500' : 'bg-green-500'} shadow-lg animate-pulse`
-                          : 'bg-gray-400 opacity-30'
-                      }`}
-                      style={{
-                        left: lightPos.x,
-                        top: lightPos.y,
-                        boxShadow: isActive ? `0 0 15px ${pos.color}, 0 0 30px ${pos.color}50` : 'none'
-                      }}
-                    />
-                  );
-                })}
+              {/* Telegraph Lever Handle (Protruding) */}
+              <div 
+                className="absolute bottom-8 left-1/2 transform-gpu transition-transform duration-700 ease-out z-20"
+                style={{
+                  transformOrigin: '0 64px',
+                  transform: `translateX(-50%) rotate(${telegraphPositions[telegraphPosition].angle - 90}deg)`,
+                }}
+              >
+                {/* Lever Shaft */}
+                <div className="w-3 h-16 bg-gradient-to-t from-gray-800 via-gray-600 to-gray-500 rounded-full shadow-lg"></div>
+                
+                {/* Lever Handle (Chrome Knob) */}
+                <div className="absolute -top-3 -left-1 w-5 h-6 bg-gradient-to-br from-gray-300 via-gray-200 to-gray-400 rounded-full shadow-lg border-2 border-gray-500">
+                  <div className="absolute inset-1 bg-gradient-to-br from-white to-gray-300 rounded-full"></div>
+                  {/* Chrome Highlight */}
+                  <div className="absolute top-1 left-1 w-1.5 h-1.5 bg-white rounded-full opacity-80"></div>
+                </div>
               </div>
+              
+              {/* Center Pivot */}
+              <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-gradient-to-br from-yellow-400 to-yellow-700 rounded-full shadow-lg border border-yellow-800 z-10"></div>
             </div>
             
             {/* Telegraph Status Panel */}
