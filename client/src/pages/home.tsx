@@ -304,51 +304,98 @@ export default function Home({ onSuccess }: HomeProps) {
       <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
         {/* Header with Telegraph */}
         <div className="text-center mb-8">
-          {/* Telegraph Lever Display */}
+          {/* Classic Maritime Telegraph Display */}
           <div className="mb-6">
-            <div className="relative w-24 h-24 mx-auto">
-              {/* Telegraph Base */}
-              <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 w-16 h-6 bg-gradient-to-b from-gray-700 to-gray-900 rounded-full shadow-lg"></div>
+            <div className="relative w-32 h-32 mx-auto">
+              {/* Brass Outer Ring */}
+              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-yellow-600 via-yellow-500 to-yellow-700 shadow-2xl border-4 border-yellow-800"></div>
+              
+              {/* Inner Brass Ring */}
+              <div className="absolute inset-2 rounded-full bg-gradient-to-br from-yellow-500 via-yellow-400 to-yellow-600 shadow-inner"></div>
+              
+              {/* Black Face */}
+              <div className="absolute inset-4 rounded-full bg-black shadow-inner">
+                {/* Telegraph Sections */}
+                <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100">
+                  {/* Section Dividers */}
+                  {telegraphPositions.map((pos, index) => (
+                    <g key={pos.id}>
+                      <line
+                        x1="50"
+                        y1="10"
+                        x2="50"
+                        y2="25"
+                        stroke="white"
+                        strokeWidth="1"
+                        transform={`rotate(${pos.angle + 90} 50 50)`}
+                      />
+                      {/* Section Labels */}
+                      <text
+                        x="50"
+                        y="20"
+                        fill="white"
+                        fontSize="6"
+                        fontWeight="bold"
+                        textAnchor="middle"
+                        fontFamily="monospace"
+                        transform={`rotate(${pos.angle + 90} 50 50)`}
+                      >
+                        {pos.label.split(' ').map((word, i) => (
+                          <tspan key={i} x="50" dy={i === 0 ? 0 : "6"}>
+                            {word}
+                          </tspan>
+                        ))}
+                      </text>
+                    </g>
+                  ))}
+                  
+                  {/* Center Text */}
+                  <text x="50" y="45" fill="white" fontSize="5" fontWeight="bold" textAnchor="middle" fontFamily="serif">
+                    ENGINE ROOM
+                  </text>
+                  <text x="50" y="52" fill="white" fontSize="5" fontWeight="bold" textAnchor="middle" fontFamily="serif">
+                    TELEGRAPH
+                  </text>
+                  
+                  {/* Anchor Symbol */}
+                  <text x="50" y="62" fill="white" fontSize="8" textAnchor="middle">⚓</text>
+                </svg>
+              </div>
               
               {/* Telegraph Lever */}
               <div 
-                className="absolute bottom-4 left-1/2 transform -translate-x-1/2 origin-bottom transition-transform duration-700 ease-out"
+                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 origin-center transition-transform duration-700 ease-out z-20"
+                style={{
+                  transform: `translate(-50%, -50%) rotate(${telegraphPositions[telegraphPosition].angle}deg)`,
+                }}
+              >
+                {/* Lever Shaft */}
+                <div className="w-1 h-12 bg-gradient-to-t from-yellow-700 via-yellow-500 to-yellow-400 rounded-full shadow-lg transform -translate-x-1/2"></div>
+                
+                {/* Lever Handle */}
+                <div className="absolute -top-2 -left-3 w-6 h-4 bg-gradient-to-br from-yellow-500 to-yellow-700 rounded shadow-lg">
+                  <div className="absolute inset-1 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded"></div>
+                </div>
+              </div>
+              
+              {/* Center Hub */}
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-gradient-to-br from-yellow-400 to-yellow-700 rounded-full shadow-lg border-2 border-yellow-800 z-10"></div>
+              
+              {/* Position Indicator Arrow */}
+              <div 
+                className="absolute top-1 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 border-r-2 border-b-4 border-transparent border-b-red-500 transition-transform duration-700"
                 style={{
                   transform: `translateX(-50%) rotate(${telegraphPositions[telegraphPosition].angle}deg)`,
                 }}
-              >
-                <div className="w-2 h-16 bg-gradient-to-t from-gray-600 via-gray-400 to-gray-300 rounded-full shadow-lg"></div>
-                <div 
-                  className="absolute -top-2 -left-2 w-6 h-6 rounded-full shadow-lg transition-colors duration-500 border-2 border-gray-300"
-                  style={{ backgroundColor: telegraphPositions[telegraphPosition].color }}
-                ></div>
-              </div>
-              
-              {/* Position Markers Circle */}
-              <div className="absolute inset-0">
-                {telegraphPositions.map((pos, index) => (
-                  <div
-                    key={pos.id}
-                    className={`absolute w-2 h-2 rounded-full transition-all duration-500 ${
-                      index === telegraphPosition ? 'bg-orange-500 scale-150 ring-2 ring-orange-300' : 'bg-gray-300 scale-75'
-                    }`}
-                    style={{
-                      bottom: '16px',
-                      left: '50%',
-                      transform: `translateX(-50%) rotate(${pos.angle}deg) translateY(-28px)`,
-                    }}
-                  ></div>
-                ))}
-              </div>
-              
-              {/* Telegraph Ring */}
-              <div className="absolute inset-0 rounded-full border-4 border-gray-300 bg-gradient-to-br from-gray-100 to-gray-200 shadow-inner"></div>
+              ></div>
             </div>
             
-            {/* Telegraph Status */}
+            {/* Telegraph Status Panel */}
             <div className="mt-4">
-              <div className="text-sm font-mono text-gray-700 bg-gray-100 rounded-lg px-3 py-1 inline-block">
-                Engine: {telegraphPositions[telegraphPosition].label}
+              <div className="bg-gradient-to-br from-yellow-600 to-yellow-800 text-white text-sm font-bold px-4 py-2 rounded border-2 border-yellow-900 shadow-lg">
+                <div className="text-center font-mono">
+                  ENGINE: {telegraphPositions[telegraphPosition].label}
+                </div>
               </div>
             </div>
           </div>
