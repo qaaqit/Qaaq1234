@@ -656,12 +656,7 @@ export default function Register({ onSuccess }: RegisterProps) {
           </p>
         </div>
 
-        {/* Footer */}
-        <div className="mt-10 text-center">
-          <p className="text-xs text-gray-500">
-            Join the global maritime professional community
-          </p>
-        </div>
+        
       </div>
     </div>
   );
