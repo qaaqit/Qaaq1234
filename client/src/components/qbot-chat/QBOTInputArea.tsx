@@ -311,7 +311,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
           {/* Attach icon inside text box on left */}
           <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
             <ObjectUploader
-              maxNumberOfFiles={5}
+              maxNumberOfFiles={1}
               maxFileSize={52428800} // 50MB
               onGetUploadParameters={handleGetUploadParameters}
               onComplete={handleUploadComplete}
@@ -339,19 +339,19 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
           )}
         </div>
 
-        {/* Right side send button with orange background */}
+        {/* Right side send button with orange background - matching text entry height */}
         <button
           onClick={handleSend}
           disabled={disabled || (!message.trim() && attachments.length === 0)}
           className={`
-            p-3 rounded-lg transition-all duration-200 flex-shrink-0 min-h-[48px]
+            px-4 py-3 rounded-lg transition-all duration-200 flex-shrink-0 h-[48px] flex items-center justify-center
             ${(message.trim() || attachments.length > 0) && !disabled
               ? 'bg-orange-500 text-white hover:bg-orange-600' 
               : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }
           `}
         >
-          <Send size={20} />
+          <Send size={18} />
         </button>
       </div>
 
