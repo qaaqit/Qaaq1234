@@ -22,6 +22,7 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
     qaaqId: "",
     password: ""
   });
+  const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
 
   // Handle Google auth errors from URL params
   useEffect(() => {
@@ -88,6 +89,54 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!formData.qaaqId.trim()) {
+      toast({
+        title: "QAAQ ID Required",
+        description: "Please enter your QAAQ ID first to reset your password",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setForgotPasswordLoading(true);
+    try {
+      const response = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          qaaqId: formData.qaaqId.trim()
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: "Password Reset Email Sent",
+          description: "Check your email for a temporary password to log in",
+        });
+      } else {
+        toast({
+          title: "Reset Failed",
+          description: data.message || "Unable to send password reset email",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      toast({
+        title: "Reset Error",
+        description: "Unable to process password reset. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setForgotPasswordLoading(false);
     }
   };
 
@@ -173,6 +222,18 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
               </>
             )}
           </Button>
+
+          {/* Forgot Password Link */}
+          <div className="text-center mt-4">
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              disabled={forgotPasswordLoading}
+              className="text-sm text-orange-600 hover:text-orange-700 underline transition-colors disabled:opacity-50"
+            >
+              {forgotPasswordLoading ? "Sending..." : "Forgot your password?"}
+            </button>
+          </div>
         </form>
 
         {/* Google Sign In */}

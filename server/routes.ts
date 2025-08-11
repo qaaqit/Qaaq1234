@@ -323,6 +323,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Forgot password endpoint - sends temporary password via email
+  app.post("/api/auth/forgot-password", async (req, res) => {
+    try {
+      const { qaaqId } = req.body;
+      
+      if (!qaaqId) {
+        return res.status(400).json({ message: "QAAQ ID is required" });
+      }
+
+      // Find user by ID (email or username)
+      const user = await storage.getUserByEmail(qaaqId) || await storage.getUser(qaaqId);
+      if (!user || !user.email) {
+        return res.status(404).json({ message: "User not found or no email associated with this account" });
+      }
+
+      // Generate temporary password (8 characters: letters + numbers)
+      const tempPassword = Math.random().toString(36).slice(2, 10).toUpperCase();
+      
+      // Update user with temporary password
+      await storage.updateUserPassword(user.id, tempPassword);
+
+      // Send email with temporary password
+      const emailResult = await emailService.sendPasswordResetEmail(user.email, tempPassword, qaaqId);
+      
+      if (emailResult.success) {
+        console.log(`✅ Temporary password sent to: ${user.email} for user: ${qaaqId}`);
+        res.json({
+          success: true,
+          message: "Temporary password sent to your email address"
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          message: "Failed to send password reset email"
+        });
+      }
+      
+    } catch (error: unknown) {
+      console.error('Forgot password error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ message: "Failed to process password reset", error: errorMessage });
+    }
+  });
+
   // Email verification endpoint
   app.get("/api/verify-email", async (req, res) => {
     try {
