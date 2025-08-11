@@ -254,6 +254,9 @@ export default function Register({ onSuccess }: RegisterProps) {
 
         {/* Header with Telegraph */}
         <div className="text-center mb-4">
+          {/* Title */}
+          <h1 className="text-xl font-bold text-gray-900 mb-3">Join QaaqConnect</h1>
+          
           {/* Maritime Telegraph Display */}
           <div className="mb-3">
             <div className="relative w-64 h-32 mx-auto">
@@ -375,8 +378,7 @@ export default function Register({ onSuccess }: RegisterProps) {
             </div>
           </div>
 
-          {/* Logo and Title */}
-          <h1 className="text-xl font-bold text-gray-900 mb-1">Join QaaqConnect</h1>
+          {/* Subtitle */}
           <p className="text-xs text-gray-600">Maritime Professional Registration</p>
         </div>
 
