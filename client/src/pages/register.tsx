@@ -255,7 +255,7 @@ export default function Register({ onSuccess }: RegisterProps) {
         {/* Header with Telegraph */}
         <div className="text-center mb-4">
           {/* Title */}
-          <h1 className="text-xl font-bold text-gray-900 mb-1">MV QaaqConnect</h1>
+          <h1 className="font-bold text-gray-900 mb-1 text-[24px]">MV QaaqConnect</h1>
           <p className="text-xs text-gray-600 mb-3">Welcome to our Gangway!</p>
           
           {/* Maritime Telegraph Display */}
