@@ -244,10 +244,10 @@ export default function Register({ onSuccess }: RegisterProps) {
         {/* Header with Telegraph */}
         <div className="text-center mb-2">
           {/* Title with Back Arrow */}
-          <div className="flex items-center justify-center mb-1">
+          <div className="relative mb-1">
             <button
               onClick={() => setLocation('/login')}
-              className="text-gray-500 hover:text-gray-700 transition-colors mr-2"
+              className="absolute left-0 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
