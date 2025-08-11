@@ -241,20 +241,18 @@ export default function Register({ onSuccess }: RegisterProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-100 flex items-center justify-center p-2">
       <div className="w-full max-w-md bg-white rounded-xl shadow-2xl p-4 border border-gray-200 overflow-hidden">
-        {/* Back Button */}
-        <div className="flex items-center mb-3">
-          <button
-            onClick={() => setLocation('/login')}
-            className="flex items-center text-gray-500 hover:text-gray-700 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-        </div>
-
         {/* Header with Telegraph */}
-        <div className="text-center mb-4">
-          {/* Title */}
-          <h1 className="font-bold text-gray-900 mb-1 text-[24px]">MV QaaqConnect</h1>
+        <div className="text-center mb-2">
+          {/* Title with Back Arrow */}
+          <div className="flex items-center justify-center mb-1">
+            <button
+              onClick={() => setLocation('/login')}
+              className="text-gray-500 hover:text-gray-700 transition-colors mr-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <h1 className="font-bold text-gray-900 text-[24px]">MV QaaqConnect</h1>
+          </div>
           <p className="text-xs text-gray-600 mb-3">Welcome to our Gangway!</p>
           
           {/* Maritime Telegraph Display */}
