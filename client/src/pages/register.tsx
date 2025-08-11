@@ -366,8 +366,8 @@ export default function Register({ onSuccess }: RegisterProps) {
             </div>
             
             {/* Telegraph Status Panel */}
-            <div className="mt-4">
-              <div className="bg-gradient-to-br from-gray-700 to-gray-900 text-white text-sm font-bold px-4 py-2 rounded border-2 border-gray-600 shadow-lg">
+            <div className="mt-0">
+              <div className="bg-gradient-to-br from-gray-700 to-gray-900 text-white text-sm font-bold px-4 py-2 rounded-b border-2 border-gray-600 shadow-lg">
                 <div className="text-center font-mono">
                   {telegraphPositions[telegraphPosition].label}
                 </div>
