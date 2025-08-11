@@ -67,8 +67,18 @@ export function QuestionsTab() {
   const [scrollPosition, setScrollPosition] = useState(0);
   const { user } = useAuth();
   
-  // Check if user is admin
-  const isAdmin = user?.isAdmin || user?.fullName === '+919029010070';
+  // Check if user is admin - based on specific user ID and phone number
+  const isAdmin = user?.isAdmin || 
+                  user?.fullName === '+919029010070' || 
+                  user?.id === '44885683' ||
+                  user?.id === '+919029010070' ||
+                  user?.id === '5791e66f-9cc1-4be4-bd4b-7fc1bd2e258e';
+  
+  // Debug admin check
+  console.log('Admin check:', { 
+    user: user ? { id: user.id, fullName: user.fullName, isAdmin: user.isAdmin } : null, 
+    isAdmin 
+  });
 
   const observer = useRef<IntersectionObserver | null>(null);
   const lastQuestionRef = useRef<HTMLDivElement | null>(null);
@@ -405,7 +415,7 @@ export function QuestionsTab() {
     }
 
     try {
-      const response = await apiRequest(`/api/questions/${questionId}/hide`, {
+      const response = await fetch(`/api/questions/${questionId}/hide`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -415,9 +425,13 @@ export function QuestionsTab() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to hide question');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to hide question');
       }
 
+      const result = await response.json();
+      console.log('Question hidden successfully:', result);
+      
       // Refresh questions list
       window.location.reload();
     } catch (error) {
