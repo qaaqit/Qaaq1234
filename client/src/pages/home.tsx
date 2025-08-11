@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,24 @@ export default function Home({ onSuccess }: HomeProps) {
     userId: "",
     password: "",
   });
+
+  // Check for authentication errors in URL parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const error = urlParams.get('error');
+    
+    if (error === 'auth_failed') {
+      toast({
+        title: "Authentication Failed",
+        description: "Google sign-in was not successful. Please try again or use your regular login.",
+        variant: "destructive",
+      });
+      
+      // Clean up the URL by removing the error parameter
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+    }
+  }, [toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

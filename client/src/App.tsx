@@ -74,6 +74,7 @@ function Router() {
       <div className={currentUser ? "pb-16" : ""}>
         <Switch>
           <Route path="/" component={() => currentUser ? <QBOTPage user={currentUser} /> : <Home onSuccess={setUser} />} />
+          <Route path="/login" component={() => <Home onSuccess={setUser} />} />
           <Route path="/register" component={() => <Register onSuccess={setUser} />} />
           <Route path="/verify" component={() => <Verify onSuccess={setUser} />} />
           <Route path="/oauth-callback" component={() => <OAuthCallback />} />
