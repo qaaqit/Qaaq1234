@@ -175,6 +175,29 @@ export function QuestionsTab() {
     ).join(' ');
   };
 
+  // Clean question content by removing QBOT breadcrumbs and extracting actual question
+  const cleanQuestionContent = (content: string): string => {
+    if (!content) return 'Question content not available';
+    
+    // Remove QBOT breadcrumbs pattern: [QBOT Q&A - System > Equipment > Make > Model]
+    const breadcrumbPattern = /^\[QBOT Q&A[^\]]*\]\s*/;
+    let cleanContent = content.replace(breadcrumbPattern, '');
+    
+    // Remove "User: Name (via Q..." pattern at the beginning
+    const userPattern = /^User:\s*[^(]*\(via Q[^)]*\)\s*/;
+    cleanContent = cleanContent.replace(userPattern, '');
+    
+    // Remove any extra whitespace and newlines at the beginning
+    cleanContent = cleanContent.replace(/^\s+/, '');
+    
+    // If content is empty after cleaning, return the original
+    if (!cleanContent.trim()) {
+      return content;
+    }
+    
+    return cleanContent.trim();
+  };
+
   const toggleExpanded = (questionId: number) => {
     const newExpanded = new Set(expandedQuestions);
     if (newExpanded.has(questionId)) {
@@ -383,7 +406,7 @@ export function QuestionsTab() {
             <div className="flex items-start justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900 flex-1 pr-4">
                 <span className="text-orange-600 font-bold">#{question.id}</span>{' '}
-                {question.content || 'Question content not available'}
+                {cleanQuestionContent(question.content)}
               </h3>
               <Button
                 variant="ghost"
