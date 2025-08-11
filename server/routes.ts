@@ -3,8 +3,10 @@ import { createServer, type Server } from "http";
 import ws from 'ws';
 import jwt from 'jsonwebtoken';
 import { storage } from "./storage";
-import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, insertChatConnectionSchema, insertChatMessageSchema, insertRankGroupSchema, insertRankGroupMemberSchema, insertRankGroupMessageSchema } from "@shared/schema";
-import { sendVerificationEmail } from "./services/email";
+import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, insertChatConnectionSchema, insertChatMessageSchema, insertRankGroupSchema, insertRankGroupMemberSchema, insertRankGroupMessageSchema, insertEmailVerificationTokenSchema, emailVerificationTokens } from "@shared/schema";
+import { emailService } from "./email-service";
+import { randomBytes } from 'crypto';
+import { eq } from 'drizzle-orm';
 import { pool } from "./db";
 import { getQuestions, searchQuestions, getQuestionAnswers } from "./questions-service";
 import { 
@@ -106,6 +108,24 @@ const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: numbe
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  
+  // Create verification tokens table if it doesn't exist
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS email_verification_tokens (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        email TEXT NOT NULL,
+        token TEXT NOT NULL UNIQUE,
+        user_data JSONB NOT NULL,
+        expires_at TIMESTAMP NOT NULL,
+        is_used BOOLEAN DEFAULT false,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log('✅ Email verification tokens table ready');
+  } catch (err) {
+    console.log('⚠️ Email verification table creation failed:', err.message);
+  }
   
   // Setup merge routes for robust authentication
   setupMergeRoutes(app);
@@ -242,45 +262,183 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Register new user
+  // Register new user with email verification
   app.post("/api/register", async (req, res) => {
     try {
-      const userData = insertUserSchema.parse(req.body);
+      const { firstName, lastName, email, whatsapp, maritimeRank, company, password } = req.body;
       
+      if (!firstName || !lastName || !email || !maritimeRank || !company || !password) {
+        return res.status(400).json({ message: "All required fields must be provided" });
+      }
+
       // Check if user already exists
-      const existingUser = await storage.getUserByEmail(userData.email);
+      const existingUser = await storage.getUserByEmail(email);
       if (existingUser) {
         return res.status(400).json({ message: "User already exists with this email" });
       }
 
-      // Set password based on city name (QAAQ standard)
-      const userWithPassword = {
-        ...userData,
-        password: userData.city ? userData.city.toLowerCase() : 'default'
+      // Generate verification token
+      const verificationToken = randomBytes(32).toString('hex');
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 24); // 24 hour expiration
+
+      // Store user data in verification tokens table
+      const userData = {
+        firstName,
+        lastName,
+        email,
+        whatsapp: whatsapp || null,
+        maritimeRank,
+        company,
+        password,
+        userType: 'sailor' // Default to sailor
       };
 
-      // Create user
-      const user = await storage.createUser(userWithPassword);
+      // Save verification token to database
+      await pool.query(
+        `INSERT INTO email_verification_tokens (email, token, user_data, expires_at) 
+         VALUES ($1, $2, $3, $4)`,
+        [email, verificationToken, JSON.stringify(userData), expiresAt]
+      );
+
+      // Send verification email
+      const emailResult = await emailService.sendVerificationEmail(email, verificationToken, userData);
       
-      // Generate JWT token for immediate access
-      const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '30d' });
+      if (emailResult.success) {
+        res.json({
+          success: true,
+          message: "Verification email sent successfully. Please check your inbox."
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          message: "Failed to send verification email"
+        });
+      }
       
-      res.json({
-        user: {
-          id: user.id,
-          fullName: user.fullName,
-          email: user.email,
-          userType: user.userType,
-          isVerified: user.isVerified,
-          loginCount: user.loginCount
-        },
-        token,
-        needsVerification: false // First login doesn't need verification
-      });
     } catch (error: unknown) {
       console.error('Registration error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       res.status(400).json({ message: "Registration failed", error: errorMessage });
+    }
+  });
+
+  // Email verification endpoint
+  app.get("/api/verify-email", async (req, res) => {
+    try {
+      const { token } = req.query;
+      
+      if (!token) {
+        return res.status(400).send(`
+          <html>
+            <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+              <h2 style="color: #dc2626;">❌ Invalid Verification Link</h2>
+              <p>The verification link is missing required parameters.</p>
+            </body>
+          </html>
+        `);
+      }
+
+      // Find verification token in database
+      const tokenResult = await pool.query(
+        `SELECT * FROM email_verification_tokens 
+         WHERE token = $1 AND is_used = false AND expires_at > NOW()`,
+        [token]
+      );
+
+      if (tokenResult.rows.length === 0) {
+        return res.status(400).send(`
+          <html>
+            <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+              <h2 style="color: #dc2626;">❌ Invalid or Expired Link</h2>
+              <p>This verification link is either invalid or has expired.</p>
+              <p><a href="/register" style="color: #ea580c;">Register again</a></p>
+            </body>
+          </html>
+        `);
+      }
+
+      const verificationData = tokenResult.rows[0];
+      const userData = JSON.parse(verificationData.user_data);
+
+      // Create user account
+      const newUser = await storage.createUser({
+        fullName: `${userData.firstName} ${userData.lastName}`,
+        email: userData.email,
+        whatsAppNumber: userData.whatsapp,
+        rank: userData.maritimeRank,
+        lastCompany: userData.company,
+        password: userData.password,
+        userType: userData.userType,
+        isVerified: true
+      });
+
+      // Mark token as used
+      await pool.query(
+        `UPDATE email_verification_tokens SET is_used = true WHERE token = $1`,
+        [token]
+      );
+
+      // Generate JWT token
+      const jwtToken = jwt.sign({ userId: newUser.id }, JWT_SECRET, { expiresIn: '30d' });
+
+      console.log(`✅ User verified and registered: ${newUser.fullName} (${newUser.email})`);
+
+      // Redirect to login with success message
+      res.send(`
+        <html>
+          <head>
+            <style>
+              body { 
+                font-family: Arial, sans-serif; 
+                text-align: center; 
+                padding: 50px; 
+                background: linear-gradient(135deg, #f97316, #dc2626);
+                margin: 0;
+              }
+              .container {
+                background: white;
+                border-radius: 10px;
+                padding: 40px;
+                max-width: 500px;
+                margin: 0 auto;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+              }
+              .success { color: #16a34a; margin-bottom: 20px; }
+              .btn {
+                background: linear-gradient(135deg, #ea580c, #dc2626);
+                color: white;
+                padding: 12px 24px;
+                text-decoration: none;
+                border-radius: 8px;
+                font-weight: bold;
+                display: inline-block;
+                margin-top: 20px;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h1 style="color: #ea580c;">⚓ QaaqConnect</h1>
+              <h2 class="success">✅ Email Verified Successfully!</h2>
+              <p>Welcome aboard, <strong>${userData.firstName}</strong>!</p>
+              <p>Your maritime professional account has been created and verified.</p>
+              <a href="/login" class="btn">Continue to Login</a>
+            </div>
+          </body>
+        </html>
+      `);
+
+    } catch (error: unknown) {
+      console.error('Email verification error:', error);
+      res.status(500).send(`
+        <html>
+          <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+            <h2 style="color: #dc2626;">❌ Verification Failed</h2>
+            <p>An error occurred during verification. Please try again.</p>
+          </body>
+        </html>
+      `);
     }
   });
 

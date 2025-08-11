@@ -100,11 +100,21 @@ export default function Register({ onSuccess }: RegisterProps) {
     }
   }, [loading, otpLoading, otpSent, formData.firstName, formData.lastName, formData.email, formData.maritimeRank, formData.company, formData.password]);
 
-  // Send email OTP
-  const sendEmailOTP = async () => {
-    if (!formData.email || !formData.email.includes('@')) {
+  // Send verification email
+  const sendVerificationEmail = async () => {
+    // Validate required fields
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.maritimeRank || !formData.company || !formData.password) {
       toast({
-        title: "Email Required",
+        title: "Missing Information",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.email.includes('@')) {
+      toast({
+        title: "Invalid Email",
         description: "Please enter a valid email address",
         variant: "destructive",
       });
@@ -113,15 +123,19 @@ export default function Register({ onSuccess }: RegisterProps) {
 
     setOtpLoading(true);
     try {
-      const response = await fetch('/api/auth/send-email-otp', {
+      const response = await fetch('/api/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: formData.email,
           firstName: formData.firstName,
           lastName: formData.lastName,
+          email: formData.email,
+          whatsapp: formData.whatsapp,
+          maritimeRank: formData.maritimeRank,
+          company: formData.company === 'Other' ? formData.customCompany : formData.company,
+          password: formData.password
         }),
       });
 
@@ -129,23 +143,22 @@ export default function Register({ onSuccess }: RegisterProps) {
 
       if (response.ok) {
         setOtpSent(true);
-        setOtpCountdown(300); // 5 minutes
         toast({
-          title: "Verification Code Sent!",
-          description: `Check your email at ${formData.email}`,
+          title: "Verification Email Sent!",
+          description: `Check your inbox at ${formData.email} and click the verification link`,
         });
       } else {
         toast({
-          title: "Failed to Send Code",
-          description: data.error || "Unable to send verification code. Please try again.",
+          title: "Registration Failed",
+          description: data.message || "Unable to send verification email. Please try again.",
           variant: "destructive",
         });
       }
     } catch (error) {
-      console.error('Email OTP error:', error);
+      console.error('Registration error:', error);
       toast({
-        title: "Email Error",
-        description: "Unable to send verification code. Please check your internet connection.",
+        title: "Registration Error",
+        description: "Unable to send verification email. Please check your internet connection.",
         variant: "destructive",
       });
     } finally {
@@ -167,75 +180,17 @@ export default function Register({ onSuccess }: RegisterProps) {
       return;
     }
 
-    // If OTP not sent yet, send it first
+    // Send verification email if not sent yet
     if (!otpSent) {
-      await sendEmailOTP();
+      await sendVerificationEmail();
       return;
     }
 
-    // If OTP sent but not entered
-    if (!formData.otpCode || formData.otpCode.length !== 6) {
-      toast({
-        title: "Verification Required",
-        description: "Please enter the 6-digit verification code sent to your email",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      // Verify OTP and complete registration
-      const response = await fetch('/api/auth/complete-registration', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          firstName: formData.firstName.trim(),
-          lastName: formData.lastName.trim(),
-          whatsapp: formData.whatsapp.trim(),
-          email: formData.email.trim(),
-          maritimeRank: formData.maritimeRank,
-          company: formData.company === "Other" ? formData.otherCompany.trim() : formData.company,
-          password: formData.password,
-          otpCode: formData.otpCode,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        // Store token and user data
-        setStoredToken(data.token);
-        setStoredUser(data.user);
-        
-        onSuccess(data.user);
-        
-        toast({
-          title: "Welcome to QaaqConnect! 🚢",
-          description: `Registration successful! Welcome aboard, ${formData.firstName}`,
-        });
-        
-        setLocation('/qbot');
-      } else {
-        toast({
-          title: "Registration Failed",
-          description: data.error || "Unable to complete registration. Please try again.",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error('Registration error:', error);
-      toast({
-        title: "Registration Error",
-        description: "Unable to connect to server. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+    // Email verification is handled via email link - nothing to do here
+    toast({
+      title: "Check Your Email",
+      description: "Please click the verification link in your email to complete registration",
+    });
   };
 
   return (
@@ -553,29 +508,18 @@ export default function Register({ onSuccess }: RegisterProps) {
             </div>
           </div>
 
-          {/* OTP Code (if email verification is required) */}
+          {/* Email Verification Message */}
           {otpSent && (
-            <div>
-              <Label htmlFor="otpCode" className="text-xs font-medium text-gray-700 mb-1 block">
-                Email Verification Code *
-              </Label>
-              <Input
-                id="otpCode"
-                type="text"
-                value={formData.otpCode}
-                onChange={(e) => setFormData({ ...formData, otpCode: e.target.value.replace(/\D/g, '').slice(0, 6) })}
-                placeholder="Enter 6-digit code"
-                className="w-full h-8 text-sm text-center font-mono tracking-widest"
-                disabled={loading}
-                maxLength={6}
-                required
-              />
-              {otpCountdown > 0 && (
-                <div className="flex items-center justify-center mt-1 text-xs text-gray-500">
-                  <Clock className="w-3 h-3 mr-1" />
-                  Code expires in {Math.floor(otpCountdown / 60)}:{(otpCountdown % 60).toString().padStart(2, '0')}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <div className="flex items-center">
+                <Mail className="w-4 h-4 text-blue-600 mr-2" />
+                <div>
+                  <p className="text-xs font-medium text-blue-800">Verification Email Sent!</p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    Check your inbox and click the verification link to complete registration.
+                  </p>
                 </div>
-              )}
+              </div>
             </div>
           )}
 
@@ -587,40 +531,39 @@ export default function Register({ onSuccess }: RegisterProps) {
                 ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700'
                 : 'bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700'
             } text-white`}
-            disabled={loading || otpLoading || (otpSent && otpCountdown <= 0)}
+            disabled={loading || otpLoading || otpSent}
           >
             {loading || otpLoading ? (
               <>
                 <i className="fas fa-spinner fa-spin mr-2"></i>
-                {otpLoading ? 'Sending verification...' : 'Completing registration...'}
+                {otpLoading ? 'Sending verification email...' : 'Processing...'}
               </>
             ) : otpSent ? (
               <>
-                <Shield className="w-4 h-4 mr-2" />
-                Verify & Complete Registration
+                <Mail className="w-4 h-4 mr-2" />
+                Verification Email Sent
               </>
             ) : (
               <>
                 <Mail className="w-4 h-4 mr-2" />
-                Send Verification Code
+                Send Verification Email
               </>
             )}
           </Button>
 
-          {/* Resend OTP */}
-          {otpSent && otpCountdown <= 0 && (
+          {/* Resend Email */}
+          {otpSent && (
             <Button
               type="button"
               onClick={() => {
                 setOtpSent(false);
-                setFormData({ ...formData, otpCode: "" });
                 sendEmailOTP();
               }}
               variant="outline"
-              className="w-full h-10 text-sm"
+              className="w-full h-9 text-sm"
               disabled={otpLoading}
             >
-              Resend Verification Code
+              Resend Verification Email
             </Button>
           )}
         </form>

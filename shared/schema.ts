@@ -184,6 +184,17 @@ export const whatsappMessages = pgTable("whatsapp_messages", {
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 
+// Email verification tokens for registration
+export const emailVerificationTokens = pgTable("email_verification_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: text("email").notNull(),
+  token: text("token").notNull().unique(),
+  userData: jsonb("user_data").notNull(), // Store registration data until verified
+  expiresAt: timestamp("expires_at").notNull(),
+  isUsed: boolean("is_used").default(false),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`)
+});
+
 
 
 // Relations
@@ -321,6 +332,13 @@ export const changePasswordSchema = z.object({
 
 export const forgotPasswordSchema = z.object({
   userId: z.string().min(1, "User ID is required"),
+});
+
+export const insertEmailVerificationTokenSchema = createInsertSchema(emailVerificationTokens).pick({
+  email: true,
+  token: true,
+  userData: true,
+  expiresAt: true,
 });
 
 export const insertChatConnectionSchema = createInsertSchema(chatConnections).pick({

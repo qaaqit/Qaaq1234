@@ -69,6 +69,86 @@ class EmailService {
   }
 
   /**
+   * Send email verification link
+   */
+  async sendVerificationEmail(email: string, verificationToken: string, userData: any): Promise<{ success: boolean; message: string }> {
+    try {
+      await this.ensureInitialized();
+
+      const verificationUrl = `${process.env.BASE_URL || 'https://qaaq.app'}/api/verify-email?token=${verificationToken}`;
+      
+      const mailOptions = {
+        from: '"QaaqConnect" <support@qaaq.app>',
+        to: email,
+        subject: '🚢 Welcome Aboard QaaqConnect - Verify Your Email',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #f97316, #dc2626); padding: 2px; border-radius: 12px;">
+            <div style="background: white; padding: 30px; border-radius: 10px;">
+              <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="color: #ea580c; margin: 0; font-size: 28px;">⚓ QaaqConnect</h1>
+                <p style="color: #6b7280; margin: 5px 0 0 0; font-size: 14px;">Maritime Professional Network</p>
+              </div>
+              
+              <h2 style="color: #374151; margin-bottom: 20px;">Welcome Aboard, ${userData.firstName}!</h2>
+              
+              <p style="color: #6b7280; line-height: 1.6; margin-bottom: 25px;">
+                Thank you for joining the QaaqConnect maritime community. To complete your registration and start connecting with fellow maritime professionals, please verify your email address.
+              </p>
+              
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${verificationUrl}" 
+                   style="background: linear-gradient(135deg, #ea580c, #dc2626); color: white; text-decoration: none; padding: 15px 30px; border-radius: 8px; font-weight: bold; display: inline-block; border: none; cursor: pointer;">
+                  ✅ Verify Email Address
+                </a>
+              </div>
+              
+              <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 25px 0;">
+                <p style="margin: 0; color: #6b7280; font-size: 14px;">
+                  <strong>Your Registration Details:</strong><br>
+                  Name: ${userData.firstName} ${userData.lastName}<br>
+                  Email: ${email}<br>
+                  Rank: ${userData.maritimeRank}<br>
+                  Company: ${userData.company}
+                </p>
+              </div>
+              
+              <p style="color: #9ca3af; font-size: 12px; line-height: 1.5; margin-top: 30px; border-top: 1px solid #e5e7eb; padding-top: 20px;">
+                If you didn't create this account, please ignore this email. This verification link will expire in 24 hours for security.
+              </p>
+              
+              <div style="text-align: center; margin-top: 25px;">
+                <p style="color: #6b7280; font-size: 14px; margin: 0;">
+                  🌊 Welcome to the global maritime community!
+                </p>
+              </div>
+            </div>
+          </div>
+        `,
+        text: `Welcome to QaaqConnect, ${userData.firstName}!\n\nPlease verify your email address by clicking this link:\n${verificationUrl}\n\nThis link will expire in 24 hours.\n\nBest regards,\nQaaqConnect Team`
+      };
+
+      const info = await this.transporter.sendMail(mailOptions);
+      
+      // Log for test accounts
+      if (info.messageId.includes('ethereal')) {
+        console.log('📧 Test email sent:', nodemailer.getTestMessageUrl(info));
+      }
+
+      return {
+        success: true,
+        message: 'Verification email sent successfully'
+      };
+
+    } catch (error) {
+      console.error('❌ Verification email error:', error);
+      return {
+        success: false,
+        message: 'Failed to send verification email'
+      };
+    }
+  }
+
+  /**
    * Send OTP email
    */
   async sendOTPEmail(email: string, otpCode: string, whatsappNumber: string): Promise<{ success: boolean; message: string }> {
@@ -244,5 +324,6 @@ QaaqConnect - Connecting Maritime Professionals Worldwide
   }
 }
 
-export { EmailService };
-export const emailService = new EmailService();
+// Export singleton instance
+const emailService = new EmailService();
+export { EmailService, emailService };
