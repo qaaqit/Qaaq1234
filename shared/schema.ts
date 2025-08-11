@@ -9,7 +9,7 @@ export const users = pgTable("users", {
   userId: text("user_id").unique(), // Human-readable user ID (e.g., QAAQ123, CAP456)
   fullName: text("full_name").notNull(),
   email: text("email").notNull().unique(),
-  qaaqPassword: text("password"), // Password for QAAQ login
+  password: text("password"), // Password for QAAQ login
   hasSetCustomPassword: boolean("has_set_custom_password").default(false).notNull(), // Whether user has set their own password
   liberalLoginCount: integer("liberal_login_count").default(0).notNull(), // Count of liberal "1234koihai" logins
   needsPasswordChange: boolean("needs_password_change").default(true), // Force password change on third login
@@ -30,7 +30,7 @@ export const users = pgTable("users", {
   port: text("port"), // Current or next port
   visitWindow: text("visit_window"), // Planned visit time window (e.g., "28 to 30 Jul25")
   city: text("city"),
-  password: text("password_backup"), // Renamed from current_city for user database migration
+  // password field moved to line 12 for proper database alignment
   country: text("country"),
   nationality: text("nationality"), // QAAQ field
   

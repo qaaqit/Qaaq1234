@@ -419,7 +419,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         whatsAppNumber: userData.whatsapp,
         rank: userData.maritimeRank,
         lastCompany: userData.company,
-        qaaqPassword: userData.password,
+        password: userData.password,
         userType: userData.userType,
         userId: userData.userId, // Include generated user ID
         isVerified: true
