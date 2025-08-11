@@ -231,7 +231,7 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
               disabled={forgotPasswordLoading}
               className="text-orange-600 hover:text-orange-700 underline transition-colors disabled:opacity-50"
             >
-              {forgotPasswordLoading ? "Sending..." : "Forgot your password?"}
+              {forgotPasswordLoading ? "Sending..." : "Forgot password?"}
             </button>
             <button
               onClick={() => navigate('/register')}
