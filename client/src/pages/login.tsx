@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Anchor, Eye, EyeOff, Mail, Lock } from "lucide-react";
+import qaaqLogoPath from "@assets/ICON_1754950288816.png";
 import { GoogleAuthButton } from "@/components/GoogleAuthButton";
 import { User } from "@/lib/auth";
 
@@ -96,7 +97,7 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-gradient-to-br from-orange-600 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Anchor className="text-2xl text-white" size={28} />
+            <img src={qaaqLogoPath} alt="QAAQ" className="w-10 h-10" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
           <p className="text-gray-600">Sign in to QaaqConnect</p>
