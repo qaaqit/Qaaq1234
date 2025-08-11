@@ -275,18 +275,33 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
         </div>
       )}
       
-      {/* Chat input container */}
-      <div className="flex items-end gap-3">
-        {/* Left side crown icon - outside the input */}
+      {/* Crown icon positioned above input area */}
+      <div className="flex justify-start mb-2">
         <button
           onClick={togglePremiumMode}
-          className="p-3 rounded-lg transition-all duration-200 text-gray-400 hover:bg-gray-100 flex-shrink-0"
+          className="p-2 rounded-lg transition-all duration-200 text-gray-400 hover:bg-gray-100 flex-shrink-0"
           title={isPremiumMode ? "Premium Mode Active" : "Enable Premium Mode"}
         >
-          <Crown size={20} className={isPremiumMode ? "fill-current text-yellow-600" : ""} />
+          <Crown size={18} className={isPremiumMode ? "fill-current text-yellow-600" : ""} />
         </button>
+      </div>
 
-        {/* Input area with attachments inside */}
+      {/* Chat input container */}
+      <div className="flex items-end gap-3">
+        {/* Left side attach icon - outside the input */}
+        <div className="flex-shrink-0">
+          <ObjectUploader
+            maxNumberOfFiles={5}
+            maxFileSize={52428800} // 50MB
+            onGetUploadParameters={handleGetUploadParameters}
+            onComplete={handleUploadComplete}
+            buttonClassName="p-3 rounded-lg text-gray-400 hover:bg-gray-100 transition-all duration-200"
+          >
+            <Paperclip size={20} />
+          </ObjectUploader>
+        </div>
+
+        {/* Input area */}
         <div className="relative flex-1">
           <textarea
             ref={textareaRef}
@@ -297,7 +312,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
             onPaste={handlePaste}
             placeholder={currentPlaceholder}
             disabled={disabled}
-            className="w-full resize-none rounded-lg border border-gray-300 pl-4 pr-12 pt-3 pb-3
+            className="w-full resize-none rounded-lg border border-gray-300 pl-4 pr-4 pt-3 pb-3
                      focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent
                      disabled:opacity-50 disabled:cursor-not-allowed
                      placeholder:text-gray-400 text-gray-700
@@ -305,21 +320,8 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
             style={{ resize: 'none' }}
             rows={1}
           />
-          
-          {/* Attachment icon inside text box */}
-          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-            <ObjectUploader
-              maxNumberOfFiles={5}
-              maxFileSize={52428800} // 50MB
-              onGetUploadParameters={handleGetUploadParameters}
-              onComplete={handleUploadComplete}
-              buttonClassName="p-2 rounded-lg text-gray-400 hover:bg-gray-100 transition-all duration-200"
-            >
-              <Paperclip size={16} />
-            </ObjectUploader>
-          </div>
 
-          {/* Privacy Shield (only for premium/admin users) - positioned above attach icon */}
+          {/* Privacy Shield (only for premium/admin users) - positioned top right */}
           {((userStatus as any)?.isPremium || (userStatus as any)?.isSuperUser || localStorage.getItem('isAdmin') === 'true') && (
             <div className="absolute right-3 top-1">
               <button
@@ -337,14 +339,14 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
           )}
         </div>
 
-        {/* Right side send button - outside the input */}
+        {/* Right side send button with orange background */}
         <button
           onClick={handleSend}
           disabled={disabled || (!message.trim() && attachments.length === 0)}
           className={`
-            p-3 rounded-lg transition-all duration-200 flex-shrink-0
+            p-3 rounded-lg transition-all duration-200 flex-shrink-0 min-h-[48px]
             ${(message.trim() || attachments.length > 0) && !disabled
-              ? 'bg-red-500 text-white hover:bg-red-600' 
+              ? 'bg-orange-500 text-white hover:bg-orange-600' 
               : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }
           `}
