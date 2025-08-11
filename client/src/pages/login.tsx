@@ -146,7 +146,7 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-gradient-to-br from-orange-600 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <img src={qaaqLogoPath} alt="QAAQ" className="w-12 h-12" />
+            <img src={qaaqLogoPath} alt="QAAQ" className="w-14 h-14" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
           <p className="text-gray-600">Sign in to QaaqConnect</p>
