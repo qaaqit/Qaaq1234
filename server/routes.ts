@@ -2989,9 +2989,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const questionId = parseInt(req.params.id);
       const { hidden = true, hidden_reason = 'Admin removal' } = req.body;
       
-      // Check if user is admin
-      const user = await storage.getUserById(req.userId);
-      if (!user?.isAdmin && req.userId !== '5791e66f-9cc1-4be4-bd4b-7fc1bd2e258e') {
+      // Check if user is admin - simplified admin check using known admin IDs
+      const adminIds = [
+        '5791e66f-9cc1-4be4-bd4b-7fc1bd2e258e', // Special admin UUID
+        '44885683', // Admin user ID
+        '+919029010070' // Admin phone number
+      ];
+      
+      if (!adminIds.includes(req.userId)) {
         return res.status(403).json({ 
           success: false, 
           message: 'Admin access required to hide questions' 

@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { MessageCircle, Search, Calendar, CheckCircle, Clock, Hash, ChevronDown, ChevronUp, Image as ImageIcon, Share2, ArrowUp, Trash2 } from 'lucide-react';
+import { MessageCircle, Search, Calendar, CheckCircle, Clock, Hash, ChevronDown, ChevronUp, Image as ImageIcon, Share2, ArrowUp, Trash2, RotateCcw } from 'lucide-react';
 import { format } from 'date-fns';
 import { apiRequest } from '@/lib/queryClient';
 import { isTokenValid, forceTokenRefresh } from '@/utils/auth';
@@ -35,6 +35,7 @@ interface Question {
   author_whatsapp_profile_picture_url?: string | null;
   author_whatsapp_display_name?: string | null;
   author_profile_picture_url?: string | null;
+  is_hidden?: boolean;
 }
 
 interface Answer {
@@ -73,12 +74,6 @@ export function QuestionsTab() {
                   user?.id === '44885683' ||
                   user?.id === '+919029010070' ||
                   user?.id === '5791e66f-9cc1-4be4-bd4b-7fc1bd2e258e';
-  
-  // Debug admin check
-  console.log('Admin check:', { 
-    user: user ? { id: user.id, fullName: user.fullName, isAdmin: user.isAdmin } : null, 
-    isAdmin 
-  });
 
   const observer = useRef<IntersectionObserver | null>(null);
   const lastQuestionRef = useRef<HTMLDivElement | null>(null);
@@ -403,17 +398,15 @@ export function QuestionsTab() {
     });
   };
 
-  // Admin-only delete question function
-  const handleDeleteQuestion = async (questionId: number) => {
+  // Admin-only toggle question visibility function
+  const handleToggleQuestion = async (questionId: number, currentlyHidden: boolean = false) => {
     if (!isAdmin) {
-      console.warn('Unauthorized: Only admins can delete questions');
+      console.warn('Unauthorized: Only admins can toggle questions');
       return;
     }
 
-    if (!confirm('Are you sure you want to hide this question from the QuestionBank? This action cannot be undone.')) {
-      return;
-    }
-
+    const action = currentlyHidden ? 'restore' : 'hide';
+    
     try {
       const response = await fetch(`/api/questions/${questionId}/hide`, {
         method: 'POST',
@@ -421,22 +414,25 @@ export function QuestionsTab() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('qaaq_token')}`
         },
-        body: JSON.stringify({ hidden: true, hidden_reason: 'Admin removal from QuestionBank' })
+        body: JSON.stringify({ 
+          hidden: !currentlyHidden, 
+          hidden_reason: currentlyHidden ? 'Admin restore' : 'Admin removal from QuestionBank' 
+        })
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to hide question');
+        throw new Error(errorData.message || `Failed to ${action} question`);
       }
 
       const result = await response.json();
-      console.log('Question hidden successfully:', result);
+      console.log(`Question ${action}d successfully:`, result);
       
       // Refresh questions list
       window.location.reload();
     } catch (error) {
-      console.error('Error hiding question:', error);
-      alert('Failed to hide question. Please try again.');
+      console.error(`Error ${action}ing question:`, error);
+      alert(`Failed to ${action} question. Please try again.`);
     }
   };
 
@@ -473,19 +469,23 @@ export function QuestionsTab() {
                 >
                   <Share2 size={16} />
                 </Button>
-                {/* Admin Only Delete Button */}
+                {/* Admin Only Toggle Button */}
                 {isAdmin && (
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDeleteQuestion(question.id);
+                      handleToggleQuestion(question.id, question.is_hidden || false);
                     }}
-                    className="text-gray-400 hover:text-red-600 hover:bg-red-50 p-2"
-                    title="Admin: Hide question from QuestionBank"
+                    className={`p-2 ${
+                      question.is_hidden 
+                        ? "text-gray-400 hover:text-green-600 hover:bg-green-50" 
+                        : "text-gray-400 hover:text-red-600 hover:bg-red-50"
+                    }`}
+                    title={question.is_hidden ? "Admin: Restore question to QuestionBank" : "Admin: Hide question from QuestionBank"}
                   >
-                    <Trash2 size={16} />
+                    {question.is_hidden ? <RotateCcw size={16} /> : <Trash2 size={16} />}
                   </Button>
                 )}
               </div>
