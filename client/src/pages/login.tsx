@@ -223,15 +223,21 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
             )}
           </Button>
 
-          {/* Forgot Password Link */}
-          <div className="text-center mt-4">
+          {/* Forgot Password and Signup Links */}
+          <div className="flex justify-between items-center mt-4 text-sm">
             <button
               type="button"
               onClick={handleForgotPassword}
               disabled={forgotPasswordLoading}
-              className="text-sm text-orange-600 hover:text-orange-700 underline transition-colors disabled:opacity-50"
+              className="text-orange-600 hover:text-orange-700 underline transition-colors disabled:opacity-50"
             >
               {forgotPasswordLoading ? "Sending..." : "Forgot your password?"}
+            </button>
+            <button
+              onClick={() => navigate('/register')}
+              className="text-orange-600 hover:text-orange-800 font-semibold"
+            >
+              New User Signup
             </button>
           </div>
         </form>
@@ -249,17 +255,6 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
           <div className="mt-4">
             <GoogleAuthButton />
           </div>
-        </div>
-
-        {/* Register Link */}
-        <div className="mt-8 text-center">
-          <p className="text-sm text-gray-600">
-            New to maritime networking?{" "}
-            <button
-              onClick={() => navigate('/register')}
-              className="text-orange-600 hover:text-orange-800 font-semibold"
-            >New User Signup</button>
-          </p>
         </div>
 
         {/* Footer */}
