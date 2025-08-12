@@ -4247,6 +4247,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Export comprehensive maritime professionals CSV (admin only)
+  app.get('/api/export/maritime-professionals-csv', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      console.log('📤 Exporting comprehensive maritime professionals CSV...');
+      
+      // Import database directly
+      const { db } = await import('./db');
+      const { users } = await import('../shared/schema');
+      
+      // Get all users from database
+      const allUsers = await db.select().from(users);
+      
+      // Enhanced CSV headers with all requested maritime attributes
+      const csvRows = [
+        'Full Name,WhatsApp Number,Maritime Rank,Email,Company,Current City,Question Count,Present/Last Ship,User Type,Registration Date,Last Login,Profile Complete'
+      ];
+      
+      let exportedCount = 0;
+      
+      for (const user of allUsers) {
+        // Include all users with comprehensive maritime data
+        const fullName = user.fullName || user.firstName || 'Unknown';
+        const whatsappNumber = user.id || user.whatsAppNumber || '';
+        const maritimeRank = user.maritimeRank || '';
+        const email = user.email || '';
+        const company = user.company || user.shipCompany || '';
+        const currentCity = user.currentCity || user.city || '';
+        const questionCount = user.questionCount || 0;
+        const presentShip = user.shipName || user.lastShip || user.currentShip || '';
+        const userType = user.userType || 'Free';
+        const registrationDate = user.createdAt ? new Date(user.createdAt).toISOString().split('T')[0] : '';
+        const lastLogin = user.lastLoginAt ? new Date(user.lastLoginAt).toISOString().split('T')[0] : '';
+        const profileComplete = (fullName !== 'Unknown' && maritimeRank && email) ? 'Yes' : 'No';
+        
+        // Enhanced CSV row with all maritime professional attributes
+        csvRows.push([
+          `"${fullName}"`,
+          `"${whatsappNumber}"`,
+          `"${maritimeRank}"`,
+          `"${email}"`,
+          `"${company}"`,
+          `"${currentCity}"`,
+          `"${questionCount}"`,
+          `"${presentShip}"`,
+          `"${userType}"`,
+          `"${registrationDate}"`,
+          `"${lastLogin}"`,
+          `"${profileComplete}"`
+        ].join(','));
+        
+        exportedCount++;
+      }
+      
+      const csvData = csvRows.join('\n');
+      
+      console.log(`📤 CSV export complete: ${exportedCount} maritime professionals`);
+      
+      // Set headers for CSV download
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="maritime_professionals_${new Date().toISOString().split('T')[0]}.csv"`);
+      
+      res.send(csvData);
+      
+    } catch (error) {
+      console.error('❌ Error exporting maritime professionals CSV:', error);
+      res.status(500).json({ success: false, message: 'Failed to export CSV' });
+    }
+  });
+
   // Bulk import contacts to WATI (admin only)
   app.post('/api/wati/bulk-import', authenticateToken, isAdmin, async (req: any, res) => {
     try {

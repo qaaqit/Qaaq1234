@@ -302,6 +302,45 @@ export function WatiAdminPanel() {
     document.body.removeChild(a);
   };
 
+  const downloadComprehensiveCSV = async () => {
+    try {
+      setExporting(true);
+      
+      const response = await fetch('/api/export/maritime-professionals-csv', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('qaaq_token')}`
+        }
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `maritime_professionals_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        toast({
+          title: "CSV Downloaded",
+          description: "Comprehensive maritime professionals CSV exported successfully"
+        });
+      } else {
+        throw new Error('Failed to download CSV');
+      }
+    } catch (error) {
+      toast({
+        title: "Download Error",
+        description: "Failed to download comprehensive CSV export",
+        variant: "destructive"
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const downloadVCF = () => {
     if (!exportData?.vcfData) return;
     
@@ -589,13 +628,32 @@ export function WatiAdminPanel() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button 
-                  onClick={exportUsersToWati}
-                  disabled={exporting}
-                  className="w-full"
-                >
-                  {exporting ? 'Exporting...' : 'Export All Users to WATI Format'}
-                </Button>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Button 
+                    onClick={downloadComprehensiveCSV}
+                    disabled={exporting}
+                    className="w-full bg-green-600 hover:bg-green-700"
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    {exporting ? 'Downloading...' : 'Download Comprehensive CSV'}
+                  </Button>
+                  
+                  <Button 
+                    onClick={exportUsersToWati}
+                    disabled={exporting}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    {exporting ? 'Exporting...' : 'Export to WATI Format'}
+                  </Button>
+                </div>
+                
+                <div className="text-sm text-gray-600 p-3 bg-blue-50 rounded-lg">
+                  <p className="font-semibold mb-1">Comprehensive CSV includes:</p>
+                  <p>• Full Name, Maritime Rank, Email, Company</p>
+                  <p>• Current City, Question Count, Present/Last Ship</p>
+                  <p>• User Type, Registration Date, Profile Status</p>
+                </div>
                 
                 {exportData && (
                   <div className="mt-6 p-4 border rounded-lg bg-green-50">
