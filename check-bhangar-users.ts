@@ -1,67 +1,78 @@
-import { pool } from './server/db';
+import { db } from './server/db';
 
 async function checkBhangarUsers() {
   try {
-    console.log('🔍 Checking for bhangar users table and question count column...');
+    console.log('Checking bhangar_users table...');
     
-    // First, list all tables to see what's available
-    const tablesResult = await pool.query(`
-      SELECT table_name 
-      FROM information_schema.tables 
-      WHERE table_schema = 'public' 
-      ORDER BY table_name
+    // Check if bhangar_users table exists
+    const tables = await db.execute(`
+      SELECT table_name FROM information_schema.tables 
+      WHERE table_schema = 'public' AND table_name LIKE '%bhangar%';
     `);
+    console.log('Bhangar-related tables:', tables.rows.map(r => r.table_name));
     
-    console.log('\n📋 Available tables:');
-    console.table(tablesResult.rows);
-    
-    // Check for any table with 'bhangar' or similar pattern
-    const bhangarTables = tablesResult.rows.filter(row => 
-      row.table_name.toLowerCase().includes('bhangar') ||
-      row.table_name.toLowerCase().includes('user') ||
-      row.table_name.toLowerCase().includes('professional')
-    );
-    
-    console.log('\n🎯 Relevant tables found:');
-    console.table(bhangarTables);
-    
-    // Check current users table structure
-    const usersColumns = await pool.query(`
-      SELECT column_name, data_type, is_nullable 
-      FROM information_schema.columns 
-      WHERE table_name = 'users' 
-      ORDER BY ordinal_position
-    `);
-    
-    console.log('\n👥 Current users table columns:');
-    console.table(usersColumns.rows);
-    
-    // Check if question_count already exists
-    const hasQuestionCount = usersColumns.rows.some(col => 
-      col.column_name === 'question_count'
-    );
-    
-    console.log(`\n❓ Question count column exists: ${hasQuestionCount}`);
-    
-    if (hasQuestionCount) {
-      // Show current question count data
-      const questionCountData = await pool.query(`
-        SELECT id, full_name, question_count, answer_count 
-        FROM users 
-        WHERE question_count > 0 
-        ORDER BY question_count DESC 
-        LIMIT 10
+    if (tables.rows.length === 0) {
+      console.log('No bhangar_users table found. Checking all tables...');
+      const allTables = await db.execute(`
+        SELECT table_name FROM information_schema.tables 
+        WHERE table_schema = 'public';
       `);
-      
-      console.log('\n🏆 Current top professionals by question count:');
-      console.table(questionCountData.rows);
+      console.log('All tables:', allTables.rows.map(r => r.table_name));
+      return;
     }
     
+    // Get total count from bhangar_users
+    const totalCount = await db.execute(`SELECT COUNT(*) as count FROM bhangar_users;`);
+    console.log('Total users in bhangar_users:', totalCount.rows[0].count);
+    
+    // Check structure of bhangar_users
+    const columns = await db.execute(`
+      SELECT column_name, data_type FROM information_schema.columns 
+      WHERE table_name = 'bhangar_users' AND table_schema = 'public'
+      ORDER BY ordinal_position;
+    `);
+    console.log('bhangar_users columns:');
+    columns.rows.forEach(col => {
+      console.log(`  ${col.column_name}: ${col.data_type}`);
+    });
+    
+    // Get sample data with location info - check which location columns exist
+    const sampleData = await db.execute(`
+      SELECT full_name, permanent_city, permanent_country, current_city, current_country, 
+             truecaller_location, maritime_rank, id, nationality, whatsapp_number
+      FROM bhangar_users 
+      WHERE (permanent_city IS NOT NULL AND permanent_city != '') 
+         OR (current_city IS NOT NULL AND current_city != '')
+         OR (truecaller_location IS NOT NULL AND truecaller_location != '')
+      LIMIT 15;
+    `);
+    console.log('Sample bhangar_users with location data:');
+    sampleData.rows.forEach((user, i) => {
+      console.log(`${i+1}. ${user.full_name || 'No name'} [${user.whatsapp_number || user.id}]`);
+      console.log(`   Permanent: ${user.permanent_city || 'No city'}, ${user.permanent_country || 'No country'}`);
+      console.log(`   Current: ${user.current_city || 'No city'}, ${user.current_country || 'No country'}`);
+      console.log(`   TrueCaller: ${user.truecaller_location || 'No location'}`);
+      console.log(`   Nationality: ${user.nationality || 'No nationality'}`);
+      console.log(`   Rank: ${user.maritime_rank || 'No rank'}\n`);
+    });
+    
+    // Check for location data availability
+    const locationStats = await db.execute(`
+      SELECT 
+        COUNT(*) as total,
+        COUNT(permanent_city) as has_permanent_city,
+        COUNT(permanent_country) as has_permanent_country,
+        COUNT(current_city) as has_current_city,
+        COUNT(current_country) as has_current_country,
+        COUNT(truecaller_location) as has_truecaller_location,
+        COUNT(nationality) as has_nationality
+      FROM bhangar_users;
+    `);
+    console.log('Location data statistics:', locationStats.rows[0]);
+    
   } catch (error) {
-    console.error('❌ Error checking bhangar users:', error);
-  } finally {
-    process.exit(0);
+    console.error('Error:', error);
   }
 }
 
-checkBhangarUsers();
+checkBhangarUsers().then(() => process.exit(0));
