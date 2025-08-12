@@ -66,6 +66,7 @@ export function QuestionsTab() {
   const [expandedQuestions, setExpandedQuestions] = useState<Set<number>>(new Set());
   const [showScrollToTop, setShowScrollToTop] = useState(false);
   const [scrollPosition, setScrollPosition] = useState(0);
+  const [feedbackGiven, setFeedbackGiven] = useState<Record<string, 'helpful' | 'needs_improvement'>>({});
   const { user } = useAuth();
   
   // Check if user is admin - based on specific user ID and phone number
@@ -444,6 +445,9 @@ export function QuestionsTab() {
       return;
     }
 
+    // Track feedback given for this answer
+    const feedbackKey = `${questionId}-${answerId}`;
+    
     try {
       const response = await fetch('/api/ai-feedback', {
         method: 'POST',
@@ -466,6 +470,12 @@ export function QuestionsTab() {
 
       const result = await response.json();
       console.log('Feedback submitted successfully:', result);
+      
+      // Update feedback state to show visual feedback
+      setFeedbackGiven(prev => ({
+        ...prev,
+        [feedbackKey]: feedbackType
+      }));
       
       // Show visual feedback to admin
       const feedbackText = feedbackType === 'helpful' ? 'Marked as helpful' : 'Marked for improvement';
@@ -558,8 +568,21 @@ export function QuestionsTab() {
                         e.stopPropagation();
                         handleAnswerFeedback(question.id, firstAnswer.id, 'helpful');
                       }}
-                      className="p-1 h-7 text-green-600 hover:text-green-700 hover:bg-green-50"
-                      title="This answer is helpful"
+                      disabled={feedbackGiven[`${question.id}-${firstAnswer.id}`] !== undefined}
+                      className={`p-1 h-7 transition-all ${
+                        feedbackGiven[`${question.id}-${firstAnswer.id}`] === 'helpful'
+                          ? 'bg-green-600 text-white hover:bg-green-700'
+                          : feedbackGiven[`${question.id}-${firstAnswer.id}`] === 'needs_improvement'
+                          ? 'opacity-50 cursor-not-allowed'
+                          : 'text-green-600 hover:text-green-700 hover:bg-green-50'
+                      }`}
+                      title={
+                        feedbackGiven[`${question.id}-${firstAnswer.id}`] === 'helpful'
+                          ? "You marked this as helpful"
+                          : feedbackGiven[`${question.id}-${firstAnswer.id}`] === 'needs_improvement'
+                          ? "You marked this for improvement"
+                          : "This answer is helpful"
+                      }
                     >
                       <ThumbsUp size={14} className="mr-1" />
                       <span className="text-xs">Good</span>
@@ -571,8 +594,21 @@ export function QuestionsTab() {
                         e.stopPropagation();
                         handleAnswerFeedback(question.id, firstAnswer.id, 'needs_improvement');
                       }}
-                      className="p-1 h-7 text-red-600 hover:text-red-700 hover:bg-red-50"
-                      title="This answer needs improvement"
+                      disabled={feedbackGiven[`${question.id}-${firstAnswer.id}`] !== undefined}
+                      className={`p-1 h-7 transition-all ${
+                        feedbackGiven[`${question.id}-${firstAnswer.id}`] === 'needs_improvement'
+                          ? 'bg-red-600 text-white hover:bg-red-700'
+                          : feedbackGiven[`${question.id}-${firstAnswer.id}`] === 'helpful'
+                          ? 'opacity-50 cursor-not-allowed'
+                          : 'text-red-600 hover:text-red-700 hover:bg-red-50'
+                      }`}
+                      title={
+                        feedbackGiven[`${question.id}-${firstAnswer.id}`] === 'needs_improvement'
+                          ? "You marked this for improvement"
+                          : feedbackGiven[`${question.id}-${firstAnswer.id}`] === 'helpful'
+                          ? "You marked this as helpful"
+                          : "This answer needs improvement"
+                      }
                     >
                       <ThumbsDown size={14} className="mr-1" />
                       <span className="text-xs">Improve</span>
