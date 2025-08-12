@@ -83,6 +83,55 @@ export default function QBOTPage({ user }: QBOTPageProps) {
     fetchWhatsAppHistory();
   }, [user?.id, toast]);
 
+  // Load WATI WhatsApp widget
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.async = true;
+    script.src = 'https://wati-integration-prod-service.clare.ai/v2/watiWidget.js?92314';
+    
+    const options = {
+      "enabled": true,
+      "chatButtonSetting": {
+        "backgroundColor": "#ea8c34",
+        "ctaText": "Chat with us",
+        "borderRadius": "25",
+        "marginLeft": "0",
+        "marginRight": "20", 
+        "marginBottom": "20",
+        "ctaIconWATI": false,
+        "position": "right"
+      },
+      "brandSetting": {
+        "brandName": "Qaaq",
+        "brandSubTitle": "undefined",
+        "brandImg": "https://www.wati.io/wp-content/uploads/2023/04/Wati-logo.svg",
+        "welcomeText": "Hi there!\nThis is QBOT.",
+        "messageText": "",
+        "backgroundColor": "#ea8c34",
+        "ctaText": "Chat with us",
+        "borderRadius": "25",
+        "autoShow": false,
+        "phoneNumber": "917208878008"
+      }
+    };
+
+    script.onload = function() {
+      if (typeof (window as any).CreateWhatsappChatWidget === 'function') {
+        (window as any).CreateWhatsappChatWidget(options);
+      }
+    };
+
+    document.head.appendChild(script);
+
+    // Cleanup function to remove script when component unmounts
+    return () => {
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
+    };
+  }, []);
+
   const handleSendQBotMessage = async (messageText: string, attachments?: string[], isPrivate?: boolean) => {
     const newMessage: Message = {
       id: Date.now().toString(),
