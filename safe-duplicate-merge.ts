@@ -1,282 +1,147 @@
-import { db } from "./server/db";
-import { sql } from "drizzle-orm";
+import { db } from './server/db';
 
-interface UserRecord {
-  id: string;
-  full_name: string | null;
-  email: string | null;
-  whatsapp_number: string | null;
-  question_count: number | null;
-  answer_count: number | null;
-  is_platform_admin: boolean | null;
-  created_at: Date | null;
-  maritime_rank: string | null;
-  city: string | null;
-}
-
-// Normalize WhatsApp number to consistent format
-function normalizeWhatsAppNumber(number: string | null): string | null {
-  if (!number) return null;
-  
-  // Remove all non-digit characters except +
-  const cleaned = number.replace(/[^+\d]/g, '');
-  
-  // Remove any wa_ prefix and extract digits
-  const digits = cleaned.replace(/wa_/g, '').replace(/\D/g, '');
-  
-  // If it starts with 91 and has 12 digits total, it's likely +91 format
-  if (digits.length === 12 && digits.startsWith('91')) {
-    return `+${digits}`;
-  }
-  
-  // If it's 10 digits, add +91
-  if (digits.length === 10) {
-    return `+91${digits}`;
-  }
-  
-  // If it starts with 91 but shorter, might need +91 prefix
-  if (digits.startsWith('91') && digits.length === 11) {
-    return `+${digits}`;
-  }
-  
-  // Return normalized with + prefix
-  return `+${digits}`;
-}
-
-// Group users by normalized WhatsApp numbers
-function groupUsersByWhatsApp(usersList: UserRecord[]): Map<string, UserRecord[]> {
-  const groups = new Map<string, UserRecord[]>();
-  
-  for (const user of usersList) {
-    const normalizedNumber = normalizeWhatsAppNumber(user.whatsapp_number);
-    
-    if (normalizedNumber) {
-      if (!groups.has(normalizedNumber)) {
-        groups.set(normalizedNumber, []);
-      }
-      groups.get(normalizedNumber)!.push(user);
-    }
-  }
-  
-  return groups;
-}
-
-// Determine the primary user (keep the one with most activity or oldest)
-function selectPrimaryUser(duplicates: UserRecord[]): UserRecord {
-  return duplicates.reduce((primary, current) => {
-    // Prefer admin users
-    if (current.is_platform_admin && !primary.is_platform_admin) return current;
-    if (primary.is_platform_admin && !current.is_platform_admin) return primary;
-    
-    // Prefer users with more Q&A activity
-    const currentActivity = (current.question_count || 0) + (current.answer_count || 0);
-    const primaryActivity = (primary.question_count || 0) + (primary.answer_count || 0);
-    
-    if (currentActivity > primaryActivity) return current;
-    if (primaryActivity > currentActivity) return primary;
-    
-    // Prefer users with email addresses
-    if (current.email && !primary.email) return current;
-    if (primary.email && !current.email) return primary;
-    
-    // Prefer older accounts (created first)
-    if (current.created_at && primary.created_at) {
-      return current.created_at < primary.created_at ? current : primary;
-    }
-    
-    return primary;
-  });
-}
-
-// Update related tables to point to primary user
-async function updateRelatedTables(primaryUserId: string, duplicateIds: string[]) {
-  console.log(`   🔄 Updating related tables for ${duplicateIds.length} duplicates...`);
-  
+async function safeLocationMerge() {
   try {
-    // Update whatsapp_messages
-    for (const duplicateId of duplicateIds) {
-      await db.execute(sql`
-        UPDATE whatsapp_messages 
-        SET user_id = ${primaryUserId} 
-        WHERE user_id = ${duplicateId}
+    console.log('🔄 Starting safe location merge from bhangar_users to users table...');
+    
+    // Step 1: Remove all sample/enriched location data
+    console.log('📝 Step 1: Removing sample location data...');
+    
+    const removeResult = await db.execute(`
+      UPDATE users 
+      SET 
+        city = NULL,
+        country = NULL,
+        latitude = NULL,
+        longitude = NULL,
+        location_source = NULL
+      WHERE location_source = 'enriched'
+    `);
+    
+    console.log('✅ Removed sample location data');
+    
+    // Step 2: Copy authentic location data from bhangar_users where WhatsApp numbers match
+    console.log('📝 Step 2: Copying authentic location data from bhangar_users...');
+    
+    const updateResult = await db.execute(`
+      UPDATE users 
+      SET 
+        city = CASE 
+          WHEN b.current_city IS NOT NULL AND b.current_city != '' THEN b.current_city
+          WHEN b.permanent_city IS NOT NULL AND b.permanent_city != '' THEN b.permanent_city
+          ELSE users.city
+        END,
+        country = CASE 
+          WHEN b.current_country IS NOT NULL AND b.current_country != '' THEN b.current_country
+          WHEN b.permanent_country IS NOT NULL AND b.permanent_country != '' THEN b.permanent_country
+          WHEN b.truecaller_location IS NOT NULL AND b.truecaller_location != '' AND b.truecaller_location != 'India' THEN b.truecaller_location
+          WHEN b.truecaller_location = 'India' THEN 'India'
+          ELSE users.country
+        END,
+        location_source = 'authentic'
+      FROM bhangar_users b
+      WHERE users.whatsapp_number = b.whatsapp_number
+        AND b.whatsapp_number IS NOT NULL
+        AND b.whatsapp_number != ''
+        AND (
+          (b.current_city IS NOT NULL AND b.current_city != '') OR
+          (b.permanent_city IS NOT NULL AND b.permanent_city != '') OR
+          (b.current_country IS NOT NULL AND b.current_country != '') OR
+          (b.permanent_country IS NOT NULL AND b.permanent_country != '') OR
+          (b.truecaller_location IS NOT NULL AND b.truecaller_location != '')
+        )
+    `);
+    
+    console.log('✅ Copied authentic location data from bhangar_users');
+    
+    // Step 3: Get coordinates for authentic city locations
+    console.log('📝 Step 3: Adding coordinates for authentic cities...');
+    
+    // Major maritime cities coordinates lookup
+    const cityCoords = {
+      'Mumbai': { lat: 19.0760, lng: 72.8777 },
+      'Chennai': { lat: 13.0827, lng: 80.2707 },
+      'Kochi': { lat: 9.9312, lng: 76.2673 },
+      'Kolkata': { lat: 22.5726, lng: 88.3639 },
+      'Visakhapatnam': { lat: 17.6868, lng: 83.2185 },
+      'Singapore': { lat: 1.3521, lng: 103.8198 },
+      'Dubai': { lat: 25.2048, lng: 55.2708 },
+      'Rotterdam': { lat: 51.9225, lng: 4.4792 },
+      'Hamburg': { lat: 53.5511, lng: 9.9937 },
+      'Shanghai': { lat: 31.2304, lng: 121.4737 },
+      'Hong Kong': { lat: 22.3193, lng: 114.1694 },
+      'Busan': { lat: 35.1796, lng: 129.0756 },
+      'Antwerp': { lat: 51.2194, lng: 4.4025 },
+      'Los Angeles': { lat: 34.0522, lng: -118.2437 },
+      'New York': { lat: 40.7128, lng: -74.0060 },
+      'Norfolk': { lat: 36.8468, lng: -76.2852 },
+      'Fujairah': { lat: 25.1164, lng: 56.3265 },
+      'Jebel Ali': { lat: 25.0144, lng: 55.1274 },
+      'Port Said': { lat: 31.2653, lng: 32.3019 },
+      'Piraeus': { lat: 37.9470, lng: 23.6347 },
+      'Tokyo': { lat: 35.6762, lng: 139.6503 },
+      'Manila': { lat: 14.5995, lng: 120.9842 },
+      'Karachi': { lat: 24.8607, lng: 67.0011 },
+      'Colombo': { lat: 6.9271, lng: 79.8612 },
+      'Chittagong': { lat: 22.3569, lng: 91.7832 }
+    };
+    
+    // Add coordinates for known cities
+    for (const [city, coords] of Object.entries(cityCoords)) {
+      await db.execute(`
+        UPDATE users 
+        SET 
+          latitude = ${coords.lat},
+          longitude = ${coords.lng}
+        WHERE city = '${city}' AND location_source = 'authentic'
       `);
     }
     
-    // Update questions table if it exists
-    try {
-      for (const duplicateId of duplicateIds) {
-        await db.execute(sql`
-          UPDATE questions 
-          SET user_id = ${primaryUserId} 
-          WHERE user_id = ${duplicateId}
-        `);
-      }
-    } catch (e) {
-      // Table might not exist, continue
-    }
-    
-    // Update any other related tables
-    try {
-      for (const duplicateId of duplicateIds) {
-        await db.execute(sql`
-          UPDATE user_subscription_status 
-          SET user_id = ${primaryUserId} 
-          WHERE user_id = ${duplicateId}
-        `);
-      }
-    } catch (e) {
-      // Table might not exist, continue
-    }
-    
-    console.log(`   ✅ Related tables updated successfully`);
-    
-  } catch (error) {
-    console.error(`   ❌ Error updating related tables:`, error);
-    throw error;
-  }
-}
-
-// Merge user data from duplicates into primary user
-function mergeUserData(primary: UserRecord, duplicates: UserRecord[]): any {
-  const merged: any = { ...primary };
-  
-  for (const duplicate of duplicates) {
-    if (duplicate.id === primary.id) continue;
-    
-    // Merge Q&A counts
-    merged.question_count = (merged.question_count || 0) + (duplicate.question_count || 0);
-    merged.answer_count = (merged.answer_count || 0) + (duplicate.answer_count || 0);
-    
-    // Use better profile data if available
-    if (!merged.full_name || merged.full_name === 'Maritime Professional Professional' || merged.full_name === 'Marine Professional') {
-      if (duplicate.full_name && duplicate.full_name !== 'Maritime Professional Professional' && duplicate.full_name !== 'Marine Professional') {
-        merged.full_name = duplicate.full_name;
-      }
-    }
-    
-    if (!merged.email && duplicate.email && !duplicate.email.includes('whatsapp.temp')) {
-      merged.email = duplicate.email;
-    }
-    
-    if (!merged.city || merged.city === '1234koihai' || merged.city === 'kalam@786') {
-      if (duplicate.city && duplicate.city !== '1234koihai' && duplicate.city !== 'kalam@786') {
-        merged.city = duplicate.city;
-      }
-    }
-    
-    // Keep better maritime rank (prefer specific ranks over 'other')
-    if (!merged.maritime_rank || merged.maritime_rank === 'other') {
-      if (duplicate.maritime_rank && duplicate.maritime_rank !== 'other') {
-        merged.maritime_rank = duplicate.maritime_rank;
-      }
-    }
-  }
-  
-  return merged;
-}
-
-async function safeDuplicateMerge() {
-  console.log('🔥 EXECUTING SAFE DUPLICATE USER MERGE...');
-  console.log('🛡️  This will handle foreign key constraints properly!');
-  
-  try {
-    // Fetch all users with WhatsApp numbers
-    const result = await db.execute(sql`
-      SELECT 
-        id, 
-        full_name, 
-        email, 
-        whatsapp_number, 
-        question_count, 
-        answer_count, 
-        is_platform_admin, 
-        created_at, 
-        maritime_rank, 
-        city
-      FROM users 
-      WHERE whatsapp_number IS NOT NULL 
-        AND whatsapp_number != ''
-      ORDER BY created_at ASC
+    // For India country without specific city, use general coordinates
+    await db.execute(`
+      UPDATE users 
+      SET 
+        latitude = 19.0760,
+        longitude = 72.8777
+      WHERE country = 'India' AND city IS NULL AND location_source = 'authentic'
     `);
     
-    const allUsers = result.rows as UserRecord[];
-    console.log(`📊 Processing ${allUsers.length} users with WhatsApp numbers`);
+    console.log('✅ Added coordinates for authentic locations');
     
-    // Group users by normalized WhatsApp numbers
-    const userGroups = groupUsersByWhatsApp(allUsers);
+    // Step 4: Verify the merge results
+    console.log('📊 Step 4: Verifying authentic location data...');
     
-    let mergeCount = 0;
-    let deletedCount = 0;
+    const finalStats = await db.execute(`
+      SELECT 
+        COUNT(*) as total_users,
+        COUNT(CASE WHEN city IS NOT NULL AND city != '' THEN 1 END) as users_with_city,
+        COUNT(CASE WHEN country IS NOT NULL AND country != '' THEN 1 END) as users_with_country,
+        COUNT(CASE WHEN latitude IS NOT NULL AND longitude IS NOT NULL THEN 1 END) as users_with_coords,
+        COUNT(CASE WHEN location_source = 'authentic' THEN 1 END) as authentic_locations
+      FROM users
+    `);
     
-    for (const [whatsappNumber, userList] of userGroups) {
-      if (userList.length > 1) {
-        mergeCount++;
-        console.log(`\n🔄 MERGING GROUP ${mergeCount}: ${whatsappNumber} (${userList.length} accounts)`);
-        
-        // Select primary user and merge data
-        const primaryUser = selectPrimaryUser(userList);
-        const mergedData = mergeUserData(primaryUser, userList);
-        
-        console.log(`   ✅ Primary: ${primaryUser.full_name} (${primaryUser.id})`);
-        console.log(`   📈 Merged: Q:${mergedData.question_count} A:${mergedData.answer_count}`);
-        
-        // Get duplicate IDs
-        const duplicateIds = userList
-          .filter(user => user.id !== primaryUser.id)
-          .map(user => user.id);
-        
-        if (duplicateIds.length > 0) {
-          // Step 1: Update related tables to point to primary user
-          await updateRelatedTables(primaryUser.id, duplicateIds);
-          
-          // Step 2: Update primary user with merged data
-          await db.execute(sql`
-            UPDATE users 
-            SET 
-              question_count = ${mergedData.question_count},
-              answer_count = ${mergedData.answer_count},
-              full_name = ${mergedData.full_name},
-              email = ${mergedData.email},
-              city = ${mergedData.city},
-              maritime_rank = ${mergedData.maritime_rank}
-            WHERE id = ${primaryUser.id}
-          `);
-          
-          // Step 3: Delete duplicate users (now safe since references are updated)
-          console.log(`   🗑️  Removing ${duplicateIds.length} duplicates`);
-          
-          for (const duplicateId of duplicateIds) {
-            await db.execute(sql`DELETE FROM users WHERE id = ${duplicateId}`);
-            deletedCount++;
-          }
-        }
-        
-        console.log(`   ✅ Merge complete`);
-      }
-    }
+    console.log('📈 Final statistics:', finalStats.rows[0]);
     
-    console.log(`\n🎉 SAFE MERGE OPERATION COMPLETED!`);
-    console.log(`   • Duplicate groups processed: ${mergeCount}`);
-    console.log(`   • Duplicate accounts removed: ${deletedCount}`);
-    console.log(`   • Foreign key constraints handled properly!`);
+    // Sample of users with authentic location data
+    const sampleUsers = await db.execute(`
+      SELECT full_name, city, country, whatsapp_number, location_source
+      FROM users 
+      WHERE location_source = 'authentic'
+      ORDER BY full_name
+      LIMIT 15
+    `);
     
-    // Verify the results
-    const finalCount = await db.execute(sql`SELECT COUNT(*) as count FROM users WHERE whatsapp_number IS NOT NULL AND whatsapp_number != ''`);
-    console.log(`   • Final users with WhatsApp: ${finalCount.rows[0].count}`);
+    console.log('\n🌍 Sample users with authentic location data:');
+    sampleUsers.rows.forEach((user, i) => {
+      console.log(`${i+1}. ${user.full_name || 'Maritime Professional'} [${user.whatsapp_number}]`);
+      console.log(`   Location: ${user.city || 'No city'}, ${user.country || 'No country'}`);
+      console.log(`   Source: ${user.location_source}\n`);
+    });
     
   } catch (error) {
-    console.error('❌ Error during safe merge operation:', error);
-    throw error;
+    console.error('❌ Error during safe location merge:', error);
   }
 }
 
-// Execute the safe merge
-safeDuplicateMerge()
-  .then(() => {
-    console.log('\n🎉 Safe duplicate user merge process completed successfully!');
-    process.exit(0);
-  })
-  .catch((error) => {
-    console.error('💥 Error in safe merge process:', error);
-    process.exit(1);
-  });
+safeLocationMerge().then(() => process.exit(0));
