@@ -25,7 +25,6 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
   const [loading, setLoading] = useState(true);
   const [imageError, setImageError] = useState<Set<string>>(new Set());
   const [currentStartIndex, setCurrentStartIndex] = useState(0);
-  const [viewMode, setViewMode] = useState<'carousel' | 'grid'>('grid'); // Default to showing all images
 
   // Fetch question attachments
   useEffect(() => {
@@ -78,7 +77,7 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
     }
   };
 
-  const imagesPerView = viewMode === 'carousel' ? 3 : Math.min(7, attachments.length); // Show 7 images in grid mode, or all if fewer
+  const imagesPerView = 3; // Traditional carousel showing 3 images
 
   const scrollNext = () => {
     if (currentStartIndex + imagesPerView < attachments.length) {
