@@ -627,6 +627,19 @@ export class DatabaseStorage implements IStorage {
     console.log('Skipping login count increment for user:', userId);
   }
 
+  async incrementUserQuestionCount(userId: string): Promise<void> {
+    try {
+      await pool.query(`
+        UPDATE users 
+        SET question_count = COALESCE(question_count, 0) + 1 
+        WHERE id = $1
+      `, [userId]);
+      console.log(`📊 Incremented question count for user ${userId}`);
+    } catch (error) {
+      console.error('Error incrementing user question count:', error);
+    }
+  }
+
   async getUsersWithLocation(): Promise<User[]> {
     try {
       console.log('Fetching ALL users directly from PostgreSQL database');

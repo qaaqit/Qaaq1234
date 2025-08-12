@@ -12,6 +12,7 @@ export interface IStorage {
   updateUser(userId: string, updates: Partial<User>): Promise<User | undefined>;
   updateUserVerification(userId: string, isVerified: boolean): Promise<void>;
   incrementLoginCount(userId: string): Promise<void>;
+  incrementUserQuestionCount(userId: string): Promise<void>;
   getUsersWithLocation(): Promise<User[]>;
   updateUserLocation(userId: string, latitude: number, longitude: number, source: 'device' | 'ship' | 'city'): Promise<void>;
   updateUserProfile(userId: string, profileData: Partial<User>): Promise<User | undefined>;
@@ -117,6 +118,12 @@ export class DatabaseStorage implements IStorage {
     await db.update(users).set({ 
       loginCount: sql`${users.loginCount} + 1`,
       lastLogin: new Date()
+    }).where(eq(users.id, userId));
+  }
+
+  async incrementUserQuestionCount(userId: string): Promise<void> {
+    await db.update(users).set({ 
+      questionCount: sql`${users.questionCount} + 1`
     }).where(eq(users.id, userId));
   }
 

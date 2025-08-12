@@ -1367,7 +1367,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Increment user question count for authenticated users
           if (user) {
-            await incrementUserQuestionCount(user.id);
+            await storage.incrementUserQuestionCount(user.id);
           }
         } catch (error) {
           console.error('Error storing QBOT interaction:', error);
@@ -2064,20 +2064,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Helper function to increment user question count
-  async function incrementUserQuestionCount(userId: string): Promise<void> {
-    try {
-      await pool.query(`
-        UPDATE users 
-        SET question_count = COALESCE(question_count, 0) + 1 
-        WHERE id = $1
-      `, [userId]);
-      console.log(`📊 Incremented question count for user ${userId}`);
-    } catch (error) {
-      console.error('Error incrementing user question count:', error);
-    }
-  }
-
   // Function to park individual Q&A pair in database with proper question ID
   async function parkChatQAInDatabase(userMessage: string, aiResponse: string, user: any): Promise<string> {
     const userName = user?.fullName || user?.whatsAppDisplayName || 'QBOT User';
@@ -2150,7 +2136,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Increment user question count for authenticated users
       if (user) {
-        await incrementUserQuestionCount(user.id);
+        await storage.incrementUserQuestionCount(user.id);
       }
       
       console.log(`🤖 QBOT Chat - User: ${message.substring(0, 50)}... | Response: ${aiResponse.content.substring(0, 50)}...`);
