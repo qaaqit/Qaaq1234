@@ -317,35 +317,6 @@ export class RazorpayService {
         isOrderMode: true,
         orderDetails: order
       };
-
-      // Store the subscription in our database
-      const result = await pool.query(`
-        INSERT INTO subscriptions (
-          user_id, subscription_type, razorpay_subscription_id, razorpay_plan_id, 
-          status, amount, currency, short_url, notes
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
-        RETURNING *
-      `, [
-        userId,
-        planType,
-        razorpaySubscription.id,
-        planId,
-        razorpaySubscription.status,
-        planConfig.amount,
-        'INR',
-        razorpaySubscription.short_url,
-        JSON.stringify(razorpaySubscription.notes)
-      ]);
-
-      console.log('✅ Subscription created:', razorpaySubscription.id);
-
-      return {
-        subscription: result.rows[0],
-        checkoutUrl: razorpaySubscription.short_url,
-        razorpaySubscriptionId: razorpaySubscription.id,
-        razorpayOrderId: null,
-        isOrderMode: false
-      };
     } catch (error) {
       console.error('❌ Failed to create subscription:', error);
       throw error;
