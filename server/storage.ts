@@ -1,6 +1,6 @@
 import { users, posts, likes, verificationCodes, chatConnections, chatMessages, whatsappMessages, type User, type InsertUser, type Post, type InsertPost, type VerificationCode, type Like, type ChatConnection, type ChatMessage, type InsertChatConnection, type InsertChatMessage, type WhatsappMessage, type InsertWhatsappMessage } from "@shared/schema";
 import { db, pool } from "./db";
-import { eq, desc, and, ilike, or, sql, isNotNull } from "drizzle-orm";
+import { eq, desc, and, ilike, or, sql, isNotNull, not } from "drizzle-orm";
 
 export interface IStorage {
   // User management
@@ -282,6 +282,138 @@ export class DatabaseStorage implements IStorage {
       passwordRenewalDue: dbUser.password_renewal_due,
       mustCreatePassword: dbUser.must_create_password || false
     };
+  }
+
+  // Chat connection methods
+  async getChatConnection(senderId: string, receiverId: string): Promise<ChatConnection | null> {
+    try {
+      const [connection] = await db
+        .select()
+        .from(chatConnections)
+        .where(
+          or(
+            and(eq(chatConnections.senderId, senderId), eq(chatConnections.receiverId, receiverId)),
+            and(eq(chatConnections.senderId, receiverId), eq(chatConnections.receiverId, senderId))
+          )
+        );
+      return connection || null;
+    } catch (error) {
+      console.error('Error getting chat connection:', error);
+      return null;
+    }
+  }
+
+  async createChatConnection(senderId: string, receiverId: string): Promise<ChatConnection> {
+    const [connection] = await db
+      .insert(chatConnections)
+      .values({
+        senderId,
+        receiverId,
+        status: 'pending',
+      })
+      .returning();
+    return connection;
+  }
+
+  async getUserChatConnections(userId: string): Promise<ChatConnection[]> {
+    try {
+      const connections = await db
+        .select()
+        .from(chatConnections)
+        .where(
+          or(
+            eq(chatConnections.senderId, userId),
+            eq(chatConnections.receiverId, userId)
+          )
+        )
+        .orderBy(sql`${chatConnections.createdAt} DESC`);
+      return connections;
+    } catch (error) {
+      console.error('Error getting user chat connections:', error);
+      throw error;
+    }
+  }
+
+  async acceptChatConnection(connectionId: string): Promise<void> {
+    await db
+      .update(chatConnections)
+      .set({
+        status: 'accepted',
+        acceptedAt: new Date(),
+      })
+      .where(eq(chatConnections.id, connectionId));
+  }
+
+  async rejectChatConnection(connectionId: string): Promise<void> {
+    await db
+      .update(chatConnections)
+      .set({ status: 'rejected' })
+      .where(eq(chatConnections.id, connectionId));
+  }
+
+  async sendMessage(connectionId: string, senderId: string, message: string): Promise<ChatMessage> {
+    const [chatMessage] = await db
+      .insert(chatMessages)
+      .values({
+        connectionId,
+        senderId,
+        message,
+        isRead: false,
+      })
+      .returning();
+    return chatMessage;
+  }
+
+  async getChatMessages(connectionId: string): Promise<ChatMessage[]> {
+    return await db
+      .select()
+      .from(chatMessages)
+      .where(eq(chatMessages.connectionId, connectionId))
+      .orderBy(chatMessages.createdAt);
+  }
+
+  async markMessagesAsRead(connectionId: string, userId: string): Promise<void> {
+    await db
+      .update(chatMessages)
+      .set({ isRead: true })
+      .where(
+        and(
+          eq(chatMessages.connectionId, connectionId),
+          not(eq(chatMessages.senderId, userId))
+        )
+      );
+  }
+
+  async getUnreadMessageCounts(userId: string): Promise<Record<string, number>> {
+    try {
+      // Get all connections for this user
+      const connections = await this.getUserChatConnections(userId);
+      const counts: Record<string, number> = {};
+
+      for (const connection of connections) {
+        // Find the other user in this connection
+        const otherUserId = connection.senderId === userId ? connection.receiverId : connection.senderId;
+        
+        // Count unread messages from the other user in this connection
+        const [result] = await db
+          .select({ count: sql`count(*)` })
+          .from(chatMessages)
+          .where(
+            and(
+              eq(chatMessages.connectionId, connection.id),
+              eq(chatMessages.senderId, otherUserId),
+              eq(chatMessages.isRead, false)
+            )
+          );
+
+        counts[otherUserId] = Number(result.count) || 0;
+      }
+
+      return counts;
+    } catch (error) {
+      console.error('Error getting unread message counts:', error);
+      throw error;
+    }
   }
 }
 
