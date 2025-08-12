@@ -1112,24 +1112,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async checkPasswordRenewalRequired(userId: string): Promise<boolean> {
-    try {
-      // Check password column
-      const result = await pool.query(`
-        SELECT password FROM users WHERE id = $1
-      `, [userId]);
-      
-      if (result.rows.length === 0) {
-        return true; // User not found, require password creation
-      }
-      
-      const user = result.rows[0];
-      
-      // Require password creation if password is null or empty
-      return !user.password || user.password.trim() === '';
-    } catch (error) {
-      console.error(`Error checking password renewal for user ${userId}:`, error as Error);
-      return false; // Don't require password creation on error
-    }
+    // PASSWORD RENEWAL DISABLED: Users can update passwords at their own leisure
+    return false; // Never require password renewal
   }
 
   async generateUserId(fullName: string, rank: string): Promise<string> {

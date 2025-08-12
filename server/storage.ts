@@ -156,15 +156,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async checkPasswordRenewalRequired(userId: string): Promise<boolean> {
-    const [user] = await db.select().from(users).where(eq(users.id, userId));
-    if (!user || !user.passwordCreatedAt) {
-      return true; // No password set
-    }
-    
-    const renewalDate = new Date(user.passwordCreatedAt);
-    renewalDate.setFullYear(renewalDate.getFullYear() + 1); // 1 year expiry
-    
-    return new Date() > renewalDate;
+    // PASSWORD RENEWAL DISABLED: Users can update passwords at their own leisure
+    return false; // Never require password renewal
   }
 
   async generateUserId(fullName: string, rank: string): Promise<string> {

@@ -19,10 +19,12 @@ export function usePasswordCheck(userId: string | undefined) {
   });
 
   useEffect(() => {
-    if (passwordStatus?.requiresRenewal && userId) {
-      setIsRenewal(true); // Assume renewal since all users need password creation now
-      setShowPasswordModal(true);
-    }
+    // PASSWORD RENEWAL DISABLED: Never show modal automatically
+    // Users can access password update through their profile settings
+    // if (passwordStatus?.requiresRenewal && userId) {
+    //   setIsRenewal(true);
+    //   setShowPasswordModal(true);
+    // }
   }, [passwordStatus, userId]);
 
   const closeModal = () => {

@@ -164,12 +164,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/users/:userId/password-renewal-status', async (req, res) => {
     try {
-      const { userId } = req.params;
-      const requiresRenewal = await storage.checkPasswordRenewalRequired(userId);
-      
+      // PASSWORD RENEWAL DISABLED: Always return false to allow user freedom
       res.json({
-        requiresRenewal,
-        message: requiresRenewal ? 'Password creation/renewal required' : 'Password is current'
+        requiresRenewal: false,
+        message: 'Password renewal not required - users can update at their leisure'
       });
     } catch (error: unknown) {
       console.error('Password renewal check error:', error);
