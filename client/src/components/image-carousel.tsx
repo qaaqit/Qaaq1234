@@ -108,114 +108,63 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
     return null;
   }
 
-  // Show all images in grid mode, or limited images in carousel mode
-  const displayImages = viewMode === 'grid' 
-    ? attachments 
-    : attachments.slice(currentStartIndex, currentStartIndex + imagesPerView);
+  // Traditional carousel - show 3 images at a time
+  const displayImages = attachments.slice(currentStartIndex, currentStartIndex + imagesPerView);
 
   return (
     <div className={`bg-gradient-to-r from-orange-50 to-yellow-50 border-t border-orange-200 relative ${className}`}>
-      {/* Toggle button to switch between grid and carousel */}
-      <div className="absolute top-2 right-2 z-10">
+      {/* Traditional carousel - show 3 images with navigation */}
+      <div className="flex items-stretch justify-center space-x-3 px-4 h-full">
+        {displayImages.map((attachment, index) => (
+          <div 
+            key={attachment.id} 
+            className="relative cursor-pointer group flex-1 max-w-[120px] hover:scale-105 transition-transform duration-200"
+            onClick={() => handleViewQuestion(attachment.questionId)}
+            title={`Click to view: ${attachment.question?.content?.substring(0, 50)}...`}
+          >
+            {!imageError.has(attachment.id) ? (
+              <img
+                src={attachment.attachmentUrl}
+                alt="Maritime Question"
+                className="w-full h-full object-cover rounded-lg border-2 border-white shadow-md group-hover:shadow-lg transition-shadow duration-200"
+                onError={() => handleImageError(attachment.id)}
+                loading="lazy"
+              />
+            ) : (
+              <div className="w-full h-full bg-gray-100 border-2 border-white rounded-lg flex items-center justify-center shadow-md">
+                <Eye size={20} className="text-gray-400" />
+              </div>
+            )}
+            
+            {/* Subtle hover overlay */}
+            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity duration-200 rounded-lg"></div>
+          </div>
+        ))}
+      </div>
+      
+      {/* Navigation arrows for traditional carousel */}
+      {/* Left Chevron - Only show if we can scroll back */}
+      {canScrollPrev && (
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => setViewMode(viewMode === 'grid' ? 'carousel' : 'grid')}
-          className="bg-white/80 hover:bg-white text-orange-600 border border-orange-200 px-3 py-1 text-xs rounded-full"
+          onClick={scrollPrev}
+          className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/20 hover:bg-black/40 text-white border-none p-2 h-10 w-10 rounded-full transition-all duration-200"
         >
-          {viewMode === 'grid' ? 'Carousel' : 'Show All'}
+          <ChevronLeft size={18} />
         </Button>
-      </div>
-
-      {viewMode === 'grid' ? (
-        // Grid mode - show all images in a scrollable grid
-        <div className="px-4 py-3">
-          <div className="grid grid-cols-7 gap-2 max-h-32 overflow-y-auto">
-            {displayImages.map((attachment, index) => (
-              <div 
-                key={attachment.id} 
-                className="relative cursor-pointer group aspect-square hover:scale-105 transition-transform duration-200"
-                onClick={() => handleViewQuestion(attachment.questionId)}
-                title={`Click to view: ${attachment.question?.content?.substring(0, 50)}...`}
-              >
-                {!imageError.has(attachment.id) ? (
-                  <img
-                    src={attachment.attachmentUrl}
-                    alt="Maritime Question"
-                    className="w-full h-full object-cover rounded-lg border-2 border-white shadow-md group-hover:shadow-lg transition-shadow duration-200"
-                    onError={() => handleImageError(attachment.id)}
-                    loading="lazy"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gray-100 border-2 border-white rounded-lg flex items-center justify-center shadow-md">
-                    <Eye size={16} className="text-gray-400" />
-                  </div>
-                )}
-                
-                {/* Subtle hover overlay */}
-                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity duration-200 rounded-lg"></div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : (
-        // Carousel mode - show limited images with navigation
-        <div className="flex items-stretch justify-center space-x-3 px-4 h-full">
-          {displayImages.map((attachment, index) => (
-            <div 
-              key={attachment.id} 
-              className="relative cursor-pointer group flex-1 max-w-[120px] hover:scale-105 transition-transform duration-200"
-              onClick={() => handleViewQuestion(attachment.questionId)}
-              title={`Click to view: ${attachment.question?.content?.substring(0, 50)}...`}
-            >
-              {!imageError.has(attachment.id) ? (
-                <img
-                  src={attachment.attachmentUrl}
-                  alt="Maritime Question"
-                  className="w-full h-full object-cover rounded-lg border-2 border-white shadow-md group-hover:shadow-lg transition-shadow duration-200"
-                  onError={() => handleImageError(attachment.id)}
-                  loading="lazy"
-                />
-              ) : (
-                <div className="w-full h-full bg-gray-100 border-2 border-white rounded-lg flex items-center justify-center shadow-md">
-                  <Eye size={20} className="text-gray-400" />
-                </div>
-              )}
-              
-              {/* Subtle hover overlay */}
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity duration-200 rounded-lg"></div>
-            </div>
-          ))}
-        </div>
       )}
-      
-      {/* Navigation arrows - only show in carousel mode */}
-      {viewMode === 'carousel' && (
-        <>
-          {/* Left Chevron - Only show if we can scroll back */}
-          {canScrollPrev && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={scrollPrev}
-              className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/20 hover:bg-black/40 text-white border-none p-2 h-10 w-10 rounded-full transition-all duration-200"
-            >
-              <ChevronLeft size={18} />
-            </Button>
-          )}
 
-          {/* Right Chevron - Only show if there are more images */}
-          {canScrollNext && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={scrollNext}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/20 hover:bg-black/40 text-white border-none p-2 h-10 w-10 rounded-full transition-all duration-200"
-            >
-              <ChevronRight size={18} />
-            </Button>
-          )}
-        </>
+      {/* Right Chevron - Only show if there are more images */}
+      {canScrollNext && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={scrollNext}
+          className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/20 hover:bg-black/40 text-white border-none p-2 h-10 w-10 rounded-full transition-all duration-200"
+        >
+          <ChevronRight size={18} />
+        </Button>
       )}
     </div>
   );
