@@ -563,7 +563,7 @@ _Your maritime community is here to help_ ⚓`;
       const allUsers = await db.select().from(users);
       
       const watiContacts = [];
-      const csvRows = ['Full Name,WhatsApp Number,Maritime Rank,Email,Company,Current City,Question Count,Present/Last Ship'];
+      const csvRows = ['Full Name,Country Code,Phone Number,Maritime Rank,Email,Company,Current City,Question Count,Present/Last Ship'];
       const vcfContacts = [];
       
       for (const user of allUsers) {
@@ -625,8 +625,8 @@ _Your maritime community is here to help_ ⚓`;
         
         watiContacts.push(watiContact);
         
-        // Enhanced CSV row
-        csvRows.push(`"${fullName}","${user.id}","${maritimeRank}","${email}","${company}","${currentCity}","${questionCount}","${presentShip}"`);
+        // Enhanced CSV row with separate country code and phone number
+        csvRows.push(`"${fullName}","${countryCode}","${phoneNumber}","${maritimeRank}","${email}","${company}","${currentCity}","${questionCount}","${presentShip}"`);
         
         // VCF contact
         const vcfContact = [

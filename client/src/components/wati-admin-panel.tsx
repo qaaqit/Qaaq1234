@@ -709,26 +709,43 @@ export function WatiAdminPanel() {
                 </CardHeader>
                 <CardContent>
                   <div className="max-h-60 overflow-y-auto">
-                    <div className="grid gap-2">
-                      {exportData.contacts.slice(0, 10).map((contact: any, index: number) => (
-                        <div key={index} className="flex items-center justify-between p-2 border rounded">
-                          <div>
-                            <span className="font-medium">{contact.name || 'Unknown'}</span>
-                            <span className="text-sm text-gray-500 ml-2">+{contact.whatsappNumber}</span>
-                          </div>
-                          <div className="text-xs text-gray-400">
-                            {contact.customParams?.find((p: any) => p.name === 'maritime_rank')?.value || 'No rank'}
-                            {contact.customParams?.find((p: any) => p.name === 'ship_name')?.value && 
-                              ' • ' + contact.customParams.find((p: any) => p.name === 'ship_name').value}
-                          </div>
-                        </div>
-                      ))}
-                      {exportData.contacts.length > 10 && (
-                        <div className="text-center text-sm text-gray-500 py-2">
-                          ... and {exportData.contacts.length - 10} more maritime professionals
-                        </div>
-                      )}
-                    </div>
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Country Code</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Phone Number</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Maritime Rank</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Ship</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {exportData.contacts.slice(0, 10).map((contact: any, index: number) => (
+                          <tr key={index}>
+                            <td className="px-4 py-2 text-sm font-medium text-gray-900">
+                              {contact.name || 'Unknown'}
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-500">
+                              {contact.countryCode || '+91'}
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-500">
+                              {contact.whatsappNumber}
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-500">
+                              {contact.customParams?.find((p: any) => p.name === 'maritime_rank')?.value || '-'}
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-500">
+                              {contact.customParams?.find((p: any) => p.name === 'ship_name')?.value || '-'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {exportData.contacts.length > 10 && (
+                      <div className="text-center text-sm text-gray-500 py-2">
+                        ... and {exportData.contacts.length - 10} more maritime professionals
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
