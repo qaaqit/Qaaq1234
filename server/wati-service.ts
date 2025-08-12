@@ -628,48 +628,70 @@ _Your maritime community is here to help_ ⚓`;
   }
 
   /**
-   * Bulk import contacts to WATI
+   * Bulk import contacts to WATI (with proper chunking for large datasets)
    */
   async bulkImportContacts(contacts: WatiContact[]): Promise<any> {
     try {
       console.log(`📤 Bulk importing ${contacts.length} contacts to WATI...`);
       
       const results = [];
-      const batchSize = 10; // Process in smaller batches to avoid rate limits
+      const batchSize = 5; // Smaller batches for large datasets
+      const maxRetries = 3;
       
       for (let i = 0; i < contacts.length; i += batchSize) {
         const batch = contacts.slice(i, i + batchSize);
+        console.log(`📤 Processing batch ${Math.floor(i/batchSize) + 1} of ${Math.ceil(contacts.length/batchSize)} (${batch.length} contacts)`);
         
-        const batchPromises = batch.map(async (contact) => {
-          try {
-            const result = await this.addContact(contact);
-            return { success: true, contact: contact.whatsappNumber, result };
-          } catch (error) {
-            console.error(`Failed to import contact ${contact.whatsappNumber}:`, error);
-            return { success: false, contact: contact.whatsappNumber, error: error.message };
+        const batchPromises = batch.map(async (contact, index) => {
+          let retries = 0;
+          
+          while (retries < maxRetries) {
+            try {
+              // Add small delay for each contact to avoid overwhelming the API
+              if (index > 0) {
+                await new Promise(resolve => setTimeout(resolve, 200));
+              }
+              
+              const result = await this.addContact(contact);
+              console.log(`✅ Imported ${contact.name} (${contact.whatsappNumber})`);
+              return { success: true, contact: contact.whatsappNumber, result };
+              
+            } catch (error) {
+              retries++;
+              console.warn(`⚠️ Attempt ${retries} failed for ${contact.whatsappNumber}: ${error.message}`);
+              
+              if (retries >= maxRetries) {
+                console.error(`❌ Failed to import ${contact.whatsappNumber} after ${maxRetries} attempts`);
+                return { success: false, contact: contact.whatsappNumber, error: error.message };
+              }
+              
+              // Exponential backoff delay
+              await new Promise(resolve => setTimeout(resolve, Math.pow(2, retries) * 1000));
+            }
           }
         });
         
         const batchResults = await Promise.all(batchPromises);
         results.push(...batchResults);
         
-        // Small delay between batches to respect rate limits
+        // Longer delay between batches to respect rate limits
         if (i + batchSize < contacts.length) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          console.log(`⏳ Waiting 3 seconds before next batch...`);
+          await new Promise(resolve => setTimeout(resolve, 3000));
         }
       }
       
       const successful = results.filter(r => r.success).length;
       const failed = results.filter(r => !r.success).length;
       
-      console.log(`📤 Bulk import complete: ${successful} successful, ${failed} failed`);
+      console.log(`📤 Bulk import complete: ${successful} successful, ${failed} failed out of ${contacts.length} total`);
       
       return {
         success: true,
         total: contacts.length,
         successful,
         failed,
-        results
+        results: results.slice(0, 10) // Only return first 10 results to avoid payload size issues
       };
       
     } catch (error) {

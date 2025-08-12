@@ -4316,10 +4316,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Bulk import contacts to WATI (admin only)
+  // Bulk import contacts to WATI (admin only) - with chunked processing
   app.post('/api/wati/bulk-import', authenticateToken, isAdmin, async (req: any, res) => {
     try {
-      const { contacts } = req.body;
+      console.log('📤 Starting bulk import to WATI platform...');
+      const { contacts, batchSize = 50 } = req.body;
       
       if (!contacts || !Array.isArray(contacts)) {
         return res.status(400).json({ success: false, message: 'Contacts array is required' });
@@ -4332,12 +4333,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ success: false, message: 'WATI service not available' });
       }
       
-      const result = await watiService.bulkImportContacts(contacts);
-      res.json(result);
+      console.log(`📤 Importing ${contacts.length} contacts in manageable chunks...`);
+      
+      // Process in smaller chunks to avoid payload and rate limit issues
+      const chunkSize = Math.min(batchSize, 25); // Smaller chunks for stability
+      const results = [];
+      let totalSuccessful = 0;
+      let totalFailed = 0;
+      
+      for (let i = 0; i < contacts.length; i += chunkSize) {
+        const chunk = contacts.slice(i, i + chunkSize);
+        console.log(`📤 Processing chunk ${Math.floor(i/chunkSize) + 1} of ${Math.ceil(contacts.length/chunkSize)} (${chunk.length} contacts)`);
+        
+        try {
+          const chunkResult = await watiService.bulkImportContacts(chunk);
+          totalSuccessful += chunkResult.successful;
+          totalFailed += chunkResult.failed;
+          
+          results.push({
+            chunk: Math.floor(i/chunkSize) + 1,
+            processed: chunk.length,
+            successful: chunkResult.successful,
+            failed: chunkResult.failed
+          });
+          
+          console.log(`✅ Chunk ${Math.floor(i/chunkSize) + 1}: ${chunkResult.successful} successful, ${chunkResult.failed} failed`);
+          
+        } catch (chunkError) {
+          console.error(`❌ Error processing chunk ${Math.floor(i/chunkSize) + 1}:`, chunkError.message);
+          totalFailed += chunk.length;
+          results.push({
+            chunk: Math.floor(i/chunkSize) + 1,
+            processed: chunk.length,
+            successful: 0,
+            failed: chunk.length,
+            error: chunkError.message
+          });
+        }
+        
+        // Delay between chunks to respect rate limits
+        if (i + chunkSize < contacts.length) {
+          console.log('⏳ Waiting 2 seconds before next chunk...');
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      }
+      
+      const summary = {
+        success: true,
+        total: contacts.length,
+        successful: totalSuccessful,
+        failed: totalFailed,
+        chunks: results.length,
+        results: results.slice(0, 5) // Only return first 5 chunk results to avoid large response
+      };
+      
+      console.log(`📤 Import complete: ${totalSuccessful} successful, ${totalFailed} failed out of ${contacts.length} total`);
+      res.json(summary);
       
     } catch (error) {
       console.error('❌ Error bulk importing contacts:', error);
-      res.status(500).json({ success: false, message: 'Failed to import contacts' });
+      res.status(500).json({ success: false, message: 'Failed to import contacts', error: error.message });
     }
   });
 
