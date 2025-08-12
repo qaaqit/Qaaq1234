@@ -83,81 +83,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
     fetchWhatsAppHistory();
   }, [user?.id, toast]);
 
-  // Load WATI WhatsApp widget positioned over send button
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.type = 'text/javascript';
-    script.async = true;
-    script.src = 'https://wati-integration-prod-service.clare.ai/v2/watiWidget.js?92314';
-    
-    const options = {
-      "enabled": true,
-      "chatButtonSetting": {
-        "backgroundColor": "#ea8c34",
-        "ctaText": "WhatsApp",
-        "borderRadius": "12",
-        "marginLeft": "0",
-        "marginRight": "80", // Position it over the send button area
-        "marginBottom": "80", // Position it above the send button
-        "ctaIconWATI": false,
-        "position": "right"
-      },
-      "brandSetting": {
-        "brandName": "Qaaq",
-        "brandSubTitle": "undefined",
-        "brandImg": "https://www.wati.io/wp-content/uploads/2023/04/Wati-logo.svg",
-        "welcomeText": "Hi there!\nThis is QBOT.",
-        "messageText": "",
-        "backgroundColor": "#ea8c34",
-        "ctaText": "WhatsApp",
-        "borderRadius": "12",
-        "autoShow": false,
-        "phoneNumber": "917208878008"
-      }
-    };
 
-    script.onload = function() {
-      if (typeof (window as any).CreateWhatsappChatWidget === 'function') {
-        (window as any).CreateWhatsappChatWidget(options);
-        
-        // Additional CSS to position widget over send button area
-        const styleElement = document.createElement('style');
-        styleElement.textContent = `
-          .wati-chat-button {
-            z-index: 1000 !important;
-            position: fixed !important;
-            bottom: 80px !important;
-            right: 80px !important;
-            width: 56px !important;
-            height: 56px !important;
-            border-radius: 12px !important;
-            box-shadow: 0 4px 12px rgba(234, 140, 52, 0.3) !important;
-          }
-          .wati-chat-button:hover {
-            transform: scale(1.05) !important;
-            transition: transform 0.2s ease !important;
-          }
-        `;
-        document.head.appendChild(styleElement);
-      }
-    };
-
-    document.head.appendChild(script);
-
-    // Cleanup function to remove script when component unmounts
-    return () => {
-      if (script.parentNode) {
-        script.parentNode.removeChild(script);
-      }
-      // Also remove custom styles
-      const styles = document.querySelectorAll('style');
-      styles.forEach(style => {
-        if (style.textContent?.includes('.wati-chat-button')) {
-          style.remove();
-        }
-      });
-    };
-  }, []);
 
   const handleSendQBotMessage = async (messageText: string, attachments?: string[], isPrivate?: boolean) => {
     const newMessage: Message = {
@@ -294,6 +220,32 @@ export default function QBOTPage({ user }: QBOTPageProps) {
               </div>
             </button>
             <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+              {/* WATI WhatsApp Widget Button */}
+              <button
+                onClick={() => {
+                  if (typeof (window as any).CreateWhatsappChatWidget === 'function') {
+                    // Trigger WATI widget if available
+                    const watiButton = document.querySelector('.wati-chat-button') as HTMLElement;
+                    if (watiButton) {
+                      watiButton.click();
+                    }
+                  } else {
+                    // Fallback to direct WhatsApp
+                    window.open('https://wa.me/917208878008', '_blank');
+                  }
+                }}
+                className="w-8 h-8 sm:w-9 sm:h-9 bg-green-600 hover:bg-green-700 rounded-full flex items-center justify-center transition-colors text-white shadow-md"
+                title="WhatsApp QBOT"
+              >
+                <svg 
+                  viewBox="0 0 24 24" 
+                  fill="currentColor" 
+                  className="w-4 h-4 sm:w-5 sm:h-5"
+                >
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.465 3.516"/>
+                </svg>
+              </button>
+              
               <UserDropdown user={user} onLogout={() => window.location.reload()} />
             </div>
           </div>
