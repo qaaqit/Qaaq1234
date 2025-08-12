@@ -1235,6 +1235,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Handle different message types based on Commandments
       let response = "";
+      let aiModel = 'unknown';
+      let responseTime: number | undefined;
+      let tokens: number | undefined;
       
       // Commandment X: Handle simple acknowledgments
       if (isSimpleAcknowledgment(message)) {
@@ -1242,7 +1245,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       // Commandment I: AI-powered technical responses
       else if (isQuestionMessage(message) || isTechnicalMessage(message)) {
-        response = await generateAIResponse(message, category, user, activeRules);
+        const aiResponse = await generateAIResponse(message, category, user, activeRules);
+        response = aiResponse.content;
+        aiModel = aiResponse.aiModel;
+        responseTime = aiResponse.responseTime;
+        tokens = aiResponse.tokens;
       }
       // Location/proximity requests (Commandment VI)
       else if (isLocationQuery(message)) {
@@ -1254,7 +1261,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       // Default AI response for all other messages (Commandment I)
       else {
-        response = await generateAIResponse(message, category, user, activeRules);
+        const aiResponse = await generateAIResponse(message, category, user, activeRules);
+        response = aiResponse.content;
+        aiModel = aiResponse.aiModel;
+        responseTime = aiResponse.responseTime;
+        tokens = aiResponse.tokens;
       }
 
       // Commandment II: Ensure message uniqueness (simplified for API)
@@ -1263,8 +1274,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Store QBOT interaction in database unless privacy mode is enabled
       if (!isPrivate) {
         try {
-          await storeQBOTResponseInDatabase(message, response, user, attachments);
-          console.log(`📚 QBOT interaction stored in database (User: ${userId})`);
+          // Store QBOT interaction with AI model information for feedback tracking
+          const storedResponse = await storeQBOTResponseInDatabase(message, response, user, attachments, aiModel, responseTime, tokens);
+          console.log(`📚 QBOT interaction stored in database with ${aiModel} model (User: ${userId})`);
         } catch (error) {
           console.error('Error storing QBOT interaction:', error);
           // Continue without failing the request
@@ -1278,6 +1290,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         response: response,
         category: category,
         responseId: responseId,
+        aiModel: aiModel,
+        responseTime: responseTime,
         timestamp: new Date()
       });
 
@@ -1387,66 +1401,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return followUps[Math.floor(Math.random() * followUps.length)];
   }
 
-  async function generateAIResponse(message: string, category: string, user: any, activeRules?: string): Promise<string> {
-    // Commandment I: AI-powered responses for all messages
+  async function generateAIResponse(message: string, category: string, user: any, activeRules?: string): Promise<{ content: string, aiModel: string, responseTime?: number, tokens?: number }> {
+    // Import AI service for dual model testing
+    const { aiService } = await import('./ai-service');
+    
     try {
-      if (!process.env.OPENAI_API_KEY) {
-        throw new Error('OpenAI API key not configured');
-      }
-
-      const { OpenAI } = await import('openai');
-      const openai = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
-      });
-
-      const userRank = user?.maritimeRank || 'Maritime Professional';
-      const userShip = user?.shipName ? `aboard ${user.shipName}` : 'shore-based';
+      // Use dual AI system with random model selection for testing
+      const aiResponse = await aiService.generateDualResponse(message, category, user, activeRules);
+      console.log(`🤖 AI Response generated using ${aiResponse.model} for ${category}: ${aiResponse.content.substring(0, 50)}...`);
       
-      let systemPrompt = `You are QBOT, an advanced maritime AI assistant and the primary chat interface for QaaqConnect. 
-      You specialize in ${category} and serve the global maritime community with expert knowledge on:
-      - Maritime engineering, maintenance, and troubleshooting
-      - Navigation, regulations, and safety procedures  
-      - Ship operations, cargo handling, and port procedures
-      - Career guidance for maritime professionals
-      - Technical specifications for maritime equipment
-      
-      User context: ${userRank} ${userShip}
-      
-      CRITICAL RESPONSE FORMAT:
-      - ALWAYS respond in bullet point format with exactly 3-5 bullet points
-      - Keep total response between 30-50 words maximum
-      - Each bullet point should be 6-12 words maximum
-      - Use concise, technical language
-      - Prioritize safety and maritime regulations (SOLAS, MARPOL, STCW)
-      - Example format:
-        • [Action/Solution in 6-12 words]
-        • [Technical detail in 6-12 words]  
-        • [Safety consideration in 6-12 words]
-        • [Regulation reference if applicable]`;
-      
-      // Include active rules context if available
-      if (activeRules) {
-        systemPrompt += `\n\nActive bot documentation guidelines:\n${activeRules.substring(0, 800)}`;
-      }
-
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: message }
-        ],
-        max_tokens: 80,
-        temperature: 0.7,
-      });
-
-      const aiResponse = response.choices[0]?.message?.content || 'Unable to generate response at this time.';
-      console.log(`🤖 AI Response generated for ${category}: ${aiResponse.substring(0, 50)}...`);
-      return aiResponse;
+      return {
+        content: aiResponse.content,
+        aiModel: aiResponse.model,
+        responseTime: aiResponse.responseTime,
+        tokens: aiResponse.tokens
+      };
 
     } catch (error) {
-      console.error('OpenAI API error:', error);
+      console.error('AI generation error:', error);
       
-      // Fallback to bullet point responses if OpenAI fails
+      // Fallback to predefined responses
       const fallbackResponses = [
         `• Check manufacturer's manual first\n• Follow proper safety protocols\n• Consult senior engineer if unsure`,
         `• Inspect for mechanical wear signs\n• Verify lubrication levels adequate\n• Test electrical connections thoroughly`,
@@ -1455,7 +1429,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         `• Prioritize safety protocols always\n• Consult vessel maintenance schedule\n• Report findings to senior officer`
       ];
       
-      return fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
+      return {
+        content: fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)],
+        aiModel: 'fallback',
+        responseTime: 0
+      };
     }
   }
 
