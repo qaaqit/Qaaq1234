@@ -545,6 +545,138 @@ _Your maritime community is here to help_ ⚓`;
       { name: 'answerer_name', value: answererName }
     ]);
   }
+
+  /**
+   * Export all users from database to WATI format
+   */
+  async exportUsersToWati(): Promise<{ success: boolean; contacts: any[]; csvData: string; vcfData: string }> {
+    try {
+      console.log('📤 Starting user export to WATI...');
+      
+      // Get all users from database with WhatsApp numbers
+      const allUsers = await db.select().from(users);
+      
+      const watiContacts = [];
+      const csvRows = ['Full Name,WhatsApp Number,Maritime Rank,Email,Company,Current City,Question Count,Present/Last Ship'];
+      const vcfContacts = [];
+      
+      for (const user of allUsers) {
+        // Skip users without WhatsApp numbers
+        if (!user.id || !user.id.startsWith('+')) continue;
+        
+        const whatsappNumber = user.id.replace('+', ''); // Remove + for WATI
+        const fullName = user.fullName || user.firstName || 'Unknown';
+        const maritimeRank = user.maritimeRank || '';
+        const email = user.email || '';
+        const company = user.company || user.shipCompany || '';
+        const currentCity = user.currentCity || user.city || '';
+        const questionCount = user.questionCount || 0;
+        const presentShip = user.shipName || user.lastShip || user.currentShip || '';
+        
+        // WATI contact format
+        const watiContact = {
+          whatsappNumber: whatsappNumber,
+          name: fullName,
+          customParams: [
+            { name: 'maritime_rank', value: maritimeRank },
+            { name: 'email', value: email },
+            { name: 'company', value: company },
+            { name: 'current_city', value: currentCity },
+            { name: 'question_count', value: questionCount.toString() },
+            { name: 'ship_name', value: presentShip }
+          ].filter(param => param.value) // Remove empty params
+        };
+        
+        watiContacts.push(watiContact);
+        
+        // Enhanced CSV row
+        csvRows.push(`"${fullName}","${user.id}","${maritimeRank}","${email}","${company}","${currentCity}","${questionCount}","${presentShip}"`);
+        
+        // VCF contact
+        const vcfContact = [
+          'BEGIN:VCARD',
+          'VERSION:3.0',
+          `FN:${fullName}`,
+          `TEL;TYPE=CELL:${user.id}`,
+          email ? `EMAIL:${email}` : '',
+          currentCity ? `ADR:;;${currentCity};;;;` : '',
+          maritimeRank ? `TITLE:${maritimeRank}` : '',
+          company ? `ORG:${company}` : '',
+          presentShip ? `NOTE:Ship: ${presentShip}` : '',
+          'END:VCARD'
+        ].filter(line => line).join('\r\n');
+        
+        vcfContacts.push(vcfContact);
+      }
+      
+      const csvData = csvRows.join('\n');
+      const vcfData = vcfContacts.join('\r\n\r\n');
+      
+      console.log(`📤 Exported ${watiContacts.length} maritime contacts for WATI`);
+      
+      return {
+        success: true,
+        contacts: watiContacts,
+        csvData,
+        vcfData
+      };
+      
+    } catch (error) {
+      console.error('Error exporting users to WATI:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Bulk import contacts to WATI
+   */
+  async bulkImportContacts(contacts: WatiContact[]): Promise<any> {
+    try {
+      console.log(`📤 Bulk importing ${contacts.length} contacts to WATI...`);
+      
+      const results = [];
+      const batchSize = 10; // Process in smaller batches to avoid rate limits
+      
+      for (let i = 0; i < contacts.length; i += batchSize) {
+        const batch = contacts.slice(i, i + batchSize);
+        
+        const batchPromises = batch.map(async (contact) => {
+          try {
+            const result = await this.addContact(contact);
+            return { success: true, contact: contact.whatsappNumber, result };
+          } catch (error) {
+            console.error(`Failed to import contact ${contact.whatsappNumber}:`, error);
+            return { success: false, contact: contact.whatsappNumber, error: error.message };
+          }
+        });
+        
+        const batchResults = await Promise.all(batchPromises);
+        results.push(...batchResults);
+        
+        // Small delay between batches to respect rate limits
+        if (i + batchSize < contacts.length) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+      
+      const successful = results.filter(r => r.success).length;
+      const failed = results.filter(r => !r.success).length;
+      
+      console.log(`📤 Bulk import complete: ${successful} successful, ${failed} failed`);
+      
+      return {
+        success: true,
+        total: contacts.length,
+        successful,
+        failed,
+        results
+      };
+      
+    } catch (error) {
+      console.error('Error in bulk import:', error);
+      throw error;
+    }
+  }
 }
 
 // Initialize WATI service
