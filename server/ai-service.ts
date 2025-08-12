@@ -165,8 +165,13 @@ export class AIService {
   }
 
   async generateDualResponse(message: string, category: string, user: any, activeRules?: string, preferredModel?: 'openai' | 'gemini'): Promise<AIResponse> {
-    // For dual testing, we can randomly choose a model or use preference
-    const useModel = preferredModel || (Math.random() > 0.5 ? 'openai' : 'gemini');
+    // Date-based model selection: Gemini on odd dates, OpenAI on even dates
+    const currentDate = new Date().getDate();
+    const isOddDate = currentDate % 2 === 1;
+    const dateBasedModel = isOddDate ? 'gemini' : 'openai';
+    const useModel = preferredModel || dateBasedModel;
+    
+    console.log(`📅 Date: ${currentDate}th (${isOddDate ? 'odd' : 'even'}) - Using ${useModel} model`);
     
     try {
       if (useModel === 'gemini' && process.env.GEMINI_API_KEY) {
@@ -177,8 +182,10 @@ export class AIService {
       
       // Fallback to available model
       if (process.env.OPENAI_API_KEY) {
+        console.log('Falling back to OpenAI (primary model not available)');
         return await this.generateOpenAIResponse(message, category, user, activeRules);
       } else if (process.env.GEMINI_API_KEY) {
+        console.log('Falling back to Gemini (primary model not available)');
         return await this.generateGeminiResponse(message, category, user, activeRules);
       }
       
@@ -192,8 +199,10 @@ export class AIService {
       
       try {
         if (fallbackModel === 'gemini' && process.env.GEMINI_API_KEY) {
+          console.log(`Trying fallback to Gemini after ${useModel} failed`);
           return await this.generateGeminiResponse(message, category, user, activeRules);
         } else if (fallbackModel === 'openai' && process.env.OPENAI_API_KEY) {
+          console.log(`Trying fallback to OpenAI after ${useModel} failed`);
           return await this.generateOpenAIResponse(message, category, user, activeRules);
         }
       } catch (fallbackError) {
