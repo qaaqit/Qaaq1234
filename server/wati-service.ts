@@ -16,6 +16,7 @@ interface WatiMessage {
 
 interface WatiContact {
   whatsappNumber: string;
+  countryCode?: string;
   name?: string;
   customParams?: Array<{ name: string; value: string }>;
 }
@@ -182,9 +183,14 @@ export class WatiService {
       if (contact.name) data.name = contact.name;
       if (contact.customParams) data.customParams = contact.customParams;
 
-      const result = await this.makeRequest(`/addContact/${contact.whatsappNumber}`, 'POST', data);
+      // Use full phone number with country code for WATI API endpoint
+      const fullPhoneNumber = contact.countryCode ? 
+        `${contact.countryCode}${contact.whatsappNumber}` : 
+        contact.whatsappNumber;
+
+      const result = await this.makeRequest(`/addContact/${fullPhoneNumber.replace('+', '')}`, 'POST', data);
       
-      console.log(`👤 Contact added: ${contact.name || contact.whatsappNumber}`);
+      console.log(`👤 Contact added: ${contact.name || contact.whatsappNumber} (${fullPhoneNumber})`);
       return result;
     } catch (error: any) {
       console.error(`❌ Failed to add contact ${contact.whatsappNumber}:`, error.message);
@@ -564,27 +570,57 @@ _Your maritime community is here to help_ ⚓`;
         // Skip users without WhatsApp numbers
         if (!user.id || !user.id.startsWith('+')) continue;
         
-        const whatsappNumber = user.id.replace('+', ''); // Remove + for WATI
-        const fullName = user.fullName || user.firstName || 'Unknown';
-        const maritimeRank = user.maritimeRank || '';
+        // Extract country code and phone number properly
+        const fullPhoneNumber = user.id; // e.g., "+919481344941"
+        let countryCode = '';
+        let phoneNumber = '';
+        
+        // Extract country code (assuming +91 for India, +1 for US, etc.)
+        if (fullPhoneNumber.startsWith('+91')) {
+          countryCode = '+91';
+          phoneNumber = fullPhoneNumber.substring(3); // Remove +91
+        } else if (fullPhoneNumber.startsWith('+1')) {
+          countryCode = '+1';
+          phoneNumber = fullPhoneNumber.substring(2); // Remove +1
+        } else if (fullPhoneNumber.startsWith('+')) {
+          // Generic extraction for other country codes (2-3 digits)
+          const match = fullPhoneNumber.match(/^(\+\d{1,3})(\d+)$/);
+          if (match) {
+            countryCode = match[1];
+            phoneNumber = match[2];
+          } else {
+            countryCode = '+91'; // Default to India
+            phoneNumber = fullPhoneNumber.substring(1);
+          }
+        } else {
+          // If no + prefix, assume it's a phone number with default country code
+          countryCode = '+91';
+          phoneNumber = user.id;
+        }
+        
+        const fullName = user.fullName || user.nickname || `Maritime User ${phoneNumber.substring(-4)}`;
+        const maritimeRank = user.maritimeRank || user.rank || '';
         const email = user.email || '';
-        const company = user.company || user.shipCompany || '';
+        const company = user.company || user.lastCompany || '';
         const currentCity = user.currentCity || user.city || '';
         const questionCount = user.questionCount || 0;
-        const presentShip = user.shipName || user.lastShip || user.currentShip || '';
+        const presentShip = user.shipName || user.lastShip || user.currentShipName || '';
         
-        // WATI contact format
+        // WATI contact format with proper fields
         const watiContact = {
-          whatsappNumber: whatsappNumber,
+          whatsappNumber: phoneNumber, // Phone number without country code
+          countryCode: countryCode,    // Country code with +
           name: fullName,
           customParams: [
+            { name: 'country_code', value: countryCode },
+            { name: 'full_phone', value: fullPhoneNumber },
             { name: 'maritime_rank', value: maritimeRank },
             { name: 'email', value: email },
             { name: 'company', value: company },
             { name: 'current_city', value: currentCity },
             { name: 'question_count', value: questionCount.toString() },
             { name: 'ship_name', value: presentShip }
-          ].filter(param => param.value) // Remove empty params
+          ].filter(param => param.value && param.value !== '') // Remove empty params
         };
         
         watiContacts.push(watiContact);
