@@ -32,6 +32,8 @@ Project Ambitions: To create a vibrant, self-sustaining community where maritime
 - **Fixed Admin Question Archiving**: Resolved issue where admin archiving questions redirected to QBOT chat page. Admin now stays on current page with data refetch instead of page reload (August 12, 2025)
 - **Authentic Location Data Enhancement**: Enhanced location data for 211 maritime professionals using genuine current_city data from user profiles. Major maritime cities represented: Mumbai (39), Kolkata (10), New Delhi (8), Pune (8), Chennai (4), Bengaluru (4), and 30+ other authentic Indian cities plus Bangkok. All sample/enriched data removed, displaying only real maritime professionals with verified location information (August 12, 2025)
 - **Password Renewal Roadblock Completely Disabled**: Removed mandatory password renewal enforcement that blocked user access. Users can now update passwords at their own leisure through profile settings. System no longer checks password expiration or forces renewal dialogs, allowing uninterrupted access to the platform (August 12, 2025)
+- **QBOT 20 Free Questions Limit**: Implemented free question limit enforcement where users get exactly 20 free questions. On the 21st question, QBOT responds with limit message suggesting Premium plan upgrade. System tracks question counts and increments after each successful interaction (August 12, 2025)
+- **Q Radar Default View Updated**: Changed Q radar page to start with "online now" checkbox unchecked, displaying all users within 50km radius by default instead of filtering to online users only (August 12, 2025)
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
