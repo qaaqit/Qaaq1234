@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { MessageCircle, Search, Calendar, CheckCircle, Clock, Hash, ChevronDown, ChevronUp, Image as ImageIcon, Share2, ArrowUp, Trash2, RotateCcw } from 'lucide-react';
+import { MessageCircle, Search, Calendar, CheckCircle, Clock, Hash, ChevronDown, ChevronUp, Image as ImageIcon, Share2, ArrowUp, Trash2, RotateCcw, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { apiRequest } from '@/lib/queryClient';
 import { isTokenValid, forceTokenRefresh } from '@/utils/auth';
@@ -437,6 +437,49 @@ export function QuestionsTab() {
     }
   };
 
+  // Admin-only answer feedback function for AI training
+  const handleAnswerFeedback = async (questionId: number, answerId: number, feedbackType: 'helpful' | 'needs_improvement') => {
+    if (!isAdmin) {
+      console.warn('Unauthorized: Only admins can provide answer feedback');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/ai-feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('qaaq_token')}`
+        },
+        body: JSON.stringify({ 
+          questionId,
+          answerId,
+          feedbackType,
+          adminId: user?.id || user?.fullName
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to submit feedback');
+      }
+
+      const result = await response.json();
+      console.log('Feedback submitted successfully:', result);
+      
+      // Show visual feedback to admin
+      const feedbackText = feedbackType === 'helpful' ? 'Marked as helpful' : 'Marked for improvement';
+      const feedbackElement = document.createElement('div');
+      feedbackElement.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+      feedbackElement.textContent = feedbackText;
+      document.body.appendChild(feedbackElement);
+      setTimeout(() => feedbackElement.remove(), 2000);
+    } catch (error) {
+      console.error('Error submitting answer feedback:', error);
+      alert('Failed to submit feedback. Please try again.');
+    }
+  };
+
   // Question with Answer Previews Component  
   const QuestionWithAnswers = ({ question, index }: { question: Question; index: number }) => {
     const { data: answers, isLoading: answersLoading } = useQuestionAnswers(question.id, true);
@@ -504,6 +547,38 @@ export function QuestionsTab() {
                     }
                   </span>
                 </div>
+                {/* Admin Feedback Buttons for AI Training */}
+                {isAdmin && (
+                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-orange-200">
+                    <span className="text-xs text-gray-600 mr-2">AI Feedback:</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAnswerFeedback(question.id, firstAnswer.id, 'helpful');
+                      }}
+                      className="p-1 h-7 text-green-600 hover:text-green-700 hover:bg-green-50"
+                      title="This answer is helpful"
+                    >
+                      <ThumbsUp size={14} className="mr-1" />
+                      <span className="text-xs">Good</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAnswerFeedback(question.id, firstAnswer.id, 'needs_improvement');
+                      }}
+                      className="p-1 h-7 text-red-600 hover:text-red-700 hover:bg-red-50"
+                      title="This answer needs improvement"
+                    >
+                      <ThumbsDown size={14} className="mr-1" />
+                      <span className="text-xs">Improve</span>
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
 

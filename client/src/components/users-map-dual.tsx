@@ -14,6 +14,7 @@ interface MapUser {
   userType: string;
   rank: string | null;
   shipName: string | null;
+  currentShipName?: string | null;
   company?: string | null;
   imoNumber: string | null;
   port: string | null;
@@ -27,6 +28,8 @@ interface MapUser {
   locationUpdatedAt?: Date | string | null;
   questionCount?: number;
   answerCount?: number;
+  onboardStatus?: string | null;
+  profilePictureUrl?: string | null;
 }
 
 const getRankAbbreviation = (rank: string): string => {
@@ -90,22 +93,22 @@ const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: numbe
 // Maritime rank categories for filtering
 const MARITIME_RANK_CATEGORIES = [
   {
+    id: 'senior_officers',
+    label: 'Senior officers',
+    description: 'Captain, Chief Officer, Chief Engineer, 2nd Engineer',
+    ranks: ['captain', 'master', 'chief officer', 'CO', 'C/O', 'chief engineer', 'CE', 'second engineer', '2nd engineer', '2E', 'superintendent']
+  },
+  {
     id: 'everyone',
     label: 'Everyone',
     description: 'All maritime professionals',
     ranks: []
   },
   {
-    id: 'junior_officers_above',
-    label: 'Junior Officers & Above',
-    description: 'Officers, Engineers, and Leadership',
-    ranks: ['captain', 'chief officer', '2nd officer', '3rd officer', 'chief engineer', '2nd engineer', '3rd engineer', '4th engineer', 'eto']
-  },
-  {
-    id: 'senior_officers_above',
-    label: 'Senior Officers & Above', 
-    description: '2nd Engineer, Chief Engineer, Superintendents',
-    ranks: ['2nd engineer', 'second engineer', '2E', 'chief engineer', 'chief_engineer', 'CE', 'superintendent', 'superintendents']
+    id: 'onboard',
+    label: 'Onboard',
+    description: 'Currently sailing professionals',
+    ranks: [] // This will be handled by onboard_status field
   }
 ];
 
@@ -197,12 +200,23 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       // Apply only rank filter if selected during search
       if (selectedRankCategory !== 'everyone') {
         const category = MARITIME_RANK_CATEGORIES.find(cat => cat.id === selectedRankCategory);
-        if (category && category.ranks.length > 0) {
-          filtered = filtered.filter(mapUser => {
-            return category.ranks.some(rank => 
-              mapUser.rank?.toLowerCase().includes(rank.toLowerCase())
-            );
-          });
+        
+        if (category) {
+          if (category.id === 'onboard') {
+            // Filter for onboard users (check onboard_status or ship name)
+            filtered = filtered.filter(mapUser => {
+              return mapUser.onboardStatus === 'ONBOARD' || 
+                     mapUser.shipName || 
+                     mapUser.currentShipName;
+            });
+          } else if (category.ranks.length > 0) {
+            // Filter by rank for senior officers
+            filtered = filtered.filter(mapUser => {
+              return category.ranks.some(rank => 
+                mapUser.rank?.toLowerCase().includes(rank.toLowerCase())
+              );
+            });
+          }
         }
       }
       
@@ -237,12 +251,23 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     // Filter by selected rank category
     if (selectedRankCategory !== 'everyone') {
       const category = MARITIME_RANK_CATEGORIES.find(cat => cat.id === selectedRankCategory);
-      if (category && category.ranks.length > 0) {
-        filtered = filtered.filter(mapUser => {
-          return category.ranks.some(rank => 
-            mapUser.rank?.toLowerCase().includes(rank.toLowerCase())
-          );
-        });
+      
+      if (category) {
+        if (category.id === 'onboard') {
+          // Filter for onboard users (check onboard_status or ship name)
+          filtered = filtered.filter(mapUser => {
+            return mapUser.onboardStatus === 'ONBOARD' || 
+                   mapUser.shipName || 
+                   mapUser.currentShipName;
+          });
+        } else if (category.ranks.length > 0) {
+          // Filter by rank for senior officers
+          filtered = filtered.filter(mapUser => {
+            return category.ranks.some(rank => 
+              mapUser.rank?.toLowerCase().includes(rank.toLowerCase())
+            );
+          });
+        }
       }
     }
 
@@ -518,7 +543,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                       onChange={(e) => setShowOnlineOnly(e.target.checked)}
                       className="w-4 h-4 text-orange-600"
                     />
-                    <label htmlFor="onlineOnly" className="text-sm">Online Only</label>
+                    <label htmlFor="onlineOnly" className="text-sm">Online now</label>
                   </div>
                   
                   {/* Rank Categories */}

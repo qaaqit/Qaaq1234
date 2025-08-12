@@ -227,7 +227,7 @@ export class DatabaseStorage implements IStorage {
       fullName: fullName,
       email: dbUser.email || '',
       password: dbUser.password || '',
-      userType: dbUser.user_type || (dbUser.current_ship_name ? 'sailor' : 'local'),
+      userType: dbUser.onboard_status === 'ONBOARD' || dbUser.current_ship_name || dbUser.ship_name ? 'Onboard' : 'On land',
       isAdmin: dbUser.is_admin || dbUser.is_platform_admin || false,
       nickname: dbUser.nickname || '',
       rank: dbUser.rank || dbUser.maritime_rank || '',
