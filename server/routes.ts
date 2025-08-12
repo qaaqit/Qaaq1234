@@ -4472,6 +4472,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== QBOT QR CODE ENDPOINTS =====
+  
+  // Import and setup QR code endpoints for QBOTbaby
+  const { setupQREndpoints } = await import('./qr-generator');
+  setupQREndpoints(app);
+
   // ===== GRANDMASTER WATI BOT WEBHOOK =====
   
   // WATI Webhook endpoint for GrandMaster Bot
