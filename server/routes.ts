@@ -27,7 +27,7 @@ import { robustAuth } from "./auth-system";
 import { ObjectStorageService } from "./objectStorage";
 import { imageManagementService } from "./image-management-service";
 import { setupStableImageRoutes } from "./stable-image-upload";
-import { razorpayService, SUBSCRIPTION_PLANS } from "./razorpay-service-dummy";
+import { razorpayService, SUBSCRIPTION_PLANS } from "./razorpay-service-production";
 import { setupGoogleAuth } from "./google-auth";
 import { PasswordManager } from "./password-manager";
 import { AIService } from "./ai-service";
