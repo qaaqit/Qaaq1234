@@ -83,7 +83,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
     fetchWhatsAppHistory();
   }, [user?.id, toast]);
 
-  // Load WATI WhatsApp widget
+  // Load WATI WhatsApp widget positioned over send button
   useEffect(() => {
     const script = document.createElement('script');
     script.type = 'text/javascript';
@@ -94,11 +94,11 @@ export default function QBOTPage({ user }: QBOTPageProps) {
       "enabled": true,
       "chatButtonSetting": {
         "backgroundColor": "#ea8c34",
-        "ctaText": "Chat with us",
-        "borderRadius": "25",
+        "ctaText": "WhatsApp",
+        "borderRadius": "12",
         "marginLeft": "0",
-        "marginRight": "20", 
-        "marginBottom": "20",
+        "marginRight": "80", // Position it over the send button area
+        "marginBottom": "80", // Position it above the send button
         "ctaIconWATI": false,
         "position": "right"
       },
@@ -109,8 +109,8 @@ export default function QBOTPage({ user }: QBOTPageProps) {
         "welcomeText": "Hi there!\nThis is QBOT.",
         "messageText": "",
         "backgroundColor": "#ea8c34",
-        "ctaText": "Chat with us",
-        "borderRadius": "25",
+        "ctaText": "WhatsApp",
+        "borderRadius": "12",
         "autoShow": false,
         "phoneNumber": "917208878008"
       }
@@ -119,6 +119,26 @@ export default function QBOTPage({ user }: QBOTPageProps) {
     script.onload = function() {
       if (typeof (window as any).CreateWhatsappChatWidget === 'function') {
         (window as any).CreateWhatsappChatWidget(options);
+        
+        // Additional CSS to position widget over send button area
+        const styleElement = document.createElement('style');
+        styleElement.textContent = `
+          .wati-chat-button {
+            z-index: 1000 !important;
+            position: fixed !important;
+            bottom: 80px !important;
+            right: 80px !important;
+            width: 56px !important;
+            height: 56px !important;
+            border-radius: 12px !important;
+            box-shadow: 0 4px 12px rgba(234, 140, 52, 0.3) !important;
+          }
+          .wati-chat-button:hover {
+            transform: scale(1.05) !important;
+            transition: transform 0.2s ease !important;
+          }
+        `;
+        document.head.appendChild(styleElement);
       }
     };
 
@@ -129,6 +149,13 @@ export default function QBOTPage({ user }: QBOTPageProps) {
       if (script.parentNode) {
         script.parentNode.removeChild(script);
       }
+      // Also remove custom styles
+      const styles = document.querySelectorAll('style');
+      styles.forEach(style => {
+        if (style.textContent?.includes('.wati-chat-button')) {
+          style.remove();
+        }
+      });
     };
   }, []);
 
