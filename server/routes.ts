@@ -1338,12 +1338,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Commandment II: Ensure message uniqueness (simplified for API)
       const responseId = `${userId}_${Date.now()}`;
 
+      // CHECK 20 FREE QUESTIONS LIMIT FOR AUTHENTICATED USERS (if not private mode)
+      if (!isPrivate && user) {
+        const currentQuestionCount = user.question_count || 0;
+        const userType = user.user_type || 'Free'; // Default to Free if not set
+        
+        // Check if user has reached the 20 free question limit
+        if (userType === 'Free' && currentQuestionCount >= 20) {
+          console.log(`🚫 Free limit reached for user ${userId}: ${currentQuestionCount}/20 questions`);
+          return res.json({
+            response: "Free limit is over. Please purchase Premium plan for unlimited web/ whatsapp questions",
+            category: "limit-reached",
+            responseId: `${userId}_${Date.now()}`,
+            aiModel: 'limit-reached',
+            responseTime: 0,
+            timestamp: new Date(),
+            limitReached: true
+          });
+        }
+      }
+
       // Store QBOT interaction in database unless privacy mode is enabled
       if (!isPrivate) {
         try {
           // Store QBOT interaction with AI model information for feedback tracking
           const storedResponse = await storeQBOTResponseInDatabase(message, response, user, attachments, aiModel, responseTime, tokens);
           console.log(`📚 QBOT interaction stored in database with ${aiModel} model (User: ${userId})`);
+          
+          // Increment user question count for authenticated users
+          if (user) {
+            await incrementUserQuestionCount(user.id);
+          }
         } catch (error) {
           console.error('Error storing QBOT interaction:', error);
           // Continue without failing the request
@@ -2039,6 +2064,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Helper function to increment user question count
+  async function incrementUserQuestionCount(userId: string): Promise<void> {
+    try {
+      await pool.query(`
+        UPDATE users 
+        SET question_count = COALESCE(question_count, 0) + 1 
+        WHERE id = $1
+      `, [userId]);
+      console.log(`📊 Incremented question count for user ${userId}`);
+    } catch (error) {
+      console.error('Error incrementing user question count:', error);
+    }
+  }
+
   // Function to park individual Q&A pair in database with proper question ID
   async function parkChatQAInDatabase(userMessage: string, aiResponse: string, user: any): Promise<string> {
     const userName = user?.fullName || user?.whatsAppDisplayName || 'QBOT User';
@@ -2085,11 +2124,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      // CHECK 20 FREE QUESTIONS LIMIT FOR AUTHENTICATED USERS
+      if (user) {
+        const currentQuestionCount = user.question_count || 0;
+        const userType = user.user_type || 'Free'; // Default to Free if not set
+        
+        // Check if user has reached the 20 free question limit
+        if (userType === 'Free' && currentQuestionCount >= 20) {
+          console.log(`🚫 Free limit reached for user ${userId}: ${currentQuestionCount}/20 questions`);
+          return res.json({
+            response: "Free limit is over. Please purchase Premium plan for unlimited web/ whatsapp questions",
+            aiModel: 'limit-reached',
+            responseTime: 0,
+            timestamp: new Date().toISOString(),
+            limitReached: true
+          });
+        }
+      }
+
       // Generate AI response using dual AI service
       const aiResponse = await aiService.generateDualResponse(message, 'Maritime Technical Support', user);
       
       // Store QBOT response in Questions database with SEMM breadcrumb and AI model info
       await storeQBOTResponseInDatabase(message, aiResponse.content, user, [], aiResponse.aiModel, aiResponse.responseTime, aiResponse.tokens);
+      
+      // Increment user question count for authenticated users
+      if (user) {
+        await incrementUserQuestionCount(user.id);
+      }
       
       console.log(`🤖 QBOT Chat - User: ${message.substring(0, 50)}... | Response: ${aiResponse.content.substring(0, 50)}...`);
       
