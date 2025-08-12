@@ -4003,6 +4003,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // AI Feedback endpoint for admin training
+  app.post('/api/ai-feedback', authenticateToken, async (req: any, res) => {
+    try {
+      const { questionId, answerId, feedbackType, adminId } = req.body;
+      
+      // Verify user is admin
+      const isAdminUser = req.userId === '44885683' || req.userId === '+919029010070' || req.userId === '5791e66f-9cc1-4be4-bd4b-7fc1bd2e258e';
+      
+      if (!isAdminUser) {
+        return res.status(403).json({ 
+          success: false, 
+          message: 'Unauthorized: Admin access required' 
+        });
+      }
+      
+      if (!questionId || !answerId || !feedbackType || !['helpful', 'needs_improvement'].includes(feedbackType)) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Missing or invalid required fields' 
+        });
+      }
+      
+      // Store feedback in database for AI training
+      const feedbackRecord = await pool.query(`
+        INSERT INTO ai_feedback (question_id, answer_id, feedback_type, admin_id, created_at)
+        VALUES ($1, $2, $3, $4, NOW())
+        ON CONFLICT (question_id, answer_id, admin_id) 
+        DO UPDATE SET feedback_type = EXCLUDED.feedback_type, created_at = NOW()
+        RETURNING *
+      `, [questionId, answerId, feedbackType, adminId]);
+      
+      console.log(`AI Feedback recorded: Q${questionId} A${answerId} - ${feedbackType} by ${adminId}`);
+      
+      res.json({
+        success: true,
+        message: 'Feedback recorded successfully',
+        feedback: feedbackRecord.rows[0]
+      });
+      
+    } catch (error) {
+      console.error('Error recording AI feedback:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to record feedback' 
+      });
+    }
+  });
+
   // ===== RAZORPAY PAYMENT ENDPOINTS =====
 
   // Get subscription plans
