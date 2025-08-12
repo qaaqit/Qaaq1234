@@ -73,6 +73,12 @@ export const users = pgTable("users", {
   // Q&A tracking
   questionCount: integer("question_count").default(0), // Total questions asked on QAAQ
   answerCount: integer("answer_count").default(0), // Total answers given on QAAQ
+  
+  // Subscription/Premium fields
+  isPremium: boolean("is_premium").default(false), // Premium subscription status
+  premiumExpiresAt: timestamp("premium_expires_at"), // Premium subscription expiry
+  subscriptionId: text("subscription_id"), // Razorpay subscription ID
+  subscriptionType: text("subscription_type"), // 'premium_monthly', 'premium_yearly', 'super_user'
   lastChatClearAt: timestamp("last_chat_clear_at"), // Last time user cleared their QBOT chat
   
   // System metadata
