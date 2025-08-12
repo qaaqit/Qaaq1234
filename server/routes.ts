@@ -27,7 +27,7 @@ import { robustAuth } from "./auth-system";
 import { ObjectStorageService } from "./objectStorage";
 import { imageManagementService } from "./image-management-service";
 import { setupStableImageRoutes } from "./stable-image-upload";
-import { razorpayService, SUBSCRIPTION_PLANS } from "./razorpay-service";
+import { razorpayService, SUBSCRIPTION_PLANS } from "./razorpay-service-dummy";
 import { setupGoogleAuth } from "./google-auth";
 import { PasswordManager } from "./password-manager";
 import { AIService } from "./ai-service";
@@ -2054,18 +2054,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { items, totalAmount, currency, deliveryLocation, shipSchedule, storeLocation } = req.body;
       const userId = req.userId;
 
-      // Create actual Razorpay order
-      const receiptId = `qaaq_store_${userId}_${Date.now()}`;
-      const order = await razorpayService.createOrder(
-        totalAmount * 100, // Convert to paise
-        currency,
-        receiptId
-      );
+      // Mock Razorpay integration (replace with actual Razorpay when keys are provided)
+      const mockOrderId = `order_${Date.now()}`;
+      
+      // In production, you would create a real Razorpay order here:
+      // const Razorpay = require('razorpay');
+      // const razorpay = new Razorpay({
+      //   key_id: process.env.RAZORPAY_KEY_ID,
+      //   key_secret: process.env.RAZORPAY_KEY_SECRET,
+      // });
+      // 
+      // const order = await razorpay.orders.create({
+      //   amount: totalAmount * 100, // Convert to paise
+      //   currency: currency,
+      //   receipt: `qaaq_${userId}_${Date.now()}`,
+      //   payment_capture: 1
+      // });
 
       // Log order for store processing
       console.log('New Qaaq Store Order:', {
         userId,
-        orderId: order.id,
+        orderId: mockOrderId,
         items: items.map((item: any) => ({ name: item.name, quantity: item.quantity, price: item.price })),
         totalAmount,
         deliveryLocation,
@@ -2075,10 +2084,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       res.json({
-        razorpayOrderId: order.id,
-        amount: order.amount,
-        currency: order.currency,
-        key: process.env.RAZORPAY_KEY_ID,
+        razorpayOrderId: mockOrderId,
+        amount: totalAmount * 100, // In paise for Razorpay
+        currency: currency,
         message: "Order created successfully. Store will prepare items for delivery."
       });
 
@@ -4464,12 +4472,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ===== QBOT QR CODE ENDPOINTS =====
-  
-  // Import and setup QR code endpoints for QBOTbaby
-  const { setupQREndpoints } = await import('./qr-generator');
-  setupQREndpoints(app);
-
   // ===== GRANDMASTER WATI BOT WEBHOOK =====
   
   // WATI Webhook endpoint for GrandMaster Bot
@@ -4494,10 +4496,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const grandmasterBot = new GrandmasterWatiBot(watiService);
       
-      // Also process through QBot WhatsApp service if available
-      const { getQBotWhatsApp } = await import('./whatsapp-service');
-      const qbotService = getQBotWhatsApp();
-      
       // Handle different webhook events
       switch (payload.eventType) {
         case 'message':
@@ -4506,17 +4504,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             await grandmasterBot.processMessage(
               payload.waId, 
               payload.text, 
-              payload.senderName || 'Maritime Professional'
+              payload.senderName
             );
-            
-            // Also process through QBOTbaby service if running
-            if (qbotService && qbotService.isClientReady()) {
-              await qbotService.processIncomingMessage(
-                payload.waId,
-                payload.text,
-                payload.senderName || 'Maritime Professional'
-              );
-            }
           }
           break;
           
@@ -4526,17 +4515,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             await grandmasterBot.processMessage(
               payload.waId, 
               payload.text, 
-              payload.senderName || 'New Maritime Professional'
+              payload.senderName
             );
-            
-            // Also process through QBOTbaby service if running
-            if (qbotService && qbotService.isClientReady()) {
-              await qbotService.processIncomingMessage(
-                payload.waId,
-                payload.text,
-                payload.senderName || 'New Maritime Professional'
-              );
-            }
           }
           break;
           
@@ -4605,200 +4585,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: false, 
         message: 'Failed to test bot',
         error: error.message 
-      });
-    }
-  });
-
-  // ===== DIRECT WHATSAPP QBOT ENDPOINTS =====
-  
-  // Start QBot WhatsApp service with phone number
-  app.post('/api/qbot/whatsapp/start', authenticateToken, isAdmin, async (req: any, res) => {
-    try {
-      const { phoneNumber } = req.body;
-      
-      if (!phoneNumber) {
-        return res.status(400).json({
-          success: false,
-          message: 'Phone number is required (e.g., +905363694997)'
-        });
-      }
-      
-      // Import WhatsApp service
-      const { startQBotWhatsApp, getQBotWhatsApp } = await import('./whatsapp-service');
-      
-      // Check if already running
-      const existingService = getQBotWhatsApp();
-      if (existingService && existingService.isClientReady()) {
-        return res.json({
-          success: true,
-          message: 'QBot WhatsApp already running',
-          phoneNumber: existingService.getPhoneNumber(),
-          status: 'active'
-        });
-      }
-      
-      // Start new service
-      const qbotService = await startQBotWhatsApp(phoneNumber);
-      
-      res.json({
-        success: true,
-        message: 'QBot WhatsApp service starting... Please scan QR code in console',
-        phoneNumber: phoneNumber,
-        status: 'starting',
-        features: [
-          'GrandMaster rules active',
-          'OpenAI GPT-4o integration',
-          'Maritime technical assistance',
-          'Daily question limits',
-          'A/B clarification system'
-        ]
-      });
-      
-    } catch (error: any) {
-      console.error('❌ Error starting QBot WhatsApp:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to start QBot WhatsApp service',
-        error: error.message
-      });
-    }
-  });
-  
-  // Get QBot WhatsApp status
-  app.get('/api/qbot/whatsapp/status', authenticateToken, isAdmin, async (req: any, res) => {
-    try {
-      const { getQBotWhatsApp } = await import('./whatsapp-service');
-      const qbotService = getQBotWhatsApp();
-      
-      if (!qbotService) {
-        return res.json({
-          success: true,
-          status: 'stopped',
-          message: 'QBot WhatsApp service not running'
-        });
-      }
-      
-      res.json({
-        success: true,
-        status: qbotService.isClientReady() ? 'active' : 'connecting',
-        phoneNumber: qbotService.getPhoneNumber(),
-        features: {
-          grandmasterRules: true,
-          openaiIntegration: true,
-          maritimeTechnicalAssistance: true,
-          dailyQuestionLimits: true,
-          abClarificationSystem: true
-        }
-      });
-      
-    } catch (error: any) {
-      console.error('❌ Error getting QBot status:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to get QBot status',
-        error: error.message
-      });
-    }
-  });
-  
-  // Stop QBot WhatsApp service
-  app.post('/api/qbot/whatsapp/stop', authenticateToken, isAdmin, async (req: any, res) => {
-    try {
-      const { stopQBotWhatsApp } = await import('./whatsapp-service');
-      await stopQBotWhatsApp();
-      
-      res.json({
-        success: true,
-        message: 'QBot WhatsApp service stopped successfully'
-      });
-      
-    } catch (error: any) {
-      console.error('❌ Error stopping QBot WhatsApp:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to stop QBot WhatsApp service',
-        error: error.message
-      });
-    }
-  });
-  
-  // Send direct WhatsApp message (admin testing)
-  app.post('/api/qbot/whatsapp/send', authenticateToken, isAdmin, async (req: any, res) => {
-    try {
-      const { phoneNumber, message } = req.body;
-      
-      if (!phoneNumber || !message) {
-        return res.status(400).json({
-          success: false,
-          message: 'Phone number and message are required'
-        });
-      }
-      
-      const { getQBotWhatsApp } = await import('./whatsapp-service');
-      const qbotService = getQBotWhatsApp();
-      
-      if (!qbotService || !qbotService.isClientReady()) {
-        return res.status(400).json({
-          success: false,
-          message: 'QBot WhatsApp service not ready'
-        });
-      }
-      
-      await qbotService.sendDirectMessage(phoneNumber, message);
-      
-      res.json({
-        success: true,
-        message: 'Message sent successfully'
-      });
-      
-    } catch (error: any) {
-      console.error('❌ Error sending WhatsApp message:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to send message',
-        error: error.message
-      });
-    }
-  });
-  
-  // Test maritime AI response
-  app.post('/api/qbot/whatsapp/test-ai', authenticateToken, isAdmin, async (req: any, res) => {
-    try {
-      const { question } = req.body;
-      
-      if (!question) {
-        return res.status(400).json({
-          success: false,
-          message: 'Question is required'
-        });
-      }
-      
-      const { getQBotWhatsApp } = await import('./whatsapp-service');
-      const qbotService = getQBotWhatsApp();
-      
-      if (!qbotService) {
-        return res.status(400).json({
-          success: false,
-          message: 'QBot WhatsApp service not available'
-        });
-      }
-      
-      const aiResponse = await qbotService.testMaritimeAI(question);
-      
-      res.json({
-        success: true,
-        question: question,
-        aiResponse: aiResponse,
-        model: 'gpt-4o',
-        timestamp: new Date().toISOString()
-      });
-      
-    } catch (error: any) {
-      console.error('❌ Error testing maritime AI:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to test AI',
-        error: error.message
       });
     }
   });
@@ -4951,36 +4737,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({
         success: false,
         message: error instanceof Error ? error.message : 'Failed to cancel subscription'
-      });
-    }
-  });
-
-  // Test Razorpay integration (admin only)
-  app.get('/api/razorpay/test', authenticateToken, isAdmin, async (req: any, res) => {
-    try {
-      // Create a small test order
-      const testOrder = await razorpayService.createOrder(
-        100, // ₹1 in paise
-        'INR',
-        `test_${Date.now()}`
-      );
-
-      res.json({
-        success: true,
-        message: 'Razorpay integration is working!',
-        testOrder: {
-          id: testOrder.id,
-          amount: testOrder.amount,
-          currency: testOrder.currency,
-          status: testOrder.status
-        }
-      });
-    } catch (error) {
-      console.error('Razorpay test failed:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Razorpay integration test failed',
-        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   });
