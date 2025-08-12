@@ -1788,14 +1788,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         attachmentText = `\n\nAttachments: ${attachments.map(att => `[IMAGE: ${att}]`).join(', ')}`;
       }
       
-      // Store question
+      // Store question with proper ID generation
       const questionResult = await pool.query(`
         INSERT INTO questions (
-          content, created_at, updated_at
-        ) VALUES ($1, NOW(), NOW())
+          id, content, author_id, created_at, updated_at
+        ) VALUES (
+          (SELECT COALESCE(MAX(id), 0) + 1 FROM questions),
+          $1, $2, NOW(), NOW()
+        )
         RETURNING id
       `, [
-        `[QBOT Q&A - ${semmCategory.breadcrumb}]\nUser: ${userName} (via QBOT)\nCategory: ${semmCategory.category}\n\nQuestion: ${userMessage}${attachmentText}`
+        `[QBOT Q&A - ${semmCategory.breadcrumb}]\nUser: ${userName} (via QBOT)\nCategory: ${semmCategory.category}\n\nQuestion: ${userMessage}${attachmentText}`,
+        userId
       ]);
       
       const questionId = questionResult.rows[0].id;
@@ -1981,8 +1985,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const userName = user?.fullName || user?.whatsAppDisplayName || 'QBOT User';
     const userRank = user?.maritimeRank || user?.rank || 'Maritime Professional';
     
-    // Generate proper question ID for shareable link
-    const questionId = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
+    // Generate proper question ID for shareable link (safe integer range)
+    const maxQuestionResult = await pool.query('SELECT COALESCE(MAX(id), 0) as max_id FROM questions');
+    const nextQuestionId = (maxQuestionResult.rows[0].max_id || 0) + 1;
     
     // Analyze message for SEMM categorization
     const semmCategory = categorizeMessageWithSEMM(userMessage, aiResponse);
@@ -1990,15 +1995,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Insert into questions table with proper structure for qaaqit.com compatibility
     await pool.query(`
       INSERT INTO questions (
-        id, content, created_at, updated_at
-      ) VALUES ($1, $2, NOW(), NOW())
+        id, content, author_id, created_at, updated_at
+      ) VALUES ($1, $2, $3, NOW(), NOW())
     `, [
-      parseInt(questionId),
-      `[QBOT CHAT - ${semmCategory.breadcrumb}]\nUser: ${userName} (via QBOT Chat)\nCategory: ${semmCategory.category}\n\nQuestion: ${userMessage}\n\nAnswer: ${aiResponse}`
+      nextQuestionId,
+      `[QBOT CHAT - ${semmCategory.breadcrumb}]\nUser: ${userName} (via QBOT Chat)\nCategory: ${semmCategory.category}\n\nQuestion: ${userMessage}\n\nAnswer: ${aiResponse}`,
+      user?.id || 'qbot_user'
     ]);
 
-    console.log(`📚 Parked Q&A with ID ${questionId}: ${semmCategory.breadcrumb}`);
-    return questionId;
+    console.log(`📚 Parked Q&A with ID ${nextQuestionId}: ${semmCategory.breadcrumb}`);
+    return nextQuestionId.toString();
   }
 
   // QBOT chat endpoint - responds to user messages with AI
