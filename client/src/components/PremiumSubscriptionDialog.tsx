@@ -83,12 +83,24 @@ export function PremiumSubscriptionDialog({
       const payload = planType === 'super_user' && topupPlan 
         ? { planType: 'super_user', topupPlan } 
         : { planType, billingPeriod };
-      return apiRequest('/api/subscriptions', {
+      
+      const response = await fetch('/api/subscriptions', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('qaaq_token')}`
+        },
         body: JSON.stringify(payload),
       });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create subscription');
+      }
+      
+      return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       // Open Razorpay checkout URL
       if (data.checkoutUrl) {
         window.open(data.checkoutUrl, '_blank');
@@ -113,8 +125,8 @@ export function PremiumSubscriptionDialog({
     );
   }
 
-  const plans: SubscriptionPlans = plansData?.plans || {};
-  const userStatus = userStatusData || {};
+  const plans: SubscriptionPlans = (plansData as any)?.plans || { premium: { monthly: {} as PremiumPlan, yearly: {} as PremiumPlan }, super_user: {} };
+  const userStatus = (userStatusData as any) || { isPremium: false, isSuperUser: false, premiumExpiresAt: null };
 
   const formatPrice = (amount: number) => {
     return `₹${(amount / 100).toLocaleString('en-IN')}`;

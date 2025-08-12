@@ -109,6 +109,29 @@ export class RazorpayService {
     return true; // Always return true in dummy mode
   }
 
+  // Dummy create subscription
+  async createSubscription(userId: string, planType: 'premium' | 'super_user', billingPeriod?: string, topupPlan?: string) {
+    console.log('🔧 Dummy subscription creation:', { userId, planType, billingPeriod, topupPlan });
+    
+    // Return dummy response with checkout URL
+    const dummySubscriptionId = `dummy_sub_${Date.now()}`;
+    const dummyCheckoutUrl = `https://dummy-razorpay-checkout.example.com/subscription/${dummySubscriptionId}`;
+    
+    // Log the dummy checkout creation
+    console.log('🔧 Dummy checkout URL generated:', dummyCheckoutUrl);
+    console.log('⚠️ NOTE: This is a dummy checkout URL. For real payments, configure Razorpay credentials.');
+    
+    return {
+      subscriptionId: dummySubscriptionId,
+      checkoutUrl: dummyCheckoutUrl,
+      planType: planType,
+      amount: planType === 'premium' 
+        ? (billingPeriod === 'yearly' ? 261100 : 45100)
+        : topupPlan === 'topup_451' ? 45100 : 451000,
+      status: 'created'
+    };
+  }
+
   // Dummy process subscription
   async processSubscription(userId: string, planType: 'premium' | 'super_user', planVariant: string, paymentId: string, orderId: string) {
     console.log('🔧 Dummy subscription processed:', { userId, planType, planVariant });
