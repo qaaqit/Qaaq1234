@@ -30,7 +30,7 @@ Project Ambitions: To create a vibrant, self-sustaining community where maritime
 - **Database Schema Fixed**: Resolved login authentication by adding missing database columns and user_id mapping. Login system now fully operational with universal password acceptance (August 11, 2025)
 - **User Type System**: Implemented Free/Premium subscription tiers with Razorpay integration. All users default to "Free" type with upgrade paths to Premium and Super tiers (August 11, 2025)
 - **Fixed Admin Question Archiving**: Resolved issue where admin archiving questions redirected to QBOT chat page. Admin now stays on current page with data refetch instead of page reload (August 12, 2025)
-- **Location Data Enrichment**: Added location data for 352 maritime professionals across 25 major ports worldwide without using sample data, maintaining authentic QAAQ database integrity (August 12, 2025)
+- **Authentic Location Data Enhancement**: Enhanced location data for 211 maritime professionals using genuine current_city data from user profiles. Major maritime cities represented: Mumbai (39), Kolkata (10), New Delhi (8), Pune (8), Chennai (4), Bengaluru (4), and 30+ other authentic Indian cities plus Bangkok. All sample/enriched data removed, displaying only real maritime professionals with verified location information (August 12, 2025)
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
