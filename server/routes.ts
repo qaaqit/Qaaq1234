@@ -4098,6 +4098,212 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== WATI WHATSAPP INTEGRATION ENDPOINTS =====
+
+  // WATI webhook endpoint - receive messages and events
+  app.post('/api/wati/webhook', async (req, res) => {
+    try {
+      const webhookPayload = req.body;
+      console.log('🔄 WATI webhook received:', JSON.stringify(webhookPayload, null, 2));
+      
+      // Import WATI service
+      const { getWatiService } = await import('./wati-service');
+      const watiService = getWatiService();
+      
+      if (!watiService) {
+        console.error('❌ WATI service not initialized');
+        return res.status(500).json({ success: false, message: 'WATI service not available' });
+      }
+      
+      // Process webhook
+      await watiService.handleWebhook(webhookPayload);
+      
+      // Always respond with 200 to acknowledge receipt
+      res.status(200).json({ success: true, message: 'Webhook processed' });
+      
+    } catch (error) {
+      console.error('❌ Error processing WATI webhook:', error);
+      res.status(500).json({ success: false, message: 'Webhook processing failed' });
+    }
+  });
+
+  // Send message via WATI (admin only)
+  app.post('/api/wati/send-message', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      const { whatsappNumber, message, messageType = 'session' } = req.body;
+      
+      if (!whatsappNumber || !message) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'WhatsApp number and message are required' 
+        });
+      }
+      
+      const { getWatiService } = await import('./wati-service');
+      const watiService = getWatiService();
+      
+      if (!watiService) {
+        return res.status(500).json({ success: false, message: 'WATI service not available' });
+      }
+      
+      let result;
+      if (messageType === 'template') {
+        result = await watiService.sendTemplateMessage(whatsappNumber, message.templateName, message.parameters);
+      } else {
+        result = await watiService.sendSessionMessage(whatsappNumber, message);
+      }
+      
+      res.json({ success: true, result });
+      
+    } catch (error) {
+      console.error('❌ Error sending WATI message:', error);
+      res.status(500).json({ success: false, message: 'Failed to send message' });
+    }
+  });
+
+  // Send maritime welcome message (admin only)
+  app.post('/api/wati/send-maritime-welcome', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      const { whatsappNumber, userName, shipName } = req.body;
+      
+      if (!whatsappNumber || !userName) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'WhatsApp number and user name are required' 
+        });
+      }
+      
+      const { getWatiService } = await import('./wati-service');
+      const watiService = getWatiService();
+      
+      if (!watiService) {
+        return res.status(500).json({ success: false, message: 'WATI service not available' });
+      }
+      
+      const result = await watiService.sendMaritimeWelcome(whatsappNumber, userName, shipName);
+      
+      res.json({ success: true, result });
+      
+    } catch (error) {
+      console.error('❌ Error sending maritime welcome:', error);
+      res.status(500).json({ success: false, message: 'Failed to send welcome message' });
+    }
+  });
+
+  // Get WATI contacts (admin only)
+  app.get('/api/wati/contacts', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      const { getWatiService } = await import('./wati-service');
+      const watiService = getWatiService();
+      
+      if (!watiService) {
+        return res.status(500).json({ success: false, message: 'WATI service not available' });
+      }
+      
+      const contacts = await watiService.getContacts();
+      res.json({ success: true, contacts });
+      
+    } catch (error) {
+      console.error('❌ Error fetching WATI contacts:', error);
+      res.status(500).json({ success: false, message: 'Failed to fetch contacts' });
+    }
+  });
+
+  // Get WATI message templates (admin only)
+  app.get('/api/wati/templates', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      const { getWatiService } = await import('./wati-service');
+      const watiService = getWatiService();
+      
+      if (!watiService) {
+        return res.status(500).json({ success: false, message: 'WATI service not available' });
+      }
+      
+      const templates = await watiService.getMessageTemplates();
+      res.json({ success: true, templates });
+      
+    } catch (error) {
+      console.error('❌ Error fetching WATI templates:', error);
+      res.status(500).json({ success: false, message: 'Failed to fetch templates' });
+    }
+  });
+
+  // Add WATI contact (admin only)
+  app.post('/api/wati/contacts', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      const { whatsappNumber, name, customParams } = req.body;
+      
+      if (!whatsappNumber) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'WhatsApp number is required' 
+        });
+      }
+      
+      const { getWatiService } = await import('./wati-service');
+      const watiService = getWatiService();
+      
+      if (!watiService) {
+        return res.status(500).json({ success: false, message: 'WATI service not available' });
+      }
+      
+      const result = await watiService.addContact(whatsappNumber, name, customParams);
+      res.json({ success: true, result });
+      
+    } catch (error) {
+      console.error('❌ Error adding WATI contact:', error);
+      res.status(500).json({ success: false, message: 'Failed to add contact' });
+    }
+  });
+
+  // Send question answered notification via WATI
+  app.post('/api/wati/notify-question-answered', authenticateToken, async (req: any, res) => {
+    try {
+      const { questionId, answererName } = req.body;
+      
+      if (!questionId || !answererName) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Question ID and answerer name are required' 
+        });
+      }
+      
+      // Get question details
+      const questionResult = await pool.query('SELECT * FROM questions WHERE id = $1', [questionId]);
+      if (questionResult.rows.length === 0) {
+        return res.status(404).json({ success: false, message: 'Question not found' });
+      }
+      
+      const question = questionResult.rows[0];
+      
+      // Get question author's WhatsApp number
+      const authorResult = await pool.query('SELECT whatsapp_number FROM users WHERE user_id = $1', [question.author_id]);
+      if (authorResult.rows.length === 0 || !authorResult.rows[0].whatsapp_number) {
+        return res.json({ success: false, message: 'Author WhatsApp number not found' });
+      }
+      
+      const { getWatiService } = await import('./wati-service');
+      const watiService = getWatiService();
+      
+      if (!watiService) {
+        return res.status(500).json({ success: false, message: 'WATI service not available' });
+      }
+      
+      const questionTitle = question.content.substring(0, 50) + (question.content.length > 50 ? '...' : '');
+      await watiService.sendQuestionAnsweredNotification(
+        authorResult.rows[0].whatsapp_number, 
+        questionTitle, 
+        answererName
+      );
+      
+      res.json({ success: true, message: 'Notification sent' });
+      
+    } catch (error) {
+      console.error('❌ Error sending question answered notification:', error);
+      res.status(500).json({ success: false, message: 'Failed to send notification' });
+    }
+  });
+
   // ===== RAZORPAY PAYMENT ENDPOINTS =====
 
   // Get subscription plans
