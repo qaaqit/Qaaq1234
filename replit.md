@@ -86,4 +86,4 @@ Onboard Search: Special "onboard" keyword search filters for sailing users and d
 - **TanStack Query**: Server state management.
 - **Wouter**: Lightweight routing solution.
 - **OpenAI GPT-4o**: AI-powered responses for QBOT.
-- **Razorpay**: Payment gateway for subscriptions and top-ups.
+- **Razorpay**: Live payment gateway for premium subscriptions (₹451/month, ₹2,611/year) and super user top-ups (₹451-₹4,510). Activated August 12, 2025 with live API credentials.

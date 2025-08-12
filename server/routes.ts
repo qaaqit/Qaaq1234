@@ -27,7 +27,7 @@ import { robustAuth } from "./auth-system";
 import { ObjectStorageService } from "./objectStorage";
 import { imageManagementService } from "./image-management-service";
 import { setupStableImageRoutes } from "./stable-image-upload";
-import { razorpayService, SUBSCRIPTION_PLANS } from "./razorpay-service-dummy";
+import { razorpayService, SUBSCRIPTION_PLANS } from "./razorpay-service";
 import { setupGoogleAuth } from "./google-auth";
 import { PasswordManager } from "./password-manager";
 import { AIService } from "./ai-service";
@@ -2054,27 +2054,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { items, totalAmount, currency, deliveryLocation, shipSchedule, storeLocation } = req.body;
       const userId = req.userId;
 
-      // Mock Razorpay integration (replace with actual Razorpay when keys are provided)
-      const mockOrderId = `order_${Date.now()}`;
-      
-      // In production, you would create a real Razorpay order here:
-      // const Razorpay = require('razorpay');
-      // const razorpay = new Razorpay({
-      //   key_id: process.env.RAZORPAY_KEY_ID,
-      //   key_secret: process.env.RAZORPAY_KEY_SECRET,
-      // });
-      // 
-      // const order = await razorpay.orders.create({
-      //   amount: totalAmount * 100, // Convert to paise
-      //   currency: currency,
-      //   receipt: `qaaq_${userId}_${Date.now()}`,
-      //   payment_capture: 1
-      // });
+      // Create actual Razorpay order
+      const receiptId = `qaaq_store_${userId}_${Date.now()}`;
+      const order = await razorpayService.createOrder(
+        totalAmount * 100, // Convert to paise
+        currency,
+        receiptId
+      );
 
       // Log order for store processing
       console.log('New Qaaq Store Order:', {
         userId,
-        orderId: mockOrderId,
+        orderId: order.id,
         items: items.map((item: any) => ({ name: item.name, quantity: item.quantity, price: item.price })),
         totalAmount,
         deliveryLocation,
@@ -2084,9 +2075,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       res.json({
-        razorpayOrderId: mockOrderId,
-        amount: totalAmount * 100, // In paise for Razorpay
-        currency: currency,
+        razorpayOrderId: order.id,
+        amount: order.amount,
+        currency: order.currency,
+        key: process.env.RAZORPAY_KEY_ID,
         message: "Order created successfully. Store will prepare items for delivery."
       });
 
@@ -4959,6 +4951,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({
         success: false,
         message: error instanceof Error ? error.message : 'Failed to cancel subscription'
+      });
+    }
+  });
+
+  // Test Razorpay integration (admin only)
+  app.get('/api/razorpay/test', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      // Create a small test order
+      const testOrder = await razorpayService.createOrder(
+        100, // ₹1 in paise
+        'INR',
+        `test_${Date.now()}`
+      );
+
+      res.json({
+        success: true,
+        message: 'Razorpay integration is working!',
+        testOrder: {
+          id: testOrder.id,
+          amount: testOrder.amount,
+          currency: testOrder.currency,
+          status: testOrder.status
+        }
+      });
+    } catch (error) {
+      console.error('Razorpay test failed:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Razorpay integration test failed',
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   });
