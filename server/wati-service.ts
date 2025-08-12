@@ -1,4 +1,3 @@
-import axios, { AxiosInstance } from 'axios';
 import { db } from './db';
 import { users } from '../shared/schema';
 import { eq } from 'drizzle-orm';
@@ -37,22 +36,49 @@ interface WatiWebhookPayload {
 }
 
 export class WatiService {
-  private api: AxiosInstance;
   private config: WatiConfig;
+  private baseHeaders: Record<string, string>;
 
   constructor(config: WatiConfig) {
     this.config = config;
-    this.api = axios.create({
-      baseURL: config.apiEndpoint,
-      headers: {
-        'Authorization': `Bearer ${config.token}`,
-        'Content-Type': 'application/json',
-        'Accept': '*/*'
-      },
-      timeout: 30000
-    });
+    this.baseHeaders = {
+      'Authorization': `Bearer ${config.token}`,
+      'Content-Type': 'application/json',
+      'Accept': '*/*'
+    };
 
     console.log('🔗 WATI Service initialized');
+  }
+
+  /**
+   * Make HTTP request using built-in fetch
+   */
+  private async makeRequest(endpoint: string, method: 'GET' | 'POST' | 'PUT' = 'GET', body?: any): Promise<any> {
+    const url = `${this.config.apiEndpoint}${endpoint}`;
+    
+    const options: RequestInit = {
+      method,
+      headers: this.baseHeaders,
+      signal: AbortSignal.timeout(30000) // 30 second timeout
+    };
+
+    if (body && (method === 'POST' || method === 'PUT')) {
+      options.body = JSON.stringify(body);
+    }
+
+    try {
+      const response = await fetch(url, options);
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(`WATI API error: ${response.status} - ${JSON.stringify(data)}`);
+      }
+      
+      return data;
+    } catch (error: any) {
+      console.error(`❌ WATI API request failed: ${method} ${endpoint}`, error.message);
+      throw error;
+    }
   }
 
   /**
@@ -60,14 +86,14 @@ export class WatiService {
    */
   async sendSessionMessage(whatsappNumber: string, messageText: string): Promise<any> {
     try {
-      const response = await this.api.post(`/sendSessionMessage/${whatsappNumber}`, {
+      const result = await this.makeRequest(`/sendSessionMessage/${whatsappNumber}`, 'POST', {
         messageText
       });
       
       console.log(`📱 Session message sent to ${whatsappNumber}`);
-      return response.data;
+      return result;
     } catch (error: any) {
-      console.error(`❌ Failed to send session message to ${whatsappNumber}:`, error.response?.data || error.message);
+      console.error(`❌ Failed to send session message to ${whatsappNumber}:`, error.message);
       throw error;
     }
   }
@@ -82,7 +108,7 @@ export class WatiService {
     broadcastName = 'QaaqConnect API'
   ): Promise<any> {
     try {
-      const response = await this.api.post('/sendTemplateMessage', {
+      const result = await this.makeRequest('/sendTemplateMessage', 'POST', {
         whatsappNumber,
         template_name: templateName,
         broadcast_name: broadcastName,
@@ -90,9 +116,9 @@ export class WatiService {
       });
       
       console.log(`📧 Template message "${templateName}" sent to ${whatsappNumber}`);
-      return response.data;
+      return result;
     } catch (error: any) {
-      console.error(`❌ Failed to send template message to ${whatsappNumber}:`, error.response?.data || error.message);
+      console.error(`❌ Failed to send template message to ${whatsappNumber}:`, error.message);
       throw error;
     }
   }
@@ -107,7 +133,7 @@ export class WatiService {
     listItems: Array<{ id: string; title: string; description?: string }>
   ): Promise<any> {
     try {
-      const response = await this.api.post('/sendInteractiveListMessage', {
+      const result = await this.makeRequest('/sendInteractiveListMessage', 'POST', {
         whatsappNumber,
         header: { text: headerText },
         body: { text: bodyText },
@@ -115,9 +141,9 @@ export class WatiService {
       });
       
       console.log(`📋 Interactive list sent to ${whatsappNumber}`);
-      return response.data;
+      return result;
     } catch (error: any) {
-      console.error(`❌ Failed to send interactive list to ${whatsappNumber}:`, error.response?.data || error.message);
+      console.error(`❌ Failed to send interactive list to ${whatsappNumber}:`, error.message);
       throw error;
     }
   }
@@ -132,7 +158,7 @@ export class WatiService {
     buttons: Array<{ id: string; title: string }>
   ): Promise<any> {
     try {
-      const response = await this.api.post('/sendInteractiveButtonsMessage', {
+      const result = await this.makeRequest('/sendInteractiveButtonsMessage', 'POST', {
         whatsappNumber,
         header: { text: headerText },
         body: { text: bodyText },
@@ -140,9 +166,9 @@ export class WatiService {
       });
       
       console.log(`🔘 Interactive buttons sent to ${whatsappNumber}`);
-      return response.data;
+      return result;
     } catch (error: any) {
-      console.error(`❌ Failed to send interactive buttons to ${whatsappNumber}:`, error.response?.data || error.message);
+      console.error(`❌ Failed to send interactive buttons to ${whatsappNumber}:`, error.message);
       throw error;
     }
   }
@@ -156,12 +182,12 @@ export class WatiService {
       if (name) data.name = name;
       if (customParams) data.customParams = customParams;
 
-      const response = await this.api.post(`/addContact/${whatsappNumber}`, data);
+      const result = await this.makeRequest(`/addContact/${whatsappNumber}`, 'POST', data);
       
       console.log(`👤 Contact added: ${name || whatsappNumber}`);
-      return response.data;
+      return result;
     } catch (error: any) {
-      console.error(`❌ Failed to add contact ${whatsappNumber}:`, error.response?.data || error.message);
+      console.error(`❌ Failed to add contact ${whatsappNumber}:`, error.message);
       throw error;
     }
   }
@@ -175,12 +201,12 @@ export class WatiService {
       if (name) data.name = name;
       if (customParams) data.customParams = customParams;
 
-      const response = await this.api.put(`/updateContact/${whatsappNumber}`, data);
+      const result = await this.makeRequest(`/updateContact/${whatsappNumber}`, 'PUT', data);
       
       console.log(`✏️ Contact updated: ${name || whatsappNumber}`);
-      return response.data;
+      return result;
     } catch (error: any) {
-      console.error(`❌ Failed to update contact ${whatsappNumber}:`, error.response?.data || error.message);
+      console.error(`❌ Failed to update contact ${whatsappNumber}:`, error.message);
       throw error;
     }
   }
@@ -190,11 +216,11 @@ export class WatiService {
    */
   async getContacts(): Promise<any> {
     try {
-      const response = await this.api.get('/getContacts');
-      console.log(`📇 Retrieved ${response.data?.contacts?.length || 0} contacts`);
-      return response.data;
+      const result = await this.makeRequest('/getContacts');
+      console.log(`📇 Retrieved ${result?.contacts?.length || 0} contacts`);
+      return result;
     } catch (error: any) {
-      console.error('❌ Failed to get contacts:', error.response?.data || error.message);
+      console.error('❌ Failed to get contacts:', error.message);
       throw error;
     }
   }
@@ -204,11 +230,11 @@ export class WatiService {
    */
   async getMessages(whatsappNumber: string): Promise<any> {
     try {
-      const response = await this.api.get(`/getMessages/${whatsappNumber}`);
+      const result = await this.makeRequest(`/getMessages/${whatsappNumber}`);
       console.log(`💬 Retrieved messages for ${whatsappNumber}`);
-      return response.data;
+      return result;
     } catch (error: any) {
-      console.error(`❌ Failed to get messages for ${whatsappNumber}:`, error.response?.data || error.message);
+      console.error(`❌ Failed to get messages for ${whatsappNumber}:`, error.message);
       throw error;
     }
   }
@@ -218,11 +244,11 @@ export class WatiService {
    */
   async getMessageTemplates(): Promise<any> {
     try {
-      const response = await this.api.get('/getMessageTemplates');
-      console.log(`📝 Retrieved ${response.data?.templates?.length || 0} templates`);
-      return response.data;
+      const result = await this.makeRequest('/getMessageTemplates');
+      console.log(`📝 Retrieved ${result?.templates?.length || 0} templates`);
+      return result;
     } catch (error: any) {
-      console.error('❌ Failed to get message templates:', error.response?.data || error.message);
+      console.error('❌ Failed to get message templates:', error.message);
       throw error;
     }
   }
