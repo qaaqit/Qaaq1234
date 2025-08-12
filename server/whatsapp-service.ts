@@ -59,7 +59,7 @@ export class QBotWhatsAppService {
   // Process incoming messages via webhook (WATI integration)
   async processIncomingMessage(phoneNumber: string, messageText: string, senderName: string): Promise<void> {
     try {
-      console.log(`\n📨 Incoming WhatsApp Message (via WATI):`);
+      console.log(`\n📨 QBOTbaby - Incoming WhatsApp Message (via WATI):`);
       console.log(`👤 From: ${senderName} (${phoneNumber})`);
       console.log(`💬 Message: ${messageText}`);
       console.log(`⏰ Time: ${new Date().toLocaleString()}`);
@@ -67,14 +67,14 @@ export class QBotWhatsAppService {
       // Process with GrandMaster Bot
       await this.grandmasterBot.processMessage(phoneNumber, messageText, senderName);
 
-      console.log(`✅ Message processed by GrandMaster bot\n`);
+      console.log(`✅ QBOTbaby - Message processed by GrandMaster bot\n`);
 
     } catch (error) {
       console.error('❌ Error processing WhatsApp message:', error);
       
       // Send error message to user
       try {
-        await this.directService.sendMessage(phoneNumber, '⚠️ Technical difficulty. Our team has been notified. Please try again.');
+        await this.directService.sendMessage(phoneNumber, '⚠️ QBOTbaby technical difficulty. Our team has been notified. Please try again.');
       } catch (replyError) {
         console.error('❌ Error sending error reply:', replyError);
       }
@@ -83,7 +83,7 @@ export class QBotWhatsAppService {
 
   async start(): Promise<void> {
     try {
-      console.log(`\n🚀 Starting QBot WhatsApp service for ${this.phoneNumber}...`);
+      console.log(`\n🚀 Starting QBOTbaby WhatsApp service for ${this.phoneNumber}...`);
       console.log('📱 Using WATI webhook integration');
       console.log('🤖 GrandMaster rules activated');
       console.log('🧠 OpenAI GPT-4o integration enabled');
@@ -94,7 +94,7 @@ export class QBotWhatsAppService {
       console.log(`1. Login to your WhatsApp Business account on phone ${this.phoneNumber}`);
       console.log('2. Configure WATI webhook to point to this service');
       console.log('3. Messages will be processed with GrandMaster rules automatically');
-      console.log('\n✅ QBot service ready and waiting for messages!\n');
+      console.log('\n✅ QBOTbaby service ready and waiting for messages!\n');
       
       this.isReady = true;
     } catch (error) {
@@ -106,7 +106,7 @@ export class QBotWhatsAppService {
   async stop(): Promise<void> {
     try {
       this.isReady = false;
-      console.log('🛑 QBot WhatsApp service stopped');
+      console.log('🛑 QBOTbaby WhatsApp service stopped');
     } catch (error) {
       console.error('❌ Error stopping WhatsApp service:', error);
     }
@@ -122,7 +122,7 @@ export class QBotWhatsAppService {
 
   async sendDirectMessage(phoneNumber: string, message: string): Promise<void> {
     if (!this.isReady) {
-      throw new Error('QBot service not ready');
+      throw new Error('QBOTbaby service not ready');
     }
     await this.directService.sendMessage(phoneNumber, message);
   }

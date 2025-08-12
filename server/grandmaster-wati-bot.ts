@@ -35,7 +35,7 @@ export class GrandmasterWatiBot {
     this.openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY
     });
-    console.log('🤖 GrandMaster WATI Bot initialized');
+    console.log('🤖 QBOTchief (GrandMaster WATI Bot) initialized');
   }
 
   /**
@@ -43,7 +43,7 @@ export class GrandmasterWatiBot {
    */
   async processMessage(whatsappNumber: string, messageText: string, senderName?: string): Promise<void> {
     const startTime = Date.now();
-    console.log(`📨 [GrandMaster Bot] Processing message from ${whatsappNumber}: "${messageText}"`);
+    console.log(`📨 [QBOTchief] Processing message from ${whatsappNumber}: "${messageText}"`);
 
     try {
       // 1. MESSAGE RECEPTION & RECOVERY (Flow Step 1-1.1)
@@ -69,10 +69,10 @@ export class GrandmasterWatiBot {
       await this.routeMessage(whatsappNumber, messageText, classification, userAuth.user);
 
       const processingTime = Date.now() - startTime;
-      console.log(`✅ [GrandMaster Bot] Message processed in ${processingTime}ms`);
+      console.log(`✅ [QBOTchief] Message processed in ${processingTime}ms`);
 
     } catch (error) {
-      console.error('❌ [GrandMaster Bot] Error processing message:', error);
+      console.error('❌ [QBOTchief] Error processing message:', error);
       await this.handleCriticalError(whatsappNumber, error);
     }
   }

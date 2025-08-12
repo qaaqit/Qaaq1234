@@ -4511,7 +4511,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               payload.senderName || 'Maritime Professional'
             );
             
-            // Also process through QBot service if running
+            // Also process through QBOTbaby service if running
             if (qbotService && qbotService.isClientReady()) {
               await qbotService.processIncomingMessage(
                 payload.waId,
@@ -4531,7 +4531,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               payload.senderName || 'New Maritime Professional'
             );
             
-            // Also process through QBot service if running
+            // Also process through QBOTbaby service if running
             if (qbotService && qbotService.isClientReady()) {
               await qbotService.processIncomingMessage(
                 payload.waId,

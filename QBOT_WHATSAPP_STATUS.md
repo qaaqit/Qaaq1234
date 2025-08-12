@@ -1,12 +1,16 @@
 # QBot WhatsApp Integration Status - PRODUCTION READY ✅
 
 ## Overview
-QBot WhatsApp service is now **FULLY OPERATIONAL** with complete GrandMaster rules integration, OpenAI GPT-4o maritime responses, and WATI webhook processing.
+**QBOTbaby** (+905363694997) and **QBOTchief** (WATI) are now **FULLY OPERATIONAL** with complete GrandMaster rules integration, OpenAI GPT-4o maritime responses, and WATI webhook processing.
 
 ## 🚢 Service Details
 
+### Bot Names & Configuration
+- **QBOTbaby**: Direct WhatsApp Web Bot (+905363694997)  
+- **QBOTchief**: WATI-powered Bot (Webhook Integration)
+
 ### Phone Number
-**+905363694997** - Ready for WhatsApp Business integration
+**+905363694997** - QBOTbaby WhatsApp Business integration
 
 ### Features Active
 ✅ **GrandMaster Rules Engine** - Complete three-flow system (Conversation, Technical, Onboarding)  
@@ -25,7 +29,8 @@ POST https://your-replit-app.replit.app/api/wati/webhook
 ```
 
 ### Service Status
-- **Status**: ACTIVE ✅
+- **QBOTbaby Status**: ACTIVE ✅ (Direct WhatsApp Web)
+- **QBOTchief Status**: ACTIVE ✅ (WATI Integration)
 - **Backend**: WATI-integrated with local database
 - **AI Model**: OpenAI GPT-4o (definition responses) + o1-mini (technical troubleshooting)
 - **Database**: PostgreSQL with conversation state tracking
@@ -221,6 +226,8 @@ All interactions logged with:
 **Status**: 🟢 FULLY OPERATIONAL  
 **Last Updated**: August 12, 2025, 5:30 PM UTC  
 **Version**: GrandMaster v1.0 Production  
+**QBOTbaby**: Direct WhatsApp Web (+905363694997)  
+**QBOTchief**: WATI-powered maritime assistant  
 **Ready for**: Maritime technical assistance via WhatsApp  
 
-🚢 **QBot is ready to serve the maritime community!** 🚢
+🚢 **QBOTbaby & QBOTchief are ready to serve the maritime community!** 🚢
