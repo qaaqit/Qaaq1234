@@ -188,7 +188,8 @@ export default function DMPage() {
     }
   });
 
-  const getInitials = (name: string) => {
+  const getInitials = (name: string | null | undefined) => {
+    if (!name || typeof name !== 'string') return 'U';
     return name
       .split(' ')
       .map(word => word.charAt(0))
