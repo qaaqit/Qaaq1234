@@ -126,7 +126,8 @@ export function QuestionsTab() {
     hasNextPage,
     isFetchingNextPage,
     status,
-    error
+    error,
+    refetch
   } = useInfiniteQuery({
     queryKey: ['/api/questions', debouncedSearch || ''],
     queryFn: async ({ pageParam = 1 }) => {
@@ -428,8 +429,8 @@ export function QuestionsTab() {
       const result = await response.json();
       console.log(`Question ${action}d successfully:`, result);
       
-      // Refresh questions list
-      window.location.reload();
+      // Refetch questions data instead of page reload to stay on same page
+      await refetch();
     } catch (error) {
       console.error(`Error ${action}ing question:`, error);
       alert(`Failed to ${action} question. Please try again.`);

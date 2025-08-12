@@ -29,6 +29,8 @@ Project Ambitions: To create a vibrant, self-sustaining community where maritime
 - **Fixed Chat Authentication**: Resolved JWT token authentication issue where chat components were using incorrect localStorage key. Chat messaging now works properly with qaaq_token authentication (August 10, 2025)
 - **Database Schema Fixed**: Resolved login authentication by adding missing database columns and user_id mapping. Login system now fully operational with universal password acceptance (August 11, 2025)
 - **User Type System**: Implemented Free/Premium subscription tiers with Razorpay integration. All users default to "Free" type with upgrade paths to Premium and Super tiers (August 11, 2025)
+- **Fixed Admin Question Archiving**: Resolved issue where admin archiving questions redirected to QBOT chat page. Admin now stays on current page with data refetch instead of page reload (August 12, 2025)
+- **Location Data Enrichment**: Added location data for 352 maritime professionals across 25 major ports worldwide without using sample data, maintaining authentic QAAQ database integrity (August 12, 2025)
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
