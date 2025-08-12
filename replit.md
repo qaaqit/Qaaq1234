@@ -7,33 +7,6 @@ Business Vision: To be the leading platform for maritime professionals, fosterin
 Market Potential: Tapping into the global maritime industry, connecting a vast network of sailors, ship companies, and related businesses.
 Project Ambitions: To create a vibrant, self-sustaining community where maritime professionals can thrive personally and professionally.
 
-## Version Milestones
-**QaaqSlow Version** (August 10, 2025) - Above Base & Deadslow versions ✅ SEALED
-- Successfully implemented redesigned question card layout with clean minimalist design
-- Orange question ID numbering system (#1251, #1250, etc.)
-- Eliminated QG circle avatars, replaced "Assistant" with "Ans:" labels
-- Edge-to-edge card layout with no gaps between cards or screen borders
-- Clean answer text flowing directly after "Ans:" without line breaks
-- Displaying all 1,244 authentic maritime questions from QAAQ parent database
-- Consistent URL structure and navigation throughout Q&A system
-- **Universal Login System**: Any password accepted for any user with automatic password updates
-- **WhatsApp Cross-Platform Integration**: Users see their previous WhatsApp Q&A history when logging into webapp
-- **Replit-Style Chat Interface**: Paperclip and crown icons embedded inside text box, send button outside
-- **Premium Mode Feature**: Crown toggle for enhanced features with visual feedback
-- **Auto-Assignment Disabled**: Manual group joining only - no automatic user assignment to rank groups
-- **Razorpay Payment Integration**: Complete subscription system with premium subscriptions (₹451/month, ₹2,611/year) and super user pay-per-question topups (2 options: ₹451, ₹4,510), payment processing, webhook handling, and admin analytics dashboard
-- **Encrypted/Anonymous Chat**: Privacy shield icon for premium users enabling encrypted chat without database storage
-- **Streamlined Super User Packs**: Simplified to 2 options (₹451 Starter, ₹4,510 Max) with column-style comparison layout
-- **Silent Crown Toggle**: Removed promotional toast messages for distraction-free premium mode switching
-- **Google OAuth Authentication**: Complete Google OAuth integration with professional login button, backend authentication service, and callback handling for seamless user authentication using Google accounts. Configured with custom domain https://qaaq.app/api/auth/google/callback for production use
-- **Fixed Chat Authentication**: Resolved JWT token authentication issue where chat components were using incorrect localStorage key. Chat messaging now works properly with qaaq_token authentication (August 10, 2025)
-- **Database Schema Fixed**: Resolved login authentication by adding missing database columns and user_id mapping. Login system now fully operational with universal password acceptance (August 11, 2025)
-- **User Type System**: Implemented Free/Premium subscription tiers with Razorpay integration. All users default to "Free" type with upgrade paths to Premium and Super tiers (August 11, 2025)
-- **Fixed Admin Question Archiving**: Resolved issue where admin archiving questions redirected to QBOT chat page. Admin now stays on current page with data refetch instead of page reload (August 12, 2025)
-- **Authentic Location Data Enhancement**: Enhanced location data for 211 maritime professionals using genuine current_city data from user profiles. Major maritime cities represented: Mumbai (39), Kolkata (10), New Delhi (8), Pune (8), Chennai (4), Bengaluru (4), and 30+ other authentic Indian cities plus Bangkok. All sample/enriched data removed, displaying only real maritime professionals with verified location information (August 12, 2025)
-- **WATI WhatsApp Integration**: Complete integration with WATI platform for automated maritime WhatsApp communications. Features include webhook endpoints, maritime-specific auto-responses for port/rank/question inquiries, admin panel for message management, contact handling, and notification system for question answers. Service uses fetch-based HTTP client for reliable API communication. WhatsApp widget button positioned in QBOT header to the left of user profile for easy access (August 12, 2025)
-- **GrandMaster WATI Bot System**: Comprehensive WhatsApp automation system implementing advanced conversation flow management with three distinct flows: Conversation (general chat and interaction management), Technical (maritime engineering questions with AI processing), and Onboarding (new user registration and profile completion). Features intelligent message classification engine, A/B clarification system for ambiguous technical questions, OpenAI o1-mini integration for maritime-specific responses, daily question limits (10 for complete profiles, 3 for incomplete), emergency handling protocols, and complete user state management. Includes dedicated database tables for conversation tracking, message history, and technical clarifications with 10-minute timeout handling (August 12, 2025)
-
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 Username field label: "USER NAME (This may be ur country code +91 & whatsapp number )"
@@ -75,41 +48,34 @@ Onboard Search: Special "onboard" keyword search filters for sailing users and d
 - **Runtime**: Node.js with Express.js
 - **Language**: TypeScript with ES modules
 - **Database**: PostgreSQL with Drizzle ORM, shared QAAQ Admin Database
-- **Questions System**: Authentic QAAQ database with 1,244 real maritime Q&A records with separate attachment tracking system. QaaqSlow version features redesigned question cards with orange ID numbering, clean minimalist layout, and edge-to-edge display without gaps.
-- **Question Attachments**: Dedicated `question_attachments` table with unique IDs for tracking questions with images/attachments. Currently tracking 32+ authentic maritime question images stored locally in Replit filesystem, each linked to real QAAQ technical questions from maritime professionals, with separate UUID-based attachment IDs for enhanced organization and retrieval. Latest download added 26 new question-image links covering engines, pumps, compressors, valves, generators, and other maritime equipment.
-- **Image Storage**: Transitioned from Google Cloud Storage to local filesystem storage. Authentic maritime question images stored in `server/uploads/` directory with WhatsApp naming pattern (`whatsapp_[number]_[timestamp].jpg`) for direct serving via `/uploads/` endpoint. System supports multiple image sources for comprehensive maritime content display. Total storage: 2.6MB with 8 authentic maritime images. Fixed grey box issue by mapping only real image files to carousel, eliminating placeholder SVG files.
-- **Stable Image Upload System**: Implemented comprehensive stable image management system with `ImageManagementService` class for handling all future uploads from web and WhatsApp. Features include: automated file processing, UUID-based unique naming, validation for file types and sizes (up to 50MB), proper database integration with `question_attachments` table, and cleanup utilities for unused images.
-- **Image Upload Endpoints**: Created dedicated API endpoints (`/api/questions/:questionId/upload-image`) for stable web-based uploads and WhatsApp integration. System automatically handles source detection, proper URL generation, and carousel integration.
-- **Question Card Design**: QaaqSlow version implements clean card layout with orange question IDs, "Ans:" labels replacing assistant avatars, and seamless edge-to-edge display eliminating all gaps between cards and screen borders.
-- **Authentication**: Dual OTP verification (WhatsApp + Email) with JWT tokens. Universal password acceptance with automatic user creation. Any password works for any user to simplify login experience.
-- **Session Management**: Express sessions with PostgreSQL storage
-- **Email Service**: Gmail SMTP (support@qaaq.app)
-- **WhatsApp Integration**: Primary OTP delivery.
+- **Questions System**: Authentic QAAQ database with 1,244 real maritime Q&A records with attachment tracking. Features redesigned question cards with orange ID numbering, clean minimalist layout, and edge-to-edge display without gaps.
+- **Image Storage**: Local filesystem storage (`server/uploads/`) with UUID-based unique naming and WhatsApp naming patterns. Supports multiple image sources. Comprehensive image management system (`ImageManagementService`) for file processing, validation (up to 50MB), and database integration with `question_attachments` table. Dedicated API endpoints (`/api/questions/:questionId/upload-image`) for web and WhatsApp uploads.
+- **Authentication**: Dual OTP verification (WhatsApp + Email) with JWT tokens. Universal password acceptance for simplified login. Google OAuth integration.
+- **Session Management**: Express sessions with PostgreSQL storage.
 
 ### Bot Integration Architecture
-- **QBOT**: WhatsApp bot for maritime networking assistance, location discovery, and QAAQ Store services.
-- **QOI GPT**: WhatsApp bot for Q&A functionality, professional experience sharing, and maritime guidance.
-- **GrandMaster WATI Bot**: Advanced WhatsApp automation system with three-flow architecture (Conversation, Technical, Onboarding), intelligent message classification, A/B clarification system, OpenAI o1-mini integration, and comprehensive state management.
+- **QBOT**: WhatsApp bot for maritime networking, location discovery, and QAAQ Store services.
+- **QOI GPT**: WhatsApp bot for Q&A functionality and maritime guidance.
+- **GrandMaster WATI Bot**: Advanced WhatsApp automation system with three-flow architecture (Conversation, Technical, Onboarding). Features intelligent message classification, A/B clarification, OpenAI o1-mini integration for maritime-specific responses, daily question limits, emergency handling, and comprehensive user state management with dedicated database tables.
 - **Shared Service**: All bots serve QAAQ, QaaqConnect, and other Replit apps through unified WhatsApp interface.
-- **Database Access**: Direct access to shared QAAQ database with dedicated bot state management tables.
-- **Bot Documentation Storage**: Bot rules and documentation stored in `bot_documentation` table.
-- **AI-Powered Responses**: Connected QBOT to OpenAI GPT-4o for intelligent maritime assistance, GrandMaster Bot uses o1-mini for specialized technical responses.
+- **Database Access**: Direct access to shared QAAQ database with dedicated bot state management tables and `bot_documentation`.
+- **AI-Powered Responses**: QBOT uses OpenAI GPT-4o; GrandMaster Bot uses o1-mini.
 - **SEMM Breadcrumb System**: Implemented System > Equipment > Make > Model categorization for technical questions.
-- **Database Storage**: All bot interactions automatically stored with conversation state tracking, message history, and technical clarification management.
-- **File Attachments**: Clip icon attachment system to QBOT chat supporting JPG, PNG, PDF and similar formats up to 50MB with object storage integration. Direct image paste functionality.
-- **Webhook Integration**: Complete WATI webhook system for real-time message processing with `/api/wati/webhook` endpoint and admin testing capabilities.
+- **File Attachments**: Clip icon attachment system to QBOT chat supporting JPG, PNG, PDF (up to 50MB) with object storage integration and direct image paste.
+- **Webhook Integration**: Complete WATI webhook system for real-time message processing via `/api/wati/webhook`.
 
 ### System Design Choices
-- **Authentication System**: QAAQ User ID and Password authentication, JWT tokens, user type distinction. Cross-platform compatibility. All authentication flows redirect to "/qbot" (QBOT Chat) as the home page.
-- **Social Features**: Post creation with content categories and location tagging, like/unlike functionality, author display options.
-- **Discovery System**: Interactive world map with light grey theme, proximity-based user discovery showing nearest users, city-based location display for sailors and locals, color-coded map pins. Mobile GPS integration for real-time location.
-- **Real-Time Messaging**: WebSocket-based real-time messaging with live typing indicators, instant message delivery, and read receipts.
-- **QBOT Integration**: Fully functional QBOT chat system integrated across all pages with consistent functionality and UI. WhatsApp users see their previous conversations when logging into webapp for seamless cross-platform experience.
+- **Authentication System**: QAAQ User ID and Password, JWT tokens, user type distinction (Free/Premium). Cross-platform compatibility. All authentication flows redirect to "/qbot" (QBOT Chat). Universal login with automatic password updates.
+- **Social Features**: Post creation with content categories and location tagging, like/unlike, author display.
+- **Discovery System**: Interactive world map with light grey theme, proximity-based user discovery, city-based location display, color-coded map pins. Mobile GPS for real-time location.
+- **Real-Time Messaging**: WebSocket-based real-time messaging with typing indicators, instant delivery, read receipts. Encrypted/anonymous chat for premium users (no database storage).
+- **QBOT Integration**: Fully functional QBOT chat system integrated across all pages with consistent UI. WhatsApp users see previous conversations in webapp for seamless cross-platform experience. Replit-style chat interface with paperclip and crown icons inside textbox.
 
 ## External Dependencies
-- **Shared QAAQ Database**: PostgreSQL database for authentic maritime user data and Q&A records.
-- **WhatsApp Bot Services**: QBOT and QOI GPT.
-- **Gmail SMTP**: Email delivery.
+- **Shared QAAQ Database**: PostgreSQL database.
+- **WhatsApp Bot Services**: QBOT, QOI GPT, GrandMaster WATI Bot.
+- **WATI**: WhatsApp integration platform.
+- **Gmail SMTP**: Email delivery (support@qaaq.app).
 - **Replit**: Development and deployment platform.
 - **Radix UI**: Accessible component primitives.
 - **Tailwind CSS**: Utility-first styling framework.
@@ -119,4 +85,5 @@ Onboard Search: Special "onboard" keyword search filters for sailing users and d
 - **Vite**: Fast development server and build tool.
 - **TanStack Query**: Server state management.
 - **Wouter**: Lightweight routing solution.
-- **OpenAI GPT-4o**: For QBOT AI-powered responses.
+- **OpenAI GPT-4o**: AI-powered responses for QBOT.
+- **Razorpay**: Payment gateway for subscriptions and top-ups.
