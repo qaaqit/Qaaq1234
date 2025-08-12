@@ -68,13 +68,24 @@ export function QuestionsTab() {
   const [scrollPosition, setScrollPosition] = useState(0);
   const [feedbackGiven, setFeedbackGiven] = useState<Record<string, 'helpful' | 'needs_improvement'>>({});
   const { user } = useAuth();
-  
+
   // Check if user is admin - based on specific user ID and phone number
   const isAdmin = user?.isAdmin || 
                   user?.fullName === '+919029010070' || 
                   user?.id === '44885683' ||
                   user?.id === '+919029010070' ||
                   user?.id === '5791e66f-9cc1-4be4-bd4b-7fc1bd2e258e';
+
+  // Query to fetch existing feedback for admin
+  const { data: existingFeedback } = useQuery<{
+    success: boolean;
+    feedback: Record<string, 'helpful' | 'needs_improvement'>;
+    count: number;
+  }>({
+    queryKey: ['/api/ai-feedback', user?.id],
+    enabled: !!(isAdmin && user?.id),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
   const observer = useRef<IntersectionObserver | null>(null);
   const lastQuestionRef = useRef<HTMLDivElement | null>(null);
@@ -108,7 +119,13 @@ export function QuestionsTab() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // This will be moved after allQuestions is defined
+  // Load existing feedback on component mount
+  useEffect(() => {
+    if (existingFeedback?.success && existingFeedback.feedback) {
+      setFeedbackGiven(existingFeedback.feedback);
+      console.log(`Loaded ${existingFeedback.count} existing feedback records`);
+    }
+  }, [existingFeedback]);
 
   // Scroll to top function
   const scrollToTop = () => {

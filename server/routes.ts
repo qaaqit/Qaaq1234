@@ -4051,6 +4051,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get existing AI feedback for admin
+  app.get('/api/ai-feedback/:adminId', authenticateToken, async (req: any, res) => {
+    try {
+      const { adminId } = req.params;
+      
+      // Verify user is admin and requesting their own feedback
+      const isAdminUser = req.userId === '44885683' || req.userId === '+919029010070' || req.userId === '5791e66f-9cc1-4be4-bd4b-7fc1bd2e258e';
+      
+      if (!isAdminUser || req.userId !== adminId) {
+        return res.status(403).json({ 
+          success: false, 
+          message: 'Unauthorized: Admin access required' 
+        });
+      }
+      
+      // Get all feedback given by this admin
+      const feedbackResult = await pool.query(`
+        SELECT question_id, answer_id, feedback_type 
+        FROM ai_feedback 
+        WHERE admin_id = $1
+        ORDER BY created_at DESC
+      `, [adminId]);
+      
+      // Convert to a map for easy frontend access
+      const feedbackMap: Record<string, string> = {};
+      feedbackResult.rows.forEach(row => {
+        const key = `${row.question_id}-${row.answer_id}`;
+        feedbackMap[key] = row.feedback_type;
+      });
+      
+      console.log(`Retrieved ${feedbackResult.rows.length} feedback records for admin ${adminId}`);
+      
+      res.json({
+        success: true,
+        feedback: feedbackMap,
+        count: feedbackResult.rows.length
+      });
+      
+    } catch (error) {
+      console.error('Error fetching AI feedback:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to fetch feedback' 
+      });
+    }
+  });
+
   // ===== RAZORPAY PAYMENT ENDPOINTS =====
 
   // Get subscription plans
