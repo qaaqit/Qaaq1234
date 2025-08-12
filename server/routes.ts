@@ -4247,8 +4247,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Export comprehensive maritime professionals CSV (admin only)
-  app.get('/api/export/maritime-professionals-csv', authenticateToken, isAdmin, async (req: any, res) => {
+  // Export comprehensive maritime professionals CSV (authenticated users)
+  app.get('/api/export/maritime-professionals-csv', authenticateToken, async (req: any, res) => {
     try {
       console.log('📤 Exporting comprehensive maritime professionals CSV...');
       
