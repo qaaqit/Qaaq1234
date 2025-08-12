@@ -31,6 +31,7 @@ Project Ambitions: To create a vibrant, self-sustaining community where maritime
 - **User Type System**: Implemented Free/Premium subscription tiers with Razorpay integration. All users default to "Free" type with upgrade paths to Premium and Super tiers (August 11, 2025)
 - **Fixed Admin Question Archiving**: Resolved issue where admin archiving questions redirected to QBOT chat page. Admin now stays on current page with data refetch instead of page reload (August 12, 2025)
 - **Authentic Location Data Enhancement**: Enhanced location data for 211 maritime professionals using genuine current_city data from user profiles. Major maritime cities represented: Mumbai (39), Kolkata (10), New Delhi (8), Pune (8), Chennai (4), Bengaluru (4), and 30+ other authentic Indian cities plus Bangkok. All sample/enriched data removed, displaying only real maritime professionals with verified location information (August 12, 2025)
+- **WATI WhatsApp Integration**: Complete integration with WATI platform for automated maritime WhatsApp communications. Features include webhook endpoints, maritime-specific auto-responses for port/rank/question inquiries, admin panel for message management, contact handling, and notification system for question answers. Service uses fetch-based HTTP client for reliable API communication (August 12, 2025)
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
