@@ -16,9 +16,10 @@ async function createMissingTables() {
       );
     `);
 
-    // Create chat_messages table  
+    // Drop and recreate chat_messages table with correct structure
+    await db.execute(`DROP TABLE IF EXISTS chat_messages;`);
     await db.execute(`
-      CREATE TABLE IF NOT EXISTS chat_messages (
+      CREATE TABLE chat_messages (
         id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
         connection_id VARCHAR NOT NULL,
         sender_id VARCHAR NOT NULL,
