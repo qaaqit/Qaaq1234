@@ -326,19 +326,6 @@ export default function AdminPanel() {
                 Users
               </button>
             </div>
-            
-            {/* Third Row: WhatsApp Integration */}
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                onClick={() => setLocation("/admin/wati")}
-                className="flex items-center justify-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors bg-green-600 text-white hover:bg-green-700 shadow-sm"
-              >
-                <i className="fab fa-whatsapp mr-2"></i>
-                WhatsApp WATI
-              </button>
-              <div></div>
-              <div></div>
-            </div>
           </div>
 
           {/* Analytics Tab - Replit-style Dashboard */}

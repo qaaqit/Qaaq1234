@@ -4,10 +4,9 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { pool } from "./db"; // Import database pool for image serving
 import QoiGPTBot from "./whatsapp-bot";
-import { initializeWatiService } from "./wati-service";
 
 const app = express();
-app.use(express.json({ limit: '50mb' }));
+app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // Serve authentic maritime images from multiple sources
@@ -158,20 +157,6 @@ let whatsappBot: QoiGPTBot | null = null;
   }, () => {
     log(`serving on port ${port}`);
     console.log(`📱 WhatsApp Bot API available at /api/whatsapp-start`);
-    
-    // Initialize WATI service if credentials are available
-    if (process.env.WATI_TOKEN && process.env.WATI_API_ENDPOINT) {
-      try {
-        initializeWatiService(process.env.WATI_TOKEN, process.env.WATI_API_ENDPOINT);
-        console.log(`🔗 WATI WhatsApp integration initialized`);
-        console.log(`📥 WATI webhook endpoint: /api/wati/webhook`);
-      } catch (error) {
-        console.error('❌ Failed to initialize WATI service:', error);
-      }
-    } else {
-      console.log(`⚠️ WATI integration disabled - Missing WATI_TOKEN or WATI_API_ENDPOINT environment variables`);
-      console.log(`   To enable WATI: Set WATI_TOKEN and WATI_API_ENDPOINT in your environment`);
-    }
   });
 
   // Handle graceful shutdown

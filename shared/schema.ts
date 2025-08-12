@@ -196,50 +196,7 @@ export const emailVerificationTokens = pgTable("email_verification_tokens", {
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`)
 });
 
-// WhatsApp Bot Conversation State Management
-export const watiConversationState = pgTable("wati_conversation_state", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  whatsappNumber: text("whatsapp_number").notNull().unique(),
-  currentFlow: text("current_flow").notNull(), // 'conversation', 'technical', 'onboarding'
-  currentStep: text("current_step").notNull(), // Current step in the flow
-  stepData: jsonb("step_data").$type<Record<string, any>>().default({}), // Step-specific data
-  pendingQuestion: text("pending_question"), // For technical flow clarification
-  dailyQuestionCount: integer("daily_question_count").default(0),
-  lastQuestionDate: timestamp("last_question_date"),
-  onboardingComplete: boolean("onboarding_complete").default(false),
-  profileCompleteness: integer("profile_completeness").default(0), // 0-100%
-  lastActivity: timestamp("last_activity").default(sql`now()`),
-  createdAt: timestamp("created_at").default(sql`now()`),
-  updatedAt: timestamp("updated_at").default(sql`now()`)
-});
 
-// WhatsApp Bot Message History
-export const watiMessageHistory = pgTable("wati_message_history", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  whatsappNumber: text("whatsapp_number").notNull(),
-  messageType: text("message_type").notNull(), // 'inbound', 'outbound'
-  messageText: text("message_text").notNull(),
-  messageClassification: text("message_classification"), // 'greeting', 'question', 'command', 'casual', etc.
-  flowContext: text("flow_context"), // Which flow was active
-  stepContext: text("step_context"), // Which step was active
-  aiResponse: text("ai_response"), // AI-generated response if applicable
-  processingTime: integer("processing_time"), // Response time in ms
-  watiMessageId: text("wati_message_id"), // WATI API message ID
-  createdAt: timestamp("created_at").default(sql`now()`)
-});
-
-// Technical Question Clarifications
-export const watiTechnicalClarifications = pgTable("wati_technical_clarifications", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  whatsappNumber: text("whatsapp_number").notNull(),
-  originalQuestion: text("original_question").notNull(),
-  clarificationType: text("clarification_type").notNull(), // 'definition', 'troubleshooting'
-  clarificationSent: boolean("clarification_sent").default(false),
-  userResponse: text("user_response"), // A or B response
-  finalAnswerSent: boolean("final_answer_sent").default(false),
-  expiresAt: timestamp("expires_at").notNull(), // 10 minute timeout
-  createdAt: timestamp("created_at").default(sql`now()`)
-});
 
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({

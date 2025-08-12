@@ -27,7 +27,6 @@ import SetPasswordPage from "@/pages/set-password";
 import PasswordDemoPage from "@/pages/password-demo";
 import OAuthCallback from "@/pages/oauth-callback";
 import TopQProfessionalsPage from "@/pages/TopQProfessionalsPage";
-import WatiAdminPanel from "@/components/wati-admin-panel";
 
 import NotFound from "@/pages/not-found";
 import BottomNav from "@/components/bottom-nav";
@@ -97,7 +96,6 @@ function Router() {
           <Route path="/rank-groups" component={() => <RankGroupsPage />} />
           <Route path="/admin" component={() => <Admin />} />
           <Route path="/admin/bot-rules" component={() => <BotRulesAdmin />} />
-          <Route path="/admin/wati" component={() => <WatiAdminPanel />} />
           <Route path="/merge-accounts/:sessionId" component={MergeAccountsPage} />
           <Route path="/auth-test" component={AuthTestPage} />
           <Route path="/set-password" component={SetPasswordPage} />
