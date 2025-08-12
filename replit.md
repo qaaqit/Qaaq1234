@@ -32,6 +32,7 @@ Project Ambitions: To create a vibrant, self-sustaining community where maritime
 - **Fixed Admin Question Archiving**: Resolved issue where admin archiving questions redirected to QBOT chat page. Admin now stays on current page with data refetch instead of page reload (August 12, 2025)
 - **Authentic Location Data Enhancement**: Enhanced location data for 211 maritime professionals using genuine current_city data from user profiles. Major maritime cities represented: Mumbai (39), Kolkata (10), New Delhi (8), Pune (8), Chennai (4), Bengaluru (4), and 30+ other authentic Indian cities plus Bangkok. All sample/enriched data removed, displaying only real maritime professionals with verified location information (August 12, 2025)
 - **WATI WhatsApp Integration**: Complete integration with WATI platform for automated maritime WhatsApp communications. Features include webhook endpoints, maritime-specific auto-responses for port/rank/question inquiries, admin panel for message management, contact handling, and notification system for question answers. Service uses fetch-based HTTP client for reliable API communication. WhatsApp widget button positioned in QBOT header to the left of user profile for easy access (August 12, 2025)
+- **GrandMaster WATI Bot System**: Comprehensive WhatsApp automation system implementing advanced conversation flow management with three distinct flows: Conversation (general chat and interaction management), Technical (maritime engineering questions with AI processing), and Onboarding (new user registration and profile completion). Features intelligent message classification engine, A/B clarification system for ambiguous technical questions, OpenAI o1-mini integration for maritime-specific responses, daily question limits (10 for complete profiles, 3 for incomplete), emergency handling protocols, and complete user state management. Includes dedicated database tables for conversation tracking, message history, and technical clarifications with 10-minute timeout handling (August 12, 2025)
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -88,13 +89,15 @@ Onboard Search: Special "onboard" keyword search filters for sailing users and d
 ### Bot Integration Architecture
 - **QBOT**: WhatsApp bot for maritime networking assistance, location discovery, and QAAQ Store services.
 - **QOI GPT**: WhatsApp bot for Q&A functionality, professional experience sharing, and maritime guidance.
-- **Shared Service**: Both bots serve QAAQ, QaaqConnect, and other Replit apps through unified WhatsApp interface.
-- **Database Access**: Direct access to shared QAAQ database.
+- **GrandMaster WATI Bot**: Advanced WhatsApp automation system with three-flow architecture (Conversation, Technical, Onboarding), intelligent message classification, A/B clarification system, OpenAI o1-mini integration, and comprehensive state management.
+- **Shared Service**: All bots serve QAAQ, QaaqConnect, and other Replit apps through unified WhatsApp interface.
+- **Database Access**: Direct access to shared QAAQ database with dedicated bot state management tables.
 - **Bot Documentation Storage**: Bot rules and documentation stored in `bot_documentation` table.
-- **AI-Powered Responses**: Connected QBOT to OpenAI GPT-4o for intelligent maritime assistance.
+- **AI-Powered Responses**: Connected QBOT to OpenAI GPT-4o for intelligent maritime assistance, GrandMaster Bot uses o1-mini for specialized technical responses.
 - **SEMM Breadcrumb System**: Implemented System > Equipment > Make > Model categorization for technical questions.
-- **Database Storage**: All QBOT interactions automatically stored in questions table with SEMM breadcrumbs.
+- **Database Storage**: All bot interactions automatically stored with conversation state tracking, message history, and technical clarification management.
 - **File Attachments**: Clip icon attachment system to QBOT chat supporting JPG, PNG, PDF and similar formats up to 50MB with object storage integration. Direct image paste functionality.
+- **Webhook Integration**: Complete WATI webhook system for real-time message processing with `/api/wati/webhook` endpoint and admin testing capabilities.
 
 ### System Design Choices
 - **Authentication System**: QAAQ User ID and Password authentication, JWT tokens, user type distinction. Cross-platform compatibility. All authentication flows redirect to "/qbot" (QBOT Chat) as the home page.

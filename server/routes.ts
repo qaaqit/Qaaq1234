@@ -4472,6 +4472,123 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== GRANDMASTER WATI BOT WEBHOOK =====
+  
+  // WATI Webhook endpoint for GrandMaster Bot
+  app.post('/api/wati/webhook', async (req, res) => {
+    try {
+      const payload = req.body;
+      console.log('🔄 WATI Webhook received:', JSON.stringify(payload, null, 2));
+      
+      // Verify webhook payload
+      if (!payload.eventType || !payload.waId) {
+        return res.status(400).json({ success: false, message: 'Invalid webhook payload' });
+      }
+      
+      // Import services
+      const { getWatiService } = await import('./wati-service');
+      const { GrandmasterWatiBot } = await import('./grandmaster-wati-bot');
+      
+      const watiService = getWatiService();
+      if (!watiService) {
+        return res.status(500).json({ success: false, message: 'WATI service not available' });
+      }
+      
+      const grandmasterBot = new GrandmasterWatiBot(watiService);
+      
+      // Handle different webhook events
+      switch (payload.eventType) {
+        case 'message':
+          // Process incoming message with GrandMaster rules
+          if (payload.text && payload.waId) {
+            await grandmasterBot.processMessage(
+              payload.waId, 
+              payload.text, 
+              payload.senderName
+            );
+          }
+          break;
+          
+        case 'newContactMessageReceived':
+          // New user sending first message - trigger onboarding
+          if (payload.text && payload.waId) {
+            await grandmasterBot.processMessage(
+              payload.waId, 
+              payload.text, 
+              payload.senderName
+            );
+          }
+          break;
+          
+        case 'templateMessageSent':
+          console.log(`📧 Template message sent to ${payload.waId}`);
+          break;
+          
+        case 'sentMessageDELIVERED':
+          console.log(`✅ Message delivered to ${payload.waId}`);
+          break;
+          
+        case 'templateMessageFailed':
+          console.log(`❌ Template message failed for ${payload.waId}: ${payload.failedDetail}`);
+          break;
+          
+        default:
+          console.log(`⚠️ Unhandled webhook event: ${payload.eventType}`);
+      }
+      
+      res.json({ success: true, message: 'Webhook processed successfully' });
+      
+    } catch (error: any) {
+      console.error('❌ Error processing WATI webhook:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to process webhook',
+        error: error.message 
+      });
+    }
+  });
+  
+  // Test GrandMaster Bot endpoint (admin only)
+  app.post('/api/wati/test-grandmaster', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      const { whatsappNumber, message } = req.body;
+      
+      if (!whatsappNumber || !message) {
+        return res.status(400).json({
+          success: false,
+          message: 'WhatsApp number and message are required'
+        });
+      }
+      
+      // Import services
+      const { getWatiService } = await import('./wati-service');
+      const { GrandmasterWatiBot } = await import('./grandmaster-wati-bot');
+      
+      const watiService = getWatiService();
+      if (!watiService) {
+        return res.status(500).json({ success: false, message: 'WATI service not available' });
+      }
+      
+      const grandmasterBot = new GrandmasterWatiBot(watiService);
+      
+      // Process test message
+      await grandmasterBot.processMessage(whatsappNumber, message, 'Test User');
+      
+      res.json({ 
+        success: true, 
+        message: 'Test message processed by GrandMaster bot' 
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Error testing GrandMaster bot:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to test bot',
+        error: error.message 
+      });
+    }
+  });
+
   // ===== RAZORPAY PAYMENT ENDPOINTS =====
 
   // Get subscription plans
