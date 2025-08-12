@@ -3441,55 +3441,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // API endpoint to get file uploads for carousel - serves files directly from server/uploads
+  // API endpoint to get file uploads for carousel - MUST BE BEFORE parameterized routes
   app.get("/api/questions/attachments", noAuth, async (req, res) => {
     try {
-      const fs = await import('fs');
-      const path = await import('path');
+      const limit = parseInt(req.query.limit as string) || 50; // Default to more images from file_uploads
       
       console.log('Authentication bypassed for questions API');
       
-      // Read files directly from server/uploads directory
-      const uploadsDir = path.resolve('./server/uploads');
-      const files = fs.readdirSync(uploadsDir);
+      // Try file_uploads table first, fallback to question_attachments
+      let result;
+      try {
+        result = await pool.query(`
+          SELECT 
+            fu.id,
+            fu.file_name,
+            fu.file_path,
+            fu.file_size,
+            fu.mime_type,
+            fu.created_at,
+            fu.uploaded_by
+          FROM file_uploads fu
+          WHERE (fu.file_name ILIKE '%foto%' OR fu.file_name ILIKE '%.png' OR fu.file_name ILIKE '%.jpg' OR fu.file_name ILIKE '%.jpeg')
+            AND fu.file_name IS NOT NULL
+          ORDER BY fu.created_at DESC
+          LIMIT $1
+        `, [limit]);
+        console.log(`Found ${result.rows.length} files in file_uploads table`);
+      } catch (error) {
+        console.log('file_uploads table not found, using question_attachments as fallback');
+        // Fallback to question_attachments table
+        result = await pool.query(`
+          SELECT 
+            qa.id,
+            qa.attachment_url as file_path,
+            qa.file_name,
+            qa.file_size_bytes as file_size,
+            qa.mime_type,
+            qa.created_at,
+            'system' as uploaded_by
+          FROM question_attachments qa
+          WHERE qa.attachment_type = 'image' 
+            AND qa.is_processed = true
+          ORDER BY qa.created_at DESC
+          LIMIT $1
+        `, [limit]);
+        console.log(`Found ${result.rows.length} files in question_attachments table`);
+      }
       
-      // Filter for image files and create carousel data
-      const imageFiles = files.filter(file => 
-        /\.(jpg|jpeg|png|gif|webp)$/i.test(file)
-      );
-      
-      console.log(`Found ${imageFiles.length} image files in uploads directory`);
-      
-      // Create carousel data from files (ordered by filename which includes timestamps)
-      const attachments = imageFiles
-        .sort((a, b) => b.localeCompare(a)) // Sort by filename desc (newer first)
-        .map((fileName, index) => {
-          const pseudoQuestionId = 1000 + index;
-          
-          return {
-            id: `file_${index}`,
-            questionId: pseudoQuestionId,
-            attachmentType: 'image',
-            attachmentUrl: `/uploads/${fileName}`,
-            fileName: fileName,
-            mimeType: fileName.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg',
-            isProcessed: true,
-            createdAt: new Date().toISOString(),
-            question: {
-              id: pseudoQuestionId,
-              content: fileName.includes('whatsapp') 
-                ? `WhatsApp Maritime Query - ${fileName.split('_')[1]?.slice(0,4)}****`
-                : `Maritime Equipment: ${fileName.replace(/\.(jpg|png|jpeg)$/i, '').replace(/[-_]/g, ' ')}`,
-              authorId: fileName.includes('whatsapp') ? 'whatsapp_user' : 'maritime_expert'
-            }
-          };
-        });
+      console.log(`Found ${result.rows.length} file uploads in database`);
 
-      console.log(`Retrieved ${attachments.length} foto files for carousel`);
+      // Map file uploads to carousel format
+      const attachments = result.rows.map((row) => {
+        // Construct attachment URL based on file path or file name
+        let attachmentUrl = row.file_path;
+        if (!attachmentUrl) {
+          // If no file_path, construct from file_name assuming uploads directory
+          attachmentUrl = `/uploads/${row.file_name}`;
+        }
+        
+        // Create a pseudo question ID based on file upload ID for navigation
+        const pseudoQuestionId = parseInt(row.id) || Math.floor(Math.random() * 1000);
+
+        return {
+          id: row.id,
+          questionId: pseudoQuestionId,
+          attachmentType: 'image',
+          attachmentUrl: attachmentUrl,
+          fileName: row.file_name,
+          mimeType: row.mime_type || 'image/jpeg',
+          isProcessed: true,
+          createdAt: row.created_at,
+          question: {
+            id: pseudoQuestionId,
+            content: `Maritime image: ${row.file_name}`,
+            authorId: row.uploaded_by || 'maritime_user'
+          }
+        };
+      });
+
+      console.log(`Retrieved ${attachments.length} file uploads for carousel`);
       res.json(attachments);
     } catch (error) {
-      console.error('Error fetching foto files:', error);
-      res.status(500).json({ message: 'Failed to fetch foto files' });
+      console.error('Error fetching question attachments:', error);
+      res.status(500).json({ message: 'Failed to fetch question attachments' });
     }
   });
 
