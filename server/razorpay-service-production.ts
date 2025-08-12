@@ -298,21 +298,25 @@ export class RazorpayService {
         };
       }
 
-      // For premium subscriptions, create actual Razorpay subscription
+      // For premium plans, create a one-time order instead of subscription for now
+      // This avoids the plan ID issue until proper plans are created in Razorpay dashboard
       const premiumPlanConfig = planConfig as PremiumPlan;
-      const subscriptionData = {
-        plan_id: planId,
-        total_count: premiumPlanConfig.period === 'yearly' ? 1 : 12, // 1 year for yearly, 12 months for monthly
-        quantity: 1,
-        customer_notify: 1,
-        notes: {
-          userId: userId,
-          planType: planType,
-          billingPeriod: billingPeriod
-        }
-      };
+      const receiptId = `qaaq_premium_${userId}_${Date.now()}`;
+      const order = await this.createOrder(premiumPlanConfig.amount, 'INR', receiptId);
 
-      const razorpaySubscription = await razorpayClient!.createSubscription(subscriptionData);
+      console.log('✅ Created premium order (temporary solution):', order.id);
+
+      return {
+        subscriptionId: null,
+        checkoutUrl: `https://rzp.io/l/${order.id}`,
+        razorpayOrderId: order.id,
+        razorpaySubscriptionId: null,
+        planType: planType,
+        amount: premiumPlanConfig.amount,
+        status: 'created',
+        isOrderMode: true,
+        orderDetails: order
+      };
 
       // Store the subscription in our database
       const result = await pool.query(`
