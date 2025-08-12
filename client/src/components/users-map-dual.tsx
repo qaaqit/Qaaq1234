@@ -693,24 +693,25 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
               {nearestUsers.map((user) => (
                 <div
                   key={user.id}
-                  className={`bg-white rounded-lg border border-gray-200 p-2 sm:p-3 hover:bg-gray-50 transition-colors touch-manipulation ${
+                  className={`bg-white rounded-lg border border-gray-200 p-2 sm:p-3 hover:bg-gray-50 hover:shadow-md transition-all cursor-pointer touch-manipulation ${
                     searchQuery.trim() ? 'w-full' : 'min-w-[140px] sm:min-w-[160px] flex-shrink-0'
                   }`}
                   onClick={() => {
-                    // Navigate to Ch13 DM page with selected user
+                    // Navigate to Q13 active chat page with selected user
                     navigate(`/dm?user=${encodeURIComponent(user.id)}`);
                   }}
+                  title="Click to open chat"
                 >
                   <div className="flex items-center space-x-2 mb-1 sm:mb-2">
-                    {/* Touch-Friendly Profile Circle for Chat */}
+                    {/* Touch-Friendly Profile Circle */}
                     <div className="relative">
                       <div 
-                        className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-100 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-200 hover:scale-110 transition-all duration-200 border-2 border-transparent hover:border-blue-300 touch-manipulation overflow-hidden"
+                        className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-100 rounded-full flex items-center justify-center hover:bg-blue-200 hover:scale-110 transition-all duration-200 border-2 border-transparent hover:border-blue-300 touch-manipulation overflow-hidden"
                         onClick={(e) => {
-                          e.stopPropagation(); // Prevent card click
+                          e.stopPropagation(); // Still allow quick chat option
                           setOpenChatUserId(prev => prev === user.id ? null : user.id);
                         }}
-                        title="Tap to open chat"
+                        title="Quick chat"
                       >
                         {user.profilePictureUrl ? (
                           <img 
@@ -733,45 +734,47 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                       {/* Message notification dot */}
                       <MessageNotificationDot userId={user.id} />
                     </div>
-                    <div className="flex-1 min-w-0 cursor-pointer">
+                    <div className="flex-1 min-w-0">
                       <div className="text-xs sm:text-sm font-medium text-gray-900 truncate">{user.fullName}</div>
+                      {/* Always show rank prominently */}
                       {user.rank && (
-                        <div className="text-xs text-blue-600 font-medium">{getRankAbbreviation(user.rank)}</div>
+                        <div className="text-xs text-orange-600 font-bold">{getRankAbbreviation(user.rank)}</div>
                       )}
                     </div>
                   </div>
                   
-                  <div className="space-y-1">
-                    {/* Show ship info prominently for onboard searches */}
-                    {searchQuery.toLowerCase().trim() === 'onboard' ? (
-                      <>
-                        {user.shipName && (
-                          <div className="text-xs text-blue-700 font-semibold truncate">🚢 {user.shipName}</div>
-                        )}
-                        {user.imoNumber && (
-                          <div className="text-xs text-gray-600 truncate">IMO: {user.imoNumber}</div>
-                        )}
-                        {user.company && (
-                          <div className="text-xs text-gray-600">🏢 {user.company}</div>
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        {user.shipName && (
-                          <div className="text-xs text-gray-600 truncate">🚢 {user.shipName}</div>
-                        )}
-                        {user.company && (
-                          <div className="text-xs text-gray-600 truncate">🏢 {user.company}</div>
-                        )}
-                        {searchQuery.trim() && user.distance && (
-                          <div className="text-xs text-gray-500">
-                            📍 {user.distance.toFixed(1)}km away
-                          </div>
-                        )}
-                      </>
+                  <div className="space-y-0.5">
+                    {/* Always show ship name (current or last) */}
+                    {(user.currentShipName || user.shipName) && (
+                      <div className="text-xs text-blue-700 font-semibold truncate">
+                        🚢 {user.currentShipName || user.shipName}
+                      </div>
                     )}
-                    {user.questionCount && user.answerCount && (
-                      <div className="text-xs text-green-600">{user.questionCount}Q {user.answerCount}A</div>
+                    
+                    {/* Always show company */}
+                    {user.company && (
+                      <div className="text-xs text-gray-700 font-medium truncate">
+                        🏢 {user.company}
+                      </div>
+                    )}
+                    
+                    {/* Show IMO for onboard users */}
+                    {searchQuery.toLowerCase().trim() === 'onboard' && user.imoNumber && (
+                      <div className="text-xs text-gray-600 truncate">IMO: {user.imoNumber}</div>
+                    )}
+                    
+                    {/* Show distance for proximity searches */}
+                    {!searchQuery.trim() && user.distance && (
+                      <div className="text-xs text-gray-500">
+                        📍 {user.distance.toFixed(1)}km away
+                      </div>
+                    )}
+                    
+                    {/* Q&A stats */}
+                    {(user.questionCount || user.answerCount) && (
+                      <div className="text-xs text-green-600 font-medium">
+                        {user.questionCount || 0}Q {user.answerCount || 0}A
+                      </div>
                     )}
                   </div>
                 </div>
@@ -794,7 +797,6 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
           <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-200 p-3 max-w-[280px]">
             <h3 className="font-bold text-gray-900 mb-2 text-sm">
               {hoveredUser.fullName} 
-              {hoveredUser.rank && ` (${getRankAbbreviation(hoveredUser.rank)})`}
               {hoveredUser.questionCount !== undefined && 
                 <span className="text-blue-600 font-medium ml-2">
                   {hoveredUser.questionCount}Q{hoveredUser.answerCount || 0}A
@@ -802,17 +804,24 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
               }
             </h3>
             
+            {/* Rank */}
+            {hoveredUser.rank && (
+              <p className="text-orange-600 font-bold text-xs mb-1">
+                Rank: {getRankAbbreviation(hoveredUser.rank)}
+              </p>
+            )}
+            
+            {/* Ship - Show current or last */}
+            {(hoveredUser.currentShipName || hoveredUser.shipName) && (
+              <p className="text-gray-600 text-xs mb-1">
+                <strong>{hoveredUser.onboardStatus === 'ONBOARD' ? 'Current Ship:' : 'Last Ship:'}</strong> <em>{hoveredUser.currentShipName || hoveredUser.shipName}</em>
+              </p>
+            )}
+            
             {/* Company */}
             {hoveredUser.company && (
               <p className="text-gray-600 text-xs mb-1">
                 <strong>Company:</strong> {hoveredUser.company}
-              </p>
-            )}
-            
-            {/* Ship */}
-            {hoveredUser.shipName && (
-              <p className="text-gray-600 text-xs mb-1">
-                <strong>Ship:</strong> <em>{hoveredUser.shipName}</em>
               </p>
             )}
             
@@ -824,7 +833,10 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
               </p>
             )}
             
-
+            {/* Click to chat hint */}
+            <p className="text-blue-600 text-xs mt-2 font-medium">
+              Click marker to open Q13 chat
+            </p>
           </div>
         </div>
       )}
