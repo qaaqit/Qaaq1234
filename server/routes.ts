@@ -2640,17 +2640,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const query = cleanQuery.toLowerCase();
         console.log(`Searching for: "${query}" (cleaned from: "${searchQuery}")`);
         
-        // Special handling for "onboard" search - show only sailing users with ship info
+        // Special handling for "onboard" search - show only users currently onboard ships
         if (query === 'onboard') {
-          console.log('🚢 Onboard search detected - filtering for sailing users with ship information');
+          console.log('🚢 Onboard search detected - filtering for maritime professionals currently onboard ships');
           filteredUsers = allUsers.filter(user => {
-            // Must be a sailor with ship information
-            return user.userType === 'sailor' && 
-                   (user.shipName || user.imoNumber) && 
-                   user.shipName !== null && 
-                   user.shipName !== '';
+            // Must have onboard status or ship information with ship tracking location
+            return (user.onboardStatus === 'ONBOARD' || 
+                   (user.shipName && user.shipName !== null && user.shipName !== '') ||
+                   (user.currentShipName && user.currentShipName !== null && user.currentShipName !== '') ||
+                   (user.locationSource === 'ship_tracking')) &&
+                   user.latitude && user.longitude; // Must have coordinates
           });
-          console.log(`Found ${filteredUsers.length} sailors currently onboard ships`);
+          console.log(`Found ${filteredUsers.length} maritime professionals currently onboard ships with tracked positions`);
         } else {
           // Regular text search across multiple fields including user ID
           filteredUsers = allUsers.filter(user => {

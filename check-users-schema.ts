@@ -1,56 +1,71 @@
-import { db } from "./server/db";
-import { users } from "./shared/schema";
-import { sql } from "drizzle-orm";
+import { db } from './server/db';
 
 async function checkUsersSchema() {
-  console.log('🔍 Checking users table schema and sample data...');
-  
   try {
-    // Get table schema
-    const schemaQuery = await db.execute(sql`
-      SELECT column_name, data_type, is_nullable 
+    console.log('🔍 Checking users table schema...');
+    
+    const usersSchema = await db.execute(`
+      SELECT column_name, data_type, is_nullable, column_default
       FROM information_schema.columns 
-      WHERE table_name = 'users' 
-      ORDER BY ordinal_position;
+      WHERE table_name = 'users'
+      ORDER BY ordinal_position
     `);
     
     console.log('\n📋 Users table columns:');
-    schemaQuery.rows.forEach((row: any) => {
-      console.log(`  • ${row.column_name} (${row.data_type}) ${row.is_nullable === 'YES' ? '(nullable)' : '(not null)'}`);
+    usersSchema.rows.forEach((col, i) => {
+      console.log(`${i+1}. ${col.column_name} (${col.data_type}) ${col.is_nullable === 'YES' ? 'NULL' : 'NOT NULL'}`);
     });
     
-    // Get sample users with WhatsApp numbers
-    const sampleUsers = await db
-      .select()
-      .from(users)
-      .where(sql`whatsapp_number IS NOT NULL AND whatsapp_number != ''`)
-      .limit(10);
+    console.log('\n🔍 Checking bhangar_users table schema...');
     
-    console.log(`\n👥 Found ${sampleUsers.length} users with WhatsApp numbers (showing first 10):`);
-    sampleUsers.forEach((user, index) => {
-      console.log(`  ${index + 1}. ${user.fullName} - WhatsApp: ${user.whatsAppNumber} - Email: ${user.email}`);
+    const bhangarSchema = await db.execute(`
+      SELECT column_name, data_type, is_nullable, column_default
+      FROM information_schema.columns 
+      WHERE table_name = 'bhangar_users'
+      ORDER BY ordinal_position
+    `);
+    
+    console.log('\n📋 Bhangar_users table columns:');
+    bhangarSchema.rows.forEach((col, i) => {
+      console.log(`${i+1}. ${col.column_name} (${col.data_type}) ${col.is_nullable === 'YES' ? 'NULL' : 'NOT NULL'}`);
     });
     
-    // Count total users
-    const totalCount = await db.execute(sql`SELECT COUNT(*) as count FROM users`);
-    const totalWithWhatsApp = await db.execute(sql`SELECT COUNT(*) as count FROM users WHERE whatsapp_number IS NOT NULL AND whatsapp_number != ''`);
+    // Check for ship-related columns specifically
+    const shipColumns = usersSchema.rows.filter(col => 
+      col.column_name.toLowerCase().includes('ship') || 
+      col.column_name.toLowerCase().includes('vessel') ||
+      col.column_name.toLowerCase().includes('imo') ||
+      col.column_name.toLowerCase().includes('onboard')
+    );
     
-    console.log(`\n📊 User Statistics:`);
-    console.log(`   • Total users: ${totalCount.rows[0].count}`);
-    console.log(`   • Users with WhatsApp: ${totalWithWhatsApp.rows[0].count}`);
+    console.log('\n🚢 Ship-related columns in users table:');
+    if (shipColumns.length > 0) {
+      shipColumns.forEach(col => {
+        console.log(`- ${col.column_name} (${col.data_type})`);
+      });
+    } else {
+      console.log('- No ship-related columns found in users table');
+    }
+    
+    const bhangarShipColumns = bhangarSchema.rows.filter(col => 
+      col.column_name.toLowerCase().includes('ship') || 
+      col.column_name.toLowerCase().includes('vessel') ||
+      col.column_name.toLowerCase().includes('imo') ||
+      col.column_name.toLowerCase().includes('onboard')
+    );
+    
+    console.log('\n🚢 Ship-related columns in bhangar_users table:');
+    if (bhangarShipColumns.length > 0) {
+      bhangarShipColumns.forEach(col => {
+        console.log(`- ${col.column_name} (${col.data_type})`);
+      });
+    } else {
+      console.log('- No ship-related columns found in bhangar_users table');
+    }
     
   } catch (error) {
     console.error('❌ Error checking schema:', error);
-    throw error;
   }
 }
 
-checkUsersSchema()
-  .then(() => {
-    console.log('✅ Schema check completed!');
-    process.exit(0);
-  })
-  .catch((error) => {
-    console.error('💥 Error:', error);
-    process.exit(1);
-  });
+checkUsersSchema().then(() => process.exit(0));
