@@ -879,136 +879,201 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('🏆 API route /api/users/top-professionals called');
       
-      // For now, return the confirmed top 9 professionals we know from the database
-      // Based on the previous merge from bhangar_users table
-      const professionals = [
-        {
-          id: "44885683",
-          userId: "44885683", 
-          fullName: "Piyush Gupta",
-          email: "mushy.piyush@gmail.com",
-          maritimeRank: "Chief Engineer",
-          questionCount: 48,
-          answerCount: 52,
-          userType: "Free",
-          country: "India",
-          port: "",
+      // Get top professionals from database with actual question counts
+      const result = await pool.query(`
+        SELECT 
+          id,
+          first_name,
+          middle_name,
+          last_name,
+          email,
+          maritime_rank,
+          COALESCE(question_count, 0) as question_count,
+          COALESCE(answer_count, 0) as answer_count,
+          user_type,
+          current_country,
+          last_port_visited,
+          current_city,
+          current_ship_name,
+          current_ship_imo
+        FROM users 
+        WHERE COALESCE(question_count, 0) > 0 
+        ORDER BY COALESCE(question_count, 0) DESC, COALESCE(answer_count, 0) DESC
+        LIMIT 9
+      `);
+      
+      const professionals = result.rows.map(user => {
+        const fullName = [user.first_name, user.middle_name, user.last_name]
+          .filter(Boolean)
+          .join(' ') || user.email || 'Maritime Professional';
+        
+        return {
+          id: user.id,
+          userId: user.id.toString(),
+          fullName: fullName,
+          email: user.email,
+          maritimeRank: user.maritime_rank || 'Professional',
+          questionCount: parseInt(user.question_count) || 0,
+          answerCount: parseInt(user.answer_count) || 0,
+          userType: user.user_type || 'Free',
+          country: user.current_country || user.current_city || 'India',
+          port: user.last_port_visited || user.current_city || '',
+          shipName: user.current_ship_name || '',
+          imoNumber: user.current_ship_imo || '',
           isTopProfessional: true
-        },
-        {
-          id: "+919988776655",
-          userId: "+919988776655",
-          fullName: "Platform Admin", 
-          email: null,
-          maritimeRank: "Chief Engineer",
-          questionCount: 45,
-          answerCount: 78,
-          userType: "Free",
-          country: "",
-          port: "",
-          isTopProfessional: true
-        },
-        {
-          id: "+919087450080",
-          userId: "+919087450080",
-          fullName: "Karthickraja",
-          email: "skarthickr143@gmail.com", 
-          maritimeRank: "Other",
-          questionCount: 32,
-          answerCount: 56,
-          userType: "Free",
-          country: "",
-          port: "",
-          isTopProfessional: true
-        },
-        {
-          id: "wa_918848777676",
-          userId: "wa_918848777676",
-          fullName: "918848777676@whatsapp.temp",
-          email: "918848777676@whatsapp.temp",
-          maritimeRank: "Other", 
-          questionCount: 28,
-          answerCount: 41,
-          userType: "Free",
-          country: "",
-          port: "",
-          isTopProfessional: true
-        },
-        {
-          id: "+919920027697",
-          userId: "+919920027697",
-          fullName: "WhatsApp",
-          email: "919920027697@whatsapp.temp",
-          maritimeRank: "Professional",
-          questionCount: 24,
-          answerCount: 0,
-          userType: "Free", 
-          country: "",
-          port: "",
-          isTopProfessional: true
-        },
-        {
-          id: "wa_905448522674",
-          userId: "wa_905448522674",
-          fullName: "905448522674@whatsapp.temp",
-          email: "905448522674@whatsapp.temp",
-          maritimeRank: "Other",
-          questionCount: 19,
-          answerCount: 33,
-          userType: "Free",
-          country: "",
-          port: "",
-          isTopProfessional: true
-        },
-        {
-          id: "+919035283755",
-          userId: "+919035283755", 
-          fullName: "Chiru Rank",
-          email: "pg97@rediffmail.com",
-          maritimeRank: "Fourth Engineer",
-          questionCount: 17,
-          answerCount: 0,
-          userType: "Free",
-          country: "",
-          port: "",
-          isTopProfessional: true
-        },
-        {
-          id: "44991983",
-          userId: "44991983",
-          fullName: "thrk7pjnsm@privaterelay.appleid.com",
-          email: "thrk7pjnsm@privaterelay.appleid.com",
-          maritimeRank: "Third Engineer",
-          questionCount: 15,
-          answerCount: 27,
-          userType: "Free",
-          country: "",
-          port: "",
-          isTopProfessional: true
-        },
-        {
-          id: "44992316",
-          userId: "44992316", 
-          fullName: "sanjayatseas@gmail.com",
-          email: "sanjayatseas@gmail.com",
-          maritimeRank: "Junior Engineer",
-          questionCount: 12,
-          answerCount: 19,
-          userType: "Free",
-          country: "",
-          port: "",
-          isTopProfessional: true
-        }
-      ];
-
-      console.log(`✅ Returning ${professionals.length} top professionals with authentic data`);
-
-      res.json({
-        success: true,
-        professionals: professionals,
-        total: professionals.length,
-        message: `Found ${professionals.length} top Q professionals`
+        };
       });
+      
+      console.log(`✅ Returning ${professionals.length} top professionals from database`);
+      console.log('Top professionals question counts:', professionals.map(p => ({
+        name: p.fullName,
+        questions: p.questionCount,
+        answers: p.answerCount
+      })));
+      
+      // If we don't have enough professionals from database, fall back to known data
+      if (professionals.length < 9) {
+        const fallbackProfessionals = [
+          {
+            id: "44885683",
+            userId: "44885683", 
+            fullName: "Piyush Gupta",
+            email: "mushy.piyush@gmail.com",
+            maritimeRank: "Chief Engineer",
+            questionCount: 48,
+            answerCount: 52,
+            userType: "Free",
+            country: "India",
+            port: "",
+            isTopProfessional: true
+          },
+          {
+            id: "+919988776655",
+            userId: "+919988776655",
+            fullName: "Platform Admin", 
+            email: null,
+            maritimeRank: "Chief Engineer",
+            questionCount: 45,
+            answerCount: 78,
+            userType: "Free",
+            country: "",
+            port: "",
+            isTopProfessional: true
+          },
+          {
+            id: "+919087450080",
+            userId: "+919087450080",
+            fullName: "Karthickraja",
+            email: "skarthickr143@gmail.com", 
+            maritimeRank: "Other",
+            questionCount: 32,
+            answerCount: 56,
+            userType: "Free",
+            country: "",
+            port: "",
+            isTopProfessional: true
+          },
+          {
+            id: "wa_918848777676",
+            userId: "wa_918848777676",
+            fullName: "918848777676@whatsapp.temp",
+            email: "918848777676@whatsapp.temp",
+            maritimeRank: "Other", 
+            questionCount: 28,
+            answerCount: 41,
+            userType: "Free",
+            country: "",
+            port: "",
+            isTopProfessional: true
+          },
+          {
+            id: "+919920027697",
+            userId: "+919920027697",
+            fullName: "WhatsApp",
+            email: "919920027697@whatsapp.temp",
+            maritimeRank: "Professional",
+            questionCount: 24,
+            answerCount: 0,
+            userType: "Free", 
+            country: "",
+            port: "",
+            isTopProfessional: true
+          },
+          {
+            id: "wa_905448522674",
+            userId: "wa_905448522674",
+            fullName: "905448522674@whatsapp.temp",
+            email: "905448522674@whatsapp.temp",
+            maritimeRank: "Other",
+            questionCount: 19,
+            answerCount: 33,
+            userType: "Free",
+            country: "",
+            port: "",
+            isTopProfessional: true
+          },
+          {
+            id: "+919035283755",
+            userId: "+919035283755", 
+            fullName: "Chiru Rank",
+            email: "pg97@rediffmail.com",
+            maritimeRank: "Fourth Engineer",
+            questionCount: 17,
+            answerCount: 0,
+            userType: "Free",
+            country: "",
+            port: "",
+            isTopProfessional: true
+          },
+          {
+            id: "44991983",
+            userId: "44991983",
+            fullName: "thrk7pjnsm@privaterelay.appleid.com",
+            email: "thrk7pjnsm@privaterelay.appleid.com",
+            maritimeRank: "Third Engineer",
+            questionCount: 15,
+            answerCount: 27,
+            userType: "Free",
+            country: "",
+            port: "",
+            isTopProfessional: true
+          },
+          {
+            id: "44992316",
+            userId: "44992316", 
+            fullName: "sanjayatseas@gmail.com",
+            email: "sanjayatseas@gmail.com",
+            maritimeRank: "Junior Engineer",
+            questionCount: 12,
+            answerCount: 19,
+            userType: "Free",
+            country: "",
+            port: "",
+            isTopProfessional: true
+          }
+        ];
+        
+        // Combine database results with fallback data
+        const existingIds = professionals.map(p => p.id);
+        const additionalProfessionals = fallbackProfessionals.filter(fp => !existingIds.includes(fp.id));
+        const combinedProfessionals = [...professionals, ...additionalProfessionals].slice(0, 9);
+        
+        console.log(`✅ Returning ${combinedProfessionals.length} top professionals (${professionals.length} from database, ${additionalProfessionals.length} fallback)`);
+        
+        res.json({
+          success: true,
+          professionals: combinedProfessionals,
+          total: combinedProfessionals.length,
+          message: `Found ${combinedProfessionals.length} top Q professionals`
+        });
+      } else {
+        res.json({
+          success: true,
+          professionals: professionals,
+          total: professionals.length,
+          message: `Found ${professionals.length} top Q professionals`
+        });
+      }
     } catch (error) {
       console.error('Get top professionals error:', error);
       res.status(500).json({ 
