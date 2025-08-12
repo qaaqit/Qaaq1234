@@ -51,6 +51,11 @@ export function WatiAdminPanel() {
     shipName: ''
   });
 
+  // Export state
+  const [exportData, setExportData] = useState<any>(null);
+  const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
+
   useEffect(() => {
     loadContacts();
     loadTemplates();
@@ -252,6 +257,102 @@ export function WatiAdminPanel() {
     }
   };
 
+  const exportUsersToWati = async () => {
+    try {
+      setExporting(true);
+      const response = await fetch('/api/wati/export-users', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('qaaq_token')}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setExportData(data);
+        
+        toast({
+          title: "Export Ready",
+          description: `Exported ${data.contacts?.length || 0} maritime contacts`
+        });
+      } else {
+        throw new Error('Failed to export users');
+      }
+    } catch (error) {
+      toast({
+        title: "Export Error",
+        description: "Failed to export users to WATI format",
+        variant: "destructive"
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const downloadCSV = () => {
+    if (!exportData?.csvData) return;
+    
+    const blob = new Blob([exportData.csvData], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `qaaq_maritime_contacts_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  };
+
+  const downloadVCF = () => {
+    if (!exportData?.vcfData) return;
+    
+    const blob = new Blob([exportData.vcfData], { type: 'text/vcard' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `qaaq_maritime_contacts_${new Date().toISOString().split('T')[0]}.vcf`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  };
+
+  const bulkImportToWati = async () => {
+    if (!exportData?.contacts) return;
+
+    try {
+      setImporting(true);
+      const response = await fetch('/api/wati/bulk-import', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('qaaq_token')}`
+        },
+        body: JSON.stringify({
+          contacts: exportData.contacts
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        toast({
+          title: "Import Complete",
+          description: `Successfully imported ${result.successful}/${result.total} contacts to WATI`
+        });
+        loadContacts(); // Refresh contacts list
+      } else {
+        throw new Error('Failed to import contacts');
+      }
+    } catch (error) {
+      toast({
+        title: "Import Error",
+        description: "Failed to import contacts to WATI",
+        variant: "destructive"
+      });
+    } finally {
+      setImporting(false);
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
       <div className="flex items-center space-x-2">
@@ -261,10 +362,11 @@ export function WatiAdminPanel() {
       </div>
 
       <Tabs defaultValue="send-message" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="send-message">Send Message</TabsTrigger>
           <TabsTrigger value="contacts">Contacts</TabsTrigger>
           <TabsTrigger value="templates">Templates</TabsTrigger>
+          <TabsTrigger value="export">Export/Import</TabsTrigger>
           <TabsTrigger value="maritime-tools">Maritime Tools</TabsTrigger>
         </TabsList>
 
@@ -473,6 +575,109 @@ export function WatiAdminPanel() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="export" className="space-y-4">
+          <div className="grid gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <FileText className="h-5 w-5" />
+                  <span>Export Maritime Contacts</span>
+                </CardTitle>
+                <CardDescription>
+                  Export all maritime professionals from QaaqConnect to WATI format
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Button 
+                  onClick={exportUsersToWati}
+                  disabled={exporting}
+                  className="w-full"
+                >
+                  {exporting ? 'Exporting...' : 'Export All Users to WATI Format'}
+                </Button>
+                
+                {exportData && (
+                  <div className="mt-6 p-4 border rounded-lg bg-green-50">
+                    <h3 className="font-semibold text-green-800 mb-3">
+                      Export Complete: {exportData.contacts?.length || 0} Maritime Contacts
+                    </h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <Button 
+                        variant="outline" 
+                        onClick={downloadCSV}
+                        className="w-full"
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        Download CSV
+                      </Button>
+                      
+                      <Button 
+                        variant="outline" 
+                        onClick={downloadVCF}
+                        className="w-full"
+                      >
+                        <Phone className="h-4 w-4 mr-2" />
+                        Download VCF
+                      </Button>
+                      
+                      <Button 
+                        onClick={bulkImportToWati}
+                        disabled={importing}
+                        className="w-full bg-orange-600 hover:bg-orange-700"
+                      >
+                        {importing ? 'Importing...' : 'Import to WATI'}
+                      </Button>
+                    </div>
+                    
+                    <div className="mt-4 text-sm text-green-700">
+                      <p>• CSV: Spreadsheet format for external use</p>
+                      <p>• VCF: Contact cards for phone/email apps</p>
+                      <p>• WATI Import: Direct upload to WhatsApp platform</p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {exportData && exportData.contacts && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Export Preview</CardTitle>
+                  <CardDescription>
+                    Preview of maritime contacts to be exported ({exportData.contacts.length} total)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="max-h-60 overflow-y-auto">
+                    <div className="grid gap-2">
+                      {exportData.contacts.slice(0, 10).map((contact: any, index: number) => (
+                        <div key={index} className="flex items-center justify-between p-2 border rounded">
+                          <div>
+                            <span className="font-medium">{contact.name || 'Unknown'}</span>
+                            <span className="text-sm text-gray-500 ml-2">+{contact.whatsappNumber}</span>
+                          </div>
+                          <div className="text-xs text-gray-400">
+                            {contact.customParams?.find((p: any) => p.name === 'maritime_rank')?.value || 'No rank'}
+                            {contact.customParams?.find((p: any) => p.name === 'ship_name')?.value && 
+                              ' • ' + contact.customParams.find((p: any) => p.name === 'ship_name').value}
+                          </div>
+                        </div>
+                      ))}
+                      {exportData.contacts.length > 10 && (
+                        <div className="text-center text-sm text-gray-500 py-2">
+                          ... and {exportData.contacts.length - 10} more maritime professionals
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </TabsContent>
+
       </Tabs>
     </div>
   );

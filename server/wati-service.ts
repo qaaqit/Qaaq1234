@@ -176,18 +176,18 @@ export class WatiService {
   /**
    * Add a new contact to WATI
    */
-  async addContact(whatsappNumber: string, name?: string, customParams?: Array<{ name: string; value: string }>): Promise<any> {
+  async addContact(contact: WatiContact): Promise<any> {
     try {
       const data: any = {};
-      if (name) data.name = name;
-      if (customParams) data.customParams = customParams;
+      if (contact.name) data.name = contact.name;
+      if (contact.customParams) data.customParams = contact.customParams;
 
-      const result = await this.makeRequest(`/addContact/${whatsappNumber}`, 'POST', data);
+      const result = await this.makeRequest(`/addContact/${contact.whatsappNumber}`, 'POST', data);
       
-      console.log(`👤 Contact added: ${name || whatsappNumber}`);
+      console.log(`👤 Contact added: ${contact.name || contact.whatsappNumber}`);
       return result;
     } catch (error: any) {
-      console.error(`❌ Failed to add contact ${whatsappNumber}:`, error.message);
+      console.error(`❌ Failed to add contact ${contact.whatsappNumber}:`, error.message);
       throw error;
     }
   }
@@ -485,11 +485,15 @@ _Your maritime community is here to help_ ⚓`;
     await this.sendDefaultMaritimeResponse(payload.waId, payload.senderName);
     
     // Add contact with maritime-specific attributes
-    await this.addContact(payload.waId, payload.senderName, [
-      { name: 'source', value: 'whatsapp_new_contact' },
-      { name: 'platform', value: 'qaaqconnect' },
-      { name: 'industry', value: 'maritime' }
-    ]);
+    await this.addContact({
+      whatsappNumber: payload.waId,
+      name: payload.senderName,
+      customParams: [
+        { name: 'source', value: 'whatsapp_new_contact' },
+        { name: 'platform', value: 'qaaqconnect' },
+        { name: 'industry', value: 'maritime' }
+      ]
+    });
   }
 
   /**

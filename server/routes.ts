@@ -4228,6 +4228,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Export users to WATI format (admin only)
+  app.get('/api/wati/export-users', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      const { getWatiService } = await import('./wati-service');
+      const watiService = getWatiService();
+      
+      if (!watiService) {
+        return res.status(500).json({ success: false, message: 'WATI service not available' });
+      }
+      
+      const exportData = await watiService.exportUsersToWati();
+      res.json(exportData);
+      
+    } catch (error) {
+      console.error('❌ Error exporting users to WATI:', error);
+      res.status(500).json({ success: false, message: 'Failed to export users' });
+    }
+  });
+
+  // Bulk import contacts to WATI (admin only)
+  app.post('/api/wati/bulk-import', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      const { contacts } = req.body;
+      
+      if (!contacts || !Array.isArray(contacts)) {
+        return res.status(400).json({ success: false, message: 'Contacts array is required' });
+      }
+      
+      const { getWatiService } = await import('./wati-service');
+      const watiService = getWatiService();
+      
+      if (!watiService) {
+        return res.status(500).json({ success: false, message: 'WATI service not available' });
+      }
+      
+      const result = await watiService.bulkImportContacts(contacts);
+      res.json(result);
+      
+    } catch (error) {
+      console.error('❌ Error bulk importing contacts:', error);
+      res.status(500).json({ success: false, message: 'Failed to import contacts' });
+    }
+  });
+
   // Add WATI contact (admin only)
   app.post('/api/wati/contacts', authenticateToken, isAdmin, async (req: any, res) => {
     try {
