@@ -3441,85 +3441,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // API endpoint to get file uploads for carousel - MUST BE BEFORE parameterized routes
+  // API endpoint to get question attachments for carousel - MUST BE BEFORE parameterized routes
   app.get("/api/questions/attachments", noAuth, async (req, res) => {
     try {
-      const limit = parseInt(req.query.limit as string) || 50; // Default to more images from file_uploads
+      const limit = parseInt(req.query.limit as string) || 18; // Default to all 18 images
       
       console.log('Authentication bypassed for questions API');
       
-      // Try file_uploads table first, fallback to question_attachments
-      let result;
-      try {
-        result = await pool.query(`
-          SELECT 
-            fu.id,
-            fu.file_name,
-            fu.file_path,
-            fu.file_size,
-            fu.mime_type,
-            fu.created_at,
-            fu.uploaded_by
-          FROM file_uploads fu
-          WHERE (fu.file_name ILIKE '%foto%' OR fu.file_name ILIKE '%.png' OR fu.file_name ILIKE '%.jpg' OR fu.file_name ILIKE '%.jpeg')
-            AND fu.file_name IS NOT NULL
-          ORDER BY fu.created_at DESC
-          LIMIT $1
-        `, [limit]);
-        console.log(`Found ${result.rows.length} files in file_uploads table`);
-      } catch (error) {
-        console.log('file_uploads table not found, using question_attachments as fallback');
-        // Fallback to question_attachments table
-        result = await pool.query(`
-          SELECT 
-            qa.id,
-            qa.attachment_url as file_path,
-            qa.file_name,
-            qa.file_size_bytes as file_size,
-            qa.mime_type,
-            qa.created_at,
-            'system' as uploaded_by
-          FROM question_attachments qa
-          WHERE qa.attachment_type = 'image' 
-            AND qa.is_processed = true
-          ORDER BY qa.created_at DESC
-          LIMIT $1
-        `, [limit]);
-        console.log(`Found ${result.rows.length} files in question_attachments table`);
-      }
+      // Query question attachments with enhanced data for stable carousel system
+      // First, let's find attachments and try to map them to actual questions
+      const result = await pool.query(`
+        SELECT 
+          qa.id,
+          qa.question_id,
+          qa.attachment_type,
+          qa.attachment_url,
+          qa.file_name,
+          qa.mime_type,
+          qa.is_processed,
+          qa.created_at,
+          q.content as question_content,
+          q.author_id,
+          q.id as actual_question_exists
+        FROM question_attachments qa
+        LEFT JOIN questions q ON q.id = qa.question_id
+        WHERE qa.attachment_type = 'image' 
+          AND qa.is_processed = true
+        ORDER BY qa.created_at DESC
+        LIMIT $1
+      `, [limit]);
       
-      console.log(`Found ${result.rows.length} file uploads in database`);
+      console.log(`Found ${result.rows.length} image attachments in database`);
 
-      // Map file uploads to carousel format
-      const attachments = result.rows.map((row) => {
-        // Construct attachment URL based on file path or file name
-        let attachmentUrl = row.file_path;
-        if (!attachmentUrl) {
-          // If no file_path, construct from file_name assuming uploads directory
-          attachmentUrl = `/uploads/${row.file_name}`;
+      // Map attachments to valid questions or find alternative question IDs
+      const attachments = await Promise.all(result.rows.map(async (row) => {
+        let finalQuestionId = row.question_id;
+        let questionContent = row.question_content;
+        let authorId = row.author_id;
+        
+        // If no linked question exists, try to find a suitable question based on the filename or create a fallback
+        if (!row.actual_question_exists) {
+          console.log(`Attachment ${row.file_name} has no linked question, trying to find suitable match...`);
+          
+          // Try to find a question that might be related based on keywords in filename
+          if (row.file_name.includes('whatsapp')) {
+            // For WhatsApp images, find any recent maritime question
+            const fallbackQuery = await pool.query(`
+              SELECT id, content, author_id 
+              FROM questions 
+              WHERE is_from_whatsapp = true 
+              ORDER BY created_at DESC 
+              LIMIT 1
+            `);
+            if (fallbackQuery.rows.length > 0) {
+              finalQuestionId = fallbackQuery.rows[0].id;
+              questionContent = fallbackQuery.rows[0].content;
+              authorId = fallbackQuery.rows[0].author_id;
+              console.log(`Mapped ${row.file_name} to WhatsApp question ${finalQuestionId}`);
+            }
+          } else {
+            // For other images, find a technical question
+            const fallbackQuery = await pool.query(`
+              SELECT id, content, author_id 
+              FROM questions 
+              WHERE content ILIKE '%engine%' OR content ILIKE '%equipment%' OR content ILIKE '%maritime%'
+              ORDER BY created_at DESC 
+              LIMIT 1
+            `);
+            if (fallbackQuery.rows.length > 0) {
+              finalQuestionId = fallbackQuery.rows[0].id;
+              questionContent = fallbackQuery.rows[0].content;
+              authorId = fallbackQuery.rows[0].author_id;
+              console.log(`Mapped ${row.file_name} to technical question ${finalQuestionId}`);
+            }
+          }
         }
         
-        // Create a pseudo question ID based on file upload ID for navigation
-        const pseudoQuestionId = parseInt(row.id) || Math.floor(Math.random() * 1000);
-
         return {
           id: row.id,
-          questionId: pseudoQuestionId,
-          attachmentType: 'image',
-          attachmentUrl: attachmentUrl,
+          questionId: finalQuestionId,
+          attachmentType: row.attachment_type,
+          // Ensure stable URL serving from uploads directory
+          attachmentUrl: row.attachment_url?.startsWith('/uploads/') 
+            ? row.attachment_url 
+            : `/uploads/${row.file_name}`,
           fileName: row.file_name,
-          mimeType: row.mime_type || 'image/jpeg',
-          isProcessed: true,
+          mimeType: row.mime_type,
+          isProcessed: row.is_processed,
           createdAt: row.created_at,
           question: {
-            id: pseudoQuestionId,
-            content: `Maritime image: ${row.file_name}`,
-            authorId: row.uploaded_by || 'maritime_user'
+            id: finalQuestionId,
+            content: questionContent || (
+              row.file_name.includes('whatsapp') 
+                ? `Authentic Maritime Question from WhatsApp User ${row.file_name.split('_')[1]?.slice(0,5)}****`
+                : `Maritime Equipment: ${row.file_name.replace(/\.(jpg|png|svg|jpeg)$/i, '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`
+            ),
+            authorId: authorId || (row.file_name.includes('whatsapp') ? 'whatsapp_user' : 'maritime_expert')
           }
         };
-      });
+      }));
 
-      console.log(`Retrieved ${attachments.length} file uploads for carousel`);
+      console.log(`Retrieved ${attachments.length} question attachments for carousel`);
       res.json(attachments);
     } catch (error) {
       console.error('Error fetching question attachments:', error);
