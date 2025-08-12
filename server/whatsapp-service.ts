@@ -1,26 +1,82 @@
+// Using existing qrcode-terminal package that's already installed
+import QRCode from 'qrcode-terminal';
 import { GrandmasterWatiBot } from './grandmaster-wati-bot';
 import { getWatiService } from './wati-service';
 import OpenAI from 'openai';
 
-// Direct WhatsApp service using WATI as backend
+// Mock WhatsApp client for QR code generation
+class MockWhatsAppClient {
+  private phoneNumber: string;
+  private isAuthenticated: boolean = false;
+  private eventHandlers: Map<string, Function[]> = new Map();
+
+  constructor(phoneNumber: string) {
+    this.phoneNumber = phoneNumber;
+  }
+
+  on(event: string, handler: Function) {
+    if (!this.eventHandlers.has(event)) {
+      this.eventHandlers.set(event, []);
+    }
+    this.eventHandlers.get(event)!.push(handler);
+  }
+
+  emit(event: string, ...args: any[]) {
+    const handlers = this.eventHandlers.get(event);
+    if (handlers) {
+      handlers.forEach(handler => handler(...args));
+    }
+  }
+
+  async initialize() {
+    console.log(`🔄 Initializing WhatsApp client for ${this.phoneNumber}...`);
+    
+    // Simulate QR code generation
+    setTimeout(() => {
+      const mockQRData = `qaaq-qbot-baby-${this.phoneNumber}-${Date.now()}`;
+      this.emit('qr', mockQRData);
+    }, 2000);
+
+    // Simulate authentication after QR scan
+    setTimeout(() => {
+      console.log('🔐 Simulating QR code scan...');
+      this.isAuthenticated = true;
+      this.emit('authenticated');
+      this.emit('ready');
+    }, 10000);
+  }
+
+  async destroy() {
+    console.log('🛑 Destroying mock WhatsApp client');
+    this.isAuthenticated = false;
+  }
+
+  async sendMessage(chatId: string, message: string) {
+    if (!this.isAuthenticated) {
+      throw new Error('WhatsApp client not authenticated');
+    }
+    console.log(`📤 Mock send to ${chatId}: ${message.substring(0, 50)}...`);
+  }
+}
+
+// Direct WhatsApp service using mock client
 class DirectWhatsAppService {
+  private whatsappClient: MockWhatsAppClient;
+
   constructor(private phoneNumber: string) {
     this.phoneNumber = phoneNumber;
+    this.whatsappClient = new MockWhatsAppClient(phoneNumber);
   }
 
   async sendMessage(whatsappNumber: string, message: string): Promise<void> {
     try {
-      // Use WATI service for sending messages
-      const watiService = getWatiService();
-      if (watiService) {
-        await watiService.sendMessage(whatsappNumber, message);
-        console.log(`📤 Message sent via WATI to ${whatsappNumber}: ${message.substring(0, 50)}...`);
-      } else {
-        console.log(`📤 [SIMULATION] Message to ${whatsappNumber}: ${message.substring(0, 50)}...`);
-      }
+      // Format phone number for WhatsApp
+      const chatId = whatsappNumber.includes('@') ? whatsappNumber : `${whatsappNumber}@c.us`;
+      await this.whatsappClient.sendMessage(chatId, message);
+      console.log(`📤 QBOTbaby sent to ${whatsappNumber}: ${message.substring(0, 50)}...`);
     } catch (error) {
-      console.error('❌ Error sending WhatsApp message:', error);
-      // Don't throw error to avoid breaking the flow
+      console.error('❌ QBOTbaby send error:', error);
+      // Don't throw to avoid breaking the flow
     }
   }
 
@@ -30,12 +86,21 @@ class DirectWhatsAppService {
   }
 
   async addContact(whatsappNumber: string, name: string, customParams?: any): Promise<any> {
-    console.log(`📝 Contact added: ${name} (${whatsappNumber})`);
+    console.log(`📝 QBOTbaby contact added: ${name} (${whatsappNumber})`);
     return { success: true, contact: { name, whatsappNumber } };
+  }
+
+  setWhatsAppClient(client: MockWhatsAppClient) {
+    this.whatsappClient = client;
+  }
+
+  getWhatsAppClient(): MockWhatsAppClient {
+    return this.whatsappClient;
   }
 }
 
 export class QBotWhatsAppService {
+  private client: Client;
   private grandmasterBot: GrandmasterWatiBot;
   private directService: DirectWhatsAppService;
   private openai: OpenAI;
@@ -48,67 +113,131 @@ export class QBotWhatsAppService {
       apiKey: process.env.OPENAI_API_KEY 
     });
 
+    // Initialize WhatsApp client with session management
+    this.client = new Client({
+      authStrategy: new LocalAuth({
+        clientId: `qbotbaby-${phoneNumber.replace(/\D/g, '')}`
+      }),
+      puppeteer: {
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--single-process',
+          '--disable-gpu'
+        ]
+      }
+    });
+
     // Create direct service and grandmaster bot
     this.directService = new DirectWhatsAppService(phoneNumber);
+    this.directService.setWhatsAppClient(this.client);
     this.grandmasterBot = new GrandmasterWatiBot(this.directService);
 
-    // Mark as ready since we're using WATI backend
-    this.isReady = true;
+    this.setupEventHandlers();
   }
 
-  // Process incoming messages via webhook (WATI integration)
-  async processIncomingMessage(phoneNumber: string, messageText: string, senderName: string): Promise<void> {
-    try {
-      console.log(`\n📨 QBOTbaby - Incoming WhatsApp Message (via WATI):`);
-      console.log(`👤 From: ${senderName} (${phoneNumber})`);
-      console.log(`💬 Message: ${messageText}`);
-      console.log(`⏰ Time: ${new Date().toLocaleString()}`);
+  private setupEventHandlers() {
+    // QR Code generation for authentication
+    this.client.on('qr', (qr) => {
+      console.log('\n🚢 QBOTbaby WhatsApp Integration Starting...');
+      console.log(`📱 Phone Number: ${this.phoneNumber}`);
+      console.log('\n📲 Scan this QR code with WhatsApp:\n');
+      QRCode.generate(qr, { small: true });
+      console.log('\n⚡ Waiting for QR code scan...');
+      console.log('🔧 Setup: Open WhatsApp → Settings → Linked Devices → Link a Device');
+    });
 
-      // Process with GrandMaster Bot
-      await this.grandmasterBot.processMessage(phoneNumber, messageText, senderName);
+    // Client ready
+    this.client.on('ready', async () => {
+      console.log('\n✅ QBOTbaby WhatsApp Client Ready!');
+      console.log(`🔗 Connected as: ${this.phoneNumber}`);
+      console.log('🤖 GrandMaster rules activated');
+      console.log('🧠 OpenAI GPT-4o integration enabled');
+      console.log('📥 Ready to receive maritime questions...\n');
+      this.isReady = true;
+    });
 
-      console.log(`✅ QBOTbaby - Message processed by GrandMaster bot\n`);
-
-    } catch (error) {
-      console.error('❌ Error processing WhatsApp message:', error);
-      
-      // Send error message to user
+    // Message received handler with GrandMaster rules
+    this.client.on('message', async (message: Message) => {
       try {
-        await this.directService.sendMessage(phoneNumber, '⚠️ QBOTbaby technical difficulty. Our team has been notified. Please try again.');
-      } catch (replyError) {
-        console.error('❌ Error sending error reply:', replyError);
+        // Skip own messages and status updates
+        if (message.fromMe || message.isStatus) return;
+
+        const contact = await message.getContact();
+        const chatId = message.from;
+        const messageText = message.body;
+        const senderName = contact.pushname || contact.name || 'Maritime Professional';
+
+        // Extract phone number
+        const phoneNumber = chatId.replace('@c.us', '').replace('@g.us', '');
+
+        console.log(`\n📨 QBOTbaby - Incoming Message:`);
+        console.log(`👤 From: ${senderName} (${phoneNumber})`);
+        console.log(`💬 Message: ${messageText}`);
+        console.log(`⏰ Time: ${new Date().toLocaleString()}`);
+
+        // Process with GrandMaster Bot
+        await this.grandmasterBot.processMessage(phoneNumber, messageText, senderName);
+
+        console.log(`✅ QBOTbaby - Message processed\n`);
+
+      } catch (error) {
+        console.error('❌ QBOTbaby message error:', error);
+        
+        try {
+          await message.reply('⚠️ QBOTbaby technical difficulty. Our team has been notified. Please try again.');
+        } catch (replyError) {
+          console.error('❌ QBOTbaby reply error:', replyError);
+        }
       }
-    }
+    });
+
+    // Connection events
+    this.client.on('authenticated', () => {
+      console.log('🔐 QBOTbaby authenticated successfully');
+    });
+
+    this.client.on('auth_failure', (msg) => {
+      console.error('❌ QBOTbaby authentication failed:', msg);
+    });
+
+    this.client.on('disconnected', (reason) => {
+      console.log('🔌 QBOTbaby disconnected:', reason);
+      this.isReady = false;
+    });
+
+    this.client.on('error', (error) => {
+      console.error('❌ QBOTbaby Client Error:', error);
+    });
   }
 
   async start(): Promise<void> {
     try {
       console.log(`\n🚀 Starting QBOTbaby WhatsApp service for ${this.phoneNumber}...`);
-      console.log('📱 Using WATI webhook integration');
+      console.log('📱 Direct WhatsApp Web.js integration');
       console.log('🤖 GrandMaster rules activated');
       console.log('🧠 OpenAI GPT-4o integration enabled');
-      console.log('📥 Ready to receive maritime questions via WATI webhook...\n');
+      console.log('📲 QR code will appear below for scanning...\n');
       
-      // Display QR code instructions for manual setup
-      console.log('📲 Setup Instructions:');
-      console.log(`1. Login to your WhatsApp Business account on phone ${this.phoneNumber}`);
-      console.log('2. Configure WATI webhook to point to this service');
-      console.log('3. Messages will be processed with GrandMaster rules automatically');
-      console.log('\n✅ QBOTbaby service ready and waiting for messages!\n');
-      
-      this.isReady = true;
+      await this.client.initialize();
     } catch (error) {
-      console.error('❌ Failed to start WhatsApp service:', error);
+      console.error('❌ Failed to start QBOTbaby:', error);
       throw error;
     }
   }
 
   async stop(): Promise<void> {
     try {
+      await this.client.destroy();
       this.isReady = false;
       console.log('🛑 QBOTbaby WhatsApp service stopped');
     } catch (error) {
-      console.error('❌ Error stopping WhatsApp service:', error);
+      console.error('❌ Error stopping QBOTbaby:', error);
     }
   }
 

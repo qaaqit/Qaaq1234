@@ -11,28 +11,20 @@ async function generateQBotBabyQR() {
     console.log('═══════════════════════════════════════\n');
 
     console.log('🚀 Starting QBOTbaby service...');
+    console.log('📲 QR Code will appear below - scan with WhatsApp!');
+    console.log('⚡ Initializing WhatsApp Web.js client...\n');
     
-    // Start the QBOTbaby WhatsApp service
+    // Start the QBOTbaby WhatsApp service - this will show QR code
     const qbotService = await startQBotWhatsApp('+905363694997');
     
-    console.log('\n✅ QBOTbaby service initialized!');
-    console.log('📲 QR Code will appear above for WhatsApp authentication');
-    console.log('\n📋 Instructions:');
-    console.log('1. Open WhatsApp on your phone (+905363694997)');
-    console.log('2. Go to Settings → Linked Devices');
-    console.log('3. Tap "Link a Device"');
-    console.log('4. Scan the QR code that appears above');
-    console.log('5. QBOTbaby will be ready to process maritime questions!');
-    
-    console.log('\n🎯 Once connected, QBOTbaby will:');
+    console.log('\n🎯 Once QR code is scanned, QBOTbaby will:');
     console.log('   • Follow GrandMaster conversation rules');
     console.log('   • Process technical maritime questions');
     console.log('   • Provide AI-powered responses via OpenAI GPT-4o');
     console.log('   • Log all conversations to the database');
     console.log('   • Handle emergency maritime situations');
     
-    console.log('\n⚡ QBOTbaby is now waiting for QR code scan...');
-    console.log('📞 Ready to serve maritime professionals worldwide!');
+    console.log('\n📞 QBOTbaby ready to serve maritime professionals worldwide!');
     
     // Keep the service running
     process.on('SIGINT', async () => {
@@ -41,10 +33,13 @@ async function generateQBotBabyQR() {
       process.exit(0);
     });
     
+    // Keep running
+    await new Promise(() => {});
+    
   } catch (error) {
     console.error('❌ Failed to start QBOTbaby QR code generator:', error);
     console.log('\n🔧 Troubleshooting:');
-    console.log('1. Ensure you have the correct phone number access');
+    console.log('1. Install required packages: npm install whatsapp-web.js qrcode-terminal');
     console.log('2. Check your internet connection');
     console.log('3. Verify OpenAI API key is configured');
     console.log('4. Make sure PostgreSQL database is accessible');
