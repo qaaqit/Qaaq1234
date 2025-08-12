@@ -80,7 +80,7 @@ async function migrateAnswers() {
     console.log(`\n🎉 Migration completed! Successfully migrated ${successCount}/${answersResult.rows.length} answers`);
     
     // Verify the migration
-    const localCountResult = await localDb.execute({ sql: 'SELECT COUNT(*) as count FROM answers', args: [] });
+    const localCountResult = await localPool.query('SELECT COUNT(*) as count FROM answers');
     console.log(`✅ Local database now has ${localCountResult.rows[0].count} answers`);
     
   } catch (error) {
@@ -88,6 +88,7 @@ async function migrateAnswers() {
     throw error;
   } finally {
     await parentPool.end();
+    await localPool.end();
   }
 }
 
