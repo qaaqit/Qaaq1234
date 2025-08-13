@@ -66,7 +66,15 @@ export function GlossaryPage() {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
-      const data = await response.json();
+      const responseText = await response.text();
+      let data;
+      
+      try {
+        data = JSON.parse(responseText);
+      } catch (jsonError) {
+        console.error('JSON parse error. Response text:', responseText.substring(0, 200));
+        throw new Error('Server returned invalid response format. Please refresh the page.');
+      }
       
       if (data.success) {
         // Sort alphabetically by the term (extract the "what is" part)

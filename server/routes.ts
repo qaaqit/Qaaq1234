@@ -2318,6 +2318,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Get all "what is" questions for shipping dictionary with pagination
   app.get('/api/glossary/what-is', async (req, res) => {
+    // Set JSON content type first
+    res.setHeader('Content-Type', 'application/json');
+    
     try {
       console.log('📚 Fetching "what is" questions for glossary');
       
@@ -2326,7 +2329,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const limit = parseInt(req.query.limit as string) || 60; // Show 60 entries initially, then 30 per page
       const offset = (page - 1) * limit;
       
-      // Count total entries first
+      // Test database connection first
+      await pool.query('SELECT 1');
+      
+      // Count total entries first with error handling
       const countResult = await pool.query(`
         SELECT COUNT(*) as total
         FROM questions q
@@ -2337,7 +2343,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           AND q.content NOT LIKE '%[ARCHIVED]%'
       `);
       
-      const total = parseInt(countResult.rows[0].total);
+      const total = parseInt(countResult.rows[0]?.total || '0');
+      
+      if (total === 0) {
+        console.log('⚠️ No glossary entries found in database');
+        return res.json({
+          success: true,
+          entries: [],
+          pagination: {
+            page,
+            limit,
+            total: 0,
+            hasMore: false,
+            totalPages: 0
+          }
+        });
+      }
       
       // Query database for questions that start with "what is" with pagination
       const result = await pool.query(`
@@ -2411,20 +2432,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
     } catch (error) {
-      console.error('Glossary fetch error:', error);
-      res.status(200).json({ 
-        success: false,
-        message: 'Failed to fetch glossary entries',
-        error: error instanceof Error ? error.message : String(error),
-        entries: [],
-        pagination: {
-          page: 1,
-          limit: 60,
-          total: 0,
-          hasMore: false,
-          totalPages: 0
-        }
-      });
+      console.error('🚨 Glossary fetch error:', error);
+      
+      // Ensure we always return JSON, never HTML error pages
+      try {
+        res.status(200).json({ 
+          success: false,
+          message: 'Database connection error - please refresh page',
+          error: error instanceof Error ? error.message : String(error),
+          entries: [],
+          pagination: {
+            page: parseInt(req.query.page as string) || 1,
+            limit: parseInt(req.query.limit as string) || 60,
+            total: 0,
+            hasMore: false,
+            totalPages: 0
+          }
+        });
+      } catch (jsonError) {
+        console.error('🚨 Failed to send JSON error response:', jsonError);
+        // Last resort: send plain text
+        res.status(200).send('{"success":false,"message":"Service temporarily unavailable","entries":[]}');
+      }
     }
   });
 
