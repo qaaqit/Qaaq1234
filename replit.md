@@ -21,6 +21,8 @@ Map behavior: Shows empty grey map on load, displays pins only when "Koi Hai?" b
 Proximity feature: Shows nearest 10 users when searching without text input
 User data: Connected to QAAQ parent database - contains 948+ authentic maritime professionals with real profile data
 Scope Focus: Core "Koi Hai?" discovery functionality - CPSS navigation and social features removed from roadmap
+🔒 QH13 FORMAT SEALED: Active Conversations and Top Q Professionals displayed in identical-sized compact cards with full DM functionality - NEVER change this layout
+🔒 DUAL SEARCH SYSTEM LOCKED: Pull-to-search on QH13 page + Q radar map search both fully operational with clickable green dots and DM navigation
 Mobile Optimization: Responsive layout with touch-friendly controls and compact design
 Enhanced Search: Updated placeholder to "Sailors/ Ships/ Company" for better user guidance
 Admin shield location: Keep admin shield in header top right corner (not in bottom navigation)
@@ -51,6 +53,7 @@ Login Roadblock Design: Single minimizable login roadblock with chevron control 
 - **Active Conversations Added**: Implemented 1v1 DM section above Top Q Professionals with single/double tick message status pattern
 - **Compact Card Design**: Reduced Top Q Professionals card size to match Active Conversations with consistent layout and styling
 - **Pull-to-Search Feature**: Added sailor search bar above header that appears when scrolling up, with real-time search filtering of maritime professionals
+- **🏆 QAAQ MARIANA SEAL ACHIEVED**: QH13 format permanently sealed with Active Conversations and Top Q Professionals in same-sized cards, full DM functionality for search results and Q radar map green dots, dual search system operational
 
 ## System Architecture
 
