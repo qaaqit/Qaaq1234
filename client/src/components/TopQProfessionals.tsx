@@ -307,21 +307,14 @@ export function TopQProfessionals() {
             </div>
           </div>
           
-          {/* Search Results Preview */}
-          {searchQuery && (
+          {/* Search Results Preview - Only show after search is performed */}
+          {searchResults.length > 0 && (
             <div className="mt-2 bg-gray-50 rounded-lg p-3 max-h-64 overflow-y-auto">
-              {isSearching ? (
-                <div className="text-sm text-gray-600 mb-2 flex items-center gap-2">
-                  <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
-                  Searching for "{searchQuery}"...
-                </div>
-              ) : searchResults.length > 0 ? (
-                <>
-                  <div className="text-sm text-gray-600 mb-2">
-                    Found {searchResults.length} sailors matching "{searchQuery}"
-                  </div>
-                  <div className="space-y-1">
-                    {searchResults.slice(0, 5).map(sailor => (
+              <div className="text-sm text-gray-600 mb-2">
+                Found {searchResults.length} sailors matching "{searchQuery}"
+              </div>
+              <div className="space-y-1">
+                {searchResults.slice(0, 5).map(sailor => (
                       <div 
                         key={sailor.id}
                         className="flex items-center gap-2 text-sm text-gray-700 hover:bg-white rounded p-2 cursor-pointer border-l-2 border-transparent hover:border-blue-500 transition-all"
@@ -355,18 +348,22 @@ export function TopQProfessionals() {
                         </div>
                       </div>
                     ))}
-                    {searchResults.length > 5 && (
-                      <div className="text-xs text-gray-500 text-center py-1">
-                        And {searchResults.length - 5} more sailors...
-                      </div>
-                    )}
+                {searchResults.length > 5 && (
+                  <div className="text-xs text-gray-500 text-center py-1">
+                    And {searchResults.length - 5} more sailors...
                   </div>
-                </>
-              ) : (
-                <div className="text-sm text-gray-500">
-                  No sailors found for "{searchQuery}"
-                </div>
-              )}
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Show searching indicator only during active search */}
+          {isSearching && searchQuery && (
+            <div className="mt-2 bg-gray-50 rounded-lg p-3">
+              <div className="text-sm text-gray-600 flex items-center gap-2">
+                <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                Searching for "{searchQuery}"...
+              </div>
             </div>
           )}
         </div>
