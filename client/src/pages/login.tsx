@@ -9,7 +9,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Anchor, Eye, EyeOff, Mail, Lock, ChevronUp, ChevronDown, Crown, Search } from "lucide-react";
 import qaaqLogoPath from "@assets/ICON_1754950288816.png";
 import qaaqLogo from '@assets/qaaq-logo.png';
-import { GoogleAuthButton } from "@/components/GoogleAuthButton";
 import { User } from "@/lib/auth";
 
 interface LoginPageProps {
@@ -476,21 +475,6 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
             </button>
           </div>
         </form>
-
-        {/* Google Sign In */}
-        <div className="mt-6">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">or</span>
-            </div>
-          </div>
-          <div className="mt-4">
-            <GoogleAuthButton />
-          </div>
-        </div>
 
         {/* Footer */}
         <div className="mt-8 text-center">
