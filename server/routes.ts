@@ -4078,27 +4078,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Transform the questions to match the expected frontend format and filter out hidden ones
       const transformedQuestions = allQuestions
         .filter(q => !q.is_hidden && !q.isHidden) // Filter out hidden questions
-        .map((q, index) => ({
-          id: q.id || index + 1, // Use database ID if available, otherwise index
-          content: q.questionText || q.question_text || q.content || '',
-          author_id: q.userId || q.user_id || '',
-          author_name: q.userName || q.user_name || 'Anonymous',
-          author_rank: q.maritime_rank || null,
-          tags: q.tags || [],
-          views: q.view_count || 0,
-          is_resolved: q.isResolved || q.is_resolved || false,
-          created_at: q.askedDate || q.createdAt || q.created_at || new Date().toISOString(),
-          updated_at: q.updatedAt || q.updated_at || q.created_at || new Date().toISOString(),
-          image_urls: q.image_urls || [],
-          is_from_whatsapp: q.is_from_whatsapp || false,
-          engagement_score: q.engagement_score || 0,
-          flag_count: 0,
-          category_name: q.questionCategory || q.question_category || 'General Discussion',
-          answer_count: q.answerCount || q.answer_count || 0,
-          author_whatsapp_profile_picture_url: q.author_whatsapp_profile_picture_url || null,
-          author_whatsapp_display_name: q.author_whatsapp_display_name || null,
-          author_profile_picture_url: q.author_profile_picture_url || null
-        }));
+        .map((q, index) => {
+          // Clean the content to remove category labels like "category general- general equipment question"
+          let cleanContent = q.questionText || q.question_text || q.content || '';
+          
+          // Remove category prefixes like "category general- general equipment question"
+          cleanContent = cleanContent.replace(/^category\s+[^-]*-\s*[^:]*:\s*/i, '');
+          cleanContent = cleanContent.replace(/^category\s+[^-]*-\s*[^?]*\?\s*/i, '');
+          cleanContent = cleanContent.replace(/^category\s+[^-]*-\s*/i, '');
+          
+          return {
+            id: q.id || index + 1, // Use database ID if available, otherwise index
+            content: cleanContent.trim(),
+            author_id: q.userId || q.user_id || '',
+            author_name: q.userName || q.user_name || 'Anonymous',
+            author_rank: q.maritime_rank || null,
+            tags: q.tags || [],
+            views: q.view_count || 0,
+            is_resolved: q.isResolved || q.is_resolved || false,
+            created_at: q.askedDate || q.createdAt || q.created_at || new Date().toISOString(),
+            updated_at: q.updatedAt || q.updated_at || q.created_at || new Date().toISOString(),
+            image_urls: q.image_urls || [],
+            is_from_whatsapp: q.is_from_whatsapp || false,
+            engagement_score: q.engagement_score || 0,
+            flag_count: 0,
+            category_name: q.questionCategory || q.question_category || 'General Discussion',
+            answer_count: q.answerCount || q.answer_count || 0,
+            author_whatsapp_profile_picture_url: q.author_whatsapp_profile_picture_url || null,
+            author_whatsapp_display_name: q.author_whatsapp_display_name || null,
+            author_profile_picture_url: q.author_profile_picture_url || null
+          };
+        });
       
       // Apply pagination
       const offset = (page - 1) * limit;
