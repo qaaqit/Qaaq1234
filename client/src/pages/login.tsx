@@ -142,8 +142,8 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-100 flex items-center justify-center p-4">
-      {/* Minimized state */}
+    <>
+      {/* Minimized state - only show the button */}
       {isMinimized && (
         <div className="fixed top-4 right-4 z-50">
           <Button
@@ -160,9 +160,11 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
         </div>
       )}
 
-      {/* Full login form */}
+      {/* Full login form - only show when not minimized */}
       {!isMinimized && (
-        <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 border border-gray-200 relative">
+        <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-100 flex items-center justify-center p-4">
+
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 border border-gray-200 relative">
           {/* Minimize Button */}
           <Button
             variant="ghost"
@@ -292,8 +294,9 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
             Connecting maritime professionals worldwide
           </p>
         </div>
+          </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
