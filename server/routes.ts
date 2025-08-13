@@ -31,6 +31,8 @@ import { razorpayService, SUBSCRIPTION_PLANS } from "./razorpay-service-producti
 import { setupGoogleAuth } from "./google-auth";
 import { PasswordManager } from "./password-manager";
 import { AIService } from "./ai-service";
+import { FeedbackService } from "./feedback-service";
+import { WatiBotService } from "./wati-bot-service";
 
 // Extend Express Request type
 declare global {
@@ -48,6 +50,9 @@ const passwordManager = new PasswordManager();
 
 // Initialize AI service for dual model testing
 const aiService = new AIService();
+
+// Initialize WATI bot service
+const watiBotService = new WatiBotService();
 
 // Authentication middleware - proper JWT authentication for admin routes
 const authenticateToken = async (req: Request, res: Response, next: NextFunction) => {
@@ -2141,11 +2146,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`🤖 QBOT Chat - User: ${message.substring(0, 50)}... | Response: ${aiResponse.content.substring(0, 50)}...`);
       
+      // Generate feedback message to append after the technical answer
+      const feedbackMessage = FeedbackService.generateCompactFeedbackMessage();
+      const responseWithFeedback = `${aiResponse.content}\n\n---\n${feedbackMessage}`;
+      
       res.json({ 
-        response: aiResponse.content,
+        response: responseWithFeedback,
         aiModel: aiResponse.aiModel,
         responseTime: aiResponse.responseTime,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        feedbackPrompt: true
       });
       
     } catch (error) {
@@ -2154,6 +2164,136 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: 'Unable to generate response at this time. Please try again.',
         error: 'QBOT_ERROR'
       });
+    }
+  });
+
+  // Handle user feedback responses
+  app.post('/api/qbot/feedback', optionalAuth, async (req, res) => {
+    try {
+      const { message, questionId } = req.body;
+      const userId = req.userId;
+      
+      if (!message) {
+        return res.status(400).json({ message: 'Feedback message is required' });
+      }
+      
+      // Parse the feedback rating
+      const feedbackResult = FeedbackService.parseFeedbackRating(message);
+      
+      if (feedbackResult.rating !== null) {
+        // Store the feedback
+        await FeedbackService.storeFeedback(
+          userId || 'anonymous',
+          questionId || 'unknown', 
+          feedbackResult.rating.toString(),
+          message
+        );
+        
+        // Generate thank you response
+        const thankYouMessages = [
+          "Thank you for the feedback! 🙏 Your input helps QBOT improve.",
+          "Feedback received! 👍 This helps me provide better maritime solutions.",
+          "Thanks for rating! ⭐ Your feedback makes QBOT smarter.",
+          "Appreciated! 🌊 Your input improves our maritime assistance.",
+          "Feedback noted! 🔧 This helps enhance QBOT's technical accuracy."
+        ];
+        
+        const thankYou = thankYouMessages[Math.floor(Math.random() * thankYouMessages.length)];
+        
+        res.json({ 
+          response: thankYou,
+          feedbackProcessed: true,
+          rating: feedbackResult.rating,
+          category: feedbackResult.category
+        });
+      } else {
+        // If feedback format not recognized, ask for clarification
+        res.json({ 
+          response: "Could you rate the previous answer? Use ⭐⭐⭐⭐⭐ (1-5 stars) or 'Excellent/Good/Poor'",
+          feedbackProcessed: false
+        });
+      }
+      
+    } catch (error) {
+      console.error('Feedback processing error:', error);
+      res.status(500).json({ 
+        message: 'Unable to process feedback at this time.',
+        error: 'FEEDBACK_ERROR'
+      });
+    }
+  });
+
+  // Get feedback analytics (admin only)
+  app.get('/api/admin/feedback-stats', authenticateToken, async (req, res) => {
+    try {
+      const stats = await FeedbackService.getFeedbackStats();
+      res.json(stats);
+    } catch (error) {
+      console.error('Feedback stats error:', error);
+      res.status(500).json({ message: 'Failed to get feedback statistics' });
+    }
+  });
+
+  // ==== WATI WHATSAPP BOT INTEGRATION ====
+  
+  // WATI webhook endpoint for incoming WhatsApp messages
+  app.post('/api/wati/webhook', async (req, res) => {
+    try {
+      const messageData = req.body;
+      console.log('📱 WATI Webhook received:', JSON.stringify(messageData, null, 2));
+      
+      // Process the message asynchronously
+      watiBotService.processIncomingMessage(messageData).catch(error => {
+        console.error('❌ WATI: Error processing webhook:', error);
+      });
+      
+      // Respond immediately to acknowledge receipt
+      res.json({ status: 'received', timestamp: new Date().toISOString() });
+      
+    } catch (error) {
+      console.error('❌ WATI Webhook error:', error);
+      res.status(500).json({ error: 'Webhook processing failed' });
+    }
+  });
+
+  // Test endpoint to simulate WATI messages (for development)
+  app.post('/api/wati/test-message', async (req, res) => {
+    try {
+      const { phone, message } = req.body;
+      
+      if (!phone || !message) {
+        return res.status(400).json({ error: 'Phone and message are required' });
+      }
+      
+      const testMessageData = {
+        phone: phone,
+        name: 'Test User',
+        type: 'text' as const,
+        text: message
+      };
+      
+      await watiBotService.processIncomingMessage(testMessageData);
+      
+      res.json({ 
+        success: true, 
+        message: 'Test message processed',
+        data: testMessageData
+      });
+      
+    } catch (error) {
+      console.error('❌ WATI Test message error:', error);
+      res.status(500).json({ error: 'Test message processing failed' });
+    }
+  });
+
+  // Initialize WATI bot database tables
+  app.post('/api/wati/initialize', authenticateToken, async (req, res) => {
+    try {
+      await watiBotService.initializeTables();
+      res.json({ success: true, message: 'WATI bot initialized successfully' });
+    } catch (error) {
+      console.error('❌ WATI initialization error:', error);
+      res.status(500).json({ error: 'WATI initialization failed' });
     }
   });
 

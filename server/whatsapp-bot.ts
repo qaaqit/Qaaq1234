@@ -2,6 +2,7 @@ import pkg from 'whatsapp-web.js';
 const { Client, LocalAuth } = pkg;
 import * as qrcode from 'qrcode-terminal';
 import { DatabaseStorage } from './storage';
+import { FeedbackService } from './feedback-service';
 
 // Type definitions to fix TypeScript errors
 type WhatsAppClient = InstanceType<typeof Client>;
