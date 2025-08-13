@@ -1036,25 +1036,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('🏆 API route /api/users/top-professionals called');
       
-      // Query users table directly by questions_count column  
+      // Query users table directly by question_count column  
       const result = await pool.query(`
         SELECT 
           id,
           full_name,
           email,
           maritime_rank,
-          COALESCE(questions_count, 0) as questions_count,
+          COALESCE(question_count, 0) as question_count,
           COALESCE(answer_count, 0) as answer_count,
           user_type,
           country,
           port,
           city,
           current_ship_name,
-          current_ship_imo,
-          company
+          current_ship_imo
         FROM users 
-        WHERE COALESCE(questions_count, 0) > 0
-        ORDER BY COALESCE(questions_count, 0) DESC
+        WHERE COALESCE(question_count, 0) > 0
+        ORDER BY COALESCE(question_count, 0) DESC
         LIMIT 9
       `);
       
@@ -1064,7 +1063,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fullName: user.full_name || user.email || 'Maritime Professional',
         email: user.email,
         maritimeRank: user.maritime_rank || 'Professional',
-        questionCount: parseInt(user.questions_count) || 0,
+        questionCount: parseInt(user.question_count) || 0,
         answerCount: parseInt(user.answer_count) || 0,
         userType: user.user_type || 'Free',
         subscriptionStatus: user.user_type === 'Premium' ? 'premium' : 'free',
@@ -1072,11 +1071,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         port: user.port || user.city || '',
         shipName: user.current_ship_name || '',
         imoNumber: user.current_ship_imo || '',
-        company: user.company || '',
+        company: '',
         isTopProfessional: true
       }));
       
-      console.log(`✅ Found ${professionals.length} users from questions_count column`);
+      console.log(`✅ Found ${professionals.length} users from question_count column`);
       professionals.forEach(p => console.log(`User: ${p.fullName}, Questions: ${p.questionCount}`));
       
       // If we don't have enough professionals from database, fall back to known data
