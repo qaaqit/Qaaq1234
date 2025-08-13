@@ -448,9 +448,9 @@ export function TopQProfessionals() {
       {/* 🔒 MARIANA SEAL LOCKED: Top Q Professionals Header */}
       <div className="flex items-center gap-3 mb-4">
         <Crown className="h-5 w-5 text-orange-600" />
-        <h2 className="text-xl font-bold text-gray-800">Top Q Professionals</h2>
-        <Badge variant="outline" className="ml-auto text-xs">
-          {professionals.length} Professionals
+        <h2 className="text-xl font-bold text-gray-800">🏆 Top Q Professionals</h2>
+        <Badge variant="outline" className="ml-auto text-xs bg-green-100 text-green-800">
+          MARIANA SEAL ✓ {professionals.length} Professionals
         </Badge>
       </div>
 
