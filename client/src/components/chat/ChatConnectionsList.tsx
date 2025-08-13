@@ -45,7 +45,11 @@ export default function ChatConnectionsList({ currentUserId }: ChatConnectionsLi
       const response = await apiRequest('/api/chat/connections');
       return response.json();
     },
-    refetchInterval: 30000 // Refresh every 30 seconds
+    refetchInterval: false, // Disable automatic polling
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 15 * 60 * 1000 // 15 minutes
   });
 
   // Fetch unread counts
@@ -55,7 +59,11 @@ export default function ChatConnectionsList({ currentUserId }: ChatConnectionsLi
       const response = await apiRequest('/api/chat/unread-counts');
       return response.json();
     },
-    refetchInterval: 10000 // Refresh every 10 seconds
+    refetchInterval: false, // Disable automatic polling
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000 // 10 minutes
   });
 
   const handleConnectionClick = (connection: ChatConnection) => {

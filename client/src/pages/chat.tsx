@@ -23,7 +23,10 @@ export default function ChatPage() {
   // Fetch user's chat connections
   const { data: connections = [], isLoading } = useQuery<ExtendedChatConnection[]>({
     queryKey: ['/api/chat/connections'],
-    refetchInterval: 5000, // Poll every 5 seconds for new connections
+    refetchInterval: false, // Disable polling - use WebSocket for real-time updates
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    staleTime: 10 * 60 * 1000, // 10 minutes
   });
 
   const getInitials = (name: string) => {
