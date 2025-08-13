@@ -43,17 +43,68 @@ function Router() {
   const { showPasswordModal, isRenewal, closeModal } = usePasswordCheck(user?.id);
 
   useEffect(() => {
-    const token = getStoredToken();
-    const storedUser = getStoredUser();
+    const checkAuth = async () => {
+      // First check for QAAQ JWT token
+      const token = getStoredToken();
+      const storedUser = getStoredUser();
+      
+      if (token && storedUser) {
+        setUser(storedUser);
+        setLoading(false);
+        return;
+      }
+      
+      // Then check for Replit Auth session
+      try {
+        const response = await fetch('/api/auth/user', {
+          credentials: 'include', // Important for session cookies
+        });
+        
+        if (response.ok) {
+          const replitUser = await response.json();
+          if (replitUser) {
+            // Convert Replit user to our User format
+            const user: User = {
+              id: replitUser.id,
+              fullName: replitUser.fullName || replitUser.email,
+              email: replitUser.email,
+              userType: replitUser.userType || 'sailor',
+              isAdmin: replitUser.isAdmin || false,
+              nickname: replitUser.nickname,
+              isVerified: true, // Replit users are always verified
+              loginCount: replitUser.loginCount || 0
+            };
+            setUser(user);
+            setLoading(false);
+            return;
+          }
+        }
+      } catch (error) {
+        console.log('No Replit Auth session found');
+      }
+      
+      setLoading(false);
+    };
     
-    if (token && storedUser) {
-      setUser(storedUser);
-    }
-    setLoading(false);
+    checkAuth();
   }, []);
 
   const handleLogout = () => {
+    // Clear QAAQ tokens
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('qaaq_user');
+    
+    // Also handle Replit Auth logout
     setUser(null);
+    
+    // If it's a Replit user, redirect to Replit logout
+    if (user && user.id && !getStoredToken()) {
+      window.location.href = '/api/logout';
+      return;
+    }
+    
+    // For QAAQ users, just refresh the page
+    window.location.href = '/';
   };
 
   if (loading) {
