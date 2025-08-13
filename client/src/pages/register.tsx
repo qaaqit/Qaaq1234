@@ -192,6 +192,7 @@ export default function Register({ onSuccess }: RegisterProps) {
           description: `Check your inbox at ${formData.email} and click the verification link`,
         });
       } else {
+        console.error('Registration failed:', response.status, data);
         toast({
           title: "Registration Failed",
           description: data.message || "Unable to send verification email. Please try again.",
@@ -210,8 +211,11 @@ export default function Register({ onSuccess }: RegisterProps) {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    e.stopPropagation();
+
+    console.log('Form submitted with data:', formData);
 
     // Validation
     const finalCompany = formData.company === 'Other' ? formData.otherCompany : formData.company;
@@ -382,7 +386,7 @@ export default function Register({ onSuccess }: RegisterProps) {
         </div>
 
         {/* Registration Form */}
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-3" noValidate>
           {/* Name Fields */}
           <div className="grid grid-cols-2 gap-2">
             <div>
@@ -637,7 +641,7 @@ export default function Register({ onSuccess }: RegisterProps) {
               type="button"
               onClick={() => {
                 setOtpSent(false);
-                sendEmailOTP();
+                sendVerificationEmail();
               }}
               variant="outline"
               className="w-full h-9 text-sm"

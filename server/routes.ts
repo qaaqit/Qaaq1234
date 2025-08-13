@@ -340,7 +340,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if user already exists
       const existingUser = await storage.getUserByEmail(email);
       if (existingUser) {
-        return res.status(400).json({ message: "User already exists with this email" });
+        return res.status(400).json({ 
+          success: false,
+          message: "User already exists with this email. Try logging in instead." 
+        });
       }
 
       // Generate unique user ID based on rank
