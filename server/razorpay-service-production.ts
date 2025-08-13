@@ -227,6 +227,58 @@ export class RazorpayService {
     return RazorpayService.instance;
   }
 
+  // Enhanced database operation with retry logic for subscription reliability
+  private async executeWithRetry<T>(
+    operation: () => Promise<T>,
+    description: string,
+    maxRetries: number = 3
+  ): Promise<T> {
+    let lastError: Error;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`🔄 ${description} (attempt ${attempt}/${maxRetries})`);
+        const result = await operation();
+        console.log(`✅ ${description} completed successfully`);
+        return result;
+      } catch (error) {
+        lastError = error as Error;
+        console.error(`❌ ${description} failed (attempt ${attempt}):`, error.message);
+        
+        // Don't retry for certain errors
+        if (this.isNonRetryableError(error as Error)) {
+          console.error(`💀 ${description}: Non-retryable error, aborting`);
+          throw error;
+        }
+        
+        if (attempt < maxRetries) {
+          const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000); // Exponential backoff, max 5s
+          console.log(`⏳ ${description}: Retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+    }
+    
+    throw new Error(`${description} failed after ${maxRetries} attempts. Last error: ${lastError.message}`);
+  }
+
+  // Check if error should not be retried
+  private isNonRetryableError(error: Error): boolean {
+    const nonRetryablePatterns = [
+      'unique constraint',
+      'foreign key constraint',
+      'check constraint',
+      'invalid input syntax',
+      'column does not exist',
+      'relation does not exist',
+      'duplicate key value',
+      'authentication failed'
+    ];
+
+    const errorMessage = error.message.toLowerCase();
+    return nonRetryablePatterns.some(pattern => errorMessage.includes(pattern));
+  }
+
   async ensureInitialized() {
     if (!this.isInitialized) {
       await initializeRazorpay();
@@ -254,7 +306,7 @@ export class RazorpayService {
     }
   }
 
-  // Create subscription with Razorpay
+  // Create subscription with Razorpay and enhanced database connection
   async createSubscription(userId: string, planType: 'premium' | 'super_user', billingPeriod?: string, topupPlan?: string) {
     await this.ensureInitialized();
 
@@ -314,24 +366,26 @@ export class RazorpayService {
 
       const razorpaySubscription = await razorpayClient!.createSubscription(subscriptionData);
 
-      // Store the subscription in our database
-      const result = await pool.query(`
-        INSERT INTO subscriptions (
-          user_id, subscription_type, razorpay_subscription_id, razorpay_plan_id, 
-          status, amount, currency, short_url, notes
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
-        RETURNING *
-      `, [
-        userId,
-        planType,
-        razorpaySubscription.id,
-        planId,
-        razorpaySubscription.status,
-        planConfig.amount,
-        'INR',
-        razorpaySubscription.short_url,
-        JSON.stringify(razorpaySubscription.notes)
-      ]);
+      // Store the subscription in our database with enhanced reliability and retry logic
+      const result = await this.executeWithRetry(async () => {
+        return await pool.query(`
+          INSERT INTO subscriptions (
+            user_id, subscription_type, razorpay_subscription_id, razorpay_plan_id, 
+            status, amount, currency, short_url, notes
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+          RETURNING *
+        `, [
+          userId,
+          planType,
+          razorpaySubscription.id,
+          planId,
+          razorpaySubscription.status,
+          planConfig.amount,
+          'INR',
+          razorpaySubscription.short_url,
+          JSON.stringify(razorpaySubscription.notes)
+        ]);
+      }, `Create subscription for user ${userId}`);
 
       console.log('✅ Subscription created:', razorpaySubscription.id);
 
@@ -391,66 +445,77 @@ export class RazorpayService {
       // Fetch payment details from Razorpay
       const payment = await razorpayClient!.fetchPayment(paymentId);
 
-      // Store payment record
-      const paymentResult = await pool.query(`
-        INSERT INTO payments (
-          user_id, razorpay_payment_id, razorpay_order_id, razorpay_signature,
-          amount, currency, status, method, description
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
-        RETURNING *
-      `, [
-        userId,
-        paymentId,
-        orderId,
-        signature,
-        payment.amount,
-        payment.currency,
-        payment.status,
-        payment.method,
-        payment.description || 'QaaqConnect subscription payment'
-      ]);
+      // Store payment record with enhanced reliability
+      const paymentResult = await this.executeWithRetry(async () => {
+        return await pool.query(`
+          INSERT INTO payments (
+            user_id, razorpay_payment_id, razorpay_order_id, razorpay_signature,
+            amount, currency, status, method, description
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+          RETURNING *
+        `, [
+          userId,
+          paymentId,
+          orderId,
+          signature,
+          payment.amount,
+          payment.currency,
+          payment.status,
+          payment.method,
+          payment.description || 'QaaqConnect subscription payment'
+        ]);
+      }, `Process payment ${paymentId} for user ${userId}`);
 
-      // Update subscription status
-      await pool.query(`
-        UPDATE subscriptions 
-        SET status = 'active', current_period_start = NOW(), 
-            current_period_end = NOW() + INTERVAL '1 month'
-        WHERE user_id = $1 AND status = 'created'
-      `, [userId]);
+      // Update subscription status with enhanced reliability
+      await this.executeWithRetry(async () => {
+        return await pool.query(`
+          UPDATE subscriptions 
+          SET status = 'active', current_period_start = NOW(), 
+              current_period_end = NOW() + INTERVAL '1 month'
+          WHERE user_id = $1 AND status = 'created'
+        `, [userId]);
+      }, `Update subscription status for user ${userId}`);
 
-      // Update user subscription status
-      const subscriptionResult = await pool.query(`
-        SELECT subscription_type, notes FROM subscriptions 
-        WHERE user_id = $1 AND status = 'active' 
-        ORDER BY created_at DESC LIMIT 1
-      `, [userId]);
+      // Get subscription details with retry logic
+      const subscriptionResult = await this.executeWithRetry(async () => {
+        return await pool.query(`
+          SELECT subscription_type, notes FROM subscriptions 
+          WHERE user_id = $1 AND status = 'active' 
+          ORDER BY created_at DESC LIMIT 1
+        `, [userId]);
+      }, `Get subscription details for user ${userId}`);
 
       if (subscriptionResult.rows.length > 0) {
         const subscription = subscriptionResult.rows[0];
         
+        // Update user subscription status with enhanced reliability
         if (subscription.subscription_type === 'premium') {
-          await pool.query(`
-            INSERT INTO user_subscription_status (
-              user_id, is_premium, premium_expires_at
-            ) VALUES ($1, true, NOW() + INTERVAL '1 month')
-            ON CONFLICT (user_id) DO UPDATE SET
-              is_premium = true,
-              premium_expires_at = NOW() + INTERVAL '1 month'
-          `, [userId]);
+          await this.executeWithRetry(async () => {
+            return await pool.query(`
+              INSERT INTO user_subscription_status (
+                user_id, is_premium, premium_expires_at
+              ) VALUES ($1, true, NOW() + INTERVAL '1 month')
+              ON CONFLICT (user_id) DO UPDATE SET
+                is_premium = true,
+                premium_expires_at = NOW() + INTERVAL '1 month'
+            `, [userId]);
+          }, `Update premium status for user ${userId}`);
         } else if (subscription.subscription_type === 'super_user') {
           const notes = subscription.notes || {};
           const questions = notes.questions || 100;
           const validityMonths = notes.validityMonths || 1;
 
-          await pool.query(`
-            INSERT INTO user_subscription_status (
-              user_id, is_super_user, super_user_expires_at, questions_remaining
-            ) VALUES ($1, true, NOW() + INTERVAL '${validityMonths} months', $2)
-            ON CONFLICT (user_id) DO UPDATE SET
-              is_super_user = true,
-              super_user_expires_at = NOW() + INTERVAL '${validityMonths} months',
-              questions_remaining = COALESCE(user_subscription_status.questions_remaining, 0) + $2
-          `, [userId, questions]);
+          await this.executeWithRetry(async () => {
+            return await pool.query(`
+              INSERT INTO user_subscription_status (
+                user_id, is_super_user, super_user_expires_at, questions_remaining
+              ) VALUES ($1, true, NOW() + INTERVAL '${validityMonths} months', $2)
+              ON CONFLICT (user_id) DO UPDATE SET
+                is_super_user = true,
+                super_user_expires_at = NOW() + INTERVAL '${validityMonths} months',
+                questions_remaining = COALESCE(user_subscription_status.questions_remaining, 0) + $2
+            `, [userId, questions]);
+          }, `Update super user status for user ${userId}`);
         }
       }
 
@@ -643,18 +708,20 @@ export class RazorpayService {
   // Handle subscription activated webhook
   private async handleSubscriptionActivated(subscription: any) {
     try {
-      await pool.query(`
-        UPDATE subscriptions 
-        SET status = 'active', 
-            current_period_start = $2,
-            current_period_end = $3,
-            updated_at = NOW()
-        WHERE razorpay_subscription_id = $1
-      `, [
-        subscription.id, 
-        new Date(subscription.current_start * 1000),
-        new Date(subscription.current_end * 1000)
-      ]);
+      await this.executeWithRetry(async () => {
+        return await pool.query(`
+          UPDATE subscriptions 
+          SET status = 'active', 
+              current_period_start = $2,
+              current_period_end = $3,
+              updated_at = NOW()
+          WHERE razorpay_subscription_id = $1
+        `, [
+          subscription.id, 
+          new Date(subscription.current_start * 1000),
+          new Date(subscription.current_end * 1000)
+        ]);
+      }, `Handle subscription activation for ${subscription.id}`);
 
       console.log('✅ Subscription activated:', subscription.id);
     } catch (error) {

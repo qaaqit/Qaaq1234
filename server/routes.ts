@@ -5136,6 +5136,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Database health monitoring endpoint
+  app.get('/api/health/database', async (req, res) => {
+    try {
+      const start = Date.now();
+      await pool.query('SELECT 1 as health_check');
+      const latency = Date.now() - start;
+      
+      res.json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        database: { healthy: true, latency }
+      });
+    } catch (error) {
+      res.status(503).json({
+        status: 'unhealthy',
+        timestamp: new Date().toISOString(),
+        error: error.message
+      });
+    }
+  });
+
   // Favicon route to prevent 500 errors
   app.get('/favicon.ico', (req, res) => {
     res.status(204).end(); // No content response for favicon

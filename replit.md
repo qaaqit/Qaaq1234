@@ -55,13 +55,15 @@ Login Roadblock Design: Single minimizable login roadblock with chevron control 
 ### Backend Architecture
 - **Runtime**: Node.js with Express.js
 - **Language**: TypeScript with ES modules
-- **Database**: PostgreSQL with Drizzle ORM, shared QAAQ Admin Database
+- **Database**: Enhanced PostgreSQL with connection pooling (max: 20, min: 5 connections), retry logic, and health monitoring. Shared QAAQ Admin Database with subscription tables.
+- **Database Reliability**: Comprehensive retry logic with exponential backoff for subscription operations, connection health monitoring at `/api/health/database`, enhanced timeout configurations for payment processing reliability.
 - **Questions System**: Authentic QAAQ database with 1,244 real maritime Q&A records, with redesigned question card layout (orange ID numbering, minimalist design, edge-to-edge display). Dedicated `question_attachments` table for tracking questions with images/attachments stored locally in `server/uploads/`.
 - **Image Storage**: Local filesystem storage (`server/uploads/`) with `ImageManagementService` for handling uploads (UUID-based naming, validation, database integration).
 - **Authentication**: Dual OTP verification (WhatsApp + Email) with JWT tokens. Universal password acceptance with automatic user creation.
 - **Session Management**: Express sessions with PostgreSQL storage
 - **Email Service**: Gmail SMTP (support@qaaq.app)
 - **WhatsApp Integration**: Primary OTP delivery.
+- **Payment System**: Production Razorpay integration with enhanced database connection reliability, automatic retry logic for payment processing, and comprehensive subscription management.
 
 ### Bot Integration Architecture
 - **QBOT**: WhatsApp bot for maritime networking assistance, location discovery, QAAQ Store services, and Q&A functionality.
