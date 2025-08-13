@@ -148,27 +148,44 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
 
 
 
-  // Fetch all users with comprehensive search functionality
-  const { data: usersResponse, isLoading } = useQuery<{success: boolean, sailors: MapUser[]}>({
+  // Fetch users from nearby API for map display
+  const { data: nearbyUsersResponse, isLoading: isLoadingNearby } = useQuery<MapUser[]>({
+    queryKey: ['/api/users/nearby'],
+    queryFn: async () => {
+      const response = await fetch('/api/users/nearby');
+      if (!response.ok) throw new Error('Failed to fetch nearby users');
+      const data = await response.json();
+      return data;
+    },
+    staleTime: 60000, // Cache for 1 minute
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
+  // Fetch search results separately for search functionality
+  const { data: usersResponse, isLoading: isLoadingSearch } = useQuery<{success: boolean, sailors: MapUser[]}>({
     queryKey: ['/api/users/search', searchQuery],
     queryFn: async () => {
+      if (!searchQuery.trim()) return { success: true, sailors: [] };
+      
       const params = new URLSearchParams();
-      if (searchQuery.trim()) {
-        params.append('q', searchQuery.trim());
-        params.append('limit', '500'); // Higher limit for search results
-      } else {
-        params.append('limit', '100'); // Default limit for browsing
-      }
+      params.append('q', searchQuery.trim());
+      params.append('limit', '500');
       
       const response = await fetch(`/api/users/search?${params}`);
       if (!response.ok) throw new Error('Failed to fetch users');
       const data = await response.json();
       return data;
     },
-    staleTime: searchQuery.trim() ? 30000 : 60000, // Shorter cache for search results
+    enabled: !!searchQuery.trim(),
+    staleTime: 30000,
   });
 
-  const allUsers = usersResponse?.sailors || [];
+  const searchUsers = usersResponse?.sailors || [];
+  const nearbyUsers = nearbyUsersResponse || [];
+  
+  // Combine users based on search state
+  const allUsers = searchQuery.trim() ? searchUsers : nearbyUsers;
+  const isLoading = searchQuery.trim() ? isLoadingSearch : isLoadingNearby;
 
   // Simple search handler
   const handleSearchInput = (value: string) => {
@@ -454,7 +471,12 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             setHoverPosition(position || null);
           }}
           onUserClick={(userId) => {
-            navigate(`/user-profile/${userId}`);
+            const clickedUser = filteredUsers.find(u => u.id === userId);
+            if (clickedUser && user) {
+              console.log('🔵 Map user clicked:', clickedUser.fullName, '- Opening DM');
+              // Navigate to DM page with the clicked user
+              navigate(`/dm?user=${encodeURIComponent(clickedUser.id)}&name=${encodeURIComponent(clickedUser.fullName || 'Maritime Professional')}`);
+            }
           }}
           onZoomChange={handleZoomChange}
           showScanElements={showScanElements}

@@ -322,6 +322,7 @@ export function TopQProfessionals() {
                           setShowSearchBar(false);
                           handleStartConversation(sailor);
                         }}
+                        data-testid={`search-result-card-${sailor.id}`}
                       >
                         <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
                           <span className="text-xs text-blue-600 font-bold">
