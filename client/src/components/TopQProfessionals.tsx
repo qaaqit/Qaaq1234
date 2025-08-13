@@ -92,8 +92,7 @@ export function TopQProfessionals() {
     },
     onSuccess: (data, targetUserId) => {
       // Redirect to DM page with the target user
-      console.log('🔗 Connection successful, redirecting to DM page:', `/dm?user=${targetUserId}`);
-      window.location.href = `/dm?user=${targetUserId}`;
+      setLocation(`/dm?user=${targetUserId}`);
       toast({
         title: "Conversation Started",
         description: "You can now chat with this maritime professional.",
@@ -319,11 +318,8 @@ export function TopQProfessionals() {
                       <div 
                         key={sailor.id}
                         className="flex items-center gap-2 text-sm text-gray-700 hover:bg-white rounded p-2 cursor-pointer border-l-2 border-transparent hover:border-blue-500 transition-all"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
+                        onClick={() => {
                           setShowSearchBar(false);
-                          console.log('🔍 Starting conversation with sailor:', sailor.fullName, 'ID:', sailor.id);
                           handleStartConversation(sailor);
                         }}
                       >
