@@ -40,7 +40,8 @@ async function testConnection(retries = 3) {
       console.log('✅ Enhanced PostgreSQL connection established successfully');
       return true;
     } catch (error) {
-      console.error(`❌ Connection attempt ${i + 1} failed:`, error.message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`❌ Connection attempt ${i + 1} failed:`, errorMessage);
       if (i < retries - 1) {
         await new Promise(resolve => setTimeout(resolve, 2000));
       }

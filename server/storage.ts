@@ -48,8 +48,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.email, email));
-    return user || undefined;
+    try {
+      // Use direct SQL query to avoid column mismatch issues with Drizzle
+      const result = await pool.query('SELECT * FROM users WHERE email = $1 LIMIT 1', [email]);
+      if (result.rows.length === 0) {
+        return undefined;
+      }
+      
+      const user = result.rows[0];
+      return this.convertDbUserToAppUser(user);
+    } catch (error) {
+      console.error('Error getting user by email:', error);
+      return undefined;
+    }
   }
 
   async getUserByGoogleId(googleId: string): Promise<User | undefined> {
@@ -103,8 +114,32 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(user: InsertUser): Promise<User> {
-    const [newUser] = await db.insert(users).values(user).returning();
-    return newUser;
+    try {
+      // Use direct SQL to avoid schema mismatch issues with Drizzle
+      const result = await pool.query(`
+        INSERT INTO users (
+          user_id, full_name, email, password, user_type, rank, 
+          last_company, whatsapp_number, is_verified, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+        RETURNING *
+      `, [
+        user.userId || null,
+        user.fullName,
+        user.email,
+        user.password || null,
+        user.userType,
+        user.rank || null,
+        user.lastCompany || null,
+        user.whatsAppNumber || null,
+        user.isVerified || false
+      ]);
+      
+      const newUser = result.rows[0];
+      return this.convertDbUserToAppUser(newUser);
+    } catch (error) {
+      console.error('Error creating user:', error);
+      throw error;
+    }
   }
 
   async createGoogleUser(googleUserData: any): Promise<User> {
@@ -328,7 +363,12 @@ export class DatabaseStorage implements IStorage {
       needsPasswordChange: dbUser.needs_password_change || false,
       passwordCreatedAt: dbUser.password_created_at,
       passwordRenewalDue: dbUser.password_renewal_due,
-      mustCreatePassword: dbUser.must_create_password || false
+      mustCreatePassword: dbUser.must_create_password || false,
+      // Subscription fields - provide defaults for missing columns
+      isPremium: dbUser.is_premium || false,
+      premiumExpiresAt: dbUser.premium_expires_at || null,
+      subscriptionId: dbUser.subscription_id || null,
+      subscriptionType: dbUser.subscription_type || null
     };
   }
 
