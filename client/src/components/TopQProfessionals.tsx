@@ -113,7 +113,7 @@ export function TopQProfessionals() {
   const handleStartConversation = (professional: TopProfessional) => {
     if (!user) {
       toast({
-        title: "Authentication Required",
+        title: "Authentication Required", 
         description: "Please log in to start a conversation.",
         variant: "destructive",
       });
@@ -124,7 +124,7 @@ export function TopQProfessionals() {
       return; // Don't allow chat with self
     }
 
-    // Start the conversation by creating a chat connection
+    // Start the conversation by creating a chat connection and navigate to DM
     createConversationMutation.mutate(professional.id);
   };
 
