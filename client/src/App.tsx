@@ -153,6 +153,7 @@ function Router() {
           <Route path="/set-password" component={SetPasswordPage} />
           <Route path="/password-demo" component={PasswordDemoPage} />
           <Route path="/top-professionals" component={TopQProfessionalsPage} />
+          <Route path="/qh13" component={TopQProfessionalsPage} />
           <Route path="/glossary" component={() => <GlossaryPage />} />
           <Route path="/home-old" component={() => <Login onSuccess={setUser} />} />
 

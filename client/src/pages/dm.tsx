@@ -96,11 +96,11 @@ export default function DMPage() {
     gcTime: Infinity,
   });
 
-  // Debug connection loading - DISABLED for qh13 refresh fix  
-  useEffect(() => {
-    // DISABLED to prevent console spam and refresh issues
-    // console.log('🔍 DM Auto-connect check - DISABLED for qh13 refresh fix');
-  }, []); // Completely disabled
+  // Debug connection loading - COMPLETELY DISABLED for qh13 refresh fix  
+  // useEffect(() => {
+  //   // DISABLED to prevent console spam and refresh issues
+  //   // console.log('🔍 DM Auto-connect check - DISABLED for qh13 refresh fix');
+  // }, []); // Completely disabled
 
   // Fetch users - use search API when searching, nearby API otherwise
   const { data: nearbyUsers = [], isLoading: usersLoading } = useQuery<UserWithDistance[]>({
@@ -221,7 +221,7 @@ export default function DMPage() {
 
   // Auto-open chat for specific user if specified in URL
   useEffect(() => {
-    console.log('🔍 DM Auto-connect check:', { targetUserId, targetUser: targetUser?.fullName, connectionsCount: connections.length });
+    // console.log('🔍 DM Auto-connect check - DISABLED for qh13 refresh fix');
     
     if (targetUserId && (targetUser || connections.length > 0)) {
       // Check if there's already an existing connection
