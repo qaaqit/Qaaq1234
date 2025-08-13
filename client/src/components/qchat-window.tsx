@@ -86,7 +86,7 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
     }
   }, [isOpen, user]);
 
-  // Get messages for this connection
+  // Get messages for this connection - DISABLED for qh13 refresh fix
   const { data: messages = [], isLoading } = useQuery<ChatMessage[]>({
     queryKey: ['/api/chat/messages', connection?.id],
     queryFn: async () => {
@@ -100,8 +100,10 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
       if (!response.ok) throw new Error('Failed to fetch messages');
       return response.json();
     },
-    enabled: !!connection?.id && isOpen,
-    refetchInterval: 2000, // Poll for new messages every 2 seconds
+    enabled: false, // DISABLED to prevent 401 polling causing qh13 refresh
+    refetchInterval: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   // Enhanced send message function using WebSocket

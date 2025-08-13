@@ -187,23 +187,34 @@ export function TopQProfessionals() {
                   </Badge>
                 </div>
 
-                {/* Location & Ship Info */}
-                {(professional.shipName || professional.port) && (
-                  <div className="pt-2 border-t border-gray-200">
-                    {professional.shipName && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Ship className="h-4 w-4" />
-                        <span>{professional.shipName}</span>
+                {/* Company, Ship & Location Info */}
+                <div className="pt-2 border-t border-gray-200 space-y-2">
+                  {/* Company */}
+                  {(professional as any).company && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <div className="h-4 w-4 rounded-full bg-blue-100 flex items-center justify-center">
+                        <span className="text-xs text-blue-600 font-bold">C</span>
                       </div>
-                    )}
-                    {professional.port && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <MapPin className="h-4 w-4" />
-                        <span>{professional.port}{professional.country && `, ${professional.country}`}</span>
-                      </div>
-                    )}
-                  </div>
-                )}
+                      <span className="font-medium">{(professional as any).company}</span>
+                    </div>
+                  )}
+                  
+                  {/* Ship */}
+                  {professional.shipName && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Ship className="h-4 w-4" />
+                      <span>{professional.shipName}</span>
+                    </div>
+                  )}
+                  
+                  {/* Location */}
+                  {professional.port && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <MapPin className="h-4 w-4" />
+                      <span>{professional.port}{professional.country && `, ${professional.country}`}</span>
+                    </div>
+                  )}
+                </div>
 
                 {/* Progress Bar */}
                 <div className="pt-2">

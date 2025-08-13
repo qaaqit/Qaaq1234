@@ -9,11 +9,13 @@ interface MessageNotificationDotProps {
 export default function MessageNotificationDot({ userId, className = "" }: MessageNotificationDotProps) {
   const { user } = useAuth();
 
-  // Fetch unread message counts
+  // Fetch unread message counts - DISABLED for qh13 refresh fix
   const { data: unreadCounts = {} } = useQuery<Record<string, number>>({
     queryKey: ['/api/chat/unread-counts'],
-    refetchInterval: 3000, // Check for new messages every 3 seconds
-    enabled: !!user?.id,
+    enabled: false, // DISABLED to prevent 401 polling causing qh13 refresh
+    refetchInterval: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   const unreadCount = unreadCounts[userId] || 0;
