@@ -190,12 +190,12 @@ export function TopQProfessionals() {
                 {/* Company, Ship & Location Info */}
                 <div className="pt-2 border-t border-gray-200 space-y-2">
                   {/* Company */}
-                  {(professional as any).company && (
+                  {professional.company && (
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <div className="h-4 w-4 rounded-full bg-blue-100 flex items-center justify-center">
                         <span className="text-xs text-blue-600 font-bold">C</span>
                       </div>
-                      <span className="font-medium">{(professional as any).company}</span>
+                      <span className="font-medium">{professional.company}</span>
                     </div>
                   )}
                   

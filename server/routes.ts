@@ -1036,6 +1036,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('🏆 API route /api/users/top-professionals called');
       
+      // First check what company columns exist
+      console.log('🔍 Checking for company columns...');
+      
       // Query users table directly by question_count column  
       const result = await pool.query(`
         SELECT 
@@ -1050,7 +1053,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           port,
           city,
           current_ship_name,
-          current_ship_imo
+          current_ship_imo,
+          COALESCE(company, '') as last_company,
+          COALESCE(current_company, '') as current_company,
+          COALESCE(organisation, '') as organisation
         FROM users 
         WHERE COALESCE(question_count, 0) > 0
         ORDER BY COALESCE(question_count, 0) DESC
@@ -1071,7 +1077,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         port: user.port || user.city || '',
         shipName: user.current_ship_name || '',
         imoNumber: user.current_ship_imo || '',
-        company: '',
+        company: user.last_company || '',
         isTopProfessional: true
       }));
       
