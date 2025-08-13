@@ -397,7 +397,6 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
                 type="text"
                 value={formData.qaaqId}
                 onChange={(e) => setFormData({ ...formData, qaaqId: e.target.value })}
-                placeholder="eg 9820012345/ krishkapoor#gmail.com"
                 className="w-full h-11 text-base pl-10"
                 disabled={loading}
                 required
