@@ -289,7 +289,7 @@ export class DatabaseStorage implements IStorage {
       userId,
       code,
       expiresAt,
-      isUsed: false
+      used: false
     }).returning();
     return verificationCode;
   }
@@ -299,14 +299,14 @@ export class DatabaseStorage implements IStorage {
       and(
         eq(verificationCodes.userId, userId),
         eq(verificationCodes.code, code),
-        eq(verificationCodes.isUsed, false)
+        eq(verificationCodes.used, false)
       )
     );
     return verificationCode || undefined;
   }
 
   async markCodeAsUsed(codeId: string): Promise<void> {
-    await db.update(verificationCodes).set({ isUsed: true }).where(eq(verificationCodes.id, codeId));
+    await db.update(verificationCodes).set({ used: true }).where(eq(verificationCodes.id, codeId));
   }
 
   private convertDbUserToAppUser(dbUser: any): User {

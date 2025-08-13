@@ -3825,12 +3825,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // User Profile API endpoints
   
-  // Get user profile for CV/Profile page
-  app.get('/api/users/profile', authenticateToken, async (req, res) => {
+  // Get user profile for CV/Profile page - supports both QAAQ JWT and Replit Auth
+  app.get('/api/users/profile', async (req, res) => {
     try {
-      const userId = req.userId; // Use req.userId set by authenticateToken middleware
+      let userId = null;
+      
+      // First try QAAQ JWT authentication
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        try {
+          const token = authHeader.substring(7);
+          const decoded = jwt.verify(token, JWT_SECRET) as any;
+          userId = decoded.userId;
+          console.log(`🔑 QAAQ JWT auth - User: ${userId}`);
+        } catch (jwtError) {
+          console.log('JWT verification failed, trying session auth');
+        }
+      }
+      
+      // If no JWT token or JWT failed, try Replit Auth session
+      if (!userId && req.isAuthenticated && req.isAuthenticated()) {
+        userId = req.user?.claims?.sub;
+        console.log(`🔑 Replit session auth - User: ${userId}`);
+      }
+      
       if (!userId) {
-        return res.status(400).json({ error: 'User ID not found' });
+        return res.status(401).json({ error: 'Authentication required' });
       }
       
       console.log(`📋 Fetching profile for user: ${userId}`);
@@ -3847,12 +3867,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update user profile
-  app.put('/api/users/profile', authenticateToken, async (req, res) => {
+  // Update user profile - supports both QAAQ JWT and Replit Auth
+  app.put('/api/users/profile', async (req, res) => {
     try {
-      const userId = req.userId; // Use req.userId set by authenticateToken middleware
+      let userId = null;
+      
+      // First try QAAQ JWT authentication
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        try {
+          const token = authHeader.substring(7);
+          const decoded = jwt.verify(token, JWT_SECRET) as any;
+          userId = decoded.userId;
+        } catch (jwtError) {
+          console.log('JWT verification failed, trying session auth');
+        }
+      }
+      
+      // If no JWT token or JWT failed, try Replit Auth session
+      if (!userId && req.isAuthenticated && req.isAuthenticated()) {
+        userId = req.user?.claims?.sub;
+      }
+      
       if (!userId) {
-        return res.status(400).json({ error: 'User ID not found' });
+        return res.status(401).json({ error: 'Authentication required' });
       }
 
       console.log('Profile update request for user:', userId, 'Data:', req.body);
