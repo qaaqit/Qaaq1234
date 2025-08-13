@@ -454,86 +454,55 @@ export function TopQProfessionals() {
         </Badge>
       </div>
 
-      {/* 🔒 MARIANA SEAL: Identical-sized Compact Cards */}
-      <div className="grid grid-cols-1 gap-2">
+      {/* 🔒 MARIANA SEAL: Slim Cards Like Image 2 */}
+      <div className="space-y-2">
         {professionals.map((professional, index) => (
           <Card 
             key={professional.id} 
             className={`hover:shadow-sm transition-all duration-200 cursor-pointer ${
-              index === 0 ? 'border-l-3 border-l-orange-500 bg-gradient-to-r from-orange-50 to-red-50' :
-              index === 1 ? 'border-l-3 border-l-red-500 bg-gradient-to-r from-red-50 to-orange-50' :
-              index === 2 ? 'border-l-3 border-l-gray-500 bg-gradient-to-r from-gray-50 to-gray-100' :
-              'border-l-3 border-l-blue-500 bg-white'
+              index === 0 ? 'border-l-4 border-l-orange-500' :
+              index === 1 ? 'border-l-4 border-l-red-500' :
+              index === 2 ? 'border-l-4 border-l-gray-500' :
+              'border-l-4 border-l-blue-500'
             }`}
             onClick={() => user && typeof user === 'object' && 'id' in user && user.id !== professional.id && handleStartConversation(professional)}
           >
             <CardContent className="p-3">
-              <div className="flex items-center gap-3">
-                {/* Compact Rank Medal/Avatar */}
-                <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
-                  {index < 3 ? (
-                    <span className="text-sm">
-                      {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
-                    </span>
-                  ) : (
-                    <span className="text-xs font-bold text-orange-600">
-                      #{index + 1}
-                    </span>
-                  )}
-                </div>
-                
-                {/* Professional Details */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <h3 className="font-medium text-gray-800 truncate text-sm">
-                      {professional.fullName || professional.email || 'Maritime Professional'}
-                    </h3>
-                    <div className="flex items-center gap-1">
-                      <Badge variant="outline" className="font-bold text-orange-700 text-xs py-0 px-1">
-                        {professional.questionCount}Q
-                      </Badge>
-                      <Badge variant="outline" className="font-bold text-red-700 text-xs py-0 px-1">
-                        {professional.answerCount}A
-                      </Badge>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
-                      <Badge variant="secondary" className="text-xs mb-1 py-0">
-                        {professional.maritimeRank?.replace(/_/g, ' ') || 'Professional'}
-                      </Badge>
-                      
-                      {/* Company and Ship Info */}
-                      <div className="flex items-center gap-1 text-xs text-gray-600">
-                        {professional.company && (
-                          <span className="bg-blue-100 px-1 py-0.5 rounded truncate max-w-20 text-xs">
-                            {professional.company}
-                          </span>
-                        )}
-                        {professional.lastShip && (
-                          <span className="bg-gray-100 px-1 py-0.5 rounded truncate max-w-20 text-xs">
-                            {professional.lastShip}
-                          </span>
-                        )}
+              <div className="flex items-center justify-between">
+                {/* Left side: Medal + Name + Rank */}
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  {/* Medal */}
+                  <div className="flex-shrink-0">
+                    {index < 3 ? (
+                      <span className="text-lg">
+                        {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+                      </span>
+                    ) : (
+                      <div className="h-6 w-6 rounded-full bg-orange-100 flex items-center justify-center">
+                        <span className="text-xs font-bold text-orange-600">#{index + 1}</span>
                       </div>
-                    </div>
-                    
-                    {/* Compact Chat Button */}
-                    {user && typeof user === 'object' && 'id' in user && user.id !== professional.id && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="border-orange-300 text-orange-600 hover:bg-orange-50 ml-2 h-6 w-6 p-0"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleStartConversation(professional);
-                        }}
-                      >
-                        <MessageCircle className="h-3 w-3" />
-                      </Button>
                     )}
                   </div>
+                  
+                  {/* Name and Rank */}
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-gray-800 text-sm truncate">
+                      {professional.fullName || professional.email || 'Maritime Professional'}
+                    </div>
+                    <Badge variant="secondary" className="text-xs mt-1">
+                      {professional.maritimeRank?.replace(/_/g, ' ') || 'Maritime Professional'}
+                    </Badge>
+                  </div>
+                </div>
+                
+                {/* Right side: Q&A badges */}
+                <div className="flex items-center gap-1 ml-2">
+                  <Badge variant="outline" className="font-bold text-orange-700 text-xs">
+                    {professional.questionCount}Q
+                  </Badge>
+                  <Badge variant="outline" className="font-bold text-red-700 text-xs">
+                    {professional.answerCount}A
+                  </Badge>
                 </div>
               </div>
             </CardContent>
