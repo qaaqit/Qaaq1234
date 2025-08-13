@@ -98,10 +98,68 @@ export function TopQProfessionals() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
 
+  const [searchResults, setSearchResults] = useState<TopProfessional[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+
+  const performSearch = async (query: string) => {
+    if (query.trim().length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
+    setIsSearching(true);
+    console.log('Searching for:', query);
+    
+    try {
+      const response = await fetch(`/api/users/search?q=${encodeURIComponent(query)}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        console.log(`✅ Found ${data.total} sailors matching "${query}"`);
+        setSearchResults(data.sailors.map((sailor: any) => ({
+          id: sailor.id,
+          userId: sailor.id,
+          fullName: sailor.fullName,
+          email: sailor.email,
+          maritimeRank: sailor.maritimeRank,
+          company: sailor.company,
+          lastShip: sailor.lastShip,
+          port: sailor.port,
+          country: sailor.country,
+          questionCount: sailor.questionCount,
+          answerCount: sailor.answerCount,
+          userType: sailor.userType,
+          subscriptionStatus: sailor.userType === 'Premium' ? 'premium' : 'free',
+          profilePictureUrl: sailor.profilePictureUrl,
+          isTopProfessional: false,
+          matchType: sailor.matchType
+        })));
+      } else {
+        setSearchResults([]);
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    // TODO: Implement actual search functionality
-    console.log('Searching for:', query);
+    
+    // Clear existing timeout
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    
+    // Set new timeout for debounced search
+    const timeout = setTimeout(() => {
+      performSearch(query);
+    }, 300); // 300ms debounce
+    
+    setSearchTimeout(timeout);
   };
 
   if (isLoading) {
@@ -195,43 +253,64 @@ export function TopQProfessionals() {
           
           {/* Search Results Preview */}
           {searchQuery && (
-            <div className="mt-2 bg-gray-50 rounded-lg p-3">
-              <div className="text-sm text-gray-600 mb-2">
-                Searching for "{searchQuery}"...
-              </div>
-              <div className="space-y-1">
-                {professionals
-                  .filter(p => 
-                    p.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    p.maritimeRank?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    p.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    p.lastShip?.toLowerCase().includes(searchQuery.toLowerCase())
-                  )
-                  .slice(0, 3)
-                  .map(professional => (
-                    <div 
-                      key={professional.id}
-                      className="flex items-center gap-2 text-sm text-gray-700 hover:bg-white rounded p-2 cursor-pointer"
-                      onClick={() => {
-                        setShowSearchBar(false);
-                        handleStartConversation(professional);
-                      }}
-                    >
-                      <div className="h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center">
-                        <span className="text-xs text-blue-600 font-bold">
-                          {professional.fullName?.charAt(0) || 'M'}
-                        </span>
+            <div className="mt-2 bg-gray-50 rounded-lg p-3 max-h-64 overflow-y-auto">
+              {isSearching ? (
+                <div className="text-sm text-gray-600 mb-2 flex items-center gap-2">
+                  <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                  Searching for "{searchQuery}"...
+                </div>
+              ) : searchResults.length > 0 ? (
+                <>
+                  <div className="text-sm text-gray-600 mb-2">
+                    Found {searchResults.length} sailors matching "{searchQuery}"
+                  </div>
+                  <div className="space-y-1">
+                    {searchResults.slice(0, 5).map(sailor => (
+                      <div 
+                        key={sailor.id}
+                        className="flex items-center gap-2 text-sm text-gray-700 hover:bg-white rounded p-2 cursor-pointer border-l-2 border-transparent hover:border-blue-500 transition-all"
+                        onClick={() => {
+                          setShowSearchBar(false);
+                          handleStartConversation(sailor);
+                        }}
+                      >
+                        <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                          <span className="text-xs text-blue-600 font-bold">
+                            {sailor.fullName?.charAt(0) || 'M'}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium truncate">
+                              {sailor.fullName || 'Maritime Professional'}
+                            </span>
+                            {(sailor as any).matchType === 'exact' && (
+                              <span className="text-xs bg-green-100 text-green-700 px-1 rounded">Exact</span>
+                            )}
+                          </div>
+                          <div className="text-xs text-gray-500 truncate">
+                            {sailor.maritimeRank}
+                            {sailor.company && ` • ${sailor.company}`}
+                            {sailor.lastShip && ` • ${sailor.lastShip}`}
+                          </div>
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          Q: {sailor.questionCount}
+                        </div>
                       </div>
-                      <span className="font-medium">
-                        {professional.fullName || 'Maritime Professional'}
-                      </span>
-                      <span className="text-gray-500">
-                        - {professional.maritimeRank}
-                      </span>
-                    </div>
-                  ))
-                }
-              </div>
+                    ))}
+                    {searchResults.length > 5 && (
+                      <div className="text-xs text-gray-500 text-center py-1">
+                        And {searchResults.length - 5} more sailors...
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="text-sm text-gray-500">
+                  No sailors found for "{searchQuery}"
+                </div>
+              )}
             </div>
           )}
         </div>

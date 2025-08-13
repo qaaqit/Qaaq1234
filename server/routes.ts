@@ -1238,6 +1238,148 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Sailor Search API - Exact match first, then fuzzy logic
+  app.get("/api/users/search", async (req, res) => {
+    try {
+      const { q: query } = req.query;
+      
+      if (!query || typeof query !== 'string' || query.trim().length < 2) {
+        return res.json({
+          success: false,
+          message: "Search query must be at least 2 characters",
+          sailors: []
+        });
+      }
+
+      const searchTerm = query.trim().toLowerCase();
+      console.log(`🔍 Sailor search for: "${searchTerm}"`);
+
+      // First: Exact matches (case-insensitive)
+      const exactMatches = await pool.query(`
+        SELECT DISTINCT
+          id,
+          full_name,
+          email,
+          maritime_rank,
+          last_company,
+          last_ship,
+          current_ship_name,
+          port,
+          country,
+          city,
+          COALESCE(question_count, 0) as question_count,
+          COALESCE(answer_count, 0) as answer_count,
+          user_type,
+          profile_picture_url
+        FROM users 
+        WHERE 
+          LOWER(full_name) = $1 OR
+          LOWER(maritime_rank) = $1 OR  
+          LOWER(last_company) = $1 OR
+          LOWER(last_ship) = $1 OR
+          LOWER(current_ship_name) = $1 OR
+          LOWER(email) = $1
+        ORDER BY COALESCE(question_count, 0) DESC
+        LIMIT 10
+      `, [searchTerm]);
+
+      // Second: Fuzzy matches using ILIKE (partial matching)  
+      const fuzzyMatches = await pool.query(`
+        SELECT DISTINCT
+          id,
+          full_name,
+          email,
+          maritime_rank,
+          last_company,
+          last_ship,
+          current_ship_name,
+          port,
+          country,
+          city,
+          COALESCE(question_count, 0) as question_count,
+          COALESCE(answer_count, 0) as answer_count,
+          user_type,
+          profile_picture_url
+        FROM users 
+        WHERE 
+          (LOWER(full_name) ILIKE $1 OR
+           LOWER(maritime_rank) ILIKE $1 OR  
+           LOWER(last_company) ILIKE $1 OR
+           LOWER(last_ship) ILIKE $1 OR
+           LOWER(current_ship_name) ILIKE $1 OR
+           LOWER(email) ILIKE $1) AND
+          NOT (
+            LOWER(full_name) = $2 OR
+            LOWER(maritime_rank) = $2 OR  
+            LOWER(last_company) = $2 OR
+            LOWER(last_ship) = $2 OR
+            LOWER(current_ship_name) = $2 OR
+            LOWER(email) = $2
+          )
+        ORDER BY COALESCE(question_count, 0) DESC
+        LIMIT 15
+      `, [`%${searchTerm}%`, searchTerm]);
+
+      // Combine results: exact matches first, then fuzzy matches
+      const exactResults = exactMatches.rows.map(user => ({
+        id: user.id,
+        fullName: user.full_name || user.email || 'Maritime Professional',
+        email: user.email,
+        maritimeRank: user.maritime_rank || 'Professional',
+        company: user.last_company || '',
+        lastShip: user.last_ship || user.current_ship_name || '',
+        port: user.port || user.city || '',
+        country: user.country || '',
+        questionCount: parseInt(user.question_count) || 0,
+        answerCount: parseInt(user.answer_count) || 0,
+        userType: user.user_type || 'Free',
+        profilePictureUrl: user.profile_picture_url || '',
+        matchType: 'exact'
+      }));
+
+      const fuzzyResults = fuzzyMatches.rows.map(user => ({
+        id: user.id,
+        fullName: user.full_name || user.email || 'Maritime Professional',
+        email: user.email,
+        maritimeRank: user.maritime_rank || 'Professional',
+        company: user.last_company || '',
+        lastShip: user.last_ship || user.current_ship_name || '',
+        port: user.port || user.city || '',
+        country: user.country || '',
+        questionCount: parseInt(user.question_count) || 0,
+        answerCount: parseInt(user.answer_count) || 0,
+        userType: user.user_type || 'Free',
+        profilePictureUrl: user.profile_picture_url || '',
+        matchType: 'fuzzy'
+      }));
+
+      const allResults = [...exactResults, ...fuzzyResults];
+      const limitedResults = allResults.slice(0, 20); // Limit to 20 total results
+
+      console.log(`✅ Found ${exactResults.length} exact matches, ${fuzzyResults.length} fuzzy matches`);
+      if (limitedResults.length > 0) {
+        console.log(`Sample result: ${limitedResults[0].fullName} - ${limitedResults[0].maritimeRank}`);
+      }
+
+      res.json({
+        success: true,
+        sailors: limitedResults,
+        total: limitedResults.length,
+        exactMatches: exactResults.length,
+        fuzzyMatches: fuzzyResults.length,
+        message: `Found ${limitedResults.length} sailors matching "${query}"`
+      });
+      
+    } catch (error) {
+      console.error('Sailor search error:', error);
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to search sailors",
+        sailors: []
+      });
+    }
+  });
+
   // Update user's device location (GPS from mobile/browser)
   app.post("/api/users/location/device", async (req, res) => {
     try {
