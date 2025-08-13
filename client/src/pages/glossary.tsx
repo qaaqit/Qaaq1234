@@ -23,7 +23,7 @@ export function GlossaryPage() {
   const [glossaryEntries, setGlossaryEntries] = useState<GlossaryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  // Removed category filtering - now showing all terms
   const [isAdmin, setIsAdmin] = useState(false);
   const { toast } = useToast();
 
@@ -172,19 +172,14 @@ export function GlossaryPage() {
     }
   };
 
-  const getCategories = () => {
-    const uniqueCategories = Array.from(new Set(glossaryEntries.map(entry => entry.category)));
-    const cats = ['all', ...uniqueCategories];
-    return cats.filter(Boolean);
-  };
+  // Removed category grouping function
 
   const filteredEntries = glossaryEntries.filter(entry => {
     // Show all entries if no search term is provided
     const matchesSearch = !searchTerm || 
                          entry.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          entry.answer.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || entry.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+    return matchesSearch;
   });
 
   const groupedEntries = filteredEntries.reduce((acc, entry) => {
@@ -236,8 +231,8 @@ export function GlossaryPage() {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-6">
-        {/* Search and Filter Controls */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        {/* Search Controls */}
+        <div className="flex flex-col gap-4 mb-6">
           <div className="flex-1">
             <Input
               placeholder="Search maritime terms... (or browse all alphabetically below)"
@@ -245,22 +240,6 @@ export function GlossaryPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="border-orange-300 focus:border-orange-500"
             />
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            {getCategories().map(category => (
-              <Button
-                key={category}
-                variant={selectedCategory === category ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedCategory(category)}
-                className={selectedCategory === category 
-                  ? "bg-orange-600 hover:bg-orange-700" 
-                  : "border-orange-300 text-orange-600 hover:bg-orange-50"
-                }
-              >
-                {category === 'all' ? 'All Categories' : category}
-              </Button>
-            ))}
           </div>
         </div>
 
