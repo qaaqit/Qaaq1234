@@ -1269,8 +1269,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           city,
           COALESCE(question_count, 0) as question_count,
           COALESCE(answer_count, 0) as answer_count,
-          user_type,
-          profile_picture_url
+          user_type
         FROM users 
         WHERE 
           LOWER(full_name) = $1 OR
@@ -1298,8 +1297,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           city,
           COALESCE(question_count, 0) as question_count,
           COALESCE(answer_count, 0) as answer_count,
-          user_type,
-          profile_picture_url
+          user_type
         FROM users 
         WHERE 
           (LOWER(full_name) ILIKE $1 OR
@@ -1333,7 +1331,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         questionCount: parseInt(user.question_count) || 0,
         answerCount: parseInt(user.answer_count) || 0,
         userType: user.user_type || 'Free',
-        profilePictureUrl: user.profile_picture_url || '',
+        profilePictureUrl: '',
         matchType: 'exact'
       }));
 
@@ -1349,7 +1347,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         questionCount: parseInt(user.question_count) || 0,
         answerCount: parseInt(user.answer_count) || 0,
         userType: user.user_type || 'Free',
-        profilePictureUrl: user.profile_picture_url || '',
+        profilePictureUrl: '',
         matchType: 'fuzzy'
       }));
 
