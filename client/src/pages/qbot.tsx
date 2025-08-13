@@ -205,18 +205,25 @@ export default function QBOTPage({ user }: QBOTPageProps) {
         
         <div className="relative z-10 px-2 py-2 sm:px-4 sm:py-3">
           <div className="flex items-center justify-between gap-2">
-            <button 
-              onClick={() => setLocation('/')}
-              className="flex items-center space-x-2 sm:space-x-3 hover:bg-white/10 rounded-lg p-1 sm:p-2 transition-colors min-w-0 flex-shrink-0"
-            >
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
-                <img src={qaaqLogo} alt="QAAQ Logo" className="w-full h-full object-cover" />
-              </div>
+            <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-shrink-0">
+              <button 
+                onClick={() => setLocation('/')}
+                className="hover:bg-white/10 rounded-lg p-1 sm:p-2 transition-colors"
+              >
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
+                  <img src={qaaqLogo} alt="QAAQ Logo" className="w-full h-full object-cover" />
+                </div>
+              </button>
               <div className="min-w-0">
                 <h1 className="text-base sm:text-xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent whitespace-nowrap">QaaqConnect</h1>
-                <p className="text-xs sm:text-sm text-gray-600 italic font-medium whitespace-nowrap">(shipping dictionary)</p>
+                <button
+                  onClick={() => setLocation('/glossary')}
+                  className="text-xs sm:text-sm text-gray-600 italic font-medium whitespace-nowrap hover:text-orange-600 hover:underline transition-colors cursor-pointer"
+                >
+                  (shipping dictionary)
+                </button>
               </div>
-            </button>
+            </div>
             <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
               <UserDropdown user={user} onLogout={() => window.location.reload()} />
             </div>

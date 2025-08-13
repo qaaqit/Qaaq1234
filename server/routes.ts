@@ -2234,6 +2234,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ==== GLOSSARY API ENDPOINTS ====
+  
+  // Get all "what is" questions for shipping dictionary
+  app.get('/api/glossary/what-is', async (req, res) => {
+    try {
+      console.log('📚 Fetching "what is" questions for glossary');
+      
+      // Query database for questions that start with "what is"  
+      const result = await pool.query(`
+        SELECT 
+          q.id,
+          q.content as question,
+          a.content as answer,
+          q.created_at as timestamp
+        FROM questions q
+        LEFT JOIN answers a ON q.id = a.question_id
+        WHERE LOWER(q.content) LIKE '%what is%'
+          AND a.content IS NOT NULL
+          AND LENGTH(a.content) > 10
+        ORDER BY q.content ASC
+        LIMIT 500
+      `);
+      
+      const entries = result.rows.map(row => ({
+        id: row.id.toString(),
+        question: row.question,
+        answer: row.answer,
+        category: 'General',
+        timestamp: row.timestamp,
+        attachments: []
+      }));
+      
+      console.log(`✅ Found ${entries.length} glossary entries`);
+      
+      res.json({
+        success: true,
+        entries: entries,
+        total: entries.length
+      });
+      
+    } catch (error) {
+      console.error('Glossary fetch error:', error);
+      res.status(500).json({ 
+        success: false,
+        message: 'Failed to fetch glossary entries',
+        entries: []
+      });
+    }
+  });
+
   // ==== WATI WHATSAPP BOT INTEGRATION ====
   
   // WATI webhook endpoint for incoming WhatsApp messages
