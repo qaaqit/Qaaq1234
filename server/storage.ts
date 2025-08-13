@@ -219,12 +219,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUsersWithLocation(): Promise<User[]> {
-    return await db.select().from(users).where(
-      and(
-        isNotNull(users.latitude),
-        isNotNull(users.longitude)
-      )
-    );
+    try {
+      // Use direct SQL to avoid schema issues with parent QAAQ database
+      const result = await pool.query(`
+        SELECT * FROM users 
+        WHERE (latitude IS NOT NULL AND longitude IS NOT NULL)
+           OR (current_latitude IS NOT NULL AND current_longitude IS NOT NULL)
+           OR (device_latitude IS NOT NULL AND device_longitude IS NOT NULL)
+        ORDER BY last_updated DESC
+        LIMIT 50
+      `);
+      
+      return result.rows.map(row => this.convertDbUserToAppUser(row));
+    } catch (error) {
+      console.error('Get users with location error:', error);
+      return [];
+    }
   }
 
   async updateUserLocation(userId: string, latitude: number, longitude: number, source: 'device' | 'ship' | 'city'): Promise<void> {

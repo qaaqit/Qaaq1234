@@ -84,10 +84,9 @@ export const users = pgTable("users", {
   questionCount: integer("question_count").default(0), // Total questions asked on QAAQ
   answerCount: integer("answer_count").default(0), // Total answers given on QAAQ
   
-  // Subscription/Premium fields
+  // Subscription/Premium fields - REMOVED subscription_id to match parent QAAQ database
   isPremium: boolean("is_premium").default(false), // Premium subscription status
   premiumExpiresAt: timestamp("premium_expires_at"), // Premium subscription expiry
-  subscriptionId: text("subscription_id"), // Razorpay subscription ID
   subscriptionType: text("subscription_type"), // 'premium_monthly', 'premium_yearly', 'super_user'
   subscriptionStatus: text("subscription_status").default("inactive"), // 'active', 'inactive', 'cancelled', 'paused'
   razorpayCustomerId: text("razorpay_customer_id"), // Razorpay customer ID for recurring payments
