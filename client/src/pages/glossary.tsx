@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Archive, AlertTriangle, Merge, Eraser, Loader2 } from 'lucide-react';
+import { Archive, AlertTriangle, Merge, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import qaaqLogo from '@assets/qaaq-logo.png';
@@ -175,36 +175,7 @@ export function GlossaryPage() {
     }
   };
 
-  const handleCleanupDefinitions = async () => {
-    try {
-      const response = await fetch('/api/glossary/cleanup-definitions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
 
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        // Refresh the glossary entries after cleanup
-        fetchGlossaryEntries(1, true);
-        toast({
-          title: "Definitions Cleaned Successfully",
-          description: `Removed redundant phrases from ${data.summary.definitionsCleaned} definitions to save space.`,
-        });
-      } else {
-        throw new Error(data.message || 'Failed to cleanup definitions');
-      }
-    } catch (error) {
-      toast({
-        title: "Cleanup Failed", 
-        description: "Could not cleanup definition phrases. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
 
   // Removed category grouping function
 
@@ -301,15 +272,6 @@ export function GlossaryPage() {
               >
                 <Merge className="w-4 h-4 mr-2" />
                 Merge Duplicates
-              </Button>
-              <Button
-                onClick={handleCleanupDefinitions}
-                variant="outline"
-                size="sm"
-                className="border-green-300 text-green-600 hover:bg-green-50 hover:border-green-400"
-              >
-                <Eraser className="w-4 h-4 mr-2" />
-                Clean Phrases
               </Button>
             </div>
           )}

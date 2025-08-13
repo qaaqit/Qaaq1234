@@ -2356,14 +2356,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
         LIMIT $1 OFFSET $2
       `, [limit, offset]);
       
-      const entries = result.rows.map(row => ({
-        id: row.id.toString(),
-        question: row.question,
-        answer: row.answer,
-        category: 'General',
-        timestamp: row.timestamp,
-        attachments: []
-      }));
+      const entries = result.rows.map(row => {
+        // Clean the answer by removing common redundant phrases
+        let cleanAnswer = row.answer;
+        
+        // Remove phrases like "based on my studies", "in my opinion", etc.
+        const phrasesToRemove = [
+          /based on my studies,?\s*/gi,
+          /in my opinion,?\s*/gi,
+          /from my experience,?\s*/gi,
+          /according to my knowledge,?\s*/gi,
+          /as far as i know,?\s*/gi,
+          /i believe that,?\s*/gi,
+          /i think that,?\s*/gi,
+          /it is my understanding that,?\s*/gi,
+          /personally,?\s*/gi,
+          /generally speaking,?\s*/gi
+        ];
+        
+        phrasesToRemove.forEach(phrase => {
+          cleanAnswer = cleanAnswer.replace(phrase, '');
+        });
+        
+        // Clean up any double spaces and trim
+        cleanAnswer = cleanAnswer.replace(/\s+/g, ' ').trim();
+        
+        // Capitalize first letter if it was lowercased after cleaning
+        if (cleanAnswer.length > 0) {
+          cleanAnswer = cleanAnswer.charAt(0).toUpperCase() + cleanAnswer.slice(1);
+        }
+        
+        return {
+          id: row.id.toString(),
+          question: row.question,
+          answer: cleanAnswer,
+          category: 'General',
+          timestamp: row.timestamp,
+          attachments: []
+        };
+      });
       
       console.log(`✅ Found ${entries.length} glossary entries (page ${page}, total: ${total})`);
       
