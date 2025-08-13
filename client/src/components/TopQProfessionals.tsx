@@ -46,6 +46,9 @@ export function TopQProfessionals() {
   
   const { data, isLoading, error } = useQuery<TopProfessionalsResponse>({
     queryKey: ['/api/users/top-professionals'],
+    staleTime: 24 * 60 * 60 * 1000, // Cache for 24 hours - daily static rank
+    refetchOnWindowFocus: false, // Prevent continuous refreshing
+    refetchOnMount: false, // Don't refetch on component mount
     queryFn: async () => {
       const response = await fetch('/api/users/top-professionals');
       if (!response.ok) {
@@ -211,7 +214,7 @@ export function TopQProfessionals() {
                     />
                   </div>
                   <div className="text-xs text-gray-500 mt-1 text-center">
-                    Rank #{index + 1} of {professionals.length}
+                    Daily Rank #{index + 1} of {professionals.length}
                   </div>
                 </div>
 
@@ -238,8 +241,8 @@ export function TopQProfessionals() {
       <Card className="bg-gradient-to-r from-orange-50 to-red-50 border-orange-200">
         <CardContent className="p-4 text-center">
           <p className="text-sm text-gray-600">
-            Rankings are based on authentic question contributions from maritime professionals. 
-            Data updated from the comprehensive QAAQ maritime database.
+            Static daily rankings based on authentic question contributions from maritime professionals. 
+            Rankings calculated once per day from the comprehensive QAAQ maritime database.
           </p>
         </CardContent>
       </Card>
