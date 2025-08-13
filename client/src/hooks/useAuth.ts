@@ -9,7 +9,7 @@ export function useAuth() {
     refetchOnReconnect: false, // Disable refetch on network reconnect
     staleTime: 30 * 60 * 1000, // Consider data fresh for 30 minutes - longer to reduce requests
     gcTime: 60 * 60 * 1000, // Keep data in cache for 1 hour
-    enabled: false, // DISABLED to prevent auth polling causing qh13 refresh
+    enabled: true, // Re-enable auth but with conservative settings
   });
 
   return {
