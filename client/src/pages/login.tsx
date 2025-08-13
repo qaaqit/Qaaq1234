@@ -248,7 +248,7 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
               {glossaryLoading ? (
                 <div className="space-y-2">
                   {Array.from({ length: 8 }).map((_, i) => (
-                    <div key={i} className="flex items-center justify-between py-2 border-b border-gray-100">
+                    <div key={`skeleton-${i}`} className="flex items-center justify-between py-2 border-b border-gray-100">
                       <Skeleton className="h-3 w-24" />
                       <Skeleton className="h-3 w-48" />
                     </div>
@@ -256,44 +256,52 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {filteredEntries.slice(0, 20).map((entry) => (
-                    <Dialog key={entry.id}>
-                      <DialogTrigger asChild>
-                        <div className="flex items-center justify-between py-3 px-4 bg-white rounded-lg shadow-sm border border-gray-200 hover:border-orange-300 cursor-pointer transition-colors">
-                          <span className="font-medium text-orange-700">
-                            {extractTerm(entry.question).toUpperCase()}
-                          </span>
-                          <span className="text-xs text-gray-500 flex items-center gap-1">
-                            📖 Definition
-                          </span>
-                        </div>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                        <DialogHeader>
-                          <DialogTitle className="text-xl font-bold text-gray-900 mb-2">
-                            {extractTerm(entry.question).toUpperCase()}
-                          </DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                          <div className="text-sm text-gray-600 bg-orange-50 p-3 rounded-lg">
-                            <strong>Question:</strong> {entry.question}
+                  {filteredEntries.slice(0, 20).map((entry, index) => {
+                    const previewText = entry.answer.split(' ').slice(0, 10).join(' ') + (entry.answer.split(' ').length > 10 ? '...' : '');
+                    return (
+                      <Dialog key={`entry-${entry.id}-${index}`}>
+                        <DialogTrigger asChild>
+                          <div className="py-3 px-4 bg-white rounded-lg shadow-sm border border-gray-200 hover:border-orange-300 cursor-pointer transition-colors">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="font-medium text-orange-700">
+                                {extractTerm(entry.question).toUpperCase()}
+                              </span>
+                              <span className="text-xs text-gray-500 flex items-center gap-1">
+                                📖 Definition
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-600 line-clamp-2">
+                              {previewText}
+                            </p>
                           </div>
-                          <div className="prose prose-sm max-w-none text-gray-700">
-                            {entry.answer.split('\n').map((line: string, idx: number) => (
-                              <p key={idx} className="mb-2 last:mb-0">
-                                {line.startsWith('•') ? (
-                                  <span className="flex items-start gap-2">
-                                    <span className="text-orange-600 font-bold">•</span>
-                                    <span>{line.substring(1).trim()}</span>
-                                  </span>
-                                ) : line}
-                              </p>
-                            ))}
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" aria-describedby="definition-content">
+                          <DialogHeader>
+                            <DialogTitle className="text-xl font-bold text-gray-900 mb-2">
+                              {extractTerm(entry.question).toUpperCase()}
+                            </DialogTitle>
+                          </DialogHeader>
+                          <div id="definition-content" className="space-y-4">
+                            <div className="text-sm text-gray-600 bg-orange-50 p-3 rounded-lg">
+                              <strong>Question:</strong> {entry.question}
+                            </div>
+                            <div className="prose prose-sm max-w-none text-gray-700">
+                              {entry.answer.split('\n').map((line: string, idx: number) => (
+                                <p key={`line-${entry.id}-${idx}`} className="mb-2 last:mb-0">
+                                  {line.startsWith('•') ? (
+                                    <span className="flex items-start gap-2">
+                                      <span className="text-orange-600 font-bold">•</span>
+                                      <span>{line.substring(1).trim()}</span>
+                                    </span>
+                                  ) : line}
+                                </p>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                  ))}
+                        </DialogContent>
+                      </Dialog>
+                    );
+                  })}
                   
                   {filteredEntries.length === 0 && !glossaryLoading && (
                     <div className="text-center py-12">
