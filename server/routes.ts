@@ -2316,12 +2316,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ==== GLOSSARY API ENDPOINTS ====
   
-  // Get all "what is" questions for shipping dictionary
+  // Get all "what is" questions for shipping dictionary with pagination
   app.get('/api/glossary/what-is', async (req, res) => {
     try {
       console.log('📚 Fetching "what is" questions for glossary');
       
-      // Query database for questions that start with "what is" 
+      // Extract pagination parameters
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 60; // Show 60 entries initially, then 30 per page
+      const offset = (page - 1) * limit;
+      
+      // Count total entries first
+      const countResult = await pool.query(`
+        SELECT COUNT(*) as total
+        FROM questions q
+        LEFT JOIN answers a ON q.id = a.question_id
+        WHERE LOWER(q.content) LIKE '%what is%'
+          AND a.content IS NOT NULL
+          AND LENGTH(a.content) > 10
+          AND q.content NOT LIKE '%[ARCHIVED]%'
+      `);
+      
+      const total = parseInt(countResult.rows[0].total);
+      
+      // Query database for questions that start with "what is" with pagination
       const result = await pool.query(`
         SELECT 
           q.id,
@@ -2335,8 +2353,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           AND LENGTH(a.content) > 10
           AND q.content NOT LIKE '%[ARCHIVED]%'
         ORDER BY q.content ASC
-        LIMIT 500
-      `);
+        LIMIT $1 OFFSET $2
+      `, [limit, offset]);
       
       const entries = result.rows.map(row => ({
         id: row.id.toString(),
@@ -2347,12 +2365,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         attachments: []
       }));
       
-      console.log(`✅ Found ${entries.length} glossary entries`);
+      console.log(`✅ Found ${entries.length} glossary entries (page ${page}, total: ${total})`);
       
       res.json({
         success: true,
         entries: entries,
-        total: entries.length
+        pagination: {
+          page,
+          limit,
+          total,
+          hasMore: offset + limit < total,
+          totalPages: Math.ceil(total / limit)
+        }
       });
       
     } catch (error) {
@@ -2360,7 +2384,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         success: false,
         message: 'Failed to fetch glossary entries',
-        entries: []
+        entries: [],
+        pagination: {
+          page: 1,
+          limit: 60,
+          total: 0,
+          hasMore: false,
+          totalPages: 0
+        }
       });
     }
   });

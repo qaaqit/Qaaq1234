@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation } from 'wouter';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Archive, AlertTriangle, Merge, Eraser } from 'lucide-react';
+import { Archive, AlertTriangle, Merge, Eraser, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import qaaqLogo from '@assets/qaaq-logo.png';
@@ -20,24 +20,47 @@ interface GlossaryEntry {
   attachments?: string[];
 }
 
+interface PaginationInfo {
+  page: number;
+  limit: number;
+  total: number;
+  hasMore: boolean;
+  totalPages: number;
+}
+
 export function GlossaryPage() {
   const [, setLocation] = useLocation();
   const [glossaryEntries, setGlossaryEntries] = useState<GlossaryEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    page: 1,
+    limit: 60,
+    total: 0,
+    hasMore: false,
+    totalPages: 0
+  });
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
+  const observer = useRef<IntersectionObserver>();
 
   useEffect(() => {
-    // Load glossary entries regardless of authentication
-    fetchGlossaryEntries();
+    // Load initial glossary entries regardless of authentication
+    fetchGlossaryEntries(1, true);
   }, []);
 
 
 
-  const fetchGlossaryEntries = async () => {
+  const fetchGlossaryEntries = async (page: number = 1, reset: boolean = false) => {
     try {
-      const response = await fetch('/api/glossary/what-is');
+      if (page === 1) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
+
+      const response = await fetch(`/api/glossary/what-is?page=${page}&limit=${page === 1 ? 60 : 30}`);
       const data = await response.json();
       
       if (data.success) {
@@ -47,14 +70,36 @@ export function GlossaryPage() {
           const termB = extractTerm(b.question);
           return termA.localeCompare(termB);
         });
-        setGlossaryEntries(sortedEntries);
+        
+        if (reset || page === 1) {
+          setGlossaryEntries(sortedEntries);
+        } else {
+          setGlossaryEntries(prev => [...prev, ...sortedEntries]);
+        }
+        
+        setPagination(data.pagination);
       }
     } catch (error) {
       console.error('Error fetching glossary:', error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
+
+  // Intersection Observer callback for infinite scroll
+  const lastEntryElementRef = useCallback((node: HTMLElement | null) => {
+    if (loading || loadingMore) return;
+    if (observer.current) observer.current.disconnect();
+    
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && pagination.hasMore) {
+        fetchGlossaryEntries(pagination.page + 1, false);
+      }
+    });
+    
+    if (node) observer.current.observe(node);
+  }, [loading, loadingMore, pagination.hasMore, pagination.page]);
 
   const extractTerm = (question: string): string => {
     // Extract the main term from "what is..." questions
@@ -81,6 +126,8 @@ export function GlossaryPage() {
       if (response.ok) {
         // Remove the archived entry from the local state
         setGlossaryEntries(prev => prev.filter(entry => entry.id !== entryId));
+        // Update pagination total count
+        setPagination(prev => ({ ...prev, total: prev.total - 1 }));
         toast({
           title: "Entry Archived",
           description: `"${term}" has been hidden from public view.`,
@@ -111,7 +158,7 @@ export function GlossaryPage() {
 
       if (response.ok && data.success) {
         // Refresh the glossary entries after merge
-        fetchGlossaryEntries();
+        fetchGlossaryEntries(1, true);
         toast({
           title: "Duplicates Merged Successfully",
           description: `Processed ${data.summary.termsProcessed} terms, archived ${data.summary.duplicatesArchived} duplicates. Dictionary now has ${data.summary.finalUniqueTerms} unique terms.`,
@@ -142,7 +189,7 @@ export function GlossaryPage() {
 
       if (response.ok && data.success) {
         // Refresh the glossary entries after cleanup
-        fetchGlossaryEntries();
+        fetchGlossaryEntries(1, true);
         toast({
           title: "Definitions Cleaned Successfully",
           description: `Removed redundant phrases from ${data.summary.definitionsCleaned} definitions to save space.`,
@@ -236,7 +283,7 @@ export function GlossaryPage() {
         <div className="flex items-center justify-between mb-6">
           <div className="flex gap-4">
             <Badge variant="secondary" className="bg-orange-100 text-orange-800 px-3 py-1">
-              📚 {filteredEntries.length} Maritime Terms
+              📚 {filteredEntries.length} Maritime Terms {pagination.hasMore ? `(of ${pagination.total})` : ''}
             </Badge>
             <Badge variant="secondary" className="bg-blue-100 text-blue-800 px-3 py-1">
               🔤 {alphabetLetters.length} Alphabetical Groups
@@ -295,20 +342,27 @@ export function GlossaryPage() {
 
                 {/* Terms List - Ultra Compact */}
                 <div className="space-y-0 ml-11">
-                  {groupedEntries[letter].map((entry, index) => (
-                    <Dialog key={`dialog-${letter}-${entry.id}-${index}`}>
-                      <DialogTrigger asChild>
-                        <div className="py-1 border-b border-gray-50 hover:bg-orange-25 hover:border-orange-100 transition-colors cursor-pointer group">
-                          <div className="text-sm">
-                            <span className="font-medium text-gray-900 group-hover:text-orange-700 transition-colors">
-                              {extractTerm(entry.question).toUpperCase()}
-                            </span>
-                            <span className="text-gray-600 group-hover:text-gray-800 transition-colors ml-1">
-                              {truncateDefinition(entry.answer)}
-                            </span>
+                  {groupedEntries[letter].map((entry, index) => {
+                    const isLastEntry = letter === alphabetLetters[alphabetLetters.length - 1] && 
+                                       index === groupedEntries[letter].length - 1;
+                    
+                    return (
+                      <Dialog key={`dialog-${letter}-${entry.id}-${index}`}>
+                        <DialogTrigger asChild>
+                          <div 
+                            ref={isLastEntry ? lastEntryElementRef : null}
+                            className="py-1 border-b border-gray-50 hover:bg-orange-25 hover:border-orange-100 transition-colors cursor-pointer group"
+                          >
+                            <div className="text-sm">
+                              <span className="font-medium text-gray-900 group-hover:text-orange-700 transition-colors">
+                                {extractTerm(entry.question).toUpperCase()}
+                              </span>
+                              <span className="text-gray-600 group-hover:text-gray-800 transition-colors ml-1">
+                                {truncateDefinition(entry.answer)}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      </DialogTrigger>
+                        </DialogTrigger>
                       
                       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                         <DialogHeader>
@@ -370,10 +424,31 @@ export function GlossaryPage() {
                         </div>
                       </DialogContent>
                     </Dialog>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             ))}
+
+            {/* Loading More Indicator */}
+            {loadingMore && (
+              <div className="flex justify-center items-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-orange-600 mr-2" />
+                <span className="text-sm text-gray-600">Loading more maritime terms...</span>
+              </div>
+            )}
+
+            {/* End of Content */}
+            {!pagination.hasMore && glossaryEntries.length > 0 && !loading && (
+              <div className="text-center py-8">
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-lg">✓</span>
+                </div>
+                <p className="text-sm text-gray-600">
+                  You've explored all {pagination.total} maritime terms in our dictionary
+                </p>
+              </div>
+            )}
 
             {/* No Results */}
             {filteredEntries.length === 0 && !loading && (
