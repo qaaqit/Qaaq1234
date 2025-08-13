@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Archive, AlertTriangle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import qaaqLogo from '@assets/qaaq-logo.png';
 
 interface GlossaryEntry {
@@ -22,10 +24,29 @@ export function GlossaryPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [isAdmin, setIsAdmin] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchGlossaryEntries();
+    checkAdminStatus();
   }, []);
+
+  const checkAdminStatus = async () => {
+    try {
+      const response = await fetch('/api/user/profile', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        }
+      });
+      if (response.ok) {
+        const userData = await response.json();
+        setIsAdmin(userData.isAdmin || false);
+      }
+    } catch (error) {
+      console.log('Not authenticated or admin check failed');
+    }
+  };
 
   const fetchGlossaryEntries = async () => {
     try {
@@ -58,6 +79,35 @@ export function GlossaryPage() {
     const words = text.split(' ');
     if (words.length <= wordLimit) return text;
     return words.slice(0, wordLimit).join(' ') + '...';
+  };
+
+  const handleArchiveEntry = async (entryId: string, term: string) => {
+    try {
+      const response = await fetch(`/api/glossary/archive/${entryId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        // Remove the archived entry from the local state
+        setGlossaryEntries(prev => prev.filter(entry => entry.id !== entryId));
+        toast({
+          title: "Entry Archived",
+          description: `"${term}" has been hidden from public view.`,
+        });
+      } else {
+        throw new Error('Failed to archive entry');
+      }
+    } catch (error) {
+      toast({
+        title: "Archive Failed", 
+        description: "Could not archive the entry. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const getCategories = () => {
@@ -242,6 +292,25 @@ export function GlossaryPage() {
                               Added: {new Date(entry.timestamp).toLocaleDateString()}
                             </p>
                           </div>
+
+                          {/* Admin Archive Button */}
+                          {isAdmin && (
+                            <div className="pt-3 border-t border-gray-200">
+                              <Button
+                                onClick={() => handleArchiveEntry(entry.id, extractTerm(entry.question))}
+                                variant="outline"
+                                size="sm"
+                                className="w-full border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
+                              >
+                                <Archive className="w-4 h-4 mr-2" />
+                                Archive (Hide from Public)
+                              </Button>
+                              <p className="text-xs text-red-500 mt-1 text-center">
+                                <AlertTriangle className="w-3 h-3 inline mr-1" />
+                                This will hide the entry from all users
+                              </p>
+                            </div>
+                          )}
                         </div>
                       </DialogContent>
                     </Dialog>

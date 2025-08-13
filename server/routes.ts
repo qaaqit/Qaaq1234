@@ -553,6 +553,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get current user profile (authenticated)
+  app.get("/api/user/profile", authenticateToken, async (req, res) => {
+    try {
+      const userId = req.userId;
+      
+      const user = await storage.getUserById(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json({
+        id: user.id,
+        fullName: user.fullName,
+        email: user.email,
+        userType: user.userType,
+        isAdmin: user.isAdmin,
+        nickname: user.nickname,
+        rank: user.rank,
+        shipName: user.shipName,
+        port: user.port,
+        visitWindow: user.visitWindow,
+        city: user.city,
+        country: user.country,
+        latitude: user.latitude,
+        longitude: user.longitude,
+        isVerified: user.isVerified,
+        loginCount: user.loginCount || 0,
+        questionCount: user.questionCount || 0,
+        answerCount: user.answerCount || 0,
+        profilePictureUrl: user.profilePictureUrl,
+        whatsAppProfilePictureUrl: user.whatsAppProfilePictureUrl,
+        whatsAppDisplayName: user.whatsAppDisplayName
+      });
+    } catch (error: unknown) {
+      console.error('Get user profile error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ message: "Failed to get user profile", error: errorMessage });
+    }
+  });
+
   // Verify email code
   app.post("/api/verify", async (req, res) => {
     try {
@@ -2241,7 +2281,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('📚 Fetching "what is" questions for glossary');
       
-      // Query database for questions that start with "what is"  
+      // Query database for questions that start with "what is" and are not archived
       const result = await pool.query(`
         SELECT 
           q.id,
@@ -2253,6 +2293,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         WHERE LOWER(q.content) LIKE '%what is%'
           AND a.content IS NOT NULL
           AND LENGTH(a.content) > 10
+          AND (q.archived IS NULL OR q.archived = false)
         ORDER BY q.content ASC
         LIMIT 500
       `);
@@ -2280,6 +2321,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: false,
         message: 'Failed to fetch glossary entries',
         entries: []
+      });
+    }
+  });
+
+  // Archive glossary entry (admin only)
+  app.post('/api/glossary/archive/:id', authenticateToken, async (req, res) => {
+    try {
+      const entryId = req.params.id;
+      const userId = req.userId;
+      
+      // Check if user is admin
+      const userResult = await pool.query('SELECT is_admin FROM users WHERE id = $1', [userId]);
+      const user = userResult.rows[0];
+      
+      if (!user || !user.is_admin) {
+        return res.status(403).json({
+          success: false,
+          message: 'Admin privileges required to archive entries'
+        });
+      }
+      
+      // First ensure the archived column exists
+      await pool.query(`
+        ALTER TABLE questions 
+        ADD COLUMN IF NOT EXISTS archived BOOLEAN DEFAULT FALSE
+      `);
+      
+      // Archive the entry
+      const result = await pool.query(`
+        UPDATE questions 
+        SET archived = TRUE, updated_at = NOW()
+        WHERE id = $1
+        RETURNING id, content
+      `, [entryId]);
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Glossary entry not found'
+        });
+      }
+      
+      console.log(`📚 Admin ${userId} archived glossary entry ${entryId}: ${result.rows[0].content.substring(0, 50)}...`);
+      
+      res.json({
+        success: true,
+        message: 'Entry archived successfully',
+        archivedEntry: result.rows[0]
+      });
+      
+    } catch (error) {
+      console.error('Archive glossary entry error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to archive entry'
       });
     }
   });
