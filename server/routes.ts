@@ -1039,52 +1039,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // First check what company columns exist
       console.log('🔍 Checking for company columns...');
       
-      // Query users table directly by question_count column (try different column variations)
-      let result;
-      try {
-        result = await pool.query(`
-          SELECT 
-            id,
-            full_name,
-            email,
-            maritime_rank,
-            COALESCE(question_count, 0) as question_count,
-            COALESCE(answer_count, 0) as answer_count,
-            user_type,
-            country,
-            port,
-            city,
-            current_ship_name,
-            current_ship_imo,
-            last_company,
-            last_ship
-          FROM users 
-          WHERE COALESCE(question_count, 0) > 0
-          ORDER BY COALESCE(question_count, 0) DESC
-          LIMIT 9
-        `);
-      } catch (error) {
-        console.log('❌ Error with last_company/last_ship columns, trying basic query...');
-        result = await pool.query(`
-          SELECT 
-            id,
-            full_name,
-            email,
-            maritime_rank,
-            COALESCE(question_count, 0) as question_count,
-            COALESCE(answer_count, 0) as answer_count,
-            user_type,
-            country,
-            port,
-            city,
-            current_ship_name,
-            current_ship_imo
-          FROM users 
-          WHERE COALESCE(question_count, 0) > 0
-          ORDER BY COALESCE(question_count, 0) DESC
-          LIMIT 9
-        `);
-      }
+      // Query users table with correct column names: maritime_rank, last_company, last_ship
+      const result = await pool.query(`
+        SELECT 
+          id,
+          full_name,
+          email,
+          maritime_rank,
+          COALESCE(question_count, 0) as question_count,
+          COALESCE(answer_count, 0) as answer_count,
+          user_type,
+          country,
+          port,
+          city,
+          current_ship_name,
+          current_ship_imo,
+          last_company,
+          last_ship
+        FROM users 
+        WHERE COALESCE(question_count, 0) > 0
+        ORDER BY COALESCE(question_count, 0) DESC
+        LIMIT 9
+      `);
       
       const professionals = result.rows.map(user => ({
         id: user.id,
