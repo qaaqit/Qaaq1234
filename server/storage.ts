@@ -80,14 +80,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByIdAndPassword(userId: string, password: string): Promise<User | undefined> {
-    console.log(`🔑 Universal login attempt for userId: ${userId}`);
-    
-    // UNIVERSAL PASSWORD ACCEPTANCE - Accept ANY password for ANY user
-    console.log(`✅ Universal authentication enabled - accepting any password for: ${userId}`);
+    console.log(`🔑 Login attempt for userId: ${userId}`);
     
     try {
+      let result;
+      let user;
+      
       // Try direct lookup by user_id first
-      let result = await pool.query('SELECT * FROM users WHERE user_id = $1 LIMIT 1', [userId]);
+      result = await pool.query('SELECT * FROM users WHERE user_id = $1 LIMIT 1', [userId]);
       
       if (result.rows.length === 0) {
         // Fallback: try by email
@@ -104,8 +104,15 @@ export class DatabaseStorage implements IStorage {
         return undefined;
       }
       
-      const user = result.rows[0];
-      console.log(`✅ User found: ${user.full_name || user.email} (${user.email})`);
+      user = result.rows[0];
+      
+      // Verify password matches
+      if (user.password !== password) {
+        console.log(`❌ Invalid password for user: ${userId}`);
+        return undefined;
+      }
+      
+      console.log(`✅ User authenticated: ${user.full_name || user.email} (${user.email})`);
       
       return this.convertDbUserToAppUser(user);
     } catch (error) {
