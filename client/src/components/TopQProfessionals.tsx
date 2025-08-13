@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Crown, MessageSquare, Award, MapPin, Ship, MessageCircle } from 'lucide-react';
+import { Crown, MessageSquare, Award, MapPin, Ship, MessageCircle, Check, CheckCheck } from 'lucide-react';
 import { useState } from 'react';
 import QChatWindow from '@/components/qchat-window';
 import { useAuth } from '@/hooks/useAuth';
@@ -109,9 +109,110 @@ export function TopQProfessionals() {
 
   const professionals = data.professionals || [];
 
+  // Mock active conversations data (in real app, this would come from API)
+  const activeConversations = [
+    {
+      id: "conv_1",
+      user: { name: "Karthickraja", rank: "Engine Cadet", avatar: "K" },
+      lastMessage: "Thanks for the engine room tips!",
+      timestamp: "2m ago",
+      unreadCount: 2,
+      messageStatus: "read" // read, delivered, sent
+    },
+    {
+      id: "conv_2", 
+      user: { name: "Platform Admin", rank: "Chief Engineer", avatar: "PA" },
+      lastMessage: "The new maritime regulations are...",
+      timestamp: "5m ago",
+      unreadCount: 0,
+      messageStatus: "delivered"
+    },
+    {
+      id: "conv_3",
+      user: { name: "Chiru Rank", rank: "Fourth Engineer", avatar: "CR" },
+      lastMessage: "When are you visiting port next?",
+      timestamp: "1h ago", 
+      unreadCount: 1,
+      messageStatus: "sent"
+    }
+  ];
+
   return (
     <div className="space-y-6">
-      {/* Simple Header */}
+      {/* Active Conversations Section */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <MessageCircle className="h-6 w-6 text-blue-600" />
+          <h2 className="text-2xl font-bold text-gray-800">Active Conversations</h2>
+          <Badge variant="outline" className="ml-auto">
+            {activeConversations.length} Active
+          </Badge>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3">
+          {activeConversations.map((conversation) => (
+            <Card 
+              key={conversation.id}
+              className="hover:shadow-md transition-all duration-200 cursor-pointer border-l-4 border-l-blue-500"
+              onClick={() => {
+                // Handle conversation click - would open chat with that user
+                console.log(`Opening chat with ${conversation.user.name}`);
+              }}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  {/* User Avatar */}
+                  <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                    <span className="text-sm font-bold text-blue-600">{conversation.user.avatar}</span>
+                  </div>
+                  
+                  {/* Conversation Details */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <h3 className="font-semibold text-gray-800 truncate">
+                        {conversation.user.name}
+                      </h3>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-500">{conversation.timestamp}</span>
+                        {/* Message Status Indicators */}
+                        {conversation.messageStatus === 'sent' && (
+                          <Check className="h-4 w-4 text-gray-400" />
+                        )}
+                        {conversation.messageStatus === 'delivered' && (
+                          <CheckCheck className="h-4 w-4 text-gray-400" />
+                        )}
+                        {conversation.messageStatus === 'read' && (
+                          <CheckCheck className="h-4 w-4 text-blue-500" />
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Badge variant="secondary" className="text-xs mb-1">
+                          {conversation.user.rank}
+                        </Badge>
+                        <p className="text-sm text-gray-600 truncate">
+                          {conversation.lastMessage}
+                        </p>
+                      </div>
+                      
+                      {/* Unread Count */}
+                      {conversation.unreadCount > 0 && (
+                        <Badge className="bg-red-500 text-white min-w-[1.25rem] h-5 rounded-full text-xs">
+                          {conversation.unreadCount}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      {/* Top Q Professionals Header */}
       <div className="flex items-center gap-3 mb-6">
         <Crown className="h-6 w-6 text-orange-600" />
         <h2 className="text-2xl font-bold text-gray-800">Top Q Professionals</h2>
