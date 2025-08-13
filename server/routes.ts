@@ -239,6 +239,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
           res.status(500).json({ message: "Failed to fetch user" });
         }
       });
+
+      // Chat connection endpoints (Replit Auth)
+      app.post('/api/chat/connect', isAuthenticated, async (req: any, res) => {
+        try {
+          const { receiverId } = req.body;
+          const senderId = req.user?.claims?.sub;
+          
+          console.log('🔗 Chat connect attempt - senderId:', senderId, 'receiverId:', receiverId);
+          
+          if (!senderId) {
+            console.error('senderId is null or undefined, user claims:', req.user?.claims);
+            return res.status(400).json({ message: "Authentication error: user ID not found" });
+          }
+
+          if (senderId === receiverId) {
+            return res.status(400).json({ message: "Cannot create connection with yourself" });
+          }
+
+          // Check if connection already exists (both directions)
+          const existing = await storage.getChatConnection(senderId, receiverId);
+          const existingReverse = await storage.getChatConnection(receiverId, senderId);
+          
+          if (existing || existingReverse) {
+            console.log('Connection already exists, returning existing connection');
+            const connection = existing || existingReverse;
+            return res.json({ 
+              success: true, 
+              connection: connection,
+              message: "Connection already exists" 
+            });
+          }
+
+          // Create new connection
+          const connection = await storage.createChatConnection(senderId, receiverId);
+          
+          // Send initial connection message
+          const initialMessage = await storage.createMessage({
+            connectionId: connection.id,
+            senderId: senderId,
+            content: "Hi! I'd like to connect with you through the maritime network.",
+            messageType: 'text'
+          });
+
+          console.log('✅ New chat connection created:', connection.id);
+          
+          res.json({ 
+            success: true, 
+            connection: connection,
+            initialMessage: initialMessage,
+            message: "Connection created successfully" 
+          });
+        } catch (error) {
+          console.error('Create chat connection error:', error);
+          res.status(500).json({ message: "Failed to create chat connection" });
+        }
+      });
       
       console.log('✅ Replit Auth initialized successfully');
     } catch (error) {
@@ -3125,27 +3181,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Chat connection endpoints
-  app.post('/api/chat/connect', authenticateToken, async (req, res) => {
+  // Chat connection endpoints (JWT Auth)
+  app.post('/api/chat/connect-jwt', authenticateToken, async (req, res) => {
     try {
-      const { receiverId } = insertChatConnectionSchema.parse(req.body);
+      const { receiverId } = req.body;
       const senderId = req.userId;
       
-      console.log('Chat connect attempt - senderId:', senderId, 'receiverId:', receiverId);
+      console.log('🔗 Chat connect (JWT) attempt - senderId:', senderId, 'receiverId:', receiverId);
       
       if (!senderId) {
         console.error('senderId is null or undefined, req.userId:', req.userId);
         return res.status(400).json({ message: "Authentication error: user ID not found" });
       }
 
-      // Check if connection already exists
-      const existing = await storage.getChatConnection(senderId, receiverId);
-      if (existing) {
-        return res.status(400).json({ message: "Connection already exists" });
+      if (senderId === receiverId) {
+        return res.status(400).json({ message: "Cannot create connection with yourself" });
       }
 
+      // Check if connection already exists (both directions)
+      const existing = await storage.getChatConnection(senderId, receiverId);
+      const existingReverse = await storage.getChatConnection(receiverId, senderId);
+      
+      if (existing || existingReverse) {
+        console.log('Connection already exists, returning existing connection');
+        const connection = existing || existingReverse;
+        return res.json({ 
+          success: true, 
+          connection: connection,
+          message: "Connection already exists" 
+        });
+      }
+
+      // Create new connection
       const connection = await storage.createChatConnection(senderId, receiverId);
-      res.json(connection);
+      
+      // Send initial connection message
+      const initialMessage = await storage.createMessage({
+        connectionId: connection.id,
+        senderId: senderId,
+        content: "Hi! I'd like to connect with you through the maritime network.",
+        messageType: 'text'
+      });
+
+      console.log('✅ New chat connection created:', connection.id);
+      
+      res.json({ 
+        success: true, 
+        connection: connection,
+        initialMessage: initialMessage,
+        message: "Connection created successfully" 
+      });
     } catch (error) {
       console.error('Create chat connection error:', error);
       res.status(500).json({ message: "Failed to create chat connection" });

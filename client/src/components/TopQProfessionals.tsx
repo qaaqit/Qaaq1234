@@ -1,11 +1,14 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Crown, MessageSquare, Award, MapPin, Ship, MessageCircle, Check, CheckCheck, Search, User } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useLocation } from 'wouter';
 import QChatWindow from '@/components/qchat-window';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 interface TopProfessional {
   id: string;
@@ -48,6 +51,9 @@ export function TopQProfessionals() {
   const [searchQuery, setSearchQuery] = useState('');
   const [lastScrollY, setLastScrollY] = useState(0);
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const { data, isLoading, error } = useQuery<TopProfessionalsResponse>({
     queryKey: ['/api/users/top-professionals'],
@@ -65,12 +71,55 @@ export function TopQProfessionals() {
     gcTime: 15 * 60 * 1000, // Keep data in cache for 15 minutes
   });
 
+  // Create conversation mutation
+  const createConversationMutation = useMutation({
+    mutationFn: async (targetUserId: string) => {
+      return apiRequest('/api/chat/connect', {
+        method: 'POST',
+        body: JSON.stringify({ 
+          receiverId: targetUserId
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    },
+    onSuccess: (data, targetUserId) => {
+      // Redirect to DM page with the target user
+      setLocation(`/dm?user=${targetUserId}`);
+      toast({
+        title: "Conversation Started",
+        description: "You can now chat with this maritime professional.",
+      });
+      // Refresh chat connections
+      queryClient.invalidateQueries({ queryKey: ['/api/chat/connections'] });
+    },
+    onError: (error) => {
+      console.error('Failed to start conversation:', error);
+      toast({
+        title: "Connection Failed",
+        description: "Unable to start conversation. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleStartConversation = (professional: TopProfessional) => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to start a conversation.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (user?.id === professional.id) {
       return; // Don't allow chat with self
     }
-    setSelectedUser(professional);
-    setIsChatOpen(true);
+
+    // Start the conversation by creating a chat connection
+    createConversationMutation.mutate(professional.id);
   };
 
   const handleCloseChat = () => {
