@@ -453,7 +453,7 @@ export default function Register({ onSuccess }: RegisterProps) {
                   type="tel"
                   value={formData.whatsapp}
                   onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value.replace(/[^0-9]/g, '') })}
-                  placeholder="9820012345"
+                  placeholder="example:9820012345"
                   className="h-8 text-sm"
                   disabled={loading || otpLoading}
                   maxLength={15}
