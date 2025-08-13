@@ -72,7 +72,7 @@ Login Roadblock Design: Single minimizable login roadblock with chevron control 
 - **Session Management**: Express sessions with PostgreSQL storage
 - **Email Service**: Gmail SMTP (support@qaaq.app)
 - **WhatsApp Integration**: Primary OTP delivery.
-- **Payment System**: Production Razorpay integration with enhanced database connection reliability, automatic retry logic for payment processing, and comprehensive subscription management.
+- **Payment System**: Production Razorpay integration with enhanced database connection reliability, automatic retry logic for payment processing, and comprehensive subscription management. Complete database schema with Google Auth and Razorpay premium mode columns.
 
 ### Bot Integration Architecture
 - **QBOT**: WhatsApp bot for maritime networking assistance, location discovery, QAAQ Store services, and Q&A functionality.

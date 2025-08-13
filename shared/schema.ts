@@ -89,6 +89,9 @@ export const users = pgTable("users", {
   premiumExpiresAt: timestamp("premium_expires_at"), // Premium subscription expiry
   subscriptionId: text("subscription_id"), // Razorpay subscription ID
   subscriptionType: text("subscription_type"), // 'premium_monthly', 'premium_yearly', 'super_user'
+  subscriptionStatus: text("subscription_status").default("inactive"), // 'active', 'inactive', 'cancelled', 'paused'
+  razorpayCustomerId: text("razorpay_customer_id"), // Razorpay customer ID for recurring payments
+  paymentMethod: text("payment_method"), // Last used payment method ('card', 'upi', 'netbanking', etc.)
   lastChatClearAt: timestamp("last_chat_clear_at"), // Last time user cleared their QBOT chat
   
   // System metadata

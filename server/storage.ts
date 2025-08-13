@@ -372,11 +372,14 @@ export class DatabaseStorage implements IStorage {
       passwordCreatedAt: dbUser.password_created_at,
       passwordRenewalDue: dbUser.password_renewal_due,
       mustCreatePassword: dbUser.must_create_password || false,
-      // Subscription fields - provide defaults for missing columns
+      // Subscription fields
       isPremium: dbUser.is_premium || false,
-      premiumExpiresAt: dbUser.premium_expires_at || null,
-      subscriptionId: dbUser.subscription_id || null,
-      subscriptionType: dbUser.subscription_type || null
+      premiumExpiresAt: dbUser.premium_expires_at,
+      subscriptionId: dbUser.subscription_id,
+      subscriptionType: dbUser.subscription_type,
+      subscriptionStatus: dbUser.subscription_status || 'inactive',
+      razorpayCustomerId: dbUser.razorpay_customer_id,
+      paymentMethod: dbUser.payment_method
     };
   }
 
