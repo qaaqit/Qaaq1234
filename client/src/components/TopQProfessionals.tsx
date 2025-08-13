@@ -53,6 +53,9 @@ export function TopQProfessionals() {
       }
       return response.json();
     },
+    refetchInterval: false, // Disable automatic refetching
+    refetchOnWindowFocus: false, // Disable refetch on window focus
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
   });
 
   const handleStartConversation = (professional: TopProfessional) => {
