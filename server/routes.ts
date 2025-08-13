@@ -1663,9 +1663,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Admin check for user ID:', userId, 'type:', typeof userId);
       
-      // For admin user IDs, allow direct access
-      if (userId === "5791e66f-9cc1-4be4-bd4b-7fc1bd2e258e") {
-        console.log('Direct admin access granted');
+      // For specific admin user IDs, allow direct access
+      const adminIds = [
+        "5791e66f-9cc1-4be4-bd4b-7fc1bd2e258e",
+        "44885683" // Add other admin IDs as needed
+      ];
+      
+      if (adminIds.includes(userId)) {
+        console.log('Direct admin access granted for:', userId);
         return next();
       }
 
@@ -2414,11 +2419,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.userId;
       
-      // Check if user is admin
-      const userResult = await pool.query('SELECT is_admin FROM users WHERE id = $1', [userId]);
-      const user = userResult.rows[0];
+      // Check if user is admin - use the storage method for consistency
+      const user = await storage.getUser(userId);
+      console.log('Merge duplicates - user check:', { userId, user: !!user, isAdmin: user?.isAdmin });
       
-      if (!user || !user.is_admin) {
+      if (!user || !user.isAdmin) {
         return res.status(403).json({
           success: false,
           message: 'Admin privileges required to merge duplicates'
