@@ -2374,6 +2374,137 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Merge duplicate glossary entries (admin only)
+  app.post('/api/glossary/merge-duplicates', authenticateToken, async (req, res) => {
+    try {
+      const userId = req.userId;
+      
+      // Check if user is admin
+      const userResult = await pool.query('SELECT is_admin FROM users WHERE id = $1', [userId]);
+      const user = userResult.rows[0];
+      
+      if (!user || !user.is_admin) {
+        return res.status(403).json({
+          success: false,
+          message: 'Admin privileges required to merge duplicates'
+        });
+      }
+      
+      console.log('🔍 Finding duplicate maritime definitions...');
+      
+      // Get all glossary entries with extracted terms
+      const result = await pool.query(`
+        SELECT 
+          q.id,
+          q.content as question,
+          a.content as answer,
+          q.created_at,
+          CASE 
+            WHEN LOWER(q.content) LIKE '%what is a %' THEN TRIM(REPLACE(SUBSTRING(q.content FROM POSITION('what is a ' IN LOWER(q.content)) + 9), '?', ''))
+            WHEN LOWER(q.content) LIKE '%what is an %' THEN TRIM(REPLACE(SUBSTRING(q.content FROM POSITION('what is an ' IN LOWER(q.content)) + 10), '?', ''))
+            WHEN LOWER(q.content) LIKE '%what is the %' THEN TRIM(REPLACE(SUBSTRING(q.content FROM POSITION('what is the ' IN LOWER(q.content)) + 11), '?', ''))
+            WHEN LOWER(q.content) LIKE '%what is %' THEN TRIM(REPLACE(SUBSTRING(q.content FROM POSITION('what is ' IN LOWER(q.content)) + 8), '?', ''))
+            ELSE q.content
+          END as extracted_term
+        FROM questions q
+        LEFT JOIN answers a ON q.id = a.question_id
+        WHERE LOWER(q.content) LIKE '%what is%'
+          AND a.content IS NOT NULL
+          AND LENGTH(a.content) > 10
+          AND q.content NOT LIKE '%[ARCHIVED]%'
+        ORDER BY extracted_term ASC
+      `);
+      
+      console.log(`📚 Found ${result.rows.length} total glossary entries`);
+      
+      // Group by normalized term
+      const termGroups = {};
+      
+      result.rows.forEach(row => {
+        const normalizedTerm = row.extracted_term.toLowerCase()
+          .replace(/[?.,!]/g, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+        
+        if (!termGroups[normalizedTerm]) {
+          termGroups[normalizedTerm] = [];
+        }
+        termGroups[normalizedTerm].push(row);
+      });
+      
+      // Find duplicates
+      const duplicateGroups = Object.entries(termGroups)
+        .filter(([term, entries]) => entries.length > 1);
+      
+      console.log(`🔗 Found ${duplicateGroups.length} terms with duplicates`);
+      
+      let mergedCount = 0;
+      let archivedCount = 0;
+      
+      for (const [term, entries] of duplicateGroups) {
+        console.log(`📝 Processing: ${term.toUpperCase()} (${entries.length} duplicates)`);
+        
+        // Sort by answer quality and recency
+        entries.sort((a, b) => {
+          // Prefer longer, more detailed answers
+          const aScore = a.answer.length + (a.answer.includes('•') ? 100 : 0);
+          const bScore = b.answer.length + (b.answer.includes('•') ? 100 : 0);
+          
+          if (Math.abs(aScore - bScore) > 50) {
+            return bScore - aScore; // Better answer first
+          }
+          
+          // If similar quality, prefer newer
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
+        
+        const bestEntry = entries[0];
+        const duplicatesToArchive = entries.slice(1);
+        
+        console.log(`  ✅ Keeping: ID ${bestEntry.id} (${bestEntry.answer.length} chars)`);
+        
+        // Archive duplicate entries
+        for (const duplicate of duplicatesToArchive) {
+          try {
+            await pool.query(`
+              UPDATE questions 
+              SET content = content || ' [ARCHIVED-DUPLICATE]'
+              WHERE id = $1 AND content NOT LIKE '%[ARCHIVED]%'
+            `, [duplicate.id]);
+            
+            archivedCount++;
+            console.log(`    🗃️ Archived duplicate: ID ${duplicate.id}`);
+          } catch (error) {
+            console.error(`    ❌ Failed to archive ID ${duplicate.id}:`, error.message);
+          }
+        }
+        
+        mergedCount++;
+      }
+      
+      console.log(`✅ Merge completed! Processed ${mergedCount} terms, archived ${archivedCount} duplicates`);
+      
+      res.json({
+        success: true,
+        message: `Successfully merged duplicates`,
+        summary: {
+          totalEntries: result.rows.length,
+          duplicateGroups: duplicateGroups.length,
+          termsProcessed: mergedCount,
+          duplicatesArchived: archivedCount,
+          finalUniqueTerms: result.rows.length - archivedCount
+        }
+      });
+      
+    } catch (error) {
+      console.error('Merge duplicates error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to merge duplicates'
+      });
+    }
+  });
+
   // ==== WATI WHATSAPP BOT INTEGRATION ====
   
   // WATI webhook endpoint for incoming WhatsApp messages

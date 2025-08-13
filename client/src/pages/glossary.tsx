@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Archive, AlertTriangle } from 'lucide-react';
+import { Archive, AlertTriangle, Merge } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import qaaqLogo from '@assets/qaaq-logo.png';
 
@@ -110,6 +110,37 @@ export function GlossaryPage() {
     }
   };
 
+  const handleMergeDuplicates = async () => {
+    try {
+      const response = await fetch('/api/glossary/merge-duplicates', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Refresh the glossary entries after merge
+        fetchGlossaryEntries();
+        toast({
+          title: "Duplicates Merged Successfully",
+          description: `Processed ${data.summary.termsProcessed} terms, archived ${data.summary.duplicatesArchived} duplicates. Dictionary now has ${data.summary.finalUniqueTerms} unique terms.`,
+        });
+      } else {
+        throw new Error(data.message || 'Failed to merge duplicates');
+      }
+    } catch (error) {
+      toast({
+        title: "Merge Failed", 
+        description: "Could not merge duplicate entries. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getCategories = () => {
     const uniqueCategories = Array.from(new Set(glossaryEntries.map(entry => entry.category)));
     const cats = ['all', ...uniqueCategories];
@@ -202,14 +233,29 @@ export function GlossaryPage() {
           </div>
         </div>
 
-        {/* Statistics */}
-        <div className="flex gap-4 mb-6">
-          <Badge variant="secondary" className="bg-orange-100 text-orange-800 px-3 py-1">
-            📚 {filteredEntries.length} Maritime Terms
-          </Badge>
-          <Badge variant="secondary" className="bg-blue-100 text-blue-800 px-3 py-1">
-            🔤 {alphabetLetters.length} Alphabetical Groups
-          </Badge>
+        {/* Statistics and Admin Controls */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex gap-4">
+            <Badge variant="secondary" className="bg-orange-100 text-orange-800 px-3 py-1">
+              📚 {filteredEntries.length} Maritime Terms
+            </Badge>
+            <Badge variant="secondary" className="bg-blue-100 text-blue-800 px-3 py-1">
+              🔤 {alphabetLetters.length} Alphabetical Groups
+            </Badge>
+          </div>
+
+          {/* Admin Merge Button */}
+          {isAdmin && (
+            <Button
+              onClick={handleMergeDuplicates}
+              variant="outline"
+              size="sm"
+              className="border-blue-300 text-blue-600 hover:bg-blue-50 hover:border-blue-400"
+            >
+              <Merge className="w-4 h-4 mr-2" />
+              Merge Duplicates
+            </Button>
+          )}
         </div>
 
         {/* Loading State */}
@@ -295,9 +341,9 @@ export function GlossaryPage() {
                             </p>
                           </div>
 
-                          {/* Admin Archive Button */}
+                          {/* Admin Actions */}
                           {isAdmin && (
-                            <div className="pt-3 border-t border-gray-200">
+                            <div className="pt-3 border-t border-gray-200 space-y-2">
                               <Button
                                 onClick={() => handleArchiveEntry(entry.id, extractTerm(entry.question))}
                                 variant="outline"
