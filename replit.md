@@ -48,6 +48,9 @@ Login Roadblock Design: Single minimizable login roadblock with chevron control 
 - **Top Q Professionals Working**: Successfully displays 9 real maritime professionals with authentic question/answer counts from QAAQ database
 - **Data Integrity Enforced**: Strict "NEVER EVER" rule followed - no test users or sample data added, only authentic QAAQ database professionals
 - **Database Schema Aligned**: Fixed subscription_id column mismatches and optimized query performance for shared database access
+- **Active Conversations Added**: Implemented 1v1 DM section above Top Q Professionals with single/double tick message status pattern
+- **Compact Card Design**: Reduced Top Q Professionals card size to match Active Conversations with consistent layout and styling
+- **Pull-to-Search Feature**: Added sailor search bar above header that appears when scrolling up, with real-time search filtering of maritime professionals
 
 ## System Architecture
 

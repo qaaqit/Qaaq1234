@@ -2,8 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Crown, MessageSquare, Award, MapPin, Ship, MessageCircle, Check, CheckCheck } from 'lucide-react';
-import { useState } from 'react';
+import { Crown, MessageSquare, Award, MapPin, Ship, MessageCircle, Check, CheckCheck, Search, User } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import QChatWindow from '@/components/qchat-window';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -14,6 +14,8 @@ interface TopProfessional {
   email?: string;
   maritimeRank: string;
   shipName?: string;
+  company?: string;
+  lastShip?: string;
   port?: string;
   country?: string;
   questionCount: number;
@@ -42,6 +44,9 @@ const getRankBadgeColor = (rank: string) => {
 export function TopQProfessionals() {
   const [selectedUser, setSelectedUser] = useState<TopProfessional | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [showSearchBar, setShowSearchBar] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [lastScrollY, setLastScrollY] = useState(0);
   const { user } = useAuth();
   
   const { data, isLoading, error } = useQuery<TopProfessionalsResponse>({
@@ -71,6 +76,32 @@ export function TopQProfessionals() {
   const handleCloseChat = () => {
     setIsChatOpen(false);
     setSelectedUser(null);
+  };
+
+  // Handle scroll to show/hide search bar
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      // Show search bar when scrolling up or at top
+      if (currentScrollY < lastScrollY || currentScrollY < 50) {
+        setShowSearchBar(true);
+      } else if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        // Hide search bar when scrolling down
+        setShowSearchBar(false);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    // TODO: Implement actual search functionality
+    console.log('Searching for:', query);
   };
 
   if (isLoading) {
@@ -138,7 +169,74 @@ export function TopQProfessionals() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {/* Sailor Search Bar - Pull to Reveal */}
+      <div 
+        className={`fixed top-0 left-0 right-0 z-50 bg-white shadow-md border-b transition-transform duration-300 ${
+          showSearchBar ? 'translate-y-0' : '-translate-y-full'
+        }`}
+      >
+        <div className="container mx-auto px-4 py-3">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Search sailors, ships, companies..."
+            />
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+              <User className="h-5 w-5 text-blue-500" />
+            </div>
+          </div>
+          
+          {/* Search Results Preview */}
+          {searchQuery && (
+            <div className="mt-2 bg-gray-50 rounded-lg p-3">
+              <div className="text-sm text-gray-600 mb-2">
+                Searching for "{searchQuery}"...
+              </div>
+              <div className="space-y-1">
+                {professionals
+                  .filter(p => 
+                    p.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    p.maritimeRank?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    p.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    p.lastShip?.toLowerCase().includes(searchQuery.toLowerCase())
+                  )
+                  .slice(0, 3)
+                  .map(professional => (
+                    <div 
+                      key={professional.id}
+                      className="flex items-center gap-2 text-sm text-gray-700 hover:bg-white rounded p-2 cursor-pointer"
+                      onClick={() => {
+                        setShowSearchBar(false);
+                        handleStartConversation(professional);
+                      }}
+                    >
+                      <div className="h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center">
+                        <span className="text-xs text-blue-600 font-bold">
+                          {professional.fullName?.charAt(0) || 'M'}
+                        </span>
+                      </div>
+                      <span className="font-medium">
+                        {professional.fullName || 'Maritime Professional'}
+                      </span>
+                      <span className="text-gray-500">
+                        - {professional.maritimeRank}
+                      </span>
+                    </div>
+                  ))
+                }
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Active Conversations Section */}
       <div className="space-y-4">
         <div className="flex items-center gap-3">
@@ -278,9 +376,9 @@ export function TopQProfessionals() {
                             {professional.company}
                           </span>
                         )}
-                        {(professional as any).lastShip && (
+                        {professional.lastShip && (
                           <span className="bg-gray-100 px-2 py-1 rounded truncate max-w-24">
-                            {(professional as any).lastShip}
+                            {professional.lastShip}
                           </span>
                         )}
                       </div>
