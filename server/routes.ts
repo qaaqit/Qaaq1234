@@ -366,11 +366,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       // Save verification token to database
-      await pool.query(
-        `INSERT INTO email_verification_tokens (email, token, user_data, expires_at) 
-         VALUES ($1, $2, $3, $4)`,
-        [email, verificationToken, JSON.stringify(userData), expiresAt]
-      );
+      console.log('Saving verification token for:', email);
+      console.log('Token to save:', verificationToken);
+      console.log('User data to save:', userData);
+      
+      try {
+        const insertResult = await pool.query(
+          `INSERT INTO email_verification_tokens (email, token, user_data, expires_at) 
+           VALUES ($1, $2, $3, $4) RETURNING id`,
+          [email, verificationToken, JSON.stringify(userData), expiresAt]
+        );
+        console.log('Token saved with ID:', insertResult.rows[0]?.id);
+        
+        // Verify the token was actually saved
+        const verifyResult = await pool.query(
+          `SELECT id FROM email_verification_tokens WHERE token = $1`,
+          [verificationToken]
+        );
+        console.log('Token verification:', verifyResult.rows.length > 0 ? 'Found' : 'NOT FOUND');
+        
+      } catch (dbError) {
+        console.error('Database insertion error:', dbError);
+        throw dbError;
+      }
 
       // Send verification email
       const emailResult = await emailService.sendVerificationEmail(email, verificationToken, userData);
@@ -476,20 +494,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const verificationData = tokenResult.rows[0];
-      const userData = JSON.parse(verificationData.user_data);
+      console.log('Raw user_data:', verificationData.user_data);
+      
+      let userData;
+      try {
+        userData = typeof verificationData.user_data === 'string' 
+          ? JSON.parse(verificationData.user_data)
+          : verificationData.user_data;
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
+        console.error('Raw data that failed to parse:', verificationData.user_data);
+        return res.status(400).send(`
+          <html>
+            <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+              <h2 style="color: #dc2626;">❌ Verification Data Corrupted</h2>
+              <p>The verification data is corrupted. Please register again.</p>
+              <p><a href="/register" style="color: #ea580c;">Register again</a></p>
+            </body>
+          </html>
+        `);
+      }
 
-      // Create user account
-      const newUser = await storage.createUser({
-        fullName: `${userData.firstName} ${userData.lastName}`,
-        email: userData.email,
-        whatsAppNumber: userData.whatsapp || null,
-        rank: userData.maritimeRank,
-        lastCompany: userData.company,
-        password: userData.password,
-        userType: userData.userType,
-        userId: userData.userId, // Include generated user ID
-        isVerified: true
-      });
+      // Create user account using direct SQL with proper ID generation
+      const result = await pool.query(`
+        INSERT INTO users (
+          id, user_id, full_name, email, whatsapp_number, rank, last_company, 
+          password, user_type, is_verified, created_at, last_login, auth_provider
+        ) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW(), $10)
+        RETURNING *
+      `, [
+        userData.userId,
+        `${userData.firstName} ${userData.lastName}`,
+        userData.email,
+        userData.whatsapp || null,
+        userData.maritimeRank,
+        userData.company,
+        userData.password,
+        userData.userType,
+        true,
+        'qaaq'
+      ]);
+
+      const newUser = result.rows[0];
 
       // Mark token as used
       await pool.query(
@@ -550,11 +596,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error: unknown) {
       console.error('Email verification error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error details:', errorMessage);
       res.status(500).send(`
         <html>
           <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
             <h2 style="color: #dc2626;">❌ Verification Failed</h2>
-            <p>An error occurred during verification. Please try again.</p>
+            <p>An error occurred during verification: ${errorMessage}</p>
+            <p><a href="/register" style="color: #ea580c;">Try registering again</a></p>
           </body>
         </html>
       `);
