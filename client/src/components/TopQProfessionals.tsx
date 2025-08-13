@@ -221,148 +221,87 @@ export function TopQProfessionals() {
         </Badge>
       </div>
 
-      {/* Simple User Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Compact User Cards Grid */}
+      <div className="grid grid-cols-1 gap-3">
         {professionals.map((professional, index) => (
           <Card 
             key={professional.id} 
-            className={`transform hover:scale-105 transition-all duration-200 ${
-              index === 0 ? 'ring-2 ring-orange-400 bg-gradient-to-br from-orange-50 to-red-50' :
-              index === 1 ? 'ring-2 ring-red-400 bg-gradient-to-br from-red-50 to-orange-50' :
-              index === 2 ? 'ring-2 ring-gray-400 bg-gradient-to-br from-gray-50 to-gray-100' :
-              'hover:shadow-lg'
+            className={`hover:shadow-md transition-all duration-200 cursor-pointer ${
+              index === 0 ? 'border-l-4 border-l-orange-500 bg-gradient-to-r from-orange-50 to-red-50' :
+              index === 1 ? 'border-l-4 border-l-red-500 bg-gradient-to-r from-red-50 to-orange-50' :
+              index === 2 ? 'border-l-4 border-l-gray-500 bg-gradient-to-r from-gray-50 to-gray-100' :
+              'border-l-4 border-l-blue-500'
             }`}
+            onClick={() => user && user.id !== professional.id && handleStartConversation(professional)}
           >
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  {index < 3 && (
-                    <div className={`text-2xl ${
-                      index === 0 ? 'text-orange-500' :
-                      index === 1 ? 'text-red-500' :
-                      'text-gray-500'
-                    }`}>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                {/* Rank Medal/Avatar */}
+                <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center">
+                  {index < 3 ? (
+                    <span className="text-lg">
                       {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
-                    </div>
+                    </span>
+                  ) : (
+                    <span className="text-sm font-bold text-orange-600">
+                      #{index + 1}
+                    </span>
                   )}
-                  <div>
-                    <CardTitle className="text-lg">
+                </div>
+                
+                {/* Professional Details */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="font-semibold text-gray-800 truncate">
                       {professional.fullName || professional.email || 'Maritime Professional'}
-                    </CardTitle>
-                    <div className="flex items-center gap-1 mt-1">
-                      <Badge 
-                        variant="secondary" 
-                        className={`text-xs ${getRankBadgeColor(professional.maritimeRank || 'other')}`}
-                      >
-                        {professional.maritimeRank?.replace('_', ' ').toUpperCase() || 'PROFESSIONAL'}
+                    </h3>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="font-bold text-orange-700 text-xs">
+                        {professional.questionCount}Q
+                      </Badge>
+                      <Badge variant="outline" className="font-bold text-red-700 text-xs">
+                        {professional.answerCount}A
                       </Badge>
                     </div>
                   </div>
-                </div>
-                {professional.userType === 'Premium' && (
-                  <Crown className="h-5 w-5 text-yellow-500" />
-                )}
-              </div>
-            </CardHeader>
-            
-            <CardContent className="pt-0">
-              <div className="space-y-3">
-                {/* Question & Answer Stats */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4 text-orange-600" />
-                    <span className="text-sm font-medium">Questions</span>
-                  </div>
-                  <Badge variant="outline" className="font-bold text-orange-700">
-                    {professional.questionCount}
-                  </Badge>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Award className="h-4 w-4 text-red-600" />
-                    <span className="text-sm font-medium">Answers</span>
-                  </div>
-                  <Badge variant="outline" className="font-bold text-red-700">
-                    {professional.answerCount}
-                  </Badge>
-                </div>
-
-                {/* Professional Details */}
-                <div className="pt-2 border-t border-gray-200 space-y-2">
-                  {/* Maritime Rank */}
-                  {professional.maritimeRank && professional.maritimeRank !== 'Professional' && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <div className="h-4 w-4 rounded-full bg-orange-100 flex items-center justify-center">
-                        <span className="text-xs text-orange-600 font-bold">R</span>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <Badge variant="secondary" className="text-xs">
+                        {professional.maritimeRank?.replace(/_/g, ' ') || 'Professional'}
+                      </Badge>
+                      
+                      {/* Company and Ship Info */}
+                      <div className="flex items-center gap-2 text-xs text-gray-600">
+                        {professional.company && (
+                          <span className="bg-blue-100 px-2 py-1 rounded truncate max-w-24">
+                            {professional.company}
+                          </span>
+                        )}
+                        {(professional as any).lastShip && (
+                          <span className="bg-gray-100 px-2 py-1 rounded truncate max-w-24">
+                            {(professional as any).lastShip}
+                          </span>
+                        )}
                       </div>
-                      <span className="font-medium capitalize">{professional.maritimeRank.replace(/_/g, ' ')}</span>
                     </div>
-                  )}
-                  
-                  {/* Last Company */}
-                  {professional.company && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <div className="h-4 w-4 rounded-full bg-blue-100 flex items-center justify-center">
-                        <span className="text-xs text-blue-600 font-bold">C</span>
-                      </div>
-                      <span className="font-medium">{professional.company}</span>
-                    </div>
-                  )}
-                  
-                  {/* Last Ship */}
-                  {(professional as any).lastShip && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Ship className="h-4 w-4 text-blue-600" />
-                      <span className="font-medium">{(professional as any).lastShip}</span>
-                    </div>
-                  )}
-                  
-                  {/* Current Ship (fallback) */}
-                  {!(professional as any).lastShip && professional.shipName && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Ship className="h-4 w-4 text-gray-500" />
-                      <span>{professional.shipName}</span>
-                    </div>
-                  )}
-                  
-                  {/* Location */}
-                  {professional.port && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <MapPin className="h-4 w-4" />
-                      <span>{professional.port}{professional.country && `, ${professional.country}`}</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Progress Bar */}
-                <div className="pt-2">
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-gradient-to-r from-orange-500 to-red-500 h-2 rounded-full transition-all duration-500"
-                      style={{ 
-                        width: `${Math.min((professional.questionCount / (professionals[0]?.questionCount || 1)) * 100, 100)}%` 
-                      }}
-                    />
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1 text-center">
-                    Rank #{index + 1} of {professionals.length}
+                    
+                    {/* Start Chat Button */}
+                    {user && user.id !== professional.id && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-orange-300 text-orange-600 hover:bg-orange-50 ml-2"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStartConversation(professional);
+                        }}
+                      >
+                        <MessageCircle className="h-3 w-3" />
+                      </Button>
+                    )}
                   </div>
                 </div>
-
-                {/* Start Conversation Button */}
-                {user && user.id !== professional.id && (
-                  <div className="pt-3 border-t border-gray-100 mt-3">
-                    <Button
-                      onClick={() => handleStartConversation(professional)}
-                      size="sm"
-                      className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white border-0"
-                    >
-                      <MessageCircle className="h-4 w-4 mr-2" />
-                      Start Conversation
-                    </Button>
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>
