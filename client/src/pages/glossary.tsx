@@ -298,14 +298,12 @@ export function GlossaryPage() {
                   {groupedEntries[letter].map((entry, index) => (
                     <Dialog key={`dialog-${letter}-${entry.id}-${index}`}>
                       <DialogTrigger asChild>
-                        <div className="flex items-start justify-between py-1 border-b border-gray-50 hover:bg-orange-25 hover:border-orange-100 transition-colors cursor-pointer group">
-                          <div className="flex-1 min-w-0">
-                            <span className="text-sm font-medium text-gray-900 group-hover:text-orange-700 transition-colors block">
+                        <div className="py-1 border-b border-gray-50 hover:bg-orange-25 hover:border-orange-100 transition-colors cursor-pointer group">
+                          <div className="text-sm">
+                            <span className="font-medium text-gray-900 group-hover:text-orange-700 transition-colors">
                               {extractTerm(entry.question).toUpperCase()}
                             </span>
-                          </div>
-                          <div className="flex-1 ml-2 min-w-0">
-                            <span className="text-sm text-gray-600 group-hover:text-gray-800 transition-colors">
+                            <span className="text-gray-600 group-hover:text-gray-800 transition-colors ml-1">
                               {truncateDefinition(entry.answer)}
                             </span>
                           </div>
