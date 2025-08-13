@@ -1,11 +1,12 @@
-import { pool } from './server/db';
+import { db } from './server/db';
+import { sql } from 'drizzle-orm';
 
 async function addUserIdColumn() {
   try {
     console.log('🔧 Adding user_id column to users table...');
     
     // Add the user_id column if it doesn't exist
-    await pool.query(`
+    await db.execute(sql`
       ALTER TABLE users 
       ADD COLUMN IF NOT EXISTS user_id TEXT;
     `);
@@ -14,7 +15,7 @@ async function addUserIdColumn() {
     
     // Copy data from id column to user_id column
     console.log('📋 Copying data from id to user_id...');
-    await pool.query(`
+    await db.execute(sql`
       UPDATE users 
       SET user_id = id 
       WHERE user_id IS NULL;
@@ -23,14 +24,14 @@ async function addUserIdColumn() {
     console.log('✅ Data copied successfully');
     
     // Check the results
-    const result = await pool.query(`
+    const result = await db.execute(sql`
       SELECT id, user_id, email, full_name 
       FROM users 
       LIMIT 5;
     `);
     
     console.log('📊 Sample data:');
-    console.table(result.rows);
+    console.table(result);
     
     console.log('🎉 Migration completed successfully!');
     
