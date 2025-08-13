@@ -55,11 +55,24 @@ export default function UserDropdown({ user, className = "", onLogout }: UserDro
   }, [isOpen]);
 
   const handleLogout = () => {
+    // Clear QAAQ tokens
     logout();
+    
+    // Call parent logout handler if provided
     if (onLogout) {
       onLogout();
     }
-    window.location.href = '/';
+    
+    // For Replit Auth users, redirect to Replit logout endpoint
+    // For QAAQ users, just go to home page
+    const token = localStorage.getItem('auth_token');
+    if (!token && user.id) {
+      // This is a Replit Auth user, use Replit logout
+      window.location.href = '/api/logout';
+    } else {
+      // This is a QAAQ user, just refresh to home
+      window.location.href = '/';
+    }
   };
 
   const menuItems = [
@@ -100,6 +113,16 @@ export default function UserDropdown({ user, className = "", onLogout }: UserDro
       }
     });
   }
+
+  // Add logout option
+  menuItems.push({
+    icon: LogOut,
+    label: "Sign Out",
+    onClick: () => {
+      handleLogout();
+      setIsOpen(false);
+    }
+  });
 
   return (
     <div className={`relative z-[5000] ${className}`} ref={dropdownRef}>
