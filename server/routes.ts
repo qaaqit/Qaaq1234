@@ -2505,6 +2505,121 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Clean up definitions - remove redundant phrases (admin only)
+  app.post('/api/glossary/cleanup-definitions', authenticateToken, async (req, res) => {
+    try {
+      const userId = req.userId;
+      
+      // Check if user is admin
+      const userResult = await pool.query('SELECT is_admin FROM users WHERE id = $1', [userId]);
+      const user = userResult.rows[0];
+      
+      if (!user || !user.is_admin) {
+        return res.status(403).json({
+          success: false,
+          message: 'Admin privileges required to cleanup definitions'
+        });
+      }
+      
+      console.log('🧹 Cleaning up redundant phrases from definitions...');
+      
+      // Find answers with redundant phrases
+      const result = await pool.query(`
+        SELECT 
+          a.id as answer_id,
+          a.content as answer,
+          q.id as question_id,
+          q.content as question
+        FROM answers a
+        JOIN questions q ON q.id = a.question_id
+        WHERE LOWER(q.content) LIKE '%what is%'
+          AND (
+            LOWER(a.content) LIKE '%based on my studies%' OR
+            LOWER(a.content) LIKE '%from my experience%' OR
+            LOWER(a.content) LIKE '%in my opinion%' OR
+            LOWER(a.content) LIKE '%according to my knowledge%' OR
+            LOWER(a.content) LIKE '%from what i know%' OR
+            LOWER(a.content) LIKE '%as far as i know%'
+          )
+          AND q.content NOT LIKE '%[ARCHIVED]%'
+      `);
+      
+      console.log(`📝 Found ${result.rows.length} definitions with redundant phrases`);
+      
+      let cleanedCount = 0;
+      const redundantPhrases = [
+        /based on my studies,?\s*/gi,
+        /from my experience,?\s*/gi,  
+        /in my opinion,?\s*/gi,
+        /according to my knowledge,?\s*/gi,
+        /from what i know,?\s*/gi,
+        /as far as i know,?\s*/gi,
+        /from my understanding,?\s*/gi,
+        /as i understand it,?\s*/gi,
+        /to my knowledge,?\s*/gi
+      ];
+      
+      for (const row of result.rows) {
+        let cleanedContent = row.answer;
+        let hasChanges = false;
+        
+        // Remove redundant phrases
+        for (const phrase of redundantPhrases) {
+          const originalContent = cleanedContent;
+          cleanedContent = cleanedContent.replace(phrase, '');
+          if (originalContent !== cleanedContent) {
+            hasChanges = true;
+          }
+        }
+        
+        // Clean up extra whitespace and fix capitalization
+        if (hasChanges) {
+          cleanedContent = cleanedContent
+            .replace(/^\s+/g, '') // Remove leading whitespace
+            .replace(/\s+/g, ' ')  // Normalize whitespace
+            .trim();
+          
+          // Capitalize first letter if needed
+          if (cleanedContent.length > 0) {
+            cleanedContent = cleanedContent.charAt(0).toUpperCase() + cleanedContent.slice(1);
+          }
+          
+          try {
+            await pool.query(`
+              UPDATE answers 
+              SET content = $1
+              WHERE id = $2
+            `, [cleanedContent, row.answer_id]);
+            
+            cleanedCount++;
+            console.log(`✅ Cleaned definition for: ${row.question.substring(0, 50)}...`);
+          } catch (error) {
+            console.error(`❌ Failed to clean answer ID ${row.answer_id}:`, error.message);
+          }
+        }
+      }
+      
+      console.log(`✅ Cleanup completed! Cleaned ${cleanedCount} definitions`);
+      
+      res.json({
+        success: true,
+        message: `Successfully cleaned definitions`,
+        summary: {
+          totalFound: result.rows.length,
+          definitionsCleaned: cleanedCount,
+          phrasesRemoved: redundantPhrases.length
+        }
+      });
+      
+    } catch (error) {
+      console.error('Cleanup definitions error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to cleanup definitions'
+      });
+    }
+  });
+
   // ==== WATI WHATSAPP BOT INTEGRATION ====
   
   // WATI webhook endpoint for incoming WhatsApp messages
