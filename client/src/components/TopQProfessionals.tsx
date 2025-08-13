@@ -371,68 +371,68 @@ export function TopQProfessionals() {
         </div>
       </div>
 
-      {/* Active Conversations Section */}
+      {/* 🔒 MARIANA SEAL LOCKED: Active Conversations Section */}
       <div className="space-y-4">
         <div className="flex items-center gap-3">
-          <MessageCircle className="h-6 w-6 text-blue-600" />
-          <h2 className="text-2xl font-bold text-gray-800">Active Conversations</h2>
-          <Badge variant="outline" className="ml-auto">
+          <MessageCircle className="h-5 w-5 text-blue-600" />
+          <h2 className="text-xl font-bold text-gray-800">Active Conversations</h2>
+          <Badge variant="outline" className="ml-auto text-xs">
             {activeConversations.length} Active
           </Badge>
         </div>
 
-        <div className="grid grid-cols-1 gap-3">
+        <div className="grid grid-cols-1 gap-2">
           {activeConversations.map((conversation) => (
             <Card 
               key={conversation.id}
-              className="hover:shadow-md transition-all duration-200 cursor-pointer border-l-4 border-l-blue-500"
+              className="hover:shadow-sm transition-all duration-200 cursor-pointer border-l-3 border-l-blue-500 bg-white"
               onClick={() => {
                 // Navigate to DM page with the conversation user
                 const userName = conversation.user.name.replace(/\s+/g, '-').toLowerCase();
                 setLocation(`/dm?user=${encodeURIComponent(userName)}&name=${encodeURIComponent(conversation.user.name)}`);
               }}
             >
-              <CardContent className="p-4">
+              <CardContent className="p-3">
                 <div className="flex items-center gap-3">
-                  {/* User Avatar */}
-                  <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                    <span className="text-sm font-bold text-blue-600">{conversation.user.avatar}</span>
+                  {/* Compact User Avatar */}
+                  <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                    <span className="text-xs font-bold text-blue-600">{conversation.user.avatar}</span>
                   </div>
                   
                   {/* Conversation Details */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <h3 className="font-semibold text-gray-800 truncate">
+                      <h3 className="font-medium text-gray-800 truncate text-sm">
                         {conversation.user.name}
                       </h3>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
                         <span className="text-xs text-gray-500">{conversation.timestamp}</span>
-                        {/* Message Status Indicators */}
+                        {/* WhatsApp-style Message Status */}
                         {conversation.messageStatus === 'sent' && (
-                          <Check className="h-4 w-4 text-gray-400" />
+                          <Check className="h-3 w-3 text-gray-400" />
                         )}
                         {conversation.messageStatus === 'delivered' && (
-                          <CheckCheck className="h-4 w-4 text-gray-400" />
+                          <CheckCheck className="h-3 w-3 text-gray-400" />
                         )}
                         {conversation.messageStatus === 'read' && (
-                          <CheckCheck className="h-4 w-4 text-blue-500" />
+                          <CheckCheck className="h-3 w-3 text-blue-500" />
                         )}
                       </div>
                     </div>
                     
                     <div className="flex items-center justify-between">
-                      <div>
-                        <Badge variant="secondary" className="text-xs mb-1">
+                      <div className="flex-1 min-w-0">
+                        <Badge variant="secondary" className="text-xs mb-1 py-0">
                           {conversation.user.rank}
                         </Badge>
-                        <p className="text-sm text-gray-600 truncate">
+                        <p className="text-xs text-gray-600 truncate">
                           {conversation.lastMessage}
                         </p>
                       </div>
                       
-                      {/* Unread Count */}
+                      {/* Unread Count Badge */}
                       {conversation.unreadCount > 0 && (
-                        <Badge className="bg-red-500 text-white min-w-[1.25rem] h-5 rounded-full text-xs">
+                        <Badge className="bg-red-500 text-white min-w-[1rem] h-4 rounded-full text-xs ml-2 px-1">
                           {conversation.unreadCount}
                         </Badge>
                       )}
@@ -445,38 +445,38 @@ export function TopQProfessionals() {
         </div>
       </div>
 
-      {/* Top Q Professionals Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <Crown className="h-6 w-6 text-orange-600" />
-        <h2 className="text-2xl font-bold text-gray-800">Top Q Professionals</h2>
-        <Badge variant="outline" className="ml-auto">
+      {/* 🔒 MARIANA SEAL LOCKED: Top Q Professionals Header */}
+      <div className="flex items-center gap-3 mb-4">
+        <Crown className="h-5 w-5 text-orange-600" />
+        <h2 className="text-xl font-bold text-gray-800">Top Q Professionals</h2>
+        <Badge variant="outline" className="ml-auto text-xs">
           {professionals.length} Professionals
         </Badge>
       </div>
 
-      {/* Compact User Cards Grid */}
-      <div className="grid grid-cols-1 gap-3">
+      {/* 🔒 MARIANA SEAL: Identical-sized Compact Cards */}
+      <div className="grid grid-cols-1 gap-2">
         {professionals.map((professional, index) => (
           <Card 
             key={professional.id} 
-            className={`hover:shadow-md transition-all duration-200 cursor-pointer ${
-              index === 0 ? 'border-l-4 border-l-orange-500 bg-gradient-to-r from-orange-50 to-red-50' :
-              index === 1 ? 'border-l-4 border-l-red-500 bg-gradient-to-r from-red-50 to-orange-50' :
-              index === 2 ? 'border-l-4 border-l-gray-500 bg-gradient-to-r from-gray-50 to-gray-100' :
-              'border-l-4 border-l-blue-500'
+            className={`hover:shadow-sm transition-all duration-200 cursor-pointer ${
+              index === 0 ? 'border-l-3 border-l-orange-500 bg-gradient-to-r from-orange-50 to-red-50' :
+              index === 1 ? 'border-l-3 border-l-red-500 bg-gradient-to-r from-red-50 to-orange-50' :
+              index === 2 ? 'border-l-3 border-l-gray-500 bg-gradient-to-r from-gray-50 to-gray-100' :
+              'border-l-3 border-l-blue-500 bg-white'
             }`}
             onClick={() => user && user.id !== professional.id && handleStartConversation(professional)}
           >
-            <CardContent className="p-4">
+            <CardContent className="p-3">
               <div className="flex items-center gap-3">
-                {/* Rank Medal/Avatar */}
-                <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center">
+                {/* Compact Rank Medal/Avatar */}
+                <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
                   {index < 3 ? (
-                    <span className="text-lg">
+                    <span className="text-sm">
                       {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
                     </span>
                   ) : (
-                    <span className="text-sm font-bold text-orange-600">
+                    <span className="text-xs font-bold text-orange-600">
                       #{index + 1}
                     </span>
                   )}
@@ -485,46 +485,46 @@ export function TopQProfessionals() {
                 {/* Professional Details */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
-                    <h3 className="font-semibold text-gray-800 truncate">
+                    <h3 className="font-medium text-gray-800 truncate text-sm">
                       {professional.fullName || professional.email || 'Maritime Professional'}
                     </h3>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="font-bold text-orange-700 text-xs">
+                    <div className="flex items-center gap-1">
+                      <Badge variant="outline" className="font-bold text-orange-700 text-xs py-0 px-1">
                         {professional.questionCount}Q
                       </Badge>
-                      <Badge variant="outline" className="font-bold text-red-700 text-xs">
+                      <Badge variant="outline" className="font-bold text-red-700 text-xs py-0 px-1">
                         {professional.answerCount}A
                       </Badge>
                     </div>
                   </div>
                   
                   <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <Badge variant="secondary" className="text-xs">
+                    <div className="flex-1 min-w-0">
+                      <Badge variant="secondary" className="text-xs mb-1 py-0">
                         {professional.maritimeRank?.replace(/_/g, ' ') || 'Professional'}
                       </Badge>
                       
                       {/* Company and Ship Info */}
-                      <div className="flex items-center gap-2 text-xs text-gray-600">
+                      <div className="flex items-center gap-1 text-xs text-gray-600">
                         {professional.company && (
-                          <span className="bg-blue-100 px-2 py-1 rounded truncate max-w-24">
+                          <span className="bg-blue-100 px-1 py-0.5 rounded truncate max-w-20 text-xs">
                             {professional.company}
                           </span>
                         )}
                         {professional.lastShip && (
-                          <span className="bg-gray-100 px-2 py-1 rounded truncate max-w-24">
+                          <span className="bg-gray-100 px-1 py-0.5 rounded truncate max-w-20 text-xs">
                             {professional.lastShip}
                           </span>
                         )}
                       </div>
                     </div>
                     
-                    {/* Start Chat Button */}
+                    {/* Compact Chat Button */}
                     {user && user.id !== professional.id && (
                       <Button
                         size="sm"
                         variant="outline"
-                        className="border-orange-300 text-orange-600 hover:bg-orange-50 ml-2"
+                        className="border-orange-300 text-orange-600 hover:bg-orange-50 ml-2 h-6 w-6 p-0"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleStartConversation(professional);
