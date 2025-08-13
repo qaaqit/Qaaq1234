@@ -1031,18 +1031,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get Top Q Professionals - Static daily ranking to prevent continuous refreshing
+  // Get Top Q Professionals - New API endpoint for Top Professionals feature
   app.get("/api/users/top-professionals", async (req, res) => {
     try {
-      console.log('🏆 API route /api/users/top-professionals called - Static daily ranking');
+      console.log('🏆 API route /api/users/top-professionals called');
       
-      // Set cache headers for 24 hour caching
-      res.set({
-        'Cache-Control': 'public, max-age=86400', // 24 hours
-        'Last-Modified': new Date().toISOString(),
-      });
-      
-      // Get top professionals from database with actual question counts (static rank up to previous day)
+      // Get top professionals from database with actual question counts
       const result = await pool.query(`
         SELECT 
           id,
@@ -1062,8 +1056,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         LIMIT 9
       `);
       
-      // Format professionals data with consistent structure
-      const professionals = result.rows.map((user, index) => ({
+      const professionals = result.rows.map(user => ({
         id: user.id,
         userId: user.id.toString(),
         fullName: user.full_name || user.email || 'Maritime Professional',
@@ -1077,7 +1070,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         port: user.port || user.city || '',
         shipName: user.current_ship_name || '',
         imoNumber: user.current_ship_imo || '',
-        rankPosition: index + 1, // Add static rank position
         isTopProfessional: true
       }));
       
