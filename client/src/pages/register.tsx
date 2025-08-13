@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { authApi, setStoredToken, setStoredUser, type User } from "@/lib/auth";
 import { GoogleAuthButton } from "@/components/GoogleAuthButton";
-import { Eye, EyeOff, Mail, Shield, Clock, User as UserIcon, Briefcase, Anchor, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, Mail, Shield, Clock, User as UserIcon, Briefcase, Anchor, ArrowLeft, Phone } from "lucide-react";
 import qaaqLogoPath from "@assets/ICON_1754950288816.png";
 
 interface RegisterProps {
@@ -27,6 +27,7 @@ export default function Register({ onSuccess }: RegisterProps) {
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
+    countryCode: "+91", // Default to India
     whatsapp: "",
     email: "",
     maritimeRank: "",
@@ -70,6 +71,48 @@ export default function Register({ onSuccess }: RegisterProps) {
     { id: 3, label: "STOP", angle: 90, color: "#6b7280" },
     { id: 4, label: "SLOW AHEAD", angle: 120, color: "#10b981" },
     { id: 5, label: "FULL AHEAD", angle: 150, color: "#059669" }
+  ];
+
+  // Common country codes for maritime professionals
+  const countryCodes = [
+    { code: "+91", country: "India", flag: "🇮🇳" },
+    { code: "+63", country: "Philippines", flag: "🇵🇭" },
+    { code: "+380", country: "Ukraine", flag: "🇺🇦" },
+    { code: "+7", country: "Russia", flag: "🇷🇺" },
+    { code: "+86", country: "China", flag: "🇨🇳" },
+    { code: "+30", country: "Greece", flag: "🇬🇷" },
+    { code: "+90", country: "Turkey", flag: "🇹🇷" },
+    { code: "+49", country: "Germany", flag: "🇩🇪" },
+    { code: "+47", country: "Norway", flag: "🇳🇴" },
+    { code: "+45", country: "Denmark", flag: "🇩🇰" },
+    { code: "+31", country: "Netherlands", flag: "🇳🇱" },
+    { code: "+44", country: "UK", flag: "🇬🇧" },
+    { code: "+1", country: "USA/Canada", flag: "🇺🇸" },
+    { code: "+33", country: "France", flag: "🇫🇷" },
+    { code: "+39", country: "Italy", flag: "🇮🇹" },
+    { code: "+34", country: "Spain", flag: "🇪🇸" },
+    { code: "+351", country: "Portugal", flag: "🇵🇹" },
+    { code: "+81", country: "Japan", flag: "🇯🇵" },
+    { code: "+82", country: "South Korea", flag: "🇰🇷" },
+    { code: "+65", country: "Singapore", flag: "🇸🇬" },
+    { code: "+60", country: "Malaysia", flag: "🇲🇾" },
+    { code: "+66", country: "Thailand", flag: "🇹🇭" },
+    { code: "+84", country: "Vietnam", flag: "🇻🇳" },
+    { code: "+62", country: "Indonesia", flag: "🇮🇩" },
+    { code: "+971", country: "UAE", flag: "🇦🇪" },
+    { code: "+974", country: "Qatar", flag: "🇶🇦" },
+    { code: "+965", country: "Kuwait", flag: "🇰🇼" },
+    { code: "+966", country: "Saudi Arabia", flag: "🇸🇦" },
+    { code: "+20", country: "Egypt", flag: "🇪🇬" },
+    { code: "+27", country: "South Africa", flag: "🇿🇦" },
+    { code: "+55", country: "Brazil", flag: "🇧🇷" },
+    { code: "+52", country: "Mexico", flag: "🇲🇽" },
+    { code: "+54", country: "Argentina", flag: "🇦🇷" },
+    { code: "+56", country: "Chile", flag: "🇨🇱" },
+    { code: "+57", country: "Colombia", flag: "🇨🇴" },
+    { code: "+51", country: "Peru", flag: "🇵🇪" },
+    { code: "+61", country: "Australia", flag: "🇦🇺" },
+    { code: "+64", country: "New Zealand", flag: "🇳🇿" },
   ];
 
   // Telegraph position based on form completion
@@ -133,7 +176,7 @@ export default function Register({ onSuccess }: RegisterProps) {
           firstName: formData.firstName,
           lastName: formData.lastName,
           email: formData.email,
-          whatsapp: formData.whatsapp,
+          whatsapp: formData.countryCode + formData.whatsapp,
           maritimeRank: formData.maritimeRank,
           company: formData.company === 'Other' ? formData.otherCompany : formData.company,
           password: formData.password
@@ -374,20 +417,52 @@ export default function Register({ onSuccess }: RegisterProps) {
             </div>
           </div>
 
-          {/* WhatsApp Number */}
+          {/* WhatsApp Number with Country Code */}
           <div>
             <Label htmlFor="whatsapp" className="text-xs font-medium text-gray-700 mb-1 block">
+              <Phone className="inline w-3 h-3 mr-1" />
               WhatsApp Number
             </Label>
-            <Input
-              id="whatsapp"
-              type="tel"
-              value={formData.whatsapp}
-              onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
-              placeholder="+919820012345"
-              className="w-full h-8 text-sm"
-              disabled={loading || otpLoading}
-            />
+            <div className="flex gap-2">
+              {/* Country Code Dropdown */}
+              <div className="w-32">
+                <Select
+                  value={formData.countryCode}
+                  onValueChange={(value) => setFormData({ ...formData, countryCode: value })}
+                  disabled={loading || otpLoading}
+                >
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-48">
+                    {countryCodes.map((country) => (
+                      <SelectItem key={country.code} value={country.code}>
+                        <span className="text-xs">
+                          {country.flag} {country.code} {country.country}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {/* Phone Number Input */}
+              <div className="flex-1">
+                <Input
+                  id="whatsapp"
+                  type="tel"
+                  value={formData.whatsapp}
+                  onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value.replace(/[^0-9]/g, '') })}
+                  placeholder="9820012345"
+                  className="h-8 text-sm"
+                  disabled={loading || otpLoading}
+                  maxLength={15}
+                />
+              </div>
+            </div>
+            <div className="text-xs text-gray-500 mt-1">
+              Complete number: {formData.countryCode}{formData.whatsapp}
+            </div>
           </div>
 
           {/* Email */}
