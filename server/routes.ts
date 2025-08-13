@@ -274,13 +274,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Create new connection
           const connection = await storage.createChatConnection(senderId, receiverId);
           
-          // Send initial connection message
-          const initialMessage = await storage.createMessage({
-            connectionId: connection.id,
-            senderId: senderId,
-            content: "Hi! I'd like to connect with you through the maritime network.",
-            messageType: 'text'
-          });
+          // Send initial connection message (if createMessage is available)
+          let initialMessage = null;
+          try {
+            if (storage.createMessage) {
+              initialMessage = await storage.createMessage({
+                connectionId: connection.id,
+                senderId: senderId,
+                content: "Hi! I'd like to connect with you through the maritime network.",
+                messageType: 'text'
+              });
+            }
+          } catch (error) {
+            console.log('Could not create initial message:', error.message);
+          }
 
           console.log('✅ New chat connection created:', connection.id);
           
