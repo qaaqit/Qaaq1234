@@ -57,13 +57,16 @@ function updateUserSession(
 async function upsertUser(
   claims: any,
 ) {
-  await storage.upsertUser({
+  console.log('🔍 Upserting Replit user with claims:', claims);
+  const result = await storage.upsertUser({
     id: claims["sub"],
     email: claims["email"],
     firstName: claims["first_name"],
     lastName: claims["last_name"],
     profileImageUrl: claims["profile_image_url"],
   });
+  console.log('✅ Replit user upserted:', result.fullName);
+  return result;
 }
 
 export async function setupAuth(app: Express) {
@@ -110,8 +113,8 @@ export async function setupAuth(app: Express) {
 
   app.get("/api/callback", (req, res, next) => {
     passport.authenticate(`replitauth:${req.hostname}`, {
-      successReturnToOrRedirect: "/",
-      failureRedirect: "/api/login",
+      successRedirect: "/qbot",
+      failureRedirect: "/login?error=auth_failed",
     })(req, res, next);
   });
 
