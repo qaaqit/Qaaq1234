@@ -187,9 +187,19 @@ export function TopQProfessionals() {
                   </Badge>
                 </div>
 
-                {/* Company, Ship & Location Info */}
+                {/* Professional Details */}
                 <div className="pt-2 border-t border-gray-200 space-y-2">
-                  {/* Company */}
+                  {/* Maritime Rank */}
+                  {professional.maritimeRank && professional.maritimeRank !== 'Professional' && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <div className="h-4 w-4 rounded-full bg-orange-100 flex items-center justify-center">
+                        <span className="text-xs text-orange-600 font-bold">R</span>
+                      </div>
+                      <span className="font-medium capitalize">{professional.maritimeRank.replace(/_/g, ' ')}</span>
+                    </div>
+                  )}
+                  
+                  {/* Last Company */}
                   {professional.company && (
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <div className="h-4 w-4 rounded-full bg-blue-100 flex items-center justify-center">
@@ -199,10 +209,18 @@ export function TopQProfessionals() {
                     </div>
                   )}
                   
-                  {/* Ship */}
-                  {professional.shipName && (
+                  {/* Last Ship */}
+                  {(professional as any).lastShip && (
                     <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Ship className="h-4 w-4" />
+                      <Ship className="h-4 w-4 text-blue-600" />
+                      <span className="font-medium">{(professional as any).lastShip}</span>
+                    </div>
+                  )}
+                  
+                  {/* Current Ship (fallback) */}
+                  {!(professional as any).lastShip && professional.shipName && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Ship className="h-4 w-4 text-gray-500" />
                       <span>{professional.shipName}</span>
                     </div>
                   )}
