@@ -59,17 +59,26 @@ export class AIService {
         systemPrompt += `\n\nActive bot documentation guidelines:\n${activeRules.substring(0, 800)}`;
       }
 
+      console.log('🤖 OpenAI: Making API request...');
+      
       const response = await this.openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-4o-mini",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: message }
         ],
-        max_tokens: 80,
+        max_tokens: 150,
         temperature: 0.7,
       });
 
-      const content = response.choices[0]?.message?.content || 'Unable to generate response at this time.';
+      let content = response.choices[0]?.message?.content;
+      
+      if (!content) {
+        console.warn('⚠️ OpenAI: No content in response, using fallback');
+        content = 'Unable to generate response at this time.';
+      }
+      
+      console.log('🤖 OpenAI: Response generated successfully:', content.substring(0, 100) + '...');
       const responseTime = Date.now() - startTime;
 
       return {
@@ -123,33 +132,50 @@ export class AIService {
       }
 
       // Direct API call to Gemini
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
+      const requestBody = {
+        contents: [{
+          parts: [{
+            text: `${systemPrompt}\n\nUser message: ${message}`
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          topK: 1,
+          topP: 1,
+          maxOutputTokens: 150,
+          stopSequences: []
+        },
+        safetySettings: [{
+          category: "HARM_CATEGORY_HARASSMENT",
+          threshold: "BLOCK_MEDIUM_AND_ABOVE"
+        }]
+      };
+
+      console.log('🤖 Gemini: Making API request...');
+      
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: `${systemPrompt}\n\nUser message: ${message}`
-            }]
-          }],
-          generationConfig: {
-            temperature: 0.7,
-            topK: 1,
-            topP: 1,
-            maxOutputTokens: 80,
-            stopSequences: []
-          }
-        })
+        body: JSON.stringify(requestBody)
       });
 
       if (!response.ok) {
-        throw new Error(`Gemini API error: ${response.status}`);
+        const errorText = await response.text();
+        console.error('❌ Gemini API error:', response.status, errorText);
+        throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
-      const content = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Unable to generate response at this time.';
+      console.log('🤖 Gemini: Response received:', JSON.stringify(data, null, 2));
+      
+      let content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      
+      if (!content) {
+        console.warn('⚠️ Gemini: No content in response, using fallback');
+        content = 'Unable to generate response at this time.';
+      }
       const responseTime = Date.now() - startTime;
 
       return {
