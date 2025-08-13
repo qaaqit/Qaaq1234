@@ -149,7 +149,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
 
 
   // Fetch all users with comprehensive search functionality
-  const { data: usersResponse, isLoading } = useQuery<{success: boolean, sailors: MapUser[]}>({
+  const { data: allUsers = [], isLoading } = useQuery<MapUser[]>({
     queryKey: ['/api/users/search', searchQuery],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -162,13 +162,10 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       
       const response = await fetch(`/api/users/search?${params}`);
       if (!response.ok) throw new Error('Failed to fetch users');
-      const data = await response.json();
-      return data;
+      return response.json();
     },
     staleTime: searchQuery.trim() ? 30000 : 60000, // Shorter cache for search results
   });
-
-  const allUsers = usersResponse?.sailors || [];
 
   // Simple search handler
   const handleSearchInput = (value: string) => {
