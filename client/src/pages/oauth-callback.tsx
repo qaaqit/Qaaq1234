@@ -1,94 +1,52 @@
-import { useEffect, useState } from "react";
-import { useLocation } from "wouter";
-import { useToast } from "@/hooks/use-toast";
-
-interface User {
-  id: string;
-  fullName: string;
-  email: string;
-  userType: string;
-  isAdmin: boolean;
-}
+import { useEffect } from 'react';
+import { useLocation } from 'wouter';
 
 export default function OAuthCallback() {
-  const [, navigate] = useLocation();
-  const { toast } = useToast();
-  const [processing, setProcessing] = useState(true);
+  const [, setLocation] = useLocation();
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
-    const userParam = urlParams.get('user');
+    const userString = urlParams.get('user');
     const error = urlParams.get('error');
 
     if (error) {
-      toast({
-        title: "Authentication Failed",
-        description: `Login error: ${error}`,
-        variant: "destructive",
-      });
-      navigate('/');
+      console.error('OAuth error:', error);
+      setLocation('/login?error=' + error);
       return;
     }
 
-    if (token && userParam) {
+    if (token && userString) {
       try {
-        const user: User = JSON.parse(decodeURIComponent(userParam));
+        // Store the authentication token
+        localStorage.setItem('auth_token', token);
         
-        // Store authentication data
-        localStorage.setItem('authToken', token);
+        // Parse and store user data
+        const user = JSON.parse(decodeURIComponent(userString));
         localStorage.setItem('user', JSON.stringify(user));
         
-        toast({
-          title: "Login Successful",
-          description: `Welcome back, ${user.fullName}!`,
-          variant: "default",
-        });
+        console.log('🔐 Google OAuth successful, redirecting to QBOT Chat');
         
-        // Redirect to QBOT Chat (home page as per user preference)
-        navigate('/qbot');
+        // Redirect to QBOT Chat as per user preference
+        setLocation('/qbot');
         
-      } catch (parseError) {
-        console.error('Error parsing user data:', parseError);
-        toast({
-          title: "Authentication Error",
-          description: "Invalid user data received",
-          variant: "destructive",
-        });
-        navigate('/');
+      } catch (error) {
+        console.error('Error processing OAuth callback:', error);
+        setLocation('/login?error=callback_processing_failed');
       }
     } else {
-      toast({
-        title: "Authentication Error",
-        description: "Missing authentication data",
-        variant: "destructive",
-      });
-      navigate('/');
+      console.error('Missing token or user data in OAuth callback');
+      setLocation('/login?error=missing_callback_data');
     }
-    
-    setProcessing(false);
-  }, [navigate, toast]);
+  }, [setLocation]);
 
-  if (processing) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <i className="fas fa-anchor text-2xl text-white"></i>
-          </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            Completing Login...
-          </h2>
-          <p className="text-gray-600">
-            Please wait while we finish setting up your account
-          </p>
-          <div className="mt-4">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
-          </div>
-        </div>
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-orange-50 to-white">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+        <h2 className="text-xl font-semibold text-gray-800 mb-2">Completing Google Sign-In</h2>
+        <p className="text-gray-600">Please wait while we redirect you to QBOT Chat...</p>
       </div>
-    );
-  }
-
-  return null;
+    </div>
+  );
 }
