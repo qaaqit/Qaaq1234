@@ -74,21 +74,15 @@ export function TopQProfessionals() {
   // Create conversation mutation
   const createConversationMutation = useMutation({
     mutationFn: async (targetUserId: string) => {
-      const response = await fetch('/api/chat/connect', {
+      return apiRequest('/api/chat/connect', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ 
           receiverId: targetUserId
         }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      return response.json();
     },
     onSuccess: (data, targetUserId) => {
       // Redirect to DM page with the target user
