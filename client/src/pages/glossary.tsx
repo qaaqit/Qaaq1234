@@ -61,6 +61,11 @@ export function GlossaryPage() {
       }
 
       const response = await fetch(`/api/glossary/what-is?page=${page}&limit=${page === 1 ? 60 : 30}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
       const data = await response.json();
       
       if (data.success) {
@@ -78,6 +83,9 @@ export function GlossaryPage() {
         }
         
         setPagination(data.pagination);
+      } else {
+        console.error('API returned error:', data.message, data.error);
+        throw new Error(data.message || 'Failed to fetch glossary entries');
       }
     } catch (error) {
       console.error('Error fetching glossary:', error);

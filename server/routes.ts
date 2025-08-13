@@ -2412,9 +2412,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
     } catch (error) {
       console.error('Glossary fetch error:', error);
-      res.status(500).json({ 
+      res.status(200).json({ 
         success: false,
         message: 'Failed to fetch glossary entries',
+        error: error instanceof Error ? error.message : String(error),
         entries: [],
         pagination: {
           page: 1,
