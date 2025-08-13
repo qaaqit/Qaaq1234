@@ -117,7 +117,9 @@ export function GlossaryPage() {
   };
 
   const filteredEntries = glossaryEntries.filter(entry => {
-    const matchesSearch = entry.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    // Show all entries if no search term is provided
+    const matchesSearch = !searchTerm || 
+                         entry.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          entry.answer.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || entry.category === selectedCategory;
     return matchesSearch && matchesCategory;
@@ -176,7 +178,7 @@ export function GlossaryPage() {
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="flex-1">
             <Input
-              placeholder="Search maritime terms and definitions..."
+              placeholder="Search maritime terms... (or browse all alphabetically below)"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="border-orange-300 focus:border-orange-500"
@@ -237,8 +239,8 @@ export function GlossaryPage() {
 
                 {/* Terms List - Compact and Vertical */}
                 <div className="space-y-1 ml-11">
-                  {groupedEntries[letter].map((entry) => (
-                    <Dialog key={`dialog-${entry.id}`}>
+                  {groupedEntries[letter].map((entry, index) => (
+                    <Dialog key={`dialog-${letter}-${entry.id}-${index}`}>
                       <DialogTrigger asChild>
                         <div className="flex items-start justify-between py-2 border-b border-gray-50 hover:bg-orange-25 hover:border-orange-100 transition-colors cursor-pointer group">
                           <div className="flex-1 min-w-0">

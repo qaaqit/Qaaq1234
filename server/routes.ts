@@ -2281,7 +2281,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('📚 Fetching "what is" questions for glossary');
       
-      // Query database for questions that start with "what is" and are not archived
+      // Query database for questions that start with "what is" 
       const result = await pool.query(`
         SELECT 
           q.id,
@@ -2293,7 +2293,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         WHERE LOWER(q.content) LIKE '%what is%'
           AND a.content IS NOT NULL
           AND LENGTH(a.content) > 10
-          AND (q.archived IS NULL OR q.archived = false)
+          AND q.content NOT LIKE '%[ARCHIVED]%'
         ORDER BY q.content ASC
         LIMIT 500
       `);
@@ -2342,17 +2342,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // First ensure the archived column exists
-      await pool.query(`
-        ALTER TABLE questions 
-        ADD COLUMN IF NOT EXISTS archived BOOLEAN DEFAULT FALSE
-      `);
-      
-      // Archive the entry
+      // Archive the entry by adding archived flag - use upsert approach
       const result = await pool.query(`
         UPDATE questions 
-        SET archived = TRUE, updated_at = NOW()
-        WHERE id = $1
+        SET content = content || ' [ARCHIVED]'
+        WHERE id = $1 AND content NOT LIKE '%[ARCHIVED]%'
         RETURNING id, content
       `, [entryId]);
       
