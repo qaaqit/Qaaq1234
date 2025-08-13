@@ -135,7 +135,7 @@ export default function Register({ onSuccess }: RegisterProps) {
           email: formData.email,
           whatsapp: formData.whatsapp,
           maritimeRank: formData.maritimeRank,
-          company: formData.company === 'Other' ? formData.customCompany : formData.company,
+          company: formData.company === 'Other' ? formData.otherCompany : formData.company,
           password: formData.password
         }),
       });
@@ -171,8 +171,9 @@ export default function Register({ onSuccess }: RegisterProps) {
     e.preventDefault();
 
     // Validation
+    const finalCompany = formData.company === 'Other' ? formData.otherCompany : formData.company;
     if (!formData.firstName || !formData.lastName || !formData.email || 
-        !formData.maritimeRank || !formData.company || !formData.password) {
+        !formData.maritimeRank || !finalCompany || !formData.password) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields",
