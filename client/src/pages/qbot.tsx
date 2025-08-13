@@ -15,7 +15,8 @@ import type { Message } from "@/components/qbot-chat/QBOTMessageList";
 import ImageCarousel from "@/components/image-carousel";
 import { QuestionsTab } from "@/components/questions-tab";
 import { useToast } from "@/hooks/use-toast";
-import qaaqLogo from "@assets/qaaq-logo.png";
+// Using public asset path for better reliability
+const qaaqLogo = "/qaaq-logo.png";
 
 interface QBOTPageProps {
   user: User;
