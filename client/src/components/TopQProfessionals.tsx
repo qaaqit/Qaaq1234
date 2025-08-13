@@ -268,15 +268,7 @@ export function TopQProfessionals() {
         ))}
       </div>
 
-      {/* Footer Note */}
-      <Card className="bg-gradient-to-r from-orange-50 to-red-50 border-orange-200">
-        <CardContent className="p-4 text-center">
-          <p className="text-sm text-gray-600">
-            Rankings are based on authentic question contributions from maritime professionals. 
-            Data updated from the comprehensive QAAQ maritime database.
-          </p>
-        </CardContent>
-      </Card>
+      
 
       {/* Chat Window */}
       {isChatOpen && selectedUser && user && (
