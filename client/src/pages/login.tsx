@@ -49,12 +49,7 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
     }
   }, [toast]);
 
-  // Load glossary entries when minimized
-  useEffect(() => {
-    if (isMinimized && glossaryEntries.length === 0) {
-      fetchGlossaryEntries();
-    }
-  }, [isMinimized]);
+
 
   const fetchGlossaryEntries = async () => {
     setGlossaryLoading(true);
@@ -186,147 +181,160 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
     }
   };
 
-  return (
-    <>
-      {/* Minimized state - show glossary with floating login button */}
-      {isMinimized && (
-        <>
-          {/* Floating login button */}
-          <div className="fixed top-4 right-4 z-50">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsMinimized(false)}
-              className="bg-white shadow-lg border-orange-200 hover:bg-orange-50 flex items-center gap-2"
-              data-testid="expand-login-roadblock"
-            >
-              <Crown className="h-4 w-4 text-orange-600" />
-              <ChevronDown className="h-4 w-4" />
-              Login Required
-            </Button>
-          </div>
+  // Load glossary entries on component mount
+  useEffect(() => {
+    if (glossaryEntries.length === 0) {
+      fetchGlossaryEntries();
+    }
+  }, []);
 
-          {/* Glossary Content */}
-          <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-yellow-50">
-            {/* Header */}
-            <header className="bg-white text-black shadow-md relative overflow-hidden border-b-2 border-orange-400">
-              <div className="absolute inset-0 bg-gradient-to-r from-red-50 via-orange-50 to-yellow-50 opacity-50"></div>
-              
-              <div className="relative z-10 px-4 py-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden">
-                      <img src={qaaqLogo} alt="QAAQ Logo" className="w-full h-full object-cover" />
-                    </div>
-                    <div>
-                      <h1 className="text-xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">
-                        Maritime Dictionary
-                      </h1>
-                      <p className="text-sm text-gray-600">Browse definitions • Login for full features</p>
-                    </div>
-                  </div>
-                </div>
+  const GlossaryContent = ({ isMinimized }: { isMinimized: boolean }) => (
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-yellow-50">
+      {/* Header */}
+      <header className="bg-white text-black shadow-md relative overflow-hidden border-b-2 border-orange-400">
+        <div className="absolute inset-0 bg-gradient-to-r from-red-50 via-orange-50 to-yellow-50 opacity-50"></div>
+        
+        <div className="relative z-10 px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden">
+                <img src={qaaqLogo} alt="QAAQ Logo" className="w-full h-full object-cover" />
               </div>
-            </header>
-
-            {/* Main Content */}
-            <div className="container mx-auto px-4 py-6">
-              {/* Search */}
-              <div className="mb-6">
-                <div className="relative">
-                  <Input
-                    placeholder="Search maritime terms..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="border-orange-300 focus:border-orange-500 pl-10"
-                  />
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                </div>
+              <div>
+                <h1 className="text-xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">
+                  Maritime Dictionary
+                </h1>
+                <p className="text-sm text-gray-600">Browse definitions • {isMinimized ? 'Login for full features' : 'Click minimize to browse freely'}</p>
               </div>
-
-              {/* Glossary Entries */}
-              {glossaryLoading ? (
-                <div className="space-y-2">
-                  {Array.from({ length: 8 }).map((_, i) => (
-                    <div key={`skeleton-${i}`} className="flex items-center justify-between py-2 border-b border-gray-100">
-                      <Skeleton className="h-3 w-24" />
-                      <Skeleton className="h-3 w-48" />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {filteredEntries.slice(0, 20).map((entry, index) => {
-                    const previewText = entry.answer.split(' ').slice(0, 10).join(' ') + (entry.answer.split(' ').length > 10 ? '...' : '');
-                    return (
-                      <Dialog key={`entry-${entry.id}-${index}`}>
-                        <DialogTrigger asChild>
-                          <div className="py-3 px-4 bg-white rounded-lg shadow-sm border border-gray-200 hover:border-orange-300 cursor-pointer transition-colors">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="font-medium text-orange-700">
-                                {extractTerm(entry.question).toUpperCase()}
-                              </span>
-                              <span className="text-xs text-gray-500 flex items-center gap-1">
-                                📖 Definition
-                              </span>
-                            </div>
-                            <p className="text-sm text-gray-600 line-clamp-2">
-                              {previewText}
-                            </p>
-                          </div>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" aria-describedby="definition-content">
-                          <DialogHeader>
-                            <DialogTitle className="text-xl font-bold text-gray-900 mb-2">
-                              {extractTerm(entry.question).toUpperCase()}
-                            </DialogTitle>
-                          </DialogHeader>
-                          <div id="definition-content" className="space-y-4">
-                            <div className="text-sm text-gray-600 bg-orange-50 p-3 rounded-lg">
-                              <strong>Question:</strong> {entry.question}
-                            </div>
-                            <div className="prose prose-sm max-w-none text-gray-700">
-                              {entry.answer.split('\n').map((line: string, idx: number) => (
-                                <p key={`line-${entry.id}-${idx}`} className="mb-2 last:mb-0">
-                                  {line.startsWith('•') ? (
-                                    <span className="flex items-start gap-2">
-                                      <span className="text-orange-600 font-bold">•</span>
-                                      <span>{line.substring(1).trim()}</span>
-                                    </span>
-                                  ) : line}
-                                </p>
-                              ))}
-                            </div>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                    );
-                  })}
-                  
-                  {filteredEntries.length === 0 && !glossaryLoading && (
-                    <div className="text-center py-12">
-                      <h3 className="text-base font-semibold text-gray-900 mb-2">No Terms Found</h3>
-                      <p className="text-sm text-gray-600 mb-4">Try a different search term</p>
-                    </div>
-                  )}
-
-                  {filteredEntries.length > 20 && (
-                    <div className="text-center py-4">
-                      <p className="text-sm text-gray-500">
-                        Showing first 20 results. Use search to find specific terms.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           </div>
-        </>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <div className="container mx-auto px-4 py-6">
+        {/* Search */}
+        <div className="mb-6">
+          <div className="relative">
+            <Input
+              placeholder="Search maritime terms..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="border-orange-300 focus:border-orange-500 pl-10"
+              disabled={!isMinimized}
+            />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+          </div>
+        </div>
+
+        {/* Glossary Entries */}
+        {glossaryLoading ? (
+          <div className="space-y-2">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={`skeleton-${i}`} className="flex items-center justify-between py-2 border-b border-gray-100">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-3 w-48" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {filteredEntries.slice(0, 20).map((entry, index) => {
+              const previewText = entry.answer.split(' ').slice(0, 10).join(' ') + (entry.answer.split(' ').length > 10 ? '...' : '');
+              return (
+                <Dialog key={`entry-${entry.id}-${index}`}>
+                  <DialogTrigger asChild disabled={!isMinimized}>
+                    <div className={`py-3 px-4 bg-white rounded-lg shadow-sm border border-gray-200 transition-colors ${isMinimized ? 'hover:border-orange-300 cursor-pointer' : 'cursor-default'}`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium text-orange-700">
+                          {extractTerm(entry.question).toUpperCase()}
+                        </span>
+                        <span className="text-xs text-gray-500 flex items-center gap-1">
+                          📖 Definition
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600 line-clamp-2">
+                        {previewText}
+                      </p>
+                    </div>
+                  </DialogTrigger>
+                  {isMinimized && (
+                    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" aria-describedby="definition-content">
+                      <DialogHeader>
+                        <DialogTitle className="text-xl font-bold text-gray-900 mb-2">
+                          {extractTerm(entry.question).toUpperCase()}
+                        </DialogTitle>
+                      </DialogHeader>
+                      <div id="definition-content" className="space-y-4">
+                        <div className="text-sm text-gray-600 bg-orange-50 p-3 rounded-lg">
+                          <strong>Question:</strong> {entry.question}
+                        </div>
+                        <div className="prose prose-sm max-w-none text-gray-700">
+                          {entry.answer.split('\n').map((line: string, idx: number) => (
+                            <p key={`line-${entry.id}-${idx}`} className="mb-2 last:mb-0">
+                              {line.startsWith('•') ? (
+                                <span className="flex items-start gap-2">
+                                  <span className="text-orange-600 font-bold">•</span>
+                                  <span>{line.substring(1).trim()}</span>
+                                </span>
+                              ) : line}
+                            </p>
+                          ))}
+                        </div>
+                      </div>
+                    </DialogContent>
+                  )}
+                </Dialog>
+              );
+            })}
+            
+            {filteredEntries.length === 0 && !glossaryLoading && (
+              <div className="text-center py-12">
+                <h3 className="text-base font-semibold text-gray-900 mb-2">No Terms Found</h3>
+                <p className="text-sm text-gray-600 mb-4">Try a different search term</p>
+              </div>
+            )}
+
+            {filteredEntries.length > 20 && (
+              <div className="text-center py-4">
+                <p className="text-sm text-gray-500">
+                  Showing first 20 results. Use search to find specific terms.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Background Glossary Content - always visible */}
+      <div className={isMinimized ? '' : 'pointer-events-none'}>
+        <GlossaryContent isMinimized={isMinimized} />
+      </div>
+
+      {/* Minimized state - floating login button */}
+      {isMinimized && (
+        <div className="fixed top-4 right-4 z-50">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsMinimized(false)}
+            className="bg-white shadow-lg border-orange-200 hover:bg-orange-50 flex items-center gap-2"
+            data-testid="expand-login-roadblock"
+          >
+            <Crown className="h-4 w-4 text-orange-600" />
+            <ChevronDown className="h-4 w-4" />
+            Login Required
+          </Button>
+        </div>
       )}
 
-      {/* Full login form - only show when not minimized */}
+      {/* Full login form overlay - only show when not minimized */}
       {!isMinimized && (
-        <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-100 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-gradient-to-br from-orange-50/95 to-red-100/95 backdrop-blur-sm flex items-center justify-center p-4 z-40">
 
           <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 border border-gray-200 relative">
           {/* Minimize Button */}
