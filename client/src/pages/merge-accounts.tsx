@@ -85,7 +85,7 @@ export default function MergeAccountsPage() {
 
       if (response.success) {
         // Store token and user data
-        localStorage.setItem('qaaq_token', response.token);
+        localStorage.setItem('auth_token', response.token);
         localStorage.setItem('qaaq_user', JSON.stringify(response.user));
         
         // Redirect to home
@@ -116,7 +116,7 @@ export default function MergeAccountsPage() {
       });
 
       if (response.success) {
-        localStorage.setItem('qaaq_token', response.token);
+        localStorage.setItem('auth_token', response.token);
         localStorage.setItem('qaaq_user', JSON.stringify(response.user));
         window.location.href = '/';
       } else {

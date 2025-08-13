@@ -61,8 +61,8 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
       const data = await response.json();
 
       if (response.ok) {
-        // Store token and user data
-        localStorage.setItem('qaaq_token', data.token);
+        // Store token and user data (using consistent auth_token key)
+        localStorage.setItem('auth_token', data.token);
         localStorage.setItem('qaaq_user', JSON.stringify(data.user));
         
         onSuccess(data.user);

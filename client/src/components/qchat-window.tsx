@@ -91,7 +91,7 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
     queryKey: ['/api/chat/messages', connection?.id],
     queryFn: async () => {
       if (!connection?.id) return [];
-      const token = localStorage.getItem('qaaq_token');
+      const token = localStorage.getItem('auth_token');
       const response = await fetch(`/api/chat/messages/${connection.id}`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -113,7 +113,7 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
       websocketService.sendMessage(connection.id, messageText);
       
       // Also send via HTTP for reliability
-      const token = localStorage.getItem('qaaq_token');
+      const token = localStorage.getItem('auth_token');
       const response = await fetch('/api/chat/message', {
         method: 'POST',
         headers: { 
@@ -134,7 +134,7 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
   // Accept connection mutation
   const acceptMutation = useMutation({
     mutationFn: async () => {
-      const token = localStorage.getItem('qaaq_token');
+      const token = localStorage.getItem('auth_token');
       const response = await fetch(`/api/chat/accept/${connection?.id}`, {
         method: 'POST',
         headers: { 

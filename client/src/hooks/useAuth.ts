@@ -15,7 +15,7 @@ export function useAuth() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('qaaq_token');
+    const token = localStorage.getItem('auth_token');
     if (token) {
       // Decode token to get user info (simplified version)
       try {
@@ -30,7 +30,7 @@ export function useAuth() {
         }
       } catch (error) {
         console.error('Failed to decode token:', error);
-        localStorage.removeItem('qaaq_token');
+        localStorage.removeItem('auth_token');
         localStorage.removeItem('qaaq_user');
       }
     }

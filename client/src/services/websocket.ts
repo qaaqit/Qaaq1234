@@ -9,7 +9,7 @@ export class WebSocketService {
   private connectionHandlers: Set<(connected: boolean) => void> = new Set();
 
   constructor() {
-    this.token = localStorage.getItem('qaaq_token');
+    this.token = localStorage.getItem('auth_token');
   }
 
   connect() {

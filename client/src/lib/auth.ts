@@ -46,15 +46,15 @@ export const authApi = {
 };
 
 export const getStoredToken = (): string | null => {
-  return localStorage.getItem('qaaq_token');
+  return localStorage.getItem('auth_token');
 };
 
 export const setStoredToken = (token: string): void => {
-  localStorage.setItem('qaaq_token', token);
+  localStorage.setItem('auth_token', token);
 };
 
 export const removeStoredToken = (): void => {
-  localStorage.removeItem('qaaq_token');
+  localStorage.removeItem('auth_token');
 };
 
 export const getStoredUser = (): User | null => {

@@ -102,7 +102,7 @@ export default function Discover({ user }: DiscoverProps) {
 
   const handleLike = async (postId: string) => {
     try {
-      const token = localStorage.getItem('qaaq_token');
+      const token = localStorage.getItem('auth_token');
       await apiRequest('POST', `/api/posts/${postId}/like`, null);
       refetch(); // Refresh the posts to update like counts
       toast({

@@ -101,7 +101,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('qaaq_token')}`
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         },
         body: JSON.stringify({ message: messageText, attachments: attachments || [], isPrivate: isPrivate || false })
       });
@@ -165,7 +165,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('qaaq_token')}`
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         },
         body: JSON.stringify({ messages: qBotMessages })
       });

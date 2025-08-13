@@ -1,6 +1,6 @@
 // Token management utility to handle JWT authentication issues
 export const clearStoredTokens = () => {
-  localStorage.removeItem('qaaq_token');
+  localStorage.removeItem('auth_token');
   localStorage.removeItem('token'); // Clear any old token keys
   localStorage.removeItem('qaaq_user');
   localStorage.removeItem('user');

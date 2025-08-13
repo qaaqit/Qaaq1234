@@ -8,7 +8,7 @@ export const AuthFix = () => {
     
     console.log('🔧 AuthFix: Setting fresh authentication tokens');
     localStorage.clear(); // Clear all old data
-    localStorage.setItem('qaaq_token', freshToken);
+    localStorage.setItem('auth_token', freshToken);
     localStorage.setItem('qaaq_user', userData);
     
     // Force immediate page reload to apply new tokens

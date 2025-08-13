@@ -33,7 +33,7 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
       try {
         const response = await fetch('/api/questions/attachments?limit=18', {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('qaaq_token')}`,
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
             'Content-Type': 'application/json'
           }
         });

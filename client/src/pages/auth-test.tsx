@@ -27,7 +27,7 @@ export default function AuthTestPage() {
       
       if (data.success) {
         // Store the token for testing
-        localStorage.setItem('qaaq_token_test', data.token);
+        localStorage.setItem('auth_token_test', data.token);
         localStorage.setItem('qaaq_user_test', JSON.stringify(data.user));
       }
     } catch (error) {
@@ -38,7 +38,7 @@ export default function AuthTestPage() {
   };
 
   const testConnections = async () => {
-    const token = localStorage.getItem('qaaq_token_test');
+    const token = localStorage.getItem('auth_token_test');
     if (!token) {
       alert('Please login first to get a token');
       return;
