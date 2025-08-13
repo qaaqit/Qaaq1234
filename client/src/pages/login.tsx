@@ -452,9 +452,31 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
             ) : (
               <>
                 <Anchor className="w-4 h-4 mr-2" />
-                Sign In
+                Sign In with QAAQ
               </>
             )}
+          </Button>
+
+          {/* Divider */}
+          <div className="flex items-center my-6">
+            <div className="flex-1 border-t border-gray-200"></div>
+            <span className="px-4 text-sm text-gray-500 bg-white">or</span>
+            <div className="flex-1 border-t border-gray-200"></div>
+          </div>
+
+          {/* Replit Auth Button */}
+          <Button 
+            type="button"
+            onClick={() => window.location.href = '/api/login'}
+            className="w-full h-12 bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 font-semibold"
+            disabled={loading}
+          >
+            <div className="flex items-center justify-center">
+              <div className="w-5 h-5 mr-3 bg-gray-600 rounded flex items-center justify-center">
+                <span className="text-white text-xs font-bold">R</span>
+              </div>
+              Continue with Replit
+            </div>
           </Button>
 
           {/* Forgot Password and Signup Links */}

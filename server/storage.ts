@@ -21,6 +21,7 @@ export interface IStorage {
   updateUserPassword(userId: string, password: string): Promise<void>;
   checkPasswordRenewalRequired(userId: string): Promise<boolean>;
   generateUserId(fullName: string, rank: string): Promise<string>;
+  upsertUser(userData: any): Promise<User>;
   
   // Verification codes
   createVerificationCode(userId: string, code: string, expiresAt: Date): Promise<VerificationCode>;
@@ -500,6 +501,41 @@ export class DatabaseStorage implements IStorage {
       return counts;
     } catch (error) {
       console.error('Error getting unread message counts:', error);
+      throw error;
+    }
+  }
+
+  async upsertUser(userData: any): Promise<User> {
+    try {
+      // Use direct SQL for upsert to avoid schema issues
+      const result = await pool.query(`
+        INSERT INTO users (
+          id, full_name, email, google_id, google_email, 
+          google_profile_picture_url, google_display_name, 
+          auth_provider, user_type, is_verified, created_at, last_login
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
+        ON CONFLICT (email) DO UPDATE SET
+          full_name = EXCLUDED.full_name,
+          google_profile_picture_url = EXCLUDED.google_profile_picture_url,
+          google_display_name = EXCLUDED.google_display_name,
+          last_login = NOW()
+        RETURNING *
+      `, [
+        userData.id || userData.sub,
+        `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.email,
+        userData.email,
+        userData.id || userData.sub,
+        userData.email,
+        userData.profileImageUrl || userData.profile_image_url,
+        `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.email,
+        'replit',
+        'sailor',
+        true
+      ]);
+
+      return this.convertDbUserToAppUser(result.rows[0]);
+    } catch (error) {
+      console.error('Error upserting user:', error);
       throw error;
     }
   }

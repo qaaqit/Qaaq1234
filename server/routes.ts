@@ -218,6 +218,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Setup Google OAuth authentication
   setupGoogleAuth(app);
+  
+  // Setup Replit Auth
+  if (process.env.REPLIT_DOMAINS && process.env.REPL_ID) {
+    try {
+      const { setupAuth, isAuthenticated } = await import('./replitAuth.js');
+      await setupAuth(app);
+      
+      // Add Replit Auth user endpoint
+      app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+        try {
+          const userId = req.user.claims.sub;
+          const user = await storage.getUser(userId);
+          res.json(user);
+        } catch (error) {
+          console.error("Error fetching user:", error);
+          res.status(500).json({ message: "Failed to fetch user" });
+        }
+      });
+      
+      console.log('✅ Replit Auth initialized successfully');
+    } catch (error) {
+      console.log('⚠️ Replit Auth setup skipped:', error.message);
+    }
+  }
 
   // Email OTP Routes
   app.post('/api/auth/send-email-otp', async (req, res) => {

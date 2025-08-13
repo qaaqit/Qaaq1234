@@ -4,6 +4,16 @@ import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Session storage table for Replit Auth
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: jsonb("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  }
+);
+
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: text("user_id").unique(), // Human-readable user ID (e.g., QAAQ123, CAP456)
@@ -53,7 +63,7 @@ export const users = pgTable("users", {
   googleEmail: text("google_email"), // Google email address
   googleProfilePictureUrl: text("google_profile_picture_url"), // Google profile picture
   googleDisplayName: text("google_display_name"), // Google display name
-  authProvider: text("auth_provider").default("qaaq"), // 'qaaq', 'google', 'whatsapp'
+  authProvider: text("auth_provider").default("qaaq"), // 'qaaq', 'google', 'whatsapp', 'replit'
   
   // System Fields
   hasCompletedOnboarding: boolean("has_completed_onboarding").default(false), // QAAQ field
