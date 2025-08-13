@@ -477,16 +477,10 @@ export function GlossaryPage() {
 
         {/* Footer */}
         <div className="mt-12 pt-6 border-t border-orange-200">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="text-center">
             <p className="text-sm text-gray-600">
               Maritime dictionary powered by authentic QAAQ community questions
             </p>
-            <Button
-              onClick={() => setLocation('/qbot')}
-              className="bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600"
-            >
-              Ask QBOT a Question →
-            </Button>
           </div>
         </div>
       </div>
