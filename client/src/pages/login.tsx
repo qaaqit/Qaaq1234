@@ -350,12 +350,14 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
             variant="outline"
             size="sm"
             onClick={() => setIsMinimized(false)}
-            className="bg-white shadow-lg border-orange-200 hover:bg-orange-50 flex items-center gap-2"
+            className="bg-white shadow-lg border-orange-200 hover:bg-orange-50 flex items-center gap-3 pr-2"
             data-testid="expand-login-roadblock"
           >
             <Crown className="h-4 w-4 text-orange-600" />
-            <ChevronDown className="h-4 w-4" />
-            Login Required
+            <span>Login Required</span>
+            <div className="w-8 h-8 bg-orange-100 hover:bg-orange-200 rounded-full flex items-center justify-center transition-colors">
+              <ChevronDown className="h-6 w-6 text-orange-600" />
+            </div>
           </Button>
         </div>
       )}
@@ -370,10 +372,12 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
             variant="ghost"
             size="sm"
             onClick={() => setIsMinimized(true)}
-            className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+            className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 p-1"
             data-testid="minimize-login-roadblock"
           >
-            <ChevronUp className="h-4 w-4" />
+            <div className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
+              <ChevronUp className="h-6 w-6" />
+            </div>
           </Button>
 
           {/* Header */}
