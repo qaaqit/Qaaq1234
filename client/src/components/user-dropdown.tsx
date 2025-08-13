@@ -64,14 +64,6 @@ export default function UserDropdown({ user, className = "", onLogout }: UserDro
 
   const menuItems = [
     {
-      icon: User,
-      label: "My Page",
-      onClick: () => {
-        setLocation(`/user/${user.id}`);
-        setIsOpen(false);
-      }
-    },
-    {
       icon: Settings,
       label: "Update CV/Profile", 
       onClick: () => {
@@ -80,34 +72,10 @@ export default function UserDropdown({ user, className = "", onLogout }: UserDro
       }
     },
     {
-      icon: Heart,
-      label: "My Machines",
-      onClick: () => {
-        // Navigate to ships/machines page when implemented
-        setIsOpen(false);
-      }
-    },
-    {
       icon: HelpCircle,
       label: "My Questions",
       onClick: () => {
         setLocation('/my-questions');
-        setIsOpen(false);
-      }
-    },
-    {
-      icon: Users,
-      label: "Friends",
-      onClick: () => {
-        setLocation('/dm');
-        setIsOpen(false);
-      }
-    },
-    {
-      icon: MessageCircle,
-      label: "Messages",
-      onClick: () => {
-        setLocation('/dm');
         setIsOpen(false);
       }
     },
