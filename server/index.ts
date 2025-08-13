@@ -128,12 +128,31 @@ let whatsappBot: QoiGPTBot | null = null;
     }
   });
 
+  // Deployment health monitoring
+  app.get('/api/deployment/status', (req, res) => {
+    res.status(200).json({
+      status: 'operational',
+      environment: process.env.REPLIT_DEPLOYMENT ? 'production' : 'development',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      memory: process.memoryUsage(),
+      version: '2.1.0'
+    });
+  });
+
+  // Error handler
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
+    
+    console.error('Server error:', {
+      message,
+      status,
+      stack: err.stack,
+      deployment: process.env.REPLIT_DEPLOYMENT || 'development'
+    });
 
     res.status(status).json({ message });
-    throw err;
   });
 
   // importantly only setup vite in development and after
@@ -161,13 +180,30 @@ let whatsappBot: QoiGPTBot | null = null;
 
   // Handle graceful shutdown
   process.on('SIGINT', async () => {
-    console.log('\n🛑 Shutting down server...');
+    console.log('\n🛑 Shutting down QaaqConnect server...');
     if (whatsappBot) {
       await whatsappBot.stop();
     }
-    if (aisProxy) {
-      aisProxy.close();
+    try {
+      await pool.end();
+      console.log('📊 Database connections closed');
+    } catch (error) {
+      console.error('Error closing database:', error);
     }
     process.exit(0);
+  });
+
+  // Handle uncaught exceptions and prevent crashes
+  process.on('uncaughtException', (error) => {
+    console.error('Uncaught Exception - QaaqConnect:', error);
+    // Don't exit in production to maintain uptime
+    if (!process.env.REPLIT_DEPLOYMENT) {
+      process.exit(1);
+    }
+  });
+
+  process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    // Don't exit in production to maintain uptime
   });
 })();

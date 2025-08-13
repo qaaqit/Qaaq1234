@@ -118,6 +118,41 @@ const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: numbe
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
+  // Health check endpoints for deployment monitoring
+  app.get('/health', (req, res) => {
+    res.status(200).json({ 
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      deployment: process.env.REPLIT_DEPLOYMENT || 'development'
+    });
+  });
+
+  app.get('/api/health', async (req, res) => {
+    try {
+      // Test database connection
+      const dbTest = await pool.query('SELECT 1 as test');
+      const dbHealthy = dbTest.rows.length > 0;
+      
+      res.status(200).json({
+        status: dbHealthy ? 'healthy' : 'degraded',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        memory: process.memoryUsage(),
+        database: dbHealthy ? 'connected' : 'disconnected',
+        deployment: process.env.REPLIT_DEPLOYMENT || 'development',
+        version: '2.1.0-maritime'
+      });
+    } catch (error) {
+      console.error('Health check failed:', error);
+      res.status(503).json({
+        status: 'unhealthy',
+        error: 'Database connection failed',
+        timestamp: new Date().toISOString(),
+        deployment: process.env.REPLIT_DEPLOYMENT || 'development'
+      });
+    }
+  });
+  
   // Create verification tokens table if it doesn't exist
   try {
     await pool.query(`

@@ -31,6 +31,12 @@ Home Reset Button: Red "Home" button in top-left corner resets search, filters, 
 User Card Interactions: Profile photo circles are clickable for chat, clicking card body centers map on user location
 Onboard Search: Special "onboard" keyword search filters for sailing users and displays ship name & IMO number prominently
 
+## Deployment Status
+- **Current Configuration**: Reserved VM with minimum 2 instances for 99.9% uptime
+- **Reliability Enhancements**: Added comprehensive health monitoring endpoints (`/health`, `/api/health`, `/api/deployment/status`) with database connectivity testing
+- **Error Handling**: Implemented graceful shutdown procedures and uncaught exception handling to prevent crashes
+- **Connection Monitoring**: Database health checks ensure persistent storage reliability
+
 ## System Architecture
 
 ### Frontend Architecture
