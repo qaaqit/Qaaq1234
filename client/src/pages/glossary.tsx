@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Archive, AlertTriangle, Merge, Eraser } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import qaaqLogo from '@assets/qaaq-logo.png';
 import LoginRoadblock from '@/components/LoginRoadblock';
 
@@ -24,39 +25,22 @@ export function GlossaryPage() {
   const [glossaryEntries, setGlossaryEntries] = useState<GlossaryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  // Removed category filtering - now showing all terms
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [showLoginRoadblock, setShowLoginRoadblock] = useState(false);
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if user is authenticated first
-    const token = localStorage.getItem('auth_token');
-    if (!token) {
-      setShowLoginRoadblock(true);
+    // Wait for auth check to complete
+    if (authLoading) return;
+    
+    if (!isAuthenticated) {
       setLoading(false);
       return;
     }
     
     fetchGlossaryEntries();
-    checkAdminStatus();
-  }, []);
+  }, [isAuthenticated, authLoading]);
 
-  const checkAdminStatus = async () => {
-    try {
-      const response = await fetch('/api/user/profile', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-        }
-      });
-      if (response.ok) {
-        const userData = await response.json();
-        setIsAdmin(userData.isAdmin || false);
-      }
-    } catch (error) {
-      console.log('Not authenticated or admin check failed');
-    }
-  };
+
 
   const fetchGlossaryEntries = async () => {
     try {
@@ -205,7 +189,7 @@ export function GlossaryPage() {
   const alphabetLetters = Object.keys(groupedEntries).sort();
 
   // Show login roadblock if not authenticated
-  if (showLoginRoadblock) {
+  if (!isAuthenticated && !authLoading) {
     return (
       <>
         <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-yellow-50">
@@ -423,7 +407,7 @@ export function GlossaryPage() {
                           </div>
 
                           {/* Admin Actions */}
-                          {isAdmin && (
+                          {user?.isAdmin && (
                             <div className="pt-3 border-t border-gray-200 space-y-2">
                               <Button
                                 onClick={() => handleArchiveEntry(entry.id, extractTerm(entry.question))}
