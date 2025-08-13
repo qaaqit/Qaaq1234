@@ -5,8 +5,13 @@ import * as schema from "@shared/schema";
 
 neonConfig.webSocketConstructor = ws;
 
-// Enhanced database configuration
-const databaseUrl = 'postgresql://neondb_owner:npg_rTOn7VZkYAb3@ep-autumn-hat-a27gd1cd.eu-central-1.aws.neon.tech/neondb?sslmode=require';
+// Enhanced database configuration - use QAAQ database URLs (correct endpoint)
+// Prioritize QAAQ_DATABASE_URL as it has the correct endpoint (ep-autumn-hat)
+const databaseUrl = process.env.QAAQ_DATABASE_URL || process.env.QAAQ_PRODUCTION_DATABASE_URL;
+
+if (!databaseUrl) {
+  throw new Error('QAAQ Database URL not found. Please check QAAQ_DATABASE_URL or QAAQ_PRODUCTION_DATABASE_URL in your environment variables.');
+}
 
 console.log('Using Enhanced PostgreSQL Database with Connection Pooling');
 console.log('Connection string:', databaseUrl.replace(/:[^@]+@/, ':****@'));
