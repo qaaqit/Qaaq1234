@@ -120,7 +120,7 @@ export function TopQProfessionals() {
       return;
     }
 
-    if (user?.id === professional.id) {
+    if (user && typeof user === 'object' && 'id' in user && user.id === professional.id) {
       return; // Don't allow chat with self
     }
 
@@ -465,7 +465,7 @@ export function TopQProfessionals() {
               index === 2 ? 'border-l-3 border-l-gray-500 bg-gradient-to-r from-gray-50 to-gray-100' :
               'border-l-3 border-l-blue-500 bg-white'
             }`}
-            onClick={() => user && user.id !== professional.id && handleStartConversation(professional)}
+            onClick={() => user && typeof user === 'object' && 'id' in user && user.id !== professional.id && handleStartConversation(professional)}
           >
             <CardContent className="p-3">
               <div className="flex items-center gap-3">
@@ -520,7 +520,7 @@ export function TopQProfessionals() {
                     </div>
                     
                     {/* Compact Chat Button */}
-                    {user && user.id !== professional.id && (
+                    {user && typeof user === 'object' && 'id' in user && user.id !== professional.id && (
                       <Button
                         size="sm"
                         variant="outline"
@@ -543,23 +543,7 @@ export function TopQProfessionals() {
 
       
 
-      {/* Chat Window */}
-      {isChatOpen && selectedUser && user && (
-        <QChatWindow
-          isOpen={isChatOpen}
-          onClose={handleCloseChat}
-          currentUser={user}
-          targetUser={{
-            id: selectedUser.id,
-            fullName: selectedUser.fullName || selectedUser.email || 'Maritime Professional',
-            rank: selectedUser.maritimeRank,
-            ship: selectedUser.shipName,
-            location: selectedUser.port && selectedUser.country ? 
-              `${selectedUser.port}, ${selectedUser.country}` : 
-              selectedUser.port || selectedUser.country || '',
-          }}
-        />
-      )}
+      {/* Chat Window - Removed as we navigate directly to DM page */}
     </div>
   );
 }
