@@ -403,9 +403,7 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
               />
               <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Your username or country code + WhatsApp number
-            </p>
+            <p className="text-xs text-gray-500 mt-1">This could be country code + WhatsApp number</p>
           </div>
 
           {/* Password */}
