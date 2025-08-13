@@ -38,13 +38,14 @@ interface ChatConnectionsListProps {
 export default function ChatConnectionsList({ currentUserId }: ChatConnectionsListProps) {
   const [selectedConnection, setSelectedConnection] = useState<ChatConnection | null>(null);
 
-  // Fetch chat connections
+  // Fetch chat connections - DISABLED for qh13 refresh fix
   const { data: connections = [], isLoading } = useQuery({
     queryKey: ['chat-connections'],
     queryFn: async () => {
       const response = await apiRequest('/api/chat/connections');
       return response.json();
     },
+    enabled: false, // DISABLED to prevent 401 polling on qh13 page
     refetchInterval: false, // Disable automatic polling
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
@@ -52,13 +53,14 @@ export default function ChatConnectionsList({ currentUserId }: ChatConnectionsLi
     gcTime: 15 * 60 * 1000 // 15 minutes
   });
 
-  // Fetch unread counts
+  // Fetch unread counts - DISABLED for qh13 refresh fix
   const { data: unreadCounts = {} } = useQuery({
     queryKey: ['chat-unread-counts'],
     queryFn: async () => {
       const response = await apiRequest('/api/chat/unread-counts');
       return response.json();
     },
+    enabled: false, // DISABLED to prevent 401 polling on qh13 page
     refetchInterval: false, // Disable automatic polling
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,

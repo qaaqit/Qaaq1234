@@ -84,45 +84,23 @@ export default function DMPage() {
     enabled: !!targetUserId,
   });
 
-  // Fetch user's chat connections
+  // Fetch user's chat connections - DISABLED for qh13 refresh fix
   const { data: connections = [], isLoading: connectionsLoading, error: connectionsError } = useQuery<ExtendedChatConnection[]>({
     queryKey: ['/api/chat/connections'],
-    refetchInterval: (data, query) => {
-      // Disable polling if getting 403 errors to prevent excessive refreshing
-      if (query?.state?.error?.message?.includes('403')) {
-        console.log('🚫 Disabling chat connections polling due to authentication errors');
-        return false;
-      }
-      return 5000; // Poll every 5 seconds when authenticated
-    },
-    enabled: !!user, // Only fetch when user is authenticated
-    retry: (failureCount, error) => {
-      // Stop retrying on 403 errors to prevent excessive API calls
-      if (error?.message?.includes('403')) {
-        return false;
-      }
-      return failureCount < 3;
-    },
-    staleTime: 30000, // Cache for 30 seconds to reduce requests
-    refetchOnWindowFocus: false, // Don't refetch when window regains focus
-    refetchOnMount: false, // Don't refetch on component mount if data exists
+    enabled: false, // DISABLED to prevent 401 polling causing qh13 refresh
+    refetchInterval: false, // Disable all polling
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
+    staleTime: Infinity, // Keep data indefinitely
+    gcTime: Infinity,
   });
 
-  // Debug connection loading - reduced frequency  
+  // Debug connection loading - DISABLED for qh13 refresh fix  
   useEffect(() => {
-    // Only log when there are actual changes, not every render
-    if (targetUserId || connections.length > 0 || connectionsError) {
-      console.log(`🔍 DM Auto-connect check:`, {
-        targetUserId,
-        connectionsCount: connections.length,
-        userAuthenticated: !!user,
-        userId: user?.id,
-        connectionsLoading,
-        connectionsError: connectionsError?.message,
-        connectionsData: connections
-      });
-    }
-  }, [targetUserId, connections.length, connectionsError?.message]); // Reduced dependencies
+    // DISABLED to prevent console spam and refresh issues
+    // console.log('🔍 DM Auto-connect check - DISABLED for qh13 refresh fix');
+  }, []); // Completely disabled
 
   // Fetch users - use search API when searching, nearby API otherwise
   const { data: nearbyUsers = [], isLoading: usersLoading } = useQuery<UserWithDistance[]>({
