@@ -44,16 +44,18 @@ Login Roadblock Design: Single minimizable login roadblock with chevron control 
 
 ## Recent Changes (August 2025)
 - **LOCAL DATABASE DELETED**: Completely removed local database connections, app now connects ONLY to parent QAAQ database (ep-autumn-hat endpoint)
-- **Parent Database Exclusive**: All data now sourced from shared QAAQ database with 948+ authentic maritime professionals
+- **Parent Database Exclusive**: All data now sourced from shared QAAQ database with 855+ authentic maritime professionals
+- **Subscription Columns Added**: Successfully added missing subscription columns (subscription_type, subscription_status, is_premium, premium_expires_at, razorpay_customer_id, payment_method) to parent QAAQ database with 855 users
+- **Database Schema Stabilized**: Fixed subscription_type column errors by making fields optional with null defaults, switched to direct SQL queries for parent QAAQ database compatibility
 - **Frequent Refreshing Fixed**: Resolved Ch13 (Top Q Professionals) page constant refreshing by fixing database schema mismatches and disabling unnecessary polling
 - **Authentication Polling Stopped**: Disabled automatic refetching in chat connections, auth hooks, and WebSocket services to prevent 401 error loops
 - **Top Q Professionals Working**: Successfully displays 9 real maritime professionals with authentic question/answer counts from QAAQ database
 - **Data Integrity Enforced**: Strict "NEVER EVER" rule followed - no test users or sample data added, only authentic QAAQ database professionals
-- **Database Schema Aligned**: Fixed subscription_id column mismatches and optimized query performance for shared database access
 - **Active Conversations Added**: Implemented 1v1 DM section above Top Q Professionals with single/double tick message status pattern
 - **Compact Card Design**: Reduced Top Q Professionals card size to match Active Conversations with consistent layout and styling
 - **Pull-to-Search Feature**: Added sailor search bar above header that appears when scrolling up, with real-time search filtering of maritime professionals
 - **🏆 QAAQ MARIANA SEAL ACHIEVED**: QH13 format permanently sealed with Active Conversations and Top Q Professionals in same-sized cards, full DM functionality for search results and Q radar map green dots, dual search system operational
+- **📋 PINNACLE PLAN CREATED**: Comprehensive 5-phase development plan created (PINNACLE_PLAN.md) outlining path from Mariana to Pinnacle version with advanced DM chats, QH16 group system, full Razorpay integration, WATI bot automation, and enhanced UI/UX
 
 ## System Architecture
 
