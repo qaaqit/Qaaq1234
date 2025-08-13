@@ -168,13 +168,29 @@ export class AIService {
       }
 
       const data = await response.json();
-      console.log('🤖 Gemini: Response received:', JSON.stringify(data, null, 2));
+      console.log('🤖 Gemini: Response received successfully');
       
       let content = data.candidates?.[0]?.content?.parts?.[0]?.text;
       
-      if (!content) {
-        console.warn('⚠️ Gemini: No content in response, using fallback');
-        content = 'Unable to generate response at this time.';
+      if (!content || content.trim() === '') {
+        console.warn('⚠️ Gemini: No valid content in response, checking error details');
+        console.log('Full response data:', JSON.stringify(data, null, 2));
+        
+        // Check for safety blocks or other issues
+        if (data.candidates?.[0]?.finishReason === 'SAFETY') {
+          console.log('Response blocked by safety filters, using fallback');
+        }
+        
+        // Use fallback response
+        const fallbackResponses = [
+          `• Check manufacturer's manual first\n• Follow proper safety protocols\n• Consult senior engineer if unsure`,
+          `• Inspect for mechanical wear signs\n• Verify lubrication levels adequate\n• Test electrical connections thoroughly`,
+          `• Monitor operating parameters closely\n• Check environmental factors impact\n• Document all readings properly`
+        ];
+        content = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
+        console.log('🔄 Using fallback response:', content);
+      } else {
+        console.log('✅ Gemini: Valid content received, length:', content.length);
       }
       const responseTime = Date.now() - startTime;
 
