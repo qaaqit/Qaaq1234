@@ -12,6 +12,7 @@ Preferred communication style: Simple, everyday language.
 Username field label: "USER NAME (This may be ur country code +91 & whatsapp number )"
 Primary focus: "Koi Hai?" (Who's there?) discovery - helping sailors find who's nearby in ports
 Home page after login: QBOT Chat (not Map Radar) - users land on QBOT Chat immediately after authentication
+MARIANA BASE RULE: The app will NEVER carry out bulk assignment of users to rank groups - this functionality is permanently disabled for security
 Color Scheme: Orange (#ea580c), Red (#dc2626), and White - NOT blue/teal colors
 Search Interface: Crown icon must be present in search bar, filter/map/radar icons on right side of search bar
 Header Design: White header with QAAQ logo, admin shield, and QBOT button

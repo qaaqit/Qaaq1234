@@ -270,20 +270,17 @@ export async function getRankGroupMessages(groupId: string, userId: string, limi
   }
 }
 
-// Auto-assign users to rank groups based on their maritime rank (DISABLED)
+// MARIANA BASE RULE: BULK ASSIGNMENT FUNCTIONALITY PERMANENTLY DISABLED
+// Auto-assignment is permanently disabled - users must manually join groups
 export async function autoAssignUserToRankGroups(userId: string) {
-  try {
-    // Auto-assignment is disabled per user request
-    // Users must manually join groups they want to participate in
-    return { 
-      success: true, 
-      message: 'Auto-assignment is disabled. Users must manually join groups.',
-      assignedGroups: []
-    };
-  } catch (error) {
-    console.error('Error in auto-assign function:', error);
-    throw error;
-  }
+  // This function is permanently disabled as per MARIANA base rule
+  // The app will NEVER carry out bulk assignment of users to rank groups
+  return { 
+    success: false, 
+    message: 'MARIANA BASE RULE: Bulk assignment of users to rank groups is permanently disabled for security.',
+    assignedGroups: [],
+    error: 'BULK_ASSIGNMENT_DISABLED'
+  };
 }
 
 // Switch user to a different rank group (for promotions)

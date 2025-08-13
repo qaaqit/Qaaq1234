@@ -20,8 +20,8 @@ import {
   autoAssignUserToRankGroups,
   switchUserRankGroup
 } from "./rank-groups-service";
-import { populateRankGroupsWithUsers } from "./populate-rank-groups";
-import { bulkAssignUsersToRankGroups } from "./bulk-assign-users";
+
+
 import { setupMergeRoutes } from "./merge-interface";
 import { robustAuth } from "./auth-system";
 import { ObjectStorageService } from "./objectStorage";
@@ -4679,19 +4679,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Auto-assign user to rank groups based on their maritime rank (DISABLED)
+  // MARIANA BASE RULE: AUTO-ASSIGNMENT PERMANENTLY DISABLED
   app.post('/api/rank-groups/auto-assign', authenticateToken, async (req: any, res) => {
-    try {
-      // Auto-assignment is disabled per user request
-      res.json({ 
-        success: true, 
-        message: 'Auto-assignment is disabled. Users must manually join groups.',
-        assignedGroups: []
-      });
-    } catch (error) {
-      console.error('Error in auto-assign endpoint:', error);
-      res.status(500).json({ error: 'Failed to process auto-assign request' });
-    }
+    res.status(403).json({ 
+      success: false, 
+      message: 'MARIANA BASE RULE: Bulk assignment of users to rank groups is permanently disabled for security.',
+      error: 'BULK_ASSIGNMENT_DISABLED'
+    });
   });
 
   // Switch user to different rank group (for promotions)
@@ -4711,24 +4705,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Auto-populate all rank groups with users based on their ranks (admin only)
-  app.post('/api/rank-groups/populate', authenticateToken, async (req: any, res) => {
-    try {
-      // Check if user is admin
-      const userResult = await pool.query('SELECT is_platform_admin FROM users WHERE id = $1', [req.userId]);
-      const isAdmin = userResult.rows.length > 0 ? userResult.rows[0].is_platform_admin : false;
-      
-      if (!isAdmin) {
-        return res.status(403).json({ error: 'Admin access required' });
-      }
-      
-      const result = await bulkAssignUsersToRankGroups();
-      res.json(result);
-    } catch (error) {
-      console.error('Error populating rank groups:', error);
-      res.status(500).json({ error: 'Failed to populate rank groups' });
-    }
-  });
+  // MARIANA BASE RULE: BULK ASSIGNMENT OF USERS TO RANK GROUPS IS PERMANENTLY DISABLED
+  // This endpoint has been permanently removed to comply with security requirements
 
   // ==== SEARCH ANALYTICS API ENDPOINTS ====
   
