@@ -341,7 +341,6 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
       <div className={isMinimized ? '' : 'pointer-events-none'}>
         <GlossaryContent isMinimized={isMinimized} />
       </div>
-
       {/* Minimized state - floating login button */}
       {isMinimized && (
         <div className="fixed top-4 right-4 z-50">
@@ -360,7 +359,6 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
           </Button>
         </div>
       )}
-
       {/* Full login form overlay - only show when not minimized */}
       {!isMinimized && (
         <div className="fixed inset-0 bg-gradient-to-br from-orange-50/80 to-red-100/80 backdrop-blur-[2px] flex items-center justify-center p-4 z-40">
@@ -392,7 +390,7 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* QAAQ ID */}
           <div>
-            <Label htmlFor="qaaqId" className="text-sm font-medium text-gray-700 mb-2 block">UserID *</Label>
+            <Label htmlFor="qaaqId" className="text-sm font-medium text-gray-700 mb-2 block">Whatsapp/ Email *</Label>
             <div className="relative">
               <Input
                 id="qaaqId"
