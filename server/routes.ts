@@ -5034,6 +5034,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Favicon route to prevent 500 errors
+  app.get('/favicon.ico', (req, res) => {
+    res.status(204).end(); // No content response for favicon
+  });
+
   const httpServer = createServer(app);
 
   // Add WebSocket server for real-time messaging
