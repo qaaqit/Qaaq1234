@@ -30,6 +30,8 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
   const [glossaryEntries, setGlossaryEntries] = useState<any[]>([]);
   const [glossaryLoading, setGlossaryLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [displayCount, setDisplayCount] = useState(20);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // Handle Google auth errors from URL params
   useEffect(() => {
@@ -82,6 +84,19 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
     return entry.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
            entry.answer.toLowerCase().includes(searchTerm.toLowerCase());
   });
+
+  const loadMoreEntries = () => {
+    setIsLoadingMore(true);
+    setTimeout(() => {
+      setDisplayCount(prev => Math.min(prev + 20, filteredEntries.length));
+      setIsLoadingMore(false);
+    }, 500);
+  };
+
+  // Reset display count when search term changes
+  useEffect(() => {
+    setDisplayCount(20);
+  }, [searchTerm]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -239,7 +254,7 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
           </div>
         ) : (
           <div className="space-y-2">
-            {filteredEntries.slice(0, 20).map((entry, index) => {
+            {filteredEntries.slice(0, displayCount).map((entry, index) => {
               const previewText = entry.answer.split(' ').slice(0, 10).join(' ') + (entry.answer.split(' ').length > 10 ? '...' : '');
               return (
                 <Dialog key={`entry-${entry.id}-${index}`}>
@@ -295,10 +310,23 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
               </div>
             )}
 
-            {filteredEntries.length > 20 && (
+            {/* Load More Button */}
+            {displayCount < filteredEntries.length && isMinimized && (
+              <div className="text-center py-6">
+                <Button
+                  onClick={loadMoreEntries}
+                  disabled={isLoadingMore}
+                  className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2"
+                >
+                  {isLoadingMore ? 'Loading...' : `Load More (${filteredEntries.length - displayCount} remaining)`}
+                </Button>
+              </div>
+            )}
+
+            {displayCount >= filteredEntries.length && filteredEntries.length > 20 && (
               <div className="text-center py-4">
                 <p className="text-sm text-gray-500">
-                  Showing first 20 results. Use search to find specific terms.
+                  All {filteredEntries.length} terms displayed
                 </p>
               </div>
             )}
@@ -334,7 +362,7 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
 
       {/* Full login form overlay - only show when not minimized */}
       {!isMinimized && (
-        <div className="fixed inset-0 bg-gradient-to-br from-orange-50/95 to-red-100/95 backdrop-blur-sm flex items-center justify-center p-4 z-40">
+        <div className="fixed inset-0 bg-gradient-to-br from-orange-50/80 to-red-100/80 backdrop-blur-[2px] flex items-center justify-center p-4 z-40">
 
           <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 border border-gray-200 relative">
           {/* Minimize Button */}
