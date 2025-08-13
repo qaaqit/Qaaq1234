@@ -5,16 +5,15 @@ import * as schema from "@shared/schema";
 
 neonConfig.webSocketConstructor = ws;
 
-// Enhanced database configuration - use QAAQ database URLs (correct endpoint)
-// Prioritize QAAQ_DATABASE_URL as it has the correct endpoint (ep-autumn-hat)
+// Connect ONLY to parent QAAQ database - NO local database
 const databaseUrl = process.env.QAAQ_DATABASE_URL || process.env.QAAQ_PRODUCTION_DATABASE_URL;
 
 if (!databaseUrl) {
-  throw new Error('QAAQ Database URL not found. Please check QAAQ_DATABASE_URL or QAAQ_PRODUCTION_DATABASE_URL in your environment variables.');
+  throw new Error('QAAQ Parent Database URL not found. App must connect only to shared QAAQ database.');
 }
 
-console.log('Using Enhanced PostgreSQL Database with Connection Pooling');
-console.log('Connection string:', databaseUrl.replace(/:[^@]+@/, ':****@'));
+console.log('🔗 CONNECTING TO PARENT QAAQ DATABASE ONLY');
+console.log('🚫 LOCAL DATABASE DELETED - Using shared QAAQ database:', databaseUrl.replace(/:[^@]+@/, ':****@'));
 
 // Enhanced connection pool for subscription reliability
 export const pool = new Pool({ 
@@ -37,7 +36,7 @@ async function testConnection(retries = 3) {
       const client = await pool.connect();
       await client.query('SELECT 1 as connection_test');
       client.release();
-      console.log('✅ Enhanced PostgreSQL connection established successfully');
+      console.log('✅ CONNECTED TO PARENT QAAQ DATABASE (LOCAL DATABASE DELETED)');
       return true;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';

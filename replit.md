@@ -41,12 +41,13 @@ Login Roadblock Design: Single minimizable login roadblock with chevron control 
 - **Connection Monitoring**: Database health checks ensure persistent storage reliability
 
 ## Recent Changes (August 2025)
-- **Replit Authentication FULLY OPERATIONAL**: Successfully implemented dual authentication system with both QAAQ JWT tokens and Replit OpenID Connect
-- **Session Management Enhanced**: Fixed callback redirects, session detection, and frontend authentication recognition for seamless user experience
-- **Dual Auth Detection Perfected**: Frontend now correctly detects both QAAQ tokens and Replit Auth sessions with proper cookie handling
-- **Authentication Security Hardened**: Disabled universal password acceptance, created test users with secure passwords
-- **Database Integration**: Successfully connected to shared QAAQ database with enhanced connection pooling and session management
-- **User Experience Optimized**: Users authenticate once and stay logged in, redirected to QBOT chat as home page after successful authentication
+- **LOCAL DATABASE DELETED**: Completely removed local database connections, app now connects ONLY to parent QAAQ database (ep-autumn-hat endpoint)
+- **Parent Database Exclusive**: All data now sourced from shared QAAQ database with 948+ authentic maritime professionals
+- **Frequent Refreshing Fixed**: Resolved Ch13 (Top Q Professionals) page constant refreshing by fixing database schema mismatches and disabling unnecessary polling
+- **Authentication Polling Stopped**: Disabled automatic refetching in chat connections, auth hooks, and WebSocket services to prevent 401 error loops
+- **Top Q Professionals Working**: Successfully displays 9 real maritime professionals with authentic question/answer counts from QAAQ database
+- **Data Integrity Enforced**: Strict "NEVER EVER" rule followed - no test users or sample data added, only authentic QAAQ database professionals
+- **Database Schema Aligned**: Fixed subscription_id column mismatches and optimized query performance for shared database access
 
 ## System Architecture
 
