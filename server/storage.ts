@@ -9,6 +9,7 @@ export interface IStorage {
   getUserByGoogleId(googleId: string): Promise<User | undefined>;
   getUserByIdAndPassword(userId: string, password: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  createGoogleUser(googleUserData: any): Promise<User>;
   updateUser(userId: string, updates: Partial<User>): Promise<User | undefined>;
   updateUserVerification(userId: string, isVerified: boolean): Promise<void>;
   incrementLoginCount(userId: string): Promise<void>;
@@ -104,6 +105,40 @@ export class DatabaseStorage implements IStorage {
   async createUser(user: InsertUser): Promise<User> {
     const [newUser] = await db.insert(users).values(user).returning();
     return newUser;
+  }
+
+  async createGoogleUser(googleUserData: any): Promise<User> {
+    try {
+      // Generate a unique user ID based on name and timestamp
+      const baseUserId = googleUserData.fullName.toLowerCase().replace(/\s+/g, '.');
+      const timestamp = Date.now().toString().slice(-6);
+      const userId = `${baseUserId}.${timestamp}`;
+
+      const result = await pool.query(`
+        INSERT INTO users (
+          user_id, full_name, email, google_id, google_email, 
+          google_profile_picture_url, google_display_name, 
+          auth_provider, user_type, is_verified, created_at, last_login
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
+        RETURNING *
+      `, [
+        userId,
+        googleUserData.fullName,
+        googleUserData.email,
+        googleUserData.googleId,
+        googleUserData.googleEmail,
+        googleUserData.googleProfilePictureUrl,
+        googleUserData.googleDisplayName,
+        googleUserData.authProvider,
+        googleUserData.userType,
+        googleUserData.isVerified
+      ]);
+
+      return this.convertDbUserToAppUser(result.rows[0]);
+    } catch (error) {
+      console.error('Error creating Google user:', error);
+      throw error;
+    }
   }
 
   async updateUser(userId: string, updates: Partial<User>): Promise<User | undefined> {
