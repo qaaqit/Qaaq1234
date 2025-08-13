@@ -315,7 +315,9 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
       // Add click listener
       marker.addListener('click', () => {
         console.log('🔵 GOOGLE MAPS CLICK: click fired for', user.fullName);
-        onUserClick(user.id);
+        if (onUserClick) {
+          onUserClick(user.id);
+        }
       });
 
       markersRef.current.push(marker);

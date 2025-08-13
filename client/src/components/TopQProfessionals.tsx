@@ -124,8 +124,9 @@ export function TopQProfessionals() {
       return; // Don't allow chat with self
     }
 
-    // Start the conversation by creating a chat connection and navigate to DM
-    createConversationMutation.mutate(professional.id);
+    // Navigate directly to DM page with the professional
+    console.log('🔵 Starting conversation with:', professional.fullName);
+    setLocation(`/dm?user=${encodeURIComponent(professional.id)}&name=${encodeURIComponent(professional.fullName || 'Maritime Professional')}`);
   };
 
   const handleCloseChat = () => {
@@ -386,8 +387,9 @@ export function TopQProfessionals() {
               key={conversation.id}
               className="hover:shadow-md transition-all duration-200 cursor-pointer border-l-4 border-l-blue-500"
               onClick={() => {
-                // Handle conversation click - would open chat with that user
-                console.log(`Opening chat with ${conversation.user.name}`);
+                // Navigate to DM page with the conversation user
+                const userName = conversation.user.name.replace(/\s+/g, '-').toLowerCase();
+                setLocation(`/dm?user=${encodeURIComponent(userName)}&name=${encodeURIComponent(conversation.user.name)}`);
               }}
             >
               <CardContent className="p-4">

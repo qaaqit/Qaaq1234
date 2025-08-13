@@ -243,7 +243,9 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, selectedUs
                 },
                 click: (e) => {
                   console.log('🔵 LEAFLET CLICK: click fired for', user.fullName);
-                  onUserClick(user.id);
+                  if (onUserClick) {
+                    onUserClick(user.id);
+                  }
                   e.originalEvent?.stopPropagation();
                 }
               }}
