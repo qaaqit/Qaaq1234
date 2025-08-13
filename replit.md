@@ -30,6 +30,8 @@ Google Maps Controls: Transparent icon-only buttons positioned in bottom-left co
 Home Reset Button: Red "Home" button in top-left corner resets search, filters, and returns to base map view
 User Card Interactions: Profile photo circles are clickable for chat, clicking card body centers map on user location
 Onboard Search: Special "onboard" keyword search filters for sailing users and displays ship name & IMO number prominently
+Shipping Dictionary Access: Users can access maritime dictionary definitions without authentication
+Login Roadblock Design: Single minimizable login roadblock with chevron control in top-right corner, no separate roadblocks for individual features
 
 ## Deployment Status
 - **Current Configuration**: Reserved VM with minimum 2 instances for 99.9% uptime

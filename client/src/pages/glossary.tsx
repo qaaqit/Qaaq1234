@@ -29,16 +29,9 @@ export function GlossaryPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Wait for auth check to complete
-    if (authLoading) return;
-    
-    if (!isAuthenticated) {
-      setLoading(false);
-      return;
-    }
-    
+    // Load glossary entries regardless of authentication
     fetchGlossaryEntries();
-  }, [isAuthenticated, authLoading]);
+  }, []);
 
 
 
@@ -188,55 +181,7 @@ export function GlossaryPage() {
 
   const alphabetLetters = Object.keys(groupedEntries).sort();
 
-  // Show login roadblock if not authenticated
-  if (!isAuthenticated && !authLoading) {
-    return (
-      <>
-        <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-yellow-50">
-          {/* Header */}
-          <header className="bg-white text-black shadow-md relative overflow-hidden border-b-2 border-orange-400">
-            <div className="absolute inset-0 bg-gradient-to-r from-red-50 via-orange-50 to-yellow-50 opacity-50"></div>
-            
-            <div className="relative z-10 px-4 py-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden">
-                    <img src={qaaqLogo} alt="QAAQ Logo" className="w-full h-full object-cover" />
-                  </div>
-                  <div>
-                    <h1 className="text-xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">
-                      Shipping Dictionary
-                    </h1>
-                    <p className="text-sm text-gray-600">Maritime Terms & Definitions</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </header>
 
-          {/* Blurred content preview */}
-          <div className="blur-sm pointer-events-none container mx-auto px-4 py-6">
-            <div className="bg-white rounded-lg shadow-sm border border-orange-200 p-4 mb-4">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-8 h-8 bg-orange-200 rounded animate-pulse"></div>
-                <div className="h-4 bg-orange-200 rounded w-1/4 animate-pulse"></div>
-              </div>
-              <div className="space-y-2">
-                <div className="h-3 bg-gray-200 rounded w-full animate-pulse"></div>
-                <div className="h-3 bg-gray-200 rounded w-3/4 animate-pulse"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2 animate-pulse"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <LoginRoadblock 
-          feature="Maritime Dictionary"
-          description="Access professional shipping and maritime definitions from authentic Q&A community"
-        />
-      </>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-yellow-50">
@@ -299,7 +244,7 @@ export function GlossaryPage() {
           </div>
 
           {/* Admin Controls */}
-          {isAdmin && (
+          {user?.isAdmin && (
             <div className="flex gap-2">
               <Button
                 onClick={handleMergeDuplicates}

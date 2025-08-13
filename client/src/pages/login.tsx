@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Anchor, Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { Anchor, Eye, EyeOff, Mail, Lock, ChevronUp, ChevronDown, Crown } from "lucide-react";
 import qaaqLogoPath from "@assets/ICON_1754950288816.png";
 import { GoogleAuthButton } from "@/components/GoogleAuthButton";
 import { User } from "@/lib/auth";
@@ -18,6 +18,7 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
   const [formData, setFormData] = useState({
     qaaqId: "",
     password: ""
@@ -142,15 +143,45 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-orange-600 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <img src={qaaqLogoPath} alt="QAAQ" className="w-14 h-14" />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
-          <p className="text-gray-600">Sign in to QaaqConnect</p>
+      {/* Minimized state */}
+      {isMinimized && (
+        <div className="fixed top-4 right-4 z-50">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsMinimized(false)}
+            className="bg-white shadow-lg border-orange-200 hover:bg-orange-50 flex items-center gap-2"
+            data-testid="expand-login-roadblock"
+          >
+            <Crown className="h-4 w-4 text-orange-600" />
+            <ChevronDown className="h-4 w-4" />
+            Login Required
+          </Button>
         </div>
+      )}
+
+      {/* Full login form */}
+      {!isMinimized && (
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 border border-gray-200 relative">
+          {/* Minimize Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsMinimized(true)}
+            className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+            data-testid="minimize-login-roadblock"
+          >
+            <ChevronUp className="h-4 w-4" />
+          </Button>
+
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-gradient-to-br from-orange-600 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <img src={qaaqLogoPath} alt="QAAQ" className="w-14 h-14" />
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
+            <p className="text-gray-600">Sign in to QaaqConnect</p>
+          </div>
 
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -261,7 +292,8 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
             Connecting maritime professionals worldwide
           </p>
         </div>
-      </div>
+        </div>
+      )}
     </div>
   );
 }
