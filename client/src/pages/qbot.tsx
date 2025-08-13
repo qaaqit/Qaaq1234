@@ -214,7 +214,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
               </div>
               <div className="min-w-0">
                 <h1 className="text-base sm:text-xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent whitespace-nowrap">QaaqConnect</h1>
-                <p className="text-xs sm:text-sm text-gray-600 italic font-medium whitespace-nowrap">QBOT AI Assistant</p>
+                <p className="text-xs sm:text-sm text-gray-600 italic font-medium whitespace-nowrap">(shipping dictionary)</p>
               </div>
             </button>
             <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
