@@ -238,18 +238,17 @@ export function TopQProfessionals() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={handleKeyPress}
-              className="block w-full pl-10 pr-24 py-3 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="block w-full pl-10 pr-20 py-3 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="Search sailors, ships, companies..."
             />
-            <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+            <div className="absolute inset-y-0 right-0 pr-1 flex items-center">
               <button
                 onClick={handleSearchClick}
-                className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-2 py-1 rounded mr-2 transition-colors disabled:bg-gray-300"
+                className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-3 py-2 rounded transition-colors disabled:bg-gray-300"
                 disabled={searchQuery.trim().length < 2}
               >
                 1234koihai
               </button>
-              <User className="h-5 w-5 text-blue-500" />
             </div>
           </div>
           
