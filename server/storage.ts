@@ -29,8 +29,21 @@ export interface IStorage {
 
 export class DatabaseStorage implements IStorage {
   async getUser(id: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user || undefined;
+    try {
+      const [user] = await db.select().from(users).where(eq(users.id, id));
+      return user || undefined;
+    } catch (error) {
+      // Fallback to direct SQL query to avoid column mismatch issues
+      console.log('Drizzle query failed, trying direct SQL:', error);
+      try {
+        const result = await pool.query('SELECT * FROM users WHERE id = $1 LIMIT 1', [id]);
+        if (result.rows.length === 0) return undefined;
+        return this.convertDbUserToAppUser(result.rows[0]);
+      } catch (sqlError) {
+        console.error('SQL fallback failed:', sqlError);
+        return undefined;
+      }
+    }
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {

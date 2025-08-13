@@ -282,29 +282,29 @@ export function GlossaryPage() {
 
         {/* Minimalistic Dictionary Entries */}
         {!loading && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {alphabetLetters.map(letter => (
               <div key={letter}>
                 {/* Letter Header */}
-                <div className="flex items-center gap-3 mb-3">
+                <div className="flex items-center gap-3 mb-2">
                   <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center">
                     <span className="text-lg font-bold text-white">{letter}</span>
                   </div>
                   <div className="flex-1 h-px bg-gray-200"></div>
                 </div>
 
-                {/* Terms List - Compact and Vertical */}
-                <div className="space-y-1 ml-11">
+                {/* Terms List - Ultra Compact */}
+                <div className="space-y-0 ml-11">
                   {groupedEntries[letter].map((entry, index) => (
                     <Dialog key={`dialog-${letter}-${entry.id}-${index}`}>
                       <DialogTrigger asChild>
-                        <div className="flex items-start justify-between py-2 border-b border-gray-50 hover:bg-orange-25 hover:border-orange-100 transition-colors cursor-pointer group">
+                        <div className="flex items-start justify-between py-1 border-b border-gray-50 hover:bg-orange-25 hover:border-orange-100 transition-colors cursor-pointer group">
                           <div className="flex-1 min-w-0">
                             <span className="text-sm font-medium text-gray-900 group-hover:text-orange-700 transition-colors block">
                               {extractTerm(entry.question).toUpperCase()}
                             </span>
                           </div>
-                          <div className="flex-1 ml-4 min-w-0">
+                          <div className="flex-1 ml-2 min-w-0">
                             <span className="text-sm text-gray-600 group-hover:text-gray-800 transition-colors">
                               {truncateDefinition(entry.answer)}
                             </span>
