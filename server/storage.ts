@@ -32,19 +32,13 @@ export interface IStorage {
 export class DatabaseStorage implements IStorage {
   async getUser(id: string): Promise<User | undefined> {
     try {
-      const [user] = await db.select().from(users).where(eq(users.id, id));
-      return user || undefined;
+      // Use direct SQL to avoid Drizzle schema mismatch with parent QAAQ database
+      const result = await pool.query('SELECT * FROM users WHERE id = $1 LIMIT 1', [id]);
+      if (result.rows.length === 0) return undefined;
+      return this.convertDbUserToAppUser(result.rows[0]);
     } catch (error) {
-      // Fallback to direct SQL query to avoid column mismatch issues
-      console.log('Drizzle query failed, trying direct SQL:', error);
-      try {
-        const result = await pool.query('SELECT * FROM users WHERE id = $1 LIMIT 1', [id]);
-        if (result.rows.length === 0) return undefined;
-        return this.convertDbUserToAppUser(result.rows[0]);
-      } catch (sqlError) {
-        console.error('SQL fallback failed:', sqlError);
-        return undefined;
-      }
+      console.error('Error getting user:', error);
+      return undefined;
     }
   }
 
@@ -382,14 +376,13 @@ export class DatabaseStorage implements IStorage {
       passwordCreatedAt: dbUser.password_created_at,
       passwordRenewalDue: dbUser.password_renewal_due,
       mustCreatePassword: dbUser.must_create_password || false,
-      // Subscription fields
+      // Subscription fields - safe access for parent QAAQ database compatibility
       isPremium: dbUser.is_premium || false,
-      premiumExpiresAt: dbUser.premium_expires_at,
-      subscriptionId: dbUser.subscription_id,
-      subscriptionType: dbUser.subscription_type,
+      premiumExpiresAt: dbUser.premium_expires_at || null,
+      subscriptionType: dbUser.subscription_type || null,
       subscriptionStatus: dbUser.subscription_status || 'inactive',
-      razorpayCustomerId: dbUser.razorpay_customer_id,
-      paymentMethod: dbUser.payment_method
+      razorpayCustomerId: dbUser.razorpay_customer_id || null,
+      paymentMethod: dbUser.payment_method || null
     };
   }
 
