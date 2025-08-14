@@ -9,20 +9,17 @@ import { useAuth } from "@/hooks/useAuth";
 
 interface Question {
   id: string;
-  questionId: string;
-  userId: string;
-  userName: string;
-  questionText: string;
-  questionCategory?: string;
-  askedDate: string;
-  source: 'whatsapp' | 'web' | 'api';
-  answerCount: number;
-  isResolved: boolean;
-  urgency: 'low' | 'normal' | 'high';
+  content: string;
+  author_id: string;
+  author_name: string;
+  created_at: string;
+  updated_at: string;
+  category: string;
   tags: string[];
-  location?: string;
-  createdAt: string;
-  updatedAt: string;
+  view_count: number;
+  is_resolved: boolean;
+  is_from_whatsapp: boolean;
+  source: string;
 }
 
 export default function MyQuestions() {
@@ -30,12 +27,12 @@ export default function MyQuestions() {
   const { user } = useAuth();
 
   const { data: questionsData, isLoading, error } = useQuery({
-    queryKey: ['/api/users', user?.id, 'profile'],
+    queryKey: ['/api/users', user?.id, 'questions'],
     enabled: !!user?.id,
     queryFn: async () => {
-      const response = await fetch(`/api/users/${user?.id}/profile`);
+      const response = await fetch(`/api/users/${user?.id}/questions`);
       if (!response.ok) {
-        throw new Error(`Failed to fetch user profile: ${response.status}`);
+        throw new Error(`Failed to fetch user questions: ${response.status}`);
       }
       return response.json();
     }
@@ -106,10 +103,10 @@ export default function MyQuestions() {
 
   // Filter questions by status
   const allQuestions = userQuestions;
-  const resolvedQuestions = userQuestions.filter((q: Question) => q.isResolved);
-  const unresolvedQuestions = userQuestions.filter((q: Question) => !q.isResolved);
+  const resolvedQuestions = userQuestions.filter((q: Question) => q.is_resolved);
+  const unresolvedQuestions = userQuestions.filter((q: Question) => !q.is_resolved);
   const recentQuestions = userQuestions.filter((q: Question) => {
-    const daysDiff = (Date.now() - new Date(q.askedDate).getTime()) / (1000 * 60 * 60 * 24);
+    const daysDiff = (Date.now() - new Date(q.created_at).getTime()) / (1000 * 60 * 60 * 24);
     return daysDiff <= 7;
   });
 
@@ -132,18 +129,18 @@ export default function MyQuestions() {
         <h2 className="text-xl font-semibold text-gray-900 mb-4">{title}</h2>
         
         {questions.map((question) => (
-          <Card key={question.questionId} className="hover:shadow-md transition-shadow cursor-pointer">
+          <Card key={question.id} className="hover:shadow-md transition-shadow cursor-pointer">
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
                   <CardTitle className="text-lg leading-tight mb-3">
-                    {question.questionText}
+                    {question.content}
                   </CardTitle>
                   
                   <div className="flex items-center gap-3 text-sm text-gray-500 mb-3">
                     <div className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
-                      <span>{formatDate(question.askedDate)} at {formatTime(question.askedDate)}</span>
+                      <span>{formatDate(question.created_at)} at {formatTime(question.created_at)}</span>
                     </div>
                     
                     <div className="flex items-center gap-1">
@@ -153,14 +150,14 @@ export default function MyQuestions() {
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
-                    {question.questionCategory && (
-                      <Badge className={getCategoryColor(question.questionCategory)}>
-                        {question.questionCategory}
+                    {question.category && (
+                      <Badge className={getCategoryColor(question.category)}>
+                        {question.category}
                       </Badge>
                     )}
                     
-                    <Badge variant="outline" className={getUrgencyColor(question.urgency)}>
-                      {question.urgency.charAt(0).toUpperCase() + question.urgency.slice(1)} Priority
+                    <Badge variant="outline" className={question.is_resolved ? 'bg-green-100 text-green-800 border-green-200' : 'bg-yellow-100 text-yellow-800 border-yellow-200'}>
+                      {question.is_resolved ? 'Resolved' : 'Open'}
                     </Badge>
 
                     {question.tags.map(tag => (
@@ -173,7 +170,7 @@ export default function MyQuestions() {
 
                 <div className="flex flex-col items-end gap-2">
                   <div className="flex items-center gap-2">
-                    {question.isResolved ? (
+                    {question.is_resolved ? (
                       <CheckCircle className="w-5 h-5 text-green-500" />
                     ) : (
                       <Clock className="w-5 h-5 text-yellow-500" />
@@ -188,14 +185,12 @@ export default function MyQuestions() {
                 <div className="flex items-center gap-4 text-sm text-gray-600">
                   <div className="flex items-center gap-1">
                     <MessageCircle className="w-4 h-4" />
-                    <span>{question.answerCount} {question.answerCount === 1 ? 'Answer' : 'Answers'}</span>
+                    <span>{question.view_count} {question.view_count === 1 ? 'View' : 'Views'}</span>
                   </div>
                   
-                  {question.location && (
-                    <div className="flex items-center gap-1">
-                      <span>📍 {question.location}</span>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-1">
+                    <span>📱 {question.is_from_whatsapp ? 'WhatsApp' : 'Web'}</span>
+                  </div>
                 </div>
 
                 <Button variant="outline" size="sm">
