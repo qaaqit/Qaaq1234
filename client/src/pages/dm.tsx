@@ -201,10 +201,7 @@ export default function DMPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/chat/connections'] });
-      toast({
-        title: "User Blocked",
-        description: "This user has been blocked and their messages will not reach your inbox.",
-      });
+      // No toast notification - blocking should be silent
     },
     onError: (error: any) => {
       toast({
@@ -222,10 +219,7 @@ export default function DMPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/chat/connections'] });
-      toast({
-        title: "User Unblocked",
-        description: "This user has been unblocked and can now send you messages.",
-      });
+      // No toast notification - unblocking should also be silent
     },
     onError: (error: any) => {
       toast({
