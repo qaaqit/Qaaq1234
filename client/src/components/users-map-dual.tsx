@@ -814,9 +814,9 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
         <div 
           className="fixed z-[2000] pointer-events-none"
           style={{
-            left: `${hoverPosition.x + 10}px`,
+            left: `${hoverPosition.x}px`,
             top: `${hoverPosition.y - 10}px`,
-            transform: hoverPosition.x > window.innerWidth - 300 ? 'translateX(-100%)' : 'none'
+            transform: `translate(-50%, -100%) ${hoverPosition.x > window.innerWidth - 300 ? 'translateX(-50%)' : ''}`
           }}
         >
           <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-200 p-3 max-w-[280px]">
