@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Archive, AlertTriangle, Merge, Loader2, EyeOff, Eye } from 'lucide-react';
+import { Merge, Loader2, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import qaaqLogo from '@assets/qaaq-logo.png';
@@ -317,7 +317,7 @@ export function GlossaryPage() {
           </div>
 
           {/* Admin Controls */}
-          {user?.isAdmin && (
+          {(user as any)?.isAdmin && (
             <div className="flex gap-2">
               <Button
                 onClick={handleMergeDuplicates}
@@ -368,15 +368,31 @@ export function GlossaryPage() {
                         <DialogTrigger asChild>
                           <div 
                             ref={isLastEntry ? lastEntryElementRef : null}
-                            className="py-1 border-b border-gray-50 hover:bg-orange-25 hover:border-orange-100 transition-colors cursor-pointer group"
+                            className="py-1 border-b border-gray-50 hover:bg-orange-25 hover:border-orange-100 transition-colors cursor-pointer group relative"
                           >
-                            <div className="text-sm">
-                              <span className="font-medium text-gray-900 group-hover:text-orange-700 transition-colors">
-                                {extractTerm(entry.question).toUpperCase()}
-                              </span>
-                              <span className="text-gray-600 group-hover:text-gray-800 transition-colors ml-1">
-                                {truncateDefinition(entry.answer)}
-                              </span>
+                            <div className="text-sm flex items-center justify-between">
+                              <div className="flex-1 min-w-0">
+                                <span className="font-medium text-gray-900 group-hover:text-orange-700 transition-colors">
+                                  {extractTerm(entry.question).toUpperCase()}
+                                </span>
+                                <span className="text-gray-600 group-hover:text-gray-800 transition-colors ml-1">
+                                  {truncateDefinition(entry.answer)}
+                                </span>
+                              </div>
+                              
+                              {/* Admin Hide Icon */}
+                              {(user as any)?.isAdmin && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleHideDefinition(entry.id, extractTerm(entry.question));
+                                  }}
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity ml-2 p-1 rounded hover:bg-red-100 hover:text-red-600 text-gray-400"
+                                  title="Hide this definition"
+                                >
+                                  <EyeOff className="w-3 h-3" />
+                                </button>
+                              )}
                             </div>
                           </div>
                         </DialogTrigger>
@@ -420,35 +436,7 @@ export function GlossaryPage() {
                             </p>
                           </div>
 
-                          {/* Admin Actions */}
-                          {user?.isAdmin && (
-                            <div className="pt-3 border-t border-gray-200 space-y-2">
-                              <div className="flex gap-2">
-                                <Button
-                                  onClick={() => handleHideDefinition(entry.id, extractTerm(entry.question))}
-                                  variant="outline"
-                                  size="sm"
-                                  className="flex-1 border-orange-300 text-orange-600 hover:bg-orange-50 hover:border-orange-400"
-                                >
-                                  <EyeOff className="w-4 h-4 mr-2" />
-                                  Hide Definition
-                                </Button>
-                                <Button
-                                  onClick={() => handleArchiveEntry(entry.id, extractTerm(entry.question))}
-                                  variant="outline"
-                                  size="sm"
-                                  className="flex-1 border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
-                                >
-                                  <Archive className="w-4 h-4 mr-2" />
-                                  Archive
-                                </Button>
-                              </div>
-                              <p className="text-xs text-gray-500 mt-1 text-center">
-                                <AlertTriangle className="w-3 h-3 inline mr-1" />
-                                Hide removes from glossary • Archive marks as [ARCHIVED]
-                              </p>
-                            </div>
-                          )}
+
                         </div>
                       </DialogContent>
                     </Dialog>
