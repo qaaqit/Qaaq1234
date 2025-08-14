@@ -1319,8 +1319,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const searchTerm = query.trim().toLowerCase();
       console.log(`🔍 Sailor search for: "${searchTerm}"`);
+      
+      // Add comprehensive debugging for specific user searches
+      if (searchTerm === "9920027697") {
+        console.log(`🔍 Special search for user: ${searchTerm} - checking all fields`);
+      }
 
-      // First: Exact matches (case-insensitive)
+      // First: Exact matches (case-insensitive) - Enhanced to include ID and phone fields
       const exactMatches = await pool.query(`
         SELECT DISTINCT
           id,
@@ -1333,17 +1338,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
           port,
           country,
           city,
+          phone,
+          whatsapp_number,
+          user_id,
           COALESCE(question_count, 0) as question_count,
           COALESCE(answer_count, 0) as answer_count,
           user_type
         FROM users 
         WHERE 
+          LOWER(id::text) = $1 OR
+          LOWER(user_id::text) = $1 OR
           LOWER(full_name) = $1 OR
           LOWER(maritime_rank) = $1 OR  
           LOWER(last_company) = $1 OR
           LOWER(last_ship) = $1 OR
           LOWER(current_ship_name) = $1 OR
-          LOWER(email) = $1
+          LOWER(email) = $1 OR
+          LOWER(phone) = $1 OR
+          LOWER(whatsapp_number) = $1
         ORDER BY COALESCE(question_count, 0) DESC
         LIMIT 10
       `, [searchTerm]);
