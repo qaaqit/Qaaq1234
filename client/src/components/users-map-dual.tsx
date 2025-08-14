@@ -123,17 +123,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [hoveredUser, setHoveredUser] = useState<MapUser | null>(null);
   const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null);
-  const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
   const [selectedUser, setSelectedUser] = useState<MapUser | null>(null);
-
-  // Cleanup hover timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (hoverTimeout) {
-        clearTimeout(hoverTimeout);
-      }
-    };
-  }, [hoverTimeout]);
   const [openChatUserId, setOpenChatUserId] = useState<string | null>(null);
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
   const [searchPanelState, setSearchPanelState] = useState<'full' | 'half' | 'minimized'>('full');
@@ -819,90 +809,76 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
         </div>
       )}
 
-      {/* Flicker-Free Square Hover Card - Concentric with green dot */}
+      {/* Hover User Card */}
       {hoveredUser && hoverPosition && (
         <div 
           className="fixed z-[2000] pointer-events-auto"
           style={{
             left: `${hoverPosition.x}px`,
-            top: `${hoverPosition.y}px`,
-            transform: 'translate(-50%, -50%)',
+            top: `${hoverPosition.y - 10}px`,
+            transform: `translate(-50%, -100%) ${hoverPosition.x > window.innerWidth - 300 ? 'translateX(-50%)' : ''}`
+          }}
+          onMouseEnter={() => {
+            // Keep the card visible when hovering over it
+          }}
+          onMouseLeave={() => {
+            // Clear the hover when leaving the card
+            setHoveredUser(null);
+            setHoverPosition(null);
           }}
         >
-          {/* Square stable card with no transitions */}
           <div 
-            className="w-72 bg-white/95 rounded-lg shadow-xl border-2 border-green-500 cursor-pointer relative p-3"
+            className="bg-white/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-200 p-3 max-w-[280px] cursor-pointer hover:bg-white transition-colors"
             onClick={() => {
+              // Click the card to open DM
               if (hoveredUser && user) {
-                console.log('🔵 Flicker-free square card clicked:', hoveredUser.fullName, '- Opening DM');
+                console.log('🔵 Hover card clicked:', hoveredUser.fullName, '- Opening DM');
                 setLocation(`/dm?user=${encodeURIComponent(hoveredUser.id)}&name=${encodeURIComponent(hoveredUser.fullName || 'Maritime Professional')}`);
               }
             }}
-            onMouseEnter={() => {
-              // Clear any pending timeout when mouse enters
-              if (hoverTimeout) {
-                clearTimeout(hoverTimeout);
-                setHoverTimeout(null);
-              }
-            }}
-            onMouseLeave={() => {
-              // Set a stable timeout to clear hover
-              const timeout = setTimeout(() => {
-                setHoveredUser(null);
-                setHoverPosition(null);
-                setHoverTimeout(null);
-              }, 300); // Longer delay for stability
-              setHoverTimeout(timeout);
-            }}
           >
-            {/* Central green dot - matches the map marker */}
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-green-500 border-2 border-white shadow-md z-10"></div>
+            <h3 className="font-bold text-gray-900 mb-2 text-sm">
+              {hoveredUser.fullName} 
+              {hoveredUser.questionCount !== undefined && 
+                <span className="text-blue-600 font-medium ml-2">
+                  {hoveredUser.questionCount}Q{hoveredUser.answerCount || 0}A
+                </span>
+              }
+            </h3>
             
-            {/* User info layout */}
-            <div className="text-center space-y-1">
-              {/* Name */}
-              <h3 className="font-bold text-gray-900 text-xs leading-tight">
-                {hoveredUser.fullName}
-                {hoveredUser.questionCount !== undefined && 
-                  <span className="text-blue-600 font-medium ml-1 text-xs">
-                    {hoveredUser.questionCount}Q{hoveredUser.answerCount || 0}A
-                  </span>
-                }
-              </h3>
-              
-              {/* Rank */}
-              {hoveredUser.rank && (
-                <p className="text-orange-600 font-bold text-xs">
-                  {getRankAbbreviation(hoveredUser.rank)}
-                </p>
-              )}
-              
-              {/* Ship - Show current or last */}
-              {(hoveredUser.currentShipName || hoveredUser.shipName) && (
-                <p className="text-gray-600 text-xs">
-                  🚢 {hoveredUser.currentShipName || hoveredUser.shipName}
-                </p>
-              )}
-              
-              {/* Company */}
-              {hoveredUser.company && (
-                <p className="text-gray-500 text-xs">
-                  {hoveredUser.company}
-                </p>
-              )}
-              
-              {/* Port */}
-              {hoveredUser.port && (
-                <p className="text-gray-500 text-xs">
-                  📍 {hoveredUser.port}
-                </p>
-              )}
-              
-              {/* Click to chat hint */}
-              <p className="text-blue-600 text-xs font-medium mt-1">
-                💬 Click to chat
+            {/* Rank */}
+            {hoveredUser.rank && (
+              <p className="text-orange-600 font-bold text-xs mb-1">
+                Rank: {getRankAbbreviation(hoveredUser.rank)}
               </p>
-            </div>
+            )}
+            
+            {/* Ship - Show current or last */}
+            {(hoveredUser.currentShipName || hoveredUser.shipName) && (
+              <p className="text-gray-600 text-xs mb-1">
+                <strong>{hoveredUser.onboardStatus === 'ONBOARD' ? 'Current Ship:' : 'Last Ship:'}</strong> <em>{hoveredUser.currentShipName || hoveredUser.shipName}</em>
+              </p>
+            )}
+            
+            {/* Company */}
+            {hoveredUser.company && (
+              <p className="text-gray-600 text-xs mb-1">
+                <strong>Company:</strong> {hoveredUser.company}
+              </p>
+            )}
+            
+            {/* Port & Visit Window */}
+            {hoveredUser.port && (
+              <p className="text-gray-600 text-xs mb-1">
+                <strong>Port:</strong> {hoveredUser.port}
+                {hoveredUser.visitWindow && ` (${hoveredUser.visitWindow})`}
+              </p>
+            )}
+            
+            {/* Click to chat hint */}
+            <p className="text-blue-600 text-xs mt-2 font-medium">
+              Click here or marker to open chat →
+            </p>
           </div>
         </div>
       )}
