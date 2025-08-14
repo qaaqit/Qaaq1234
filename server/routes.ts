@@ -3454,25 +3454,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const sender = await storage.getUser(conn.senderId);
           const receiver = await storage.getUser(conn.receiverId);
           
-          // Get first message for pending connections to help receiver decide
+          // Get first message for pending connections and last message for all connections
           let firstMessage = null;
-          if (conn.status === 'pending') {
-            console.log(`🔍 Getting messages for pending connection ${conn.id} (${conn.senderId} -> ${conn.receiverId})`);
-            const messages = await storage.getChatMessages(conn.id);
-            console.log(`📝 Found ${messages.length} messages for connection ${conn.id}`);
-            if (messages.length > 0) {
+          let lastMessage = null;
+          
+          const messages = await storage.getChatMessages(conn.id);
+          console.log(`📝 Found ${messages.length} messages for connection ${conn.id}`);
+          
+          if (messages.length > 0) {
+            // Get first message for pending connections (to help receiver decide)
+            if (conn.status === 'pending') {
               firstMessage = messages[0].content;
               console.log(`💬 First message: "${firstMessage}"`);
-            } else {
-              console.log(`❓ No messages found for connection ${conn.id}, checking if message was created during connection...`);
             }
+            
+            // Get last message for all connections (to show in chat card)
+            lastMessage = messages[messages.length - 1].content;
+            console.log(`💬 Last message: "${lastMessage}"`);
           }
           
           return {
             ...conn,
             sender: sender ? { id: sender.id, fullName: sender.fullName, rank: sender.rank } : null,
             receiver: receiver ? { id: receiver.id, fullName: receiver.fullName, rank: receiver.rank } : null,
-            firstMessage: firstMessage
+            firstMessage: firstMessage,
+            lastMessage: lastMessage
           };
         })
       );

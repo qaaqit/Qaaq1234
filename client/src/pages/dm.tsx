@@ -651,7 +651,7 @@ export default function DMPage() {
                                     {otherUser.fullName}
                                   </h4>
                                   <div className="flex items-center mt-1">
-                                    {isAccepted && (
+                                    {(isAccepted || (connection.lastMessage && connection.lastMessage.trim())) && (
                                       <div className="text-blue-500 mr-2" title="Message delivered">
                                         <svg width="16" height="12" viewBox="0 0 16 12" className="inline">
                                           <path d="m0.229 6.427-1.14-1.14-1.415 1.414 2.555 2.555 7.074-7.074-1.414-1.414z" fill="currentColor"/>
@@ -660,12 +660,13 @@ export default function DMPage() {
                                       </div>
                                     )}
                                     <p className="text-sm text-gray-500 truncate">
-                                      {isAccepted && 'Connected - Click to chat'}
-                                      {isIncoming && connection.firstMessage && (
+                                      {connection.lastMessage ? (
+                                        <span className="italic">"{connection.lastMessage}"</span>
+                                      ) : connection.firstMessage ? (
                                         <span className="italic text-blue-600">"{connection.firstMessage}"</span>
+                                      ) : (
+                                        <span className="text-gray-400">No messages yet</span>
                                       )}
-                                      {isIncoming && !connection.firstMessage && 'Wants to connect with you'}
-                                      {isOutgoing && 'Connection request sent'}
                                     </p>
                                   </div>
                                 </div>
