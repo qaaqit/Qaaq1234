@@ -160,7 +160,7 @@ export default function ChatPage() {
               senderId: data.message.senderId,
               content: data.message.content,
               messageType: 'text',
-              sentAt: data.message.createdAt,
+              sentAt: data.message.createdAt || new Date().toISOString(),
               isRead: data.message.isRead
             }];
           });
@@ -362,7 +362,17 @@ export default function ChatPage() {
                     
                     <div className={`flex items-center justify-between mt-1.5 ${isMyMessage ? 'text-orange-100' : 'text-gray-500'}`}>
                       <p className="text-xs">
-                        {formatDistanceToNow(new Date(message.sentAt), { addSuffix: true })}
+                        {(() => {
+                          try {
+                            const date = new Date(message.sentAt);
+                            if (isNaN(date.getTime())) {
+                              return 'just now';
+                            }
+                            return formatDistanceToNow(date, { addSuffix: true });
+                          } catch (error) {
+                            return 'just now';
+                          }
+                        })()}
                       </p>
                       
                       {isMyMessage && (
