@@ -398,12 +398,9 @@ export default function DMPage() {
                             <Card 
                               key={userProfile.id} 
                               className="border border-gray-200 hover:shadow-lg transition-shadow cursor-pointer"
-                              onClick={() => {
-                                if (existingConnection && existingConnection.status === 'accepted') {
-                                  openChat(existingConnection);
-                                } else if (!existingConnection) {
-                                  handleConnectUser(userProfile.id);
-                                }
+                              onClick={async () => {
+                                // Navigate directly to 1v1 DM chat
+                                setLocation(`/chat?user=${userProfile.id}`);
                               }}
                             >
                               <CardContent className="p-4 text-[#191919]" data-testid="searchcard">

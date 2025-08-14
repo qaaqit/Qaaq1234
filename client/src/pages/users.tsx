@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { Search, Filter, MapPin, MessageCircle, Users, ChevronDown } from 'lucide-react';
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -98,6 +98,7 @@ const MARITIME_RANK_CATEGORIES = [
 
 export default function UsersPage() {
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRankCategory, setSelectedRankCategory] = useState('everyone');
   const [showRankDropdown, setShowRankDropdown] = useState(false);
@@ -307,7 +308,11 @@ export default function UsersPage() {
             {filteredUsers.map((user: any) => (
               <div
                 key={user.id}
-                className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow"
+                className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => {
+                  // Navigate directly to 1v1 DM chat  
+                  setLocation(`/chat?user=${user.id}`);
+                }}
               >
                 {/* Header with avatar and name */}
                 <div className="flex items-center space-x-3 mb-3">
