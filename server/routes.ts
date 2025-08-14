@@ -260,14 +260,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           let userResult;
           try {
             // First try with Replit user ID (exact match)
-            userResult = await pool.query('SELECT is_admin, fullname FROM users WHERE id = $1', [userId]);
+            userResult = await pool.query('SELECT is_admin, full_name FROM users WHERE id = $1', [userId]);
             
             // If not found, try with userId field (for legacy compatibility)
             if (userResult.rows.length === 0) {
-              userResult = await pool.query('SELECT is_admin, fullname FROM users WHERE "userId" = $1', [userId]);
+              userResult = await pool.query('SELECT is_admin, full_name FROM users WHERE "userId" = $1', [userId]);
             }
             
-            console.log('🔍 User lookup result:', userResult.rows[0] ? `Found: ${userResult.rows[0].fullname}` : 'Not found');
+            console.log('🔍 User lookup result:', userResult.rows[0] ? `Found: ${userResult.rows[0].full_name}` : 'Not found');
           } catch (dbError) {
             console.error('🚨 Database error during user lookup:', dbError);
             return res.status(500).json({ 
@@ -286,7 +286,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
           }
           
-          console.log('✅ Admin access confirmed for user:', user.fullname);
+          console.log('✅ Admin access confirmed for user:', user.full_name);
 
           // Update the question in the database to mark as hidden/shown
           const result = await pool.query(`
