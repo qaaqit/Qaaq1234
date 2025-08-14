@@ -1348,7 +1348,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         LIMIT 10
       `, [searchTerm]);
 
-      // Second: Fuzzy matches using ILIKE (partial matching)  
+      // Second: Enhanced fuzzy matches with similarity scoring
       const fuzzyMatches = await pool.query(`
         SELECT DISTINCT
           id,
@@ -1363,7 +1363,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           city,
           COALESCE(question_count, 0) as question_count,
           COALESCE(answer_count, 0) as answer_count,
-          user_type
+          user_type,
+          -- Calculate fuzzy match score for sorting
+          CASE 
+            WHEN LOWER(full_name) ILIKE $1 THEN 100
+            WHEN LOWER(maritime_rank) ILIKE $1 THEN 90
+            WHEN LOWER(last_company) ILIKE $1 THEN 80
+            WHEN LOWER(last_ship) ILIKE $1 THEN 70
+            WHEN LOWER(current_ship_name) ILIKE $1 THEN 70
+            WHEN LOWER(email) ILIKE $1 THEN 60
+            ELSE 50
+          END as match_score
         FROM users 
         WHERE 
           (LOWER(full_name) ILIKE $1 OR
@@ -1371,7 +1381,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
            LOWER(last_company) ILIKE $1 OR
            LOWER(last_ship) ILIKE $1 OR
            LOWER(current_ship_name) ILIKE $1 OR
-           LOWER(email) ILIKE $1) AND
+           LOWER(email) ILIKE $1 OR
+           LOWER(port) ILIKE $1 OR
+           LOWER(city) ILIKE $1 OR
+           LOWER(country) ILIKE $1) AND
           NOT (
             LOWER(full_name) = $2 OR
             LOWER(maritime_rank) = $2 OR  
@@ -1380,7 +1393,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             LOWER(current_ship_name) = $2 OR
             LOWER(email) = $2
           )
-        ORDER BY COALESCE(question_count, 0) DESC
+        ORDER BY match_score DESC, COALESCE(question_count, 0) DESC
         LIMIT 15
       `, [`%${searchTerm}%`, searchTerm]);
 
@@ -1414,7 +1427,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         answerCount: parseInt(user.answer_count) || 0,
         userType: user.user_type || 'Free',
         profilePictureUrl: '',
-        matchType: 'fuzzy'
+        matchType: 'fuzzy',
+        matchScore: parseInt(user.match_score) || 50
       }));
 
       const allResults = [...exactResults, ...fuzzyResults];
@@ -1431,7 +1445,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         total: limitedResults.length,
         exactMatches: exactResults.length,
         fuzzyMatches: fuzzyResults.length,
-        message: `Found ${limitedResults.length} sailors matching "${query}"`
+        searchTerm: query,
+        breakdown: {
+          exact: exactResults,
+          fuzzy: fuzzyResults
+        },
+        message: `Found ${exactResults.length} exact matches and ${fuzzyResults.length} similar matches for "${query}"`
       });
       
     } catch (error) {
