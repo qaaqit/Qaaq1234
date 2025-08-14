@@ -111,7 +111,9 @@ export default function DMPage() {
         // Use search API for comprehensive search including WhatsApp numbers and user IDs
         const response = await fetch(`/api/users/search?q=${encodeURIComponent(searchQuery)}&limit=100`);
         if (!response.ok) throw new Error('Failed to search users');
-        return response.json();
+        const data = await response.json();
+        // Handle different response formats from search API
+        return data.sailors || data.users || data || [];
       } else {
         // Use nearby API for default top Q users
         const response = await fetch('/api/users/nearby');
@@ -235,7 +237,7 @@ export default function DMPage() {
   }, [targetUserId, targetUser, connections]);
 
   // Users are already filtered by the backend search API when searchQuery is provided
-  const filteredUsers = nearbyUsers;
+  const filteredUsers = Array.isArray(nearbyUsers) ? nearbyUsers : [];
 
   // Return early if user is not authenticated (after all hooks)
   // But show loading if auth is still loading to prevent flash of login message
