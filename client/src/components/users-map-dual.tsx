@@ -145,17 +145,34 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
   const [searchQuery, setSearchQuery] = useState(''); // User search input
   const [shipSearchResult, setShipSearchResult] = useState<any>(null); // Ship search result
   const [searchType, setSearchType] = useState<'users' | 'ships'>('users'); // Search type
+  const [isRadarActive, setIsRadarActive] = useState(false); // Radar scanner state
+  const [radarScanAngle, setRadarScanAngle] = useState(0); // Radar animation angle
 
   // Stable zoom change handler to prevent map re-initialization
   const handleZoomChange = useCallback((zoom: number) => {
     setMapZoom(zoom);
   }, []);
 
+  // Radar scanner animation effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    
+    if (isRadarActive) {
+      interval = setInterval(() => {
+        setRadarScanAngle((prev) => (prev + 6) % 360); // Rotate 6 degrees every interval
+      }, 50); // Update every 50ms for smooth animation
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isRadarActive]);
+
 
 
   // Fetch users from nearby API for map display
-  const { data: nearbyUsersResponse, isLoading: isLoadingNearby } = useQuery<MapUser[]>({
-    queryKey: ['/api/users/nearby'],
+  const { data: nearbyUsersResponse, isLoading: isLoadingNearby, refetch: refetchNearby } = useQuery<MapUser[]>({
+    queryKey: ['/api/users/nearby', isRadarActive],
     queryFn: async () => {
       const response = await fetch('/api/users/nearby');
       if (!response.ok) throw new Error('Failed to fetch nearby users');
@@ -163,7 +180,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       return data;
     },
     staleTime: 60000, // Cache for 1 minute
-    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchInterval: isRadarActive ? 5000 : 30000, // Faster refresh when radar is active
   });
 
   // Fetch search results separately for search functionality
@@ -196,6 +213,21 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
   const handleSearchInput = (value: string) => {
     setSearchQuery(value);
   };
+
+  // Radar scanner toggle handler
+  const handleRadarToggle = useCallback(() => {
+    if (isRadarActive) {
+      // Deactivate radar
+      setIsRadarActive(false);
+      setRadarScanAngle(0);
+      console.log('🔴 Radar scanner deactivated');
+    } else {
+      // Activate radar and refresh data
+      setIsRadarActive(true);
+      refetchNearby();
+      console.log('🟢 Radar scanner activated - refreshing results');
+    }
+  }, [isRadarActive, refetchNearby]);
 
   // Calculate radius based on map zoom level
   const radiusKm = useMemo(() => {
@@ -925,6 +957,30 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
               </button>
             )}
           </div>
+          
+          {/* Radar Scanner Button */}
+          <button
+            onClick={handleRadarToggle}
+            className={`ml-2 p-2 rounded-full transition-all duration-300 ${
+              isRadarActive 
+                ? 'bg-green-500 text-white shadow-lg scale-110' 
+                : 'bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-600'
+            }`}
+            title={isRadarActive ? "Deactivate Radar Scanner" : "Activate Radar Scanner"}
+          >
+            <div 
+              className={`relative ${isRadarActive ? 'animate-pulse' : ''}`}
+              style={{
+                transform: isRadarActive ? `rotate(${radarScanAngle}deg)` : 'none',
+                transition: isRadarActive ? 'none' : 'transform 0.3s ease'
+              }}
+            >
+              <Radar size={16} />
+              {isRadarActive && (
+                <div className="absolute -inset-1 border border-green-300 rounded-full animate-ping opacity-25"></div>
+              )}
+            </div>
+          </button>
           
           {/* Crown Icon for Premium */}
           <div className="ml-2 text-yellow-500">
