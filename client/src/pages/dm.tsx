@@ -413,7 +413,8 @@ export default function DMPage() {
                                   openChat(existingConnection);
                                 } else if (!existingConnection) {
                                   console.log('🚀 Creating new connection');
-                                  await handleConnectUser(userProfile.id);
+                                  // Use mutation directly to ensure navigation happens after success
+                                  createConnectionMutation.mutate(userProfile.id);
                                 } else {
                                   console.log('⏳ Connection exists but not accepted yet:', existingConnection.status);
                                   // Still try to open for pending connections  
