@@ -165,9 +165,9 @@ export function GlossaryPage() {
       const response = await fetch(`/api/glossary/hide/${entryId}`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
           'Content-Type': 'application/json'
         },
+        credentials: 'include', // Include cookies for Replit Auth
         body: JSON.stringify({
           hidden: !currentlyHidden,
           hidden_reason: currentlyHidden ? 'Unhidden by admin' : 'Hidden as non-technical/irrelevant'

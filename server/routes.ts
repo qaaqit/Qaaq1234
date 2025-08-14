@@ -4427,11 +4427,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Hide/unhide glossary definition (admin only) - similar to question hiding
-  app.post('/api/glossary/hide/:id', authenticateToken, async (req, res) => {
+  app.post('/api/glossary/hide/:id', async (req, res) => {
     try {
       const definitionId = req.params.id;
       const { hidden, hidden_reason } = req.body;
-      const userId = req.userId;
+      // Check if user is authenticated and get user info
+      if (!req.session || !req.session.userId) {
+        return res.status(401).json({ 
+          success: false, 
+          message: 'Authentication required' 
+        });
+      }
+
+      const userId = req.session.userId;
       
       // Check if user is admin (using same pattern as question hiding)
       const userResult = await pool.query('SELECT is_admin FROM users WHERE id = $1', [userId]);
