@@ -216,6 +216,8 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
 
   // Radar scanner toggle handler - Momentary activation with auto-deactivate
   const handleRadarToggle = useCallback(() => {
+    console.log('🔍 Radar button clicked! Current state:', { isRadarActive, nearbyUsers: nearbyUsersResponse?.length });
+    
     if (isRadarActive) {
       // Clear/deactivate radar
       setIsRadarActive(false);
@@ -223,8 +225,13 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       console.log('🔴 Radar scanner cleared');
     } else {
       // Activate radar temporarily and refresh data
+      console.log('🟢 Activating radar scanner...');
       setIsRadarActive(true);
+      
+      // Trigger refresh
+      console.log('📡 Triggering refetch...');
       refetchNearby();
+      
       // Dispatch global radar refresh event for other components (like DM page)
       window.dispatchEvent(new Event('radar-refresh'));
       console.log('🟢 Radar scanner activated - refreshing results and notifying other components');
@@ -236,7 +243,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
         console.log('🔴 Radar scanner auto-deactivated');
       }, 3000);
     }
-  }, [isRadarActive, refetchNearby]);
+  }, [isRadarActive, refetchNearby, nearbyUsersResponse]);
 
   // Calculate radius based on map zoom level
   const radiusKm = useMemo(() => {
@@ -855,7 +862,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                       {/* Always show maritime rank prominently */}
                       {(user.maritimeRank || user.rank) && (
                         <div className="text-xs text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded">
-                          {user.maritimeRank || getRankAbbreviation(user.rank)}
+                          {user.maritimeRank || getRankAbbreviation(user.rank || '')}
                         </div>
                       )}
                     </div>
