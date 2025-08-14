@@ -3375,8 +3375,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/chat/accept/:connectionId', authenticateToken, async (req, res) => {
+  app.post('/api/chat/accept/:connectionId', async (req: any, res) => {
     try {
+      // Get user ID from session or token - check both Replit Auth and JWT
+      let userId: string | undefined;
+      
+      // Check for Replit Auth session first
+      if (req.user && req.user.claims && req.user.claims.sub) {
+        userId = req.user.claims.sub;
+      } else {
+        // Check for QAAQ token
+        const authHeader = req.headers.authorization;
+        const token = authHeader && authHeader.split(' ')[1];
+        if (token) {
+          try {
+            const decoded = jwt.verify(token, JWT_SECRET) as any;
+            userId = decoded.userId;
+          } catch (error) {
+            // Token invalid, but continue to check for session
+          }
+        }
+      }
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
       const { connectionId } = req.params;
       await storage.acceptChatConnection(connectionId);
       res.json({ message: "Connection accepted" });
@@ -3397,9 +3421,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/chat/connections', authenticateToken, async (req, res) => {
+  app.get('/api/chat/connections', async (req: any, res) => {
     try {
-      const userId = req.userId!;
+      // Get user ID from session or token - check both Replit Auth and JWT
+      let userId: string | undefined;
+      
+      // Check for Replit Auth session first
+      if (req.user && req.user.claims && req.user.claims.sub) {
+        userId = req.user.claims.sub;
+      } else {
+        // Check for QAAQ token
+        const authHeader = req.headers.authorization;
+        const token = authHeader && authHeader.split(' ')[1];
+        if (token) {
+          try {
+            const decoded = jwt.verify(token, JWT_SECRET) as any;
+            userId = decoded.userId;
+          } catch (error) {
+            // Token invalid, but continue to check for session
+          }
+        }
+      }
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
       const connections = await storage.getUserChatConnections(userId);
       
       // Enhance connections with user information
