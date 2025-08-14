@@ -499,7 +499,7 @@ export default function DMPage() {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2 text-green-700">
               <MessageCircle size={20} />
-              <span>Active Conversations ({connections.length})</span>
+              <span>Active DMs ({connections.length})</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
