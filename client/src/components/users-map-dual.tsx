@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useLocation, useRouter } from 'wouter';
+import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/useAuth';
 import MarineChatButton from './marine-chat-button';
 import SingleMessageChat from './single-message-chat';
@@ -119,14 +119,14 @@ interface UsersMapDualProps {
 
 export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: UsersMapDualProps) {
   const { user } = useAuth();
-  const { navigate } = useRouter();
+  const [location, setLocation] = useLocation();
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [hoveredUser, setHoveredUser] = useState<MapUser | null>(null);
   const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null);
   const [selectedUser, setSelectedUser] = useState<MapUser | null>(null);
   const [openChatUserId, setOpenChatUserId] = useState<string | null>(null);
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
-  const [searchPanelState, setSearchPanelState] = useState<'full' | 'half'>('full');
+  const [searchPanelState, setSearchPanelState] = useState<'full' | 'half' | 'minimized'>('full');
   const [selectedRankCategory, setSelectedRankCategory] = useState<string>('everyone');
   const [showRankDropdown, setShowRankDropdown] = useState(false);
 
@@ -420,7 +420,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  console.log('🗺️ UsersMapDual rendering with', filteredUsers.length, 'filtered users (online within', radiusKm, 'km). Admin mode:', !!user?.isAdmin);
+  console.log('🗺️ UsersMapDual rendering with', filteredUsers.length, 'filtered users (online within', radiusKm, 'km). Admin mode:', !!(user as any)?.isAdmin);
 
   return (
     <div className="w-full h-full overflow-hidden bg-gray-100 relative">
@@ -475,7 +475,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             if (clickedUser && user) {
               console.log('🔵 Map user clicked:', clickedUser.fullName, '- Opening DM');
               // Navigate to DM page with the clicked user
-              navigate(`/dm?user=${encodeURIComponent(clickedUser.id)}&name=${encodeURIComponent(clickedUser.fullName || 'Maritime Professional')}`);
+              setLocation(`/dm?user=${encodeURIComponent(clickedUser.id)}&name=${encodeURIComponent(clickedUser.fullName || 'Maritime Professional')}`);
             }
           }}
           onZoomChange={handleZoomChange}
