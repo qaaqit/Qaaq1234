@@ -311,9 +311,7 @@ export function GlossaryPage() {
             <Badge variant="secondary" className="bg-orange-100 text-orange-800 px-3 py-1">
               📚 {filteredEntries.length} Maritime Terms {pagination.hasMore ? `(of ${pagination.total})` : ''}
             </Badge>
-            <Badge variant="secondary" className="bg-blue-100 text-blue-800 px-3 py-1">
-              🔤 {alphabetLetters.length} Alphabetical Groups
-            </Badge>
+            
           </div>
 
           {/* Admin Controls */}
