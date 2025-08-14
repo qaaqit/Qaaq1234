@@ -1320,17 +1320,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const searchTerm = query.trim().toLowerCase();
       console.log(`🔍 Sailor search for: "${searchTerm}"`);
       
+      // Handle phone number formatting - create variations for better matching
+      const searchVariations = [
+        searchTerm,                           // Original search
+        `+${searchTerm}`,                     // With plus prefix
+        `+91${searchTerm}`,                   // With country code
+        searchTerm.replace(/^\+/, ''),        // Remove plus if present
+        searchTerm.replace(/^\+91/, '')       // Remove country code
+      ];
+      
       // Add comprehensive debugging for specific user searches
       if (searchTerm === "9920027697") {
         console.log(`🔍 Special search for user: ${searchTerm} - checking all fields`);
+        console.log(`🔍 Search variations: ${searchVariations.join(', ')}`);
       }
 
-      // First: Exact matches (case-insensitive) - Using actual database columns
+      // First: Exact matches (case-insensitive) - Including whatsapp_number
       const exactMatches = await pool.query(`
         SELECT DISTINCT
           id,
           full_name,
           email,
+          whatsapp_number,
           maritime_rank,
           last_company,
           last_ship,
@@ -1343,7 +1354,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           user_type
         FROM users 
         WHERE 
-          LOWER(id::text) = $1 OR
+          LOWER(id::text) = $1 OR LOWER(id::text) = $2 OR LOWER(id::text) = $3 OR
+          LOWER(whatsapp_number) = $1 OR LOWER(whatsapp_number) = $2 OR LOWER(whatsapp_number) = $3 OR
           LOWER(full_name) = $1 OR
           LOWER(maritime_rank) = $1 OR  
           LOWER(last_company) = $1 OR
@@ -1352,14 +1364,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           LOWER(email) = $1
         ORDER BY COALESCE(question_count, 0) DESC
         LIMIT 10
-      `, [searchTerm]);
+      `, [searchTerm, `+${searchTerm}`, `+91${searchTerm}`]);
 
-      // Second: Enhanced fuzzy matches with similarity scoring - Using actual database columns
+      // Second: Enhanced fuzzy matches with similarity scoring - Including whatsapp_number
       const fuzzyMatches = await pool.query(`
         SELECT DISTINCT
           id,
           full_name,
           email,
+          whatsapp_number,
           maritime_rank,
           last_company,
           last_ship,
@@ -1372,6 +1385,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           user_type,
           -- Calculate fuzzy match score for sorting
           CASE 
+            WHEN LOWER(whatsapp_number) ILIKE $1 THEN 115
             WHEN LOWER(id::text) ILIKE $1 THEN 110
             WHEN LOWER(full_name) ILIKE $1 THEN 100
             WHEN LOWER(maritime_rank) ILIKE $1 THEN 90
@@ -1386,28 +1400,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
           END as match_score
         FROM users 
         WHERE 
-          (LOWER(id::text) ILIKE $1 OR
-           LOWER(full_name) ILIKE $1 OR
-           LOWER(maritime_rank) ILIKE $1 OR  
-           LOWER(last_company) ILIKE $1 OR
-           LOWER(last_ship) ILIKE $1 OR
-           LOWER(current_ship_name) ILIKE $1 OR
-           LOWER(email) ILIKE $1 OR
-           LOWER(port) ILIKE $1 OR
-           LOWER(city) ILIKE $1 OR
-           LOWER(country) ILIKE $1) AND
+          (LOWER(whatsapp_number) ILIKE $1 OR LOWER(whatsapp_number) ILIKE $2 OR LOWER(whatsapp_number) ILIKE $3 OR
+           LOWER(id::text) ILIKE $1 OR LOWER(id::text) ILIKE $2 OR LOWER(id::text) ILIKE $3 OR
+           LOWER(full_name) ILIKE $4 OR
+           LOWER(maritime_rank) ILIKE $4 OR  
+           LOWER(last_company) ILIKE $4 OR
+           LOWER(last_ship) ILIKE $4 OR
+           LOWER(current_ship_name) ILIKE $4 OR
+           LOWER(email) ILIKE $4 OR
+           LOWER(port) ILIKE $4 OR
+           LOWER(city) ILIKE $4 OR
+           LOWER(country) ILIKE $4) AND
           NOT (
-            LOWER(id::text) = $2 OR
-            LOWER(full_name) = $2 OR
-            LOWER(maritime_rank) = $2 OR  
-            LOWER(last_company) = $2 OR
-            LOWER(last_ship) = $2 OR
-            LOWER(current_ship_name) = $2 OR
-            LOWER(email) = $2
+            LOWER(whatsapp_number) = $5 OR LOWER(whatsapp_number) = $6 OR LOWER(whatsapp_number) = $7 OR
+            LOWER(id::text) = $5 OR LOWER(id::text) = $6 OR LOWER(id::text) = $7 OR
+            LOWER(full_name) = $5 OR
+            LOWER(maritime_rank) = $5 OR  
+            LOWER(last_company) = $5 OR
+            LOWER(last_ship) = $5 OR
+            LOWER(current_ship_name) = $5 OR
+            LOWER(email) = $5
           )
         ORDER BY match_score DESC, COALESCE(question_count, 0) DESC
         LIMIT 15
-      `, [`%${searchTerm}%`, searchTerm]);
+      `, [`%+${searchTerm}%`, `%+91${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`, searchTerm, `+${searchTerm}`, `+91${searchTerm}`]);
 
       // Combine results: exact matches first, then fuzzy matches
       const exactResults = exactMatches.rows.map(user => ({
@@ -1457,9 +1473,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Try a broader search to see if this user exists at all
         try {
           const debugSearch = await pool.query(`
-            SELECT COUNT(*) as total_count FROM users WHERE id::text LIKE '%9920027697%' OR phone LIKE '%9920027697%' OR whatsapp_number LIKE '%9920027697%'
+            SELECT COUNT(*) as total_count FROM users WHERE id::text LIKE '%9920027697%' OR whatsapp_number LIKE '%9920027697%' OR full_name LIKE '%9920027697%'
           `);
           console.log(`🔍 Debug count for 9920027697: ${debugSearch.rows[0]?.total_count || 0} potential matches`);
+          
+          // Also show sample data
+          const sampleData = await pool.query(`
+            SELECT id, full_name, whatsapp_number FROM users WHERE whatsapp_number LIKE '%9920027697%' OR id::text LIKE '%9920027697%' LIMIT 3
+          `);
+          console.log(`🔍 Sample matches:`, sampleData.rows);
         } catch (debugError) {
           console.log(`❌ Debug search failed:`, debugError);
         }
