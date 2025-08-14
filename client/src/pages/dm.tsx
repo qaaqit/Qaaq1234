@@ -104,7 +104,7 @@ export default function DMPage() {
   // }, []); // Completely disabled
 
   // Fetch users - use search API when searching, nearby API otherwise
-  const { data: nearbyUsers = [], isLoading: usersLoading } = useQuery<UserWithDistance[]>({
+  const { data: nearbyUsers = [], isLoading: usersLoading, refetch: refetchNearbyUsers } = useQuery<UserWithDistance[]>({
     queryKey: searchQuery.trim() ? ['/api/users/search', searchQuery] : ['/api/users/nearby'],
     queryFn: async () => {
       if (searchQuery.trim()) {
@@ -121,8 +121,26 @@ export default function DMPage() {
         return response.json();
       }
     },
-    refetchInterval: searchQuery.trim() ? false : 30000, // Don't auto-refresh search results, but refresh nearby users
+    refetchInterval: false, // No auto-refresh - only manual refresh when user clicks radar
+    enabled: !!user, // Only fetch when user is authenticated
   });
+
+  // Global radar refresh handler - exposed for external components
+  useEffect(() => {
+    const handleRadarRefresh = () => {
+      if (!searchQuery.trim()) {
+        refetchNearbyUsers();
+        console.log('🟢 Manual radar refresh triggered - refreshing nearby users');
+      }
+    };
+
+    // Listen for radar refresh events
+    window.addEventListener('radar-refresh', handleRadarRefresh);
+    
+    return () => {
+      window.removeEventListener('radar-refresh', handleRadarRefresh);
+    };
+  }, [refetchNearbyUsers, searchQuery]);
 
   // Create chat connection mutation
   const createConnectionMutation = useMutation({

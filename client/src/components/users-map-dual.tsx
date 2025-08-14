@@ -180,7 +180,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       return data;
     },
     staleTime: 60000, // Cache for 1 minute
-    refetchInterval: 30000, // Standard refresh interval
+    refetchInterval: false, // Removed auto-refresh - only manual refresh when radar clicked
   });
 
   // Fetch search results separately for search functionality
@@ -225,7 +225,9 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       // Activate radar and refresh data
       setIsRadarActive(true);
       refetchNearby();
-      console.log('🟢 Radar scanner activated - refreshing results');
+      // Dispatch global radar refresh event for other components (like DM page)
+      window.dispatchEvent(new Event('radar-refresh'));
+      console.log('🟢 Radar scanner activated - refreshing results and notifying other components');
     }
   }, [isRadarActive, refetchNearby]);
 
