@@ -38,7 +38,7 @@ export default function DMPage() {
   const [selectedConnection, setSelectedConnection] = useState<ExtendedChatConnection | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
 
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
@@ -247,7 +247,20 @@ export default function DMPage() {
   const filteredUsers = nearbyUsers;
 
   // Return early if user is not authenticated (after all hooks)
+  // But show loading if auth is still loading to prevent flash of login message
   if (!user) {
+    if (isLoading) {
+      return (
+        <div className="min-h-screen bg-gradient-to-b from-slate-50 to-blue-50 p-6">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-2 border-navy border-t-transparent" />
+            </div>
+          </div>
+        </div>
+      );
+    }
+    
     return (
       <div className="min-h-screen bg-gradient-to-b from-slate-50 to-blue-50 p-6">
         <div className="max-w-4xl mx-auto">
