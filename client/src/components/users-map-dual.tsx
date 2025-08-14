@@ -819,7 +819,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
         </div>
       )}
 
-      {/* Flicker-Free Circular Hover Card - Concentric with green dot */}
+      {/* Flicker-Free Square Hover Card - Concentric with green dot */}
       {hoveredUser && hoverPosition && (
         <div 
           className="fixed z-[2000] pointer-events-auto"
@@ -829,12 +829,12 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             transform: 'translate(-50%, -50%)',
           }}
         >
-          {/* Large stable circular area with no transitions */}
+          {/* Square stable card with no transitions */}
           <div 
-            className="w-64 h-64 rounded-full bg-white/95 shadow-xl border-4 border-green-500 cursor-pointer flex items-center justify-center relative"
+            className="w-80 bg-white/95 rounded-lg shadow-xl border-2 border-green-500 cursor-pointer relative p-4"
             onClick={() => {
               if (hoveredUser && user) {
-                console.log('🔵 Flicker-free circular card clicked:', hoveredUser.fullName, '- Opening DM');
+                console.log('🔵 Flicker-free square card clicked:', hoveredUser.fullName, '- Opening DM');
                 setLocation(`/dm?user=${encodeURIComponent(hoveredUser.id)}&name=${encodeURIComponent(hoveredUser.fullName || 'Maritime Professional')}`);
               }
             }}
@@ -856,50 +856,53 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             }}
           >
             {/* Central green dot - matches the map marker */}
-            <div className="w-8 h-8 rounded-full bg-green-500 border-3 border-white shadow-lg absolute z-10"></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-green-500 border-2 border-white shadow-md z-10"></div>
             
-            {/* User info layout for larger circle */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
-              {/* Name above center */}
-              <div className="absolute top-6 left-1/2 transform -translate-x-1/2 w-56">
-                <h3 className="font-bold text-gray-900 text-lg leading-tight truncate">
-                  {hoveredUser.fullName}
-                </h3>
-              </div>
-              
-              {/* Rank below name */}
-              {hoveredUser.rank && (
-                <div className="absolute top-12 left-1/2 transform -translate-x-1/2 w-56">
-                  <p className="text-orange-600 font-bold text-sm">
-                    {getRankAbbreviation(hoveredUser.rank)}
-                  </p>
-                </div>
-              )}
-              
-              {/* Q&A Count below center */}
-              {hoveredUser.questionCount !== undefined && (
-                <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2">
-                  <span className="text-blue-600 font-medium text-sm">
-                    {hoveredUser.questionCount}Q
+            {/* User info layout */}
+            <div className="text-center space-y-2">
+              {/* Name */}
+              <h3 className="font-bold text-gray-900 text-sm leading-tight">
+                {hoveredUser.fullName}
+                {hoveredUser.questionCount !== undefined && 
+                  <span className="text-blue-600 font-medium ml-2">
+                    {hoveredUser.questionCount}Q{hoveredUser.answerCount || 0}A
                   </span>
-                </div>
-              )}
+                }
+              </h3>
               
-              {/* Ship info if available */}
-              {(hoveredUser.currentShipName || hoveredUser.shipName) && (
-                <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 w-56">
-                  <p className="text-gray-600 text-sm truncate">
-                    🚢 {hoveredUser.currentShipName || hoveredUser.shipName}
-                  </p>
-                </div>
-              )}
-              
-              {/* Click hint at bottom */}
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-56">
-                <p className="text-blue-600 text-sm font-medium">
-                  Click to open chat
+              {/* Rank */}
+              {hoveredUser.rank && (
+                <p className="text-orange-600 font-bold text-xs">
+                  Rank: {getRankAbbreviation(hoveredUser.rank)}
                 </p>
-              </div>
+              )}
+              
+              {/* Ship - Show current or last */}
+              {(hoveredUser.currentShipName || hoveredUser.shipName) && (
+                <p className="text-gray-600 text-xs">
+                  <strong>{hoveredUser.onboardStatus === 'ONBOARD' ? 'Current Ship:' : 'Last Ship:'}</strong> <em>{hoveredUser.currentShipName || hoveredUser.shipName}</em>
+                </p>
+              )}
+              
+              {/* Company */}
+              {hoveredUser.company && (
+                <p className="text-gray-600 text-xs">
+                  <strong>Company:</strong> {hoveredUser.company}
+                </p>
+              )}
+              
+              {/* Port & Visit Window */}
+              {hoveredUser.port && (
+                <p className="text-gray-600 text-xs">
+                  <strong>Port:</strong> {hoveredUser.port}
+                  {hoveredUser.visitWindow && ` (${hoveredUser.visitWindow})`}
+                </p>
+              )}
+              
+              {/* Click to chat hint */}
+              <p className="text-blue-600 text-xs font-medium mt-2">
+                Click here or marker to open chat →
+              </p>
             </div>
           </div>
         </div>
