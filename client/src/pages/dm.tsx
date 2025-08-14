@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 
-import { MessageCircle, Anchor, Navigation, Search, MapPin, Clock, User, Ship, Award } from "lucide-react";
+import { MessageCircle, Anchor, Navigation, Search, MapPin, Clock, User, Ship, Award, ChevronDown, Ban } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
@@ -39,6 +40,7 @@ export default function DMPage() {
   const [selectedConnection, setSelectedConnection] = useState<ExtendedChatConnection | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("users");
+  const [isBlockedDropdownOpen, setIsBlockedDropdownOpen] = useState(false);
 
   const { user, isLoading } = useAuth();
   const { toast } = useToast();
@@ -346,8 +348,11 @@ export default function DMPage() {
   const sentRequests = sortedConnections.filter(conn => 
     conn.status === 'pending' && conn.senderId === user.id
   );
+  const blockedConnections = sortedConnections.filter(conn => 
+    conn.status === 'blocked' && conn.receiverId === user.id
+  );
 
-  // Create combined list for display: Most recent connections first, then Top Q Professionals
+  // Create combined list for display: Most recent connections first, then Top Q Professionals (excluding blocked)
   const allChatCards = [
     // Most recent pending connections first (they should appear at top)
     ...pendingConnections.map(conn => ({ type: 'connection' as const, data: conn })),
@@ -601,17 +606,86 @@ export default function DMPage() {
               <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
                 <div className="p-4 border-b border-gray-100">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
-                      <MessageCircle size={20} className="text-orange-600" />
-                      <span>Active DMs</span>
-                    </h2>
+                    <div className="flex items-center space-x-3">
+                      <h2 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+                        <DropdownMenu open={isBlockedDropdownOpen} onOpenChange={setIsBlockedDropdownOpen}>
+                          <DropdownMenuTrigger asChild>
+                            <button className="flex items-center space-x-1 hover:bg-orange-50 p-1 rounded transition-colors">
+                              <MessageCircle size={20} className="text-orange-600" />
+                              <ChevronDown size={14} className="text-orange-600" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent className="w-80 max-h-96 overflow-y-auto">
+                            <div className="p-2">
+                              <div className="flex items-center space-x-2 mb-3 px-2">
+                                <Ban size={16} className="text-red-500" />
+                                <span className="font-medium text-gray-700">Blocked Connections ({blockedConnections.length})</span>
+                              </div>
+                              {blockedConnections.length === 0 ? (
+                                <div className="text-center py-4 text-gray-500 text-sm">
+                                  No blocked connections
+                                </div>
+                              ) : (
+                                <div className="space-y-2">
+                                  {blockedConnections.map((connection) => {
+                                    const otherUser = getOtherUser(connection);
+                                    if (!otherUser) return null;
+                                    
+                                    return (
+                                      <div key={`blocked-${connection.id}`} className="flex items-center space-x-3 p-2 rounded hover:bg-gray-50">
+                                        <Avatar className="w-8 h-8">
+                                          {(otherUser.whatsAppProfilePictureUrl || otherUser.profilePictureUrl) && (
+                                            <img 
+                                              src={otherUser.whatsAppProfilePictureUrl || otherUser.profilePictureUrl} 
+                                              alt={`${otherUser.whatsAppDisplayName || otherUser.fullName}'s profile`}
+                                              className="w-full h-full rounded-full object-cover"
+                                              onError={(e) => {
+                                                const target = e.target as HTMLImageElement;
+                                                target.style.display = 'none';
+                                              }}
+                                            />
+                                          )}
+                                          <AvatarFallback className="bg-red-100 text-red-600 font-bold text-xs">
+                                            {getInitials(otherUser.whatsAppDisplayName || otherUser.fullName)}
+                                          </AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-sm font-medium text-gray-900 truncate">
+                                            {otherUser.whatsAppDisplayName || otherUser.fullName}
+                                          </p>
+                                          <p className="text-xs text-gray-500 truncate">
+                                            {otherUser.maritimeRank || otherUser.rank || "Maritime Professional"}
+                                          </p>
+                                        </div>
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="text-xs border-gray-300 text-gray-600 hover:bg-gray-50 px-2 py-1"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            unblockConnectionMutation.mutate(connection.id);
+                                          }}
+                                        >
+                                          Unblock
+                                        </Button>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                        <span>Active DMs</span>
+                      </h2>
+                    </div>
                     <span className="text-sm text-gray-500">
-                      {connections.length} chats • {filteredUsers.length} professionals
+                      {activeConnections.length + pendingConnections.length + sentRequests.length} chats • {filteredUsers.length} professionals
                     </span>
                   </div>
                 </div>
                 
-                {connections.length === 0 && filteredUsers.length === 0 ? (
+                {(activeConnections.length + pendingConnections.length + sentRequests.length) === 0 && filteredUsers.length === 0 ? (
                   <div className="text-center py-12">
                     <div className="mx-auto w-16 h-16 bg-gradient-to-r from-green-100 to-green-200 rounded-full flex items-center justify-center mb-4">
                       <MessageCircle size={32} className="text-green-600" />
