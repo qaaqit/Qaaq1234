@@ -15,6 +15,7 @@ import Admin from "@/pages/admin";
 import BotRulesAdmin from "@/pages/admin/bot-rules";
 import ChatPage from "@/pages/chat";
 import DMPage from "@/pages/dm";
+import ChatConversationPage from "@/pages/ChatPage";
 import UserProfile from "@/pages/user-profile";
 import Profile from "@/pages/profile";
 import MyQuestions from "@/pages/my-questions";
@@ -136,7 +137,7 @@ function Router() {
           <Route path="/qbot" component={() => currentUser ? <QBOTPage user={currentUser} /> : <Login onSuccess={setUser} />} />
           <Route path="/post" component={() => currentUser ? <Post user={currentUser} /> : <Login onSuccess={setUser} />} />
           <Route path="/chat" component={() => <ChatPage />} />
-          <Route path="/chat/:userId" component={() => <DMPage />} />
+          <Route path="/chat/:connectionId" component={() => <ChatConversationPage />} />
           <Route path="/dm" component={() => <DMPage />} />
           <Route path="/qhf" component={() => <DMPage />} />
           <Route path="/user/:userId" component={() => <UserProfile />} />

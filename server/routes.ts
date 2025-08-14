@@ -3294,6 +3294,166 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get specific chat connection by ID (for chat page)
+  app.get('/api/chat/connection/:connectionId', async (req: any, res) => {
+    try {
+      const { connectionId } = req.params;
+      
+      // Get user ID from session or token - check both Replit Auth and JWT
+      let userId: string | undefined;
+      
+      // Check for Replit Auth session first
+      if (req.user && req.user.claims && req.user.claims.sub) {
+        userId = req.user.claims.sub;
+      } else {
+        // Check for QAAQ token
+        const authHeader = req.headers.authorization;
+        const token = authHeader && authHeader.split(' ')[1];
+        if (token) {
+          try {
+            const decoded = jwt.verify(token, JWT_SECRET) as any;
+            userId = decoded.userId;
+          } catch (error) {
+            // Token invalid, but continue to check for session
+          }
+        }
+      }
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      // Get the connection
+      const result = await pool.query(`
+        SELECT cc.*, 
+               sender.full_name as sender_name, sender.whatsapp_profile_picture_url as sender_profile,
+               receiver.full_name as receiver_name, receiver.whatsapp_profile_picture_url as receiver_profile
+        FROM chat_connections cc
+        LEFT JOIN users sender ON cc.sender_id = sender.id
+        LEFT JOIN users receiver ON cc.receiver_id = receiver.id
+        WHERE cc.id = $1 AND (cc.sender_id = $2 OR cc.receiver_id = $2)
+      `, [connectionId, userId]);
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ message: 'Connection not found' });
+      }
+
+      const connection = result.rows[0];
+      res.json({
+        id: connection.id,
+        senderId: connection.sender_id,
+        receiverId: connection.receiver_id,
+        status: connection.status,
+        createdAt: connection.created_at,
+        senderName: connection.sender_name,
+        receiverName: connection.receiver_name,
+        senderProfile: connection.sender_profile,
+        receiverProfile: connection.receiver_profile
+      });
+    } catch (error) {
+      console.error('Error fetching chat connection:', error);
+      res.status(500).json({ message: 'Failed to get chat connection' });
+    }
+  });
+
+  // Get messages for a chat connection
+  app.get('/api/chat/messages/:connectionId', async (req: any, res) => {
+    try {
+      const { connectionId } = req.params;
+      
+      // Get user ID from session or token - check both Replit Auth and JWT
+      let userId: string | undefined;
+      
+      // Check for Replit Auth session first
+      if (req.user && req.user.claims && req.user.claims.sub) {
+        userId = req.user.claims.sub;
+      } else {
+        // Check for QAAQ token
+        const authHeader = req.headers.authorization;
+        const token = authHeader && authHeader.split(' ')[1];
+        if (token) {
+          try {
+            const decoded = jwt.verify(token, JWT_SECRET) as any;
+            userId = decoded.userId;
+          } catch (error) {
+            // Token invalid, but continue to check for session
+          }
+        }
+      }
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      // Verify user has access to this connection
+      const connectionCheck = await pool.query(`
+        SELECT id FROM chat_connections 
+        WHERE id = $1 AND (sender_id = $2 OR receiver_id = $2)
+      `, [connectionId, userId]);
+
+      if (connectionCheck.rows.length === 0) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const messages = await storage.getChatMessages(connectionId);
+      res.json(messages);
+    } catch (error) {
+      console.error('Error fetching chat messages:', error);
+      res.status(500).json({ message: 'Failed to get chat messages' });
+    }
+  });
+
+  // Send a message (for chat page)
+  app.post('/api/chat/send', async (req: any, res) => {
+    try {
+      const { connectionId, content } = req.body;
+      
+      // Get user ID from session or token - check both Replit Auth and JWT
+      let userId: string | undefined;
+      
+      // Check for Replit Auth session first
+      if (req.user && req.user.claims && req.user.claims.sub) {
+        userId = req.user.claims.sub;
+      } else {
+        // Check for QAAQ token
+        const authHeader = req.headers.authorization;
+        const token = authHeader && authHeader.split(' ')[1];
+        if (token) {
+          try {
+            const decoded = jwt.verify(token, JWT_SECRET) as any;
+            userId = decoded.userId;
+          } catch (error) {
+            // Token invalid, but continue to check for session
+          }
+        }
+      }
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+      
+      if (!connectionId || !content) {
+        return res.status(400).json({ message: 'Connection ID and content are required' });
+      }
+
+      // Verify user has access to this connection
+      const connectionCheck = await pool.query(`
+        SELECT id FROM chat_connections 
+        WHERE id = $1 AND (sender_id = $2 OR receiver_id = $2)
+      `, [connectionId, userId]);
+
+      if (connectionCheck.rows.length === 0) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const message = await storage.sendMessage(connectionId, userId, content);
+      res.json({ success: true, message });
+    } catch (error) {
+      console.error('Error sending message:', error);
+      res.status(500).json({ message: 'Failed to send message' });
+    }
+  });
+
   app.post('/api/chat/message', authenticateToken, async (req, res) => {
     try {
       const { connectionId, message } = insertChatMessageSchema.parse(req.body);

@@ -193,8 +193,8 @@ export default function DMPage() {
   };
 
   const openChat = (connection: ExtendedChatConnection) => {
-    setSelectedConnection(connection);
-    setIsChatOpen(true);
+    // Navigate to dedicated chat page
+    setLocation(`/chat/${connection.id}`);
   };
 
   const handleConnectUser = async (userId: string) => {
