@@ -173,7 +173,7 @@ export default function ChatPage() {
 
   if (connectionLoading || !connection) {
     return (
-      <div className="flex flex-col h-screen bg-gray-50">
+      <div className="flex flex-col h-[90vh] bg-gray-50">
         <div className="p-4 text-center">
           <p>Loading chat...</p>
         </div>
@@ -182,7 +182,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-orange-50">
+    <div className="flex flex-col h-[90vh] bg-gradient-to-br from-slate-50 via-blue-50 to-orange-50">
       {/* Compact Chat Header - Optimized for Mobile */}
       <div className="bg-gradient-to-r from-orange-500 via-red-500 to-orange-600 shadow-lg relative overflow-hidden flex-shrink-0">
         <div className="absolute inset-0 bg-black/10"></div>
