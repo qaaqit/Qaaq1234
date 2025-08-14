@@ -1330,9 +1330,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ];
       
       // Add comprehensive debugging for specific user searches
-      if (searchTerm === "9920027697") {
+      if (searchTerm === "9920027697" || searchTerm === "99200") {
         console.log(`🔍 Special search for user: ${searchTerm} - checking all fields`);
         console.log(`🔍 Search variations: ${searchVariations.join(', ')}`);
+      }
+
+      // Enhanced debugging for fuzzy search
+      if (searchTerm === "99200" || searchTerm === "whatsapp") {
+        console.log(`🧪 Testing fuzzy search patterns for "${searchTerm}":`);
+        console.log(`   Pattern 1: %${searchTerm}% (should match containing)`);
+        console.log(`   Pattern 2: %+${searchTerm}% (should match +prefix)`);
+        console.log(`   Pattern 3: %+91${searchTerm}% (should match +91prefix)`);
       }
 
       // First: Exact matches (case-insensitive) - Including whatsapp_number
@@ -1366,7 +1374,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         LIMIT 10
       `, [searchTerm, `+${searchTerm}`, `+91${searchTerm}`]);
 
-      // Second: Enhanced fuzzy matches with similarity scoring - Including whatsapp_number
+      // Second: Simplified fuzzy matches - test basic functionality first
       const fuzzyMatches = await pool.query(`
         SELECT DISTINCT
           id,
@@ -1383,47 +1391,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
           COALESCE(question_count, 0) as question_count,
           COALESCE(answer_count, 0) as answer_count,
           user_type,
-          -- Calculate fuzzy match score for sorting
-          CASE 
-            WHEN LOWER(whatsapp_number) ILIKE $1 THEN 115
-            WHEN LOWER(id::text) ILIKE $1 THEN 110
-            WHEN LOWER(full_name) ILIKE $1 THEN 100
-            WHEN LOWER(maritime_rank) ILIKE $1 THEN 90
-            WHEN LOWER(last_company) ILIKE $1 THEN 80
-            WHEN LOWER(last_ship) ILIKE $1 THEN 70
-            WHEN LOWER(current_ship_name) ILIKE $1 THEN 70
-            WHEN LOWER(email) ILIKE $1 THEN 60
-            WHEN LOWER(port) ILIKE $1 THEN 55
-            WHEN LOWER(city) ILIKE $1 THEN 55
-            WHEN LOWER(country) ILIKE $1 THEN 55
-            ELSE 50
-          END as match_score
+          100 as match_score
         FROM users 
         WHERE 
-          (LOWER(whatsapp_number) ILIKE $1 OR LOWER(whatsapp_number) ILIKE $2 OR LOWER(whatsapp_number) ILIKE $3 OR
-           LOWER(id::text) ILIKE $1 OR LOWER(id::text) ILIKE $2 OR LOWER(id::text) ILIKE $3 OR
-           LOWER(full_name) ILIKE $4 OR
-           LOWER(maritime_rank) ILIKE $4 OR  
-           LOWER(last_company) ILIKE $4 OR
-           LOWER(last_ship) ILIKE $4 OR
-           LOWER(current_ship_name) ILIKE $4 OR
-           LOWER(email) ILIKE $4 OR
-           LOWER(port) ILIKE $4 OR
-           LOWER(city) ILIKE $4 OR
-           LOWER(country) ILIKE $4) AND
-          NOT (
-            LOWER(whatsapp_number) = $5 OR LOWER(whatsapp_number) = $6 OR LOWER(whatsapp_number) = $7 OR
-            LOWER(id::text) = $5 OR LOWER(id::text) = $6 OR LOWER(id::text) = $7 OR
-            LOWER(full_name) = $5 OR
-            LOWER(maritime_rank) = $5 OR  
-            LOWER(last_company) = $5 OR
-            LOWER(last_ship) = $5 OR
-            LOWER(current_ship_name) = $5 OR
-            LOWER(email) = $5
-          )
-        ORDER BY match_score DESC, COALESCE(question_count, 0) DESC
+          LOWER(whatsapp_number) ILIKE $1
+        ORDER BY COALESCE(question_count, 0) DESC
         LIMIT 15
-      `, [`%+${searchTerm}%`, `%+91${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`, searchTerm, `+${searchTerm}`, `+91${searchTerm}`]);
+      `, [`%${searchTerm}%`]);
+
+      // Debug fuzzy search for specific terms
+      if (searchTerm === "99200") {
+        console.log(`🔧 Fuzzy search patterns: %${searchTerm}%, %+${searchTerm}%, %+91${searchTerm}%`);
+        console.log(`🔧 Fuzzy matches found: ${fuzzyMatches.rows.length}`);
+        if (fuzzyMatches.rows.length > 0) {
+          console.log(`🔧 Sample fuzzy match: ${fuzzyMatches.rows[0].full_name} - ${fuzzyMatches.rows[0].whatsapp_number}`);
+        }
+
+        // Direct test for the pattern that should work
+        const testQuery = await pool.query(`
+          SELECT id, full_name, whatsapp_number 
+          FROM users 
+          WHERE whatsapp_number ILIKE '%99200%' 
+          LIMIT 3
+        `);
+        console.log(`🧪 Direct test query results: ${testQuery.rows.length} matches`);
+        testQuery.rows.forEach((row, i) => {
+          console.log(`   ${i+1}. ${row.full_name} - ${row.whatsapp_number} (ID: ${row.id})`);
+        });
+      }
 
       // Combine results: exact matches first, then fuzzy matches
       const exactResults = exactMatches.rows.map(user => ({
