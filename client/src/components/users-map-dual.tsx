@@ -216,6 +216,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
 
   // Radar scanner toggle handler - Toggle rotation and green dots visibility
   const handleRadarToggle = useCallback(() => {
+    console.log('🎯 Radar button clicked - current state:', isRadarActive);
     if (isRadarActive) {
       // Stop rotation and clear green dots
       setIsRadarActive(false);
