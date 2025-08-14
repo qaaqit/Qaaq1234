@@ -3449,15 +3449,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const connections = await storage.getUserChatConnections(userId);
       
-      // Enhance connections with user information
+      // Enhance connections with user information and first message for pending connections
       const enhancedConnections = await Promise.all(
         connections.map(async (conn) => {
           const sender = await storage.getUser(conn.senderId);
           const receiver = await storage.getUser(conn.receiverId);
+          
+          // Get first message for pending connections to help receiver decide
+          let firstMessage = null;
+          if (conn.status === 'pending') {
+            const messages = await storage.getChatMessages(conn.id);
+            if (messages.length > 0) {
+              firstMessage = messages[0].content;
+            }
+          }
+          
           return {
             ...conn,
             sender: sender ? { id: sender.id, fullName: sender.fullName, rank: sender.rank } : null,
-            receiver: receiver ? { id: receiver.id, fullName: receiver.fullName, rank: receiver.rank } : null
+            receiver: receiver ? { id: receiver.id, fullName: receiver.fullName, rank: receiver.rank } : null,
+            firstMessage: firstMessage
           };
         })
       );

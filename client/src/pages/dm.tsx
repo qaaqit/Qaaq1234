@@ -25,6 +25,7 @@ import { websocketService } from "@/services/websocket";
 interface ExtendedChatConnection extends ChatConnection {
   sender: { id: string; fullName: string; rank?: string };
   receiver: { id: string; fullName: string; rank?: string };
+  firstMessage?: string;
 }
 
 interface UserWithDistance extends UserType {
@@ -652,7 +653,8 @@ export default function DMPage() {
                                     )}
                                     <p className="text-sm text-gray-500 truncate">
                                       {isAccepted && 'Connected - Click to chat'}
-                                      {isIncoming && 'Wants to connect with you'}
+                                      {isIncoming && connection.firstMessage && `"${connection.firstMessage}"`}
+                                      {isIncoming && !connection.firstMessage && 'Wants to connect with you'}
                                       {isOutgoing && 'Connection request sent'}
                                     </p>
                                   </div>
