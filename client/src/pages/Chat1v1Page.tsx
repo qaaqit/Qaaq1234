@@ -3,6 +3,7 @@ import { useRoute, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { 
   ArrowLeft, 
@@ -17,7 +18,8 @@ import {
   CheckCheck,
   Clock,
   MapPin,
-  Anchor
+  Anchor,
+  Ban
 } from "lucide-react";
 import { getStoredUser } from "@/lib/auth";
 import { apiRequest } from "@/lib/queryClient";
@@ -137,6 +139,25 @@ export default function ChatPage() {
         variant: "destructive",
       });
     },
+  });
+
+  // Block connection mutation
+  const blockConnectionMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest(`/api/chat/block/${connectionId}`, 'POST');
+    },
+    onSuccess: () => {
+      // Navigate back to DM page after blocking
+      setLocation("/dm");
+      queryClient.invalidateQueries({ queryKey: ['/api/chat/connections'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to block connection. Please try again.",
+        variant: "destructive",
+      });
+    }
   });
 
   // Set up WebSocket connection for real-time messaging
@@ -303,14 +324,28 @@ export default function ChatPage() {
             >
               <Video className="w-4 h-4" />
             </Button>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-white hover:bg-white/20 p-2 rounded-full"
-              data-testid="button-more-options"
-            >
-              <MoreHorizontal className="w-4 h-4" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-white hover:bg-white/20 p-2 rounded-full"
+                  data-testid="button-more-options"
+                >
+                  <MoreHorizontal className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem 
+                  onClick={() => blockConnectionMutation.mutate()}
+                  className="text-red-600 focus:text-red-700 cursor-pointer"
+                  data-testid="menu-block-user"
+                >
+                  <Ban className="w-4 h-4 mr-2" />
+                  Block User
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
