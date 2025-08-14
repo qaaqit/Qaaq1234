@@ -127,17 +127,43 @@ export default function DMPage() {
   // Create chat connection mutation
   const createConnectionMutation = useMutation({
     mutationFn: async (receiverId: string) => {
-      return apiRequest('/api/chat/connect', 'POST', { receiverId });
+      // Use fetch directly with credentials for Replit Auth
+      console.log('📤 Making connection request to:', '/api/chat/connect', 'with receiverId:', receiverId);
+      const response = await fetch('/api/chat/connect', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Include session cookies for Replit Auth
+        body: JSON.stringify({ receiverId }),
+      });
+      
+      console.log('📥 Response status:', response.status, 'OK:', response.ok);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Connection request failed:', response.status, errorText);
+        throw new Error(`Failed to create connection: ${response.status} - ${errorText}`);
+      }
+      
+      const result = await response.json();
+      console.log('📋 Parsed response:', result);
+      return result;
     },
     onSuccess: (data) => {
       console.log('✅ Connection mutation success:', data);
       queryClient.invalidateQueries({ queryKey: ['/api/chat/connections'] });
       // Navigate directly to dedicated chat page instead of showing toast
-      if (data.success && data.connection) {
+      if (data && data.success && data.connection && data.connection.id) {
         console.log('🚀 Navigating to chat:', `/chat/${data.connection.id}`);
         setLocation(`/chat/${data.connection.id}`);
       } else {
-        console.error('❌ Connection data missing:', data);
+        console.error('❌ Connection data missing or malformed:', data);
+        // Still try to navigate if we have any connection data
+        if (data && data.connection && data.connection.id) {
+          console.log('🔧 Attempting navigation anyway with connection ID:', data.connection.id);
+          setLocation(`/chat/${data.connection.id}`);
+        }
       }
     },
     onError: (error: any) => {
