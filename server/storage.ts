@@ -461,7 +461,7 @@ export class DatabaseStorage implements IStorage {
 
   async sendMessage(connectionId: string, senderId: string, message: string): Promise<ChatMessage> {
     try {
-      // Match the actual database schema with user_id and message columns
+      // Match the actual database schema with user_id (using id column) and message columns
       const result = await pool.query(`
         INSERT INTO chat_messages (
           connection_id, 
