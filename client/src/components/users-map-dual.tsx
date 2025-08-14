@@ -507,12 +507,36 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             setHoveredUser(user);
             setHoverPosition(position || null);
           }}
-          onUserClick={(userId) => {
+          onUserClick={async (userId) => {
             const clickedUser = filteredUsers.find(u => u.id === userId);
             if (clickedUser && user) {
-              console.log('🔵 Map user clicked:', clickedUser.fullName, '- Opening DM');
-              // Navigate to DM page with the clicked user
-              setLocation(`/dm?user=${encodeURIComponent(clickedUser.id)}&name=${encodeURIComponent(clickedUser.fullName || 'Maritime Professional')}`);
+              console.log('🔵 Map user clicked:', clickedUser.fullName, '- Opening chat');
+              try {
+                // Create or get existing chat connection
+                const response = await fetch('/api/chat/connect', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ receiverId: clickedUser.id }),
+                });
+                
+                if (response.ok) {
+                  const result = await response.json();
+                  if (result.success && result.connection) {
+                    // Navigate directly to the dedicated chat page
+                    setLocation(`/chat/${result.connection.id}`);
+                  }
+                } else {
+                  console.error('Failed to create connection:', response.statusText);
+                  // Fallback to DM page
+                  setLocation(`/dm?user=${encodeURIComponent(clickedUser.id)}`);
+                }
+              } catch (error) {
+                console.error('Error creating connection:', error);
+                // Fallback to DM page
+                setLocation(`/dm?user=${encodeURIComponent(clickedUser.id)}`);
+              }
             }
           }}
           onZoomChange={handleZoomChange}
@@ -758,9 +782,30 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                   className={`bg-white rounded-lg border border-gray-200 p-2 sm:p-3 hover:bg-gray-50 hover:shadow-md transition-all cursor-pointer touch-manipulation ${
                     searchQuery.trim() ? 'w-full' : 'min-w-[140px] sm:min-w-[160px] flex-shrink-0'
                   }`}
-                  onClick={() => {
-                    // Navigate to Q13 active chat page with selected user
-                    setLocation(`/dm?user=${encodeURIComponent(user.id)}`);
+                  onClick={async () => {
+                    // Create chat connection and navigate to dedicated chat page
+                    try {
+                      const response = await fetch('/api/chat/connect', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ receiverId: user.id }),
+                      });
+                      
+                      if (response.ok) {
+                        const result = await response.json();
+                        if (result.success && result.connection) {
+                          setLocation(`/chat/${result.connection.id}`);
+                        }
+                      } else {
+                        // Fallback to DM page
+                        setLocation(`/dm?user=${encodeURIComponent(user.id)}`);
+                      }
+                    } catch (error) {
+                      console.error('Error creating connection:', error);
+                      setLocation(`/dm?user=${encodeURIComponent(user.id)}`);
+                    }
                   }}
                   title="Click to open chat"
                 >
