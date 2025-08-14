@@ -69,20 +69,9 @@ html, body, #root {
   /* Theme colors */
   --red-primary: hsl(0, 80%, 50%);
   --orange-primary: hsl(25, 90%, 55%);
-  --orange-500: hsl(25, 85%, 50%);
-  --orange-600: hsl(25, 85%, 45%);
   --golden-primary: hsl(45, 100%, 51%);
   --black-primary: hsl(0, 0%, 10%);
   --white-primary: hsl(0, 0%, 100%);
-  
-  /* QH13 WhatsApp-like styling */
-  --qh13-green: hsl(142, 70%, 49%);
-  --qh13-orange: hsl(25, 95%, 53%);
-  --qh13-bg: hsl(210, 25%, 98%);
-  --qh13-chat-bg: hsl(0, 0%, 100%);
-  --qh13-border: hsl(214, 15%, 91%);
-  --qh13-text: hsl(0, 0%, 20%);
-  --qh13-muted: hsl(0, 0%, 60%);
 }
 
 /* Float animation for logo */
