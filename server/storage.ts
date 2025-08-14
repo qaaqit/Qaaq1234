@@ -214,15 +214,21 @@ export class DatabaseStorage implements IStorage {
 
   async getUsersWithLocation(): Promise<User[]> {
     try {
+      console.log('🔍 Accessing parent QAAQ database for ALL users with location data');
+      
       // Use direct SQL to avoid schema issues with parent QAAQ database
+      // REMOVED LIMIT 50 to access all 884+ users from parent database
       const result = await pool.query(`
         SELECT * FROM users 
         WHERE (latitude IS NOT NULL AND longitude IS NOT NULL)
            OR (current_latitude IS NOT NULL AND current_longitude IS NOT NULL)
            OR (device_latitude IS NOT NULL AND device_longitude IS NOT NULL)
+           OR (city IS NOT NULL AND city != '')
+           OR (port IS NOT NULL AND port != '')
         ORDER BY last_updated DESC
-        LIMIT 50
       `);
+      
+      console.log(`📊 Retrieved ${result.rows.length} users from parent QAAQ database (was limited to 50, now accessing full database)`);
       
       return result.rows.map(row => this.convertDbUserToAppUser(row));
     } catch (error) {
