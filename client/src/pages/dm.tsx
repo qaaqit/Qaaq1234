@@ -698,11 +698,6 @@ export default function DMPage() {
                         <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
                           {userProfile.questionCount || 0}Q
                         </Badge>
-                        {userProfile.rank && (
-                          <Badge variant="outline" className="text-xs">
-                            {userProfile.rank}
-                          </Badge>
-                        )}
                         {userProfile.maritime_rank && (
                           <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
                             {userProfile.maritime_rank}
