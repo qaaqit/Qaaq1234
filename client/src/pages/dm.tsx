@@ -406,7 +406,7 @@ export default function DMPage() {
                                 }
                               }}
                             >
-                              <CardContent className="p-4 text-[#f4c211]">
+                              <CardContent className="p-4 text-[#ecb60a]">
                                 <div className="flex items-start space-x-3 mb-3">
                                   <div className="relative">
                                     <Avatar className="w-12 h-12 border-2 border-ocean-teal/30">
