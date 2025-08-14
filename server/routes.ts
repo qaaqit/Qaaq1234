@@ -1325,7 +1325,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`🔍 Special search for user: ${searchTerm} - checking all fields`);
       }
 
-      // First: Exact matches (case-insensitive) - Enhanced to include ID and phone fields
+      // First: Exact matches (case-insensitive) - Using actual database columns
       const exactMatches = await pool.query(`
         SELECT DISTINCT
           id,
@@ -1338,29 +1338,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           port,
           country,
           city,
-          phone,
-          whatsapp_number,
-          user_id,
           COALESCE(question_count, 0) as question_count,
           COALESCE(answer_count, 0) as answer_count,
           user_type
         FROM users 
         WHERE 
           LOWER(id::text) = $1 OR
-          LOWER(user_id::text) = $1 OR
           LOWER(full_name) = $1 OR
           LOWER(maritime_rank) = $1 OR  
           LOWER(last_company) = $1 OR
           LOWER(last_ship) = $1 OR
           LOWER(current_ship_name) = $1 OR
-          LOWER(email) = $1 OR
-          LOWER(phone) = $1 OR
-          LOWER(whatsapp_number) = $1
+          LOWER(email) = $1
         ORDER BY COALESCE(question_count, 0) DESC
         LIMIT 10
       `, [searchTerm]);
 
-      // Second: Enhanced fuzzy matches with similarity scoring
+      // Second: Enhanced fuzzy matches with similarity scoring - Using actual database columns
       const fuzzyMatches = await pool.query(`
         SELECT DISTINCT
           id,
@@ -1378,17 +1372,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           user_type,
           -- Calculate fuzzy match score for sorting
           CASE 
+            WHEN LOWER(id::text) ILIKE $1 THEN 110
             WHEN LOWER(full_name) ILIKE $1 THEN 100
             WHEN LOWER(maritime_rank) ILIKE $1 THEN 90
             WHEN LOWER(last_company) ILIKE $1 THEN 80
             WHEN LOWER(last_ship) ILIKE $1 THEN 70
             WHEN LOWER(current_ship_name) ILIKE $1 THEN 70
             WHEN LOWER(email) ILIKE $1 THEN 60
+            WHEN LOWER(port) ILIKE $1 THEN 55
+            WHEN LOWER(city) ILIKE $1 THEN 55
+            WHEN LOWER(country) ILIKE $1 THEN 55
             ELSE 50
           END as match_score
         FROM users 
         WHERE 
-          (LOWER(full_name) ILIKE $1 OR
+          (LOWER(id::text) ILIKE $1 OR
+           LOWER(full_name) ILIKE $1 OR
            LOWER(maritime_rank) ILIKE $1 OR  
            LOWER(last_company) ILIKE $1 OR
            LOWER(last_ship) ILIKE $1 OR
@@ -1398,6 +1397,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
            LOWER(city) ILIKE $1 OR
            LOWER(country) ILIKE $1) AND
           NOT (
+            LOWER(id::text) = $2 OR
             LOWER(full_name) = $2 OR
             LOWER(maritime_rank) = $2 OR  
             LOWER(last_company) = $2 OR
@@ -1449,6 +1449,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`✅ Found ${exactResults.length} exact matches, ${fuzzyResults.length} fuzzy matches`);
       if (limitedResults.length > 0) {
         console.log(`Sample result: ${limitedResults[0].fullName} - ${limitedResults[0].maritimeRank}`);
+      }
+      
+      // Special debugging for the problem user
+      if (searchTerm === "9920027697" && limitedResults.length === 0) {
+        console.log(`❌ User ${searchTerm} not found. Checking database for potential issues...`);
+        // Try a broader search to see if this user exists at all
+        try {
+          const debugSearch = await pool.query(`
+            SELECT COUNT(*) as total_count FROM users WHERE id::text LIKE '%9920027697%' OR phone LIKE '%9920027697%' OR whatsapp_number LIKE '%9920027697%'
+          `);
+          console.log(`🔍 Debug count for 9920027697: ${debugSearch.rows[0]?.total_count || 0} potential matches`);
+        } catch (debugError) {
+          console.log(`❌ Debug search failed:`, debugError);
+        }
       }
 
       res.json({
