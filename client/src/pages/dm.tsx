@@ -294,7 +294,7 @@ export default function DMPage() {
     );
   }
 
-  // Separate connections by status
+  // Separate connections by status - already ordered by recent activity from backend
   const activeConnections = connections.filter(conn => conn.status === 'accepted');
   const pendingConnections = connections.filter(conn => 
     conn.status === 'pending' && conn.receiverId === user.id
@@ -302,6 +302,22 @@ export default function DMPage() {
   const sentRequests = connections.filter(conn => 
     conn.status === 'pending' && conn.senderId === user.id
   );
+
+  // Create combined list for display: Recent chats first, then Top Q Professionals
+  const allChatCards = [
+    // Active conversations (already ordered by recent activity from backend)
+    ...activeConnections.map(conn => ({ type: 'connection' as const, data: conn })),
+    // Pending connections
+    ...pendingConnections.map(conn => ({ type: 'connection' as const, data: conn })),
+    ...sentRequests.map(conn => ({ type: 'connection' as const, data: conn })),
+    // Top Q Professionals (excluding users already in active conversations)
+    ...filteredUsers
+      .filter(topQUser => !activeConnections.some(conn => {
+        const otherUser = getOtherUser(conn);
+        return otherUser?.id === topQUser.id;
+      }))
+      .map(topQUser => ({ type: 'top_q' as const, data: topQUser }))
+  ];
 
   if (connectionsLoading || usersLoading) {
     return (
@@ -562,21 +578,23 @@ export default function DMPage() {
                   </div>
                 ) : (
                   <div className="divide-y divide-gray-100 max-h-104 overflow-y-auto">
-                    {/* Active DM Connections First */}
-                    {connections.map((connection) => {
-                      const otherUser = getOtherUser(connection);
-                      if (!otherUser) return null;
-                      
-                      const isAccepted = connection.status === 'accepted';
-                      const isPending = connection.status === 'pending';
-                      const isIncoming = isPending && connection.receiverId === user?.id;
-                      const isOutgoing = isPending && connection.senderId === user?.id;
-                      
-                      return (
-                        <div 
-                          key={`connection-${connection.id}`} 
-                          className="p-4 hover:bg-gray-50 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-gray-50"
-                          tabIndex={0}
+                    {/* Unified Chat Cards: Recent DMs First, Then Top Q Professionals */}
+                    {!searchQuery.trim() && allChatCards.map((cardItem, index) => {
+                      if (cardItem.type === 'connection') {
+                        const connection = cardItem.data;
+                        const otherUser = getOtherUser(connection);
+                        if (!otherUser) return null;
+                        
+                        const isAccepted = connection.status === 'accepted';
+                        const isPending = connection.status === 'pending';
+                        const isIncoming = isPending && connection.receiverId === user?.id;
+                        const isOutgoing = isPending && connection.senderId === user?.id;
+                        
+                        return (
+                          <div 
+                            key={`connection-${connection.id}`} 
+                            className="p-4 hover:bg-gray-50 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-gray-50"
+                            tabIndex={0}
                           onClick={() => {
                             if (isAccepted) {
                               openChat(connection);
@@ -676,100 +694,95 @@ export default function DMPage() {
                           </div>
                         </div>
                       );
-                    })}
-
-                    {/* Top Q Professionals - Show only when NOT searching */}
-                    {!searchQuery.trim() && filteredUsers.map((userProfile) => {
-                      const existingConnection = connections.find(conn => 
-                        (conn.senderId === user?.id && conn.receiverId === userProfile.id) ||
-                        (conn.receiverId === user?.id && conn.senderId === userProfile.id)
-                      );
-
-                      // Don't show if user already has an active connection
-                      if (existingConnection) return null;
-
-                      return (
-                        <div 
-                          key={`professional-${userProfile.id}`} 
-                          className="p-4 hover:bg-orange-50 transition-colors cursor-pointer border-l-4 border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:bg-orange-50"
-                          tabIndex={0}
-                          onClick={async () => {
-                            try {
-                              const response = await fetch('/api/chat/connect', {
-                                method: 'POST',
-                                headers: {
-                                  'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify({ receiverId: userProfile.id }),
-                              });
-                              
-                              if (response.ok) {
-                                const result = await response.json();
-                                if (result.success && result.connection) {
-                                  setLocation(`/chat/${result.connection.id}`);
+                      
+                      } else if (cardItem.type === 'top_q') {
+                        // Top Q Professional Card
+                        const userProfile = cardItem.data;
+                        
+                        return (
+                          <div 
+                            key={`professional-${userProfile.id}`} 
+                            className="p-4 hover:bg-orange-50 transition-colors cursor-pointer border-l-4 border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:bg-orange-50"
+                            tabIndex={0}
+                            onClick={async () => {
+                              try {
+                                const response = await fetch('/api/chat/connect', {
+                                  method: 'POST',
+                                  headers: {
+                                    'Content-Type': 'application/json',
+                                  },
+                                  body: JSON.stringify({ receiverId: userProfile.id }),
+                                });
+                                
+                                if (response.ok) {
+                                  const result = await response.json();
+                                  if (result.success && result.connection) {
+                                    setLocation(`/chat/${result.connection.id}`);
+                                  }
+                                } else {
+                                  console.error('Failed to create connection:', response.statusText);
                                 }
-                              } else {
-                                console.error('Failed to create connection:', response.statusText);
+                              } catch (error) {
+                                console.error('Error creating connection:', error);
                               }
-                            } catch (error) {
-                              console.error('Error creating connection:', error);
-                            }
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              e.currentTarget.click();
-                            }
-                          }}
-                        >
-                  <div className="flex items-center space-x-3">
-                    <div className="relative">
-                      <Avatar className="w-12 h-12">
-                        {(userProfile.whatsAppProfilePictureUrl || userProfile.profilePictureUrl) && (
-                          <img 
-                            src={userProfile.whatsAppProfilePictureUrl || userProfile.profilePictureUrl} 
-                            alt={`${userProfile.whatsAppDisplayName || userProfile.fullName}'s profile`}
-                            className="w-full h-full rounded-full object-cover"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
                             }}
-                          />
-                        )}
-                        <AvatarFallback className="bg-orange-100 text-orange-800 font-bold">
-                          {getInitials(userProfile.whatsAppDisplayName || userProfile.fullName)}
-                        </AvatarFallback>
-                      </Avatar>
-                      {/* Q Professional Badge */}
-                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-orange-500 rounded-full border-2 border-white flex items-center justify-center">
-                        <Award size={8} className="text-white" />
-                      </div>
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-gray-900 truncate">
-                        {userProfile.fullName}
-                      </h4>
-                      <div className="flex items-center mt-1 space-x-2">
-                        <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
-                          {userProfile.questionCount || 0}Q
-                        </Badge>
-                        {userProfile.maritime_rank && (
-                          <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                            {userProfile.maritime_rank}
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-500 truncate mt-1">
-                        {userProfile.company && `${userProfile.company} • `}
-                        {userProfile.shipName && `${userProfile.shipName} • `}
-                        {userProfile.distance !== undefined && `${formatDistance(userProfile.distance)} away`}
-                      </p>
-
-                    </div>
-                  </div>
-                </div>
-              );
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                e.currentTarget.click();
+                              }
+                            }}
+                          >
+                            <div className="flex items-center space-x-3">
+                              <div className="relative">
+                                <Avatar className="w-12 h-12">
+                                  {(userProfile.whatsAppProfilePictureUrl || userProfile.profilePictureUrl) && (
+                                    <img 
+                                      src={userProfile.whatsAppProfilePictureUrl || userProfile.profilePictureUrl} 
+                                      alt={`${userProfile.whatsAppDisplayName || userProfile.fullName}'s profile`}
+                                      className="w-full h-full rounded-full object-cover"
+                                      onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.style.display = 'none';
+                                      }}
+                                    />
+                                  )}
+                                  <AvatarFallback className="bg-orange-100 text-orange-800 font-bold">
+                                    {getInitials(userProfile.whatsAppDisplayName || userProfile.fullName)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                {/* Q Professional Badge */}
+                                <div className="absolute -top-1 -right-1 w-4 h-4 bg-orange-500 rounded-full border-2 border-white flex items-center justify-center">
+                                  <Award size={8} className="text-white" />
+                                </div>
+                              </div>
+                              
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-medium text-gray-900 truncate">
+                                  {userProfile.fullName}
+                                </h4>
+                                <div className="flex items-center mt-1 space-x-2">
+                                  <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
+                                    {userProfile.questionCount || 0}Q
+                                  </Badge>
+                                  {userProfile.maritime_rank && (
+                                    <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                                      {userProfile.maritime_rank}
+                                    </Badge>
+                                  )}
+                                </div>
+                                <p className="text-sm text-gray-500 truncate mt-1">
+                                  {userProfile.company && `${userProfile.company} • `}
+                                  {userProfile.shipName && `${userProfile.shipName} • `}
+                                  {userProfile.distance !== undefined && `${formatDistance(userProfile.distance)} away`}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+                      
+                      return null;
                     })}
                   </div>
                 )}

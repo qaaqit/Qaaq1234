@@ -425,17 +425,38 @@ export class DatabaseStorage implements IStorage {
 
   async getUserChatConnections(userId: string): Promise<ChatConnection[]> {
     try {
-      const connections = await db
-        .select()
-        .from(chatConnections)
-        .where(
-          or(
-            eq(chatConnections.senderId, userId),
-            eq(chatConnections.receiverId, userId)
-          )
-        )
-        .orderBy(sql`${chatConnections.createdAt} DESC`);
-      return connections;
+      // Use SQL query to get connections ordered by latest message activity
+      const result = await pool.query(`
+        SELECT DISTINCT
+          cc.id,
+          cc.sender_id,
+          cc.receiver_id,
+          cc.status,
+          cc.created_at,
+          cc.accepted_at,
+          cc.updated_at,
+          COALESCE(latest_msg.latest_message_at, cc.created_at) as last_activity
+        FROM chat_connections cc
+        LEFT JOIN (
+          SELECT 
+            connection_id,
+            MAX(created_at) as latest_message_at
+          FROM chat_messages 
+          GROUP BY connection_id
+        ) latest_msg ON cc.id = latest_msg.connection_id
+        WHERE cc.sender_id = $1 OR cc.receiver_id = $1
+        ORDER BY last_activity DESC
+      `, [userId]);
+
+      return result.rows.map(row => ({
+        id: row.id,
+        senderId: row.sender_id,
+        receiverId: row.receiver_id,
+        status: row.status,
+        createdAt: row.created_at,
+        acceptedAt: row.accepted_at,
+        updatedAt: row.updated_at
+      }));
     } catch (error) {
       console.error('Error getting user chat connections:', error);
       throw error;
