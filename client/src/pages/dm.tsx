@@ -696,7 +696,7 @@ export default function DMPage() {
                       </h4>
                       <div className="flex items-center mt-1 space-x-2">
                         <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
-                          {userProfile.questionCount || 0}Q Professional
+                          {userProfile.questionCount || 0}Q
                         </Badge>
                         {userProfile.rank && (
                           <Badge variant="outline" className="text-xs">
