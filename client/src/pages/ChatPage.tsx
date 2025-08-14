@@ -183,25 +183,25 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-orange-50">
-      {/* Enhanced Chat Header with Maritime Theme */}
-      <div className="bg-gradient-to-r from-orange-500 via-red-500 to-orange-600 shadow-lg relative overflow-hidden">
+      {/* Compact Chat Header - Optimized for Mobile */}
+      <div className="bg-gradient-to-r from-orange-500 via-red-500 to-orange-600 shadow-lg relative overflow-hidden flex-shrink-0">
         <div className="absolute inset-0 bg-black/10"></div>
         
-        <div className="relative z-10 px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+        <div className="relative z-10 px-3 py-2 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
             <Button
               variant="ghost"
               size="sm"
               onClick={handleBackClick}
-              className="text-white hover:bg-white/20 p-2"
+              className="text-white hover:bg-white/20 p-1.5"
               data-testid="button-back-to-dm"
             >
-              <ArrowLeft className="w-6 h-6" />
+              <ArrowLeft className="w-5 h-5" />
             </Button>
             
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
               <div className="relative">
-                <Avatar className="w-12 h-12 border-2 border-white/30">
+                <Avatar className="w-10 h-10 border-2 border-white/30">
                   {otherUser?.profile ? (
                     <AvatarImage 
                       src={otherUser.profile} 
@@ -209,74 +209,74 @@ export default function ChatPage() {
                       className="object-cover"
                     />
                   ) : null}
-                  <AvatarFallback className="bg-white/20 text-white font-bold text-lg">
+                  <AvatarFallback className="bg-white/20 text-white font-bold text-sm">
                     {otherUser?.name?.charAt(0)?.toUpperCase() || '?'}
                   </AvatarFallback>
                 </Avatar>
                 
                 {/* Online Status Indicator */}
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white flex items-center justify-center">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border border-white">
+                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse m-0.5"></div>
                 </div>
               </div>
               
-              <div>
-                <h2 className="font-bold text-white text-lg" data-testid="text-chat-user-name">
+              <div className="min-w-0">
+                <h2 className="font-bold text-white text-base truncate" data-testid="text-chat-user-name">
                   {otherUser?.name || 'Unknown User'}
                 </h2>
                 <div className="flex items-center space-x-1">
-                  <div className="w-2 h-2 bg-green-300 rounded-full animate-pulse"></div>
-                  <p className="text-white/90 text-sm font-medium">Online now</p>
+                  <div className="w-1.5 h-1.5 bg-green-300 rounded-full animate-pulse"></div>
+                  <p className="text-white/90 text-xs font-medium">Online</p>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center space-x-0.5">
             <Button 
               variant="ghost" 
               size="sm" 
-              className="text-white hover:bg-white/20 p-3 rounded-full"
+              className="text-white hover:bg-white/20 p-2 rounded-full"
               data-testid="button-voice-call"
             >
-              <Phone className="w-5 h-5" />
+              <Phone className="w-4 h-4" />
             </Button>
             <Button 
               variant="ghost" 
               size="sm" 
-              className="text-white hover:bg-white/20 p-3 rounded-full"
+              className="text-white hover:bg-white/20 p-2 rounded-full"
               data-testid="button-video-call"
             >
-              <Video className="w-5 h-5" />
+              <Video className="w-4 h-4" />
             </Button>
             <Button 
               variant="ghost" 
               size="sm" 
-              className="text-white hover:bg-white/20 p-3 rounded-full"
+              className="text-white hover:bg-white/20 p-2 rounded-full"
               data-testid="button-more-options"
             >
-              <MoreHorizontal className="w-5 h-5" />
+              <MoreHorizontal className="w-4 h-4" />
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Enhanced Messages Area */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-gradient-to-b from-blue-50/30 to-orange-50/30">
+      {/* Compact Messages Area - Mobile Optimized */}
+      <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-gradient-to-b from-blue-50/30 to-orange-50/30 min-h-0">
         {messagesLoading ? (
           <div className="flex justify-center items-center h-full">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-4 border-orange-300 border-t-orange-600 mb-4"></div>
-              <p className="text-gray-600 font-medium">Loading messages...</p>
+              <div className="animate-spin rounded-full h-8 w-8 border-3 border-orange-300 border-t-orange-600 mb-3"></div>
+              <p className="text-gray-600 text-sm font-medium">Loading messages...</p>
             </div>
           </div>
         ) : messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center py-12">
-            <div className="w-20 h-20 bg-gradient-to-br from-orange-100 to-red-100 rounded-full flex items-center justify-center mb-6">
-              <Anchor className="w-10 h-10 text-orange-600" />
+          <div className="flex flex-col items-center justify-center h-full text-center py-6">
+            <div className="w-16 h-16 bg-gradient-to-br from-orange-100 to-red-100 rounded-full flex items-center justify-center mb-4">
+              <Anchor className="w-8 h-8 text-orange-600" />
             </div>
-            <h3 className="text-xl font-bold text-gray-800 mb-2">Start the conversation!</h3>
-            <p className="text-gray-600 max-w-md">Send your first message to connect with this maritime professional and begin networking.</p>
+            <h3 className="text-lg font-bold text-gray-800 mb-2">Start chatting!</h3>
+            <p className="text-gray-600 text-sm px-4">Send your first message to connect with this maritime professional.</p>
           </div>
         ) : (
           messages.map((message, index) => {
@@ -290,7 +290,7 @@ export default function ChatPage() {
                 data-testid={`message-${message.id}`}
               >
                 {!isMyMessage && showAvatar && (
-                  <Avatar className="w-8 h-8 mb-1">
+                  <Avatar className="w-6 h-6 mb-1">
                     {otherUser?.profile ? (
                       <AvatarImage src={otherUser.profile} alt={otherUser.name} />
                     ) : null}
@@ -300,9 +300,9 @@ export default function ChatPage() {
                   </Avatar>
                 )}
                 
-                <div className={`max-w-xs lg:max-w-md ${!isMyMessage && !showAvatar ? 'ml-10' : ''}`}>
+                <div className={`max-w-xs ${!isMyMessage && !showAvatar ? 'ml-8' : ''}`}>
                   <div
-                    className={`px-5 py-3 rounded-2xl shadow-md ${
+                    className={`px-4 py-2.5 rounded-2xl shadow-sm ${
                       isMyMessage
                         ? 'bg-gradient-to-br from-orange-500 to-red-500 text-white rounded-br-md'
                         : 'bg-white text-gray-800 border border-gray-100 rounded-bl-md'
@@ -310,7 +310,7 @@ export default function ChatPage() {
                   >
                     <p className="text-sm leading-relaxed">{message.content}</p>
                     
-                    <div className={`flex items-center justify-between mt-2 ${isMyMessage ? 'text-orange-100' : 'text-gray-500'}`}>
+                    <div className={`flex items-center justify-between mt-1.5 ${isMyMessage ? 'text-orange-100' : 'text-gray-500'}`}>
                       <p className="text-xs">
                         {formatDistanceToNow(new Date(message.sentAt), { addSuffix: true })}
                       </p>
@@ -318,9 +318,9 @@ export default function ChatPage() {
                       {isMyMessage && (
                         <div className="flex items-center space-x-1">
                           {message.isRead ? (
-                            <CheckCheck className="w-4 h-4 text-blue-200" />
+                            <CheckCheck className="w-3 h-3 text-blue-200" />
                           ) : (
-                            <Check className="w-4 h-4 text-orange-200" />
+                            <Check className="w-3 h-3 text-orange-200" />
                           )}
                         </div>
                       )}
@@ -329,7 +329,7 @@ export default function ChatPage() {
                 </div>
                 
                 {isMyMessage && showAvatar && (
-                  <Avatar className="w-8 h-8 mb-1">
+                  <Avatar className="w-6 h-6 mb-1">
                     <AvatarFallback className="bg-orange-500 text-white text-xs font-bold">
                       {user?.fullName?.charAt(0)?.toUpperCase() || 'U'}
                     </AvatarFallback>
@@ -342,27 +342,25 @@ export default function ChatPage() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Enhanced Message Input */}
-      <div className="bg-white/95 backdrop-blur-sm border-t border-gray-200 p-4 shadow-lg">
-        <form onSubmit={handleSendMessage} className="flex items-center space-x-3">
-          <div className="flex items-center space-x-2">
-            <Button 
-              type="button"
-              variant="ghost" 
-              size="sm" 
-              className="text-gray-500 hover:text-orange-600 hover:bg-orange-50 p-2 rounded-full"
-            >
-              <Paperclip className="w-5 h-5" />
-            </Button>
-          </div>
+      {/* Compact Message Input - Mobile Optimized */}
+      <div className="bg-white/95 backdrop-blur-sm border-t border-gray-200 p-3 shadow-lg flex-shrink-0">
+        <form onSubmit={handleSendMessage} className="flex items-center space-x-2">
+          <Button 
+            type="button"
+            variant="ghost" 
+            size="sm" 
+            className="text-gray-500 hover:text-orange-600 hover:bg-orange-50 p-1.5 rounded-full flex-shrink-0"
+          >
+            <Paperclip className="w-4 h-4" />
+          </Button>
           
           <div className="flex-1 relative">
             <Input
               type="text"
-              placeholder="Type your message..."
+              placeholder="Type a message..."
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              className="w-full pl-4 pr-12 py-3 rounded-full border-2 border-gray-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-200 bg-gray-50 placeholder:text-gray-500"
+              className="w-full pl-3 pr-10 py-2.5 rounded-full border-2 border-gray-200 focus:border-orange-400 focus:ring-1 focus:ring-orange-200 bg-gray-50 placeholder:text-gray-500 text-sm"
               disabled={sendMessageMutation.isPending}
               data-testid="input-message"
             />
@@ -371,9 +369,9 @@ export default function ChatPage() {
               type="button"
               variant="ghost"
               size="sm"
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-orange-600 p-1 rounded-full"
+              className="absolute right-1.5 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-orange-600 p-1 rounded-full"
             >
-              <Smile className="w-5 h-5" />
+              <Smile className="w-4 h-4" />
             </Button>
           </div>
           
@@ -382,19 +380,19 @@ export default function ChatPage() {
               type="submit"
               size="sm"
               disabled={sendMessageMutation.isPending}
-              className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+              className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white p-2.5 rounded-full shadow-md hover:shadow-lg transition-all duration-200 flex-shrink-0"
               data-testid="button-send-message"
             >
-              <Send className="w-5 h-5" />
+              <Send className="w-4 h-4" />
             </Button>
           ) : (
             <Button
               type="button"
               variant="ghost"
               size="sm"
-              className="text-gray-500 hover:text-orange-600 hover:bg-orange-50 p-3 rounded-full"
+              className="text-gray-500 hover:text-orange-600 hover:bg-orange-50 p-2.5 rounded-full flex-shrink-0"
             >
-              <Mic className="w-5 h-5" />
+              <Mic className="w-4 h-4" />
             </Button>
           )}
         </form>
