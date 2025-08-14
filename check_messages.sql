@@ -1,0 +1,1 @@
+SELECT cm.id, cm.connection_id, cm.sender_id, cm.content, cm.created_at FROM chat_messages cm JOIN chat_connections cc ON cm.connection_id = cc.id WHERE cc.status = 'pending' AND cm.content IS NOT NULL ORDER BY cm.created_at DESC LIMIT 5;

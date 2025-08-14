@@ -3354,12 +3354,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const connection = await storage.createChatConnection(senderId, receiverId);
       
       // Send initial connection message
-      const initialMessage = await storage.createMessage({
-        connectionId: connection.id,
-        senderId: senderId,
-        content: "Hi! I'd like to connect with you through the maritime network.",
-        messageType: 'text'
-      });
+      const initialMessage = await storage.sendMessage(
+        connection.id,
+        senderId,
+        "Hi! I'd like to connect with you through the maritime network."
+      );
 
       console.log('✅ New chat connection created:', connection.id);
       
@@ -3458,9 +3457,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Get first message for pending connections to help receiver decide
           let firstMessage = null;
           if (conn.status === 'pending') {
+            console.log(`🔍 Getting messages for pending connection ${conn.id} (${conn.senderId} -> ${conn.receiverId})`);
             const messages = await storage.getChatMessages(conn.id);
+            console.log(`📝 Found ${messages.length} messages for connection ${conn.id}`);
             if (messages.length > 0) {
               firstMessage = messages[0].content;
+              console.log(`💬 First message: "${firstMessage}"`);
+            } else {
+              console.log(`❓ No messages found for connection ${conn.id}, checking if message was created during connection...`);
             }
           }
           
