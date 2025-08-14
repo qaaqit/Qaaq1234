@@ -289,7 +289,7 @@ export default function DMPage() {
   }
 
   return (
-    <div className="h-screen bg-gradient-to-b from-slate-50 to-blue-50 flex flex-col overflow-hidden">
+    <div className="h-[90vh] bg-gradient-to-b from-slate-50 to-blue-50 flex flex-col overflow-hidden">
       {/* Fixed Header - Always Visible */}
       <header className="bg-white text-black shadow-md relative overflow-hidden flex-shrink-0 z-[110] border-b-2 border-orange-400 sticky top-0">
           <div className="absolute inset-0 bg-gradient-to-r from-red-50 via-orange-50 to-yellow-50 opacity-50"></div>
