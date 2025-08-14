@@ -819,9 +819,9 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             transform: 'translate(-50%, -50%)', // Center exactly on the green dot
           }}
         >
-          {/* Large circular stable area - no hover effects to prevent flickering */}
+          {/* Extra large circular stable area - doubled size */}
           <div 
-            className="w-32 h-32 rounded-full bg-white/90 backdrop-blur-sm shadow-lg border-3 border-green-400 cursor-pointer flex items-center justify-center relative"
+            className="w-64 h-64 rounded-full bg-white/90 backdrop-blur-sm shadow-lg border-4 border-green-400 cursor-pointer flex items-center justify-center relative"
             onClick={() => {
               if (hoveredUser && user) {
                 console.log('🔵 Stable circular card clicked:', hoveredUser.fullName, '- Opening DM');
@@ -847,30 +847,48 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             }}
           >
             {/* Central green dot - matches the map marker */}
-            <div className="w-5 h-5 rounded-full bg-green-500 border-2 border-white shadow-md absolute z-10"></div>
+            <div className="w-8 h-8 rounded-full bg-green-500 border-3 border-white shadow-lg absolute z-10"></div>
             
-            {/* Simplified user info layout */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-2">
+            {/* User info layout for larger circle */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
               {/* Name above center */}
-              <div className="absolute top-3 left-1/2 transform -translate-x-1/2 w-28">
-                <h3 className="font-bold text-gray-900 text-xs leading-tight truncate">
+              <div className="absolute top-6 left-1/2 transform -translate-x-1/2 w-56">
+                <h3 className="font-bold text-gray-900 text-lg leading-tight truncate">
                   {hoveredUser.fullName}
                 </h3>
               </div>
               
+              {/* Rank below name */}
+              {hoveredUser.rank && (
+                <div className="absolute top-12 left-1/2 transform -translate-x-1/2 w-56">
+                  <p className="text-orange-600 font-bold text-sm">
+                    {getRankAbbreviation(hoveredUser.rank)}
+                  </p>
+                </div>
+              )}
+              
               {/* Q&A Count below center */}
               {hoveredUser.questionCount !== undefined && (
-                <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
-                  <span className="text-blue-600 font-medium text-xs">
+                <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2">
+                  <span className="text-blue-600 font-medium text-sm">
                     {hoveredUser.questionCount}Q
                   </span>
                 </div>
               )}
               
+              {/* Ship info if available */}
+              {(hoveredUser.currentShipName || hoveredUser.shipName) && (
+                <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 w-56">
+                  <p className="text-gray-600 text-sm truncate">
+                    🚢 {hoveredUser.currentShipName || hoveredUser.shipName}
+                  </p>
+                </div>
+              )}
+              
               {/* Click hint at bottom */}
-              <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 w-28">
-                <p className="text-blue-600 text-xs font-medium">
-                  Click to chat
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-56">
+                <p className="text-blue-600 text-sm font-medium">
+                  Click to open chat
                 </p>
               </div>
             </div>
