@@ -129,13 +129,10 @@ export default function DMPage() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/chat/connections'] });
-      toast({
-        title: "Chat Started",
-        description: "Connection request sent! Chat appears in Active Conversations with single tick.",
-      });
-      
-      // Switch to Users tab to show Active Conversations
-      setActiveTab("users");
+      // Navigate directly to dedicated chat page instead of showing toast
+      if (data.success && data.connection) {
+        setLocation(`/chat/${data.connection.id}`);
+      }
     },
     onError: (error: any) => {
       toast({
@@ -205,15 +202,8 @@ export default function DMPage() {
     );
 
     if (existingConnection) {
-      if (existingConnection.status === 'accepted') {
-        openChat(existingConnection);
-      } else {
-        toast({
-          title: "Connection Already Exists",
-          description: "You already have a pending request with this user.",
-          variant: "destructive",
-        });
-      }
+      // Always navigate to chat page, regardless of status
+      openChat(existingConnection);
       return;
     }
 
