@@ -461,9 +461,9 @@ export class DatabaseStorage implements IStorage {
 
   async sendMessage(connectionId: string, senderId: string, message: string): Promise<ChatMessage> {
     try {
-      // Use direct SQL to handle parent QAAQ database schema with user_id column
+      // Use direct SQL to handle parent QAAQ database schema with user_id and content columns
       const result = await pool.query(`
-        INSERT INTO chat_messages (connection_id, sender_id, user_id, message, is_read)
+        INSERT INTO chat_messages (connection_id, sender_id, user_id, content, is_read)
         VALUES ($1, $2, $2, $3, $4)
         RETURNING *
       `, [connectionId, senderId, message, false]);
@@ -473,7 +473,7 @@ export class DatabaseStorage implements IStorage {
         id: row.id,
         connectionId: row.connection_id,
         senderId: row.sender_id,
-        message: row.message,
+        message: row.content || row.message, // Handle both content and message columns
         isRead: row.is_read,
         createdAt: row.created_at
       };
@@ -496,7 +496,7 @@ export class DatabaseStorage implements IStorage {
         id: row.id,
         connectionId: row.connection_id,
         senderId: row.sender_id,
-        message: row.message,
+        message: row.content || row.message, // Handle both content and message columns
         isRead: row.is_read,
         createdAt: row.created_at
       }));
