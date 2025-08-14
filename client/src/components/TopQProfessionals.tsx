@@ -372,16 +372,16 @@ export function TopQProfessionals() {
       </div>
 
       {/* Active Conversations Section */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <MessageCircle className="h-6 w-6 text-blue-600" />
-          <h2 className="text-2xl font-bold text-gray-800">Active Conversations</h2>
-          <Badge variant="outline" className="ml-auto">
-            {activeConversations.length} Active
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <MessageCircle className="h-5 w-5 text-blue-600" />
+          <h2 className="text-xl font-bold text-gray-800">Active Conversations</h2>
+          <Badge variant="outline" className="ml-auto text-xs">
+            {activeConversations.length}
           </Badge>
         </div>
 
-        <div className="grid grid-cols-1 gap-3">
+        <div className="grid grid-cols-1 gap-2">
           {activeConversations.map((conversation) => (
             <Card 
               key={conversation.id}
@@ -392,7 +392,7 @@ export function TopQProfessionals() {
                 setLocation(`/dm?user=${encodeURIComponent(userName)}&name=${encodeURIComponent(conversation.user.name)}`);
               }}
             >
-              <CardContent className="p-4">
+              <CardContent className="p-2.5">
                 <div className="flex items-center gap-3">
                   {/* User Avatar */}
                   <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
@@ -446,16 +446,16 @@ export function TopQProfessionals() {
       </div>
 
       {/* Top Q Professionals Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <Crown className="h-6 w-6 text-orange-600" />
-        <h2 className="text-2xl font-bold text-gray-800">Top Q Professionals</h2>
-        <Badge variant="outline" className="ml-auto">
-          {professionals.length} Professionals
+      <div className="flex items-center gap-2 mb-3">
+        <Crown className="h-5 w-5 text-orange-600" />
+        <h2 className="text-xl font-bold text-gray-800">Top Q Professionals</h2>
+        <Badge variant="outline" className="ml-auto text-xs">
+          {professionals.length}
         </Badge>
       </div>
 
-      {/* Compact User Cards Grid */}
-      <div className="grid grid-cols-1 gap-3">
+      {/* Compact User Cards Grid - 6 cards fit in one screen */}
+      <div className="grid grid-cols-1 gap-2">
         {professionals.map((professional, index) => (
           <Card 
             key={professional.id} 
@@ -467,16 +467,16 @@ export function TopQProfessionals() {
             }`}
             onClick={() => user && user.id !== professional.id && handleStartConversation(professional)}
           >
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
+            <CardContent className="p-2.5">
+              <div className="flex items-center gap-2.5">
                 {/* Rank Medal/Avatar */}
-                <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center">
+                <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center">
                   {index < 3 ? (
                     <span className="text-lg">
                       {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
                     </span>
                   ) : (
-                    <span className="text-sm font-bold text-orange-600">
+                    <span className="text-xs font-bold text-orange-600">
                       #{index + 1}
                     </span>
                   )}
@@ -484,35 +484,35 @@ export function TopQProfessionals() {
                 
                 {/* Professional Details */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <h3 className="font-semibold text-gray-800 truncate">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <h3 className="font-medium text-sm text-gray-800 truncate">
                       {professional.fullName || professional.email || 'Maritime Professional'}
                     </h3>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="font-bold text-orange-700 text-xs">
+                    <div className="flex items-center gap-1">
+                      <Badge variant="outline" className="font-bold text-orange-700 text-xs px-1 py-0">
                         {professional.questionCount}Q
                       </Badge>
-                      <Badge variant="outline" className="font-bold text-red-700 text-xs">
+                      <Badge variant="outline" className="font-bold text-red-700 text-xs px-1 py-0">
                         {professional.answerCount}A
                       </Badge>
                     </div>
                   </div>
                   
                   <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <Badge variant="secondary" className="text-xs">
+                    <div className="space-y-0.5">
+                      <Badge variant="secondary" className="text-xs py-0 px-1.5">
                         {professional.maritimeRank?.replace(/_/g, ' ') || 'Professional'}
                       </Badge>
                       
                       {/* Company and Ship Info */}
-                      <div className="flex items-center gap-2 text-xs text-gray-600">
+                      <div className="flex items-center gap-1 text-xs text-gray-600">
                         {professional.company && (
-                          <span className="bg-blue-100 px-2 py-1 rounded truncate max-w-24">
+                          <span className="bg-blue-100 px-1.5 py-0.5 rounded truncate max-w-20 text-xs">
                             {professional.company}
                           </span>
                         )}
                         {professional.lastShip && (
-                          <span className="bg-gray-100 px-2 py-1 rounded truncate max-w-24">
+                          <span className="bg-gray-100 px-1.5 py-0.5 rounded truncate max-w-20 text-xs">
                             {professional.lastShip}
                           </span>
                         )}
@@ -524,7 +524,7 @@ export function TopQProfessionals() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="border-orange-300 text-orange-600 hover:bg-orange-50 ml-2"
+                        className="border-orange-300 text-orange-600 hover:bg-orange-50 ml-1 h-6 w-8 px-1"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleStartConversation(professional);
