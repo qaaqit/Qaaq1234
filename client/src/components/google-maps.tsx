@@ -607,7 +607,7 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
   return (
     <div className="relative w-full h-full">
       {/* Coordinates Display Panel */}
-      <div className="absolute top-4 left-4 z-[1000] bg-gray-500/80 backdrop-blur-sm px-4 py-2 rounded-lg min-w-[280px]">
+      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-[1000] bg-gray-500/80 backdrop-blur-sm px-4 py-2 rounded-lg min-w-[280px]">
         {selectedUser ? (
           <div className="text-white text-center">
             <div className="text-sm font-medium">{selectedUser.fullName}</div>
