@@ -461,10 +461,19 @@ export class DatabaseStorage implements IStorage {
 
   async sendMessage(connectionId: string, senderId: string, message: string): Promise<ChatMessage> {
     try {
-      // Use direct SQL to handle parent QAAQ database schema with user_id and content columns
+      // Use direct SQL to handle parent QAAQ database schema with all required columns
       const result = await pool.query(`
-        INSERT INTO chat_messages (connection_id, sender_id, user_id, content, is_read)
-        VALUES ($1, $2, $2, $3, $4)
+        INSERT INTO chat_messages (
+          connection_id, 
+          sender_id, 
+          user_id, 
+          content, 
+          message_type,
+          platform,
+          is_read,
+          is_edited
+        )
+        VALUES ($1, $2, $2, $3, 'text', 'web', $4, false)
         RETURNING *
       `, [connectionId, senderId, message, false]);
       
