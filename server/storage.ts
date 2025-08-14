@@ -434,7 +434,6 @@ export class DatabaseStorage implements IStorage {
           cc.status,
           cc.created_at,
           cc.accepted_at,
-          cc.updated_at,
           COALESCE(latest_msg.latest_message_at, cc.created_at) as last_activity
         FROM chat_connections cc
         LEFT JOIN (
@@ -455,7 +454,7 @@ export class DatabaseStorage implements IStorage {
         status: row.status,
         createdAt: row.created_at,
         acceptedAt: row.accepted_at,
-        updatedAt: row.updated_at
+        lastActivity: row.last_activity
       }));
     } catch (error) {
       console.error('Error getting user chat connections:', error);
