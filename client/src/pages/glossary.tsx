@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Archive, AlertTriangle, Merge, Loader2 } from 'lucide-react';
+import { Archive, AlertTriangle, Merge, Loader2, EyeOff, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import qaaqLogo from '@assets/qaaq-logo.png';
@@ -155,6 +155,45 @@ export function GlossaryPage() {
       toast({
         title: "Archive Failed", 
         description: "Could not archive the entry. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleHideDefinition = async (entryId: string, term: string, currentlyHidden: boolean = false) => {
+    try {
+      const response = await fetch(`/api/glossary/hide/${entryId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          hidden: !currentlyHidden,
+          hidden_reason: currentlyHidden ? 'Unhidden by admin' : 'Hidden as non-technical/irrelevant'
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Remove the hidden entry from the local state (if hiding)
+        if (!currentlyHidden) {
+          setGlossaryEntries(prev => prev.filter(entry => entry.id !== entryId));
+          setPagination(prev => ({ ...prev, total: prev.total - 1 }));
+        }
+        
+        toast({
+          title: currentlyHidden ? "Definition Shown" : "Definition Hidden",
+          description: `"${term}" has been ${currentlyHidden ? 'made visible' : 'hidden from view'}.`,
+        });
+      } else {
+        throw new Error(data.message || 'Failed to update definition visibility');
+      }
+    } catch (error) {
+      toast({
+        title: "Hide/Unhide Failed", 
+        description: "Could not update definition visibility. Please try again.",
         variant: "destructive",
       });
     }
@@ -384,18 +423,29 @@ export function GlossaryPage() {
                           {/* Admin Actions */}
                           {user?.isAdmin && (
                             <div className="pt-3 border-t border-gray-200 space-y-2">
-                              <Button
-                                onClick={() => handleArchiveEntry(entry.id, extractTerm(entry.question))}
-                                variant="outline"
-                                size="sm"
-                                className="w-full border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
-                              >
-                                <Archive className="w-4 h-4 mr-2" />
-                                Archive (Hide from Public)
-                              </Button>
-                              <p className="text-xs text-red-500 mt-1 text-center">
+                              <div className="flex gap-2">
+                                <Button
+                                  onClick={() => handleHideDefinition(entry.id, extractTerm(entry.question))}
+                                  variant="outline"
+                                  size="sm"
+                                  className="flex-1 border-orange-300 text-orange-600 hover:bg-orange-50 hover:border-orange-400"
+                                >
+                                  <EyeOff className="w-4 h-4 mr-2" />
+                                  Hide Definition
+                                </Button>
+                                <Button
+                                  onClick={() => handleArchiveEntry(entry.id, extractTerm(entry.question))}
+                                  variant="outline"
+                                  size="sm"
+                                  className="flex-1 border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
+                                >
+                                  <Archive className="w-4 h-4 mr-2" />
+                                  Archive
+                                </Button>
+                              </div>
+                              <p className="text-xs text-gray-500 mt-1 text-center">
                                 <AlertTriangle className="w-3 h-3 inline mr-1" />
-                                This will hide the entry from all users
+                                Hide removes from glossary • Archive marks as [ARCHIVED]
                               </p>
                             </div>
                           )}

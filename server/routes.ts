@@ -2684,6 +2684,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           AND a.content IS NOT NULL
           AND LENGTH(a.content) > 10
           AND q.content NOT LIKE '%[ARCHIVED]%'
+          AND (q.is_hidden = false OR q.is_hidden IS NULL)
       `);
       
       const total = parseInt(countResult.rows[0]?.total || '0');
@@ -2716,6 +2717,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           AND a.content IS NOT NULL
           AND LENGTH(a.content) > 10
           AND q.content NOT LIKE '%[ARCHIVED]%'
+          AND (q.is_hidden = false OR q.is_hidden IS NULL)
         ORDER BY q.content ASC
         LIMIT $1 OFFSET $2
       `, [limit, offset]);
@@ -4421,6 +4423,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error updating user profile:', error);
       res.status(500).json({ error: 'Failed to update profile' });
+    }
+  });
+
+  // Hide/unhide glossary definition (admin only) - similar to question hiding
+  app.post('/api/glossary/hide/:id', authenticateToken, async (req, res) => {
+    try {
+      const definitionId = req.params.id;
+      const { hidden, hidden_reason } = req.body;
+      const userId = req.userId;
+      
+      // Check if user is admin (using same pattern as question hiding)
+      const userResult = await pool.query('SELECT is_admin FROM users WHERE id = $1', [userId]);
+      const user = userResult.rows[0];
+      
+      if (!user || !user.is_admin) {
+        return res.status(403).json({ 
+          success: false, 
+          message: 'Admin access required to hide/unhide definitions' 
+        });
+      }
+
+      // Update the question in the database to mark as hidden/shown
+      const result = await pool.query(`
+        UPDATE questions 
+        SET is_hidden = $1, 
+            hidden_reason = $2, 
+            hidden_at = CASE WHEN $1 = true THEN NOW() ELSE NULL END,
+            hidden_by = CASE WHEN $1 = true THEN $3 ELSE NULL END
+        WHERE id = $4
+        RETURNING id, is_hidden, content
+      `, [hidden, hidden_reason, userId, definitionId]);
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ 
+          success: false, 
+          message: 'Glossary definition not found' 
+        });
+      }
+
+      const definition = result.rows[0];
+      console.log(`📚 Admin ${userId} ${hidden ? 'hid' : 'unhid'} glossary definition ${definitionId}: ${hidden_reason || 'No reason provided'}`);
+      
+      res.json({
+        success: true,
+        message: `Definition ${hidden ? 'hidden' : 'shown'} successfully`,
+        definition: {
+          id: definition.id,
+          is_hidden: definition.is_hidden,
+          term: definition.content.substring(0, 50) + '...'
+        }
+      });
+    } catch (error) {
+      console.error('Error hiding/unhiding glossary definition:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to update definition visibility' 
+      });
     }
   });
 
