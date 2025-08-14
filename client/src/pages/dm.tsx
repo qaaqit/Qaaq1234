@@ -505,7 +505,7 @@ export default function DMPage() {
                     </p>
                   </div>
                 ) : (
-                  <div className="divide-y divide-gray-100 max-h-80 overflow-y-auto">
+                  <div className="divide-y divide-gray-100 max-h-104 overflow-y-auto">
                     {/* Active DM Connections First */}
                     {connections.map((connection) => {
                       const otherUser = getOtherUser(connection);
