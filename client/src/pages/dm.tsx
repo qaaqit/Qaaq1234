@@ -309,7 +309,7 @@ export default function DMPage() {
                 </div>
                 <div className="min-w-0">
                   <h1 className="text-base sm:text-xl font-bold text-gray-800 whitespace-nowrap">QaaqConnect</h1>
-                  <p className="text-xs sm:text-sm text-orange-600 italic font-medium whitespace-nowrap">direct message</p>
+                  <p className="text-xs sm:text-sm text-orange-600 italic font-medium whitespace-nowrap">Sailor Search</p>
                 </div>
               </button>
               <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
@@ -330,7 +330,7 @@ export default function DMPage() {
                 <div className="flex-1 relative">
                   <Input
                     type="text"
-                    placeholder="Search users by name, rank, ship, location, WhatsApp number..."
+                    placeholder="by name/rank/ship/company"
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
                     className="pr-12 border-ocean-teal/30 focus:border-ocean-teal"
@@ -463,11 +463,7 @@ export default function DMPage() {
                                         {existingConnection.status === 'accepted' ? 'Click to chat' : 
                                          existingConnection.status === 'pending' ? 'Request sent' : 'Connection declined'}
                                       </p>
-                                    ) : (
-                                      <p className="text-xs text-ocean-teal font-medium">
-                                        Click to connect
-                                      </p>
-                                    )}
+                                    ) : null}
                                   </div>
                                 </div>
                               </CardContent>

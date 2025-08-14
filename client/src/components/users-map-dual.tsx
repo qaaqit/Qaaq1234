@@ -843,25 +843,27 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-xs sm:text-sm font-medium text-gray-900 truncate">{user.fullName}</div>
-                      {/* Always show rank prominently */}
-                      {user.rank && (
-                        <div className="text-xs text-orange-600 font-bold">{getRankAbbreviation(user.rank)}</div>
+                      {/* Always show maritime rank prominently */}
+                      {(user.maritimeRank || user.rank) && (
+                        <div className="text-xs text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded">
+                          {user.maritimeRank || getRankAbbreviation(user.rank)}
+                        </div>
                       )}
                     </div>
                   </div>
                   
                   <div className="space-y-0.5">
-                    {/* Always show ship name (current or last) */}
-                    {(user.currentShipName || user.shipName) && (
+                    {/* Always show ship name (current, last ship, or ship name) */}
+                    {(user.currentShipName || user.lastShip || user.shipName) && (
                       <div className="text-xs text-blue-700 font-semibold truncate">
-                        🚢 {user.currentShipName || user.shipName}
+                        🚢 {user.currentShipName || user.lastShip || user.shipName}
                       </div>
                     )}
                     
-                    {/* Always show company */}
-                    {user.company && (
+                    {/* Always show company (last company or current company) */}
+                    {(user.lastCompany || user.company) && (
                       <div className="text-xs text-gray-700 font-medium truncate">
-                        🏢 {user.company}
+                        🏢 {user.lastCompany || user.company}
                       </div>
                     )}
                     
@@ -928,31 +930,34 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
               }
             </h3>
             
-            {/* Maritime Rank - using rank field (primary) or maritimeRank field (detailed) */}
-            {(hoveredUser.rank || hoveredUser.maritimeRank) && (
-              <p className="text-orange-600 font-bold text-xs mb-1">
-                <strong>Rank:</strong> {hoveredUser.rank || hoveredUser.maritimeRank}
+            {/* Maritime Rank - prioritize maritimeRank over rank field */}
+            {(hoveredUser.maritimeRank || hoveredUser.rank) && (
+              <div className="text-xs text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded mb-2">
+                {hoveredUser.maritimeRank || hoveredUser.rank}
+              </div>
+            )}
+            
+            {/* Last Ship - check multiple ship fields */}
+            {(hoveredUser.lastShip || hoveredUser.currentShipName || hoveredUser.shipName) && (
+              <p className="text-blue-700 text-xs mb-1 font-semibold">
+                🚢 {hoveredUser.lastShip || hoveredUser.currentShipName || hoveredUser.shipName}
               </p>
             )}
             
-            {/* Last Company */}
-            {hoveredUser.lastCompany && (
+            {/* Last Company - check multiple company fields */}
+            {(hoveredUser.lastCompany || hoveredUser.company) && (
+              <p className="text-gray-700 text-xs mb-1 font-medium">
+                🏢 {hoveredUser.lastCompany || hoveredUser.company}
+              </p>
+            )}
+            
+            {/* Location */}
+            {(hoveredUser.port || hoveredUser.city) && (
               <p className="text-gray-600 text-xs mb-1">
-                <strong>Company:</strong> {hoveredUser.lastCompany}
+                📍 {hoveredUser.port || hoveredUser.city}
+                {hoveredUser.country && `, ${hoveredUser.country}`}
               </p>
             )}
-            
-            {/* Last Ship */}
-            {hoveredUser.lastShip && (
-              <p className="text-gray-600 text-xs mb-1">
-                <strong>Ship:</strong> {hoveredUser.lastShip}
-              </p>
-            )}
-            
-            {/* Click to chat hint */}
-            <p className="text-blue-600 text-xs mt-2 font-medium">
-              Click here or marker to open chat →
-            </p>
           </div>
         </div>
       )}
