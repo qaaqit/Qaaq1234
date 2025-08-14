@@ -809,7 +809,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
         </div>
       )}
 
-      {/* Circular Hover Card - Concentric with green dot */}
+      {/* Stable Circular Hover Card - Concentric with green dot */}
       {hoveredUser && hoverPosition && (
         <div 
           className="fixed z-[2000] pointer-events-auto"
@@ -818,64 +818,62 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             top: `${hoverPosition.y}px`,
             transform: 'translate(-50%, -50%)', // Center exactly on the green dot
           }}
-          onMouseEnter={() => {
-            console.log('🟡 Mouse entered circular hover card');
-          }}
-          onMouseLeave={() => {
-            setHoveredUser(null);
-            setHoverPosition(null);
-          }}
         >
-          {/* Large circular clickable area */}
+          {/* Large circular stable area - no hover effects to prevent flickering */}
           <div 
-            className="w-36 h-36 rounded-full bg-white/95 backdrop-blur-sm shadow-xl border-4 border-green-400 cursor-pointer hover:bg-white hover:border-green-500 hover:scale-105 transition-all duration-200 flex items-center justify-center relative"
+            className="w-32 h-32 rounded-full bg-white/90 backdrop-blur-sm shadow-lg border-3 border-green-400 cursor-pointer flex items-center justify-center relative"
             onClick={() => {
               if (hoveredUser && user) {
-                console.log('🔵 Circular hover card clicked:', hoveredUser.fullName, '- Opening DM');
+                console.log('🔵 Stable circular card clicked:', hoveredUser.fullName, '- Opening DM');
                 setLocation(`/dm?user=${encodeURIComponent(hoveredUser.id)}&name=${encodeURIComponent(hoveredUser.fullName || 'Maritime Professional')}`);
+              }
+            }}
+            onMouseLeave={(e) => {
+              // Only clear hover if mouse leaves the circular area completely
+              const rect = e.currentTarget.getBoundingClientRect();
+              const centerX = rect.left + rect.width / 2;
+              const centerY = rect.top + rect.height / 2;
+              const distance = Math.sqrt(
+                Math.pow(e.clientX - centerX, 2) + Math.pow(e.clientY - centerY, 2)
+              );
+              
+              // Clear hover only if mouse is far from center
+              if (distance > rect.width / 2 + 10) {
+                setTimeout(() => {
+                  setHoveredUser(null);
+                  setHoverPosition(null);
+                }, 100); // Small delay to prevent rapid flickering
               }
             }}
           >
             {/* Central green dot - matches the map marker */}
-            <div className="w-6 h-6 rounded-full bg-green-500 border-2 border-white shadow-lg absolute z-10"></div>
+            <div className="w-5 h-5 rounded-full bg-green-500 border-2 border-white shadow-md absolute z-10"></div>
             
-            {/* User info arranged in quadrants around the circle */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-              {/* Top section - Name */}
-              <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-32">
+            {/* Simplified user info layout */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-2">
+              {/* Name above center */}
+              <div className="absolute top-3 left-1/2 transform -translate-x-1/2 w-28">
                 <h3 className="font-bold text-gray-900 text-xs leading-tight truncate">
                   {hoveredUser.fullName}
                 </h3>
               </div>
               
-              {/* Left section - Rank */}
-              {hoveredUser.rank && (
-                <div className="absolute left-1 top-1/2 transform -translate-y-1/2 rotate-90 origin-center">
-                  <p className="text-orange-600 font-bold text-xs whitespace-nowrap">
-                    {getRankAbbreviation(hoveredUser.rank)}
-                  </p>
-                </div>
-              )}
-              
-              {/* Right section - Q&A Count */}
+              {/* Q&A Count below center */}
               {hoveredUser.questionCount !== undefined && (
-                <div className="absolute right-1 top-1/2 transform -translate-y-1/2 -rotate-90 origin-center">
-                  <span className="text-blue-600 font-medium text-xs whitespace-nowrap">
+                <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
+                  <span className="text-blue-600 font-medium text-xs">
                     {hoveredUser.questionCount}Q
                   </span>
                 </div>
               )}
               
-              {/* Bottom section - Click hint */}
-              <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 w-32">
+              {/* Click hint at bottom */}
+              <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 w-28">
                 <p className="text-blue-600 text-xs font-medium">
                   Click to chat
                 </p>
               </div>
             </div>
-            
-            {/* Pulse animation for the border */}
-            <div className="absolute inset-0 rounded-full border-2 border-green-400 animate-pulse opacity-50"></div>
           </div>
         </div>
       )}
