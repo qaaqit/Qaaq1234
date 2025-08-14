@@ -14,7 +14,7 @@ import Post from "@/pages/post";
 import Admin from "@/pages/admin";
 import BotRulesAdmin from "@/pages/admin/bot-rules";
 import ChatPage from "@/pages/chat";
-
+import DMPage from "@/pages/dm";
 import UserProfile from "@/pages/user-profile";
 import Profile from "@/pages/profile";
 import MyQuestions from "@/pages/my-questions";
