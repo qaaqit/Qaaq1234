@@ -78,7 +78,7 @@ const getRankAbbreviation = (rank: string): string => {
     'engineer': 'ENG',
     'crew': 'CREW'
   };
-  
+
   const lowerRank = rank.toLowerCase().trim();
   return abbreviations[lowerRank] || rank.substring(0, 3).toUpperCase();
 };
@@ -156,13 +156,13 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
   // Radar scanner animation effect
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
-    
+
     if (isRadarActive) {
       interval = setInterval(() => {
         setRadarScanAngle((prev) => (prev + 6) % 360); // Rotate 6 degrees every interval
       }, 50); // Update every 50ms for smooth animation
     }
-    
+
     return () => {
       if (interval) clearInterval(interval);
     };
@@ -188,11 +188,11 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     queryKey: ['/api/users/search', searchQuery],
     queryFn: async () => {
       if (!searchQuery.trim()) return { success: true, sailors: [] };
-      
+
       const params = new URLSearchParams();
       params.append('q', searchQuery.trim());
       params.append('limit', '500');
-      
+
       const response = await fetch(`/api/users/search?${params}`);
       if (!response.ok) throw new Error('Failed to fetch users');
       const data = await response.json();
@@ -204,7 +204,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
 
   const searchUsers = usersResponse?.sailors || [];
   const nearbyUsers = nearbyUsersResponse || [];
-  
+
   // Combine users based on search state
   const allUsers = searchQuery.trim() ? searchUsers : nearbyUsers;
   const isLoading = searchQuery.trim() ? isLoadingSearch : isLoadingNearby;
@@ -253,11 +253,11 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     // If there's a search query, show all search results regardless of location
     if (searchQuery.trim()) {
       console.log(`🔍 Search mode: showing ${filtered.length} search results for "${searchQuery}"`);
-      
+
       // Apply only rank filter if selected during search
       if (selectedRankCategory !== 'everyone') {
         const category = MARITIME_RANK_CATEGORIES.find(cat => cat.id === selectedRankCategory);
-        
+
         if (category) {
           if (category.id === 'onboard') {
             // Filter for onboard users (check onboard_status or ship name)
@@ -276,7 +276,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
           }
         }
       }
-      
+
       return filtered; // Return all search results without location constraints
     }
 
@@ -308,7 +308,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     // Filter by selected rank category
     if (selectedRankCategory !== 'everyone') {
       const category = MARITIME_RANK_CATEGORIES.find(cat => cat.id === selectedRankCategory);
-      
+
       if (category) {
         if (category.id === 'onboard') {
           // Filter for onboard users (check onboard_status or ship name)
@@ -334,7 +334,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
   // Get all search results or top 6 nearest users for browsing
   const nearestUsers = useMemo(() => {
     if (!filteredUsers.length) return [];
-    
+
     // If searching, show ALL search results with distance calculation
     if (searchQuery.trim()) {
       return filteredUsers.map(user => ({
@@ -342,15 +342,15 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
         distance: userLocation ? calculateDistance(userLocation.lat, userLocation.lng, user.latitude, user.longitude) : 0
       })).sort((a, b) => a.distance - b.distance); // Sort by distance for search results
     }
-    
+
     // If not searching, show only top 6 nearest users for browsing
     if (!userLocation) return [];
-    
+
     const usersWithDistance = filteredUsers.map(user => ({
       ...user,
       distance: calculateDistance(userLocation.lat, userLocation.lng, user.latitude, user.longitude)
     }));
-    
+
     return usersWithDistance
       .sort((a, b) => a.distance - b.distance)
       .slice(0, 6);
@@ -373,7 +373,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
               lat: position.coords.latitude,
               lng: position.coords.longitude
             };
-            
+
             // Only update if location changed significantly (>100m)
             setUserLocation(prevLocation => {
               if (!prevLocation || 
@@ -418,11 +418,11 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
   // Sophisticated scan arm animation with elegant timing
   useEffect(() => {
     if (!showScanElements) return;
-    
+
     const scanInterval = setInterval(() => {
       setScanAngle(prev => (prev + 1.2) % 360); // Slower, more elegant rotation
     }, 75); // Smoother frame rate for premium feel
-    
+
     return () => clearInterval(scanInterval);
   }, [showScanElements]);
 
@@ -520,7 +520,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                   },
                   body: JSON.stringify({ receiverId: clickedUser.id }),
                 });
-                
+
                 if (response.ok) {
                   const result = await response.json();
                   if (result.success && result.connection) {
@@ -546,7 +546,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
         />
 
         {/* Right Side Control Panel - Vertical Stack */}
-        <div className="absolute top-4 right-4 z-[500] flex flex-col space-y-2">
+        <div className="absolute top-4 left-4 right-4 z-[600] mobile-p-2">
           {/* Map Controls */}
           <div className="relative dropdown-container">
             <button
@@ -556,7 +556,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             >
               {mapType === 'roadmap' ? <Map size={16} /> : <Satellite size={16} />}
             </button>
-            
+
             {showMapTypeDropdown && (
               <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[140px] z-[501]">
                 <div className="p-1">
@@ -616,7 +616,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             >
               <Filter size={16} />
             </button>
-            
+
             {showFilterDropdown && (
               <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[200px] z-[501]">
                 <div className="p-3 space-y-3">
@@ -631,7 +631,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                     />
                     <label htmlFor="onlineOnly" className="text-sm">Online now</label>
                   </div>
-                  
+
                   {/* Rank Categories */}
                   <div className="space-y-1">
                     {MARITIME_RANK_CATEGORIES.map((category) => (
@@ -663,7 +663,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             >
               <MapPin size={16} />
             </button>
-            
+
             {showLocationDropdown && (
               <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[200px] z-[501]">
                 <div className="p-3">
@@ -745,7 +745,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                   ? `Search Results: ${nearestUsers.length} users found` 
                   : `Nearest Maritime Professionals (${nearestUsers.length})`}
               </h3>
-              
+
               {/* Panel Control Button for Search Results */}
               {(searchQuery.trim() || nearestUsers.length > 0) && (
                 <button
@@ -792,7 +792,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                         },
                         body: JSON.stringify({ receiverId: user.id }),
                       });
-                      
+
                       if (response.ok) {
                         const result = await response.json();
                         if (result.success && result.connection) {
@@ -837,7 +837,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                           {user.fullName.split(' ').map(n => n[0]).join('').substring(0, 2)}
                         </span>
                       </div>
-                      
+
                       {/* Message notification dot */}
                       <MessageNotificationDot userId={user.id} />
                     </div>
@@ -851,7 +851,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="space-y-0.5">
                     {/* Always show ship name (current, last ship, or ship name) */}
                     {(user.currentShipName || user.lastShip || user.shipName) && (
@@ -859,26 +859,26 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                         🚢 {user.currentShipName || user.lastShip || user.shipName}
                       </div>
                     )}
-                    
+
                     {/* Always show company (last company or current company) */}
                     {(user.lastCompany || user.company) && (
                       <div className="text-xs text-gray-700 font-medium truncate">
                         🏢 {user.lastCompany || user.company}
                       </div>
                     )}
-                    
+
                     {/* Show IMO for onboard users */}
                     {searchQuery.toLowerCase().trim() === 'onboard' && user.imoNumber && (
                       <div className="text-xs text-gray-600 truncate">IMO: {user.imoNumber}</div>
                     )}
-                    
+
                     {/* Show distance for proximity searches */}
                     {!searchQuery.trim() && user.distance && (
                       <div className="text-xs text-gray-500">
                         📍 {user.distance.toFixed(1)}km away
                       </div>
                     )}
-                    
+
                     {/* Q&A stats */}
                     {(user.questionCount || user.answerCount) && (
                       <div className="text-xs text-green-600 font-medium">
@@ -929,28 +929,28 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                 </span>
               }
             </h3>
-            
+
             {/* Maritime Rank - prioritize maritimeRank over rank field */}
             {(hoveredUser.maritimeRank || hoveredUser.rank) && (
               <div className="text-xs text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded mb-2">
                 {hoveredUser.maritimeRank || hoveredUser.rank}
               </div>
             )}
-            
+
             {/* Last Ship - check multiple ship fields */}
             {(hoveredUser.lastShip || hoveredUser.currentShipName || hoveredUser.shipName) && (
               <p className="text-blue-700 text-xs mb-1 font-semibold">
                 🚢 {hoveredUser.lastShip || hoveredUser.currentShipName || hoveredUser.shipName}
               </p>
             )}
-            
+
             {/* Last Company - check multiple company fields */}
             {(hoveredUser.lastCompany || hoveredUser.company) && (
               <p className="text-gray-700 text-xs mb-1 font-medium">
                 🏢 {hoveredUser.lastCompany || hoveredUser.company}
               </p>
             )}
-            
+
             {/* Location */}
             {(hoveredUser.port || hoveredUser.city) && (
               <p className="text-gray-600 text-xs mb-1">
@@ -1007,7 +1007,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
               </button>
             )}
           </div>
-          
+
           {/* Radar Scanner Button */}
           <button
             onClick={handleRadarToggle}
@@ -1031,7 +1031,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
               )}
             </div>
           </button>
-          
+
           {/* Crown Icon for Premium */}
           <div className="ml-2 text-yellow-500">
             <Crown size={16} />

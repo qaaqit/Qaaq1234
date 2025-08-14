@@ -88,23 +88,23 @@ export default function DiscoveryCard({ post, onLike, user }: DiscoveryCardProps
           {getCategoryIcon(post.category)} {post.category}
         </Badge>
       </div>
-      
+
       <CardContent className="p-6">
         <h4 className="text-lg font-semibold mb-2 line-clamp-2">
           {post.content.length > 60 ? `${post.content.substring(0, 60)}...` : post.content}
         </h4>
-        
+
         {post.location && (
           <p className="text-sm text-gray-500 mb-2 flex items-center">
             <i className="fas fa-map-marker-alt mr-1"></i>
             {post.location}
           </p>
         )}
-        
+
         <p className="text-gray-600 text-sm mb-4">
           by {post.authorName}
         </p>
-        
+
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Button

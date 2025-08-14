@@ -406,10 +406,10 @@ html, body, #root {
     background-color: transparent;
   }
   
-  /* Ensure minimum touch target sizes */
-  button, .cursor-pointer {
-    min-height: 44px;
-    min-width: 44px;
+  /* Ensure minimum touch target sizes - increased for better accessibility */
+  button, .cursor-pointer, a {
+    min-height: 48px;
+    min-width: 48px;
   }
   
   /* Reduce excessive padding on small screens */
@@ -419,15 +419,70 @@ html, body, #root {
   
   /* Better text readability on mobile */
   .text-mobile-base {
-    font-size: 14px;
-    line-height: 1.4;
+    font-size: 16px; /* Increased from 14px for better readability */
+    line-height: 1.5; /* Improved line height */
   }
   
   /* Optimize map controls for mobile */
   .map-controls {
-    bottom: 20px;
+    bottom: 80px; /* Account for bottom navigation */
     left: 10px;
     right: 10px;
+  }
+  
+  /* Mobile-first form optimizations */
+  input[type="text"], 
+  input[type="email"], 
+  input[type="password"], 
+  input[type="tel"], 
+  textarea, 
+  select {
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 12px 16px; /* Better touch targets */
+    border-radius: 8px;
+  }
+  
+  /* Improve modal and dialog spacing on mobile */
+  .modal-content, .dialog-content {
+    margin: 10px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  
+  /* Better card layouts for mobile */
+  .user-card, .question-card, .group-card {
+    margin-bottom: 12px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Improved loading states */
+  .loading-skeleton {
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  
+  /* Better spacing for mobile lists */
+  .mobile-list-item {
+    padding: 16px;
+    border-bottom: 1px solid #f3f4f6;
+  }
+  
+  .mobile-list-item:last-child {
+    border-bottom: none;
+  }
+  
+  /* Optimize header for mobile */
+  .mobile-header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.9);
   }
 }
 
@@ -436,4 +491,92 @@ html, body, #root {
   max-width: calc(100vw - 2rem);
   max-height: 60vh;
   overflow-y: auto;
+}
+
+/* Mobile-specific utility classes */
+@media (max-width: 768px) {
+  /* Hide on mobile */
+  .hidden-mobile {
+    display: none !important;
+  }
+  
+  /* Show only on mobile */
+  .show-mobile-only {
+    display: block !important;
+  }
+  
+  /* Full width on mobile */
+  .mobile-full-width {
+    width: 100vw !important;
+    margin-left: calc(-50vw + 50%);
+  }
+  
+  /* Better mobile spacing */
+  .mobile-p-4 {
+    padding: 1rem !important;
+  }
+  
+  .mobile-p-2 {
+    padding: 0.5rem !important;
+  }
+  
+  .mobile-m-2 {
+    margin: 0.5rem !important;
+  }
+  
+  /* Mobile typography */
+  .mobile-text-lg {
+    font-size: 1.125rem !important;
+    line-height: 1.75rem !important;
+  }
+  
+  .mobile-text-sm {
+    font-size: 0.875rem !important;
+    line-height: 1.25rem !important;
+  }
+  
+  /* Mobile grid optimizations */
+  .mobile-grid-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+  }
+  
+  .mobile-grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  
+  /* Improve mobile performance */
+  .mobile-optimized {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transform: translateZ(0); /* Force GPU acceleration */
+    will-change: transform;
+  }
+  
+  /* Better mobile navigation */
+  .mobile-nav-safe {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 1rem);
+  }
+  
+  /* Swipe indicators */
+  .swipe-indicator {
+    position: relative;
+  }
+  
+  .swipe-indicator::after {
+    content: '';
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 36px;
+    height: 4px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 2px;
+  }
+}
+
+@media (min-width: 769px) {
+  .show-mobile-only {
+    display: none !important;
+  }
 }
