@@ -968,7 +968,13 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             }`}
             title={isRadarActive ? "Clear Radar (Click to deactivate)" : "Scan for Users (Click to refresh)"}
           >
-            <div className="relative">
+            <div 
+              className="relative"
+              style={{
+                transform: `rotate(${radarScanAngle}deg)`,
+                transition: 'none'
+              }}
+            >
               <Radar size={16} />
               {isRadarActive && (
                 <div className="absolute -inset-1 border border-green-300 rounded-full animate-ping opacity-25"></div>
