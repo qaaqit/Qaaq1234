@@ -405,7 +405,13 @@ export default function DMPage() {
                     <Card 
                       key={userProfile.id} 
                       className="border border-gray-200 hover:shadow-lg transition-shadow cursor-pointer"
-                      onClick={() => setLocation(`/user/${userProfile.id}`)}
+                      onClick={() => {
+                        if (existingConnection && existingConnection.status === 'accepted') {
+                          openChat(existingConnection);
+                        } else if (!existingConnection) {
+                          handleConnectUser(userProfile.id);
+                        }
+                      }}
                     >
                       <CardContent className="p-4">
                         <div className="flex items-start space-x-3 mb-3">
@@ -453,36 +459,22 @@ export default function DMPage() {
                               </Badge>
                             )}
                           </div>
-                          {existingConnection ? (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              disabled
-                              className={`text-xs ${
+                          <div className="text-right">
+                            {existingConnection ? (
+                              <p className={`text-xs font-medium ${
                                 existingConnection.status === 'accepted' 
-                                  ? 'border-green-300 text-green-600' 
-                                  : 'border-gray-300 text-gray-500'
-                              }`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                              }}
-                            >
-                              {existingConnection.status === 'accepted' ? 'Connected' : 
-                               existingConnection.status === 'pending' ? 'Request Sent' : 'Connection Declined'}
-                            </Button>
-                          ) : (
-                            <Button
-                              size="sm"
-                              className="text-xs bg-gradient-to-r from-ocean-teal to-cyan-600 hover:from-cyan-600 hover:to-ocean-teal text-white"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleConnectUser(userProfile.id);
-                              }}
-                              disabled={createConnectionMutation.isPending}
-                            >
-                              {createConnectionMutation.isPending ? 'Connecting...' : 'Connect'}
-                            </Button>
-                          )}
+                                  ? 'text-green-600' 
+                                  : 'text-gray-500'
+                              }`}>
+                                {existingConnection.status === 'accepted' ? 'Click to chat' : 
+                                 existingConnection.status === 'pending' ? 'Request sent' : 'Connection declined'}
+                              </p>
+                            ) : (
+                              <p className="text-xs text-ocean-teal font-medium">
+                                Click to connect
+                              </p>
+                            )}
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -644,9 +636,7 @@ export default function DMPage() {
                   key={`professional-${userProfile.id}`} 
                   className="p-4 hover:bg-orange-50 transition-colors cursor-pointer border-l-4 border-orange-300"
                   onClick={() => {
-                    if (!existingConnection) {
-                      handleConnectUser(userProfile.id);
-                    }
+                    handleConnectUser(userProfile.id);
                   }}
                 >
                   <div className="flex items-center space-x-3">
@@ -674,41 +664,27 @@ export default function DMPage() {
                     </div>
                     
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-gray-900 truncate">
-                            {userProfile.fullName}
-                          </h4>
-                          <div className="flex items-center mt-1 space-x-2">
-                            <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
-                              {userProfile.questionCount || 0}Q Professional
-                            </Badge>
-                            {userProfile.rank && (
-                              <Badge variant="outline" className="text-xs">
-                                {userProfile.rank}
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-sm text-gray-500 truncate mt-1">
-                            {userProfile.company && `${userProfile.company} • `}
-                            {userProfile.shipName && `${userProfile.shipName} • `}
-                            {userProfile.distance !== undefined && `${formatDistance(userProfile.distance)} away`}
-                          </p>
-                        </div>
-                        <div className="text-right ml-2">
-                          <Button
-                            size="sm"
-                            className="text-xs bg-gradient-to-r from-orange-500 to-red-500 hover:from-red-500 hover:to-orange-500 text-white"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleConnectUser(userProfile.id);
-                            }}
-                            disabled={createConnectionMutation.isPending}
-                          >
-                            {createConnectionMutation.isPending ? 'Connecting...' : 'Connect'}
-                          </Button>
-                        </div>
+                      <h4 className="font-medium text-gray-900 truncate">
+                        {userProfile.fullName}
+                      </h4>
+                      <div className="flex items-center mt-1 space-x-2">
+                        <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
+                          {userProfile.questionCount || 0}Q Professional
+                        </Badge>
+                        {userProfile.rank && (
+                          <Badge variant="outline" className="text-xs">
+                            {userProfile.rank}
+                          </Badge>
+                        )}
                       </div>
+                      <p className="text-sm text-gray-500 truncate mt-1">
+                        {userProfile.company && `${userProfile.company} • `}
+                        {userProfile.shipName && `${userProfile.shipName} • `}
+                        {userProfile.distance !== undefined && `${formatDistance(userProfile.distance)} away`}
+                      </p>
+                      <p className="text-xs text-orange-600 mt-1 font-medium">
+                        Click to start conversation
+                      </p>
                     </div>
                   </div>
                 </div>
