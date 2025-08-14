@@ -123,7 +123,17 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [hoveredUser, setHoveredUser] = useState<MapUser | null>(null);
   const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null);
+  const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
   const [selectedUser, setSelectedUser] = useState<MapUser | null>(null);
+
+  // Cleanup hover timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (hoverTimeout) {
+        clearTimeout(hoverTimeout);
+      }
+    };
+  }, [hoverTimeout]);
   const [openChatUserId, setOpenChatUserId] = useState<string | null>(null);
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
   const [searchPanelState, setSearchPanelState] = useState<'full' | 'half' | 'minimized'>('full');
@@ -809,41 +819,40 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
         </div>
       )}
 
-      {/* Stable Circular Hover Card - Concentric with green dot */}
+      {/* Flicker-Free Circular Hover Card - Concentric with green dot */}
       {hoveredUser && hoverPosition && (
         <div 
           className="fixed z-[2000] pointer-events-auto"
           style={{
             left: `${hoverPosition.x}px`,
             top: `${hoverPosition.y}px`,
-            transform: 'translate(-50%, -50%)', // Center exactly on the green dot
+            transform: 'translate(-50%, -50%)',
           }}
         >
-          {/* Extra large circular stable area - doubled size */}
+          {/* Large stable circular area with no transitions */}
           <div 
-            className="w-64 h-64 rounded-full bg-white/90 backdrop-blur-sm shadow-lg border-4 border-green-400 cursor-pointer flex items-center justify-center relative"
+            className="w-64 h-64 rounded-full bg-white/95 shadow-xl border-4 border-green-500 cursor-pointer flex items-center justify-center relative"
             onClick={() => {
               if (hoveredUser && user) {
-                console.log('🔵 Stable circular card clicked:', hoveredUser.fullName, '- Opening DM');
+                console.log('🔵 Flicker-free circular card clicked:', hoveredUser.fullName, '- Opening DM');
                 setLocation(`/dm?user=${encodeURIComponent(hoveredUser.id)}&name=${encodeURIComponent(hoveredUser.fullName || 'Maritime Professional')}`);
               }
             }}
-            onMouseLeave={(e) => {
-              // Only clear hover if mouse leaves the circular area completely
-              const rect = e.currentTarget.getBoundingClientRect();
-              const centerX = rect.left + rect.width / 2;
-              const centerY = rect.top + rect.height / 2;
-              const distance = Math.sqrt(
-                Math.pow(e.clientX - centerX, 2) + Math.pow(e.clientY - centerY, 2)
-              );
-              
-              // Clear hover only if mouse is far from center
-              if (distance > rect.width / 2 + 10) {
-                setTimeout(() => {
-                  setHoveredUser(null);
-                  setHoverPosition(null);
-                }, 100); // Small delay to prevent rapid flickering
+            onMouseEnter={() => {
+              // Clear any pending timeout when mouse enters
+              if (hoverTimeout) {
+                clearTimeout(hoverTimeout);
+                setHoverTimeout(null);
               }
+            }}
+            onMouseLeave={() => {
+              // Set a stable timeout to clear hover
+              const timeout = setTimeout(() => {
+                setHoveredUser(null);
+                setHoverPosition(null);
+                setHoverTimeout(null);
+              }, 300); // Longer delay for stability
+              setHoverTimeout(timeout);
             }}
           >
             {/* Central green dot - matches the map marker */}
