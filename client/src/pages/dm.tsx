@@ -318,7 +318,6 @@ export default function DMPage() {
             </div>
           </div>
         </header>
-      
       {/* Scrollable Content Area - Only Internal Scrolling */}
       <div className="flex-1 overflow-hidden">
         <div className="h-full overflow-y-auto p-6">
@@ -407,7 +406,7 @@ export default function DMPage() {
                                 }
                               }}
                             >
-                              <CardContent className="p-4">
+                              <CardContent className="p-4 text-[#f4c211]">
                                 <div className="flex items-start space-x-3 mb-3">
                                   <div className="relative">
                                     <Avatar className="w-12 h-12 border-2 border-ocean-teal/30">
@@ -718,7 +717,6 @@ export default function DMPage() {
           </div>
         </div>
       </div>
-      
       {/* Real-time Chat Window - Enhanced QChat with WebSocket */}
       {selectedConnection && (
         <QChatWindow
