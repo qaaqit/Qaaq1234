@@ -460,36 +460,64 @@ export class DatabaseStorage implements IStorage {
   }
 
   async sendMessage(connectionId: string, senderId: string, message: string): Promise<ChatMessage> {
-    const [chatMessage] = await db
-      .insert(chatMessages)
-      .values({
-        connectionId,
-        senderId,
-        message,
-        isRead: false,
-      })
-      .returning();
-    return chatMessage;
+    try {
+      // Use direct SQL to handle parent QAAQ database schema with user_id column
+      const result = await pool.query(`
+        INSERT INTO chat_messages (connection_id, sender_id, user_id, message, is_read)
+        VALUES ($1, $2, $2, $3, $4)
+        RETURNING *
+      `, [connectionId, senderId, message, false]);
+      
+      const row = result.rows[0];
+      return {
+        id: row.id,
+        connectionId: row.connection_id,
+        senderId: row.sender_id,
+        message: row.message,
+        isRead: row.is_read,
+        createdAt: row.created_at
+      };
+    } catch (error) {
+      console.error('Error sending message:', error);
+      throw error;
+    }
   }
 
   async getChatMessages(connectionId: string): Promise<ChatMessage[]> {
-    return await db
-      .select()
-      .from(chatMessages)
-      .where(eq(chatMessages.connectionId, connectionId))
-      .orderBy(chatMessages.createdAt);
+    try {
+      // Use direct SQL to handle parent QAAQ database schema
+      const result = await pool.query(`
+        SELECT * FROM chat_messages 
+        WHERE connection_id = $1
+        ORDER BY created_at ASC
+      `, [connectionId]);
+      
+      return result.rows.map(row => ({
+        id: row.id,
+        connectionId: row.connection_id,
+        senderId: row.sender_id,
+        message: row.message,
+        isRead: row.is_read,
+        createdAt: row.created_at
+      }));
+    } catch (error) {
+      console.error('Error getting chat messages:', error);
+      return [];
+    }
   }
 
   async markMessagesAsRead(connectionId: string, userId: string): Promise<void> {
-    await db
-      .update(chatMessages)
-      .set({ isRead: true })
-      .where(
-        and(
-          eq(chatMessages.connectionId, connectionId),
-          not(eq(chatMessages.senderId, userId))
-        )
-      );
+    try {
+      // Use direct SQL to handle parent QAAQ database schema
+      await pool.query(`
+        UPDATE chat_messages 
+        SET is_read = true 
+        WHERE connection_id = $1 AND sender_id != $2
+      `, [connectionId, userId]);
+    } catch (error) {
+      console.error('Error marking messages as read:', error);
+      throw error;
+    }
   }
 
   async getUnreadMessageCounts(userId: string): Promise<Record<string, number>> {
