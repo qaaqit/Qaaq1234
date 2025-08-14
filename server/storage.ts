@@ -482,17 +482,16 @@ export class DatabaseStorage implements IStorage {
   async sendMessage(connectionId: string, senderId: string, message: string): Promise<ChatMessage> {
     try {
       // Fix: Use 'content' column instead of 'message' to match database schema
+      // Temporarily removed status columns until they can be added to parent QAAQ database
       const result = await pool.query(`
         INSERT INTO chat_messages (
           connection_id, 
           sender_id,
           user_id, 
-          content,
-          is_delivered,
-          delivered_at
+          content
         )
-        VALUES ($1, $2, $2, $3, true, NOW())
-        RETURNING id, connection_id, sender_id, user_id, content, created_at, is_read, is_delivered, delivered_at, read_at
+        VALUES ($1, $2, $2, $3)
+        RETURNING id, connection_id, sender_id, user_id, content, created_at, is_read
       `, [connectionId, senderId, message]);
       
       const row = result.rows[0];
@@ -504,9 +503,9 @@ export class DatabaseStorage implements IStorage {
         messageType: 'text',
         sentAt: row.created_at,
         isRead: row.is_read || false,
-        isDelivered: row.is_delivered || false,
-        deliveredAt: row.delivered_at,
-        readAt: row.read_at
+        isDelivered: true, // Default to delivered for now
+        deliveredAt: row.created_at, // Use sent time as delivered time
+        readAt: row.is_read ? row.created_at : undefined
       };
     } catch (error) {
       console.error('Error sending message:', error);
@@ -531,9 +530,9 @@ export class DatabaseStorage implements IStorage {
         messageType: 'text',
         sentAt: row.created_at,
         isRead: row.is_read || false,
-        isDelivered: row.is_delivered || false,
-        deliveredAt: row.delivered_at,
-        readAt: row.read_at
+        isDelivered: true, // Default to delivered for now
+        deliveredAt: row.created_at, // Use sent time as delivered time
+        readAt: row.is_read ? row.created_at : undefined
       }));
     } catch (error) {
       console.error('Error getting chat messages:', error);
@@ -543,10 +542,11 @@ export class DatabaseStorage implements IStorage {
 
   async markMessagesAsRead(connectionId: string, userId: string): Promise<void> {
     try {
-      // Use direct SQL to handle parent QAAQ database schema with read_at timestamp
+      // Use direct SQL to handle parent QAAQ database schema
+      // Temporarily removed read_at timestamp until column can be added
       await pool.query(`
         UPDATE chat_messages 
-        SET is_read = true, read_at = NOW() 
+        SET is_read = true 
         WHERE connection_id = $1 AND sender_id != $2 AND is_read = false
       `, [connectionId, userId]);
     } catch (error) {
