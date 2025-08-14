@@ -147,6 +147,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
   const [searchType, setSearchType] = useState<'users' | 'ships'>('users'); // Search type
   const [isRadarActive, setIsRadarActive] = useState(false); // Radar scanner state
   const [radarScanAngle, setRadarScanAngle] = useState(0); // Radar animation angle
+  const [radarTimeoutId, setRadarTimeoutId] = useState<NodeJS.Timeout | null>(null); // Track timeout
 
   // Stable zoom change handler to prevent map re-initialization
   const handleZoomChange = useCallback((zoom: number) => {
@@ -167,6 +168,15 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       if (interval) clearInterval(interval);
     };
   }, [isRadarActive]);
+
+  // Cleanup effect to prevent stuck states
+  useEffect(() => {
+    return () => {
+      if (radarTimeoutId) {
+        clearTimeout(radarTimeoutId);
+      }
+    };
+  }, [radarTimeoutId]);
 
 
 
@@ -214,17 +224,23 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     setSearchQuery(value);
   };
 
-  // Radar scanner toggle handler - Momentary activation with auto-deactivate
+  // Radar scanner toggle handler - Simple click to refresh
   const handleRadarToggle = useCallback(() => {
     console.log('🔍 Radar button clicked! Current state:', { isRadarActive, nearbyUsers: nearbyUsersResponse?.length });
     
+    // Clear any existing timeout
+    if (radarTimeoutId) {
+      clearTimeout(radarTimeoutId);
+      setRadarTimeoutId(null);
+    }
+    
     if (isRadarActive) {
-      // Clear/deactivate radar
+      // Manual deactivation
       setIsRadarActive(false);
       setRadarScanAngle(0);
-      console.log('🔴 Radar scanner cleared');
+      console.log('🔴 Radar scanner manually cleared');
     } else {
-      // Activate radar temporarily and refresh data
+      // Activate radar and refresh data
       console.log('🟢 Activating radar scanner...');
       setIsRadarActive(true);
       
@@ -236,14 +252,17 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       window.dispatchEvent(new Event('radar-refresh'));
       console.log('🟢 Radar scanner activated - refreshing results and notifying other components');
       
-      // Auto-deactivate after 3 seconds
-      setTimeout(() => {
+      // Auto-deactivate after 2 seconds
+      const timeoutId = setTimeout(() => {
         setIsRadarActive(false);
         setRadarScanAngle(0);
+        setRadarTimeoutId(null);
         console.log('🔴 Radar scanner auto-deactivated');
-      }, 3000);
+      }, 2000);
+      
+      setRadarTimeoutId(timeoutId);
     }
-  }, [isRadarActive, refetchNearby, nearbyUsersResponse]);
+  }, [isRadarActive, refetchNearby, nearbyUsersResponse, radarTimeoutId]);
 
   // Calculate radius based on map zoom level
   const radiusKm = useMemo(() => {
@@ -1029,7 +1048,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              console.log('🔥 RADAR BUTTON CLICKED!');
+              console.log('🔥 RADAR BUTTON CLICKED! Current radar state:', isRadarActive);
               handleRadarToggle();
             }}
             className={`ml-2 p-2 rounded-full transition-all duration-300 ${
