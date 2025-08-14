@@ -17,7 +17,7 @@ export default function QBOTWelcomeState() {
         <h3 className="text-2xl font-semibold text-gray-600 mb-4">Welcome onboard Sailor!</h3>
         
         {/* Description */}
-        <p className="text-gray-500 leading-relaxed">Got any questions/ doubts. Shoot them on our marine Bot.</p>
+        <p className="text-gray-500 leading-relaxed">Non Sailors! ur Goddess has no Dominion here - QBot.</p>
       </div>
     </div>
   );
