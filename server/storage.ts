@@ -478,9 +478,10 @@ export class DatabaseStorage implements IStorage {
         id: row.id,
         connectionId: row.connection_id,
         senderId: row.sender_id,
-        message: row.content, // Use content column from database
-        isRead: row.is_read || false,
-        createdAt: row.created_at
+        content: row.content, // Use content column from database, map to 'content' for frontend
+        messageType: 'text',
+        sentAt: row.created_at,
+        isRead: row.is_read || false
       };
     } catch (error) {
       console.error('Error sending message:', error);
@@ -501,9 +502,10 @@ export class DatabaseStorage implements IStorage {
         id: row.id,
         connectionId: row.connection_id,
         senderId: row.sender_id,
-        message: row.content, // Use content column from database
-        isRead: row.is_read,
-        createdAt: row.created_at
+        content: row.content, // Use content column from database, map to 'content' for frontend
+        messageType: 'text',
+        sentAt: row.created_at,
+        isRead: row.is_read || false
       }));
     } catch (error) {
       console.error('Error getting chat messages:', error);

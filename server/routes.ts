@@ -3584,8 +3584,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: message.id,
           connectionId: message.connectionId,
           senderId: message.senderId,
-          content: message.message,
-          createdAt: message.createdAt,
+          content: message.content,
+          createdAt: message.sentAt,
           isRead: message.isRead
         }
       };

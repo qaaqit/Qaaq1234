@@ -51,14 +51,11 @@ export default function DMPage() {
       
       // Handle incoming messages
       const handleNewMessage = (data: any) => {
-        // Refresh chat connections when new messages arrive
+        // Refresh chat connections to show updated unread status
         queryClient.invalidateQueries({ queryKey: ['/api/chat/connections'] });
         
-        // Show toast notification for new messages
-        toast({
-          title: "New Message",
-          description: `You have a new message from ${data.senderName || 'a user'}`,
-        });
+        // Move the chat connection with new message to the top by refreshing nearby users
+        queryClient.invalidateQueries({ queryKey: ['/api/users/nearby'] });
       };
       
       websocketService.onMessage('new_message', handleNewMessage);
