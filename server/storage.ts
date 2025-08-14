@@ -426,6 +426,7 @@ export class DatabaseStorage implements IStorage {
   async getUserChatConnections(userId: string): Promise<ChatConnection[]> {
     try {
       // Use SQL query to get connections ordered by latest message activity
+      // Exclude blocked connections from the receiver's view
       const result = await pool.query(`
         SELECT DISTINCT
           cc.id,
@@ -443,7 +444,8 @@ export class DatabaseStorage implements IStorage {
           FROM chat_messages 
           GROUP BY connection_id
         ) latest_msg ON cc.id = latest_msg.connection_id
-        WHERE cc.sender_id = $1 OR cc.receiver_id = $1
+        WHERE (cc.sender_id = $1 OR cc.receiver_id = $1) 
+          AND NOT (cc.status = 'blocked' AND cc.receiver_id = $1)
         ORDER BY last_activity DESC
       `, [userId]);
 
@@ -477,6 +479,26 @@ export class DatabaseStorage implements IStorage {
       .update(chatConnections)
       .set({ status: 'rejected' })
       .where(eq(chatConnections.id, connectionId));
+  }
+
+  async blockChatConnection(connectionId: string): Promise<void> {
+    await db
+      .update(chatConnections)
+      .set({ status: 'blocked' })
+      .where(eq(chatConnections.id, connectionId));
+  }
+
+  async getChatConnectionById(connectionId: string): Promise<ChatConnection | null> {
+    try {
+      const [connection] = await db
+        .select()
+        .from(chatConnections)
+        .where(eq(chatConnections.id, connectionId));
+      return connection || null;
+    } catch (error) {
+      console.error('Error getting chat connection by ID:', error);
+      return null;
+    }
   }
 
   async sendMessage(connectionId: string, senderId: string, message: string): Promise<ChatMessage> {

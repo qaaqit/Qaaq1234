@@ -194,6 +194,27 @@ export default function DMPage() {
     }
   });
 
+  // Block connection mutation
+  const blockConnectionMutation = useMutation({
+    mutationFn: async (connectionId: string) => {
+      return apiRequest(`/api/chat/block/${connectionId}`, 'POST');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/chat/connections'] });
+      toast({
+        title: "User Blocked",
+        description: "This user has been blocked and their messages will not reach your inbox.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to block connection. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
   const getInitials = (name: string | null | undefined) => {
     if (!name || typeof name !== 'string') return 'U';
     return name
@@ -690,9 +711,12 @@ export default function DMPage() {
                                         size="sm"
                                         variant="outline"
                                         className="text-xs border-red-300 text-red-600 hover:bg-red-50 px-2 py-1"
-                                        onClick={(e) => e.stopPropagation()}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          blockConnectionMutation.mutate(connection.id);
+                                        }}
                                       >
-                                        Decline
+                                        Blocked
                                       </Button>
                                     </div>
                                   )}

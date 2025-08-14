@@ -3409,6 +3409,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Block connection endpoint
+  app.post('/api/chat/block/:connectionId', async (req: any, res) => {
+    try {
+      // Get user ID from session or token - check both Replit Auth and JWT
+      let userId: string | undefined;
+      
+      // Check for Replit Auth session first
+      if (req.user && req.user.claims && req.user.claims.sub) {
+        userId = req.user.claims.sub;
+      } else {
+        // Check for QAAQ token
+        const authHeader = req.headers.authorization;
+        const token = authHeader && authHeader.split(' ')[1];
+        if (token) {
+          try {
+            const decoded = jwt.verify(token, JWT_SECRET) as any;
+            userId = decoded.userId;
+          } catch (error) {
+            // Token invalid, but continue to check for session
+          }
+        }
+      }
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      const { connectionId } = req.params;
+      
+      // Get the connection to verify the user can block it
+      const connection = await storage.getChatConnectionById(connectionId);
+      if (!connection) {
+        return res.status(404).json({ message: 'Connection not found' });
+      }
+
+      // Only the receiver can block a pending connection
+      if (connection.receiverId !== userId) {
+        return res.status(403).json({ message: 'Not authorized to block this connection' });
+      }
+
+      await storage.blockChatConnection(connectionId);
+      res.json({ message: 'User blocked successfully' });
+    } catch (error) {
+      console.error('Block connection error:', error);
+      res.status(500).json({ message: "Failed to block connection" });
+    }
+  });
+
   app.post('/api/chat/reject/:connectionId', authenticateToken, async (req, res) => {
     try {
       const { connectionId } = req.params;
@@ -3632,14 +3680,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Connection ID and content are required' });
       }
 
-      // Verify user has access to this connection
+      // Verify user has access to this connection and it's not blocked
       const connectionCheck = await pool.query(`
-        SELECT id FROM chat_connections 
+        SELECT id, status, sender_id, receiver_id FROM chat_connections 
         WHERE id = $1 AND (sender_id = $2 OR receiver_id = $2)
       `, [connectionId, userId]);
 
       if (connectionCheck.rows.length === 0) {
         return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const connection = connectionCheck.rows[0];
+      
+      // Check if connection is blocked - prevent sender from sending messages
+      if (connection.status === 'blocked') {
+        // If current user is the blocked sender, silently fail (don't let them know they're blocked)
+        if (connection.sender_id === userId) {
+          return res.json({ 
+            success: true, 
+            message: { 
+              id: 'blocked_' + Date.now(), 
+              connectionId, 
+              senderId: userId, 
+              content, 
+              sentAt: new Date(),
+              isRead: false,
+              isDelivered: false 
+            } 
+          });
+        }
+        return res.status(403).json({ message: 'This connection is blocked' });
       }
 
       const message = await storage.sendMessage(connectionId, userId, content);
