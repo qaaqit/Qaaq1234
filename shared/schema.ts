@@ -145,6 +145,9 @@ export const chatMessages = pgTable("chat_messages", {
   senderId: varchar("sender_id").notNull(),
   message: text("message").notNull(),
   isRead: boolean("is_read").default(false),
+  isDelivered: boolean("is_delivered").default(true), // Single tick - message delivered to server
+  readAt: timestamp("read_at"), // Double tick - when message was read by recipient
+  deliveredAt: timestamp("delivered_at").default(sql`now()`), // When message was delivered
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 

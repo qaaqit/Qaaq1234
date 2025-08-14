@@ -487,10 +487,12 @@ export class DatabaseStorage implements IStorage {
           connection_id, 
           sender_id,
           user_id, 
-          content
+          content,
+          is_delivered,
+          delivered_at
         )
-        VALUES ($1, $2, $2, $3)
-        RETURNING id, connection_id, sender_id, user_id, content, created_at, is_read
+        VALUES ($1, $2, $2, $3, true, NOW())
+        RETURNING id, connection_id, sender_id, user_id, content, created_at, is_read, is_delivered, delivered_at, read_at
       `, [connectionId, senderId, message]);
       
       const row = result.rows[0];
@@ -501,7 +503,10 @@ export class DatabaseStorage implements IStorage {
         content: row.content, // Use content column from database, map to 'content' for frontend
         messageType: 'text',
         sentAt: row.created_at,
-        isRead: row.is_read || false
+        isRead: row.is_read || false,
+        isDelivered: row.is_delivered || false,
+        deliveredAt: row.delivered_at,
+        readAt: row.read_at
       };
     } catch (error) {
       console.error('Error sending message:', error);
@@ -525,7 +530,10 @@ export class DatabaseStorage implements IStorage {
         content: row.content, // Use content column from database, map to 'content' for frontend
         messageType: 'text',
         sentAt: row.created_at,
-        isRead: row.is_read || false
+        isRead: row.is_read || false,
+        isDelivered: row.is_delivered || false,
+        deliveredAt: row.delivered_at,
+        readAt: row.read_at
       }));
     } catch (error) {
       console.error('Error getting chat messages:', error);
@@ -535,11 +543,11 @@ export class DatabaseStorage implements IStorage {
 
   async markMessagesAsRead(connectionId: string, userId: string): Promise<void> {
     try {
-      // Use direct SQL to handle parent QAAQ database schema
+      // Use direct SQL to handle parent QAAQ database schema with read_at timestamp
       await pool.query(`
         UPDATE chat_messages 
-        SET is_read = true 
-        WHERE connection_id = $1 AND sender_id != $2
+        SET is_read = true, read_at = NOW() 
+        WHERE connection_id = $1 AND sender_id != $2 AND is_read = false
       `, [connectionId, userId]);
     } catch (error) {
       console.error('Error marking messages as read:', error);

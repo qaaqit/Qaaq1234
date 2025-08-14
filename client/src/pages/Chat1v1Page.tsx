@@ -23,6 +23,7 @@ import { getStoredUser } from "@/lib/auth";
 import { apiRequest } from "@/lib/queryClient";
 import { formatDistanceToNow } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import MessageStatus from "@/components/MessageStatus";
 
 interface ChatConnection {
   id: string;
@@ -44,6 +45,9 @@ interface ChatMessage {
   messageType: string;
   sentAt: string;
   isRead: boolean;
+  isDelivered?: boolean;
+  readAt?: string;
+  deliveredAt?: string;
 }
 
 export default function ChatPage() {
@@ -376,13 +380,13 @@ export default function ChatPage() {
                       </p>
                       
                       {isMyMessage && (
-                        <div className="flex items-center space-x-1">
-                          {message.isRead ? (
-                            <CheckCheck className="w-3 h-3 text-blue-200" />
-                          ) : (
-                            <Check className="w-3 h-3 text-orange-200" />
-                          )}
-                        </div>
+                        <MessageStatus 
+                          isRead={message.isRead}
+                          isDelivered={true}
+                          readAt={message.readAt}
+                          deliveredAt={message.deliveredAt || message.sentAt}
+                          className="ml-2"
+                        />
                       )}
                     </div>
                   </div>
