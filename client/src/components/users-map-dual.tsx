@@ -812,14 +812,31 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       {/* Hover User Card */}
       {hoveredUser && hoverPosition && (
         <div 
-          className="fixed z-[2000] pointer-events-none"
+          className="fixed z-[2000] pointer-events-auto"
           style={{
             left: `${hoverPosition.x}px`,
             top: `${hoverPosition.y - 10}px`,
             transform: `translate(-50%, -100%) ${hoverPosition.x > window.innerWidth - 300 ? 'translateX(-50%)' : ''}`
           }}
+          onMouseEnter={() => {
+            // Keep the card visible when hovering over it
+          }}
+          onMouseLeave={() => {
+            // Clear the hover when leaving the card
+            setHoveredUser(null);
+            setHoverPosition(null);
+          }}
         >
-          <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-200 p-3 max-w-[280px]">
+          <div 
+            className="bg-white/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-200 p-3 max-w-[280px] cursor-pointer hover:bg-white transition-colors"
+            onClick={() => {
+              // Click the card to open DM
+              if (hoveredUser && user) {
+                console.log('🔵 Hover card clicked:', hoveredUser.fullName, '- Opening DM');
+                setLocation(`/dm?user=${encodeURIComponent(hoveredUser.id)}&name=${encodeURIComponent(hoveredUser.fullName || 'Maritime Professional')}`);
+              }
+            }}
+          >
             <h3 className="font-bold text-gray-900 mb-2 text-sm">
               {hoveredUser.fullName} 
               {hoveredUser.questionCount !== undefined && 
@@ -860,7 +877,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             
             {/* Click to chat hint */}
             <p className="text-blue-600 text-xs mt-2 font-medium">
-              Click marker to open Q13 chat
+              Click here or marker to open chat →
             </p>
           </div>
         </div>
