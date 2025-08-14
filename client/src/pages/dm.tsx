@@ -295,21 +295,29 @@ export default function DMPage() {
     );
   }
 
-  // Separate connections by status - already ordered by recent activity from backend
-  const activeConnections = connections.filter(conn => conn.status === 'accepted');
-  const pendingConnections = connections.filter(conn => 
+  // Sort all connections by recency - most recent first (including pending connections)
+  const sortedConnections = [...connections].sort((a, b) => {
+    const timeA = new Date(a.lastActivity || a.acceptedAt || a.createdAt || 0).getTime();
+    const timeB = new Date(b.lastActivity || b.acceptedAt || b.createdAt || 0).getTime();
+    return timeB - timeA; // Most recent first
+  });
+
+  // Separate connections by status but keep recent order
+  const activeConnections = sortedConnections.filter(conn => conn.status === 'accepted');
+  const pendingConnections = sortedConnections.filter(conn => 
     conn.status === 'pending' && conn.receiverId === user.id
   );
-  const sentRequests = connections.filter(conn => 
+  const sentRequests = sortedConnections.filter(conn => 
     conn.status === 'pending' && conn.senderId === user.id
   );
 
-  // Create combined list for display: Recent chats first, then Top Q Professionals
+  // Create combined list for display: Most recent connections first, then Top Q Professionals
   const allChatCards = [
-    // Active conversations (already ordered by recent activity from backend)
-    ...activeConnections.map(conn => ({ type: 'connection' as const, data: conn })),
-    // Pending connections
+    // Most recent pending connections first (they should appear at top)
     ...pendingConnections.map(conn => ({ type: 'connection' as const, data: conn })),
+    // Active conversations ordered by recent activity
+    ...activeConnections.map(conn => ({ type: 'connection' as const, data: conn })),
+    // Sent requests
     ...sentRequests.map(conn => ({ type: 'connection' as const, data: conn })),
     // Top Q Professionals (excluding users already in active conversations)
     ...filteredUsers
@@ -653,7 +661,9 @@ export default function DMPage() {
                                     )}
                                     <p className="text-sm text-gray-500 truncate">
                                       {isAccepted && 'Connected - Click to chat'}
-                                      {isIncoming && connection.firstMessage && `"${connection.firstMessage}"`}
+                                      {isIncoming && connection.firstMessage && (
+                                        <span className="italic text-blue-600">"{connection.firstMessage}"</span>
+                                      )}
                                       {isIncoming && !connection.firstMessage && 'Wants to connect with you'}
                                       {isOutgoing && 'Connection request sent'}
                                     </p>
