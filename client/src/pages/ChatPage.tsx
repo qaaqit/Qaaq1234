@@ -4,10 +4,25 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Send, Phone, Video, MoreHorizontal } from "lucide-react";
+import { 
+  ArrowLeft, 
+  Send, 
+  Phone, 
+  Video, 
+  MoreHorizontal, 
+  Paperclip, 
+  Smile, 
+  Mic,
+  Check,
+  CheckCheck,
+  Clock,
+  MapPin,
+  Anchor
+} from "lucide-react";
 import { getStoredUser } from "@/lib/auth";
 import { apiRequest } from "@/lib/queryClient";
 import { formatDistanceToNow } from "date-fns";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface ChatConnection {
   id: string;
@@ -167,88 +182,159 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
-      {/* Chat Header */}
-      <div className="bg-white border-b px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleBackClick}
-            data-testid="button-back-to-dm"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-              {otherUser?.profile ? (
-                <img 
-                  src={otherUser.profile} 
-                  alt={otherUser.name} 
-                  className="w-10 h-10 rounded-full object-cover"
-                />
-              ) : (
-                <span className="text-orange-600 font-semibold text-sm">
-                  {otherUser?.name?.charAt(0)?.toUpperCase() || '?'}
-                </span>
-              )}
-            </div>
+    <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-orange-50">
+      {/* Enhanced Chat Header with Maritime Theme */}
+      <div className="bg-gradient-to-r from-orange-500 via-red-500 to-orange-600 shadow-lg relative overflow-hidden">
+        <div className="absolute inset-0 bg-black/10"></div>
+        
+        <div className="relative z-10 px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBackClick}
+              className="text-white hover:bg-white/20 p-2"
+              data-testid="button-back-to-dm"
+            >
+              <ArrowLeft className="w-6 h-6" />
+            </Button>
             
-            <div>
-              <h2 className="font-semibold text-gray-900" data-testid="text-chat-user-name">
-                {otherUser?.name || 'Unknown User'}
-              </h2>
-              <p className="text-sm text-gray-500">Online</p>
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <Avatar className="w-12 h-12 border-2 border-white/30">
+                  {otherUser?.profile ? (
+                    <AvatarImage 
+                      src={otherUser.profile} 
+                      alt={otherUser.name}
+                      className="object-cover"
+                    />
+                  ) : null}
+                  <AvatarFallback className="bg-white/20 text-white font-bold text-lg">
+                    {otherUser?.name?.charAt(0)?.toUpperCase() || '?'}
+                  </AvatarFallback>
+                </Avatar>
+                
+                {/* Online Status Indicator */}
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white flex items-center justify-center">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                </div>
+              </div>
+              
+              <div>
+                <h2 className="font-bold text-white text-lg" data-testid="text-chat-user-name">
+                  {otherUser?.name || 'Unknown User'}
+                </h2>
+                <div className="flex items-center space-x-1">
+                  <div className="w-2 h-2 bg-green-300 rounded-full animate-pulse"></div>
+                  <p className="text-white/90 text-sm font-medium">Online now</p>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="sm" data-testid="button-voice-call">
-            <Phone className="w-5 h-5" />
-          </Button>
-          <Button variant="ghost" size="sm" data-testid="button-video-call">
-            <Video className="w-5 h-5" />
-          </Button>
-          <Button variant="ghost" size="sm" data-testid="button-more-options">
-            <MoreHorizontal className="w-5 h-5" />
-          </Button>
+          <div className="flex items-center space-x-1">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-white hover:bg-white/20 p-3 rounded-full"
+              data-testid="button-voice-call"
+            >
+              <Phone className="w-5 h-5" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-white hover:bg-white/20 p-3 rounded-full"
+              data-testid="button-video-call"
+            >
+              <Video className="w-5 h-5" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-white hover:bg-white/20 p-3 rounded-full"
+              data-testid="button-more-options"
+            >
+              <MoreHorizontal className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      {/* Enhanced Messages Area */}
+      <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-gradient-to-b from-blue-50/30 to-orange-50/30">
         {messagesLoading ? (
-          <div className="text-center text-gray-500">Loading messages...</div>
+          <div className="flex justify-center items-center h-full">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-orange-300 border-t-orange-600 mb-4"></div>
+              <p className="text-gray-600 font-medium">Loading messages...</p>
+            </div>
+          </div>
         ) : messages.length === 0 ? (
-          <div className="text-center text-gray-500 py-8">
-            <p>No messages yet</p>
-            <p className="text-sm">Send a message to start the conversation</p>
+          <div className="flex flex-col items-center justify-center h-full text-center py-12">
+            <div className="w-20 h-20 bg-gradient-to-br from-orange-100 to-red-100 rounded-full flex items-center justify-center mb-6">
+              <Anchor className="w-10 h-10 text-orange-600" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-800 mb-2">Start the conversation!</h3>
+            <p className="text-gray-600 max-w-md">Send your first message to connect with this maritime professional and begin networking.</p>
           </div>
         ) : (
-          messages.map((message) => {
+          messages.map((message, index) => {
             const isMyMessage = message.senderId === user?.id;
+            const showAvatar = index === 0 || messages[index - 1]?.senderId !== message.senderId;
+            
             return (
               <div
                 key={message.id}
-                className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'}`}
+                className={`flex items-end space-x-2 ${isMyMessage ? 'justify-end flex-row-reverse space-x-reverse' : 'justify-start'}`}
                 data-testid={`message-${message.id}`}
               >
-                <div
-                  className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                    isMyMessage
-                      ? 'bg-orange-500 text-white'
-                      : 'bg-white text-gray-900 border'
-                  }`}
-                >
-                  <p className="text-sm">{message.content}</p>
-                  <p className={`text-xs mt-1 ${
-                    isMyMessage ? 'text-orange-100' : 'text-gray-500'
-                  }`}>
-                    {formatDistanceToNow(new Date(message.sentAt), { addSuffix: true })}
-                  </p>
+                {!isMyMessage && showAvatar && (
+                  <Avatar className="w-8 h-8 mb-1">
+                    {otherUser?.profile ? (
+                      <AvatarImage src={otherUser.profile} alt={otherUser.name} />
+                    ) : null}
+                    <AvatarFallback className="bg-orange-100 text-orange-700 text-xs font-bold">
+                      {otherUser?.name?.charAt(0)?.toUpperCase() || '?'}
+                    </AvatarFallback>
+                  </Avatar>
+                )}
+                
+                <div className={`max-w-xs lg:max-w-md ${!isMyMessage && !showAvatar ? 'ml-10' : ''}`}>
+                  <div
+                    className={`px-5 py-3 rounded-2xl shadow-md ${
+                      isMyMessage
+                        ? 'bg-gradient-to-br from-orange-500 to-red-500 text-white rounded-br-md'
+                        : 'bg-white text-gray-800 border border-gray-100 rounded-bl-md'
+                    }`}
+                  >
+                    <p className="text-sm leading-relaxed">{message.content}</p>
+                    
+                    <div className={`flex items-center justify-between mt-2 ${isMyMessage ? 'text-orange-100' : 'text-gray-500'}`}>
+                      <p className="text-xs">
+                        {formatDistanceToNow(new Date(message.sentAt), { addSuffix: true })}
+                      </p>
+                      
+                      {isMyMessage && (
+                        <div className="flex items-center space-x-1">
+                          {message.isRead ? (
+                            <CheckCheck className="w-4 h-4 text-blue-200" />
+                          ) : (
+                            <Check className="w-4 h-4 text-orange-200" />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
+                
+                {isMyMessage && showAvatar && (
+                  <Avatar className="w-8 h-8 mb-1">
+                    <AvatarFallback className="bg-orange-500 text-white text-xs font-bold">
+                      {user?.fullName?.charAt(0)?.toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                )}
               </div>
             );
           })
@@ -256,27 +342,61 @@ export default function ChatPage() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Message Input */}
-      <div className="bg-white border-t p-4">
-        <form onSubmit={handleSendMessage} className="flex items-center space-x-2">
-          <Input
-            type="text"
-            placeholder="Type a message..."
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            className="flex-1"
-            disabled={sendMessageMutation.isPending}
-            data-testid="input-message"
-          />
-          <Button
-            type="submit"
-            size="sm"
-            disabled={!newMessage.trim() || sendMessageMutation.isPending}
-            className="bg-orange-500 hover:bg-orange-600 text-white"
-            data-testid="button-send-message"
-          >
-            <Send className="w-4 h-4" />
-          </Button>
+      {/* Enhanced Message Input */}
+      <div className="bg-white/95 backdrop-blur-sm border-t border-gray-200 p-4 shadow-lg">
+        <form onSubmit={handleSendMessage} className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2">
+            <Button 
+              type="button"
+              variant="ghost" 
+              size="sm" 
+              className="text-gray-500 hover:text-orange-600 hover:bg-orange-50 p-2 rounded-full"
+            >
+              <Paperclip className="w-5 h-5" />
+            </Button>
+          </div>
+          
+          <div className="flex-1 relative">
+            <Input
+              type="text"
+              placeholder="Type your message..."
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              className="w-full pl-4 pr-12 py-3 rounded-full border-2 border-gray-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-200 bg-gray-50 placeholder:text-gray-500"
+              disabled={sendMessageMutation.isPending}
+              data-testid="input-message"
+            />
+            
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-orange-600 p-1 rounded-full"
+            >
+              <Smile className="w-5 h-5" />
+            </Button>
+          </div>
+          
+          {newMessage.trim() ? (
+            <Button
+              type="submit"
+              size="sm"
+              disabled={sendMessageMutation.isPending}
+              className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+              data-testid="button-send-message"
+            >
+              <Send className="w-5 h-5" />
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="text-gray-500 hover:text-orange-600 hover:bg-orange-50 p-3 rounded-full"
+            >
+              <Mic className="w-5 h-5" />
+            </Button>
+          )}
         </form>
       </div>
     </div>
