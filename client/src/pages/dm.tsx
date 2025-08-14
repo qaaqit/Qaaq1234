@@ -431,14 +431,33 @@ export default function DMPage() {
                                     <h4 className="font-semibold text-gray-900 truncate">
                                       {userProfile.whatsAppDisplayName || userProfile.fullName}
                                     </h4>
-                                    <p className="text-sm text-gray-600 truncate">
-                                      {userProfile.rank} • {userProfile.city}
-                                    </p>
-                                    {userProfile.shipName && (
-                                      <p className="text-xs text-ocean-teal truncate">
-                                        {userProfile.shipName}
+                                    
+                                    {/* Maritime Rank - prioritize maritimeRank over rank */}
+                                    {(userProfile.maritimeRank || userProfile.rank) && (
+                                      <div className="text-xs text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded mb-1 inline-block">
+                                        {userProfile.maritimeRank || userProfile.rank}
+                                      </div>
+                                    )}
+                                    
+                                    {/* Last Ship or Current Ship */}
+                                    {(userProfile.lastShip || userProfile.currentShipName || userProfile.shipName) && (
+                                      <p className="text-xs text-blue-700 font-semibold truncate mb-1">
+                                        🚢 {userProfile.lastShip || userProfile.currentShipName || userProfile.shipName}
                                       </p>
                                     )}
+                                    
+                                    {/* Last Company */}
+                                    {(userProfile.lastCompany || userProfile.company) && (
+                                      <p className="text-xs text-gray-700 font-medium truncate mb-1">
+                                        🏢 {userProfile.lastCompany || userProfile.company}
+                                      </p>
+                                    )}
+                                    
+                                    {/* Location */}
+                                    <p className="text-sm text-gray-600 truncate">
+                                      📍 {userProfile.port || userProfile.city}
+                                      {userProfile.country && `, ${userProfile.country}`}
+                                    </p>
                                   </div>
                                 </div>
                                 <div className="flex items-center justify-between">
