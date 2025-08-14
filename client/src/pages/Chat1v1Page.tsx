@@ -53,6 +53,7 @@ export default function ChatPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [newMessage, setNewMessage] = useState("");
+  const [socket, setSocket] = useState<WebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const connectionId = params?.connectionId;
@@ -101,7 +102,7 @@ export default function ChatPage() {
     enabled: !!connectionId,
   });
 
-  // Fetch messages for this connection
+  // Fetch messages for this connection (initial load only)
   const { data: messages = [], isLoading: messagesLoading } = useQuery<ChatMessage[]>({
     queryKey: ['/api/chat/messages', connectionId],
     queryFn: async () => {
@@ -110,7 +111,7 @@ export default function ChatPage() {
       return response.json();
     },
     enabled: !!connectionId,
-    refetchInterval: 3000, // Poll for new messages every 3 seconds
+    refetchInterval: false, // Disable polling - use WebSocket for real-time updates
   });
 
   // Send message mutation
@@ -133,6 +134,55 @@ export default function ChatPage() {
       });
     },
   });
+
+  // Set up WebSocket connection for real-time messaging
+  useEffect(() => {
+    if (!connectionId || !user) return;
+
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    const ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => {
+      console.log('WebSocket connected for chat');
+      setSocket(ws);
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'new_message' && data.connectionId === connectionId) {
+          // Update messages in real-time
+          queryClient.setQueryData(['/api/chat/messages', connectionId], (oldMessages: ChatMessage[] | undefined) => {
+            return [...(oldMessages || []), {
+              id: data.message.id,
+              connectionId: data.message.connectionId,
+              senderId: data.message.senderId,
+              content: data.message.content,
+              messageType: 'text',
+              sentAt: data.message.createdAt,
+              isRead: data.message.isRead
+            }];
+          });
+        }
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
+      }
+    };
+
+    ws.onclose = () => {
+      console.log('WebSocket disconnected');
+      setSocket(null);
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, [connectionId, user, queryClient]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {

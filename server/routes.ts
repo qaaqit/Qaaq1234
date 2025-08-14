@@ -3575,6 +3575,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const message = await storage.sendMessage(connectionId, userId, content);
+      
+      // Broadcast message via WebSocket to all connected clients
+      const messageData = {
+        type: 'new_message',
+        connectionId,
+        message: {
+          id: message.id,
+          connectionId: message.connectionId,
+          senderId: message.senderId,
+          content: message.message,
+          createdAt: message.createdAt,
+          isRead: message.isRead
+        }
+      };
+      
+      wss.clients.forEach((client) => {
+        if (client.readyState === ws.OPEN) {
+          client.send(JSON.stringify(messageData));
+        }
+      });
+      
       res.json({ success: true, message });
     } catch (error) {
       console.error('Error sending message:', error);
