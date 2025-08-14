@@ -85,16 +85,16 @@ export default function DMPage() {
     enabled: !!targetUserId,
   });
 
-  // Fetch user's chat connections - DISABLED for qh13 refresh fix
+  // Fetch user's chat connections - Re-enabled for search card navigation fix
   const { data: connections = [], isLoading: connectionsLoading, error: connectionsError } = useQuery<ExtendedChatConnection[]>({
     queryKey: ['/api/chat/connections'],
-    enabled: false, // DISABLED to prevent 401 polling causing qh13 refresh
-    refetchInterval: false, // Disable all polling
+    enabled: !!user, // Enable when user is authenticated
+    refetchInterval: false, // Disable polling but allow initial fetch
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    refetchOnMount: false,
-    staleTime: Infinity, // Keep data indefinitely
-    gcTime: Infinity,
+    refetchOnMount: true, // Allow initial mount fetch
+    staleTime: 30000, // Keep data for 30 seconds
+    gcTime: 5 * 60 * 1000, // 5 minutes garbage collection
   });
 
   // Debug connection loading - COMPLETELY DISABLED for qh13 refresh fix  
@@ -130,10 +130,14 @@ export default function DMPage() {
       return apiRequest('/api/chat/connect', 'POST', { receiverId });
     },
     onSuccess: (data) => {
+      console.log('✅ Connection mutation success:', data);
       queryClient.invalidateQueries({ queryKey: ['/api/chat/connections'] });
       // Navigate directly to dedicated chat page instead of showing toast
       if (data.success && data.connection) {
+        console.log('🚀 Navigating to chat:', `/chat/${data.connection.id}`);
         setLocation(`/chat/${data.connection.id}`);
+      } else {
+        console.error('❌ Connection data missing:', data);
       }
     },
     onError: (error: any) => {
@@ -401,6 +405,7 @@ export default function DMPage() {
                               onClick={async () => {
                                 // Create or find existing connection and navigate to 1v1 DM chat
                                 console.log('🔍 Search card clicked for user:', userProfile.id, userProfile.fullName);
+                                console.log('🔍 Current connections:', connections);
                                 
                                 // Check if connection already exists
                                 const existingConnection = connections.find(conn => 
@@ -408,17 +413,15 @@ export default function DMPage() {
                                   (conn.receiverId === user?.id && conn.senderId === userProfile.id)
                                 );
 
-                                if (existingConnection && existingConnection.status === 'accepted') {
-                                  console.log('✅ Opening existing accepted chat');
+                                console.log('🔍 Found existing connection:', existingConnection);
+
+                                if (existingConnection) {
+                                  console.log('✅ Opening existing chat, status:', existingConnection.status);
                                   openChat(existingConnection);
-                                } else if (!existingConnection) {
+                                } else {
                                   console.log('🚀 Creating new connection');
                                   // Use mutation directly to ensure navigation happens after success
                                   createConnectionMutation.mutate(userProfile.id);
-                                } else {
-                                  console.log('⏳ Connection exists but not accepted yet:', existingConnection.status);
-                                  // Still try to open for pending connections  
-                                  openChat(existingConnection);
                                 }
                               }}
                             >
