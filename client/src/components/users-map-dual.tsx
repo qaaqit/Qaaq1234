@@ -1026,13 +1026,19 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
 
           {/* Radar Scanner Button */}
           <button
-            onClick={handleRadarToggle}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('🔥 RADAR BUTTON CLICKED!');
+              handleRadarToggle();
+            }}
             className={`ml-2 p-2 rounded-full transition-all duration-300 ${
               isRadarActive 
                 ? 'bg-green-500 text-white shadow-lg' 
                 : 'bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-600'
             }`}
             title={isRadarActive ? "Clear Radar (Click to deactivate)" : "Scan for Users (Click to refresh)"}
+            type="button"
           >
             <div 
               className="relative"
