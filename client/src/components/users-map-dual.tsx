@@ -809,76 +809,73 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
         </div>
       )}
 
-      {/* Hover User Card */}
+      {/* Circular Hover Card - Concentric with green dot */}
       {hoveredUser && hoverPosition && (
         <div 
           className="fixed z-[2000] pointer-events-auto"
           style={{
             left: `${hoverPosition.x}px`,
-            top: `${hoverPosition.y - 10}px`,
-            transform: `translate(-50%, -100%) ${hoverPosition.x > window.innerWidth - 300 ? 'translateX(-50%)' : ''}`
+            top: `${hoverPosition.y}px`,
+            transform: 'translate(-50%, -50%)', // Center exactly on the green dot
           }}
           onMouseEnter={() => {
-            // Keep the card visible when hovering over it
+            console.log('🟡 Mouse entered circular hover card');
           }}
           onMouseLeave={() => {
-            // Clear the hover when leaving the card
             setHoveredUser(null);
             setHoverPosition(null);
           }}
         >
+          {/* Large circular clickable area */}
           <div 
-            className="bg-white/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-200 p-3 max-w-[280px] cursor-pointer hover:bg-white transition-colors"
+            className="w-36 h-36 rounded-full bg-white/95 backdrop-blur-sm shadow-xl border-4 border-green-400 cursor-pointer hover:bg-white hover:border-green-500 hover:scale-105 transition-all duration-200 flex items-center justify-center relative"
             onClick={() => {
-              // Click the card to open DM
               if (hoveredUser && user) {
-                console.log('🔵 Hover card clicked:', hoveredUser.fullName, '- Opening DM');
+                console.log('🔵 Circular hover card clicked:', hoveredUser.fullName, '- Opening DM');
                 setLocation(`/dm?user=${encodeURIComponent(hoveredUser.id)}&name=${encodeURIComponent(hoveredUser.fullName || 'Maritime Professional')}`);
               }
             }}
           >
-            <h3 className="font-bold text-gray-900 mb-2 text-sm">
-              {hoveredUser.fullName} 
-              {hoveredUser.questionCount !== undefined && 
-                <span className="text-blue-600 font-medium ml-2">
-                  {hoveredUser.questionCount}Q{hoveredUser.answerCount || 0}A
-                </span>
-              }
-            </h3>
+            {/* Central green dot - matches the map marker */}
+            <div className="w-6 h-6 rounded-full bg-green-500 border-2 border-white shadow-lg absolute z-10"></div>
             
-            {/* Rank */}
-            {hoveredUser.rank && (
-              <p className="text-orange-600 font-bold text-xs mb-1">
-                Rank: {getRankAbbreviation(hoveredUser.rank)}
-              </p>
-            )}
+            {/* User info arranged in quadrants around the circle */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+              {/* Top section - Name */}
+              <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-32">
+                <h3 className="font-bold text-gray-900 text-xs leading-tight truncate">
+                  {hoveredUser.fullName}
+                </h3>
+              </div>
+              
+              {/* Left section - Rank */}
+              {hoveredUser.rank && (
+                <div className="absolute left-1 top-1/2 transform -translate-y-1/2 rotate-90 origin-center">
+                  <p className="text-orange-600 font-bold text-xs whitespace-nowrap">
+                    {getRankAbbreviation(hoveredUser.rank)}
+                  </p>
+                </div>
+              )}
+              
+              {/* Right section - Q&A Count */}
+              {hoveredUser.questionCount !== undefined && (
+                <div className="absolute right-1 top-1/2 transform -translate-y-1/2 -rotate-90 origin-center">
+                  <span className="text-blue-600 font-medium text-xs whitespace-nowrap">
+                    {hoveredUser.questionCount}Q
+                  </span>
+                </div>
+              )}
+              
+              {/* Bottom section - Click hint */}
+              <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 w-32">
+                <p className="text-blue-600 text-xs font-medium">
+                  Click to chat
+                </p>
+              </div>
+            </div>
             
-            {/* Ship - Show current or last */}
-            {(hoveredUser.currentShipName || hoveredUser.shipName) && (
-              <p className="text-gray-600 text-xs mb-1">
-                <strong>{hoveredUser.onboardStatus === 'ONBOARD' ? 'Current Ship:' : 'Last Ship:'}</strong> <em>{hoveredUser.currentShipName || hoveredUser.shipName}</em>
-              </p>
-            )}
-            
-            {/* Company */}
-            {hoveredUser.company && (
-              <p className="text-gray-600 text-xs mb-1">
-                <strong>Company:</strong> {hoveredUser.company}
-              </p>
-            )}
-            
-            {/* Port & Visit Window */}
-            {hoveredUser.port && (
-              <p className="text-gray-600 text-xs mb-1">
-                <strong>Port:</strong> {hoveredUser.port}
-                {hoveredUser.visitWindow && ` (${hoveredUser.visitWindow})`}
-              </p>
-            )}
-            
-            {/* Click to chat hint */}
-            <p className="text-blue-600 text-xs mt-2 font-medium">
-              Click here or marker to open chat →
-            </p>
+            {/* Pulse animation for the border */}
+            <div className="absolute inset-0 rounded-full border-2 border-green-400 animate-pulse opacity-50"></div>
           </div>
         </div>
       )}
