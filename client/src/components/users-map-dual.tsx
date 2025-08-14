@@ -214,7 +214,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     setSearchQuery(value);
   };
 
-  // Radar scanner toggle handler - Search > Clear > Search behavior
+  // Radar scanner toggle handler - Momentary activation with auto-deactivate
   const handleRadarToggle = useCallback(() => {
     if (isRadarActive) {
       // Clear/deactivate radar
@@ -222,12 +222,19 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       setRadarScanAngle(0);
       console.log('🔴 Radar scanner cleared');
     } else {
-      // Activate radar and refresh data
+      // Activate radar temporarily and refresh data
       setIsRadarActive(true);
       refetchNearby();
       // Dispatch global radar refresh event for other components (like DM page)
       window.dispatchEvent(new Event('radar-refresh'));
       console.log('🟢 Radar scanner activated - refreshing results and notifying other components');
+      
+      // Auto-deactivate after 3 seconds
+      setTimeout(() => {
+        setIsRadarActive(false);
+        setRadarScanAngle(0);
+        console.log('🔴 Radar scanner auto-deactivated');
+      }, 3000);
     }
   }, [isRadarActive, refetchNearby]);
 
