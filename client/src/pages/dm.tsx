@@ -289,7 +289,7 @@ export default function DMPage() {
   }
 
   return (
-    <div className="h-screen bg-gradient-to-b from-slate-50 to-blue-50 flex flex-col">
+    <div className="h-screen bg-gradient-to-b from-slate-50 to-blue-50 flex flex-col overflow-hidden">
       {/* Header with Home Logo - Same as QBOT Page */}
       <header className="bg-white text-black shadow-md relative overflow-hidden flex-shrink-0 z-[110] border-b-2 border-orange-400">
           <div className="absolute inset-0 bg-gradient-to-r from-red-50 via-orange-50 to-yellow-50 opacity-50"></div>
@@ -319,7 +319,7 @@ export default function DMPage() {
           </div>
         </header>
       {/* Content Area */}
-      <div className="flex-1 overflow-auto p-6">
+      <div className="flex-1 overflow-y-auto p-6 min-h-0">
         <div className="max-w-4xl mx-auto">
           {/* Users Section - Simplified without tabs */}
           <div className="space-y-6">
@@ -503,7 +503,7 @@ export default function DMPage() {
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-gray-100 max-h-96 overflow-y-auto">
             {/* Active DM Connections First */}
             {connections.map((connection) => {
               const otherUser = getOtherUser(connection);
