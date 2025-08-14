@@ -461,15 +461,16 @@ export class DatabaseStorage implements IStorage {
 
   async sendMessage(connectionId: string, senderId: string, message: string): Promise<ChatMessage> {
     try {
-      // Try the most basic columns that should exist in any chat table
+      // Match the actual database schema with user_id and message columns
       const result = await pool.query(`
         INSERT INTO chat_messages (
           connection_id, 
-          sender_id, 
-          content
+          sender_id,
+          user_id, 
+          message
         )
-        VALUES ($1, $2, $3)
-        RETURNING id, connection_id, sender_id, content, created_at
+        VALUES ($1, $2, $2, $3)
+        RETURNING id, connection_id, sender_id, user_id, message, created_at
       `, [connectionId, senderId, message]);
       
       const row = result.rows[0];
@@ -477,7 +478,7 @@ export class DatabaseStorage implements IStorage {
         id: row.id,
         connectionId: row.connection_id,
         senderId: row.sender_id,
-        message: row.content || row.message, // Handle both content and message columns
+        message: row.message || row.content, // Handle both message and content columns
         isRead: row.is_read || false, // Default to false if column doesn't exist
         createdAt: row.created_at
       };
@@ -500,7 +501,7 @@ export class DatabaseStorage implements IStorage {
         id: row.id,
         connectionId: row.connection_id,
         senderId: row.sender_id,
-        message: row.content || row.message, // Handle both content and message columns
+        message: row.message || row.content, // Handle both message and content columns
         isRead: row.is_read,
         createdAt: row.created_at
       }));

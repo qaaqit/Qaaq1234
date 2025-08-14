@@ -388,7 +388,7 @@ export default function DMPage() {
                       </div>
                     ) : (
                       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 max-h-80 overflow-y-auto">
-                        {filteredUsers.map((userProfile) => {
+                        {filteredUsers.map((userProfile, index) => {
                           const existingConnection = connections.find(conn => 
                             (conn.senderId === user?.id && conn.receiverId === userProfile.id) ||
                             (conn.receiverId === user?.id && conn.senderId === userProfile.id)
@@ -396,7 +396,7 @@ export default function DMPage() {
 
                           return (
                             <Card 
-                              key={userProfile.id} 
+                              key={`search-${userProfile.id}-${index}`} 
                               className="border border-gray-200 hover:shadow-lg transition-shadow cursor-pointer"
                               onClick={async () => {
                                 // Create or find existing connection and navigate to 1v1 DM chat
