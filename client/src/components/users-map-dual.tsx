@@ -831,7 +831,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
         >
           {/* Square stable card with no transitions */}
           <div 
-            className="w-80 bg-white/95 rounded-lg shadow-xl border-2 border-green-500 cursor-pointer relative p-4"
+            className="w-72 bg-white/95 rounded-lg shadow-xl border-2 border-green-500 cursor-pointer relative p-3"
             onClick={() => {
               if (hoveredUser && user) {
                 console.log('🔵 Flicker-free square card clicked:', hoveredUser.fullName, '- Opening DM');
@@ -856,15 +856,15 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             }}
           >
             {/* Central green dot - matches the map marker */}
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-green-500 border-2 border-white shadow-md z-10"></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-green-500 border-2 border-white shadow-md z-10"></div>
             
             {/* User info layout */}
-            <div className="text-center space-y-2">
+            <div className="text-center space-y-1">
               {/* Name */}
-              <h3 className="font-bold text-gray-900 text-sm leading-tight">
+              <h3 className="font-bold text-gray-900 text-xs leading-tight">
                 {hoveredUser.fullName}
                 {hoveredUser.questionCount !== undefined && 
-                  <span className="text-blue-600 font-medium ml-2">
+                  <span className="text-blue-600 font-medium ml-1 text-xs">
                     {hoveredUser.questionCount}Q{hoveredUser.answerCount || 0}A
                   </span>
                 }
@@ -873,35 +873,34 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
               {/* Rank */}
               {hoveredUser.rank && (
                 <p className="text-orange-600 font-bold text-xs">
-                  Rank: {getRankAbbreviation(hoveredUser.rank)}
+                  {getRankAbbreviation(hoveredUser.rank)}
                 </p>
               )}
               
               {/* Ship - Show current or last */}
               {(hoveredUser.currentShipName || hoveredUser.shipName) && (
                 <p className="text-gray-600 text-xs">
-                  <strong>{hoveredUser.onboardStatus === 'ONBOARD' ? 'Current Ship:' : 'Last Ship:'}</strong> <em>{hoveredUser.currentShipName || hoveredUser.shipName}</em>
+                  🚢 {hoveredUser.currentShipName || hoveredUser.shipName}
                 </p>
               )}
               
               {/* Company */}
               {hoveredUser.company && (
-                <p className="text-gray-600 text-xs">
-                  <strong>Company:</strong> {hoveredUser.company}
+                <p className="text-gray-500 text-xs">
+                  {hoveredUser.company}
                 </p>
               )}
               
-              {/* Port & Visit Window */}
+              {/* Port */}
               {hoveredUser.port && (
-                <p className="text-gray-600 text-xs">
-                  <strong>Port:</strong> {hoveredUser.port}
-                  {hoveredUser.visitWindow && ` (${hoveredUser.visitWindow})`}
+                <p className="text-gray-500 text-xs">
+                  📍 {hoveredUser.port}
                 </p>
               )}
               
               {/* Click to chat hint */}
-              <p className="text-blue-600 text-xs font-medium mt-2">
-                Click here or marker to open chat →
+              <p className="text-blue-600 text-xs font-medium mt-1">
+                💬 Click to chat
               </p>
             </div>
           </div>
