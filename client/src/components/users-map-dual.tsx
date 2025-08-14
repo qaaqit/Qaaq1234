@@ -172,7 +172,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
 
   // Fetch users from nearby API for map display
   const { data: nearbyUsersResponse, isLoading: isLoadingNearby, refetch: refetchNearby } = useQuery<MapUser[]>({
-    queryKey: ['/api/users/nearby', isRadarActive],
+    queryKey: ['/api/users/nearby'],
     queryFn: async () => {
       const response = await fetch('/api/users/nearby');
       if (!response.ok) throw new Error('Failed to fetch nearby users');
@@ -180,7 +180,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       return data;
     },
     staleTime: 60000, // Cache for 1 minute
-    refetchInterval: isRadarActive ? 5000 : 30000, // Faster refresh when radar is active
+    refetchInterval: 30000, // Standard refresh interval
   });
 
   // Fetch search results separately for search functionality
@@ -214,13 +214,13 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     setSearchQuery(value);
   };
 
-  // Radar scanner toggle handler
+  // Radar scanner toggle handler - Search > Clear > Search behavior
   const handleRadarToggle = useCallback(() => {
     if (isRadarActive) {
-      // Deactivate radar
+      // Clear/deactivate radar
       setIsRadarActive(false);
       setRadarScanAngle(0);
-      console.log('🔴 Radar scanner deactivated');
+      console.log('🔴 Radar scanner cleared');
     } else {
       // Activate radar and refresh data
       setIsRadarActive(true);
@@ -963,18 +963,12 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             onClick={handleRadarToggle}
             className={`ml-2 p-2 rounded-full transition-all duration-300 ${
               isRadarActive 
-                ? 'bg-green-500 text-white shadow-lg scale-110' 
+                ? 'bg-green-500 text-white shadow-lg' 
                 : 'bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-600'
             }`}
-            title={isRadarActive ? "Deactivate Radar Scanner" : "Activate Radar Scanner"}
+            title={isRadarActive ? "Clear Radar (Click to deactivate)" : "Scan for Users (Click to refresh)"}
           >
-            <div 
-              className={`relative ${isRadarActive ? 'animate-pulse' : ''}`}
-              style={{
-                transform: isRadarActive ? `rotate(${radarScanAngle}deg)` : 'none',
-                transition: isRadarActive ? 'none' : 'transform 0.3s ease'
-              }}
-            >
+            <div className="relative">
               <Radar size={16} />
               {isRadarActive && (
                 <div className="absolute -inset-1 border border-green-300 rounded-full animate-ping opacity-25"></div>
