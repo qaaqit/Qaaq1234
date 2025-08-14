@@ -214,18 +214,18 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     setSearchQuery(value);
   };
 
-  // Radar scanner toggle handler - Search > Clear > Search behavior
+  // Radar scanner toggle handler - Toggle rotation and green dots visibility
   const handleRadarToggle = useCallback(() => {
     if (isRadarActive) {
-      // Clear/deactivate radar
+      // Stop rotation and clear green dots
       setIsRadarActive(false);
       setRadarScanAngle(0);
-      console.log('🔴 Radar scanner cleared');
+      console.log('🔴 Radar scanner stopped - clearing green dots');
     } else {
-      // Activate radar and refresh data
+      // Start rotation and show green dots with fresh data
       setIsRadarActive(true);
       refetchNearby();
-      console.log('🟢 Radar scanner activated - refreshing results');
+      console.log('🟢 Radar scanner activated - showing green dots');
     }
   }, [isRadarActive, refetchNearby]);
 
@@ -333,6 +333,9 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
 
   // Get all search results or top 6 nearest users for browsing
   const nearestUsers = useMemo(() => {
+    // If radar is inactive, don't show any users
+    if (!isRadarActive) return [];
+    
     if (!filteredUsers.length) return [];
     
     // If searching, show ALL search results with distance calculation
@@ -354,7 +357,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     return usersWithDistance
       .sort((a, b) => a.distance - b.distance)
       .slice(0, 6);
-  }, [filteredUsers, userLocation, searchQuery]);
+  }, [filteredUsers, userLocation, searchQuery, isRadarActive]);
 
   // Update user count when users are loaded (temporarily disabled to fix infinite loop)
   // useEffect(() => {
@@ -499,7 +502,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
           : 'bottom-0'
       }`}>
         <GoogleMap
-          users={filteredUsers}
+          users={isRadarActive ? filteredUsers : []}
           userLocation={userLocation}
           selectedUser={selectedUser}
           mapType={mapType}
@@ -966,7 +969,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                 ? 'bg-green-500 text-white shadow-lg' 
                 : 'bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-600'
             }`}
-            title={isRadarActive ? "Clear Radar (Click to deactivate)" : "Scan for Users (Click to refresh)"}
+            title={isRadarActive ? "Stop scanning - Hide green dots and stop rotation" : "Start scanning - Show green dots and begin rotation"}
           >
             <div 
               className="relative"
