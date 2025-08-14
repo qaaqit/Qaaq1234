@@ -461,21 +461,16 @@ export class DatabaseStorage implements IStorage {
 
   async sendMessage(connectionId: string, senderId: string, message: string): Promise<ChatMessage> {
     try {
-      // Use direct SQL to handle parent QAAQ database schema with all required columns
+      // Try the most basic columns that should exist in any chat table
       const result = await pool.query(`
         INSERT INTO chat_messages (
           connection_id, 
           sender_id, 
-          user_id, 
-          content, 
-          message_type,
-          platform,
-          is_read,
-          is_edited
+          content
         )
-        VALUES ($1, $2, $2, $3, 'text', 'web', $4, false)
-        RETURNING *
-      `, [connectionId, senderId, message, false]);
+        VALUES ($1, $2, $3)
+        RETURNING id, connection_id, sender_id, content, created_at
+      `, [connectionId, senderId, message]);
       
       const row = result.rows[0];
       return {
@@ -483,7 +478,7 @@ export class DatabaseStorage implements IStorage {
         connectionId: row.connection_id,
         senderId: row.sender_id,
         message: row.content || row.message, // Handle both content and message columns
-        isRead: row.is_read,
+        isRead: row.is_read || false, // Default to false if column doesn't exist
         createdAt: row.created_at
       };
     } catch (error) {
