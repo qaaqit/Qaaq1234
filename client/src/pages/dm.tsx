@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 
-import { MessageCircle, Anchor, Navigation, Search, MapPin, Clock, User, Ship } from "lucide-react";
+import { MessageCircle, Anchor, Navigation, Search, MapPin, Clock, User, Ship, Award } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
@@ -37,6 +37,7 @@ export default function DMPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedConnection, setSelectedConnection] = useState<ExtendedChatConnection | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("users");
 
   const { user, isLoading } = useAuth();
   const { toast } = useToast();
@@ -494,19 +495,21 @@ export default function DMPage() {
           </Card>
         )}
 
-        {/* Active DMs - Stacked Chat Cards */}
+        {/* Combined Active DMs & Top Q Professionals */}
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
           <div className="p-4 border-b border-gray-100">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
                 <MessageCircle size={20} className="text-green-600" />
-                <span>Active DMs</span>
+                <span>Active DMs & Top Q Professionals</span>
               </h2>
-              <span className="text-sm text-gray-500">{connections.length} chats</span>
+              <span className="text-sm text-gray-500">
+                {connections.length} chats • {filteredUsers.length} professionals
+              </span>
             </div>
           </div>
           
-          {connections.length === 0 ? (
+          {connections.length === 0 && filteredUsers.length === 0 ? (
             <div className="text-center py-12">
               <div className="mx-auto w-16 h-16 bg-gradient-to-r from-green-100 to-green-200 rounded-full flex items-center justify-center mb-4">
                 <MessageCircle size={32} className="text-green-600" />
@@ -518,6 +521,7 @@ export default function DMPage() {
             </div>
           ) : (
             <div className="divide-y divide-gray-100">
+              {/* Active DM Connections First */}
               {connections.map((connection) => {
                 const otherUser = getOtherUser(connection);
                 if (!otherUser) return null;
@@ -529,7 +533,7 @@ export default function DMPage() {
                 
                 return (
                   <div 
-                    key={connection.id} 
+                    key={`connection-${connection.id}`} 
                     className="p-4 hover:bg-gray-50 transition-colors cursor-pointer"
                     onClick={() => {
                       if (isAccepted) {
@@ -559,6 +563,10 @@ export default function DMPage() {
                           </AvatarFallback>
                         </Avatar>
                         {isAccepted && <MessageNotificationDot userId={otherUser.id} />}
+                        {/* Active Chat Badge */}
+                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                          <MessageCircle size={8} className="text-white" />
+                        </div>
                       </div>
                       
                       <div className="flex-1 min-w-0">
@@ -621,146 +629,95 @@ export default function DMPage() {
                   </div>
                 );
               })}
-            </div>
-          )}
-        </div>
 
+              {/* Top Q Professionals - Show only when NOT searching */}
+              {!searchQuery.trim() && filteredUsers.map((userProfile) => {
+                const existingConnection = connections.find(conn => 
+                  (conn.senderId === user?.id && conn.receiverId === userProfile.id) ||
+                  (conn.receiverId === user?.id && conn.senderId === userProfile.id)
+                );
 
+                // Don't show if user already has an active connection
+                if (existingConnection) return null;
 
-        {/* Top Q Professionals - Show only when NOT searching */}
-        {!searchQuery.trim() && (
-          <Card className="border-2 border-ocean-teal/20">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2 text-navy">
-              <Navigation size={20} />
-              <span>Top Q Professionals ({filteredUsers.length})</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {filteredUsers.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="mx-auto w-16 h-16 bg-gradient-to-r from-navy to-blue-800 rounded-full flex items-center justify-center mb-4">
-                  <User size={32} className="text-white" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">No Professionals Found</h3>
-                <p className="text-gray-600">
-                  {searchQuery ? "Try adjusting your search terms" : "No maritime professionals available nearby"}
-                </p>
-              </div>
-            ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {filteredUsers.map((userProfile) => {
-                  const existingConnection = connections.find(conn => 
-                    (conn.senderId === user?.id && conn.receiverId === userProfile.id) ||
-                    (conn.receiverId === user?.id && conn.senderId === userProfile.id)
-                  );
-
-                  return (
-                    <Card 
-                      key={userProfile.id} 
-                      className="border border-gray-200 hover:shadow-lg transition-shadow cursor-pointer"
-                      onClick={() => setLocation(`/user/${userProfile.id}`)}
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex items-start space-x-3 mb-3">
-                          <div className="relative">
-                            <Avatar className="w-12 h-12 border-2 border-ocean-teal/30">
-                              {(userProfile.whatsAppProfilePictureUrl || userProfile.profilePictureUrl) ? (
-                                <img 
-                                  src={userProfile.whatsAppProfilePictureUrl || userProfile.profilePictureUrl} 
-                                  alt={`${userProfile.whatsAppDisplayName || userProfile.fullName}'s profile`}
-                                  className="w-full h-full rounded-full object-cover"
-                                  onError={(e) => {
-                                    const target = e.target as HTMLImageElement;
-                                    target.style.display = 'none';
-                                  }}
-                                />
-                              ) : null}
-                              <AvatarFallback className="bg-ocean-teal/20 text-ocean-teal font-bold">
-                                {getInitials(userProfile.whatsAppDisplayName || userProfile.fullName)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <MessageNotificationDot userId={userProfile.id} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-gray-900 truncate">{userProfile.fullName}</h4>
-                            {userProfile.rank && (
-                              <p className="text-sm text-gray-600 truncate">
-                                {userProfile.rank} {userProfile.questionCount !== undefined && 
-                                  <span className="text-xs text-blue-600 font-medium">
-                                    {userProfile.questionCount}Q
-                                  </span>
-                                }
-                              </p>
-                            )}
-                            <div className="flex items-center mt-1 text-xs text-gray-500">
-                              <MapPin size={12} className="mr-1" />
-                              <span className="truncate">{formatDistance(userProfile.distance)}</span>
-                            </div>
-                          </div>
+                return (
+                  <div 
+                    key={`professional-${userProfile.id}`} 
+                    className="p-4 hover:bg-orange-50 transition-colors cursor-pointer border-l-4 border-orange-300"
+                    onClick={() => {
+                      if (!existingConnection) {
+                        handleConnectUser(userProfile.id);
+                      }
+                    }}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="relative">
+                        <Avatar className="w-12 h-12">
+                          {(userProfile.whatsAppProfilePictureUrl || userProfile.profilePictureUrl) && (
+                            <img 
+                              src={userProfile.whatsAppProfilePictureUrl || userProfile.profilePictureUrl} 
+                              alt={`${userProfile.whatsAppDisplayName || userProfile.fullName}'s profile`}
+                              className="w-full h-full rounded-full object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                              }}
+                            />
+                          )}
+                          <AvatarFallback className="bg-orange-100 text-orange-800 font-bold">
+                            {getInitials(userProfile.whatsAppDisplayName || userProfile.fullName)}
+                          </AvatarFallback>
+                        </Avatar>
+                        {/* Q Professional Badge */}
+                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-orange-500 rounded-full border-2 border-white flex items-center justify-center">
+                          <Award size={8} className="text-white" />
                         </div>
-
-                        {userProfile.shipName && (
-                          <div className="flex items-center mb-3 text-sm text-gray-600">
-                            <Ship size={14} className="mr-2 text-ocean-teal" />
-                            <span className="truncate">{userProfile.shipName}</span>
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-gray-900 truncate">
+                              {userProfile.fullName}
+                            </h4>
+                            <div className="flex items-center mt-1 space-x-2">
+                              <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
+                                {userProfile.questionCount || 0}Q Professional
+                              </Badge>
+                              {userProfile.rank && (
+                                <Badge variant="outline" className="text-xs">
+                                  {userProfile.rank}
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-500 truncate mt-1">
+                              {userProfile.company && `${userProfile.company} • `}
+                              {userProfile.shipName && `${userProfile.shipName} • `}
+                              {userProfile.distance !== undefined && `${formatDistance(userProfile.distance)} away`}
+                            </p>
                           </div>
-                        )}
-
-                        {userProfile.city && (
-                          <div className="flex items-center mb-3 text-sm text-gray-600">
-                            <MapPin size={14} className="mr-2 text-ocean-teal" />
-                            <span className="truncate">{userProfile.city}</span>
-                          </div>
-                        )}
-
-                        {userProfile.company ? (
-                          <Badge 
-                            variant="secondary" 
-                            className="mb-3 bg-gray-100 text-gray-700"
-                          >
-                            {userProfile.company}
-                          </Badge>
-                        ) : userProfile.userType === 'sailor' ? (
-                          <Badge 
-                            variant="secondary" 
-                            className="mb-3 bg-navy/10 text-navy"
-                          >
-                            Sailor
-                          </Badge>
-                        ) : null}
-
-                        <div onClick={(e) => e.stopPropagation()}>
-                          {existingConnection ? (
+                          <div className="text-right ml-2">
                             <Button
                               size="sm"
-                              variant="outline"
-                              className="w-full"
-                              disabled
-                            >
-                              {existingConnection.status === 'accepted' ? 'Connected' : 
-                               existingConnection.status === 'pending' ? 'Request Sent' : 'Connection Declined'}
-                            </Button>
-                          ) : (
-                            <Button
-                              size="sm"
-                              className="w-full bg-gradient-to-r from-ocean-teal to-cyan-600 hover:from-cyan-600 hover:to-ocean-teal text-[#191c25]"
-                              onClick={() => handleConnectUser(userProfile.id)}
+                              className="text-xs bg-gradient-to-r from-orange-500 to-red-500 hover:from-red-500 hover:to-orange-500 text-white"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleConnectUser(userProfile.id);
+                              }}
                               disabled={createConnectionMutation.isPending}
                             >
                               {createConnectionMutation.isPending ? 'Connecting...' : 'Connect'}
                             </Button>
-                          )}
+                          </div>
                         </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
             </div>
           </div>
