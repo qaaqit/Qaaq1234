@@ -247,6 +247,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const { hidden, hidden_reason } = req.body;
           
           const userId = req.user?.claims?.sub;
+          console.log('🔒 Glossary hide attempt - User ID:', userId, 'Definition ID:', definitionId);
+          
           if (!userId) {
             return res.status(401).json({ 
               success: false, 
@@ -254,16 +256,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
           }
           
-          // Check if user is admin (using same pattern as question hiding)
-          const userResult = await pool.query('SELECT is_admin FROM users WHERE id = $1', [userId]);
+          // Check if user is admin - look in parent QAAQ database with proper user lookup
+          let userResult;
+          try {
+            // First try with Replit user ID (exact match)
+            userResult = await pool.query('SELECT is_admin, fullname FROM users WHERE id = $1', [userId]);
+            
+            // If not found, try with userId field (for legacy compatibility)
+            if (userResult.rows.length === 0) {
+              userResult = await pool.query('SELECT is_admin, fullname FROM users WHERE "userId" = $1', [userId]);
+            }
+            
+            console.log('🔍 User lookup result:', userResult.rows[0] ? `Found: ${userResult.rows[0].fullname}` : 'Not found');
+          } catch (dbError) {
+            console.error('🚨 Database error during user lookup:', dbError);
+            return res.status(500).json({ 
+              success: false, 
+              message: 'Database error during authentication check' 
+            });
+          }
+          
           const user = userResult.rows[0];
           
           if (!user || !user.is_admin) {
+            console.log('🚫 Access denied - User is not admin:', { userId, isAdmin: user?.is_admin });
             return res.status(403).json({ 
               success: false, 
               message: 'Admin access required to hide/unhide definitions' 
             });
           }
+          
+          console.log('✅ Admin access confirmed for user:', user.fullname);
 
           // Update the question in the database to mark as hidden/shown
           const result = await pool.query(`

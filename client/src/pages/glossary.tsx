@@ -191,9 +191,10 @@ export function GlossaryPage() {
         throw new Error(data.message || 'Failed to update definition visibility');
       }
     } catch (error) {
+      console.error('Hide/unhide error:', error);
       toast({
         title: "Hide/Unhide Failed", 
-        description: "Could not update definition visibility. Please try again.",
+        description: error.message || "Could not update definition visibility. Please try again.",
         variant: "destructive",
       });
     }
