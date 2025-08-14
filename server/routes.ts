@@ -4151,58 +4151,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get all questions from shared QAAQ database (for My Questions page)
-  app.get('/api/questions', authenticateToken, async (req, res) => {
-    try {
-      console.log('📋 Fetching all questions from shared QAAQ database');
-      
-      // Use direct SQL to get questions from parent QAAQ database
-      const result = await pool.query(`
-        SELECT 
-          id,
-          content,
-          author_id,
-          created_at,
-          updated_at,
-          tags,
-          views,
-          is_resolved,
-          is_from_whatsapp,
-          engagement_score,
-          equipment_name
-        FROM questions 
-        WHERE is_hidden = false OR is_hidden IS NULL
-        ORDER BY created_at DESC
-        LIMIT 100
-      `);
-      
-      const questions = result.rows.map(row => ({
-        id: row.id,
-        content: row.content,
-        author_id: row.author_id,
-        author_name: row.author_id?.startsWith('+') ? `User ${row.author_id.slice(0,8)}****` : 'Maritime Professional',
-        created_at: row.created_at,
-        updated_at: row.updated_at,
-        category: row.equipment_name || 'General Discussion',
-        tags: row.tags || [],
-        view_count: row.views || 0,
-        is_resolved: row.is_resolved || false,
-        is_from_whatsapp: row.is_from_whatsapp || false,
-        source: row.is_from_whatsapp ? 'WhatsApp' : 'QAAQ Platform'
-      }));
-      
-      console.log(`✅ Retrieved ${questions.length} questions from shared QAAQ database`);
-      
-      res.json({
-        questions,
-        total: questions.length,
-        dataSource: 'shared-qaaq-db'
-      });
-    } catch (error) {
-      console.error('Error fetching questions from shared database:', error);
-      res.status(500).json({ error: 'Failed to fetch questions' });
-    }
-  });
+  // REMOVED: Duplicate authenticated /api/questions route - using public route instead
 
   // Get user's own questions (for My Questions page in profile dropdown)
   app.get('/api/users/:userId/questions', authenticateToken, async (req, res) => {

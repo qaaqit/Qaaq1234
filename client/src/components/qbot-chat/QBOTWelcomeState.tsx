@@ -1,4 +1,4 @@
-import { MessageCircle } from 'lucide-react';
+import { MessageCircle } from "lucide-react";
 
 export default function QBOTWelcomeState() {
   return (
@@ -6,18 +6,18 @@ export default function QBOTWelcomeState() {
       <div className="text-center max-w-md">
         {/* Large Chat Bubble Icon */}
         <div className="flex justify-center mb-6">
-          <MessageCircle 
-            size={80} 
-            className="text-gray-300" 
-            strokeWidth={1}
-          />
+          <MessageCircle size={80} className="text-gray-300" strokeWidth={1} />
         </div>
-        
+
         {/* Welcome Text */}
-        <h3 className="text-2xl font-semibold text-gray-600 mb-4">Welcome onboard Sailor!</h3>
-        
+        <h3 className="text-2xl font-semibold text-gray-600 mb-4">
+          Welcome onboard!
+        </h3>
+
         {/* Description */}
-        <p className="text-gray-500 leading-relaxed">Non Sailors! ur Goddess has no Dominion here - QBot.</p>
+        <p className="text-gray-500 leading-relaxed">
+          Non Sailors! ur Goddess has no Dominion here.
+        </p>
       </div>
     </div>
   );
