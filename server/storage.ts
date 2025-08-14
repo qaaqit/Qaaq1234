@@ -444,8 +444,7 @@ export class DatabaseStorage implements IStorage {
           FROM chat_messages 
           GROUP BY connection_id
         ) latest_msg ON cc.id = latest_msg.connection_id
-        WHERE (cc.sender_id = $1 OR cc.receiver_id = $1) 
-          AND NOT (cc.status = 'blocked' AND cc.receiver_id = $1)
+        WHERE (cc.sender_id = $1 OR cc.receiver_id = $1)
         ORDER BY last_activity DESC
       `, [userId]);
 
@@ -499,6 +498,13 @@ export class DatabaseStorage implements IStorage {
       console.error('Error getting chat connection by ID:', error);
       return null;
     }
+  }
+
+  async unblockChatConnection(connectionId: string): Promise<void> {
+    await db
+      .update(chatConnections)
+      .set({ status: 'pending' })
+      .where(eq(chatConnections.id, connectionId));
   }
 
   async sendMessage(connectionId: string, senderId: string, message: string): Promise<ChatMessage> {

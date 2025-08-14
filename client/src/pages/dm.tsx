@@ -215,6 +215,27 @@ export default function DMPage() {
     }
   });
 
+  // Unblock connection mutation
+  const unblockConnectionMutation = useMutation({
+    mutationFn: async (connectionId: string) => {
+      return apiRequest(`/api/chat/unblock/${connectionId}`, 'POST');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/chat/connections'] });
+      toast({
+        title: "User Unblocked",
+        description: "This user has been unblocked and can now send you messages.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to unblock connection. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
   const getInitials = (name: string | null | undefined) => {
     if (!name || typeof name !== 'string') return 'U';
     return name
@@ -697,27 +718,43 @@ export default function DMPage() {
                                   </p>
                                   {isIncoming && (
                                     <div className="flex space-x-1 mt-1">
-                                      <Button
-                                        size="sm"
-                                        className="text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          acceptConnectionMutation.mutate(connection.id);
-                                        }}
-                                      >
-                                        Accept
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        className="text-xs border-red-300 text-red-600 hover:bg-red-50 px-2 py-1"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          blockConnectionMutation.mutate(connection.id);
-                                        }}
-                                      >
-                                        Blocked
-                                      </Button>
+                                      {connection.status !== 'blocked' ? (
+                                        <>
+                                          <Button
+                                            size="sm"
+                                            className="text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              acceptConnectionMutation.mutate(connection.id);
+                                            }}
+                                          >
+                                            Accept
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="text-xs border-red-300 text-red-600 hover:bg-red-50 px-2 py-1"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              blockConnectionMutation.mutate(connection.id);
+                                            }}
+                                          >
+                                            Blocked
+                                          </Button>
+                                        </>
+                                      ) : (
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="text-xs border-gray-300 text-gray-600 hover:bg-gray-50 px-2 py-1"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            unblockConnectionMutation.mutate(connection.id);
+                                          }}
+                                        >
+                                          Unblock
+                                        </Button>
+                                      )}
                                     </div>
                                   )}
                                   {isOutgoing && (

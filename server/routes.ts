@@ -3457,6 +3457,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Unblock connection endpoint
+  app.post('/api/chat/unblock/:connectionId', async (req: any, res) => {
+    try {
+      // Get user ID from session or token - check both Replit Auth and JWT
+      let userId: string | undefined;
+      
+      // Check for Replit Auth session first
+      if (req.user && req.user.claims && req.user.claims.sub) {
+        userId = req.user.claims.sub;
+      } else {
+        // Check for QAAQ token
+        const authHeader = req.headers.authorization;
+        const token = authHeader && authHeader.split(' ')[1];
+        if (token) {
+          try {
+            const decoded = jwt.verify(token, JWT_SECRET) as any;
+            userId = decoded.userId;
+          } catch (error) {
+            // Token invalid, but continue to check for session
+          }
+        }
+      }
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      const { connectionId } = req.params;
+      
+      // Get the connection to verify the user can unblock it
+      const connection = await storage.getChatConnectionById(connectionId);
+      if (!connection) {
+        return res.status(404).json({ message: 'Connection not found' });
+      }
+
+      // Only the receiver can unblock a blocked connection
+      if (connection.receiverId !== userId) {
+        return res.status(403).json({ message: 'Not authorized to unblock this connection' });
+      }
+
+      await storage.unblockChatConnection(connectionId);
+      res.json({ message: 'User unblocked successfully' });
+    } catch (error) {
+      console.error('Unblock connection error:', error);
+      res.status(500).json({ message: "Failed to unblock connection" });
+    }
+  });
+
   app.post('/api/chat/reject/:connectionId', authenticateToken, async (req, res) => {
     try {
       const { connectionId } = req.params;
