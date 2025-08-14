@@ -703,6 +703,11 @@ export default function DMPage() {
                             {userProfile.rank}
                           </Badge>
                         )}
+                        {userProfile.maritime_rank && (
+                          <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                            {userProfile.maritime_rank}
+                          </Badge>
+                        )}
                       </div>
                       <p className="text-sm text-gray-500 truncate mt-1">
                         {userProfile.company && `${userProfile.company} • `}
