@@ -709,9 +709,7 @@ export default function DMPage() {
                         {userProfile.shipName && `${userProfile.shipName} • `}
                         {userProfile.distance !== undefined && `${formatDistance(userProfile.distance)} away`}
                       </p>
-                      <p className="text-xs text-orange-600 mt-1 font-medium">
-                        Click to start conversation
-                      </p>
+
                     </div>
                   </div>
                 </div>
