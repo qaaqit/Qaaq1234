@@ -329,7 +329,7 @@ export default function DMPage() {
                 <div className="flex-1 relative">
                   <Input
                     type="text"
-                    placeholder="by name/rank/ship/company"
+                    placeholder="by name / rank / ship / company"
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
                     className="pr-12 border-ocean-teal/30 focus:border-ocean-teal"
@@ -499,7 +499,7 @@ export default function DMPage() {
                 <div className="p-4 border-b border-gray-100">
                   <div className="flex items-center justify-between">
                     <h2 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
-                      <MessageCircle size={20} className="text-green-600" />
+                      <MessageCircle size={20} className="text-orange-600" />
                       <span>Active DMs</span>
                     </h2>
                     <span className="text-sm text-gray-500">
