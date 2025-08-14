@@ -517,13 +517,20 @@ export default function DMPage() {
               return (
                 <div 
                   key={`connection-${connection.id}`} 
-                  className="p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                  className="p-4 hover:bg-gray-50 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-gray-50"
+                  tabIndex={0}
                   onClick={() => {
                     if (isAccepted) {
                       openChat(connection);
                       if (connection.id) {
                         websocketService.markMessagesAsRead(connection.id);
                       }
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      e.currentTarget.click();
                     }
                   }}
                 >
@@ -626,9 +633,35 @@ export default function DMPage() {
               return (
                 <div 
                   key={`professional-${userProfile.id}`} 
-                  className="p-4 hover:bg-orange-50 transition-colors cursor-pointer border-l-4 border-orange-300"
-                  onClick={() => {
-                    handleConnectUser(userProfile.id);
+                  className="p-4 hover:bg-orange-50 transition-colors cursor-pointer border-l-4 border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:bg-orange-50"
+                  tabIndex={0}
+                  onClick={async () => {
+                    try {
+                      const response = await fetch('/api/chat/connect', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ receiverId: userProfile.id }),
+                      });
+                      
+                      if (response.ok) {
+                        const result = await response.json();
+                        if (result.success && result.connection) {
+                          setLocation(`/chat/${result.connection.id}`);
+                        }
+                      } else {
+                        console.error('Failed to create connection:', response.statusText);
+                      }
+                    } catch (error) {
+                      console.error('Error creating connection:', error);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      e.currentTarget.click();
+                    }
                   }}
                 >
                   <div className="flex items-center space-x-3">
