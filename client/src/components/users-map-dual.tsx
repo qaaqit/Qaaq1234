@@ -13,7 +13,10 @@ interface MapUser {
   fullName: string;
   userType: string;
   rank: string | null;
+  maritimeRank?: string | null;
   shipName: string | null;
+  lastShip?: string | null;
+  lastCompany?: string | null;
   currentShipName?: string | null;
   company?: string | null;
   imoNumber: string | null;
@@ -30,6 +33,8 @@ interface MapUser {
   answerCount?: number;
   onboardStatus?: string | null;
   profilePictureUrl?: string | null;
+  whatsAppProfilePictureUrl?: string | null;
+  whatsAppDisplayName?: string | null;
 }
 
 const getRankAbbreviation = (rank: string): string => {
@@ -723,7 +728,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                   }`}
                   onClick={() => {
                     // Navigate to Q13 active chat page with selected user
-                    navigate(`/dm?user=${encodeURIComponent(user.id)}`);
+                    setLocation(`/dm?user=${encodeURIComponent(user.id)}`);
                   }}
                   title="Click to open chat"
                 >
@@ -846,32 +851,24 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
               }
             </h3>
             
-            {/* Rank */}
-            {hoveredUser.rank && (
+            {/* Maritime Rank - using rank field (primary) or maritimeRank field (detailed) */}
+            {(hoveredUser.rank || hoveredUser.maritimeRank) && (
               <p className="text-orange-600 font-bold text-xs mb-1">
-                Rank: {getRankAbbreviation(hoveredUser.rank)}
+                <strong>Rank:</strong> {hoveredUser.rank || hoveredUser.maritimeRank}
               </p>
             )}
             
-            {/* Ship - Show current or last */}
-            {(hoveredUser.currentShipName || hoveredUser.shipName) && (
+            {/* Last Company */}
+            {hoveredUser.lastCompany && (
               <p className="text-gray-600 text-xs mb-1">
-                <strong>{hoveredUser.onboardStatus === 'ONBOARD' ? 'Current Ship:' : 'Last Ship:'}</strong> <em>{hoveredUser.currentShipName || hoveredUser.shipName}</em>
+                <strong>Company:</strong> {hoveredUser.lastCompany}
               </p>
             )}
             
-            {/* Company */}
-            {hoveredUser.company && (
+            {/* Last Ship */}
+            {hoveredUser.lastShip && (
               <p className="text-gray-600 text-xs mb-1">
-                <strong>Company:</strong> {hoveredUser.company}
-              </p>
-            )}
-            
-            {/* Port & Visit Window */}
-            {hoveredUser.port && (
-              <p className="text-gray-600 text-xs mb-1">
-                <strong>Port:</strong> {hoveredUser.port}
-                {hoveredUser.visitWindow && ` (${hoveredUser.visitWindow})`}
+                <strong>Ship:</strong> {hoveredUser.lastShip}
               </p>
             )}
             
