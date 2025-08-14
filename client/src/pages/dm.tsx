@@ -182,10 +182,7 @@ export default function DMPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/chat/connections'] });
-      toast({
-        title: "Connection Accepted",
-        description: "You can now start chatting!",
-      });
+      // No toast notification - accepting should be silent
     },
     onError: (error: any) => {
       toast({
