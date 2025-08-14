@@ -310,8 +310,9 @@ export default function UsersPage() {
                 key={user.id}
                 className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer"
                 onClick={() => {
-                  // Navigate directly to 1v1 DM chat  
-                  setLocation(`/chat?user=${user.id}`);
+                  // Navigate to DM page with target user for auto-connection
+                  console.log('🔍 User card clicked:', user.id, user.fullName);
+                  setLocation(`/dm?target=${user.id}`);
                 }}
               >
                 {/* Header with avatar and name */}

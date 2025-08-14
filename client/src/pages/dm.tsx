@@ -399,8 +399,26 @@ export default function DMPage() {
                               key={userProfile.id} 
                               className="border border-gray-200 hover:shadow-lg transition-shadow cursor-pointer"
                               onClick={async () => {
-                                // Navigate directly to 1v1 DM chat
-                                setLocation(`/chat?user=${userProfile.id}`);
+                                // Create or find existing connection and navigate to 1v1 DM chat
+                                console.log('🔍 Search card clicked for user:', userProfile.id, userProfile.fullName);
+                                
+                                // Check if connection already exists
+                                const existingConnection = connections.find(conn => 
+                                  (conn.senderId === user?.id && conn.receiverId === userProfile.id) ||
+                                  (conn.receiverId === user?.id && conn.senderId === userProfile.id)
+                                );
+
+                                if (existingConnection && existingConnection.status === 'accepted') {
+                                  console.log('✅ Opening existing accepted chat');
+                                  openChat(existingConnection);
+                                } else if (!existingConnection) {
+                                  console.log('🚀 Creating new connection');
+                                  await handleConnectUser(userProfile.id);
+                                } else {
+                                  console.log('⏳ Connection exists but not accepted yet:', existingConnection.status);
+                                  // Still try to open for pending connections  
+                                  openChat(existingConnection);
+                                }
                               }}
                             >
                               <CardContent className="p-4 text-[#191919]" data-testid="searchcard">
