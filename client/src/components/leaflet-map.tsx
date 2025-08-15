@@ -30,12 +30,13 @@ interface LeafletMapProps {
   onUserHover: (user: MapUser | null, position?: { x: number; y: number }) => void;
   onUserClick: (userId: string) => void;
   onZoomChange?: (zoom: number) => void;
+  onBoundsChange?: (bounds: {north: number, south: number, east: number, west: number}) => void;
   showScanElements?: boolean;
   scanAngle?: number;
   radiusKm?: number;
 }
 
-const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, selectedUser, onUserHover, onUserClick, onZoomChange, showScanElements = false, scanAngle = 0, radiusKm = 50 }) => {
+const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, selectedUser, onUserHover, onUserClick, onZoomChange, onBoundsChange, showScanElements = false, scanAngle = 0, radiusKm = 50 }) => {
   const [bounds, setBounds] = useState<LatLngBounds | null>(null);
   const [currentZoom, setCurrentZoom] = useState(10);
 
@@ -93,6 +94,31 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, selectedUs
         setCurrentZoom(zoom);
         if (onZoomChange) {
           onZoomChange(zoom);
+        }
+        
+        // Also emit bounds change when zoom ends
+        if (onBoundsChange) {
+          const bounds = e.target.getBounds();
+          const mapBounds = {
+            north: bounds.getNorth(),
+            south: bounds.getSouth(),
+            east: bounds.getEast(),
+            west: bounds.getWest()
+          };
+          onBoundsChange(mapBounds);
+        }
+      },
+      moveend: (e) => {
+        // Emit bounds change when map is moved
+        if (onBoundsChange) {
+          const bounds = e.target.getBounds();
+          const mapBounds = {
+            north: bounds.getNorth(),
+            south: bounds.getSouth(),
+            east: bounds.getEast(),
+            west: bounds.getWest()
+          };
+          onBoundsChange(mapBounds);
         }
       },
     });
