@@ -134,14 +134,10 @@ export function RankGroupsPanel() {
           </div>
           <div>
             <h2 className="text-2xl font-bold text-gray-900">{displayRank} Group Chat</h2>
-            <p className="text-sm text-gray-600">1V ALL • Connect with your {displayRank} peers</p>
           </div>
           {user?.isAdmin && <Shield className="h-5 w-5 text-orange-600" />}
         </div>
         <div className="flex items-center space-x-2">
-          <Badge variant="secondary" className="bg-orange-100 text-orange-800">
-            {rankMembers.length} {displayRank}s Online
-          </Badge>
         </div>
       </div>
       
@@ -192,13 +188,7 @@ export function RankGroupsPanel() {
               </Card>
             ))}
             
-            {rankMembers.length === 0 && (
-              <div className="text-center text-gray-500 py-8">
-                <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No {displayRank}s online</p>
-                <p className="text-sm mt-2">Check back later</p>
-              </div>
-            )}
+            
           </div>
         </div>
 
