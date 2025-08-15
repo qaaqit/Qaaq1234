@@ -19,6 +19,7 @@ interface RankMember {
   whatsAppDisplayName?: string;
   questionCount?: number;
   isOnline?: boolean;
+  lastCompany?: string;
 }
 
 interface RankMessage {
@@ -43,7 +44,7 @@ export function RankGroupsPanel() {
   
   // Get user's maritime rank directly from Users table
   const userMaritimeRank = user?.maritimeRank || user?.rank;
-  const displayRank = userMaritimeRank?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Maritime Professional';
+  const displayRank = userMaritimeRank?.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()) || 'Maritime Professional';
   
   // If no rank is found, show message
   if (!userMaritimeRank) {
@@ -179,8 +180,16 @@ export function RankGroupsPanel() {
                 <div>
                   <CardTitle className="flex items-center space-x-2">
                     <MessageCircle className="h-5 w-5 text-orange-600" />
-                    <span>CEGroup</span>
-                    <Badge className="bg-orange-100 text-orange-800">{rankMembers.length} Members</Badge>
+                    <span>{displayRank} Group</span>
+                    <Button
+                      variant="ghost"
+                      onClick={() => setShowMembers(!showMembers)}
+                      className="p-0 h-auto"
+                    >
+                      <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-200 cursor-pointer transition-colors">
+                        {rankMembers.length} Members
+                      </Badge>
+                    </Button>
                   </CardTitle>
                   <CardDescription>Connect with all maritime professionals of your rank</CardDescription>
                 </div>
@@ -195,42 +204,91 @@ export function RankGroupsPanel() {
               </div>
             </CardHeader>
 
-            {/* Messages Area */}
+            {/* Members List or Messages Area */}
             <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
-              {loadingMessages ? (
-                <div className="flex justify-center py-8">
-                  <div className="animate-spin w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full"></div>
-                </div>
-              ) : messages.length > 0 ? (
-                messages.map((message) => (
-                  <div key={message.id} className="space-y-2">
-                    <div className="flex items-center space-x-2 text-xs text-gray-500">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-white font-bold text-xs">
-                        {message.senderName?.charAt(0) || 'M'}
-                      </div>
-                      <span className="font-medium text-gray-700">{message.senderName}</span>
-                      <Badge variant="outline" className="text-xs bg-orange-100 text-orange-800">
-                        {message.senderCompany || 'Maritime Professional'}
-                      </Badge>
-                      <span className="text-xs">
-                        {new Date(message.timestamp).toLocaleTimeString()}
-                      </span>
-                    </div>
-                    <div className={`p-3 rounded-lg ml-10 ${
-                      message.senderId === user?.id 
-                        ? 'bg-orange-100 border-l-4 border-orange-500 ml-auto max-w-xs' 
-                        : 'bg-white/70 border border-gray-200 hover:bg-white transition-colors'
-                    }`}>
-                      <p className="text-sm text-gray-800">{message.message}</p>
-                    </div>
+              {showMembers ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      All {displayRank} Professionals ({rankMembers.length})
+                    </h3>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowMembers(false)}
+                      className="text-gray-600 hover:text-gray-800"
+                    >
+                      Back to Chat
+                    </Button>
                   </div>
-                ))
-              ) : (
-                <div className="text-center text-gray-500 py-12">
-                  <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg font-medium">No messages yet in {displayRank} chat</p>
-                  <p className="text-sm">Be the first to start the conversation with your maritime peers!</p>
+                  
+                  {/* Members Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {rankMembers.map((member) => (
+                      <Card key={member.id} className="bg-white hover:shadow-md transition-shadow">
+                        <CardContent className="p-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-white font-bold">
+                              {member.fullName?.charAt(0) || 'M'}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-gray-900 truncate">
+                                {member.fullName || 'Maritime Professional'}
+                              </h4>
+                              <p className="text-sm text-gray-600 truncate">
+                                {member.lastCompany || 'Company Not Specified'}
+                              </p>
+                              <div className="flex items-center space-x-2 mt-1">
+                                <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700">
+                                  {member.maritimeRank?.replace(/_/g, ' ') || 'Professional'}
+                                </Badge>
+                                {member.city && (
+                                  <span className="text-xs text-gray-500">{member.city}</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
                 </div>
+              ) : (
+                loadingMessages ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full"></div>
+                  </div>
+                ) : messages.length > 0 ? (
+                  messages.map((message) => (
+                    <div key={message.id} className="space-y-2">
+                      <div className="flex items-center space-x-2 text-xs text-gray-500">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-white font-bold text-xs">
+                          {message.senderName?.charAt(0) || 'M'}
+                        </div>
+                        <span className="font-medium text-gray-700">{message.senderName}</span>
+                        <Badge variant="outline" className="text-xs bg-orange-100 text-orange-800">
+                          {message.senderCompany || 'Maritime Professional'}
+                        </Badge>
+                        <span className="text-xs">
+                          {new Date(message.timestamp).toLocaleTimeString()}
+                        </span>
+                      </div>
+                      <div className={`p-3 rounded-lg ml-10 ${
+                        message.senderId === user?.id 
+                          ? 'bg-orange-100 border-l-4 border-orange-500 ml-auto max-w-xs' 
+                          : 'bg-white/70 border border-gray-200 hover:bg-white transition-colors'
+                      }`}>
+                        <p className="text-sm text-gray-800">{message.message}</p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center text-gray-500 py-12">
+                    <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                    <p className="text-lg font-medium">No messages yet in {displayRank} chat</p>
+                    <p className="text-sm">Be the first to start the conversation with your maritime peers!</p>
+                  </div>
+                )
               )}
             </CardContent>
 
