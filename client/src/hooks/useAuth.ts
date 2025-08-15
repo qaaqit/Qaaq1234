@@ -3,6 +3,28 @@ import { useQuery } from "@tanstack/react-query";
 export function useAuth() {
   const { data: user, isLoading } = useQuery({
     queryKey: ["/api/auth/user"],
+    queryFn: async () => {
+      // Get JWT token from localStorage for QAAQ authentication
+      const token = localStorage.getItem('authToken');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+      
+      const response = await fetch('/api/auth/user', {
+        credentials: 'include', // Include session cookies for Replit Auth
+        headers,
+      });
+      
+      if (!response.ok) {
+        throw new Error('Authentication failed');
+      }
+      
+      return response.json();
+    },
     retry: false,
     refetchInterval: false, // Disable automatic refetching 
     refetchOnWindowFocus: false, // Disable refetch on window focus

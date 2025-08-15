@@ -213,17 +213,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { setupAuth, isAuthenticated } = await import('./replitAuth.js');
       await setupAuth(app);
       
-      // Add Replit Auth user endpoint
-      app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+      // Add dual authentication user endpoint (supports both Replit Auth and QAAQ JWT)
+      app.get('/api/auth/user', async (req: any, res) => {
         try {
-          console.log('🔍 Replit auth check - user session:', req.user);
-          const userId = req.user.claims.sub;
-          console.log('🔍 Looking for user with Replit ID:', userId);
+          let userId = null;
+          let authMethod = 'none';
+          
+          console.log('🔍 Dual auth check - Session:', !!req.session, 'Auth header:', !!req.headers.authorization);
+          
+          // First check for Replit Auth session
+          if (req.isAuthenticated && req.isAuthenticated()) {
+            userId = req.user?.claims?.sub;
+            authMethod = 'replit';
+            console.log('🔑 Using Replit session auth for user:', userId);
+          } 
+          // Then check for QAAQ JWT token
+          else {
+            const authHeader = req.headers.authorization;
+            const token = authHeader && authHeader.split(' ')[1];
+            
+            if (token) {
+              try {
+                const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+                userId = decoded.userId;
+                authMethod = 'jwt';
+                console.log('🔑 Using QAAQ JWT auth for user:', userId);
+              } catch (error) {
+                console.log('❌ JWT token invalid:', (error as Error).message);
+              }
+            }
+          }
+          
+          if (!userId) {
+            console.log('❌ No valid authentication found');
+            return res.status(401).json({ message: 'No valid authentication found' });
+          }
+          
+          console.log(`🔍 Looking for user with ${authMethod} auth - ID:`, userId);
           const user = await storage.getUser(userId);
-          console.log('🔍 Found user:', user ? user.fullName : 'Not found');
+          
+          if (!user) {
+            console.log('❌ User not found in database:', userId);
+            return res.status(404).json({ message: 'User not found' });
+          }
+          
+          console.log('✅ Found user:', user.fullName, `(${authMethod} auth)`);
           res.json(user);
         } catch (error) {
-          console.error("Error fetching Replit user:", error);
+          console.error("Error fetching user:", (error as Error).message);
           res.status(500).json({ message: "Failed to fetch user" });
         }
       });
