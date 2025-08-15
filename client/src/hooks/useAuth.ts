@@ -5,7 +5,7 @@ export function useAuth() {
     queryKey: ["/api/auth/user"],
     queryFn: async () => {
       // Get JWT token from localStorage for QAAQ authentication
-      const token = localStorage.getItem('authToken');
+      const token = localStorage.getItem('auth_token');
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };

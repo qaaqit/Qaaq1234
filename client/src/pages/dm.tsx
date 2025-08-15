@@ -159,7 +159,7 @@ export default function DMPage() {
       console.log('🔍 Frontend: Fetching rank groups for user:', user?.id);
       
       // Get JWT token from localStorage
-      const token = localStorage.getItem('authToken');
+      const token = localStorage.getItem('auth_token');
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
