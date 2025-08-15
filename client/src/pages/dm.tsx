@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 
-import { MessageCircle, Anchor, Navigation, Search, MapPin, Clock, User, Ship, Award, ChevronDown, Ban } from "lucide-react";
+import { MessageCircle, Anchor, Navigation, Search, MapPin, Clock, User, Ship, Award, ChevronDown, Ban, Users } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
@@ -32,6 +32,13 @@ interface ExtendedChatConnection extends ChatConnection {
 interface UserWithDistance extends UserType {
   distance: number;
   company?: string;
+}
+
+interface RankGroup {
+  id: string;
+  name: string;
+  description: string;
+  memberCount?: number;
 }
 
 export default function DMPage() {
@@ -123,6 +130,17 @@ export default function DMPage() {
     },
     refetchInterval: false, // No auto-refresh - only manual refresh when user clicks radar
     enabled: !!user, // Only fetch when user is authenticated
+  });
+
+  // Fetch rank groups for displaying group cards
+  const { data: rankGroups = [], isLoading: rankGroupsLoading } = useQuery<RankGroup[]>({
+    queryKey: ['/api/rank-groups/public'],
+    queryFn: async () => {
+      const response = await fetch('/api/rank-groups/public');
+      if (!response.ok) throw new Error('Failed to fetch rank groups');
+      return response.json();
+    },
+    enabled: !!user,
   });
 
   // Global radar refresh handler - exposed for external components
@@ -367,7 +385,7 @@ export default function DMPage() {
     conn.status === 'blocked' && conn.receiverId === user.id
   );
 
-  // Create combined list for display: Most recent connections first, then Top Q Professionals (excluding blocked)
+  // Create combined list for display: Most recent connections first, then Top Q Professionals, then rank groups
   const allChatCards = [
     // Most recent pending connections first (they should appear at top)
     ...pendingConnections.map(conn => ({ type: 'connection' as const, data: conn })),
@@ -375,6 +393,8 @@ export default function DMPage() {
     ...activeConnections.map(conn => ({ type: 'connection' as const, data: conn })),
     // Sent requests
     ...sentRequests.map(conn => ({ type: 'connection' as const, data: conn })),
+    // Rank groups cards (only show if not searching)
+    ...(!searchQuery.trim() ? rankGroups.map(group => ({ type: 'rank_group' as const, data: group })) : []),
     // Top Q Professionals (excluding users already in active conversations)
     ...filteredUsers
       .filter(topQUser => !activeConnections.some(conn => {

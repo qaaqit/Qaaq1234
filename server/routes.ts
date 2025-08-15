@@ -5516,6 +5516,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public API to get all rank groups for DM page cards
+  app.get('/api/rank-groups/public', async (req, res) => {
+    try {
+      const result = await getAllRankGroups();
+      res.json(result);
+    } catch (error) {
+      console.error('Error fetching public rank groups:', error);
+      res.status(500).json({ error: 'Failed to fetch rank groups' });
+    }
+  });
+
   // Get all rank groups (admin only) or user's groups (regular users)
   app.get('/api/rank-groups', authenticateToken, async (req: any, res) => {
     try {
