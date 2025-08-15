@@ -26,12 +26,13 @@ interface GoogleMapProps {
   userLocation: { lat: number; lng: number } | null;
   selectedUser?: MapUser | null;
   mapType?: string;
-  onUserHover: (user: MapUser | null, position?: { x: number; y: number }) => void;
-  onUserClick: (userId: string) => void;
+  onUserHover?: (user: MapUser | null, position?: { x: number; y: number } | null) => void;
+  onUserClick?: (userId: string) => void;
   onZoomChange?: (zoom: number) => void;
   showScanElements?: boolean;
   scanAngle?: number;
   radiusKm?: number;
+  onUserCardShow?: (user: MapUser | null, position?: { x: number; y: number } | null) => void;
 }
 
 declare global {
@@ -84,7 +85,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
     script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geometry,places`;
     script.async = true;
     script.defer = true;
-    
+
     // Add error handling
     script.onerror = () => {
       console.error('Failed to load Google Maps API. Please check your API key and network connection.');
@@ -196,7 +197,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
   // Separate effect for zoom listener to avoid re-initialization
   useEffect(() => {
     if (!mapInstanceRef.current || !onZoomChange) return;
-    
+
     const zoomListener = mapInstanceRef.current.addListener('zoom_changed', () => {
       const zoom = mapInstanceRef.current.getZoom();
       onZoomChange(zoom);
@@ -241,10 +242,13 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
   useEffect(() => {
     if (!isMapLoaded || !mapInstanceRef.current || !window.google?.maps) return;
 
+    // Filter users to only include those with valid coordinates
+    const filteredUsers = users.filter(user => user.latitude !== null && user.longitude !== null);
+
     // Only clear and recreate if users array actually changed
     const currentUserIds = markersRef.current.map(m => m.userId).sort().join(',');
-    const newUserIds = users.map(u => u.id).sort().join(',');
-    
+    const newUserIds = filteredUsers.map(u => u.id).sort().join(',');
+
     if (currentUserIds === newUserIds && markersRef.current.length > 0) {
       return; // No change in users, don't recreate markers
     }
@@ -254,11 +258,9 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
     markersRef.current = [];
 
     // Add new markers with stable positioning
-    users.forEach((user) => {
-      if (!user.latitude || !user.longitude) return;
-
+    filteredUsers.forEach((user) => {
       // Check if user is online with recent location update
-      const isRecentLocation = user.locationUpdatedAt && 
+      const isRecentLocation = user.locationUpdatedAt &&
         new Date(user.locationUpdatedAt).getTime() > Date.now() - 10 * 60 * 1000;
       const isOnlineWithLocation = !!(user.deviceLatitude && user.deviceLongitude && isRecentLocation);
 
@@ -271,7 +273,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
         const seed = user.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
         const random1 = ((seed * 9301 + 49297) % 233280) / 233280;
         const random2 = (((seed + 1) * 9301 + 49297) % 233280) / 233280;
-        
+
         const scatterRadius = 0.45; // degrees (roughly 50km)
         plotLat = user.latitude + (random1 - 0.5) * scatterRadius;
         plotLng = user.longitude + (random2 - 0.5) * scatterRadius;
@@ -301,22 +303,74 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
       // Store user ID with marker for comparison
       (marker as any).userId = user.id;
 
-      // Add hover listeners
-      marker.addListener('mouseover', (e: any) => {
-        console.log('🟢 GOOGLE MAPS HOVER: mouseover fired for', user.fullName);
-        onUserHover(user, { x: e.domEvent.clientX, y: e.domEvent.clientY });
+      // Get overlay to calculate pixel position for hover/click events
+      const overlay = new window.google.maps.OverlayView();
+      overlay.draw = function() {
+        this.setMap(mapInstanceRef.current);
+      };
+      overlay.onAdd = function() {};
+      overlay.onRemove = function() {};
+      overlay.setMap(mapInstanceRef.current);
+
+      // Hover events for desktop
+      marker.addListener('mouseover', (event: any) => {
+        if (onUserHover && !isMobileDevice()) {
+          const pixelPosition = overlay.getProjection()?.fromLatLngToContainerPixel(marker.getPosition()!);
+          if (pixelPosition) {
+            onUserHover(user, { x: pixelPosition.x, y: pixelPosition.y });
+          }
+        }
       });
 
       marker.addListener('mouseout', () => {
-        console.log('🔴 GOOGLE MAPS HOVER: mouseout fired for', user.fullName);
-        onUserHover(null);
+        if (onUserHover && !isMobileDevice()) {
+          onUserHover(null);
+        }
       });
 
-      // Add click listener
+      // Click event - mobile-friendly interaction
+      let clickTimeout: NodeJS.Timeout | null = null;
+      let clickCount = 0;
+
       marker.addListener('click', () => {
-        console.log('🔵 GOOGLE MAPS CLICK: click fired for', user.fullName);
-        if (onUserClick) {
-          onUserClick(user.id);
+        clickCount++;
+
+        if (isMobileDevice()) {
+          // Mobile: First click shows card, second click opens chat
+          if (clickCount === 1) {
+            // Show user card on first click
+            if (onUserCardShow) {
+              const pixelPosition = overlay.getProjection()?.fromLatLngToContainerPixel(marker.getPosition()!);
+              if (pixelPosition) {
+                onUserCardShow(user, { x: pixelPosition.x, y: pixelPosition.y });
+              }
+            }
+
+            // Set timeout to reset click count
+            clickTimeout = setTimeout(() => {
+              clickCount = 0;
+            }, 500);
+          } else if (clickCount === 2) {
+            // Open chat on second click
+            if (clickTimeout) {
+              clearTimeout(clickTimeout);
+              clickTimeout = null;
+            }
+            clickCount = 0;
+
+            // Hide user card and open chat
+            if (onUserCardShow) {
+              onUserCardShow(null);
+            }
+            if (onUserClick) {
+              onUserClick(user.id);
+            }
+          }
+        } else {
+          // Desktop: Direct to chat on click
+          if (onUserClick) {
+            onUserClick(user.id);
+          }
         }
       });
 
@@ -324,7 +378,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
       // Reduced logging to improve performance
     });
 
-  }, [isMapLoaded, users, onUserHover, onUserClick]);
+  }, [isMapLoaded, users, onUserHover, onUserClick, onUserCardShow]); // Added onUserCardShow to dependencies
 
   // Add user location marker (current user's position)
   useEffect(() => {
@@ -388,16 +442,16 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
 
     // Calculate screen-edge radius based on zoom level and screen size
     let screenRadius;
-    
+
     try {
       const bounds = mapInstanceRef.current.getBounds();
       if (bounds) {
         const center = mapInstanceRef.current.getCenter();
-        
+
         // Get distance from center to edge of visible area
         const ne = bounds.getNorthEast();
         const sw = bounds.getSouthWest();
-        
+
         // Calculate distances to each edge (if geometry library is available)
         if (window.google.maps.geometry && window.google.maps.geometry.spherical) {
           const distanceToNorth = window.google.maps.geometry.spherical.computeDistanceBetween(
@@ -412,7 +466,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
           const distanceToWest = window.google.maps.geometry.spherical.computeDistanceBetween(
             center, new window.google.maps.LatLng(center.lat(), sw.lng())
           );
-          
+
           // Use the minimum distance to ensure circle fits within screen
           screenRadius = Math.min(distanceToNorth, distanceToEast, distanceToSouth, distanceToWest) * 0.8; // 80% of edge distance
         } else {
@@ -420,14 +474,14 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
           const latDiff = Math.abs(ne.lat() - sw.lat()) / 2;
           const lngDiff = Math.abs(ne.lng() - sw.lng()) / 2;
           const avgLat = (ne.lat() + sw.lat()) / 2;
-          
+
           // Rough conversion to meters (simplified)
           const latToMeters = 111000; // roughly 111km per degree
           const lngToMeters = 111000 * Math.cos(avgLat * Math.PI / 180);
-          
+
           const latDistance = latDiff * latToMeters;
           const lngDistance = lngDiff * lngToMeters;
-          
+
           screenRadius = Math.min(latDistance, lngDistance) * 0.8;
         }
       } else {
@@ -470,15 +524,15 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
 
     // Calculate end point of scan line based on angle and screen radius
     const bearing = (scanAngle * Math.PI) / 180; // Convert to radians
-    
+
     const lat1 = (userLocation.lat * Math.PI) / 180;
     const lng1 = (userLocation.lng * Math.PI) / 180;
-    
+
     const lat2 = Math.asin(
       Math.sin(lat1) * Math.cos(screenRadius / 6371000) +
       Math.cos(lat1) * Math.sin(screenRadius / 6371000) * Math.cos(bearing)
     );
-    
+
     const lng2 = lng1 + Math.atan2(
       Math.sin(bearing) * Math.sin(screenRadius / 6371000) * Math.cos(lat1),
       Math.cos(screenRadius / 6371000) - Math.sin(lat1) * Math.sin(lat2)
@@ -492,9 +546,6 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
     // Sophisticated scan line colors
     const lineColor = isDarkMode ? '#00d4ff' : '#0891b2'; // Match circle color
     const lineOpacity = isDarkMode ? 0.9 : 0.7;
-    const glowEffect = isDarkMode 
-      ? `0 0 10px ${lineColor}, 0 0 20px ${lineColor}` 
-      : `0 0 8px ${lineColor}`;
 
     // Create or update scan line
     if (!scanLineRef.current) {
@@ -515,7 +566,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
       });
     }
 
-  }, [isMapLoaded, userLocation, showScanElements, scanAngle, boundsUpdateTrigger]);
+  }, [isMapLoaded, userLocation, showScanElements, scanAngle, boundsUpdateTrigger]); // Added dependencies
 
   // Show error message if map failed to load
   if (mapError) {
@@ -548,6 +599,74 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
       <div ref={mapRef} className="w-full h-full" />
     </div>
   );
+};
+
+// Helper function to get user color (example implementation)
+const getUserColor = (user: MapUser): string => {
+  if (user.userType === 'sailor') return '#1E40AF'; // Navy blue for sailors
+  if (user.userType === 'local') return '#0D9488'; // Teal for locals
+  return '#10B981'; // Green for others (assuming these are the "green dot users")
+};
+
+// Helper function to get user icon (example implementation)
+const getUserIcon = (user: MapUser): string => {
+  if (user.userType === 'sailor') return '⛵';
+  if (user.userType === 'local') return '🏠';
+  return '👤';
+};
+
+// Helper function to get rank abbreviation
+const getRankAbbreviation = (rank: string): string => {
+  const abbreviations: { [key: string]: string } = {
+    'chief_engineer': 'CE',
+    'second_engineer': '2E',
+    'third_engineer': '3E',
+    'fourth_engineer': '4E',
+    'junior_engineer': 'JE',
+    'engine_cadet': 'E/C',
+    'deck_cadet': 'D/C',
+    'electrical_engineer': 'ETO',
+    'master': 'CAPT',
+    'chief_officer': 'C/O',
+    'second_officer': '2/O',
+    'third_officer': '3/O',
+    'trainee': 'TRN',
+    'other': 'OTHER',
+    'captain': 'CAPT',
+    'chief engineer': 'CE',
+    'chief officer': 'CO',
+    'first engineer': '1E',
+    'first officer': '1O',
+    'second engineer': '2E',
+    'second officer': '2O',
+    'third engineer': '3E',
+    'third officer': '3O',
+    'fourth engineer': '4E',
+    'fourth officer': '4O',
+    'bosun': 'BSN',
+    'able seaman': 'AB',
+    'ordinary seaman': 'OS',
+    'oiler': 'OLR',
+    'wiper': 'WPR',
+    'cook': 'CK',
+    'steward': 'STW',
+    'radio officer': 'RO',
+    'electrician': 'ELE',
+    'fitter': 'FIT',
+    'officer': 'OFF',
+    'engineer': 'ENG',
+    'crew': 'CREW'
+  };
+
+  const lowerRank = rank.toLowerCase().trim();
+  return abbreviations[lowerRank] || rank.substring(0, 3).toUpperCase();
+};
+
+// Mobile device detection
+const isMobileDevice = (): boolean => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+         (window.innerWidth <= 768) ||
+         ('ontouchstart' in window);
 };
 
 export default GoogleMap;

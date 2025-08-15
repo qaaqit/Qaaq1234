@@ -520,10 +520,20 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             setHoveredUser(user);
             setHoverPosition(position || null);
           }}
+          onUserCardShow={(user, position) => {
+            // Mobile-specific: Show user card on first tap
+            setHoveredUser(user);
+            setHoverPosition(position || null);
+          }}
           onUserClick={async (userId) => {
             const clickedUser = filteredUsers.find(u => u.id === userId);
             if (clickedUser && user) {
               console.log('🔵 Map user clicked:', clickedUser.fullName, '- Opening chat');
+              
+              // Clear any existing hover state
+              setHoveredUser(null);
+              setHoverPosition(null);
+              
               try {
                 // Create or get existing chat connection
                 const response = await fetch('/api/chat/connect', {
@@ -911,24 +921,74 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             transform: `translate(-50%, -100%) ${hoverPosition.x > window.innerWidth - 300 ? 'translateX(-50%)' : ''}`
           }}
           onMouseEnter={() => {
-            // Keep the card visible when hovering over it
+            // Keep the card visible when hovering over it (desktop)
           }}
           onMouseLeave={() => {
-            // Clear the hover when leaving the card
-            setHoveredUser(null);
-            setHoverPosition(null);
+            // Clear the hover when leaving the card (desktop)
+            if (!/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+              setHoveredUser(null);
+              setHoverPosition(null);
+            }
+          }}
+          onClick={(e) => {
+            // On mobile, allow clicking outside to close
+            if (e.target === e.currentTarget) {
+              setHoveredUser(null);
+              setHoverPosition(null);
+            }
           }}
         >
           <div 
-            className="bg-white/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-200 p-3 max-w-[280px] cursor-pointer hover:bg-white transition-colors"
-            onClick={() => {
-              // Click the card to open DM
+            className="bg-white/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-200 p-3 max-w-[280px] cursor-pointer hover:bg-white transition-colors relative"
+            onClick={async () => {
+              // Click the card to open chat connection
               if (hoveredUser && user) {
-                console.log('🔵 Hover card clicked:', hoveredUser.fullName, '- Opening DM');
-                setLocation(`/dm?user=${encodeURIComponent(hoveredUser.id)}&name=${encodeURIComponent(hoveredUser.fullName || 'Maritime Professional')}`);
+                console.log('🔵 Hover card clicked:', hoveredUser.fullName, '- Opening chat');
+                
+                // Clear hover state
+                setHoveredUser(null);
+                setHoverPosition(null);
+                
+                try {
+                  // Create or get existing chat connection
+                  const response = await fetch('/api/chat/connect', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ receiverId: hoveredUser.id }),
+                  });
+
+                  if (response.ok) {
+                    const result = await response.json();
+                    if (result.success && result.connection) {
+                      // Navigate directly to the dedicated chat page
+                      setLocation(`/chat/${result.connection.id}`);
+                    }
+                  } else {
+                    console.error('Failed to create connection:', response.statusText);
+                    // Fallback to DM page
+                    setLocation(`/dm?user=${encodeURIComponent(hoveredUser.id)}`);
+                  }
+                } catch (error) {
+                  console.error('Error creating connection:', error);
+                  // Fallback to DM page
+                  setLocation(`/dm?user=${encodeURIComponent(hoveredUser.id)}`);
+                }
               }
             }}
           >
+            {/* Close button for mobile */}
+            <button
+              className="absolute top-2 right-2 w-6 h-6 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center text-gray-500 md:hidden"
+              onClick={(e) => {
+                e.stopPropagation();
+                setHoveredUser(null);
+                setHoverPosition(null);
+              }}
+            >
+              ×
+            </button>
             <h3 className="font-bold text-gray-900 mb-2 text-sm">
               {hoveredUser.fullName} 
               {hoveredUser.questionCount !== undefined && 
