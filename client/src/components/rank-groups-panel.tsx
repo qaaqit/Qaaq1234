@@ -133,7 +133,6 @@ export function RankGroupsPanel() {
             <Anchor className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">{displayRank} Group Chat</h2>
           </div>
           {user?.isAdmin && <Shield className="h-5 w-5 text-orange-600" />}
         </div>
