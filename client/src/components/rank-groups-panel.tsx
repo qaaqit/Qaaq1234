@@ -200,7 +200,7 @@ export function RankGroupsPanel() {
                 <div>
                   <CardTitle className="flex items-center space-x-2">
                     <MessageCircle className="h-5 w-5 text-orange-600" />
-                    <span>{displayRank} Group • 1V ALL</span>
+                    <span>CEGroup</span>
                     <Badge className="bg-orange-100 text-orange-800">{rankMembers.length} Members</Badge>
                   </CardTitle>
                   <CardDescription>Connect with all maritime professionals of your rank</CardDescription>
