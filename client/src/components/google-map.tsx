@@ -53,9 +53,10 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
 
-  // Load Google Maps API
+  // Load Google Maps API with error handling
   useEffect(() => {
-    if (window.google) {
+    // Check for existing Google Maps
+    if (window.google?.maps) {
       setIsMapLoaded(true);
       return;
     }
@@ -65,7 +66,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
     if (existingScript) {
       // Wait for existing script to load
       const checkLoaded = () => {
-        if (window.google) {
+        if (window.google?.maps) {
           setIsMapLoaded(true);
         } else {
           setTimeout(checkLoaded, 100);
@@ -75,28 +76,35 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
       return;
     }
 
-    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-    if (!apiKey) {
-      console.error('Google Maps API key not found. Please set VITE_GOOGLE_MAPS_API_KEY environment variable.');
-      return;
-    }
-
+    // Use fallback API key if environment variable is not set
+    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyALVyOsKvkl_CmpD4NgG1o--CY5L1lxHrc';
+    
+    console.log('Loading Google Maps API...');
+    
     const script = document.createElement('script');
     script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geometry,places`;
     script.async = true;
     script.defer = true;
     
-    // Add error handling
-    script.onerror = () => {
-      console.error('Failed to load Google Maps API. Please check your API key and network connection.');
-      setMapError('Failed to load Google Maps. Please check your internet connection.');
+    // Add comprehensive error handling
+    script.onerror = (error) => {
+      console.error('❌ Failed to load Google Maps API:', error);
+      setMapError('Google Maps API failed to load. This might be due to quota limits.');
     };
 
-    // Add onload handler
+    // Add onload handler with quota checking
     script.onload = () => {
-      if (window.google) {
-        console.log('✅ Google Maps API loaded successfully');
-        setIsMapLoaded(true);
+      try {
+        if (window.google?.maps) {
+          console.log('✅ Google Maps API loaded successfully');
+          setIsMapLoaded(true);
+        } else {
+          console.error('❌ Google Maps API loaded but maps object not available');
+          setMapError('Google Maps API quota may be exceeded.');
+        }
+      } catch (error) {
+        console.error('❌ Error initializing Google Maps:', error);
+        setMapError('Error initializing Google Maps.');
       }
     };
 
@@ -107,13 +115,14 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
     };
   }, []);
 
-  // Initialize map
+  // Initialize map with error handling
   useEffect(() => {
     if (!isMapLoaded || !mapRef.current || !window.google?.maps) return;
 
-    const defaultCenter = userLocation || { lat: 19.076, lng: 72.8777 }; // Mumbai fallback
+    try {
+      const defaultCenter = userLocation || { lat: 19.076, lng: 72.8777 }; // Mumbai fallback
 
-    mapInstanceRef.current = new window.google.maps.Map(mapRef.current, {
+      mapInstanceRef.current = new window.google.maps.Map(mapRef.current, {
       zoom: 9,
       center: defaultCenter,
       mapTypeId: mapType,
@@ -217,7 +226,11 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
       });
     }
 
-    console.log('✅ Google Maps initialized for admin user');
+      console.log('✅ Google Maps initialized for admin user');
+    } catch (error) {
+      console.error('❌ Error initializing Google Maps:', error);
+      setMapError('Failed to initialize Google Maps. API quota may be exceeded.');
+    }
   }, [isMapLoaded, userLocation, onBoundsChange, onZoomChange]);
 
   // Listen for bounds changes to update scan circle when needed
@@ -255,9 +268,11 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
     }
   }, [selectedUser]);
 
-  // Add user markers (optimized to prevent flickering)
+  // Add user markers (optimized to prevent flickering) with error handling
   useEffect(() => {
-    if (!isMapLoaded || !mapInstanceRef.current || !window.google?.maps) return;
+    if (!isMapLoaded || !mapInstanceRef.current || !window.google?.maps?.Marker) return;
+    
+    try {
 
     // Only clear and recreate if users array actually changed
     const currentUserIds = markersRef.current.map(m => m.userId).sort().join(',');
@@ -267,9 +282,15 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
       return; // No change in users, don't recreate markers
     }
 
-    // Clear existing markers only when necessary
-    markersRef.current.forEach(marker => marker.setMap(null));
-    markersRef.current = [];
+      // Clear existing markers only when necessary with safety checks
+      if (markersRef.current && Array.isArray(markersRef.current)) {
+        markersRef.current.forEach(marker => {
+          if (marker && typeof marker.setMap === 'function') {
+            marker.setMap(null);
+          }
+        });
+      }
+      markersRef.current = [];
 
     // Add new markers with stable positioning
     users.forEach((user) => {
@@ -342,6 +363,10 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
       // Reduced logging to improve performance
     });
 
+    } catch (error) {
+      console.error('❌ Error creating user markers:', error);
+      // Don't set map error here as the map itself works, just markers failed
+    }
   }, [isMapLoaded, users, onUserHover, onUserClick]);
 
   // Add user location marker (current user's position)
