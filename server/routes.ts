@@ -5535,6 +5535,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ===================== RANK GROUPS API =====================
 
+  // Test endpoint to examine maritime ranks for debugging
+  app.get('/api/admin/maritime-ranks-debug', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      console.log('🔍 DEBUG: Examining maritime ranks in database...');
+      
+      // Get all distinct maritime ranks with counts
+      const ranksResult = await pool.query(`
+        SELECT maritime_rank, COUNT(*) as count
+        FROM users 
+        WHERE maritime_rank IS NOT NULL
+        GROUP BY maritime_rank
+        ORDER BY count DESC
+      `);
+      
+      console.log('📊 Maritime ranks found:', ranksResult.rows.length);
+      
+      // Import the mapping function
+      const { calculateRankGroupMemberCounts } = await import('./rank-groups-service.js');
+      const memberCounts = await calculateRankGroupMemberCounts();
+      
+      res.json({
+        success: true,
+        maritimeRanks: ranksResult.rows,
+        groupCounts: memberCounts,
+        totalRanks: ranksResult.rows.length
+      });
+    } catch (error) {
+      console.error('❌ Error examining maritime ranks:', error);
+      res.status(500).json({ error: 'Failed to examine maritime ranks' });
+    }
+  });
+
   // Initialize rank groups (admin only)
   app.post('/api/rank-groups/initialize', authenticateToken, async (req: any, res) => {
     try {
@@ -5617,11 +5649,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               // Add activity timestamps to each group
               const groupsWithActivity = await Promise.all(allGroups.map(async (group) => {
                 try {
-                  // Get most recent message timestamp for this group
+                  // Get most recent message timestamp for this group  
                   const activityResult = await pool.query(`
-                    SELECT MAX(created_at) as last_activity
+                    SELECT MAX("createdAt") as last_activity
                     FROM rank_group_messages 
-                    WHERE group_id = $1
+                    WHERE "groupId" = $1
                   `, [group.id]);
                   
                   return {
