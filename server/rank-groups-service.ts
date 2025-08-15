@@ -1,4 +1,4 @@
-import { db } from "./db";
+import { db, pool } from "./db";
 import { rankGroups, rankGroupMembers, rankGroupMessages, users } from "../shared/schema";
 import { eq, and, sql } from "drizzle-orm";
 
@@ -94,9 +94,139 @@ export async function initializeRankGroups() {
   }
 }
 
-// Get all rank groups
+// Map maritime ranks to rank group names
+function mapMaritimeRankToGroup(maritimeRank: string | null): string {
+  if (!maritimeRank) return 'Other Marine Professionals';
+  
+  const rank = maritimeRank.toLowerCase().trim();
+  
+  // Captain mapping
+  if (rank.includes('captain') || rank.includes('master') || rank === 'cap') {
+    return 'Cap';
+  }
+  
+  // Chief Officer mapping  
+  if (rank.includes('chief_officer') || rank.includes('chief officer') || rank === 'co' || rank.includes('chief mate')) {
+    return 'CO';
+  }
+  
+  // 2nd Officer mapping
+  if (rank.includes('2nd_officer') || rank.includes('second officer') || rank === '2o' || rank.includes('2nd officer')) {
+    return '2O';
+  }
+  
+  // 3rd Officer mapping
+  if (rank.includes('3rd_officer') || rank.includes('third officer') || rank === '3o' || rank.includes('3rd officer')) {
+    return '3O';
+  }
+  
+  // Chief Engineer mapping
+  if (rank.includes('chief_engineer') || rank.includes('chief engineer') || rank === 'ce') {
+    return 'CE';
+  }
+  
+  // 2nd Engineer mapping
+  if (rank.includes('2nd_engineer') || rank.includes('second engineer') || rank === '2e' || rank.includes('2nd engineer')) {
+    return '2E';
+  }
+  
+  // 3rd Engineer mapping
+  if (rank.includes('3rd_engineer') || rank.includes('third engineer') || rank === '3e' || rank.includes('3rd engineer')) {
+    return '3E';
+  }
+  
+  // 4th Engineer mapping
+  if (rank.includes('4th_engineer') || rank.includes('fourth engineer') || rank === '4e' || rank.includes('4th engineer')) {
+    return '4E';
+  }
+  
+  // Cadets mapping
+  if (rank.includes('cadet') || rank.includes('trainee')) {
+    return 'Cadets';
+  }
+  
+  // Crew mapping
+  if (rank.includes('crew') || rank.includes('seaman') || rank.includes('ratings') || rank.includes('bosun')) {
+    return 'Crew';
+  }
+  
+  // Marine Superintendent mapping
+  if (rank.includes('marine') && rank.includes('superintendent')) {
+    return 'MarineSuperIntendent';
+  }
+  
+  // Technical Superintendent mapping
+  if ((rank.includes('tech') || rank.includes('technical')) && rank.includes('superintendent')) {
+    return 'TechSuperIntendent';
+  }
+  
+  // Fleet Managers mapping
+  if (rank.includes('fleet') && (rank.includes('manager') || rank.includes('management'))) {
+    return 'Fleet Managers';
+  }
+  
+  // ETO & ESuper mapping
+  if (rank.includes('eto') || rank.includes('electro') || rank.includes('electrical') || rank.includes('esuper')) {
+    return 'ETO & ESuper';
+  }
+  
+  // Default to Other Marine Professionals for unmatched ranks
+  return 'Other Marine Professionals';
+}
+
+// Calculate member counts for each rank group based on users' maritime_rank
+export async function calculateRankGroupMemberCounts() {
+  try {
+    console.log('📊 Calculating member counts for rank groups...');
+    
+    // Get all users with their maritime ranks
+    const usersResult = await db.execute(sql`
+      SELECT maritime_rank, COUNT(*) as count
+      FROM users 
+      GROUP BY maritime_rank
+    `);
+    
+    // Initialize counts for all 15 rank groups
+    const groupCounts: Record<string, number> = {
+      'Cap': 0,
+      'CO': 0,
+      '2O': 0,
+      '3O': 0,
+      'CE': 0,
+      '2E': 0,
+      '3E': 0,
+      '4E': 0,
+      'Cadets': 0,
+      'Crew': 0,
+      'MarineSuperIntendent': 0,
+      'TechSuperIntendent': 0,
+      'Fleet Managers': 0,
+      'ETO & ESuper': 0,
+      'Other Marine Professionals': 0
+    };
+    
+    // Count users for each group
+    for (const row of usersResult.rows) {
+      const maritimeRank = row.maritime_rank as string | null;
+      const userCount = parseInt(row.count as string);
+      const groupName = mapMaritimeRankToGroup(maritimeRank);
+      
+      groupCounts[groupName] += userCount;
+      console.log(`📈 Maritime rank "${maritimeRank}" → Group "${groupName}": ${userCount} users`);
+    }
+    
+    console.log('📊 Final group counts:', groupCounts);
+    return groupCounts;
+  } catch (error) {
+    console.error('❌ Error calculating rank group member counts:', error);
+    throw error;
+  }
+}
+
+// Get all rank groups with accurate member counts
 export async function getAllRankGroups() {
   try {
+    // Get basic rank group data
     const result = await db.execute(sql`
       SELECT 
         rg.id,
@@ -104,14 +234,23 @@ export async function getAllRankGroups() {
         rg.description,
         rg."groupType",
         rg."isActive",
-        rg."createdAt",
-        (SELECT COUNT(*)::int FROM rank_group_members rgm WHERE rgm."groupId" = rg.id) as "memberCount"
+        rg."createdAt"
       FROM rank_groups rg
       WHERE rg."isActive" = true
       ORDER BY rg.name
     `);
-
-    return result.rows;
+    
+    // Calculate actual member counts
+    const memberCounts = await calculateRankGroupMemberCounts();
+    
+    // Merge rank group data with member counts
+    const groupsWithCounts = result.rows.map(group => ({
+      ...group,
+      memberCount: memberCounts[group.name as string] || 0
+    }));
+    
+    console.log('📊 Rank groups with member counts:', groupsWithCounts.map(g => `${(g as any).name}: ${g.memberCount}`));
+    return groupsWithCounts;
   } catch (error) {
     console.error('Error fetching rank groups:', error);
     throw error;
