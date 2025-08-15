@@ -1251,19 +1251,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { rank } = req.params;
       console.log(`💬 Fetching real messages for rank: ${rank}`);
       
-      // Query real messages from database, filtered by maritime rank
+      // Query real messages from database with user's lastCompany, filtered by maritime rank
       const result = await pool.query(`
         SELECT 
-          id,
-          sender_id as "senderId",
-          sender_name as "senderName",
-          maritime_rank as "senderRank",
-          message,
-          message_type as "messageType",
-          created_at as "timestamp"
-        FROM rank_chat_messages 
-        WHERE LOWER(maritime_rank) = LOWER($1)
-        ORDER BY created_at ASC
+          rcm.id,
+          rcm.sender_id as "senderId",
+          rcm.sender_name as "senderName",
+          rcm.maritime_rank as "senderRank",
+          u.last_company as "senderCompany",
+          rcm.message,
+          rcm.message_type as "messageType",
+          rcm.created_at as "timestamp"
+        FROM rank_chat_messages rcm
+        LEFT JOIN users u ON rcm.sender_id = u.id
+        WHERE LOWER(rcm.maritime_rank) = LOWER($1)
+        ORDER BY rcm.created_at ASC
         LIMIT 100
       `, [rank]);
       
@@ -6225,18 +6227,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`📤 Broadcasting rank message from ${userInfo?.fullName} to ${rank}`);
           
           try {
-            // Store message in database
+            // Store message in database and get user's lastCompany
             const result = await pool.query(`
-              INSERT INTO rank_chat_messages (maritime_rank, sender_id, sender_name, message, message_type)
-              VALUES ($1, $2, $3, $4, 'text')
-              RETURNING 
-                id,
-                sender_id as "senderId",
-                sender_name as "senderName",
-                maritime_rank as "senderRank",
-                message,
-                message_type as "messageType",
-                created_at as "timestamp"
+              WITH inserted_message AS (
+                INSERT INTO rank_chat_messages (maritime_rank, sender_id, sender_name, message, message_type)
+                VALUES ($1, $2, $3, $4, 'text')
+                RETURNING *
+              )
+              SELECT 
+                im.id,
+                im.sender_id as "senderId",
+                im.sender_name as "senderName",
+                im.maritime_rank as "senderRank",
+                u.last_company as "senderCompany",
+                im.message,
+                im.message_type as "messageType",
+                im.created_at as "timestamp"
+              FROM inserted_message im
+              LEFT JOIN users u ON im.sender_id = u.id
             `, [rank, userId, userInfo?.fullName || 'Maritime Professional', messageText]);
             
             const newMessage = result.rows[0];
