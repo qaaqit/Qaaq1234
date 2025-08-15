@@ -1189,7 +1189,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           rank,
           current_city,
           city,
-          profile_picture_url,
+          whatsapp_profile_picture_url,
           whatsapp_display_name,
           question_count,
           current_latitude,
@@ -1204,13 +1204,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const result = await pool.query(query, [rank]);
       
+      console.log(`✅ Found ${result.rows.length} users with maritime rank: ${rank}`);
+      
       const rankMembers = result.rows.map(user => ({
         id: user.id,
         fullName: user.full_name || 'Maritime Professional',
         maritimeRank: user.maritime_rank || user.rank || rank,
         rank: user.rank || user.maritime_rank || rank,
         city: user.current_city || user.city || 'Unknown Port',
-        profilePictureUrl: user.profile_picture_url,
+        profilePictureUrl: user.whatsapp_profile_picture_url,
         whatsAppDisplayName: user.whatsapp_display_name,
         questionCount: parseInt(user.question_count) || 0,
         isOnline: user.current_latitude && user.current_longitude && user.location_updated_at && 
