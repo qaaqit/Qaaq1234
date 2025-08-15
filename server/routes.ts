@@ -1175,6 +1175,134 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get users by maritime rank for rank-based chat
+  app.get("/api/users/by-rank/:rank", async (req, res) => {
+    try {
+      const { rank } = req.params;
+      console.log(`🏅 Fetching users with maritime rank: ${rank}`);
+      
+      const query = `
+        SELECT 
+          id,
+          full_name,
+          maritime_rank,
+          rank,
+          current_city,
+          city,
+          profile_picture_url,
+          whatsapp_display_name,
+          question_count,
+          current_latitude,
+          current_longitude,
+          location_updated_at
+        FROM users 
+        WHERE LOWER(maritime_rank) = LOWER($1) 
+           OR LOWER(rank) = LOWER($1)
+        ORDER BY question_count DESC NULLS LAST, full_name ASC
+        LIMIT 50
+      `;
+      
+      const result = await pool.query(query, [rank]);
+      
+      const rankMembers = result.rows.map(user => ({
+        id: user.id,
+        fullName: user.full_name || 'Maritime Professional',
+        maritimeRank: user.maritime_rank || user.rank || rank,
+        rank: user.rank || user.maritime_rank || rank,
+        city: user.current_city || user.city || 'Unknown Port',
+        profilePictureUrl: user.profile_picture_url,
+        whatsAppDisplayName: user.whatsapp_display_name,
+        questionCount: parseInt(user.question_count) || 0,
+        isOnline: user.current_latitude && user.current_longitude && user.location_updated_at && 
+                 new Date(user.location_updated_at).getTime() > Date.now() - 10 * 60 * 1000 // Online if location updated within 10 minutes
+      }));
+      
+      console.log(`✅ Found ${rankMembers.length} users with rank ${rank}`);
+      res.json(rankMembers);
+    } catch (error) {
+      console.error('Get users by rank error:', error);
+      res.status(500).json({ message: "Failed to get users by rank" });
+    }
+  });
+
+  // Get rank chat messages
+  app.get("/api/rank-chat/:rank/messages", async (req, res) => {
+    try {
+      const { rank } = req.params;
+      console.log(`💬 Fetching messages for rank: ${rank}`);
+      
+      // For now, return mock messages since we don't have rank chat table yet
+      // In a real implementation, you'd query a rank_chat_messages table
+      const mockMessages = [
+        {
+          id: "msg_1",
+          senderId: "44885683",
+          senderName: "Piyush Gupta",
+          senderRank: rank,
+          message: "Welcome to the Chief Engineer chat! How's everyone doing?",
+          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+          messageType: "text"
+        },
+        {
+          id: "msg_2", 
+          senderId: "sample_user_2",
+          senderName: "Maritime Professional",
+          senderRank: rank,
+          message: "Good to see fellow chief engineers here. Any recent experiences with new engine technologies?",
+          timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), // 1 hour ago
+          messageType: "text"
+        },
+        {
+          id: "msg_3",
+          senderId: "sample_user_3", 
+          senderName: "Senior CE",
+          senderRank: rank,
+          message: "Just completed a major overhaul. Happy to share insights if anyone needs guidance.",
+          timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 minutes ago
+          messageType: "text"
+        }
+      ];
+      
+      console.log(`✅ Returning ${mockMessages.length} mock messages for rank ${rank}`);
+      res.json(mockMessages);
+    } catch (error) {
+      console.error('Get rank chat messages error:', error);
+      res.status(500).json({ message: "Failed to get rank chat messages" });
+    }
+  });
+
+  // Send message to rank chat
+  app.post("/api/rank-chat/:rank/send", async (req, res) => {
+    try {
+      const { rank } = req.params;
+      const { message, senderRank } = req.body;
+      
+      // Get user from session (simplified for now)
+      const userId = req.session?.user?.id || "unknown_user";
+      const senderName = req.session?.user?.fullName || "Maritime Professional";
+      
+      console.log(`📤 Sending message to rank ${rank} from ${senderName}: ${message}`);
+      
+      // For now, just return success
+      // In a real implementation, you'd insert into a rank_chat_messages table
+      const newMessage = {
+        id: `msg_${Date.now()}`,
+        senderId: userId,
+        senderName: senderName,
+        senderRank: senderRank,
+        message: message,
+        timestamp: new Date().toISOString(),
+        messageType: "text"
+      };
+      
+      console.log(`✅ Message sent to rank ${rank} chat`);
+      res.json({ success: true, message: newMessage });
+    } catch (error) {
+      console.error('Send rank chat message error:', error);
+      res.status(500).json({ success: false, message: "Failed to send message" });
+    }
+  });
+
   // Get Top Q Professionals - New API endpoint for Top Professionals feature
   app.get("/api/users/top-professionals", async (req, res) => {
     try {
