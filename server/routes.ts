@@ -207,63 +207,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup Google OAuth authentication
   setupGoogleAuth(app);
   
+  // Universal authentication endpoint - always available for both Replit Auth and QAAQ JWT
+  app.get('/api/auth/user', async (req: any, res) => {
+    try {
+      let userId = null;
+      let authMethod = 'none';
+      
+      console.log('🔍 Dual auth check - Session:', !!req.session, 'Auth header:', !!req.headers.authorization);
+      
+      // First check for QAAQ JWT token
+      const authHeader = req.headers.authorization;
+      const token = authHeader && authHeader.split(' ')[1];
+      
+      if (token) {
+        try {
+          const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+          userId = decoded.userId;
+          authMethod = 'jwt';
+          console.log('🔑 Using QAAQ JWT auth for user:', userId);
+        } catch (error) {
+          console.log('❌ JWT token invalid:', (error as Error).message);
+        }
+      }
+      
+      // Then check for Replit Auth session (if available)
+      if (!userId && req.isAuthenticated && req.isAuthenticated()) {
+        userId = req.user?.claims?.sub;
+        authMethod = 'replit';
+        console.log('🔑 Using Replit session auth for user:', userId);
+      }
+      
+      if (!userId) {
+        console.log('❌ No valid authentication found');
+        return res.status(401).json({ message: 'No valid authentication found' });
+      }
+      
+      console.log(`🔍 Looking for user with ${authMethod} auth - ID:`, userId);
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        console.log('❌ User not found in database:', userId);
+        return res.status(404).json({ message: 'User not found' });
+      }
+      
+      console.log('✅ Found user:', user.fullName, `(${authMethod} auth)`);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", (error as Error).message);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
   // Setup Replit Auth
   if (process.env.REPLIT_DOMAINS && process.env.REPL_ID) {
     try {
       const { setupAuth, isAuthenticated } = await import('./replitAuth.js');
       await setupAuth(app);
-      
-      // Add dual authentication user endpoint (supports both Replit Auth and QAAQ JWT)
-      app.get('/api/auth/user', async (req: any, res) => {
-        try {
-          let userId = null;
-          let authMethod = 'none';
-          
-          console.log('🔍 Dual auth check - Session:', !!req.session, 'Auth header:', !!req.headers.authorization);
-          
-          // First check for Replit Auth session
-          if (req.isAuthenticated && req.isAuthenticated()) {
-            userId = req.user?.claims?.sub;
-            authMethod = 'replit';
-            console.log('🔑 Using Replit session auth for user:', userId);
-          } 
-          // Then check for QAAQ JWT token
-          else {
-            const authHeader = req.headers.authorization;
-            const token = authHeader && authHeader.split(' ')[1];
-            
-            if (token) {
-              try {
-                const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
-                userId = decoded.userId;
-                authMethod = 'jwt';
-                console.log('🔑 Using QAAQ JWT auth for user:', userId);
-              } catch (error) {
-                console.log('❌ JWT token invalid:', (error as Error).message);
-              }
-            }
-          }
-          
-          if (!userId) {
-            console.log('❌ No valid authentication found');
-            return res.status(401).json({ message: 'No valid authentication found' });
-          }
-          
-          console.log(`🔍 Looking for user with ${authMethod} auth - ID:`, userId);
-          const user = await storage.getUser(userId);
-          
-          if (!user) {
-            console.log('❌ User not found in database:', userId);
-            return res.status(404).json({ message: 'User not found' });
-          }
-          
-          console.log('✅ Found user:', user.fullName, `(${authMethod} auth)`);
-          res.json(user);
-        } catch (error) {
-          console.error("Error fetching user:", (error as Error).message);
-          res.status(500).json({ message: "Failed to fetch user" });
-        }
-      });
 
       // Hide/unhide glossary definition (admin only) - using Replit Auth
       app.post('/api/glossary/hide/:id', isAuthenticated, async (req: any, res) => {
