@@ -217,13 +217,13 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
   // Radar scanner toggle handler - Simple click to refresh
   const handleRadarToggle = useCallback(() => {
     console.log('🔍 Radar button clicked! Current state:', { isRadarActive, nearbyUsers: nearbyUsersResponse?.length });
-    
+
     // Clear any existing timeout
     if (radarTimeoutId) {
       clearTimeout(radarTimeoutId);
       setRadarTimeoutId(null);
     }
-    
+
     if (isRadarActive) {
       // Manual deactivation
       setIsRadarActive(false);
@@ -233,15 +233,15 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       // Activate radar and refresh data
       console.log('🟢 Activating radar scanner...');
       setIsRadarActive(true);
-      
+
       // Trigger refresh
       console.log('📡 Triggering refetch...');
       refetchNearby();
-      
+
       // Dispatch global radar refresh event for other components (like DM page)
       window.dispatchEvent(new Event('radar-refresh'));
       console.log('🟢 Radar scanner activated - refreshing results and notifying other components');
-      
+
       // Auto-deactivate after 2 seconds
       const timeoutId = setTimeout(() => {
         setIsRadarActive(false);
@@ -249,7 +249,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
         setRadarTimeoutId(null);
         console.log('🔴 Radar scanner auto-deactivated');
       }, 2000);
-      
+
       setRadarTimeoutId(timeoutId);
     }
   }, [isRadarActive, refetchNearby, nearbyUsersResponse, radarTimeoutId]);
@@ -311,15 +311,26 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     }
 
     // Filter by auto-calculated radius based on zoom
+    // This part is now based on map boundaries rather than explicit distance calculation
+    // The `google-map` component will handle rendering based on its current viewport.
+    // Here we might still filter based on userLocation if needed, but the primary
+    // filtering for visibility will be on the map component itself.
+    // For now, we'll keep this section to demonstrate how a radius *could* be used,
+    // but note that the map component's viewport is the actual driver of visibility.
     filtered = filtered.filter(mapUser => {
-      const distance = calculateDistance(
-        userLocation.lat, 
-        userLocation.lng, 
-        mapUser.latitude, 
-        mapUser.longitude
-      );
-      return distance <= radiusKm;
+      // This is a placeholder for potential future radius filtering if not solely relying on map viewport
+      // For now, we return true, assuming the map component will handle viewport filtering.
+      // If explicit radius filtering based on userLocation is needed, uncomment and use the calculateDistance logic.
+      // const distance = calculateDistance(
+      //   userLocation.lat, 
+      //   userLocation.lng, 
+      //   mapUser.latitude, 
+      //   mapUser.longitude
+      // );
+      // return distance <= radiusKm;
+      return true; // Keep all users if not searching and relying on map viewport
     });
+
 
     // Filter by online status if enabled
     if (showOnlineOnly) {

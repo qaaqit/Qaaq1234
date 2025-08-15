@@ -29,9 +29,9 @@ interface GoogleMapProps {
   onUserHover: (user: MapUser | null, position?: { x: number; y: number }) => void;
   onUserClick: (userId: string) => void;
   onZoomChange?: (zoom: number) => void;
+  onBoundsChange?: (bounds: { north: number; south: number; east: number; west: number }) => void;
   showScanElements?: boolean;
   scanAngle?: number;
-  radiusKm?: number;
 }
 
 declare global {
@@ -41,7 +41,7 @@ declare global {
   }
 }
 
-const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser, mapType = 'roadmap', onUserHover, onUserClick, onZoomChange, showScanElements = false, scanAngle = 0, radiusKm = 50 }) => {
+const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser, mapType = 'roadmap', onUserHover, onUserClick, onZoomChange, onBoundsChange, showScanElements = false, scanAngle = 0 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
@@ -193,33 +193,54 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
     console.log('✅ Google Maps initialized for admin user');
   }, [isMapLoaded, userLocation]);
 
-  // Separate effect for zoom listener to avoid re-initialization
+  // Separate effect for zoom and bounds listeners to avoid re-initialization
   useEffect(() => {
-    if (!mapInstanceRef.current || !onZoomChange) return;
+    if (!mapInstanceRef.current) return;
     
-    const zoomListener = mapInstanceRef.current.addListener('zoom_changed', () => {
-      const zoom = mapInstanceRef.current.getZoom();
-      onZoomChange(zoom);
-    });
+    const listeners: any[] = [];
 
-    // Also listen for bounds changes to update scan circle
+    // Zoom change listener
+    if (onZoomChange) {
+      const zoomListener = mapInstanceRef.current.addListener('zoom_changed', () => {
+        const zoom = mapInstanceRef.current.getZoom();
+        onZoomChange(zoom);
+      });
+      listeners.push(zoomListener);
+    }
+
+    // Bounds change listener
     const boundsListener = mapInstanceRef.current.addListener('bounds_changed', () => {
       // Trigger scan update when bounds change
       if (showScanElements) {
         setBoundsUpdateTrigger(prev => prev + 1);
       }
+
+      // Update bounds for filtering if callback provided
+      if (onBoundsChange) {
+        const bounds = mapInstanceRef.current.getBounds();
+        if (bounds) {
+          const ne = bounds.getNorthEast();
+          const sw = bounds.getSouthWest();
+          onBoundsChange({
+            north: ne.lat(),
+            south: sw.lat(),
+            east: ne.lng(),
+            west: sw.lng()
+          });
+        }
+      }
     });
+    listeners.push(boundsListener);
 
     // Cleanup listeners on unmount or when dependencies change
     return () => {
-      if (zoomListener && zoomListener.remove) {
-        zoomListener.remove();
-      }
-      if (boundsListener && boundsListener.remove) {
-        boundsListener.remove();
-      }
+      listeners.forEach(listener => {
+        if (listener && listener.remove) {
+          listener.remove();
+        }
+      });
     };
-  }, [isMapLoaded, onZoomChange, showScanElements]);
+  }, [isMapLoaded, onZoomChange, onBoundsChange, showScanElements]);
 
   // Update map type when mapType prop changes
   useEffect(() => {
