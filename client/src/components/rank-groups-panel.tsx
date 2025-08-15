@@ -127,15 +127,7 @@ export function RankGroupsPanel() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-3">
-          <div>
-          </div>
-          {user?.isAdmin && <Shield className="h-5 w-5 text-orange-600" />}
-        </div>
-        <div className="flex items-center space-x-2">
-        </div>
-      </div>
+      
       
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Maritime Professionals List */}
