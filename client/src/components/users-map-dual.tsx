@@ -499,9 +499,8 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                 {isLoading ? '🔍 Searching...' : `📊 ${allUsers.length} results for "${searchQuery.trim()}" • Showing ${filteredUsers.length} on map`}
               </div>
             ) : (
-              <div className="px-3 py-2 bg-gray-100 rounded-lg text-xs font-medium text-gray-700"
-                   title={`Zoom level ${Math.round(mapZoom)} shows ${radiusKm}km radius with ${filteredUsers.length} users`}>
-                Z{Math.round(mapZoom)} • {radiusKm}km • {filteredUsers.length} users
+              <div className="px-3 py-2 bg-gray-100 rounded-lg text-xs font-medium text-gray-700">
+                {filteredUsers.length} users found
               </div>
             )}
           </div>
