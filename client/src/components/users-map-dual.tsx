@@ -331,21 +331,34 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       return filtered; // Return all search results without location constraints
     }
 
-    // If no search query, apply location-based filtering
+    // If no search query and no user location, show all users with default fallback location
     if (!userLocation) {
-      return [];
+      // Use a default fallback location (Mumbai) if user location is not available
+      const fallbackLocation = { lat: 19.076, lng: 72.8777 };
+      console.log('🌍 No user location detected, using fallback location for filtering');
+      
+      // Filter by auto-calculated radius from fallback location
+      filtered = filtered.filter(mapUser => {
+        const distance = calculateDistance(
+          fallbackLocation.lat, 
+          fallbackLocation.lng, 
+          mapUser.latitude, 
+          mapUser.longitude
+        );
+        return distance <= radiusKm;
+      });
+    } else {
+      // Filter by auto-calculated radius based on zoom using actual user location
+      filtered = filtered.filter(mapUser => {
+        const distance = calculateDistance(
+          userLocation.lat, 
+          userLocation.lng, 
+          mapUser.latitude, 
+          mapUser.longitude
+        );
+        return distance <= radiusKm;
+      });
     }
-
-    // Filter by auto-calculated radius based on zoom
-    filtered = filtered.filter(mapUser => {
-      const distance = calculateDistance(
-        userLocation.lat, 
-        userLocation.lng, 
-        mapUser.latitude, 
-        mapUser.longitude
-      );
-      return distance <= radiusKm;
-    });
 
     // Filter by online status if enabled
     if (showOnlineOnly) {

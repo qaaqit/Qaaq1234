@@ -45,16 +45,25 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, selectedUs
     // otherwise navy blue for sailors or ocean teal for locals
     let color;
     if (isOnlineWithLocation) {
-      color = '#22c55e'; // Green for online with location
+      color = '#10b981'; // Green for online with location
     } else {
-      color = user.userType === 'sailor' ? '#1e3a8a' : '#0891b2';
+      color = user.userType === 'sailor' ? '#1e40af' : '#0d9488';
     }
     
     return divIcon({
-      html: `<div style="color: ${color}; font-size: 6px; cursor: pointer; pointer-events: auto;">⚓</div>`,
-      className: 'custom-anchor-marker',
-      iconSize: [8, 8], // Reduced from 40x40 to 8x8 (1/5th size)
-      iconAnchor: [4, 4], // Adjusted anchor point
+      html: `<div style="
+        width: 12px; 
+        height: 12px; 
+        background-color: ${color}; 
+        border: 2px solid white; 
+        border-radius: 50%; 
+        cursor: pointer; 
+        pointer-events: auto;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      "></div>`,
+      className: 'custom-dot-marker',
+      iconSize: [12, 12],
+      iconAnchor: [6, 6], // Center the marker
     });
   };
 
