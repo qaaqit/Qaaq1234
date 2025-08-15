@@ -404,7 +404,7 @@ export default function DMPage() {
       .map(topQUser => ({ type: 'top_q' as const, data: topQUser }))
   ];
 
-  if (connectionsLoading || usersLoading) {
+  if (connectionsLoading || usersLoading || rankGroupsLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-slate-50 to-blue-50 p-6">
         <div className="max-w-4xl mx-auto">
@@ -872,6 +872,57 @@ export default function DMPage() {
                         </div>
                       );
                       
+                      } else if (cardItem.type === 'rank_group') {
+                        // Rank Group Card
+                        const group = cardItem.data as RankGroup;
+                        
+                        return (
+                          <div 
+                            key={`rank-group-${group.id}`} 
+                            className="p-4 hover:bg-orange-50 transition-colors cursor-pointer border-l-4 border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:bg-orange-50"
+                            tabIndex={0}
+                            onClick={() => {
+                              console.log('🏢 Rank group card clicked:', group.name);
+                              setLocation('/rank-groups');
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                e.currentTarget.click();
+                              }
+                            }}
+                          >
+                            <div className="flex items-center space-x-3">
+                              <div className="relative">
+                                <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-600 rounded-full flex items-center justify-center">
+                                  <Users size={20} className="text-white" />
+                                </div>
+                                {/* Group Badge */}
+                                <div className="absolute -top-1 -right-1 w-4 h-4 bg-orange-600 rounded-full border-2 border-white flex items-center justify-center">
+                                  <Users size={8} className="text-white" />
+                                </div>
+                              </div>
+                              
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-medium text-gray-900 truncate">
+                                  {group.name}
+                                </h4>
+                                <div className="flex items-center mt-1 space-x-2">
+                                  <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
+                                    Rank Group
+                                  </Badge>
+                                  <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                                    {group.memberCount || 0} members
+                                  </Badge>
+                                </div>
+                                <p className="text-sm text-gray-500 truncate mt-1">
+                                  {group.description}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                        
                       } else if (cardItem.type === 'top_q') {
                         // Top Q Professional Card
                         const userProfile = cardItem.data;

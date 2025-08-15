@@ -5516,13 +5516,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Public API to get all rank groups for DM page cards
+  // API to get rank groups for DM page cards - user's rank group or all groups for admin
   app.get('/api/rank-groups/public', async (req, res) => {
     try {
-      const result = await getAllRankGroups();
-      res.json(result);
+      // Check if user is authenticated via session
+      let userId = null;
+      let isAdmin = false;
+      
+      if (req.session && req.session.user) {
+        userId = req.session.user.id;
+        
+        // Check if user is admin
+        if (userId === '5791e66f-9cc1-4be4-bd4b-7fc1bd2e258e') {
+          isAdmin = true;
+        } else {
+          const userResult = await pool.query('SELECT is_platform_admin, maritime_rank FROM users WHERE id = $1', [userId]);
+          if (userResult.rows.length > 0) {
+            isAdmin = userResult.rows[0].is_platform_admin;
+            const userMaritimeRank = userResult.rows[0].maritime_rank;
+            
+            if (isAdmin) {
+              // Admin gets all 15 rank groups
+              const allGroups = await getAllRankGroups();
+              return res.json(allGroups);
+            } else {
+              // Regular user gets only their rank group
+              const allGroups = await getAllRankGroups();
+              const userRankGroup = allGroups.find(group => {
+                // Match group name with user's maritime rank
+                const groupName = group.name.toLowerCase();
+                const userRank = (userMaritimeRank || '').toLowerCase();
+                
+                // Map common maritime ranks to group names
+                if (userRank.includes('captain') || userRank.includes('master')) return groupName === 'cap';
+                if (userRank.includes('chief_officer') || userRank.includes('chief officer')) return groupName === 'co';
+                if (userRank.includes('2nd_officer') || userRank.includes('second officer')) return groupName === '2o';
+                if (userRank.includes('3rd_officer') || userRank.includes('third officer')) return groupName === '3o';
+                if (userRank.includes('chief_engineer')) return groupName === 'ce';
+                if (userRank.includes('2nd_engineer') || userRank.includes('second engineer')) return groupName === '2e';
+                if (userRank.includes('3rd_engineer') || userRank.includes('third engineer')) return groupName === '3e';
+                if (userRank.includes('4th_engineer') || userRank.includes('fourth engineer')) return groupName === '4e';
+                if (userRank.includes('cadet')) return groupName === 'cadets';
+                if (userRank.includes('crew')) return groupName === 'crew';
+                if (userRank.includes('marine') && userRank.includes('superintendent')) return groupName === 'marinesuperintendent';
+                if (userRank.includes('tech') && userRank.includes('superintendent')) return groupName === 'techsuperintendent';
+                if (userRank.includes('fleet') && userRank.includes('manager')) return groupName === 'fleet managers';
+                if (userRank.includes('eto') || userRank.includes('electro')) return groupName === 'eto & esuper';
+                
+                // Default to Other Marine Professionals if no match
+                return groupName === 'other marine professionals';
+              });
+              
+              return res.json(userRankGroup ? [userRankGroup] : []);
+            }
+          }
+        }
+      }
+      
+      // No user session - return empty array
+      res.json([]);
     } catch (error) {
-      console.error('Error fetching public rank groups:', error);
+      console.error('Error fetching rank groups for DM:', error);
       res.status(500).json({ error: 'Failed to fetch rank groups' });
     }
   });
