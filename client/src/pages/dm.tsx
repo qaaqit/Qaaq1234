@@ -156,9 +156,18 @@ export default function DMPage() {
   const { data: rankGroups = [], isLoading: rankGroupsLoading } = useQuery<RankGroup[]>({
     queryKey: ['/api/rank-groups/public'],
     queryFn: async () => {
-      const response = await fetch('/api/rank-groups/public');
+      console.log('🔍 Frontend: Fetching rank groups for user:', user?.id);
+      const response = await fetch('/api/rank-groups/public', {
+        credentials: 'include', // Include session cookies
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      console.log('📥 Frontend: Rank groups response status:', response.status);
       if (!response.ok) throw new Error('Failed to fetch rank groups');
-      return response.json();
+      const data = await response.json();
+      console.log('📊 Frontend: Rank groups data received:', data.length, 'groups');
+      return data;
     },
     enabled: !!user,
   });

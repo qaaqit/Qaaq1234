@@ -5523,21 +5523,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let userId = null;
       let isAdmin = false;
       
+      console.log('🔍 Rank groups public - Session check:', {
+        hasSession: !!req.session,
+        hasUser: !!(req.session && req.session.user),
+        userId: req.session?.user?.id
+      });
+      
       if (req.session && req.session.user) {
         userId = req.session.user.id;
         
         // Check if user is admin
         if (userId === '5791e66f-9cc1-4be4-bd4b-7fc1bd2e258e') {
           isAdmin = true;
+          console.log('🔒 Admin detected - Special UUID:', userId);
         } else {
           const userResult = await pool.query('SELECT is_platform_admin, maritime_rank FROM users WHERE id = $1', [userId]);
+          console.log('🔍 Database admin check result:', {
+            userId,
+            rowsFound: userResult.rows.length,
+            isAdmin: userResult.rows[0]?.is_platform_admin,
+            maritimeRank: userResult.rows[0]?.maritime_rank
+          });
+          
           if (userResult.rows.length > 0) {
             isAdmin = userResult.rows[0].is_platform_admin;
             const userMaritimeRank = userResult.rows[0].maritime_rank;
             
+            console.log('🔒 Final admin decision:', { userId, isAdmin, userMaritimeRank });
+            
             if (isAdmin) {
               // Admin gets all 15 rank groups with activity data
+              console.log('👑 Admin access granted - fetching all 15 rank groups');
               const allGroups = await getAllRankGroups();
+              console.log('📊 Found rank groups:', allGroups.length);
               
               // Add activity timestamps to each group
               const groupsWithActivity = await Promise.all(allGroups.map(async (group) => {
@@ -5626,6 +5644,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // No user session - return empty array
+      console.log('❌ No user session found - returning empty array');
       res.json([]);
     } catch (error) {
       console.error('Error fetching rank groups for DM:', error);
