@@ -40,13 +40,31 @@ interface GroupMessage {
 }
 
 export function RankGroupsPanel() {
+  const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+  const [newMessage, setNewMessage] = useState('');
+  const [isAnnouncement, setIsAnnouncement] = useState(false);
+  const [showMembers, setShowMembers] = useState(false);
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  // Fetch all rank groups
+  // Fetch groups based on user role (admins see all, users see only their groups)
   const { data: groups = [], isLoading: loadingGroups } = useQuery<RankGroup[]>({
     queryKey: ['/api/rank-groups'],
-    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchInterval: user?.isAdmin ? 30000 : 10000, // Admin: all groups every 30s, Users: their groups every 10s
+  });
+
+  // Fetch messages for selected group
+  const { data: messagesData } = useQuery({
+    queryKey: ['/api/rank-groups', selectedGroup, 'messages'],
+    enabled: !!selectedGroup,
+    refetchInterval: 5000, // Refresh every 5 seconds
+  });
+
+  // Fetch members for selected group
+  const { data: membersData = [] } = useQuery<any[]>({
+    queryKey: ['/api/rank-groups', selectedGroup, 'members'],
+    enabled: !!selectedGroup,
+    refetchInterval: 10000, // Refresh every 10 seconds
   });
 
   // Join group mutation
@@ -64,19 +82,106 @@ export function RankGroupsPanel() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/rank-groups'] });
+      console.log('Successfully joined the group!');
     },
     onError: () => {
       console.error('Failed to join group');
     },
   });
 
-  const handleGroupClick = (group: RankGroup) => {
-    // For now, just join the group if not already joined
-    const isJoined = groups.some((g: any) => g.id === group.id && g.role);
-    if (!isJoined && !user?.isAdmin) {
-      joinGroupMutation.mutate(group.id);
-    }
+  // Leave group mutation
+  const leaveGroupMutation = useMutation({
+    mutationFn: async (groupId: string) => {
+      const response = await fetch(`/api/rank-groups/${groupId}/leave`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+        },
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/rank-groups'] });
+      setSelectedGroup(null);
+      console.log('Successfully left the group!');
+    },
+    onError: () => {
+      console.error('Failed to leave group');
+    },
+  });
+
+  // Send message mutation
+  const sendMessageMutation = useMutation({
+    mutationFn: async ({ groupId, message, isAnnouncement }: { 
+      groupId: string; 
+      message: string; 
+      isAnnouncement: boolean;
+    }) => {
+      const response = await fetch(`/api/rank-groups/${groupId}/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+        },
+        body: JSON.stringify({
+          groupId,
+          message,
+          messageType: 'text',
+          isAnnouncement,
+        }),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      setNewMessage('');
+      setIsAnnouncement(false);
+      queryClient.invalidateQueries({ 
+        queryKey: ['/api/rank-groups', selectedGroup, 'messages'] 
+      });
+      console.log('Message sent!');
+    },
+    onError: () => {
+      console.error('Failed to send message');
+    },
+  });
+
+  // Auto-assign to groups
+  const autoAssignMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch('/api/rank-groups/auto-assign', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+        },
+      });
+      return response.json();
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/rank-groups/my-groups'] });
+      console.log(`Auto-assigned to groups: ${data?.assignedGroups?.join(', ') || 'None'}`);
+    },
+    onError: () => {
+      console.error('Failed to auto-assign groups');
+    },
+  });
+
+  const handleSendMessage = () => {
+    if (!selectedGroup || !newMessage.trim()) return;
+    
+    sendMessageMutation.mutate({
+      groupId: selectedGroup,
+      message: newMessage.trim(),
+      isAnnouncement,
+    });
   };
+
+  const isUserInGroup = (groupId: string) => {
+    return groups.some((group: any) => group.id === groupId && group.role); // Has role means user is in group
+  };
+
+  const selectedGroupData = groups.find((group: RankGroup) => group.id === selectedGroup);
 
   if (loadingGroups) {
     return (
