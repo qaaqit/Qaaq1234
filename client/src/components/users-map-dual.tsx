@@ -178,7 +178,8 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     };
   }, [radarTimeoutId]);
 
-
+  // State for map bounds - MUST be declared before use in queries
+  const [mapBounds, setMapBounds] = useState<{north: number, south: number, east: number, west: number} | null>(null);
 
   // Fetch users from nearby API for map display - with bounds support
   const { data: nearbyUsersResponse, isLoading: isLoadingNearby, refetch: refetchNearby } = useQuery<MapUser[]>({
@@ -238,9 +239,6 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
   const handleSearchInput = (value: string) => {
     setSearchQuery(value);
   };
-
-  // State for map bounds
-  const [mapBounds, setMapBounds] = useState<{north: number, south: number, east: number, west: number} | null>(null);
 
   // Radar scanner toggle handler - Simple click to refresh with map bounds
   const handleRadarToggle = useCallback(() => {
