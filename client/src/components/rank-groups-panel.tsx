@@ -126,51 +126,10 @@ export function RankGroupsPanel() {
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      
-      
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Maritime Professionals List */}
-        <div className="lg:col-span-1">
-          <div className="flex items-center justify-between mb-4">
-          </div>
-          
-          <div className="space-y-2 max-h-[500px] overflow-y-auto">
-            {rankMembers.map((member) => (
-              <Card key={member.id} className="hover:bg-gray-50 transition-colors cursor-pointer">
-                <CardContent className="p-3">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-white font-bold text-sm">
-                      {member.fullName?.charAt(0) || 'M'}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2">
-                        <p className="font-medium text-gray-900 truncate">{member.fullName}</p>
-                        {member.isOnline && (
-                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        )}
-                      </div>
-                      <div className="flex items-center space-x-2 text-xs text-gray-500">
-                        <span>{member.city || 'Unknown Port'}</span>
-                        {member.questionCount && (
-                          <Badge variant="outline" className="text-xs">
-                            {member.questionCount} Q&As
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-            
-            
-          </div>
-        </div>
-
-        {/* 1V ALL Chat Area */}
-        <div className="lg:col-span-3">
-          <Card className="h-[600px] flex flex-col bg-gradient-to-br from-orange-50 to-red-50">
+    <div className="h-full flex flex-col">
+      {/* 1V ALL Chat Area - Full Height */}
+      <div className="flex-1">
+        <Card className="h-full flex flex-col bg-gradient-to-br from-orange-50 to-red-50 rounded-none border-0">
             <CardHeader className="border-b bg-white/80 backdrop-blur-sm">
               <div className="flex items-center justify-between">
                 <div>
@@ -263,7 +222,6 @@ export function RankGroupsPanel() {
               </div>
             </div>
           </Card>
-        </div>
       </div>
     </div>
   );
