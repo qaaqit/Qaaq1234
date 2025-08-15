@@ -129,9 +129,6 @@ export function RankGroupsPanel() {
     <div className="p-6 max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center">
-            <Anchor className="h-6 w-6 text-white" />
-          </div>
           <div>
           </div>
           {user?.isAdmin && <Shield className="h-5 w-5 text-orange-600" />}
