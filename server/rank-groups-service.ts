@@ -2,77 +2,92 @@ import { db } from "./db";
 import { rankGroups, rankGroupMembers, rankGroupMessages, users } from "../shared/schema";
 import { eq, and, sql } from "drizzle-orm";
 
-// Initialize the 9 maritime rank groups
+// Initialize the 15 individual maritime rank groups
 export async function initializeRankGroups() {
   const groups = [
     {
-      name: "TSI",
-      description: "Technical Superintendent Inspector - Senior maritime technical officers",
-      groupType: "rank"
+      name: "Cap",
+      description: "Captain - Ship Master and commanding officer"
     },
     {
-      name: "MSI", 
-      description: "Marine Superintendent Inspector - Senior marine operations officers",
-      groupType: "rank"
+      name: "CO",
+      description: "Chief Officer - First Mate and second in command"
     },
     {
-      name: "Mtr CO",
-      description: "Master & Chief Officer - Ship command and navigation officers",
-      groupType: "rank"
+      name: "2O",
+      description: "2nd Officer - Navigation and watch keeping officer"
     },
     {
-      name: "20 30",
-      description: "2nd Officer & 3rd Officer - Deck officers and navigation watch keepers",
-      groupType: "rank"
+      name: "3O",
+      description: "3rd Officer - Junior deck officer and watch keeper"
     },
     {
-      name: "CE 2E",
-      description: "Chief Engineer & 2nd Engineer - Senior engine room officers",
-      groupType: "rank"
+      name: "CE",
+      description: "Chief Engineer - Senior engine room officer"
     },
     {
-      name: "3E 4E",
-      description: "3rd Engineer & 4th Engineer - Junior engine room officers",
-      groupType: "rank"
+      name: "2E",
+      description: "2nd Engineer - Senior engine room officer"
+    },
+    {
+      name: "3E",
+      description: "3rd Engineer - Junior engine room officer"
+    },
+    {
+      name: "4E",
+      description: "4th Engineer - Junior engine room officer"
     },
     {
       name: "Cadets",
-      description: "Maritime Cadets - Trainees and maritime academy students",
-      groupType: "rank"
+      description: "Maritime Cadets - Trainees and maritime academy students"
     },
     {
       name: "Crew",
-      description: "Ship Crew - Deck and engine room crew members",
-      groupType: "rank"
+      description: "Ship Crew - Deck and engine room crew members"
     },
     {
-      name: "Marine Personnel",
-      description: "General Marine Personnel - All maritime professionals",
-      groupType: "general"
+      name: "MarineSuperIntendent",
+      description: "Marine Superintendent - Shore-based marine operations manager"
+    },
+    {
+      name: "TechSuperIntendent",
+      description: "Technical Superintendent - Shore-based technical manager"
+    },
+    {
+      name: "Fleet Managers",
+      description: "Fleet Managers - Ship fleet management professionals"
+    },
+    {
+      name: "ETO & ESuper",
+      description: "Electro Technical Officers & Electric Superintendents"
+    },
+    {
+      name: "Other Marine Professionals",
+      description: "Other Marine Professionals - General maritime personnel"
     }
   ];
 
   try {
-    console.log('🏢 Initializing maritime rank groups...');
+    console.log('🏢 Initializing 15 individual maritime rank groups...');
     
+    // First, delete all existing rank groups and their relationships
+    console.log('🗑️ Clearing existing rank groups...');
+    await db.execute(sql`DELETE FROM rank_group_messages`);
+    await db.execute(sql`DELETE FROM rank_group_members`);
+    await db.execute(sql`DELETE FROM rank_groups`);
+    console.log('✅ Cleared all existing rank group data');
+    
+    // Create new 15 individual rank groups using direct SQL
     for (const group of groups) {
-      // Check if group already exists
-      const existing = await db
-        .select()
-        .from(rankGroups)
-        .where(eq(rankGroups.name, group.name))
-        .limit(1);
-
-      if (existing.length === 0) {
-        await db.insert(rankGroups).values(group);
-        console.log(`✅ Created rank group: ${group.name}`);
-      } else {
-        console.log(`📋 Rank group already exists: ${group.name}`);
-      }
+      await db.execute(sql`
+        INSERT INTO rank_groups (name, description) 
+        VALUES (${group.name}, ${group.description})
+      `);
+      console.log(`✅ Created individual rank group: ${group.name}`);
     }
     
-    console.log('🏢 Maritime rank groups initialization complete');
-    return { success: true, message: 'Rank groups initialized successfully' };
+    console.log('🏢 Maritime rank groups initialization complete - 15 individual groups created');
+    return { success: true, message: '15 individual rank groups initialized successfully' };
   } catch (error) {
     console.error('❌ Error initializing rank groups:', error);
     return { success: false, error: error };

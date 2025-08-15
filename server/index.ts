@@ -4,6 +4,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { pool } from "./db"; // Import database pool for image serving
 import QoiGPTBot from "./whatsapp-bot";
+import { initializeRankGroups } from "./rank-groups-service";
 
 const app = express();
 app.use(express.json());
@@ -173,9 +174,21 @@ let whatsappBot: QoiGPTBot | null = null;
     port,
     host: "0.0.0.0",
     reusePort: true,
-  }, () => {
+  }, async () => {
     log(`serving on port ${port}`);
     console.log(`📱 WhatsApp Bot API available at /api/whatsapp-start`);
+    
+    // Initialize 15 individual rank groups on server startup
+    try {
+      const result = await initializeRankGroups();
+      if (result.success) {
+        console.log('🎯 Rank groups initialization completed during startup');
+      } else {
+        console.error('❌ Rank groups initialization failed:', result.error);
+      }
+    } catch (error) {
+      console.error('❌ Error during rank groups initialization:', error);
+    }
   });
 
   // Handle graceful shutdown
