@@ -180,13 +180,28 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
 
 
 
-  // Fetch users from nearby API for map display
+  // Fetch users from nearby API for map display - with bounds support
   const { data: nearbyUsersResponse, isLoading: isLoadingNearby, refetch: refetchNearby } = useQuery<MapUser[]>({
-    queryKey: ['/api/users/nearby'],
+    queryKey: ['/api/users/nearby', mapBounds],
     queryFn: async () => {
-      const response = await fetch('/api/users/nearby');
+      let url = '/api/users/nearby';
+      const params = new URLSearchParams();
+      
+      // If we have map bounds and radar is active, use bounds to filter users
+      if (mapBounds && isRadarActive) {
+        params.append('bounds', JSON.stringify(mapBounds));
+        console.log('🗺️ Fetching users within map bounds:', mapBounds);
+      }
+      
+      if (params.toString()) {
+        url += '?' + params.toString();
+      }
+      
+      const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to fetch nearby users');
       const data = await response.json();
+      
+      console.log(`📍 Retrieved ${data.length} users from API`);
       return data;
     },
     staleTime: 60000, // Cache for 1 minute
@@ -224,7 +239,10 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     setSearchQuery(value);
   };
 
-  // Radar scanner toggle handler - Simple click to refresh
+  // State for map bounds
+  const [mapBounds, setMapBounds] = useState<{north: number, south: number, east: number, west: number} | null>(null);
+
+  // Radar scanner toggle handler - Simple click to refresh with map bounds
   const handleRadarToggle = useCallback(() => {
     console.log('🔍 Radar button clicked! Current state:', { isRadarActive, nearbyUsers: nearbyUsersResponse?.length });
     
@@ -244,8 +262,8 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       console.log('🟢 Activating radar scanner...');
       setIsRadarActive(true);
       
-      // Trigger refresh
-      console.log('📡 Triggering refetch...');
+      // Trigger refresh with current map bounds
+      console.log('📡 Triggering refetch with map bounds...');
       refetchNearby();
       
       // Dispatch global radar refresh event for other components (like DM page)
@@ -575,6 +593,10 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             }
           }}
           onZoomChange={handleZoomChange}
+          onBoundsChange={(bounds) => {
+            setMapBounds(bounds);
+            console.log('🗺️ Map bounds updated:', bounds);
+          }}
           showScanElements={showScanElements}
           scanAngle={scanAngle}
           radiusKm={radiusKm}

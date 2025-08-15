@@ -4049,9 +4049,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get nearby users - supports both proximity-based and Q-based discovery
   app.get('/api/users/nearby', async (req, res) => {
     try {
-      const { lat, lng, mode } = req.query;
+      const { lat, lng, mode, bounds } = req.query;
       const allUsers = await storage.getUsersWithLocation();
       console.log(`Found ${allUsers.length} users with location data`);
+      
+      // If map bounds provided, filter users within viewport
+      if (bounds && typeof bounds === 'string') {
+        try {
+          const mapBounds = JSON.parse(bounds);
+          const { north, south, east, west } = mapBounds;
+          
+          console.log(`Filtering users within map bounds: N${north}, S${south}, E${east}, W${west}`);
+          
+          const usersInBounds = allUsers.filter(user => {
+            if (!user.latitude || !user.longitude) return false;
+            
+            return user.latitude <= north && 
+                   user.latitude >= south && 
+                   user.longitude <= east && 
+                   user.longitude >= west;
+          });
+          
+          console.log(`Found ${usersInBounds.length} users within current map viewport`);
+          return res.json(usersInBounds);
+        } catch (error) {
+          console.error('Error parsing bounds:', error);
+          // Fall through to default behavior
+        }
+      }
       
       // If latitude and longitude provided, do proximity-based search
       if (lat && lng && mode === 'proximity') {
