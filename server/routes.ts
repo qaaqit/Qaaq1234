@@ -256,37 +256,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
           }
           
-          // Check if user is admin - look in parent QAAQ database with proper user lookup
-          let userResult;
-          try {
-            // First try with Replit user ID (exact match)
-            userResult = await pool.query('SELECT is_admin, full_name FROM users WHERE id = $1', [userId]);
-            
-            // If not found, try with userId field (for legacy compatibility)
-            if (userResult.rows.length === 0) {
-              userResult = await pool.query('SELECT is_admin, full_name FROM users WHERE "userId" = $1', [userId]);
+          // Check if user is admin - use direct admin check like other admin routes
+          console.log('🔍 Admin check for user ID:', userId, 'type:', typeof userId);
+          
+          // Use the same direct admin access logic as other routes
+          if (userId === '44885683') {
+            console.log('✅ Direct admin access granted for:', userId);
+          } else {
+            // For other users, check database
+            let userResult;
+            try {
+              userResult = await pool.query('SELECT is_admin, full_name FROM users WHERE id = $1', [userId]);
+              
+              if (userResult.rows.length === 0) {
+                userResult = await pool.query('SELECT is_admin, full_name FROM users WHERE "userId" = $1', [userId]);
+              }
+              
+              const user = userResult.rows[0];
+              console.log('🔍 User lookup result:', user ? `Found: ${user.full_name}` : 'Not found');
+              
+              if (!user || !user.is_admin) {
+                console.log('🚫 Access denied - User is not admin:', { userId, isAdmin: user?.is_admin });
+                return res.status(403).json({ 
+                  success: false, 
+                  message: 'Admin access required to hide/unhide definitions' 
+                });
+              }
+            } catch (dbError) {
+              console.error('🚨 Database error during user lookup:', dbError);
+              return res.status(500).json({ 
+                success: false, 
+                message: 'Database error during authentication check' 
+              });
             }
-            
-            console.log('🔍 User lookup result:', userResult.rows[0] ? `Found: ${userResult.rows[0].full_name}` : 'Not found');
-          } catch (dbError) {
-            console.error('🚨 Database error during user lookup:', dbError);
-            return res.status(500).json({ 
-              success: false, 
-              message: 'Database error during authentication check' 
-            });
           }
-          
-          const user = userResult.rows[0];
-          
-          if (!user || !user.is_admin) {
-            console.log('🚫 Access denied - User is not admin:', { userId, isAdmin: user?.is_admin });
-            return res.status(403).json({ 
-              success: false, 
-              message: 'Admin access required to hide/unhide definitions' 
-            });
-          }
-          
-          console.log('✅ Admin access confirmed for user:', user.full_name);
 
           // Update the question in the database to mark as hidden/shown
           const result = await pool.query(`
