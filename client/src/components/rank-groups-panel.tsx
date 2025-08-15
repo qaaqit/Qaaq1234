@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { Users, MessageCircle, Send, Shield, User, Anchor } from 'lucide-react';
@@ -34,8 +34,11 @@ interface RankMessage {
 export function RankGroupsPanel() {
   const [newMessage, setNewMessage] = useState('');
   const [showMembers, setShowMembers] = useState(false);
+  const [messages, setMessages] = useState<RankMessage[]>([]);
+  const [isConnected, setIsConnected] = useState(false);
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const wsRef = useRef<WebSocket | null>(null);
   
   // Get user's maritime rank directly from Users table
   const userMaritimeRank = user?.maritimeRank || user?.rank;
@@ -65,53 +68,93 @@ export function RankGroupsPanel() {
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
-  // Fetch messages for the rank-based chat
-  const { data: messages = [], isLoading: loadingMessages } = useQuery<RankMessage[]>({
+  // Load initial messages on component mount
+  const { isLoading: loadingMessages } = useQuery<RankMessage[]>({
     queryKey: ['/api/rank-chat', userMaritimeRank, 'messages'],
     queryFn: async () => {
       const response = await fetch(`/api/rank-chat/${encodeURIComponent(userMaritimeRank)}/messages`);
       if (!response.ok) throw new Error('Failed to fetch messages');
-      return response.json();
+      const data = await response.json();
+      setMessages(data);
+      return data;
     },
-    refetchInterval: 3000, // Refresh every 3 seconds for real-time chat
+    enabled: !!userMaritimeRank,
   });
+  
+  // WebSocket connection for real-time messaging
+  useEffect(() => {
+    if (!userMaritimeRank || !user) return;
+    
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    const ws = new WebSocket(wsUrl);
+    wsRef.current = ws;
+    
+    ws.onopen = () => {
+      console.log('WebSocket connected for rank chat');
+      setIsConnected(true);
+      
+      // Authenticate
+      ws.send(JSON.stringify({
+        type: 'auth',
+        userId: user.id,
+        userInfo: {
+          fullName: user.fullName || 'Maritime Professional',
+          maritimeRank: userMaritimeRank
+        }
+      }));
+    };
+    
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      
+      if (data.type === 'auth_success') {
+        // Join rank room after authentication
+        ws.send(JSON.stringify({
+          type: 'join_rank_room',
+          rank: userMaritimeRank
+        }));
+      } else if (data.type === 'rank_room_joined') {
+        console.log(`Joined ${data.rank} chat room`);
+      } else if (data.type === 'new_rank_message') {
+        // Add new message to the list
+        setMessages(prev => [...prev, data.message]);
+      }
+    };
+    
+    ws.onclose = () => {
+      console.log('WebSocket disconnected');
+      setIsConnected(false);
+    };
+    
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      setIsConnected(false);
+    };
+    
+    return () => {
+      ws.close();
+    };
+  }, [userMaritimeRank, user]);
 
 
-  // Send message mutation for rank chat
-  const sendMessageMutation = useMutation({
-    mutationFn: async ({ message }: { message: string }) => {
-      const response = await fetch(`/api/rank-chat/${encodeURIComponent(userMaritimeRank)}/send`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message,
-          senderRank: userMaritimeRank,
-        }),
-      });
-      if (!response.ok) throw new Error('Failed to send message');
-      return response.json();
-    },
-    onSuccess: () => {
-      setNewMessage('');
-      queryClient.invalidateQueries({ 
-        queryKey: ['/api/rank-chat', userMaritimeRank, 'messages'] 
-      });
-      console.log('Message sent to rank chat!');
-    },
-    onError: (error) => {
-      console.error('Failed to send message:', error);
-    },
-  });
+  // Send message via WebSocket
+  const sendMessage = () => {
+    if (!newMessage.trim() || !wsRef.current || !isConnected) return;
+    
+    wsRef.current.send(JSON.stringify({
+      type: 'send_rank_message',
+      message: newMessage.trim(),
+      rank: userMaritimeRank
+    }));
+    
+    setNewMessage('');
+    console.log('Message sent via WebSocket!');
+  };
 
 
   const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
-    
-    sendMessageMutation.mutate({
-      message: newMessage.trim(),
-    });
+    sendMessage();
   };
 
   if (loadingMembers) {
@@ -141,7 +184,12 @@ export function RankGroupsPanel() {
                   <CardDescription>Connect with all maritime professionals of your rank</CardDescription>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                  <div className={`w-3 h-3 rounded-full animate-pulse ${
+                    isConnected ? 'bg-green-500' : 'bg-red-500'
+                  }`}></div>
+                  <span className="text-xs text-gray-500">
+                    {isConnected ? 'Real-time WebSocket' : 'Connecting...'}
+                  </span>
                 </div>
               </div>
             </CardHeader>
@@ -211,11 +259,11 @@ export function RankGroupsPanel() {
                     </span>
                     <Button
                       onClick={handleSendMessage}
-                      disabled={!newMessage.trim() || sendMessageMutation.isPending}
+                      disabled={!newMessage.trim() || !isConnected}
                       className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700"
                     >
                       <Send className="h-4 w-4 mr-2" />
-                      Send to All {displayRank}s
+                      {isConnected ? `Send to All ${displayRank}s` : 'Connecting...'}
                     </Button>
                   </div>
                 </div>

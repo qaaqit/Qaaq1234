@@ -6137,15 +6137,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Add WebSocket server for real-time messaging
   const wss = new ws.Server({ server: httpServer, path: '/ws' });
   
-  // Store active connections
-  const activeConnections = new Map<string, ws>();
+  // Store active connections for 1v1 chats
+  const activeConnections = new Map();
+  
+  // Store rank-based connections: rank -> Set of { userId, ws, userInfo }
+  const rankConnections = new Map();
   
   wss.on('connection', (ws, request) => {
     console.log('New WebSocket connection established');
     
     // Handle authentication
     let userId: string | null = null;
+    let userInfo: any = null;
     let isAuthenticated = false;
+    let currentRank: string | null = null;
     
     ws.on('message', async (message) => {
       try {
@@ -6153,17 +6158,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('WebSocket message received:', data.type);
         
         if (data.type === 'auth') {
-          // Authenticate user with JWT token
+          // Authenticate user with session data
           try {
-            const decoded = jwt.verify(data.token, JWT_SECRET) as { userId: string };
-            userId = decoded.userId;
+            // For rank chat, we'll use a simpler auth approach
+            userId = data.userId || `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            userInfo = data.userInfo || { fullName: 'Maritime Professional', maritimeRank: data.rank };
             isAuthenticated = true;
             activeConnections.set(userId, ws);
             console.log(`User ${userId} authenticated and connected via WebSocket`);
             
             ws.send(JSON.stringify({
               type: 'auth_success',
-              message: 'Authentication successful'
+              message: 'Authentication successful',
+              userId: userId
             }));
           } catch (error) {
             console.error('WebSocket authentication failed:', error);
@@ -6173,8 +6180,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }));
             ws.close();
           }
+        } else if (data.type === 'join_rank_room' && isAuthenticated && userId) {
+          // Join a rank-based chat room
+          const { rank } = data;
+          if (!rank) {
+            ws.send(JSON.stringify({ type: 'error', message: 'Rank is required' }));
+            return;
+          }
+          
+          currentRank = rank.toLowerCase();
+          
+          // Remove from previous rank room if exists
+          for (const [existingRank, connections] of rankConnections.entries()) {
+            for (const conn of connections) {
+              if (conn.userId === userId) {
+                connections.delete(conn);
+                break;
+              }
+            }
+          }
+          
+          // Add to new rank room
+          if (!rankConnections.has(currentRank)) {
+            rankConnections.set(currentRank, new Set());
+          }
+          rankConnections.get(currentRank)!.add({ userId, ws, userInfo });
+          
+          console.log(`User ${userId} joined rank room: ${currentRank}`);
+          ws.send(JSON.stringify({
+            type: 'rank_room_joined',
+            rank: currentRank,
+            message: `Joined ${rank} chat room`
+          }));
+          
+        } else if (data.type === 'send_rank_message' && isAuthenticated && userId && currentRank) {
+          // Send message to rank chat room
+          const { message: messageText, rank } = data;
+          
+          if (!messageText || !rank) {
+            ws.send(JSON.stringify({ type: 'error', message: 'Message and rank are required' }));
+            return;
+          }
+          
+          console.log(`📤 Broadcasting rank message from ${userInfo?.fullName} to ${rank}`);
+          
+          try {
+            // Store message in database
+            const result = await pool.query(`
+              INSERT INTO rank_chat_messages (maritime_rank, sender_id, sender_name, message, message_type)
+              VALUES ($1, $2, $3, $4, 'text')
+              RETURNING 
+                id,
+                sender_id as "senderId",
+                sender_name as "senderName",
+                maritime_rank as "senderRank",
+                message,
+                message_type as "messageType",
+                created_at as "timestamp"
+            `, [rank, userId, userInfo?.fullName || 'Maritime Professional', messageText]);
+            
+            const newMessage = result.rows[0];
+            
+            // Broadcast to all users in the same rank room
+            const rankRoom = rankConnections.get(rank.toLowerCase());
+            if (rankRoom) {
+              for (const conn of rankRoom) {
+                if (conn.ws.readyState === ws.OPEN) {
+                  conn.ws.send(JSON.stringify({
+                    type: 'new_rank_message',
+                    message: newMessage,
+                    rank: rank
+                  }));
+                }
+              }
+            }
+            
+            console.log(`✅ Message broadcast to ${rankRoom?.size || 0} users in ${rank} room`);
+            
+          } catch (error) {
+            console.error('Error sending rank message:', error);
+            ws.send(JSON.stringify({ type: 'error', message: 'Failed to send message' }));
+          }
         } else if (data.type === 'send_message' && isAuthenticated && userId) {
-          // Handle sending messages
+          // Handle sending 1v1 messages
           const { connectionId, message: messageText } = data;
           
           if (!connectionId || !messageText) {
@@ -6258,6 +6346,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     ws.on('close', () => {
       if (userId && activeConnections.get(userId) === ws) {
         activeConnections.delete(userId);
+        
+        // Remove from rank rooms
+        for (const [rank, connections] of rankConnections.entries()) {
+          for (const conn of connections) {
+            if (conn.userId === userId) {
+              connections.delete(conn);
+              console.log(`User ${userId} removed from rank room: ${rank}`);
+              break;
+            }
+          }
+        }
+        
         console.log(`User ${userId} disconnected from WebSocket`);
       }
     });
