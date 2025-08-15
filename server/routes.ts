@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import ws from 'ws';
 import jwt from 'jsonwebtoken';
 import { storage } from "./storage";
-import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, insertChatConnectionSchema, insertChatMessageSchema, insertRankGroupSchema, insertRankGroupMemberSchema, insertRankGroupMessageSchema, insertEmailVerificationTokenSchema, emailVerificationTokens } from "@shared/schema";
+import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, insertChatConnectionSchema, insertChatMessageSchema, insertRankGroupSchema, insertRankGroupMemberSchema, insertRankGroupMessageSchema, insertRankChatMessageSchema, insertEmailVerificationTokenSchema, emailVerificationTokens, rankChatMessages } from "@shared/schema";
 import { emailService } from "./email-service";
 import { randomBytes } from 'crypto';
 import { eq } from 'drizzle-orm';
@@ -1227,49 +1227,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create rank chat messages table if it doesn't exist
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS rank_chat_messages (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        maritime_rank TEXT NOT NULL,
+        sender_id VARCHAR NOT NULL,
+        sender_name TEXT NOT NULL,
+        message TEXT NOT NULL,
+        message_type TEXT DEFAULT 'text',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log('✅ Rank chat messages table ready');
+  } catch (err) {
+    console.log('⚠️ Rank chat messages table creation failed:', err.message);
+  }
+
   // Get rank chat messages
   app.get("/api/rank-chat/:rank/messages", async (req, res) => {
     try {
       const { rank } = req.params;
-      console.log(`💬 Fetching messages for rank: ${rank}`);
+      console.log(`💬 Fetching real messages for rank: ${rank}`);
       
-      // For now, return mock messages since we don't have rank chat table yet
-      // In a real implementation, you'd query a rank_chat_messages table
-      const mockMessages = [
-        {
-          id: "msg_1",
-          senderId: "44885683",
-          senderName: "Piyush Gupta",
-          senderRank: rank,
-          message: "Welcome to the Chief Engineer chat! How's everyone doing?",
-          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-          messageType: "text"
-        },
-        {
-          id: "msg_2", 
-          senderId: "sample_user_2",
-          senderName: "Maritime Professional",
-          senderRank: rank,
-          message: "Good to see fellow chief engineers here. Any recent experiences with new engine technologies?",
-          timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), // 1 hour ago
-          messageType: "text"
-        },
-        {
-          id: "msg_3",
-          senderId: "sample_user_3", 
-          senderName: "Senior CE",
-          senderRank: rank,
-          message: "Just completed a major overhaul. Happy to share insights if anyone needs guidance.",
-          timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 minutes ago
-          messageType: "text"
-        }
-      ];
+      // Query real messages from database, filtered by maritime rank
+      const result = await pool.query(`
+        SELECT 
+          id,
+          sender_id as "senderId",
+          sender_name as "senderName",
+          maritime_rank as "senderRank",
+          message,
+          message_type as "messageType",
+          created_at as "timestamp"
+        FROM rank_chat_messages 
+        WHERE LOWER(maritime_rank) = LOWER($1)
+        ORDER BY created_at ASC
+        LIMIT 100
+      `, [rank]);
       
-      console.log(`✅ Returning ${mockMessages.length} mock messages for rank ${rank}`);
-      res.json(mockMessages);
+      console.log(`✅ Found ${result.rows.length} real messages for rank ${rank}`);
+      res.json(result.rows);
     } catch (error) {
       console.error('Get rank chat messages error:', error);
       res.status(500).json({ message: "Failed to get rank chat messages" });
+    }
+  });
+
+  // Send rank chat message
+  app.post("/api/rank-chat/:rank/send", async (req, res) => {
+    try {
+      const { rank } = req.params;
+      const { message, senderRank } = req.body;
+      
+      // Get user info from session or create a temporary profile
+      let senderId = "anonymous_user";
+      let senderName = "Maritime Professional";
+      
+      // Try to get user from session if available
+      if (req.session && req.session.user) {
+        senderId = req.session.user.id;
+        senderName = req.session.user.fullName || req.session.user.name || "Maritime Professional";
+      } else {
+        // Generate a temporary user ID for unauthenticated users
+        senderId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      }
+      
+      console.log(`📤 Sending message to rank: ${rank} from user: ${senderName}`);
+      
+      // Insert message into database
+      const result = await pool.query(`
+        INSERT INTO rank_chat_messages (maritime_rank, sender_id, sender_name, message, message_type)
+        VALUES ($1, $2, $3, $4, 'text')
+        RETURNING 
+          id,
+          sender_id as "senderId",
+          sender_name as "senderName",
+          maritime_rank as "senderRank",
+          message,
+          message_type as "messageType",
+          created_at as "timestamp"
+      `, [rank, senderId, senderName, message]);
+      
+      console.log(`✅ Message sent to rank ${rank} by ${senderName}`);
+      res.json({ success: true, message: result.rows[0] });
+    } catch (error) {
+      console.error('Send rank chat message error:', error);
+      res.status(500).json({ message: "Failed to send rank chat message" });
     }
   });
 

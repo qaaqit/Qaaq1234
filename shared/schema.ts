@@ -182,6 +182,17 @@ export const rankGroupMessages = pgTable("rank_group_messages", {
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 
+// Rank-based chat messages (separate from group messages)
+export const rankChatMessages = pgTable("rank_chat_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  maritimeRank: text("maritime_rank").notNull(), // Filter messages by rank (chief_engineer, captain, etc.)
+  senderId: varchar("sender_id").notNull(),
+  senderName: text("sender_name").notNull(),
+  message: text("message").notNull(),
+  messageType: text("message_type").default("text"), // text, image, file
+  createdAt: timestamp("created_at").default(sql`now()`),
+});
+
 // Bot Rules Documentation Table
 export const botRules = pgTable("bot_rules", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -389,6 +400,14 @@ export const insertRankGroupMessageSchema = createInsertSchema(rankGroupMessages
   message: true,
   messageType: true,
   isAnnouncement: true,
+});
+
+export const insertRankChatMessageSchema = createInsertSchema(rankChatMessages).pick({
+  maritimeRank: true,
+  senderId: true,
+  senderName: true,
+  message: true,
+  messageType: true,
 });
 
 export const insertBotRuleSchema = createInsertSchema(botRules)
