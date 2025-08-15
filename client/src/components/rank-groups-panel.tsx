@@ -34,7 +34,6 @@ interface RankMessage {
 export function RankGroupsPanel() {
   const [newMessage, setNewMessage] = useState('');
   const [showMembers, setShowMembers] = useState(false);
-  const [showMembersList, setShowMembersList] = useState(false);
   const queryClient = useQueryClient();
   const { user } = useAuth();
   
@@ -137,12 +136,7 @@ export function RankGroupsPanel() {
                   <CardTitle className="flex items-center space-x-2">
                     <MessageCircle className="h-5 w-5 text-orange-600" />
                     <span>CEGroup</span>
-                    <Badge 
-                      className="bg-orange-100 text-orange-800 cursor-pointer hover:bg-orange-200 transition-colors"
-                      onClick={() => setShowMembersList(true)}
-                    >
-                      {rankMembers.length} Members
-                    </Badge>
+                    <Badge className="bg-orange-100 text-orange-800">{rankMembers.length} Members</Badge>
                   </CardTitle>
                   <CardDescription>Connect with all maritime professionals of your rank</CardDescription>
                 </div>
@@ -191,96 +185,7 @@ export function RankGroupsPanel() {
               )}
             </CardContent>
 
-            {/* Members List Modal */}
-            {showMembersList && (
-              <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] flex flex-col">
-                  {/* Modal Header */}
-                  <div className="flex items-center justify-between p-6 border-b">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center">
-                        <Anchor className="h-5 w-5 text-white" />
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-bold text-gray-900">{displayRank} Professionals</h2>
-                        <p className="text-sm text-gray-600">{rankMembers.length} active members</p>
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowMembersList(false)}
-                      className="text-gray-500 hover:text-gray-700"
-                    >
-                      ✕
-                    </Button>
-                  </div>
-                  
-                  {/* Modal Content - Scrollable Members List */}
-                  <div className="flex-1 overflow-y-auto p-6">
-                    <div className="space-y-3">
-                      {rankMembers.map((member) => (
-                        <Card key={member.id} className="hover:bg-gray-50 transition-colors cursor-pointer border border-gray-200">
-                          <CardContent className="p-4">
-                            <div className="flex items-center space-x-4">
-                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
-                                {member.fullName?.charAt(0) || 'M'}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center space-x-2 mb-1">
-                                  <h3 className="font-semibold text-gray-900 truncate">{member.fullName}</h3>
-                                  {member.isOnline && (
-                                    <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
-                                  )}
-                                </div>
-                                <div className="flex items-center space-x-3 text-sm text-gray-600">
-                                  <span className="flex items-center space-x-1">
-                                    <span>📍</span>
-                                    <span>{member.city || 'Unknown Port'}</span>
-                                  </span>
-                                  {member.questionCount > 0 && (
-                                    <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                                      {member.questionCount} Q&As
-                                    </Badge>
-                                  )}
-                                  <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
-                                    {member.rank?.replace(/_/g, ' ') || 'Chief Engineer'}
-                                  </Badge>
-                                </div>
-                              </div>
-                              <div className="flex flex-col items-end space-y-2">
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  className="text-xs bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100"
-                                >
-                                  💬 Chat
-                                </Button>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  {/* Modal Footer */}
-                  <div className="border-t p-4 bg-gray-50 rounded-b-lg">
-                    <div className="flex items-center justify-between text-sm text-gray-600">
-                      <span>Total: {rankMembers.length} {displayRank} professionals</span>
-                      <Button 
-                        onClick={() => setShowMembersList(false)}
-                        className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700"
-                      >
-                        Close
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Message Input */
+            {/* Message Input */}
             <div className="border-t bg-white/90 backdrop-blur-sm p-4">
               <div className="flex space-x-3">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-white font-bold flex-shrink-0">
