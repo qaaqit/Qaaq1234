@@ -145,9 +145,6 @@ export function RankGroupsPanel() {
         {/* Maritime Professionals List */}
         <div className="lg:col-span-1">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">
-              {displayRank} Professionals
-            </h3>
             <Button
               variant={!showMembers ? "default" : "outline"}
               size="sm"
