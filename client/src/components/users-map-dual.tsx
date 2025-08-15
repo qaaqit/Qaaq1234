@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import MarineChatButton from './marine-chat-button';
 import SingleMessageChat from './single-message-chat';
 import MessageNotificationDot from './message-notification-dot';
-import LeafletMap from './leaflet-map';
+import GoogleMap from './google-map';
 import { ChevronDown, ChevronUp, Filter, MapPin, Radar, Search, Home, Map, Satellite, Crown } from 'lucide-react';
 
 interface MapUser {
@@ -178,31 +178,15 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     };
   }, [radarTimeoutId]);
 
-  // State for map bounds - MUST be declared before use in queries
-  const [mapBounds, setMapBounds] = useState<{north: number, south: number, east: number, west: number} | null>(null);
 
-  // Fetch users from nearby API for map display - with bounds support
+
+  // Fetch users from nearby API for map display
   const { data: nearbyUsersResponse, isLoading: isLoadingNearby, refetch: refetchNearby } = useQuery<MapUser[]>({
-    queryKey: ['/api/users/nearby', mapBounds],
+    queryKey: ['/api/users/nearby'],
     queryFn: async () => {
-      let url = '/api/users/nearby';
-      const params = new URLSearchParams();
-      
-      // If we have map bounds and radar is active, use bounds to filter users
-      if (mapBounds && isRadarActive) {
-        params.append('bounds', JSON.stringify(mapBounds));
-        console.log('🗺️ Fetching users within map bounds:', mapBounds);
-      }
-      
-      if (params.toString()) {
-        url += '?' + params.toString();
-      }
-      
-      const response = await fetch(url);
+      const response = await fetch('/api/users/nearby');
       if (!response.ok) throw new Error('Failed to fetch nearby users');
       const data = await response.json();
-      
-      console.log(`📍 Retrieved ${data.length} users from API`);
       return data;
     },
     staleTime: 60000, // Cache for 1 minute
@@ -240,7 +224,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     setSearchQuery(value);
   };
 
-  // Radar scanner toggle handler - Simple click to refresh with map bounds
+  // Radar scanner toggle handler - Simple click to refresh
   const handleRadarToggle = useCallback(() => {
     console.log('🔍 Radar button clicked! Current state:', { isRadarActive, nearbyUsers: nearbyUsersResponse?.length });
     
@@ -260,8 +244,8 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       console.log('🟢 Activating radar scanner...');
       setIsRadarActive(true);
       
-      // Trigger refresh with current map bounds
-      console.log('📡 Triggering refetch with map bounds...');
+      // Trigger refresh
+      console.log('📡 Triggering refetch...');
       refetchNearby();
       
       // Dispatch global radar refresh event for other components (like DM page)
@@ -331,34 +315,21 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       return filtered; // Return all search results without location constraints
     }
 
-    // If no search query and no user location, show all users with default fallback location
+    // If no search query, apply location-based filtering
     if (!userLocation) {
-      // Use a default fallback location (Mumbai) if user location is not available
-      const fallbackLocation = { lat: 19.076, lng: 72.8777 };
-      console.log('🌍 No user location detected, using fallback location for filtering');
-      
-      // Filter by auto-calculated radius from fallback location
-      filtered = filtered.filter(mapUser => {
-        const distance = calculateDistance(
-          fallbackLocation.lat, 
-          fallbackLocation.lng, 
-          mapUser.latitude, 
-          mapUser.longitude
-        );
-        return distance <= radiusKm;
-      });
-    } else {
-      // Filter by auto-calculated radius based on zoom using actual user location
-      filtered = filtered.filter(mapUser => {
-        const distance = calculateDistance(
-          userLocation.lat, 
-          userLocation.lng, 
-          mapUser.latitude, 
-          mapUser.longitude
-        );
-        return distance <= radiusKm;
-      });
+      return [];
     }
+
+    // Filter by auto-calculated radius based on zoom
+    filtered = filtered.filter(mapUser => {
+      const distance = calculateDistance(
+        userLocation.lat, 
+        userLocation.lng, 
+        mapUser.latitude, 
+        mapUser.longitude
+      );
+      return distance <= radiusKm;
+    });
 
     // Filter by online status if enabled
     if (showOnlineOnly) {
@@ -550,7 +521,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
 
       </div>
 
-      {/* Stable Map System: Leaflet for Reliability */}
+      {/* Dual Map System: Google Maps for Admin, Leaflet for Users */}
       <div className={`absolute top-[80px] sm:top-[60px] left-0 right-0 ${
         nearestUsers.length > 0 
           ? searchPanelState === 'minimized'
@@ -562,10 +533,11 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             : 'bottom-[160px] sm:bottom-[180px]'
           : 'bottom-0'
       }`}>
-        <LeafletMap
+        <GoogleMap
           users={filteredUsers}
           userLocation={userLocation}
           selectedUser={selectedUser}
+          mapType={mapType}
           onUserHover={(user, position) => {
             setHoveredUser(user);
             setHoverPosition(position || null);
@@ -603,10 +575,6 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
             }
           }}
           onZoomChange={handleZoomChange}
-          onBoundsChange={(bounds) => {
-            setMapBounds(bounds);
-            console.log('🗺️ Map bounds updated:', bounds);
-          }}
           showScanElements={showScanElements}
           scanAngle={scanAngle}
           radiusKm={radiusKm}

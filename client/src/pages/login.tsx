@@ -4,27 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Anchor,
-  Eye,
-  EyeOff,
-  Mail,
-  Lock,
-  ChevronUp,
-  ChevronDown,
-  Crown,
-  Search,
-} from "lucide-react";
+import { Anchor, Eye, EyeOff, Mail, Lock, ChevronUp, ChevronDown, Crown, Search } from "lucide-react";
 import qaaqLogoPath from "@assets/ICON_1754950288816.png";
-import qaaqLogo from "@assets/qaaq-logo.png";
+import qaaqLogo from '@assets/qaaq-logo.png';
 import { User } from "@/lib/auth";
 
 interface LoginPageProps {
@@ -39,40 +23,41 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
   const [isMinimized, setIsMinimized] = useState(false);
   const [formData, setFormData] = useState({
     qaaqId: "",
-    password: "",
+    password: ""
   });
   const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
   const [glossaryEntries, setGlossaryEntries] = useState<any[]>([]);
   const [glossaryLoading, setGlossaryLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [displayCount, setDisplayCount] = useState(20);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // Handle Google auth errors from URL params
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const error = urlParams.get("error");
-
-    if (error === "auth_failed") {
+    const error = urlParams.get('error');
+    
+    if (error === 'auth_failed') {
       toast({
         title: "Authentication Failed",
-        description:
-          "Google sign-in was not successful. Please try again or use your regular login.",
+        description: "Google sign-in was not successful. Please try again or use your regular login.",
         variant: "destructive",
       });
-
+      
       // Clean up the URL by removing the error parameter
       const newUrl = window.location.pathname;
       window.history.replaceState({}, document.title, newUrl);
     }
   }, [toast]);
 
+
+
   const fetchGlossaryEntries = async () => {
     setGlossaryLoading(true);
     try {
-      const response = await fetch("/api/glossary/what-is");
+      const response = await fetch('/api/glossary/what-is');
       const data = await response.json();
-
+      
       if (data.success) {
         const sortedEntries = data.entries.sort((a: any, b: any) => {
           const termA = extractTerm(a.question);
@@ -82,31 +67,27 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
         setGlossaryEntries(sortedEntries);
       }
     } catch (error) {
-      console.error("Error fetching glossary:", error);
+      console.error('Error fetching glossary:', error);
     } finally {
       setGlossaryLoading(false);
     }
   };
 
   const extractTerm = (question: string): string => {
-    const match = question
-      .toLowerCase()
-      .match(/what\s+is\s+(?:a\s+|an\s+|the\s+)?(.+?)(?:\?|$)/);
+    const match = question.toLowerCase().match(/what\s+is\s+(?:a\s+|an\s+|the\s+)?(.+?)(?:\?|$)/);
     return match ? match[1].trim() : question;
   };
 
-  const filteredEntries = glossaryEntries.filter((entry) => {
+  const filteredEntries = glossaryEntries.filter(entry => {
     if (!searchTerm) return true;
-    return (
-      entry.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      entry.answer.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    return entry.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           entry.answer.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
   const loadMoreEntries = () => {
     setIsLoadingMore(true);
     setTimeout(() => {
-      setDisplayCount((prev) => Math.min(prev + 20, filteredEntries.length));
+      setDisplayCount(prev => Math.min(prev + 20, filteredEntries.length));
       setIsLoadingMore(false);
     }, 500);
   };
@@ -121,10 +102,10 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           userId: formData.qaaqId.trim(),
@@ -136,28 +117,26 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
 
       if (response.ok) {
         // Store token and user data (using consistent auth_token key)
-        localStorage.setItem("auth_token", data.token);
-        localStorage.setItem("qaaq_user", JSON.stringify(data.user));
-
+        localStorage.setItem('auth_token', data.token);
+        localStorage.setItem('qaaq_user', JSON.stringify(data.user));
+        
         onSuccess(data.user);
-
+        
         toast({
           title: "Welcome back!",
           description: `Logged in successfully as ${data.user.fullName}`,
         });
-
-        navigate("/qbot");
+        
+        navigate('/qbot');
       } else {
         toast({
           title: "Login Failed",
-          description:
-            data.error ||
-            "Invalid credentials. Please check your QAAQ ID and password.",
+          description: data.error || "Invalid credentials. Please check your QAAQ ID and password.",
           variant: "destructive",
         });
       }
     } catch (error) {
-      console.error("Login error:", error);
+      console.error('Login error:', error);
       toast({
         title: "Login Error",
         description: "Unable to connect to server. Please try again.",
@@ -180,13 +159,13 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
 
     setForgotPasswordLoading(true);
     try {
-      const response = await fetch("/api/auth/forgot-password", {
-        method: "POST",
+      const response = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userId: formData.qaaqId.trim(),
+          userId: formData.qaaqId.trim()
         }),
       });
 
@@ -205,7 +184,7 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
         });
       }
     } catch (error) {
-      console.error("Forgot password error:", error);
+      console.error('Forgot password error:', error);
       toast({
         title: "Reset Error",
         description: "Unable to process password reset. Please try again.",
@@ -228,27 +207,18 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
       {/* Header */}
       <header className="bg-white text-black shadow-md relative overflow-hidden border-b-2 border-orange-400">
         <div className="absolute inset-0 bg-gradient-to-r from-red-50 via-orange-50 to-yellow-50 opacity-50"></div>
-
+        
         <div className="relative z-10 px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden">
-                <img
-                  src={qaaqLogo}
-                  alt="QAAQ Logo"
-                  className="w-full h-full object-cover"
-                />
+                <img src={qaaqLogo} alt="QAAQ Logo" className="w-full h-full object-cover" />
               </div>
               <div>
                 <h1 className="text-xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">
                   Maritime Dictionary
                 </h1>
-                <p className="text-sm text-gray-600">
-                  Browse definitions •{" "}
-                  {isMinimized
-                    ? "Login for full features"
-                    : "Click minimize to browse freely"}
-                </p>
+                <p className="text-sm text-gray-600">Browse definitions • {isMinimized ? 'Login for full features' : 'Click minimize to browse freely'}</p>
               </div>
             </div>
           </div>
@@ -267,10 +237,7 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
               className="border-orange-300 focus:border-orange-500 pl-10"
               disabled={!isMinimized}
             />
-            <Search
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-              size={18}
-            />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
           </div>
         </div>
 
@@ -278,10 +245,7 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
         {glossaryLoading ? (
           <div className="space-y-2">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div
-                key={`skeleton-${i}`}
-                className="flex items-center justify-between py-2 border-b border-gray-100"
-              >
+              <div key={`skeleton-${i}`} className="flex items-center justify-between py-2 border-b border-gray-100">
                 <Skeleton className="h-3 w-24" />
                 <Skeleton className="h-3 w-48" />
               </div>
@@ -290,15 +254,11 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
         ) : (
           <div className="space-y-2">
             {filteredEntries.slice(0, displayCount).map((entry, index) => {
-              const previewText =
-                entry.answer.split(" ").slice(0, 10).join(" ") +
-                (entry.answer.split(" ").length > 10 ? "..." : "");
+              const previewText = entry.answer.split(' ').slice(0, 10).join(' ') + (entry.answer.split(' ').length > 10 ? '...' : '');
               return (
                 <Dialog key={`entry-${entry.id}-${index}`}>
                   <DialogTrigger asChild disabled={!isMinimized}>
-                    <div
-                      className={`py-3 px-4 bg-white rounded-lg shadow-sm border border-gray-200 transition-colors ${isMinimized ? "hover:border-orange-300 cursor-pointer" : "cursor-default"}`}
-                    >
+                    <div className={`py-3 px-4 bg-white rounded-lg shadow-sm border border-gray-200 transition-colors ${isMinimized ? 'hover:border-orange-300 cursor-pointer' : 'cursor-default'}`}>
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-medium text-orange-700">
                           {extractTerm(entry.question).toUpperCase()}
@@ -313,10 +273,7 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
                     </div>
                   </DialogTrigger>
                   {isMinimized && (
-                    <DialogContent
-                      className="max-w-2xl max-h-[80vh] overflow-y-auto"
-                      aria-describedby="definition-content"
-                    >
+                    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" aria-describedby="definition-content">
                       <DialogHeader>
                         <DialogTitle className="text-xl font-bold text-gray-900 mb-2">
                           {extractTerm(entry.question).toUpperCase()}
@@ -327,25 +284,16 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
                           <strong>Question:</strong> {entry.question}
                         </div>
                         <div className="prose prose-sm max-w-none text-gray-700">
-                          {entry.answer
-                            .split("\n")
-                            .map((line: string, idx: number) => (
-                              <p
-                                key={`line-${entry.id}-${idx}`}
-                                className="mb-2 last:mb-0"
-                              >
-                                {line.startsWith("•") ? (
-                                  <span className="flex items-start gap-2">
-                                    <span className="text-orange-600 font-bold">
-                                      •
-                                    </span>
-                                    <span>{line.substring(1).trim()}</span>
-                                  </span>
-                                ) : (
-                                  line
-                                )}
-                              </p>
-                            ))}
+                          {entry.answer.split('\n').map((line: string, idx: number) => (
+                            <p key={`line-${entry.id}-${idx}`} className="mb-2 last:mb-0">
+                              {line.startsWith('•') ? (
+                                <span className="flex items-start gap-2">
+                                  <span className="text-orange-600 font-bold">•</span>
+                                  <span>{line.substring(1).trim()}</span>
+                                </span>
+                              ) : line}
+                            </p>
+                          ))}
                         </div>
                       </div>
                     </DialogContent>
@@ -353,15 +301,11 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
                 </Dialog>
               );
             })}
-
+            
             {filteredEntries.length === 0 && !glossaryLoading && (
               <div className="text-center py-12">
-                <h3 className="text-base font-semibold text-gray-900 mb-2">
-                  No Terms Found
-                </h3>
-                <p className="text-sm text-gray-600 mb-4">
-                  Try a different search term
-                </p>
+                <h3 className="text-base font-semibold text-gray-900 mb-2">No Terms Found</h3>
+                <p className="text-sm text-gray-600 mb-4">Try a different search term</p>
               </div>
             )}
 
@@ -373,21 +317,18 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
                   disabled={isLoadingMore}
                   className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2"
                 >
-                  {isLoadingMore
-                    ? "Loading..."
-                    : `Load More (${filteredEntries.length - displayCount} remaining)`}
+                  {isLoadingMore ? 'Loading...' : `Load More (${filteredEntries.length - displayCount} remaining)`}
                 </Button>
               </div>
             )}
 
-            {displayCount >= filteredEntries.length &&
-              filteredEntries.length > 20 && (
-                <div className="text-center py-4">
-                  <p className="text-sm text-gray-500">
-                    All {filteredEntries.length} terms displayed
-                  </p>
-                </div>
-              )}
+            {displayCount >= filteredEntries.length && filteredEntries.length > 20 && (
+              <div className="text-center py-4">
+                <p className="text-sm text-gray-500">
+                  All {filteredEntries.length} terms displayed
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -397,7 +338,7 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
   return (
     <>
       {/* Background Glossary Content - always visible */}
-      <div className={isMinimized ? "" : "pointer-events-none"}>
+      <div className={isMinimized ? '' : 'pointer-events-none'}>
         <GlossaryContent isMinimized={isMinimized} />
       </div>
       {/* Minimized state - floating login button */}
@@ -421,164 +362,143 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
       {/* Full login form overlay - only show when not minimized */}
       {!isMinimized && (
         <div className="fixed inset-0 bg-gradient-to-br from-orange-50/80 to-red-100/80 backdrop-blur-[2px] flex items-center justify-center p-4 z-40">
+
           <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 border border-gray-200 relative">
-            {/* Minimize Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsMinimized(true)}
-              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 p-1"
-              data-testid="minimize-login-roadblock"
-            >
-              <div className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
-                <ChevronUp className="h-6 w-6" />
-              </div>
-            </Button>
-
-            {/* Header */}
-            <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-gradient-to-br from-orange-600 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <img src={qaaqLogoPath} alt="QAAQ" className="w-14 h-14" />
-              </div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                Welcome Back
-              </h1>
-              <p className="text-gray-600">Sign in to QaaqConnect</p>
+          {/* Minimize Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsMinimized(true)}
+            className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 p-1"
+            data-testid="minimize-login-roadblock"
+          >
+            <div className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
+              <ChevronUp className="h-6 w-6" />
             </div>
+          </Button>
 
-            {/* Login Form */}
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {/* QAAQ ID */}
-              <div>
-                <Label
-                  htmlFor="qaaqId"
-                  className="text-sm font-medium text-gray-700 mb-2 block"
-                >
-                  Whatsapp/ Email *
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="qaaqId"
-                    type="text"
-                    value={formData.qaaqId}
-                    onChange={(e) =>
-                      setFormData({ ...formData, qaaqId: e.target.value })
-                    }
-                    className="w-full h-11 text-base pl-10"
-                    disabled={loading}
-                    required
-                  />
-                  <Mail
-                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                    size={18}
-                  />
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  This could be country code + WhatsApp number
-                </p>
-              </div>
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-gradient-to-br from-orange-600 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <img src={qaaqLogoPath} alt="QAAQ" className="w-14 h-14" />
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
+            <p className="text-gray-600">Sign in to QaaqConnect</p>
+          </div>
 
-              {/* Password */}
-              <div>
-                <Label
-                  htmlFor="password"
-                  className="text-sm font-medium text-gray-700 mb-2 block"
-                >
-                  Password *
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    value={formData.password}
-                    onChange={(e) =>
-                      setFormData({ ...formData, password: e.target.value })
-                    }
-                    placeholder="....enter ur password"
-                    className="w-full h-11 text-base pl-10 pr-10"
-                    disabled={loading}
-                    required
-                  />
-                  <Lock
-                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                    size={18}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Submit Button */}
-              <Button
-                type="submit"
-                className="w-full h-12 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white font-semibold"
+        {/* Login Form */}
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* QAAQ ID */}
+          <div>
+            <Label htmlFor="qaaqId" className="text-sm font-medium text-gray-700 mb-2 block">Whatsapp/ Email *</Label>
+            <div className="relative">
+              <Input
+                id="qaaqId"
+                type="text"
+                value={formData.qaaqId}
+                onChange={(e) => setFormData({ ...formData, qaaqId: e.target.value })}
+                className="w-full h-11 text-base pl-10"
                 disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <i className="fas fa-spinner fa-spin mr-2"></i>
-                    Signing in...
-                  </>
-                ) : (
-                  <>
-                    <Anchor className="w-4 h-4 mr-2" />
-                    Sign In with QAAQ
-                  </>
-                )}
-              </Button>
+                required
+              />
+              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+            </div>
+            <p className="text-xs text-gray-500 mt-1">This could be country code + WhatsApp number</p>
+          </div>
 
-              {/* Divider */}
-              <div className="flex items-center my-6">
-                <div className="flex-1 border-t border-gray-200"></div>
-                <span className="px-4 text-sm text-gray-500 bg-white">or</span>
-                <div className="flex-1 border-t border-gray-200"></div>
-              </div>
-
-              {/* Replit Auth Button */}
-              <Button
+          {/* Password */}
+          <div>
+            <Label htmlFor="password" className="text-sm font-medium text-gray-700 mb-2 block">
+              Password *
+            </Label>
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                placeholder="Enter your password"
+                className="w-full h-11 text-base pl-10 pr-10"
+                disabled={loading}
+                required
+              />
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+              <button
                 type="button"
-                onClick={() => (window.location.href = "/api/login")}
-                className="w-full h-12 bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 font-semibold"
-                disabled={loading}
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
-                <div className="flex items-center justify-center">
-                  <div className="w-5 h-5 mr-3 bg-gray-600 rounded flex items-center justify-center">
-                    <span className="text-white text-xs font-bold">R</span>
-                  </div>
-                  Continue with Replit
-                </div>
-              </Button>
-
-              {/* Forgot Password and Signup Links */}
-              <div className="flex justify-between items-center mt-4 text-sm">
-                <button
-                  type="button"
-                  onClick={handleForgotPassword}
-                  disabled={forgotPasswordLoading}
-                  className="text-orange-600 hover:text-orange-700 underline transition-colors disabled:opacity-50"
-                >
-                  {forgotPasswordLoading ? "Sending..." : "Forgot password?"}
-                </button>
-                <button
-                  onClick={() => navigate("/register")}
-                  className="text-orange-600 hover:text-orange-800 font-semibold"
-                >
-                  New User Signup
-                </button>
-              </div>
-            </form>
-
-            {/* Footer */}
-            <div className="mt-8 text-center">
-              <p className="text-xs text-gray-500">
-                Connecting maritime professionals worldwide
-              </p>
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
+          </div>
+
+          {/* Submit Button */}
+          <Button 
+            type="submit" 
+            className="w-full h-12 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white font-semibold"
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <i className="fas fa-spinner fa-spin mr-2"></i>
+                Signing in...
+              </>
+            ) : (
+              <>
+                <Anchor className="w-4 h-4 mr-2" />
+                Sign In with QAAQ
+              </>
+            )}
+          </Button>
+
+          {/* Divider */}
+          <div className="flex items-center my-6">
+            <div className="flex-1 border-t border-gray-200"></div>
+            <span className="px-4 text-sm text-gray-500 bg-white">or</span>
+            <div className="flex-1 border-t border-gray-200"></div>
+          </div>
+
+          {/* Replit Auth Button */}
+          <Button 
+            type="button"
+            onClick={() => window.location.href = '/api/login'}
+            className="w-full h-12 bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 font-semibold"
+            disabled={loading}
+          >
+            <div className="flex items-center justify-center">
+              <div className="w-5 h-5 mr-3 bg-gray-600 rounded flex items-center justify-center">
+                <span className="text-white text-xs font-bold">R</span>
+              </div>
+              Continue with Replit
+            </div>
+          </Button>
+
+          {/* Forgot Password and Signup Links */}
+          <div className="flex justify-between items-center mt-4 text-sm">
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              disabled={forgotPasswordLoading}
+              className="text-orange-600 hover:text-orange-700 underline transition-colors disabled:opacity-50"
+            >
+              {forgotPasswordLoading ? "Sending..." : "Forgot password?"}
+            </button>
+            <button
+              onClick={() => navigate('/register')}
+              className="text-orange-600 hover:text-orange-800 font-semibold"
+            >
+              New User Signup
+            </button>
+          </div>
+        </form>
+
+        {/* Footer */}
+        <div className="mt-8 text-center">
+          <p className="text-xs text-gray-500">
+            Connecting maritime professionals worldwide
+          </p>
+        </div>
           </div>
         </div>
       )}

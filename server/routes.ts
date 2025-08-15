@@ -247,6 +247,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const { hidden, hidden_reason } = req.body;
           
           const userId = req.user?.claims?.sub;
+          console.log('🔒 Glossary hide attempt - User ID:', userId, 'Definition ID:', definitionId);
+          
           if (!userId) {
             return res.status(401).json({ 
               success: false, 
@@ -254,15 +256,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
           }
           
-          // Check if user is admin (using same pattern as question hiding)
-          const userResult = await pool.query('SELECT is_admin FROM users WHERE id = $1', [userId]);
-          const user = userResult.rows[0];
+          // Check if user is admin - use direct admin check like other admin routes
+          console.log('🔍 Admin check for user ID:', userId, 'type:', typeof userId);
           
-          if (!user || !user.is_admin) {
-            return res.status(403).json({ 
-              success: false, 
-              message: 'Admin access required to hide/unhide definitions' 
-            });
+          // Use the same direct admin access logic as other routes
+          if (userId === '44885683') {
+            console.log('✅ Direct admin access granted for:', userId);
+          } else {
+            // For other users, check database
+            let userResult;
+            try {
+              userResult = await pool.query('SELECT is_admin, full_name FROM users WHERE id = $1', [userId]);
+              
+              if (userResult.rows.length === 0) {
+                userResult = await pool.query('SELECT is_admin, full_name FROM users WHERE "userId" = $1', [userId]);
+              }
+              
+              const user = userResult.rows[0];
+              console.log('🔍 User lookup result:', user ? `Found: ${user.full_name}` : 'Not found');
+              
+              if (!user || !user.is_admin) {
+                console.log('🚫 Access denied - User is not admin:', { userId, isAdmin: user?.is_admin });
+                return res.status(403).json({ 
+                  success: false, 
+                  message: 'Admin access required to hide/unhide definitions' 
+                });
+              }
+            } catch (dbError) {
+              console.error('🚨 Database error during user lookup:', dbError);
+              return res.status(500).json({ 
+                success: false, 
+                message: 'Database error during authentication check' 
+              });
+            }
           }
 
           // Update the question in the database to mark as hidden/shown
@@ -1368,7 +1394,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Sailor Search API - Exact match first, then fuzzy logic
+  app.get("/api/users/search", async (req, res) => {
+    try {
+      const { q: query } = req.query;
+      
+      if (!query || typeof query !== 'string' || query.trim().length < 2) {
+        return res.json({
+          success: false,
+          message: "Search query must be at least 2 characters",
+          sailors: []
+        });
+      }
 
+      const searchTerm = query.trim().toLowerCase();
+      console.log(`🔍 Sailor search for: "${searchTerm}"`);
+      
+      // Handle phone number formatting - create variations for better matching
+      const searchVariations = [
+        searchTerm,                           // Original search
+        `+${searchTerm}`,                     // With plus prefix
+        `+91${searchTerm}`,                   // With country code
+        searchTerm.replace(/^\+/, ''),        // Remove plus if present
+        searchTerm.replace(/^\+91/, '')       // Remove country code
+      ];
+      
+      // Add comprehensive debugging for specific user searches
+      if (searchTerm === "9920027697" || searchTerm === "99200") {
+        console.log(`🔍 Special search for user: ${searchTerm} - checking all fields`);
+        console.log(`🔍 Search variations: ${searchVariations.join(', ')}`);
+      }
+
+      // Enhanced debugging for fuzzy search
+      if (searchTerm === "99200" || searchTerm === "whatsapp") {
+        console.log(`🧪 Testing fuzzy search patterns for "${searchTerm}":`);
+        console.log(`   Pattern 1: %${searchTerm}% (should match containing)`);
+        console.log(`   Pattern 2: %+${searchTerm}% (should match +prefix)`);
+        console.log(`   Pattern 3: %+91${searchTerm}% (should match +91prefix)`);
+      }
+
+      // First: Exact matches (case-insensitive) - Including whatsapp_number
+      const exactMatches = await pool.query(`
+        SELECT DISTINCT
+          id,
+          full_name,
+          email,
+          whatsapp_number,
+          maritime_rank,
+          last_company,
+          last_ship,
+          current_ship_name,
+          port,
+          country,
+          city,
+          COALESCE(question_count, 0) as question_count,
+          COALESCE(answer_count, 0) as answer_count,
+          user_type
+        FROM users 
+        WHERE 
+          LOWER(id::text) = $1 OR LOWER(id::text) = $2 OR LOWER(id::text) = $3 OR
+          LOWER(whatsapp_number) = $1 OR LOWER(whatsapp_number) = $2 OR LOWER(whatsapp_number) = $3 OR
+          LOWER(full_name) = $1 OR
+          LOWER(maritime_rank) = $1 OR  
+          LOWER(last_company) = $1 OR
+          LOWER(last_ship) = $1 OR
+          LOWER(current_ship_name) = $1 OR
+          LOWER(email) = $1
+        ORDER BY COALESCE(question_count, 0) DESC
+        LIMIT 10
+      `, [searchTerm, `+${searchTerm}`, `+91${searchTerm}`]);
+
+      // Second: Simplified fuzzy matches - test basic functionality first
+      const fuzzyMatches = await pool.query(`
+        SELECT DISTINCT
+          id,
+          full_name,
           email,
           whatsapp_number,
           maritime_rank,
@@ -3975,34 +4075,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get nearby users - supports both proximity-based and Q-based discovery
   app.get('/api/users/nearby', async (req, res) => {
     try {
-      const { lat, lng, mode, bounds } = req.query;
+      const { lat, lng, mode } = req.query;
       const allUsers = await storage.getUsersWithLocation();
       console.log(`Found ${allUsers.length} users with location data`);
-      
-      // If map bounds provided, filter users within viewport
-      if (bounds && typeof bounds === 'string') {
-        try {
-          const mapBounds = JSON.parse(bounds);
-          const { north, south, east, west } = mapBounds;
-          
-          console.log(`Filtering users within map bounds: N${north}, S${south}, E${east}, W${west}`);
-          
-          const usersInBounds = allUsers.filter(user => {
-            if (!user.latitude || !user.longitude) return false;
-            
-            return user.latitude <= north && 
-                   user.latitude >= south && 
-                   user.longitude <= east && 
-                   user.longitude >= west;
-          });
-          
-          console.log(`Found ${usersInBounds.length} users within current map viewport`);
-          return res.json(usersInBounds);
-        } catch (error) {
-          console.error('Error parsing bounds:', error);
-          // Fall through to default behavior
-        }
-      }
       
       // If latitude and longitude provided, do proximity-based search
       if (lat && lng && mode === 'proximity') {
