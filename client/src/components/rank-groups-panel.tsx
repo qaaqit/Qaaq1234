@@ -37,9 +37,22 @@ export function RankGroupsPanel() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   
-  // Get user's maritime rank (for admin it's chief_engineer)
-  const userMaritimeRank = user?.maritimeRank || user?.rank || 'chief_engineer';
-  const displayRank = userMaritimeRank.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  // Get user's maritime rank directly from Users table
+  const userMaritimeRank = user?.maritimeRank || user?.rank;
+  const displayRank = userMaritimeRank?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Maritime Professional';
+  
+  // If no rank is found, show message
+  if (!userMaritimeRank) {
+    return (
+      <div className="p-6">
+        <div className="text-center text-gray-500 py-12">
+          <Anchor className="h-16 w-16 mx-auto mb-4 opacity-50" />
+          <p className="text-lg font-medium">No Maritime Rank Found</p>
+          <p className="text-sm">Please update your profile with your maritime rank to access rank groups.</p>
+        </div>
+      </div>
+    );
+  }
 
   // Fetch all users with same maritime rank
   const { data: rankMembers = [], isLoading: loadingMembers } = useQuery<RankMember[]>({
@@ -121,7 +134,7 @@ export function RankGroupsPanel() {
           </div>
           <div>
             <h2 className="text-2xl font-bold text-gray-900">{displayRank} Group Chat</h2>
-            <p className="text-sm text-gray-600">1V ALL • Connect with your maritime peers</p>
+            <p className="text-sm text-gray-600">1V ALL • Connect with your {displayRank} peers</p>
           </div>
           {user?.isAdmin && <Shield className="h-5 w-5 text-orange-600" />}
         </div>
