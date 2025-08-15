@@ -5536,11 +5536,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const userMaritimeRank = userResult.rows[0].maritime_rank;
             
             if (isAdmin) {
-              // Admin gets all 15 rank groups
+              // Admin gets all 15 rank groups with activity data
               const allGroups = await getAllRankGroups();
-              return res.json(allGroups);
+              
+              // Add activity timestamps to each group
+              const groupsWithActivity = await Promise.all(allGroups.map(async (group) => {
+                try {
+                  // Get most recent message timestamp for this group
+                  const activityResult = await pool.query(`
+                    SELECT MAX(created_at) as last_activity
+                    FROM rank_group_messages 
+                    WHERE group_id = $1
+                  `, [group.id]);
+                  
+                  return {
+                    ...group,
+                    lastActivity: activityResult.rows[0]?.last_activity || group.createdAt || new Date('2024-01-01'),
+                    type: 'rank_group'
+                  };
+                } catch (error) {
+                  console.error('Error fetching activity for group:', group.id, error);
+                  return {
+                    ...group,
+                    lastActivity: group.createdAt || new Date('2024-01-01'),
+                    type: 'rank_group'
+                  };
+                }
+              }));
+              
+              return res.json(groupsWithActivity);
             } else {
-              // Regular user gets only their rank group
+              // Regular user gets only their rank group with activity data
               const allGroups = await getAllRankGroups();
               const userRankGroup = allGroups.find(group => {
                 // Match group name with user's maritime rank
@@ -5567,7 +5593,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 return groupName === 'other marine professionals';
               });
               
-              return res.json(userRankGroup ? [userRankGroup] : []);
+              if (userRankGroup) {
+                try {
+                  // Get activity data for user's rank group
+                  const activityResult = await pool.query(`
+                    SELECT MAX(created_at) as last_activity
+                    FROM rank_group_messages 
+                    WHERE group_id = $1
+                  `, [userRankGroup.id]);
+                  
+                  const groupWithActivity = {
+                    ...userRankGroup,
+                    lastActivity: activityResult.rows[0]?.last_activity || userRankGroup.createdAt || new Date('2024-01-01'),
+                    type: 'rank_group'
+                  };
+                  
+                  return res.json([groupWithActivity]);
+                } catch (error) {
+                  console.error('Error fetching activity for user group:', userRankGroup.id, error);
+                  return res.json([{
+                    ...userRankGroup,
+                    lastActivity: userRankGroup.createdAt || new Date('2024-01-01'),
+                    type: 'rank_group'
+                  }]);
+                }
+              }
+              
+              return res.json([]);
             }
           }
         }

@@ -24,9 +24,27 @@ import ChatConnectionsList from "@/components/chat/ChatConnectionsList";
 import { websocketService } from "@/services/websocket";
 
 interface ExtendedChatConnection extends ChatConnection {
-  sender: { id: string; fullName: string; rank?: string };
-  receiver: { id: string; fullName: string; rank?: string };
+  sender: {
+    id: string;
+    fullName: string;
+    rank?: string;
+    whatsAppProfilePictureUrl?: string;
+    profilePictureUrl?: string;
+    whatsAppDisplayName?: string;
+    maritimeRank?: string;
+  };
+  receiver: {
+    id: string;
+    fullName: string;
+    rank?: string;
+    whatsAppProfilePictureUrl?: string;
+    profilePictureUrl?: string;
+    whatsAppDisplayName?: string;
+    maritimeRank?: string;
+  };
   firstMessage?: string;
+  lastMessage?: string;
+  lastActivity?: string;
 }
 
 interface UserWithDistance extends UserType {
@@ -39,6 +57,8 @@ interface RankGroup {
   name: string;
   description: string;
   memberCount?: number;
+  lastActivity?: string;
+  type?: string;
 }
 
 export default function DMPage() {
@@ -385,16 +405,47 @@ export default function DMPage() {
     conn.status === 'blocked' && conn.receiverId === user.id
   );
 
-  // Create combined list for display: Most recent connections first, then Top Q Professionals, then rank groups
+  // Create activity-sorted combined list: connections and rank groups intermingled by recent activity
+  const allActivityItems = [
+    // Chat connections with their activity timestamps
+    ...pendingConnections.map(conn => ({
+      type: 'connection' as const,
+      data: conn,
+      activityTime: new Date(conn.lastActivity || conn.acceptedAt || conn.createdAt || 0).getTime(),
+      priority: 3 // Pending connections get highest priority
+    })),
+    ...activeConnections.map(conn => ({
+      type: 'connection' as const,
+      data: conn,
+      activityTime: new Date(conn.lastActivity || conn.acceptedAt || conn.createdAt || 0).getTime(),
+      priority: 2 // Active connections get high priority
+    })),
+    ...sentRequests.map(conn => ({
+      type: 'connection' as const,
+      data: conn,
+      activityTime: new Date(conn.lastActivity || conn.acceptedAt || conn.createdAt || 0).getTime(),
+      priority: 1 // Sent requests get medium priority
+    })),
+    // Rank groups with their activity timestamps (only show if not searching)
+    ...(!searchQuery.trim() ? rankGroups.map(group => ({
+      type: 'rank_group' as const,
+      data: group,
+      activityTime: new Date(group.lastActivity || new Date('2024-01-01')).getTime(),
+      priority: 0 // Rank groups get lowest priority
+    })) : [])
+  ];
+  
+  // Sort by priority first (higher priority = appears first), then by activity time (more recent = appears first)
+  const sortedActivityItems = allActivityItems.sort((a, b) => {
+    if (a.priority !== b.priority) {
+      return b.priority - a.priority; // Higher priority first
+    }
+    return b.activityTime - a.activityTime; // More recent activity first
+  });
+  
   const allChatCards = [
-    // Most recent pending connections first (they should appear at top)
-    ...pendingConnections.map(conn => ({ type: 'connection' as const, data: conn })),
-    // Active conversations ordered by recent activity
-    ...activeConnections.map(conn => ({ type: 'connection' as const, data: conn })),
-    // Sent requests
-    ...sentRequests.map(conn => ({ type: 'connection' as const, data: conn })),
-    // Rank groups cards (only show if not searching)
-    ...(!searchQuery.trim() ? rankGroups.map(group => ({ type: 'rank_group' as const, data: group })) : []),
+    // Activity-sorted connections and rank groups
+    ...sortedActivityItems,
     // Top Q Professionals (excluding users already in active conversations)
     ...filteredUsers
       .filter(topQUser => !activeConnections.some(conn => {
@@ -732,7 +783,7 @@ export default function DMPage() {
                   </div>
                 ) : (
                   <div className="divide-y divide-gray-100 max-h-104 overflow-y-auto">
-                    {/* Unified Chat Cards: Recent DMs First, Then Top Q Professionals */}
+                    {/* Unified Chat Cards: Activity-Sorted DMs and Rank Groups, Then Top Q Professionals */}
                     {!searchQuery.trim() && allChatCards.map((cardItem, index) => {
                       if (cardItem.type === 'connection') {
                         const connection = cardItem.data;
@@ -873,13 +924,13 @@ export default function DMPage() {
                       );
                       
                       } else if (cardItem.type === 'rank_group') {
-                        // Rank Group Card
+                        // Rank Group Card - styled like user cards
                         const group = cardItem.data as RankGroup;
                         
                         return (
                           <div 
                             key={`rank-group-${group.id}`} 
-                            className="p-4 hover:bg-orange-50 transition-colors cursor-pointer border-l-4 border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:bg-orange-50"
+                            className="p-4 hover:bg-gray-50 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-gray-50"
                             tabIndex={0}
                             onClick={() => {
                               console.log('🏢 Rank group card clicked:', group.name);
@@ -894,30 +945,40 @@ export default function DMPage() {
                           >
                             <div className="flex items-center space-x-3">
                               <div className="relative">
-                                <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-600 rounded-full flex items-center justify-center">
-                                  <Users size={20} className="text-white" />
-                                </div>
+                                <Avatar className="w-12 h-12">
+                                  <AvatarFallback className="bg-blue-100 text-blue-600 font-bold">
+                                    <Users size={20} />
+                                  </AvatarFallback>
+                                </Avatar>
                                 {/* Group Badge */}
-                                <div className="absolute -top-1 -right-1 w-4 h-4 bg-orange-600 rounded-full border-2 border-white flex items-center justify-center">
+                                <div className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center">
                                   <Users size={8} className="text-white" />
                                 </div>
                               </div>
                               
                               <div className="flex-1 min-w-0">
-                                <h4 className="font-medium text-gray-900 truncate">
-                                  {group.name}
-                                </h4>
-                                <div className="flex items-center mt-1 space-x-2">
-                                  <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
-                                    Rank Group
-                                  </Badge>
-                                  <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                                    {group.memberCount || 0} members
-                                  </Badge>
+                                <div className="flex items-center justify-between">
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className="font-medium text-gray-900 truncate">
+                                      {group.name} Group
+                                    </h4>
+                                    <div className="flex items-center mt-1">
+                                      <p className="text-sm text-gray-500 truncate">
+                                        {group.description}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="flex flex-col items-end space-y-1">
+                                    <Badge variant="outline" className="text-xs">
+                                      {group.memberCount || 0} members
+                                    </Badge>
+                                    {group.lastActivity && (
+                                      <p className="text-xs text-gray-400">
+                                        {formatDistanceToNow(new Date(group.lastActivity), { addSuffix: true })}
+                                      </p>
+                                    )}
+                                  </div>
                                 </div>
-                                <p className="text-sm text-gray-500 truncate mt-1">
-                                  {group.description}
-                                </p>
                               </div>
                             </div>
                           </div>
@@ -993,9 +1054,9 @@ export default function DMPage() {
                                   <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
                                     {userProfile.questionCount || 0}Q
                                   </Badge>
-                                  {userProfile.maritime_rank && (
+                                  {userProfile.maritimeRank && (
                                     <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                                      {userProfile.maritime_rank}
+                                      {userProfile.maritimeRank}
                                     </Badge>
                                   )}
                                 </div>
