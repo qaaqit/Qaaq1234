@@ -126,17 +126,17 @@ function mapMaritimeRankToGroup(maritimeRank: string | null): string {
   }
   
   // 2nd Engineer mapping
-  if (rank.includes('2nd_engineer') || rank.includes('second engineer') || rank === '2e' || rank.includes('2nd engineer')) {
+  if (rank.includes('2nd_engineer') || rank.includes('second_engineer') || rank.includes('second engineer') || rank === '2e' || rank.includes('2nd engineer')) {
     return '2E';
   }
   
   // 3rd Engineer mapping
-  if (rank.includes('3rd_engineer') || rank.includes('third engineer') || rank === '3e' || rank.includes('3rd engineer')) {
+  if (rank.includes('3rd_engineer') || rank.includes('third_engineer') || rank.includes('third engineer') || rank === '3e' || rank.includes('3rd engineer')) {
     return '3E';
   }
   
   // 4th Engineer mapping
-  if (rank.includes('4th_engineer') || rank.includes('fourth engineer') || rank === '4e' || rank.includes('4th engineer')) {
+  if (rank.includes('4th_engineer') || rank.includes('fourth_engineer') || rank.includes('fourth engineer') || rank === '4e' || rank.includes('4th engineer')) {
     return '4E';
   }
   
