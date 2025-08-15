@@ -144,15 +144,6 @@ export function RankGroupsPanel() {
         {/* Maritime Professionals List */}
         <div className="lg:col-span-1">
           <div className="flex items-center justify-between mb-4">
-            <Button
-              variant={!showMembers ? "default" : "outline"}
-              size="sm"
-              onClick={() => setShowMembers(!showMembers)}
-              className="flex items-center space-x-1"
-            >
-              <Users className="h-4 w-4" />
-              <span>{rankMembers.length}</span>
-            </Button>
           </div>
           
           <div className="space-y-2 max-h-[500px] overflow-y-auto">
