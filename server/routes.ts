@@ -102,19 +102,7 @@ const generateVerificationCode = (): string => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-// Calculate distance between two coordinates using Haversine formula
-const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-  const R = 6371; // Radius of the Earth in kilometers
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  const distance = R * c; // Distance in kilometers
-  return distance;
-};
+// Distance calculations removed to avoid API quota issues
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
@@ -4085,29 +4073,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const userLng = parseFloat(lng as string);
         console.log(`Getting nearby users for location: ${userLat}, ${userLng}`);
         
-        // Calculate distance for each user using Haversine formula
-        const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-          const R = 6371; // Earth's radius in kilometers
-          const dLat = (lat2 - lat1) * Math.PI / 180;
-          const dLon = (lon2 - lon1) * Math.PI / 180;
-          const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-            Math.sin(dLon/2) * Math.sin(dLon/2);
-          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-          return R * c;
-        };
-        
-        const usersWithDistance = allUsers
+        // Return users without distance calculation to avoid API quota issues
+        const proximityUsers = allUsers
           .filter(user => user.latitude && user.longitude) // Only users with valid coordinates
-          .map(user => ({
-            ...user,
-            distance: calculateDistance(userLat, userLng, user.latitude!, user.longitude!)
-          }))
-          .sort((a, b) => a.distance - b.distance)
-          .slice(0, 9); // Return 9 closest users
+          .slice(0, 9); // Return 9 users
           
-        console.log(`Returning ${usersWithDistance.length} nearby users by proximity`);
-        res.json(usersWithDistance);
+        console.log(`Returning ${proximityUsers.length} nearby users (distance calculation disabled)`);
+        res.json(proximityUsers);
       } else {
         // Default: Sort by question count for DM discovery
         console.log('Getting top Q users for DM discovery');

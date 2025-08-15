@@ -83,17 +83,7 @@ const getRankAbbreviation = (rank: string): string => {
   return abbreviations[lowerRank] || rank.substring(0, 3).toUpperCase();
 };
 
-// Calculate distance between two points using Haversine formula
-const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
-  const R = 6371; // Earth's radius in kilometers
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLng/2) * Math.sin(dLng/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c;
-};
+// Distance calculations removed to avoid API quota issues
 
 // Maritime rank categories for filtering
 const MARITIME_RANK_CATEGORIES = [
@@ -370,25 +360,13 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
   const nearestUsers = useMemo(() => {
     if (!filteredUsers.length) return [];
 
-    // If searching, show ALL search results with distance calculation
+    // If searching, show ALL search results (no distance calculation)
     if (searchQuery.trim()) {
-      return filteredUsers.map(user => ({
-        ...user,
-        distance: userLocation ? calculateDistance(userLocation.lat, userLocation.lng, user.latitude, user.longitude) : 0
-      })).sort((a, b) => a.distance - b.distance); // Sort by distance for search results
+      return filteredUsers;
     }
 
-    // If not searching, show only top 6 nearest users for browsing
-    if (!userLocation) return [];
-
-    const usersWithDistance = filteredUsers.map(user => ({
-      ...user,
-      distance: calculateDistance(userLocation.lat, userLocation.lng, user.latitude, user.longitude)
-    }));
-
-    return usersWithDistance
-      .sort((a, b) => a.distance - b.distance)
-      .slice(0, 6);
+    // If not searching, show only top 6 users for browsing (no distance sorting)
+    return filteredUsers.slice(0, 6);
   }, [filteredUsers, userLocation, searchQuery]);
 
   // Update user count when users are loaded (temporarily disabled to fix infinite loop)
@@ -907,12 +885,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
                       <div className="text-xs text-gray-600 truncate">IMO: {user.imoNumber}</div>
                     )}
 
-                    {/* Show distance for proximity searches */}
-                    {!searchQuery.trim() && user.distance && (
-                      <div className="text-xs text-gray-500">
-                        📍 {user.distance.toFixed(1)}km away
-                      </div>
-                    )}
+
 
                     {/* Q&A stats */}
                     {(user.questionCount || user.answerCount) && (

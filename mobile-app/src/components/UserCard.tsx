@@ -145,18 +145,7 @@ export default function UserCard({ user, onChat, onClose }: UserCardProps) {
               </Text>
             </View>
 
-            {/* Distance */}
-            {user.distance && (
-              <View style={styles.distanceContainer}>
-                <FontAwesome5 name="route" size={12} color="#6b7280" />
-                <Text style={styles.distanceText}>
-                  {user.distance < 1 
-                    ? `${(user.distance * 1000).toFixed(0)}m away`
-                    : `${user.distance.toFixed(1)}km away`
-                  }
-                </Text>
-              </View>
-            )}
+            {/* Distance display removed to avoid API quota issues */}
           </View>
         </View>
 

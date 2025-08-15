@@ -58,6 +58,7 @@ Login Roadblock Design: Single minimizable login roadblock with chevron control 
 - **📋 PINNACLE PLAN CREATED**: Comprehensive 5-phase development plan created (PINNACLE_PLAN.md) outlining path from Mariana to Pinnacle version with advanced DM chats, QH16 group system, full Razorpay integration, WATI bot automation, and enhanced UI/UX
 - **⚡ PERFORMANCE OPTIMIZATION**: Eliminated all automatic polling intervals (30-second nearby users, 3-second mobile chat polling) - nearby users now refresh only when green radar button is manually pressed, significantly reducing server load and improving performance
 - **🎯 RADAR TOGGLE FIXED**: Green radar button now properly toggles on/off with 2-second auto-deactivation, spinning animation during active state, and manual deactivation capability when clicked while active
+- **📏 DISTANCE DISPLAY REMOVED**: Completely removed "x.x km away" distance metrics from all user cards to prevent API quota exceeded issues - distance calculations using Haversine formula disabled across web, mobile, and server components
 
 ## System Architecture
 
