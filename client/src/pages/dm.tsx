@@ -157,11 +157,21 @@ export default function DMPage() {
     queryKey: ['/api/rank-groups/public'],
     queryFn: async () => {
       console.log('🔍 Frontend: Fetching rank groups for user:', user?.id);
+      
+      // Get JWT token from localStorage
+      const token = localStorage.getItem('authToken');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+        console.log('🔑 Frontend: Adding JWT token to request');
+      }
+      
       const response = await fetch('/api/rank-groups/public', {
         credentials: 'include', // Include session cookies
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
       });
       console.log('📥 Frontend: Rank groups response status:', response.status);
       if (!response.ok) throw new Error('Failed to fetch rank groups');

@@ -5519,18 +5519,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API to get rank groups for DM page cards - user's rank group or all groups for admin
   app.get('/api/rank-groups/public', async (req, res) => {
     try {
-      // Check if user is authenticated via session
+      // Check if user is authenticated via session OR JWT token
       let userId = null;
       let isAdmin = false;
       
-      console.log('🔍 Rank groups public - Session check:', {
+      console.log('🔍 Rank groups public - Auth check:', {
         hasSession: !!req.session,
         hasUser: !!(req.session && req.session.user),
-        userId: req.session?.user?.id
+        sessionUserId: req.session?.user?.id,
+        hasAuthHeader: !!req.headers.authorization
       });
       
+      // First try session authentication
       if (req.session && req.session.user) {
         userId = req.session.user.id;
+        console.log('🔑 Using session auth for user:', userId);
+      } 
+      // Then try JWT token authentication
+      else {
+        const authHeader = req.headers.authorization;
+        const token = authHeader && authHeader.split(' ')[1];
+        
+        if (token) {
+          try {
+            const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+            userId = decoded.userId;
+            console.log('🔑 Using JWT auth for user:', userId);
+          } catch (error) {
+            console.log('❌ JWT token invalid:', error.message);
+          }
+        }
+      }
+      
+      if (userId) {
         
         // Check if user is admin
         if (userId === '5791e66f-9cc1-4be4-bd4b-7fc1bd2e258e') {
