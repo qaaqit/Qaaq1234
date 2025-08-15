@@ -199,7 +199,7 @@ export function RankGroupsPanel() {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-2 text-[14px]">
           <Users className="h-6 w-6" />
-          <h2 className="text-2xl font-bold">Maritime Rank Groups</h2>
+          <h2 className="text-2xl font-bold">Rank Group chat</h2>
           {user?.isAdmin && <Shield className="h-5 w-5 text-blue-600" />}
         </div>
         {!user?.isAdmin && (
