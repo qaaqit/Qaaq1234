@@ -26,6 +26,7 @@ interface RankMessage {
   senderId: string;
   senderName: string;
   senderRank: string;
+  senderCompany?: string;
   message: string;
   timestamp: string;
   messageType: 'text' | 'system';
@@ -209,7 +210,7 @@ export function RankGroupsPanel() {
                       </div>
                       <span className="font-medium text-gray-700">{message.senderName}</span>
                       <Badge variant="outline" className="text-xs bg-orange-100 text-orange-800">
-                        {message.senderRank?.replace(/_/g, ' ')}
+                        {message.senderCompany || 'Maritime Professional'}
                       </Badge>
                       <span className="text-xs">
                         {new Date(message.timestamp).toLocaleTimeString()}
