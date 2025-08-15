@@ -884,7 +884,12 @@ START → Step 1 → Step 2 → Step 3/4
                               )}
                             </div>
                           )}
-                          {user.city && (
+                          {user.company ? (
+                            <div className="text-xs text-gray-600">
+                              <i className="fas fa-building mr-1"></i>
+                              {user.company}
+                            </div>
+                          ) : user.city && (
                             <div className="text-xs text-gray-600">
                               <i className="fas fa-map-marker-alt mr-1"></i>
                               {user.city}, {user.country}
