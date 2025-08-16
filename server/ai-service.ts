@@ -90,7 +90,7 @@ export class AIService {
 
     } catch (error) {
       console.error('OpenAI API error:', error);
-      throw new Error(`OpenAI generation failed: ${error.message}`);
+      throw new Error(`OpenAI generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -202,7 +202,7 @@ export class AIService {
 
     } catch (error) {
       console.error('Gemini API error:', error);
-      throw new Error(`Gemini generation failed: ${error.message}`);
+      throw new Error(`Gemini generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 

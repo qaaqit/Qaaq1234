@@ -2188,8 +2188,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // CHECK 20 FREE QUESTIONS LIMIT FOR AUTHENTICATED USERS (if not private mode)
       if (!isPrivate && user) {
-        const currentQuestionCount = user.question_count || 0;
-        const userType = user.user_type || 'Free'; // Default to Free if not set
+        const currentQuestionCount = user.questionCount || 0;
+        const userType = user.userType || 'Free'; // Default to Free if not set
         
         // Check if user has reached the 20 free question limit
         if (userType === 'Free' && currentQuestionCount >= 20) {
