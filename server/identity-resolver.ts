@@ -79,32 +79,26 @@ export class IdentityResolver {
    */
   async ensureUserHasUnifiedIdentity(user: User, provider: string, providerId: string): Promise<void> {
     try {
-      // Skip unified identity operations if tables don't exist (shared database scenario)
-      const existingIdentity = await storage.getUserByProviderId(provider, providerId);
-      if (existingIdentity && existingIdentity.id === user.id) {
-        console.log(`✅ User ${user.id} already has ${provider} identity`);
-        return;
+      console.log(`🔗 Ensuring ${provider} identity for user ${user.id} (legacy mode - shared database)`);
+      
+      // In shared database mode, we can't create unified identity tables
+      // Instead, update legacy fields in users table based on provider
+      
+      if (provider === 'replit' || provider === 'google') {
+        // Update googleId field for Replit/Google logins
+        await storage.updateUser(user.id, {
+          googleId: providerId,
+          authProvider: provider,
+          primaryAuthProvider: provider
+        });
+        console.log(`✅ Updated legacy ${provider} fields for user ${user.id}`);
       }
-
-      // Create missing identity
-      console.log(`🔗 Creating ${provider} identity for user ${user.id}`);
-      await storage.linkIdentityToUser(user.id, {
-        provider,
-        providerId,
-        isVerified: true,
-        metadata: {
-          autoCreated: true,
-          createdAt: new Date().toISOString()
-        }
-      });
-
+      
+      // For WhatsApp, the phone number is already stored in whatsAppNumber field
+      // For QAAQ, the userId is already in the userId field
+      
     } catch (error) {
-      // Gracefully handle missing unified identity tables
-      if (error.code === '42P01') {
-        console.log(`ℹ️ Unified identity table not available - using legacy auth mode`);
-        return;
-      }
-      console.error(`Error ensuring unified identity:`, error);
+      console.log(`ℹ️ Skipping identity linking in shared database mode:`, error.message);
     }
   }
 
