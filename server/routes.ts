@@ -338,32 +338,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup Google OAuth authentication
   setupGoogleAuth(app);
   
-  // UNIFIED authentication endpoint using session bridge
-  app.get('/api/auth/user', async (req: any, res) => {
-    try {
-      console.log('🎯 UNIFIED AUTH: Checking authentication via bridge');
-      
-      // Use the bridge for consistent authentication
-      const auth = bridgedAuth(req);
-      
-      if (!auth.isAuthenticated || !auth.user) {
-        console.log('❌ UNIFIED AUTH: No valid authentication found');
-        return res.status(401).json({ 
-          message: 'No valid authentication found',
-          bridgeState: req.authBridge?.isAuthenticated || false
-        });
-      }
-      
-      console.log(`✅ UNIFIED AUTH: Success - ${auth.user.fullName} (${auth.method})`);
-      res.json(auth.user);
-      
-    } catch (error) {
-      console.error("🚨 UNIFIED AUTH ERROR:", (error as Error).message);
-      res.status(500).json({ message: "Failed to fetch user" });
-    }
-  });
-
-  // Setup Replit Auth
+  // Setup Replit Auth FIRST to ensure proper middleware order
   if (process.env.REPLIT_DOMAINS && process.env.REPL_ID) {
     try {
       const { setupAuth, isAuthenticated } = await import('./replitAuth.js');
@@ -373,6 +348,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // This ensures req.user is populated before the bridge runs
       console.log('🌉 Installing session bridge middleware after passport setup');
       app.use(sessionBridge);
+      
+      // UNIFIED authentication endpoint using session bridge (AFTER bridge middleware is set up)
+      app.get('/api/auth/user', async (req: any, res) => {
+        try {
+          console.log('🎯 UNIFIED AUTH: Checking authentication via bridge');
+          
+          // Use the bridge for consistent authentication
+          const auth = bridgedAuth(req);
+          
+          if (!auth.isAuthenticated || !auth.user) {
+            console.log('❌ UNIFIED AUTH: No valid authentication found');
+            return res.status(401).json({ 
+              message: 'No valid authentication found',
+              bridgeState: req.authBridge?.isAuthenticated || false
+            });
+          }
+          
+          console.log(`✅ UNIFIED AUTH: Success - ${auth.user.fullName} (${auth.method})`);
+          res.json(auth.user);
+          
+        } catch (error) {
+          console.error("🚨 UNIFIED AUTH ERROR:", (error as Error).message);
+          res.status(500).json({ message: "Failed to fetch user" });
+        }
+      });
 
       // Hide/unhide glossary definition (admin only) - using Replit Auth
       app.post('/api/glossary/hide/:id', isAuthenticated, async (req: any, res) => {
@@ -529,8 +529,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('✅ Replit Auth initialized successfully');
     } catch (error) {
-      console.log('⚠️ Replit Auth setup skipped:', error.message);
+      console.error('❌ Failed to setup Replit Auth:', error);
     }
+  } else {
+    console.log('🔕 Replit Auth disabled - missing REPLIT_DOMAINS or REPL_ID');
   }
 
   // Email OTP Routes
