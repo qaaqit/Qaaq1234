@@ -23,7 +23,7 @@ export default function OAuthCallback() {
         
         // Parse and store user data
         const user = JSON.parse(decodeURIComponent(userString));
-        localStorage.setItem('user', JSON.stringify(user));
+        localStorage.setItem('qaaq_user', JSON.stringify(user));
         
         console.log('🔐 Google OAuth successful, redirecting to QBOT Chat');
         
