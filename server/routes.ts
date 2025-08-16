@@ -3835,16 +3835,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check for Replit Auth session first
       if (req.user && req.user.claims && req.user.claims.sub) {
         userId = req.user.claims.sub;
+        console.log('🔑 Chat connection auth: Using Replit session for user:', userId);
       } else {
         // Check for QAAQ token
         const authHeader = req.headers.authorization;
         const token = authHeader && authHeader.split(' ')[1];
+        console.log('🔑 Chat connection auth: Checking JWT token:', token ? 'present' : 'missing');
         if (token) {
           try {
             const decoded = jwt.verify(token, JWT_SECRET) as any;
             userId = decoded.userId;
+            console.log('🔑 Chat connection auth: JWT verified for user:', userId);
           } catch (error) {
-            // Token invalid, but continue to check for session
+            console.log('🔒 Chat connection auth: JWT verification failed:', error.message);
           }
         }
       }
@@ -3897,16 +3900,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check for Replit Auth session first
       if (req.user && req.user.claims && req.user.claims.sub) {
         userId = req.user.claims.sub;
+        console.log('🔑 Chat messages auth: Using Replit session for user:', userId);
       } else {
         // Check for QAAQ token
         const authHeader = req.headers.authorization;
         const token = authHeader && authHeader.split(' ')[1];
+        console.log('🔑 Chat messages auth: Checking JWT token:', token ? 'present' : 'missing');
         if (token) {
           try {
             const decoded = jwt.verify(token, JWT_SECRET) as any;
             userId = decoded.userId;
+            console.log('🔑 Chat messages auth: JWT verified for user:', userId);
           } catch (error) {
-            // Token invalid, but continue to check for session
+            console.log('🔒 Chat messages auth: JWT verification failed:', error.message);
           }
         }
       }
