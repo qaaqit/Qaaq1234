@@ -58,7 +58,7 @@ export async function initializeRankGroups() {
       description: "Fleet Managers - Ship fleet management professionals"
     },
     {
-      name: "ETO & ESuper",
+      name: "Eto/ Elec Superintendent",
       description: "Electro Technical Officers & Electric Superintendents"
     },
     {
@@ -165,9 +165,9 @@ function mapMaritimeRankToGroup(maritimeRank: string | null): string {
     return 'Fleet Managers';
   }
   
-  // ETO & ESuper mapping
+  // Eto/ Elec Superintendent mapping
   if (rank.includes('eto') || rank.includes('electro') || rank.includes('electrical') || rank.includes('esuper')) {
-    return 'ETO & ESuper';
+    return 'Eto/ Elec Superintendent';
   }
   
   // Default to Other Marine Professionals for unmatched ranks
@@ -201,7 +201,7 @@ export async function calculateRankGroupMemberCounts() {
       'MarineSuperIntendent': 0,
       'TechSuperIntendent': 0,
       'Fleet Managers': 0,
-      'ETO & ESuper': 0,
+      'Eto/ Elec Superintendent': 0,
       'Other Marine Professionals': 0
     };
     
