@@ -14,11 +14,30 @@ export const sessions = pgTable(
   }
 );
 
+// Unified Identity Management Tables
+export const userIdentities = pgTable("user_identities", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(), // References users.id
+  provider: text("provider").notNull(), // 'qaaq', 'replit', 'google', 'whatsapp', 'email'
+  providerId: text("provider_id").notNull(), // External ID from provider
+  isPrimary: boolean("is_primary").default(false), // Primary identity for login
+  isVerified: boolean("is_verified").default(false), // Identity verification status
+  metadata: jsonb("metadata").$type<{
+    email?: string;
+    phone?: string;
+    displayName?: string;
+    profileImageUrl?: string;
+    [key: string]: any;
+  }>().default({}), // Provider-specific data
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`),
+});
+
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: text("user_id").unique(), // Human-readable user ID (e.g., QAAQ123, CAP456)
+  userId: text("user_id").unique(), // Human-readable user ID (e.g., QAAQ123, CAP456) - Legacy compatibility
   fullName: text("full_name").notNull(),
-  email: text("email").notNull().unique(),
+  email: text("email").unique(), // Primary email - may be null for WhatsApp-only users
   password: text("password"), // Password for QAAQ login
   hasSetCustomPassword: boolean("has_set_custom_password").default(false).notNull(), // Whether user has set their own password
   needsPasswordChange: boolean("needs_password_change").default(true), // Force password change on third login
@@ -28,6 +47,10 @@ export const users = pgTable("users", {
   userType: text("user_type").notNull(), // 'sailor' or 'local'
   isAdmin: boolean("is_admin").default(false), // Admin role flag
   nickname: text("nickname"),
+  
+  // Primary auth method tracking
+  primaryAuthProvider: text("primary_auth_provider").notNull().default("qaaq"), // Primary login method
+  authProviders: jsonb("auth_providers").$type<string[]>().default([]), // All linked providers
   
   // QAAQ-compatible CV/Profile fields
   rank: text("rank"), // Maritime rank (e.g., 'Captain', 'Chief Engineer', 'Officer', 'Crew')
@@ -58,12 +81,12 @@ export const users = pgTable("users", {
   whatsAppProfilePictureUrl: text("whatsapp_profile_picture_url"), // WhatsApp profile picture from QBOT
   whatsAppDisplayName: text("whatsapp_display_name"), // WhatsApp display name from QBOT
   
-  // Google OAuth fields
-  googleId: text("google_id"), // Google account ID
-  googleEmail: text("google_email"), // Google email address
-  googleProfilePictureUrl: text("google_profile_picture_url"), // Google profile picture
-  googleDisplayName: text("google_display_name"), // Google display name
-  authProvider: text("auth_provider").default("qaaq"), // 'qaaq', 'google', 'whatsapp', 'replit'
+  // Legacy OAuth fields - DEPRECATED: Use userIdentities table instead
+  googleId: text("google_id"), // DEPRECATED: Use userIdentities
+  googleEmail: text("google_email"), // DEPRECATED: Use userIdentities
+  googleProfilePictureUrl: text("google_profile_picture_url"), // DEPRECATED: Use userIdentities
+  googleDisplayName: text("google_display_name"), // DEPRECATED: Use userIdentities
+  authProvider: text("auth_provider").default("qaaq"), // DEPRECATED: Use primaryAuthProvider
   
   // System Fields
   hasCompletedOnboarding: boolean("has_completed_onboarding").default(false), // QAAQ field
@@ -324,6 +347,30 @@ export const rankGroupMessagesRelations = relations(rankGroupMessages, ({ one })
 
 
 // Schemas
+// User Identities Relations
+export const userIdentitiesRelations = relations(userIdentities, ({ one }) => ({
+  user: one(users, {
+    fields: [userIdentities.userId],
+    references: [users.id],
+  }),
+}));
+
+// Enhanced User Relations
+export const usersRelations = relations(users, ({ many, one }) => ({
+  identities: many(userIdentities),
+  posts: many(posts),
+  sentMessages: many(chatMessages, { relationName: "senderMessages" }),
+  receivedConnections: many(chatConnections, { relationName: "receiverConnections" }),
+  sentConnections: many(chatConnections, { relationName: "senderConnections" }),
+}));
+
+// User Identity Schemas
+export const insertUserIdentitySchema = createInsertSchema(userIdentities).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   fullName: true,
   email: true,
@@ -461,9 +508,16 @@ export const updateProfileSchema = createInsertSchema(users).omit({
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type UpdateProfile = z.infer<typeof updateProfileSchema>;
+export type InsertUserIdentity = z.infer<typeof insertUserIdentitySchema>;
+export type UserIdentity = typeof userIdentities.$inferSelect;
+
+// Enhanced User type with identity information
 export type User = typeof users.$inferSelect & {
   profilePictureUrl?: string | null;
   company?: string | null;
+  // Resolved identity data for convenience
+  identities?: UserIdentity[];
+  primaryIdentity?: UserIdentity;
 };
 export type InsertPost = z.infer<typeof insertPostSchema>;
 export type Post = typeof posts.$inferSelect;
