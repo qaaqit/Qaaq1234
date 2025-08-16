@@ -17,11 +17,13 @@ export interface IStorage {
   getUserById(id: string): Promise<User | undefined>; // Missing method - added
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByGoogleId(googleId: string): Promise<User | undefined>;
+  getUserByLinkedInId(linkedInId: string): Promise<User | undefined>;
   getUserByWhatsApp(phoneNumber: string): Promise<User | undefined>;
   getUserByReplitId(replitId: string): Promise<User | undefined>;
   getUserByIdAndPassword(userId: string, password: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   createGoogleUser(googleUserData: any): Promise<User>;
+  createLinkedInUser(linkedInUserData: any): Promise<User>;
   createReplitUser(replitData: any): Promise<User>; // Missing method - added
   createWhatsAppUser(phoneNumber: string, displayName?: string): Promise<User>;
   updateUser(userId: string, updates: Partial<User>): Promise<User | undefined>;
@@ -277,6 +279,21 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async getUserByLinkedInId(linkedInId: string): Promise<User | undefined> {
+    try {
+      const result = await pool.query('SELECT * FROM users WHERE linkedin_id = $1 LIMIT 1', [linkedInId]);
+      if (result.rows.length === 0) {
+        return undefined;
+      }
+      
+      const user = result.rows[0];
+      return this.convertDbUserToAppUser(user);
+    } catch (error) {
+      console.error('Error getting user by LinkedIn ID:', error);
+      return undefined;
+    }
+  }
+
   async getUserByIdAndPassword(userId: string, password: string): Promise<User | undefined> {
     console.log(`🔑 Login attempt for userId: ${userId}`);
     
@@ -378,6 +395,40 @@ export class DatabaseStorage implements IStorage {
       return this.convertDbUserToAppUser(result.rows[0]);
     } catch (error) {
       console.error('Error creating Google user:', error);
+      throw error;
+    }
+  }
+
+  async createLinkedInUser(linkedInUserData: any): Promise<User> {
+    try {
+      // Generate a unique user ID based on name and timestamp
+      const baseUserId = linkedInUserData.fullName.toLowerCase().replace(/\s+/g, '.');
+      const timestamp = Date.now().toString().slice(-6);
+      const userId = `${baseUserId}.${timestamp}`;
+
+      const result = await pool.query(`
+        INSERT INTO users (
+          user_id, full_name, email, linkedin_id, linkedin_email, 
+          linkedin_profile_picture_url, linkedin_display_name, 
+          auth_provider, user_type, is_verified, created_at, last_login
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
+        RETURNING *
+      `, [
+        userId,
+        linkedInUserData.fullName,
+        linkedInUserData.email,
+        linkedInUserData.linkedInId,
+        linkedInUserData.linkedInEmail,
+        linkedInUserData.linkedInProfilePictureUrl,
+        linkedInUserData.linkedInDisplayName,
+        linkedInUserData.authProvider,
+        linkedInUserData.userType,
+        linkedInUserData.isVerified
+      ]);
+
+      return this.convertDbUserToAppUser(result.rows[0]);
+    } catch (error) {
+      console.error('Error creating LinkedIn user:', error);
       throw error;
     }
   }

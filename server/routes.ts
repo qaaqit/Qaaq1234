@@ -29,6 +29,7 @@ import { imageManagementService } from "./image-management-service";
 import { setupStableImageRoutes } from "./stable-image-upload";
 import { razorpayService, SUBSCRIPTION_PLANS } from "./razorpay-service-production";
 import { setupGoogleAuth } from "./google-auth";
+import { setupLinkedInAuth } from "./linkedin-auth";
 import { PasswordManager } from "./password-manager";
 import { AIService } from "./ai-service";
 import { FeedbackService } from "./feedback-service";
@@ -354,6 +355,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Setup Google OAuth authentication
   setupGoogleAuth(app);
+  
+  // Setup LinkedIn OAuth authentication
+  setupLinkedInAuth(app);
   
   // Setup Replit Auth FIRST to ensure proper middleware order
   if (process.env.REPLIT_DOMAINS && process.env.REPL_ID) {
