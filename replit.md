@@ -36,30 +36,6 @@ Onboard Search: Special "onboard" keyword search filters for sailing users and d
 Shipping Dictionary Access: Users can access maritime dictionary definitions without authentication
 Login Roadblock Design: Single minimizable login roadblock with chevron control in top-right corner, no separate roadblocks for individual features
 
-## Deployment Status
-- **Current Configuration**: Reserved VM with minimum 2 instances for 99.9% uptime
-- **Reliability Enhancements**: Added comprehensive health monitoring endpoints (`/health`, `/api/health`, `/api/deployment/status`) with database connectivity testing
-- **Error Handling**: Implemented graceful shutdown procedures and uncaught exception handling to prevent crashes
-- **Connection Monitoring**: Database health checks ensure persistent storage reliability
-
-## Recent Changes (August 2025)
-- **LOCAL DATABASE DELETED**: Completely removed local database connections, app now connects ONLY to parent QAAQ database (ep-autumn-hat endpoint)
-- **Parent Database Exclusive**: All data now sourced from shared QAAQ database with 855+ authentic maritime professionals
-- **Subscription Columns Added**: Successfully added missing subscription columns (subscription_type, subscription_status, is_premium, premium_expires_at, razorpay_customer_id, payment_method) to parent QAAQ database with 855 users
-- **Database Schema Stabilized**: Fixed subscription_type column errors by making fields optional with null defaults, switched to direct SQL queries for parent QAAQ database compatibility
-- **Frequent Refreshing Fixed**: Resolved Ch13 (Top Q Professionals) page constant refreshing by fixing database schema mismatches and disabling unnecessary polling
-- **Authentication Polling Stopped**: Disabled automatic refetching in chat connections, auth hooks, and WebSocket services to prevent 401 error loops
-- **Top Q Professionals Integration**: Integrated Top Q Professionals directly into DM page's Active DMs section, displaying 9 real maritime professionals with authentic question/answer counts from QAAQ database
-- **Data Integrity Enforced**: Strict "NEVER EVER" rule followed - no test users or sample data added, only authentic QAAQ database professionals
-- **Active Conversations and Professionals**: Unified 1v1 DM section with active conversations and Top Q Professionals in same interface with single/double tick message status pattern
-- **Compact Card Design**: Consistent card layout and styling for both active conversations and Top Q Professionals in unified DM interface
-- **Pull-to-Search Feature**: Added sailor search bar above header that appears when scrolling up, with real-time search filtering of maritime professionals
-- **🏆 QAAQ MARIANA SEAL ACHIEVED**: DM page format permanently sealed with Active Conversations and Top Q Professionals unified in same interface with same-sized cards, full DM functionality for search results and Q radar map green dots, dual search system operational
-- **📋 PINNACLE PLAN CREATED**: Comprehensive 5-phase development plan created (PINNACLE_PLAN.md) outlining path from Mariana to Pinnacle version with advanced DM chats, QH16 group system, full Razorpay integration, WATI bot automation, and enhanced UI/UX
-- **⚡ PERFORMANCE OPTIMIZATION**: Eliminated all automatic polling intervals (30-second nearby users, 3-second mobile chat polling) - nearby users now refresh only when green radar button is manually pressed, significantly reducing server load and improving performance
-- **🎯 RADAR TOGGLE FIXED**: Green radar button now properly toggles on/off with 2-second auto-deactivation, spinning animation during active state, and manual deactivation capability when clicked while active
-- **📏 DISTANCE DISPLAY REMOVED**: Completely removed "x.x km away" distance metrics from all user cards to prevent API quota exceeded issues - distance calculations using Haversine formula disabled across web, mobile, and server components
-
 ## System Architecture
 
 ### Frontend Architecture
@@ -76,15 +52,12 @@ Login Roadblock Design: Single minimizable login roadblock with chevron control 
 ### Backend Architecture
 - **Runtime**: Node.js with Express.js
 - **Language**: TypeScript with ES modules
-- **Database**: Enhanced PostgreSQL with connection pooling (max: 20, min: 5 connections), retry logic, and health monitoring. Shared QAAQ Admin Database with subscription tables.
-- **Database Reliability**: Comprehensive retry logic with exponential backoff for subscription operations, connection health monitoring at `/api/health/database`, enhanced timeout configurations for payment processing reliability.
-- **Questions System**: Authentic QAAQ database with 1,244 real maritime Q&A records, with redesigned question card layout (orange ID numbering, minimalist design, edge-to-edge display). Dedicated `question_attachments` table for tracking questions with images/attachments stored locally in `server/uploads/`.
-- **Image Storage**: Local filesystem storage (`server/uploads/`) with `ImageManagementService` for handling uploads (UUID-based naming, validation, database integration).
+- **Database**: Enhanced PostgreSQL with connection pooling, retry logic, and health monitoring. Shared QAAQ Admin Database with subscription tables.
+- **Questions System**: Authentic QAAQ database with 1,244 real maritime Q&A records, with redesigned question card layout. Dedicated `question_attachments` table for tracking questions with images/attachments stored locally in `server/uploads/`.
+- **Image Storage**: Local filesystem storage (`server/uploads/`) with `ImageManagementService`.
 - **Authentication**: Dual OTP verification (WhatsApp + Email) with JWT tokens. Universal password acceptance with automatic user creation.
-- **Session Management**: Express sessions with PostgreSQL storage
-- **Email Service**: Gmail SMTP (support@qaaq.app)
-- **WhatsApp Integration**: Primary OTP delivery.
-- **Payment System**: Production Razorpay integration with enhanced database connection reliability, automatic retry logic for payment processing, and comprehensive subscription management. Complete database schema with Google Auth and Razorpay premium mode columns.
+- **Session Management**: Express sessions with PostgreSQL storage.
+- **Payment System**: Production Razorpay integration with enhanced database connection reliability, automatic retry logic for payment processing, and comprehensive subscription management.
 
 ### Bot Integration Architecture
 - **QBOT**: WhatsApp bot for maritime networking assistance, location discovery, QAAQ Store services, and Q&A functionality.
@@ -93,21 +66,15 @@ Login Roadblock Design: Single minimizable login roadblock with chevron control 
 - **Database Access**: Direct access to shared QAAQ database.
 - **AI-Powered Responses**: Connected QBOT to OpenAI GPT-4o for intelligent maritime assistance.
 - **SEMM Breadcrumb System**: Implemented System > Equipment > Make > Model categorization for technical questions.
-- **Database Storage**: All QBOT interactions automatically stored in questions table with SEMM breadcrumbs.
 - **File Attachments**: Clip icon attachment system to QBOT chat supporting JPG, PNG, PDF and similar formats up to 50MB with object storage integration.
 
 ### System Design Choices
-- **Dual Authentication System**: 
-  - QAAQ JWT token authentication with User ID/email/WhatsApp number and password
-  - Replit OpenID Connect authentication with session management
-  - Frontend automatically detects both authentication methods
-  - All successful logins redirect to "/qbot" (QBOT Chat) as the home page
-  - Users stay logged in across sessions with proper session persistence
+- **Dual Authentication System**: QAAQ JWT token and Replit OpenID Connect. All successful logins redirect to "/qbot" (QBOT Chat).
 - **WhatsApp Cross-Platform Integration**: Users see their previous WhatsApp Q&A history when logging into webapp.
 - **Social Features**: Post creation with content categories and location tagging, like/unlike functionality, author display options.
 - **Discovery System**: Interactive world map with light grey theme, proximity-based user discovery showing nearest users, city-based location display for sailors and locals, color-coded map pins. Mobile GPS integration for real-time location.
 - **Real-Time Messaging**: WebSocket-based real-time messaging with live typing indicators, instant message delivery, and read receipts.
-- **QBOT Integration**: Fully functional QBOT chat system integrated across all pages with consistent functionality and UI.
+- **QBOT Integration**: Fully functional QBOT chat system integrated across all pages.
 
 ## External Dependencies
 - **Shared QAAQ Database**: PostgreSQL database for authentic maritime user data and Q&A records.
