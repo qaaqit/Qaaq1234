@@ -8,7 +8,7 @@ import { emailService } from "./email-service";
 import { randomBytes } from 'crypto';
 import { eq } from 'drizzle-orm';
 import { pool } from "./db";
-import { getQuestions, searchQuestions, getQuestionAnswers } from "./questions-service";
+import { getQuestions, searchQuestions, getQuestionAnswers, getQuestionById } from "./questions-service";
 import { 
   initializeRankGroups, 
   getAllRankGroups, 
@@ -5496,40 +5496,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Invalid question ID' });
       }
       
-      // First try to get from shared QAAQ database
-      const questionQuery = await pool.query(`
-        SELECT id, content, author_id, created_at, updated_at,
-               tags, views, is_resolved, is_from_whatsapp,
-               engagement_score, equipment_name
-        FROM questions 
-        WHERE id = $1
-      `, [questionId]);
+      console.log(`🔍 API: Fetching question ${questionId}`);
       
-      if (questionQuery.rows.length === 0) {
+      // Use the proper questions service function
+      const question = await getQuestionById(questionId);
+      
+      if (!question) {
+        console.log(`❌ API: Question ${questionId} not found or hidden/archived`);
         return res.status(404).json({ error: 'Question not found' });
       }
       
-      const questionData = questionQuery.rows[0];
-      
-      // Format the question response
-      const question = {
-        id: questionData.id,
-        content: questionData.content,
-        author_id: questionData.author_id,
-        author_name: questionData.author_id.startsWith('+') ? `User ${questionData.author_id.slice(0,8)}****` : 'Maritime Professional',
-        author_rank: 'Maritime Expert',
-        created_at: questionData.created_at,
-        updated_at: questionData.updated_at,
-        category: questionData.equipment_name || 'Technical Discussion',
-        tags: questionData.tags || [],
-        view_count: questionData.views || 0,
-        answer_count: 0, // We'll calculate this
-        is_resolved: questionData.is_resolved || false,
-        is_anonymous: false,
-        is_from_whatsapp: questionData.is_from_whatsapp || false,
-        source: questionData.is_from_whatsapp ? 'WhatsApp' : 'QAAQ Platform'
-      };
-      
+      console.log(`✅ API: Successfully retrieved question ${questionId}`);
       res.json(question);
     } catch (error) {
       console.error('Error fetching question:', error);
@@ -5545,24 +5522,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Invalid question ID' });
       }
       
-      // Get answers from shared database - this might not exist for all questions
-      const answersQuery = await pool.query(`
-        SELECT id, content, author_id, created_at
-        FROM answers 
-        WHERE question_id = $1
-        ORDER BY created_at ASC
-      `, [questionId]);
+      console.log(`🔍 API: Fetching answers for question ${questionId}`);
       
-      const answers = answersQuery.rows.map(row => ({
-        id: row.id,
-        content: row.content,
-        author_id: row.author_id,
-        author_name: row.author_id === 'QG' || row.author_id === 'QAAQ GPT' ? 'QAAQ GPT' : 'Maritime Professional',
-        author_rank: row.author_id === 'QG' || row.author_id === 'QAAQ GPT' ? 'AI Assistant' : 'Maritime Expert',
-        created_at: row.created_at,
-        is_best_answer: false
-      }));
+      // Use the proper questions service function
+      const answers = await getQuestionAnswers(questionId);
       
+      console.log(`✅ API: Retrieved ${answers.length} answers for question ${questionId}`);
       res.json(answers);
     } catch (error) {
       console.error('Error fetching answers:', error);
