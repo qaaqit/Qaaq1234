@@ -164,7 +164,19 @@ export async function getQuestionById(questionId: number): Promise<Question | nu
       return null;
     }
     
-    return result.rows[0];
+    // Process the raw data to handle null values like getQuestions does
+    const row = result.rows[0];
+    return {
+      ...row,
+      author_name: row.author_name?.trim() || 'Anonymous',
+      author_rank: row.author_rank || null,
+      tags: row.tags || [],
+      image_urls: row.image_urls || [],
+      views: row.view_count || 0,
+      engagement_score: row.engagement_score || 0,
+      flag_count: row.flag_count || 0,
+      answer_count: parseInt(row.answer_count) || 0
+    };
   } catch (error) {
     console.error('Error fetching question by ID:', error);
     throw error;
