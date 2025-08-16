@@ -785,7 +785,7 @@ export default function DMPage() {
                       </h2>
                     </div>
                     <span className="text-sm text-gray-500">
-                      {activeConnections.length + pendingConnections.length + sentRequests.length} chats • {filteredUsers.length} professionals
+                      {activeConnections.length + pendingConnections.length + sentRequests.length} chats 
                     </span>
                   </div>
                 </div>
