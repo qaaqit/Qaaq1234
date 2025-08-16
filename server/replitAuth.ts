@@ -25,21 +25,52 @@ const getOidcConfig = memoize(
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   const pgStore = connectPg(session);
+  
+  const connectionString = process.env.QAAQ_DATABASE_URL || process.env.DATABASE_URL;
+  console.log('🗄️ Session store: Creating with database connection to:', connectionString?.replace(/postgresql:\/\/[^@]+@/, 'postgresql://****@'));
+  
   const sessionStore = new pgStore({
-    conString: process.env.QAAQ_DATABASE_URL || process.env.DATABASE_URL,
+    conString: connectionString,
     createTableIfMissing: true,
     ttl: sessionTtl,
     tableName: "sessions",
+    pruneSessionInterval: 60 * 15 // 15 minutes
   });
+  
+  // Test the connection immediately
+  try {
+    sessionStore.query = sessionStore.query || function() {};
+    console.log('🔍 Session store: Testing database connection...');
+  } catch (error) {
+    console.error('❌ Session store: Failed to initialize:', error);
+  }
+  
+  sessionStore.on('connect', () => {
+    console.log('✅ Session store: Connected to database successfully');
+  });
+  
+  sessionStore.on('disconnect', () => {
+    console.log('❌ Session store: Disconnected from database');
+  });
+  
+  sessionStore.on('error', (error) => {
+    console.error('❌ Session store error:', error);
+  });
+  
+  console.log('🍪 Session config: secure =', process.env.NODE_ENV === 'production');
+  
   return session({
+    name: 'replit.sid',
     secret: process.env.SESSION_SECRET!,
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
+    rolling: true,
     cookie: {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: sessionTtl,
+      sameSite: 'lax'
     },
   });
 }
@@ -81,10 +112,21 @@ export async function setupAuth(app: Express) {
     tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
     verified: passport.AuthenticateCallback
   ) => {
-    const user = {};
-    updateUserSession(user, tokens);
-    await upsertUser(tokens.claims());
-    verified(null, user);
+    try {
+      console.log('✅ Replit Auth: Token verification started');
+      const user = {};
+      updateUserSession(user, tokens);
+      console.log('✅ Replit Auth: User session updated');
+      
+      const dbUser = await upsertUser(tokens.claims());
+      console.log('✅ Replit Auth: User upserted to database:', dbUser.fullName);
+      
+      verified(null, user);
+      console.log('✅ Replit Auth: Verification completed successfully');
+    } catch (error) {
+      console.error('❌ Replit Auth: Verification failed:', error);
+      verified(error as Error);
+    }
   };
 
   for (const domain of process.env
@@ -105,6 +147,7 @@ export async function setupAuth(app: Express) {
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
   app.get("/api/login", (req, res, next) => {
+    console.log('🔐 Replit Auth: Login initiated for hostname:', req.hostname);
     passport.authenticate(`replitauth:${req.hostname}`, {
       prompt: "login consent",
       scope: ["openid", "email", "profile", "offline_access"],
@@ -112,6 +155,9 @@ export async function setupAuth(app: Express) {
   });
 
   app.get("/api/callback", (req, res, next) => {
+    console.log('🔄 Replit Auth: Callback received for hostname:', req.hostname);
+    console.log('🔄 Replit Auth: Callback query params:', req.query);
+    
     passport.authenticate(`replitauth:${req.hostname}`, {
       successRedirect: "/qbot",
       failureRedirect: "/login?error=auth_failed",
