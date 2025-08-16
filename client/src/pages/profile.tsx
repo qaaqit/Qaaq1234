@@ -20,6 +20,25 @@ import {
 } from "lucide-react";
 import { z } from "zod";
 
+// Maritime ranks options
+const maritimeRanks = [
+  { value: "captain", label: "Captain" },
+  { value: "chief_officer", label: "Chief Officer" },
+  { value: "second_officer", label: "2nd Officer" },
+  { value: "third_officer", label: "3rd Officer" },
+  { value: "chief_engineer", label: "Chief Engineer" },
+  { value: "second_engineer", label: "2nd Engineer" },
+  { value: "third_engineer", label: "3rd Engineer" },
+  { value: "fourth_engineer", label: "4th Engineer" },
+  { value: "cadet", label: "Maritime Cadet" },
+  { value: "crew", label: "Ship Crew" },
+  { value: "marine_superintendent", label: "Marine Superintendent" },
+  { value: "technical_superintendent", label: "Technical Superintendent" },
+  { value: "fleet_manager", label: "Fleet Manager" },
+  { value: "eto", label: "ETO/Elec Superintendent" },
+  { value: "other_maritime", label: "Other Maritime Professional" }
+];
+
 // Simplified profile update schema matching QAAQ database columns
 const profileUpdateSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
@@ -297,7 +316,18 @@ export default function Profile() {
                       <FormItem>
                         <FormLabel>Maritime Rank</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="Captain, Chief Engineer, Officer..." disabled={!isEditing} />
+                          <Select value={field.value || ""} onValueChange={field.onChange} disabled={!isEditing}>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select your maritime rank..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {maritimeRanks.map((rank) => (
+                                <SelectItem key={rank.value} value={rank.value}>
+                                  {rank.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
