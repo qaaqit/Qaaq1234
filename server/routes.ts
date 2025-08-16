@@ -155,6 +155,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // 🧪 DEBUG IDENTITY RESOLUTION - Test unified identity system
+  app.get('/api/debug/identity-check', async (req, res) => {
+    try {
+      const { identifier } = req.query;
+      if (!identifier) {
+        return res.status(400).json({ error: 'identifier parameter required' });
+      }
+
+      console.log(`🧪 DEBUG: Testing identity resolution for: ${identifier}`);
+      
+      // Test the canonical identity resolver
+      const user = await identityResolver.resolveUserByAnyMethod(identifier as string, 'session');
+      
+      if (user) {
+        console.log(`✅ DEBUG: Found user: ${user.fullName} (ID: ${user.id})`);
+        
+        // Get all identities for this user
+        const identities = await storage.getUserIdentities(user.id);
+        
+        res.json({
+          success: true,
+          user: {
+            id: user.id,
+            fullName: user.fullName,
+            email: user.email,
+            userType: user.userType,
+            whatsAppNumber: user.whatsAppNumber,
+            googleId: user.googleId,
+            authProvider: user.authProvider
+          },
+          identities: identities,
+          searchedFor: identifier
+        });
+      } else {
+        console.log(`❌ DEBUG: No user found for: ${identifier}`);
+        res.json({
+          success: false,
+          message: 'User not found',
+          searchedFor: identifier
+        });
+      }
+    } catch (error) {
+      console.error('🚨 DEBUG: Identity check error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: error.message,
+        searchedFor: req.query.identifier
+      });
+    }
+  });
+
   // 🔧 RESTORE HIDDEN QUESTIONS - Make hidden questions visible again
   app.post('/api/debug/restore-hidden-questions', async (req, res) => {
     try {
