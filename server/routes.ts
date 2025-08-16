@@ -34,6 +34,11 @@ import { AIService } from "./ai-service";
 import { FeedbackService } from "./feedback-service";
 import { WatiBotService } from "./wati-bot-service";
 
+// Import new unified authentication system
+import { sessionBridge, bridgedAuth } from "./session-bridge";
+import { identityResolver } from "./identity-resolver";
+import { identityConsolidation } from "./identity-consolidation";
+
 // Extend Express Request type
 declare global {
   namespace Express {
@@ -105,6 +110,10 @@ const generateVerificationCode = (): string => {
 // Distance calculations removed to avoid API quota issues
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  
+  // CRITICAL: Add session bridge middleware BEFORE all routes
+  // This fixes the session-authentication disconnect issue
+  app.use(sessionBridge);
   
   // Health check endpoints for deployment monitoring
   app.get('/health', (req, res) => {
@@ -282,66 +291,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup Google OAuth authentication
   setupGoogleAuth(app);
   
-  // Universal authentication endpoint - always available for both Replit Auth and QAAQ JWT
+  // UNIFIED authentication endpoint using session bridge
   app.get('/api/auth/user', async (req: any, res) => {
     try {
-      let userId = null;
-      let authMethod = 'none';
-      let userData = null;
+      console.log('🎯 UNIFIED AUTH: Checking authentication via bridge');
       
-      console.log('🔍 Dual auth check - Session authenticated:', !!req.isAuthenticated?.(), 'Auth header:', !!req.headers.authorization);
-      console.log('🔍 Session user data:', req.user?.userId || req.user?.claims?.sub || 'None');
+      // Use the bridge for consistent authentication
+      const auth = bridgedAuth(req);
       
-      // First check for QAAQ JWT token
-      const authHeader = req.headers.authorization;
-      const token = authHeader && authHeader.split(' ')[1];
-      
-      if (token) {
-        try {
-          const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
-          userId = decoded.userId;
-          authMethod = 'jwt';
-          console.log('🔑 Using QAAQ JWT auth for user:', userId);
-        } catch (error) {
-          console.log('❌ JWT token invalid:', (error as Error).message);
-        }
-      }
-      
-      // Then check for Replit Auth session (if available)
-      if (!userId && req.isAuthenticated && req.isAuthenticated()) {
-        // Try multiple ways to get user ID from session
-        userId = req.user?.userId || req.user?.claims?.sub || req.user?.dbUser?.id;
-        userData = req.user?.dbUser; // Use cached user data if available
-        authMethod = 'replit';
-        console.log('🔑 Using Replit session auth for user:', userId);
-        console.log('🔑 Replit session data:', {
-          hasUserId: !!req.user?.userId,
-          hasClaimsub: !!req.user?.claims?.sub,
-          hasDbUser: !!req.user?.dbUser
+      if (!auth.isAuthenticated || !auth.user) {
+        console.log('❌ UNIFIED AUTH: No valid authentication found');
+        return res.status(401).json({ 
+          message: 'No valid authentication found',
+          bridgeState: req.authBridge?.isAuthenticated || false
         });
       }
       
-      if (!userId) {
-        console.log('❌ No valid authentication found');
-        return res.status(401).json({ message: 'No valid authentication found' });
-      }
+      console.log(`✅ UNIFIED AUTH: Success - ${auth.user.fullName} (${auth.method})`);
+      res.json(auth.user);
       
-      // Use cached user data if available (for Replit sessions)
-      let user = userData;
-      if (!user) {
-        console.log(`🔍 Looking for user with ${authMethod} auth - ID:`, userId);
-        user = await storage.getUser(userId);
-      }
-      
-      if (!user) {
-        console.log('❌ User not found in database:', userId);
-        return res.status(404).json({ message: 'User not found' });
-      }
-      
-      console.log('✅ Found user:', user.fullName, `(${authMethod} auth)`);
-      res.json(user);
     } catch (error) {
-      console.error("Error fetching user:", (error as Error).message);
+      console.error("🚨 UNIFIED AUTH ERROR:", (error as Error).message);
       res.status(500).json({ message: "Failed to fetch user" });
     }
   });

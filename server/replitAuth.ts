@@ -7,6 +7,8 @@ import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
+import { identityConsolidation } from "./identity-consolidation";
+import { identityResolver } from "./identity-resolver";
 
 if (!process.env.REPLIT_DOMAINS) {
   throw new Error("Environment variable REPLIT_DOMAINS not provided");
@@ -87,16 +89,38 @@ function updateUserSession(
 async function upsertUser(
   claims: any,
 ) {
-  console.log('🔍 Upserting Replit user with claims:', claims);
-  const result = await storage.upsertUser({
-    id: claims["sub"],
-    email: claims["email"],
-    firstName: claims["first_name"],
-    lastName: claims["last_name"],
-    profileImageUrl: claims["profile_image_url"],
-  });
-  console.log('✅ Replit user upserted:', result.fullName);
-  return result;
+  console.log('🔍 CONSOLIDATION: Processing Replit user with claims:', claims);
+  
+  try {
+    // Use identity consolidation service instead of direct upsert
+    const result = await identityConsolidation.consolidateOnLogin(
+      claims["sub"], 
+      'replit', 
+      {
+        email: claims["email"],
+        name: `${claims["first_name"]} ${claims["last_name"]}`.trim(),
+        displayName: claims["name"],
+        profileImageUrl: claims["profile_image_url"],
+        firstName: claims["first_name"],
+        lastName: claims["last_name"]
+      }
+    );
+    
+    console.log('✅ CONSOLIDATION: Replit user processed:', result.fullName);
+    return result;
+  } catch (error) {
+    console.error('🚨 CONSOLIDATION ERROR:', error);
+    // Fallback to legacy method
+    const result = await storage.upsertUser({
+      id: claims["sub"],
+      email: claims["email"],
+      firstName: claims["first_name"],
+      lastName: claims["last_name"],
+      profileImageUrl: claims["profile_image_url"],
+    });
+    console.log('✅ Fallback: Replit user upserted:', result.fullName);
+    return result;
+  }
 }
 
 export async function setupAuth(app: Express) {
