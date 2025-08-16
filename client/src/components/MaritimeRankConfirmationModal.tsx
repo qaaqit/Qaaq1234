@@ -30,7 +30,7 @@ const maritimeRanks = [
   { value: "marine_superintendent", label: "Marine Superintendent", description: "Shore-based marine operations manager" },
   { value: "technical_superintendent", label: "Technical Superintendent", description: "Shore-based technical manager" },
   { value: "fleet_manager", label: "Fleet Manager", description: "Ship fleet management professional" },
-  { value: "eto", label: "ETO/Electrical Officer", description: "Electro Technical Officer" },
+  { value: "eto", label: "ETO/Elec Superintendent", description: "Electro Technical Officer" },
   { value: "other_maritime", label: "Other Maritime Professional", description: "General maritime personnel" }
 ];
 
@@ -114,10 +114,7 @@ export function MaritimeRankConfirmationModal({
                 <SelectContent className="max-h-64">
                   {maritimeRanks.map((rank) => (
                     <SelectItem key={rank.value} value={rank.value} data-testid={`rank-option-${rank.value}`}>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{rank.label}</span>
-                        <span className="text-xs text-gray-500">{rank.description}</span>
-                      </div>
+                      <span className="font-medium">{rank.label}</span>
                     </SelectItem>
                   ))}
                 </SelectContent>
