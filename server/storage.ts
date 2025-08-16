@@ -529,12 +529,29 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUserPassword(userId: string, password: string): Promise<void> {
-    await db.update(users).set({ 
-      password,
-      passwordCreatedAt: new Date(),
-      hasSetCustomPassword: true,
-      needsPasswordChange: false
-    }).where(eq(users.id, userId));
+    try {
+      console.log(`🔄 Updating password for user: ${userId}`);
+      
+      const result = await pool.query(`
+        UPDATE users SET 
+          password = $1,
+          password_created_at = NOW(),
+          has_set_custom_password = true,
+          needs_password_change = false,
+          last_updated = NOW()
+        WHERE id = $2
+        RETURNING id, full_name
+      `, [password, userId]);
+      
+      if (result.rows.length === 0) {
+        throw new Error(`User with ID ${userId} not found`);
+      }
+      
+      console.log(`✅ Password updated for user: ${result.rows[0].full_name} (${userId})`);
+    } catch (error) {
+      console.error('Error updating user password:', error);
+      throw error;
+    }
   }
 
   async checkPasswordRenewalRequired(userId: string): Promise<boolean> {

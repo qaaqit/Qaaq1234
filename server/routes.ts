@@ -296,11 +296,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup stable image upload system
   setupStableImageRoutes(app);
   
-  // Password management endpoints - no auth required for password renewal/creation
-  app.put('/api/users/:userId/password', async (req, res) => {
+  // Password management endpoints - requires authentication
+  app.put('/api/users/:userId/password', requireBridgedAuth, async (req: any, res) => {
     try {
       const { userId } = req.params;
       const { password } = req.body;
+      const currentUserId = req.currentUser?.id || req.userId;
       
       if (!password || password.length < 6) {
         return res.status(400).json({ 
@@ -308,8 +309,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Check if the user is updating their own password or is an admin
+      if (currentUserId !== userId && !req.currentUser?.isAdmin) {
+        return res.status(403).json({ 
+          message: 'You can only update your own password' 
+        });
+      }
+      
+      // Check if user exists first
+      const existingUser = await storage.getUser(userId);
+      if (!existingUser) {
+        return res.status(404).json({ 
+          message: 'User not found' 
+        });
+      }
+      
       await storage.updateUserPassword(userId, password);
       
+      console.log(`✅ Password updated successfully for user: ${userId}`);
       res.json({
         success: true,
         message: 'Password updated successfully'
