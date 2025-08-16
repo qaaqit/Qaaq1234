@@ -2083,7 +2083,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // QBOT Chat API endpoint - Implementing 13 Commandments
-  app.post("/api/qbot/message", requireBridgedAuth, async (req: any, res) => {
+  app.post("/api/qbot/message", optionalAuth, async (req: any, res) => {
     try {
       const { message, attachments, image, isPrivate } = req.body;
       const userId = req.currentUser?.id || req.userId;
@@ -2721,7 +2721,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Function to store QBOT response in Questions database with SEMM breadcrumb and attachments
   async function storeQBOTResponseInDatabase(userMessage: string, aiResponse: string, user: any, attachments?: string[], aiModel?: string, responseTime?: number, tokens?: number): Promise<{ questionId: number, answerId: number }> {
     try {
-      const userId = user?.id || 'qbot_user';
+      const userId = user?.id || null;
       const userName = user?.fullName || user?.whatsAppDisplayName || 'QBOT User';
       const userRank = user?.maritimeRank || user?.rank || 'Maritime Professional';
       
@@ -2734,7 +2734,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         attachmentText = `\n\nAttachments: ${attachments.map(att => `[IMAGE: ${att}]`).join(', ')}`;
       }
       
-      // Store question with proper author attribution
+      // Store question with proper author attribution - handle null user IDs  
+      const authorId = userId || '44885683'; // Use admin ID for anonymous users
       const questionResult = await pool.query(`
         INSERT INTO questions (
           content, author_id, is_from_whatsapp, created_at, updated_at
@@ -2742,14 +2743,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         RETURNING id
       `, [
         `[QBOT Q&A - ${semmCategory.breadcrumb}]\nUser: ${userName} (via QBOT)\nCategory: ${semmCategory.category}\n\nQuestion: ${userMessage}${attachmentText}`,
-        userId, // Include the user's ID
+        authorId, // Use valid user ID
         false // Mark as QBOT (not WhatsApp but still bot-originated)
       ]);
       
       const questionId = questionResult.rows[0].id;
       
       // Update user's question count if it's a real user (not 'qbot_user')
-      if (userId && userId !== 'qbot_user') {
+      if (userId && userId !== 'qbot_user' && userId !== '44885683') {
         try {
           await pool.query(`
             UPDATE users 

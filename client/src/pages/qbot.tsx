@@ -98,7 +98,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
 
     try {
       // Call QBOT API for AI-powered response
-      const response = await fetch('/api/qbot/message', {
+      const response = await fetch('/api/qbot/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
