@@ -247,7 +247,77 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUserProfile(userId: string, profileData: Partial<User>): Promise<User | undefined> {
-    return this.updateUser(userId, profileData);
+    try {
+      console.log('🔄 Updating user profile with data:', profileData);
+      
+      // Build SET clause dynamically for only the fields we want to update
+      const setClause = [];
+      const values = [];
+      let paramCount = 1;
+      
+      if (profileData.fullName !== undefined) {
+        setClause.push(`full_name = $${paramCount++}`);
+        values.push(profileData.fullName);
+      }
+      if (profileData.email !== undefined) {
+        setClause.push(`email = $${paramCount++}`);
+        values.push(profileData.email);
+      }
+      if (profileData.maritimeRank !== undefined) {
+        setClause.push(`maritime_rank = $${paramCount++}`);
+        values.push(profileData.maritimeRank);
+      }
+      if (profileData.currentLastShip !== undefined) {
+        setClause.push(`current_lastShip = $${paramCount++}`);
+        values.push(profileData.currentLastShip);
+      }
+      if (profileData.currentShipIMO !== undefined) {
+        setClause.push(`current_ship_imo = $${paramCount++}`);
+        values.push(profileData.currentShipIMO);
+      }
+      if (profileData.city !== undefined) {
+        setClause.push(`city = $${paramCount++}`);
+        values.push(profileData.city);
+      }
+      if (profileData.country !== undefined) {
+        setClause.push(`country = $${paramCount++}`);
+        values.push(profileData.country);
+      }
+      
+      if (setClause.length === 0) {
+        console.log('❌ No valid fields to update');
+        return undefined;
+      }
+      
+      // Add last_updated timestamp
+      setClause.push(`last_updated = NOW()`);
+      
+      // Add userId to values for WHERE clause
+      values.push(userId);
+      
+      const query = `
+        UPDATE users 
+        SET ${setClause.join(', ')} 
+        WHERE id = $${paramCount}
+        RETURNING *
+      `;
+      
+      console.log('📝 Profile update query:', query);
+      console.log('📝 Profile update values:', values);
+      
+      const result = await pool.query(query, values);
+      
+      if (result.rows.length === 0) {
+        console.log('❌ User not found for profile update');
+        return undefined;
+      }
+      
+      console.log('✅ Profile updated successfully');
+      return this.convertDbUserToAppUser(result.rows[0]);
+    } catch (error) {
+      console.error('❌ Error updating user profile:', error);
+      return undefined;
+    }
   }
 
   async updateUserShipName(userId: string, shipName: string): Promise<void> {
