@@ -4248,17 +4248,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/chat/messages/:connectionId', authenticateToken, async (req, res) => {
-    try {
-      const { connectionId } = req.params;
-      const messages = await storage.getChatMessages(connectionId);
-      await storage.markMessagesAsRead(connectionId, req.userId!);
-      res.json(messages);
-    } catch (error) {
-      console.error('Get messages error:', error);
-      res.status(500).json({ message: "Failed to get messages" });
-    }
-  });
 
   // Mark individual message as read
   app.post('/api/chat/messages/:messageId/read', authenticateToken, async (req, res) => {
