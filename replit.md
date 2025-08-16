@@ -85,6 +85,11 @@ Login Roadblock Design: Single minimizable login roadblock with chevron control 
 - **Automated Maintenance**: Daily cleanup of old data, index optimization, and database analysis scheduled at 2 AM
 - **Admin Controls**: Database restart, pool optimization, sync queue management, and real-time health monitoring endpoints
 
+## Recent Technical Fixes (August 2025)
+- **QBOT Web Interface Fixed**: Resolved "trouble connecting to AI" issue by switching from `/api/qbot/message` to `/api/qbot/chat` endpoint and removing authentication requirements for web interface
+- **Database Storage Optimization**: Fixed foreign key constraint errors in QBOT Q&A storage system with proper author attribution
+- **Dual AI Model System**: Operational with OpenAI and Gemini integration providing structured maritime technical responses
+
 ## External Dependencies
 - **Shared QAAQ Database**: PostgreSQL database for authentic maritime user data and Q&A records.
 - **WhatsApp Bot Services**: QBOT and QOI GPT.

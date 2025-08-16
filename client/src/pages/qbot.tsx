@@ -101,10 +101,9 @@ export default function QBOTPage({ user }: QBOTPageProps) {
       const response = await fetch('/api/qbot/chat', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ message: messageText, attachments: attachments || [], isPrivate: isPrivate || false })
+        body: JSON.stringify({ message: messageText })
       });
 
       if (response.ok) {
