@@ -2,6 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import jwt from 'jsonwebtoken';
 import { storage } from "./storage";
 import { pool } from './db';
+import { identityConsolidation } from './identity-consolidation';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'qaaq_jwt_secret_key_2024_secure';
 
@@ -102,52 +103,79 @@ async function getGoogleUserInfo(accessToken: string): Promise<GoogleUserInfo> {
 // Find or create user from Google profile
 async function findOrCreateGoogleUser(googleUser: GoogleUserInfo): Promise<any> {
   try {
-    // First try to find user by Google ID
-    let user = await storage.getUserByGoogleId(googleUser.id);
+    console.log('🔍 GOOGLE AUTH: Processing Google user with ID:', googleUser.id);
     
-    if (user) {
-      // Update last login time for existing Google user
-      await pool.query(`
-        UPDATE users SET last_login = NOW() WHERE google_id = $1
-      `, [googleUser.id]);
-      return user;
-    }
-
-    // Try to find user by email
-    user = await storage.getUserByEmail(googleUser.email);
+    // Use identity consolidation service for Google auth
+    const result = await identityConsolidation.consolidateOnLogin(
+      googleUser.id, 
+      'google', 
+      {
+        email: googleUser.email,
+        name: googleUser.name,
+        displayName: googleUser.name,
+        profileImageUrl: googleUser.picture,
+        firstName: googleUser.given_name,
+        lastName: googleUser.family_name
+      }
+    );
     
-    if (user) {
-      // Link existing account to Google
-      await pool.query(`
-        UPDATE users SET 
-          google_id = $1,
-          google_email = $2,
-          google_profile_picture_url = $3,
-          google_display_name = $4,
-          auth_provider = 'google',
-          last_login = NOW()
-        WHERE id = $5
-      `, [googleUser.id, googleUser.email, googleUser.picture, googleUser.name, user.id]);
-      return user;
-    }
-
-    // Create new user
-    const newUser = await storage.createGoogleUser({
-      googleId: googleUser.id,
-      fullName: googleUser.name,
-      email: googleUser.email,
-      googleEmail: googleUser.email,
-      googleProfilePictureUrl: googleUser.picture,
-      googleDisplayName: googleUser.name,
-      authProvider: 'google',
-      userType: 'sailor', // Default to sailor, can be changed later
-      isVerified: true, // Google accounts are pre-verified
-    });
-
-    return newUser;
+    console.log('✅ GOOGLE AUTH: User processed via consolidation:', result.fullName);
+    return result;
   } catch (error) {
-    console.error('Error finding/creating Google user:', error);
-    throw error;
+    console.error('🚨 GOOGLE AUTH: Consolidation failed, using fallback:', error);
+    
+    // Fallback to legacy method if consolidation fails
+    try {
+      // First try to find user by Google ID
+      let user = await storage.getUserByGoogleId(googleUser.id);
+      
+      if (user) {
+        // Update last login time for existing Google user
+        await pool.query(`
+          UPDATE users SET last_login = NOW() WHERE google_id = $1
+        `, [googleUser.id]);
+        console.log('✅ GOOGLE AUTH: Found existing Google user:', user.fullName);
+        return user;
+      }
+
+      // Try to find user by email
+      user = await storage.getUserByEmail(googleUser.email);
+      
+      if (user) {
+        // Link existing account to Google
+        await pool.query(`
+          UPDATE users SET 
+            google_id = $1,
+            google_email = $2,
+            google_profile_picture_url = $3,
+            google_display_name = $4,
+            auth_provider = 'google',
+            last_login = NOW()
+          WHERE id = $5
+        `, [googleUser.id, googleUser.email, googleUser.picture, googleUser.name, user.id]);
+        console.log('✅ GOOGLE AUTH: Linked existing user to Google:', user.fullName);
+        return user;
+      }
+
+      // Create new user
+      const newUser = await storage.createGoogleUser({
+        googleId: googleUser.id,
+        fullName: googleUser.name,
+        email: googleUser.email,
+        googleEmail: googleUser.email,
+        googleProfilePictureUrl: googleUser.picture,
+        googleDisplayName: googleUser.name,
+        authProvider: 'google',
+        userType: 'sailor', // Default to sailor, can be changed later
+        isVerified: true, // Google accounts are pre-verified
+      });
+
+      console.log('✅ GOOGLE AUTH: Created new Google user:', newUser.fullName);
+      return newUser;
+    } catch (fallbackError) {
+      console.error('🚨 GOOGLE AUTH: Fallback also failed:', fallbackError);
+      throw fallbackError;
+    }
   }
 }
 
