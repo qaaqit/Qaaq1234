@@ -198,7 +198,7 @@ export function RankGroupsPanel() {
                     isConnected ? 'bg-green-500' : 'bg-red-500'
                   }`}></div>
                   <span className="text-xs text-gray-500">
-                    {isConnected ? 'Real-time WebSocket' : 'Connecting...'}
+                    {isConnected ? 'LIVE' : 'Connecting...'}
                   </span>
                 </div>
               </div>
