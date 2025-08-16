@@ -53,4 +53,40 @@ async function testConnection(retries = 3) {
 // Initialize connection
 testConnection();
 
+// Start database services
+async function initializeDatabaseServices() {
+  try {
+    // Import and start database keeper
+    const { databaseKeeper } = await import('./database-keeper');
+    databaseKeeper.start();
+
+    // Import and start connection pool manager
+    const { connectionPoolManager } = await import('./connection-pool-manager');
+    connectionPoolManager.startMonitoring();
+
+    console.log('✅ Database services initialized successfully');
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('❌ Failed to initialize database services:', errorMessage);
+  }
+}
+
+// Import and initialize database migration helper
+async function initializeMigrationHelper() {
+  try {
+    const { DatabaseMigrationHelper } = await import('./database-migration-helper');
+    await DatabaseMigrationHelper.ensureRequiredTables();
+    console.log('✅ Database migration helper initialized');
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('❌ Migration helper initialization failed:', errorMessage);
+  }
+}
+
+// Start services after a brief delay to ensure database connection is established
+setTimeout(() => {
+  initializeDatabaseServices();
+  initializeMigrationHelper();
+}, 2000);
+
 export const db = drizzle({ client: pool, schema });

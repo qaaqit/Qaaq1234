@@ -40,6 +40,11 @@ import { sessionBridge, bridgedAuth, requireBridgedAuth } from "./session-bridge
 import { identityResolver } from "./identity-resolver";
 import { identityConsolidation } from "./identity-consolidation";
 
+// Import database management services
+import { databaseKeeper } from "./database-keeper";
+import { connectionPoolManager } from "./connection-pool-manager";
+import { syncManager } from "./sync-manager";
+
 // Extend Express Request type
 declare global {
   namespace Express {
@@ -6510,6 +6515,243 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Favicon route to prevent 500 errors
   app.get('/favicon.ico', (req, res) => {
     res.status(204).end(); // No content response for favicon
+  });
+
+  // ==== DATABASE MONITORING & SYNC MANAGEMENT ENDPOINTS ====
+  
+  // Database Health Status (Admin only)
+  app.get('/api/admin/db-health', authenticateToken, isAdmin, async (req, res) => {
+    try {
+      const keeperStatus = databaseKeeper.getStatus();
+      const poolStats = connectionPoolManager.getStats();
+      const syncStatus = syncManager.getStatus();
+      
+      // Test database connectivity
+      const startTime = Date.now();
+      const client = await pool.connect();
+      const connectTime = Date.now() - startTime;
+      
+      // Get database information
+      const dbInfo = await client.query(`
+        SELECT 
+          current_database() as database,
+          current_user as user,
+          version() as version,
+          NOW() as server_time,
+          pg_database_size(current_database()) as db_size
+      `);
+      
+      client.release();
+      
+      res.json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        connectivity: {
+          connectionTime: `${connectTime}ms`,
+          status: connectTime < 1000 ? 'excellent' : connectTime < 3000 ? 'good' : 'slow'
+        },
+        database: {
+          name: dbInfo.rows[0].database,
+          user: dbInfo.rows[0].user,
+          version: dbInfo.rows[0].version.split(' ')[1],
+          serverTime: dbInfo.rows[0].server_time,
+          size: Math.round(dbInfo.rows[0].db_size / 1024 / 1024) + ' MB'
+        },
+        keeper: {
+          active: keeperStatus.active,
+          lastActivity: keeperStatus.lastActivity,
+          consecutiveFailures: keeperStatus.consecutiveFailures,
+          uptime: Math.round(keeperStatus.uptime / 1000) + 's'
+        },
+        pool: {
+          activeConnections: poolStats.activeConnections,
+          waitingRequests: poolStats.waitingRequests,
+          totalQueries: poolStats.queryCount,
+          errors: poolStats.connectionErrors,
+          errorRate: poolStats.queryCount > 0 ? 
+            ((poolStats.connectionErrors / poolStats.queryCount) * 100).toFixed(2) + '%' : '0%'
+        },
+        sync: {
+          queueLength: syncStatus.queueLength,
+          isProcessing: syncStatus.isProcessing,
+          lastSync: new Date(syncStatus.lastSync).toISOString()
+        }
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Database health check failed:', errorMessage);
+      res.status(500).json({
+        status: 'unhealthy',
+        error: errorMessage,
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  // Database Performance Metrics (Admin only)
+  app.get('/api/admin/db-metrics', authenticateToken, isAdmin, async (req, res) => {
+    try {
+      const client = await pool.connect();
+      
+      // Get active connections and long-running queries
+      const activeQueries = await client.query(`
+        SELECT 
+          pid,
+          usename,
+          state,
+          query_start,
+          now() - query_start as duration,
+          left(query, 100) as query_preview
+        FROM pg_stat_activity 
+        WHERE state = 'active' 
+          AND query NOT LIKE '%pg_stat_activity%'
+        ORDER BY query_start
+      `);
+      
+      // Get database statistics
+      const dbStats = await client.query(`
+        SELECT 
+          schemaname,
+          tablename,
+          n_tup_ins as inserts,
+          n_tup_upd as updates,
+          n_tup_del as deletes,
+          seq_scan,
+          seq_tup_read,
+          idx_scan,
+          idx_tup_fetch
+        FROM pg_stat_user_tables 
+        ORDER BY n_tup_ins + n_tup_upd + n_tup_del DESC
+        LIMIT 10
+      `);
+      
+      // Get index usage
+      const indexStats = await client.query(`
+        SELECT 
+          schemaname,
+          tablename,
+          indexname,
+          idx_scan,
+          idx_tup_read,
+          idx_tup_fetch
+        FROM pg_stat_user_indexes 
+        WHERE idx_scan > 0
+        ORDER BY idx_scan DESC
+        LIMIT 10
+      `);
+      
+      client.release();
+      
+      res.json({
+        timestamp: new Date().toISOString(),
+        activeQueries: activeQueries.rows,
+        tableStats: dbStats.rows,
+        indexStats: indexStats.rows,
+        poolMetrics: connectionPoolManager.getStats()
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Database metrics error:', errorMessage);
+      res.status(500).json({ error: errorMessage });
+    }
+  });
+
+  // Control Database Services (Admin only)
+  app.post('/api/admin/db-control/:action', authenticateToken, isAdmin, async (req, res) => {
+    try {
+      const { action } = req.params;
+      const userId = req.userId;
+      
+      switch (action) {
+        case 'restart-keeper':
+          databaseKeeper.stop();
+          setTimeout(() => databaseKeeper.start(), 1000);
+          console.log(`🔄 Database keeper restarted by admin ${userId}`);
+          res.json({ message: 'Database keeper restarted', action: 'restart-keeper' });
+          break;
+          
+        case 'optimize-pool':
+          await connectionPoolManager.optimizePool();
+          console.log(`🔧 Connection pool optimized by admin ${userId}`);
+          res.json({ message: 'Connection pool optimized', action: 'optimize-pool' });
+          break;
+          
+        case 'reset-pool-stats':
+          connectionPoolManager.resetStats();
+          console.log(`📊 Pool statistics reset by admin ${userId}`);
+          res.json({ message: 'Pool statistics reset', action: 'reset-pool-stats' });
+          break;
+          
+        case 'force-sync':
+          await syncManager.forcSync();
+          console.log(`🚀 Forced synchronization by admin ${userId}`);
+          res.json({ message: 'Synchronization forced', action: 'force-sync' });
+          break;
+          
+        case 'clear-sync-queue':
+          syncManager.clearQueue();
+          console.log(`🗑️ Sync queue cleared by admin ${userId}`);
+          res.json({ message: 'Sync queue cleared', action: 'clear-sync-queue' });
+          break;
+          
+        default:
+          res.status(400).json({ error: 'Unknown action' });
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Database control error:', errorMessage);
+      res.status(500).json({ error: errorMessage });
+    }
+  });
+
+  // Sync Queue Management (Admin only)
+  app.post('/api/admin/sync-queue', authenticateToken, isAdmin, async (req, res) => {
+    try {
+      const { operation, data } = req.body;
+      
+      if (!operation || !data) {
+        return res.status(400).json({ error: 'Operation and data are required' });
+      }
+      
+      const syncId = syncManager.queueSync(operation, data);
+      
+      res.json({
+        message: 'Operation queued successfully',
+        syncId,
+        operation,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Sync queue error:', errorMessage);
+      res.status(500).json({ error: errorMessage });
+    }
+  });
+
+  // Database Connection Test (Public endpoint for service monitoring)
+  app.get('/api/db-status', async (req, res) => {
+    try {
+      const startTime = Date.now();
+      const client = await pool.connect();
+      await client.query('SELECT 1 as test');
+      client.release();
+      const responseTime = Date.now() - startTime;
+      
+      res.json({
+        status: 'connected',
+        responseTime: `${responseTime}ms`,
+        timestamp: new Date().toISOString(),
+        healthy: responseTime < 2000
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(503).json({
+        status: 'disconnected',
+        error: errorMessage,
+        timestamp: new Date().toISOString(),
+        healthy: false
+      });
+    }
   });
 
   const httpServer = createServer(app);

@@ -52,7 +52,8 @@ Login Roadblock Design: Single minimizable login roadblock with chevron control 
 ### Backend Architecture
 - **Runtime**: Node.js with Express.js
 - **Language**: TypeScript with ES modules
-- **Database**: Enhanced PostgreSQL with connection pooling, retry logic, and health monitoring. Shared QAAQ Admin Database with subscription tables.
+- **Database**: Enhanced PostgreSQL with advanced connection pooling, retry logic, health monitoring, and hibernation prevention. Shared QAAQ Admin Database with subscription tables.
+- **Database Management**: Comprehensive database services including DatabaseKeeper (prevents hibernation), ConnectionPoolManager (optimizes performance), SyncManager (ensures data consistency), and automated migration helper with daily maintenance scheduling.
 - **Questions System**: Authentic QAAQ database with 1,244 real maritime Q&A records, with redesigned question card layout. Dedicated `question_attachments` table for tracking questions with images/attachments stored locally in `server/uploads/`.
 - **Image Storage**: Local filesystem storage (`server/uploads/`) with `ImageManagementService`.
 - **Authentication**: Dual OTP verification (WhatsApp + Email) with JWT tokens. Universal password acceptance with automatic user creation.
@@ -75,6 +76,14 @@ Login Roadblock Design: Single minimizable login roadblock with chevron control 
 - **Discovery System**: Interactive world map with light grey theme, proximity-based user discovery showing nearest users, city-based location display for sailors and locals, color-coded map pins. Mobile GPS integration for real-time location.
 - **Real-Time Messaging**: WebSocket-based real-time messaging with live typing indicators, instant message delivery, and read receipts.
 - **QBOT Integration**: Fully functional QBOT chat system integrated across all pages.
+
+## Database Synchronization & Performance Features
+- **Keep-Alive Service**: Prevents database hibernation with automated ping every 5 minutes and health checks every 30 seconds
+- **Connection Pool Management**: Advanced pool optimization with monitoring, query tracking, and automatic retry logic
+- **Data Synchronization**: Queue-based sync manager for user locations, message status, activity logs, and subscription updates
+- **Performance Monitoring**: Real-time database metrics, connection statistics, and query performance tracking
+- **Automated Maintenance**: Daily cleanup of old data, index optimization, and database analysis scheduled at 2 AM
+- **Admin Controls**: Database restart, pool optimization, sync queue management, and real-time health monitoring endpoints
 
 ## External Dependencies
 - **Shared QAAQ Database**: PostgreSQL database for authentic maritime user data and Q&A records.
