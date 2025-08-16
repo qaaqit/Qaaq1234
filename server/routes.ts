@@ -2670,17 +2670,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         attachmentText = `\n\nAttachments: ${attachments.map(att => `[IMAGE: ${att}]`).join(', ')}`;
       }
       
-      // Store question
+      // Store question with proper author attribution
       const questionResult = await pool.query(`
         INSERT INTO questions (
-          content, created_at, updated_at
-        ) VALUES ($1, NOW(), NOW())
+          content, author_id, is_from_whatsapp, created_at, updated_at
+        ) VALUES ($1, $2, $3, NOW(), NOW())
         RETURNING id
       `, [
-        `[QBOT Q&A - ${semmCategory.breadcrumb}]\nUser: ${userName} (via QBOT)\nCategory: ${semmCategory.category}\n\nQuestion: ${userMessage}${attachmentText}`
+        `[QBOT Q&A - ${semmCategory.breadcrumb}]\nUser: ${userName} (via QBOT)\nCategory: ${semmCategory.category}\n\nQuestion: ${userMessage}${attachmentText}`,
+        userId, // Include the user's ID
+        false // Mark as QBOT (not WhatsApp but still bot-originated)
       ]);
       
       const questionId = questionResult.rows[0].id;
+      
+      // Update user's question count if it's a real user (not 'qbot_user')
+      if (userId && userId !== 'qbot_user') {
+        try {
+          await pool.query(`
+            UPDATE users 
+            SET question_count = COALESCE(question_count, 0) + 1
+            WHERE id = $1
+          `, [userId]);
+          console.log(`📊 Updated question count for user ${userId}`);
+        } catch (error) {
+          console.log(`⚠️  Could not update question count for user ${userId}:`, error.message);
+        }
+      }
       
       // Store answer with AI model information (use admin user as author for QBOT AI)
       const answerResult = await pool.query(`
