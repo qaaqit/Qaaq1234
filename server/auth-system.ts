@@ -426,29 +426,6 @@ export class RobustAuthSystem {
     };
   }
 
-  /**
-   * Increment liberal login counter
-   */
-  private async incrementLiberalLoginCount(userId: string): Promise<void> {
-    try {
-      await pool.query(`
-        UPDATE users 
-        SET "liberal_login_count" = COALESCE("liberal_login_count", 0) + 1
-        WHERE id = $1
-      `, [userId]);
-    } catch (error) {
-      // Try alternative column names if schema differs
-      try {
-        await pool.query(`
-          UPDATE users 
-          SET liberal_login_count = COALESCE(liberal_login_count, 0) + 1
-          WHERE id = $1
-        `, [userId]);
-      } catch (fallbackError) {
-        console.log('Could not update liberal login count:', fallbackError);
-      }
-    }
-  }
 
   /**
    * Set custom password for user after first liberal login

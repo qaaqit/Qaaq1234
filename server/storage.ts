@@ -447,7 +447,6 @@ export class DatabaseStorage implements IStorage {
       lastUpdated: dbUser.last_updated,
       createdAt: dbUser.created_at,
       hasSetCustomPassword: dbUser.has_set_custom_password || false,
-      liberalLoginCount: dbUser.liberal_login_count || 0,
       needsPasswordChange: dbUser.needs_password_change || false,
       passwordCreatedAt: dbUser.password_created_at,
       passwordRenewalDue: dbUser.password_renewal_due,

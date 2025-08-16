@@ -21,7 +21,6 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   password: text("password"), // Password for QAAQ login
   hasSetCustomPassword: boolean("has_set_custom_password").default(false).notNull(), // Whether user has set their own password
-  liberalLoginCount: integer("liberal_login_count").default(0).notNull(), // Count of liberal "1234koihai" logins
   needsPasswordChange: boolean("needs_password_change").default(true), // Force password change on third login
   passwordCreatedAt: timestamp("password_created_at"), // When current password was created
   passwordRenewalDue: timestamp("password_renewal_due"), // When password renewal is required (12 months from creation)
