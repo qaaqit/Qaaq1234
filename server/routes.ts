@@ -115,6 +115,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // 🔍 TEMPORARY DEBUG ENDPOINT - Check total questions count including archived/hidden
+  app.get('/api/debug/questions-count', async (req, res) => {
+    try {
+      const results = await Promise.all([
+        pool.query('SELECT COUNT(*) as total FROM questions'),
+        pool.query('SELECT COUNT(*) as active FROM questions WHERE is_archived = false AND is_hidden = false'),
+        pool.query('SELECT COUNT(*) as archived FROM questions WHERE is_archived = true'),
+        pool.query('SELECT COUNT(*) as hidden FROM questions WHERE is_hidden = true'),
+        pool.query('SELECT MAX(id) as max_id FROM questions'),
+        pool.query('SELECT MIN(id) as min_id FROM questions'),
+        pool.query('SELECT COUNT(DISTINCT id) as unique_ids FROM questions')
+      ]);
+      
+      const stats = {
+        total_questions: parseInt(results[0].rows[0].total),
+        active_questions: parseInt(results[1].rows[0].active),
+        archived_questions: parseInt(results[2].rows[0].archived),
+        hidden_questions: parseInt(results[3].rows[0].hidden),
+        max_question_id: parseInt(results[4].rows[0].max_id),
+        min_question_id: parseInt(results[5].rows[0].min_id),
+        unique_question_ids: parseInt(results[6].rows[0].unique_ids),
+        expected_questions: 1549
+      };
+      
+      stats.missing_questions = stats.expected_questions - stats.total_questions;
+      
+      console.log('📊 QUESTIONS DATABASE ANALYSIS:', stats);
+      
+      res.json(stats);
+    } catch (error) {
+      console.error('Error analyzing questions:', error);
+      res.status(500).json({ error: 'Failed to analyze questions database' });
+    }
+  });
+
+  // 🔧 RESTORE HIDDEN QUESTIONS - Make hidden questions visible again
+  app.post('/api/debug/restore-hidden-questions', async (req, res) => {
+    try {
+      const result = await pool.query(`
+        UPDATE questions 
+        SET is_hidden = false, 
+            hidden_reason = NULL,
+            hidden_at = NULL,
+            hidden_by = NULL
+        WHERE is_hidden = true
+        RETURNING id, content
+      `);
+      
+      console.log(`✅ RESTORED ${result.rows.length} hidden questions to visible status`);
+      result.rows.forEach(row => {
+        console.log(`📝 Restored question ${row.id}: ${row.content.substring(0, 100)}...`);
+      });
+      
+      res.json({
+        success: true,
+        restored_count: result.rows.length,
+        restored_questions: result.rows
+      });
+    } catch (error) {
+      console.error('Error restoring hidden questions:', error);
+      res.status(500).json({ error: 'Failed to restore hidden questions' });
+    }
+  });
+
   app.get('/api/health', async (req, res) => {
     try {
       // Test database connection
