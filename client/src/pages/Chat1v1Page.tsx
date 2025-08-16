@@ -112,8 +112,7 @@ export default function ChatPage() {
   const { data: connection, isLoading: connectionLoading } = useQuery<ChatConnection>({
     queryKey: ['/api/chat/connection', connectionId],
     queryFn: async () => {
-      const response = await fetch(`/api/chat/connection/${connectionId}`);
-      if (!response.ok) throw new Error('Failed to fetch connection');
+      const response = await apiRequest(`/api/chat/connection/${connectionId}`, 'GET');
       return response.json();
     },
     enabled: !!connectionId,
@@ -123,8 +122,7 @@ export default function ChatPage() {
   const { data: messages = [], isLoading: messagesLoading } = useQuery<ChatMessage[]>({
     queryKey: ['/api/chat/messages', connectionId],
     queryFn: async () => {
-      const response = await fetch(`/api/chat/messages/${connectionId}`);
-      if (!response.ok) throw new Error('Failed to fetch messages');
+      const response = await apiRequest(`/api/chat/messages/${connectionId}`, 'GET');
       return response.json();
     },
     enabled: !!connectionId,
