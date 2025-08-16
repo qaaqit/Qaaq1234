@@ -4879,7 +4879,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: 'Authentication required' });
       }
 
-      console.log('Profile update request for user:', userId, 'Data:', req.body);
+      console.log('🔄 Profile update request for user:', userId);
+      console.log('🔄 Profile update request data:', req.body);
 
       // Only use fields that exist in QAAQ parent database
       const allowedFields = {
@@ -4897,14 +4898,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         Object.entries(allowedFields).filter(([_, value]) => value !== undefined)
       );
 
+      console.log('🔄 Filtered update data:', updateData);
+
       if (Object.keys(updateData).length === 0) {
         return res.status(400).json({ error: 'No valid fields to update' });
       }
 
+      console.log('📝 Calling storage.updateUserProfile for user:', userId);
       const updatedUser = await storage.updateUserProfile(userId, updateData);
+      console.log('📝 Storage.updateUserProfile result:', updatedUser ? 'SUCCESS' : 'FAILED/NULL');
       
       if (!updatedUser) {
-        return res.status(404).json({ error: 'User not found' });
+        console.log('❌ Profile update failed: User not found or update failed');
+        return res.status(404).json({ error: 'User not found or update failed' });
       }
 
       res.json(updatedUser);
