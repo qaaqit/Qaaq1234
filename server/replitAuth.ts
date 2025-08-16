@@ -63,11 +63,11 @@ export function getSession() {
     secret: process.env.SESSION_SECRET!,
     store: sessionStore,
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true, // Changed to true to ensure session is created
     rolling: true,
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: false, // Force false for development
       maxAge: sessionTtl,
       sameSite: 'lax'
     },
@@ -113,15 +113,21 @@ export async function setupAuth(app: Express) {
   ) => {
     try {
       console.log('✅ Replit Auth: Token verification started');
-      const user = {};
+      const user: any = {
+        id: tokens.claims()?.sub
+      };
       updateUserSession(user, tokens);
       console.log('✅ Replit Auth: User session updated');
       
       const dbUser = await upsertUser(tokens.claims());
       console.log('✅ Replit Auth: User upserted to database:', dbUser.fullName);
       
+      // Store user info for session persistence
+      user.dbUser = dbUser;
+      user.userId = dbUser.id;
+      
       verified(null, user);
-      console.log('✅ Replit Auth: Verification completed successfully');
+      console.log('✅ Replit Auth: Verification completed successfully for user:', user.userId);
     } catch (error) {
       console.error('❌ Replit Auth: Verification failed:', error);
       verified(error as Error);
@@ -142,8 +148,23 @@ export async function setupAuth(app: Express) {
     passport.use(strategy);
   }
 
-  passport.serializeUser((user: Express.User, cb) => cb(null, user));
-  passport.deserializeUser((user: Express.User, cb) => cb(null, user));
+  passport.serializeUser((user: any, cb) => {
+    console.log('🔄 Serializing user for session:', user?.userId || user?.id);
+    cb(null, {
+      id: user.id,
+      userId: user.userId,
+      claims: user.claims,
+      access_token: user.access_token,
+      refresh_token: user.refresh_token,
+      expires_at: user.expires_at,
+      dbUser: user.dbUser
+    });
+  });
+  
+  passport.deserializeUser((sessionData: any, cb) => {
+    console.log('🔄 Deserializing user from session:', sessionData?.userId || sessionData?.id);
+    cb(null, sessionData);
+  });
 
   app.get("/api/login", (req, res, next) => {
     console.log('🔐 Replit Auth: Login initiated for hostname:', req.hostname);

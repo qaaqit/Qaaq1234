@@ -287,8 +287,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       let userId = null;
       let authMethod = 'none';
+      let userData = null;
       
-      console.log('🔍 Dual auth check - Session:', !!req.session, 'Auth header:', !!req.headers.authorization);
+      console.log('🔍 Dual auth check - Session authenticated:', !!req.isAuthenticated?.(), 'Auth header:', !!req.headers.authorization);
+      console.log('🔍 Session user data:', req.user?.userId || req.user?.claims?.sub || 'None');
       
       // First check for QAAQ JWT token
       const authHeader = req.headers.authorization;
@@ -307,9 +309,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Then check for Replit Auth session (if available)
       if (!userId && req.isAuthenticated && req.isAuthenticated()) {
-        userId = req.user?.claims?.sub;
+        // Try multiple ways to get user ID from session
+        userId = req.user?.userId || req.user?.claims?.sub || req.user?.dbUser?.id;
+        userData = req.user?.dbUser; // Use cached user data if available
         authMethod = 'replit';
         console.log('🔑 Using Replit session auth for user:', userId);
+        console.log('🔑 Replit session data:', {
+          hasUserId: !!req.user?.userId,
+          hasClaimsub: !!req.user?.claims?.sub,
+          hasDbUser: !!req.user?.dbUser
+        });
       }
       
       if (!userId) {
@@ -317,8 +326,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: 'No valid authentication found' });
       }
       
-      console.log(`🔍 Looking for user with ${authMethod} auth - ID:`, userId);
-      const user = await storage.getUser(userId);
+      // Use cached user data if available (for Replit sessions)
+      let user = userData;
+      if (!user) {
+        console.log(`🔍 Looking for user with ${authMethod} auth - ID:`, userId);
+        user = await storage.getUser(userId);
+      }
       
       if (!user) {
         console.log('❌ User not found in database:', userId);
