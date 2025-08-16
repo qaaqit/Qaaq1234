@@ -35,7 +35,7 @@ import { FeedbackService } from "./feedback-service";
 import { WatiBotService } from "./wati-bot-service";
 
 // Import new unified authentication system
-import { sessionBridge, bridgedAuth } from "./session-bridge";
+import { sessionBridge, bridgedAuth, requireBridgedAuth } from "./session-bridge";
 import { identityResolver } from "./identity-resolver";
 import { identityConsolidation } from "./identity-consolidation";
 
@@ -957,9 +957,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get current user profile (authenticated)
-  app.get("/api/user/profile", authenticateToken, async (req, res) => {
+  app.get("/api/user/profile", requireBridgedAuth, async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = req.currentUser?.id || req.userId;
       
       const user = await storage.getUserById(userId);
       if (!user) {
@@ -2056,10 +2056,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // QBOT Chat API endpoint - Implementing 13 Commandments
-  app.post("/api/qbot/message", authenticateToken, async (req: any, res) => {
+  app.post("/api/qbot/message", requireBridgedAuth, async (req: any, res) => {
     try {
       const { message, attachments, image, isPrivate } = req.body;
-      const userId = req.userId;
+      const userId = req.currentUser?.id || req.userId;
 
       if (!message || !message.trim()) {
         return res.status(400).json({ message: "Message is required" });
@@ -5630,10 +5630,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===================== RANK GROUPS API =====================
 
   // Confirm maritime rank for user
-  app.post('/api/user/confirm-maritime-rank', authenticateToken, async (req: any, res) => {
+  app.post('/api/user/confirm-maritime-rank', requireBridgedAuth, async (req: any, res) => {
     try {
       const { maritimeRank } = req.body;
-      const userId = req.userId;
+      const userId = req.currentUser?.id || req.userId;
       
       if (!maritimeRank) {
         return res.status(400).json({ error: 'Maritime rank is required' });
