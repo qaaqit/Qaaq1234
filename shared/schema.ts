@@ -35,6 +35,7 @@ export const users = pgTable("users", {
   maritimeRank: text("maritime_rank"), // Detailed maritime rank from QAAQ
   shipName: text("ship_name"), // Current ship name
   currentShipName: text("current_ship_name"), // QAAQ field
+  currentLastShip: text("current_lastShip"), // Current or last ship name
   imoNumber: text("imo_number"), // International Maritime Organization number
   currentShipIMO: text("current_ship_imo"), // QAAQ field
   port: text("port"), // Current or next port
@@ -447,6 +448,7 @@ export const updateProfileSchema = createInsertSchema(users).omit({
   maritimeRank: z.string().optional(),
   experienceLevel: z.enum(["Fresher", "Junior", "Senior", "Expert"]).optional(),
   currentShipName: z.string().optional(),
+  currentLastShip: z.string().optional(),
   currentShipIMO: z.string().optional(),
   lastCompany: z.string().optional(),
   lastShip: z.string().optional(),

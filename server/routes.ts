@@ -4891,7 +4891,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fullName: req.body.fullName,           // Maps to full_name
         email: req.body.email,                 // Maps to email
         maritimeRank: req.body.rank,           // Maps to maritime_rank
-        currentShipName: req.body.shipName,    // Maps to current_ship_name
+        currentLastShip: req.body.shipName,    // Maps to current_lastShip
         currentShipIMO: req.body.imoNumber,    // Maps to current_ship_imo
         city: req.body.city,                   // Maps to current_city
         country: req.body.country,             // Maps to current_country

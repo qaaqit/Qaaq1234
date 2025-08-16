@@ -45,7 +45,7 @@ const profileUpdateSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(1, "Password is required"),     // Password field
   rank: z.string().optional(),         // Will map to maritime_rank
-  shipName: z.string().optional(),     // Will map to current_ship_name  
+  shipName: z.string().optional(),     // Will map to current_lastShip  
   imoNumber: z.string().optional(),    // Will map to current_ship_imo
   city: z.string().optional(),         // Will map to current_city
   country: z.string().optional(),      // Will map to current_country
@@ -74,7 +74,7 @@ export default function Profile() {
       email: profile.email || '',
       password: profile.password || '',
       rank: profile.rank || '',
-      shipName: profile.shipName || '',
+      shipName: profile.currentLastShip || '',
       imoNumber: profile.imoNumber || '',
       city: profile.city || '',
       country: profile.country || '',
@@ -340,7 +340,7 @@ export default function Profile() {
                       <FormItem>
                         <FormLabel>Current/ Last Ship Name</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="MV Ocean Star" disabled={!isEditing} />
+                          <Input {...field} placeholder="Enter ship name (e.g. MV Ocean Star)" disabled={!isEditing} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
