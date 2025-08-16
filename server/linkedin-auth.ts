@@ -56,7 +56,8 @@ interface LinkedInEmailInfo {
 // Generate LinkedIn OAuth URL
 export function getLinkedInAuthUrl(): string {
   if (!LINKEDIN_CLIENT_ID) {
-    throw new Error('LINKEDIN_CLIENT_ID environment variable is required');
+    console.warn('⚠️ LINKEDIN_CLIENT_ID not configured - LinkedIn auth disabled');
+    throw new Error('LinkedIn authentication not configured');
   }
 
   const currentRedirectUri = getLinkedInRedirectUri();
@@ -230,11 +231,16 @@ export function setupLinkedInAuth(app: Express) {
   // Initiate LinkedIn OAuth
   app.get('/api/auth/linkedin', (req: Request, res: Response) => {
     try {
+      if (!LINKEDIN_CLIENT_ID) {
+        console.warn('⚠️ LinkedIn authentication not configured - redirecting to login');
+        return res.redirect('/login?error=linkedin_not_configured');
+      }
+      
       const authUrl = getLinkedInAuthUrl();
       res.redirect(authUrl);
     } catch (error) {
       console.error('Error initiating LinkedIn auth:', error);
-      res.status(500).json({ error: 'Failed to initiate LinkedIn authentication' });
+      res.redirect('/login?error=linkedin_auth_failed');
     }
   });
 
@@ -262,8 +268,8 @@ export function setupLinkedInAuth(app: Express) {
       ]);
       
       // Extract profile picture URL if available
-      let profilePictureUrl;
-      if (linkedInUser.profilePicture?.['displayImage~']?.elements?.length > 0) {
+      let profilePictureUrl: string | undefined;
+      if (linkedInUser.profilePicture?.['displayImage~']?.elements?.length && linkedInUser.profilePicture['displayImage~'].elements.length > 0) {
         const elements = linkedInUser.profilePicture['displayImage~'].elements;
         profilePictureUrl = elements[0]?.identifiers?.[0]?.identifier;
       }
