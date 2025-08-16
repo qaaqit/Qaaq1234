@@ -75,10 +75,11 @@ export class IdentityResolver {
   /**
    * Ensure user exists in unified identity system
    * Auto-creates identity records for users found via legacy methods
+   * Gracefully handles missing unified identity tables in shared databases
    */
   async ensureUserHasUnifiedIdentity(user: User, provider: string, providerId: string): Promise<void> {
     try {
-      // Check if identity already exists
+      // Skip unified identity operations if tables don't exist (shared database scenario)
       const existingIdentity = await storage.getUserByProviderId(provider, providerId);
       if (existingIdentity && existingIdentity.id === user.id) {
         console.log(`✅ User ${user.id} already has ${provider} identity`);
@@ -98,6 +99,11 @@ export class IdentityResolver {
       });
 
     } catch (error) {
+      // Gracefully handle missing unified identity tables
+      if (error.code === '42P01') {
+        console.log(`ℹ️ Unified identity table not available - using legacy auth mode`);
+        return;
+      }
       console.error(`Error ensuring unified identity:`, error);
     }
   }

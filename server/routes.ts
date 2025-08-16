@@ -111,10 +111,6 @@ const generateVerificationCode = (): string => {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
-  // CRITICAL: Add session bridge middleware BEFORE all routes
-  // This fixes the session-authentication disconnect issue
-  app.use(sessionBridge);
-  
   // Health check endpoints for deployment monitoring
   app.get('/health', (req, res) => {
     res.status(200).json({ 
@@ -321,6 +317,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { setupAuth, isAuthenticated } = await import('./replitAuth.js');
       await setupAuth(app);
+      
+      // CRITICAL: Add session bridge middleware AFTER passport is set up
+      // This ensures req.user is populated before the bridge runs
+      console.log('🌉 Installing session bridge middleware after passport setup');
+      app.use(sessionBridge);
 
       // Hide/unhide glossary definition (admin only) - using Replit Auth
       app.post('/api/glossary/hide/:id', isAuthenticated, async (req: any, res) => {

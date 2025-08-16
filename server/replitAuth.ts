@@ -187,6 +187,14 @@ export async function setupAuth(app: Express) {
   
   passport.deserializeUser((sessionData: any, cb) => {
     console.log('🔄 Deserializing user from session:', sessionData?.userId || sessionData?.id);
+    console.log('🔄 Full session data structure:', {
+      hasUserId: !!sessionData?.userId,
+      hasId: !!sessionData?.id,
+      hasClaims: !!sessionData?.claims,
+      hasDbUser: !!sessionData?.dbUser,
+      claimsKeys: sessionData?.claims ? Object.keys(sessionData.claims) : [],
+      topLevelKeys: sessionData ? Object.keys(sessionData) : []
+    });
     cb(null, sessionData);
   });
 

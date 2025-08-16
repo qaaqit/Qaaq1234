@@ -32,26 +32,55 @@ export const sessionBridge = async (req: Request, res: Response, next: NextFunct
     let user: User | null = null;
     let method: 'replit' | 'jwt' | 'whatsapp' = 'replit';
 
-    // Check 1: Replit session data
-    if (req.user && (req.user as any).claims?.sub) {
-      const userId = (req.user as any).claims.sub;
-      console.log('🌉 SESSION BRIDGE: Found Replit session data:', userId);
+    // Check 1: Replit session data - handle multiple session formats
+    let sessionUserId = null;
+    
+    if (req.user) {
+      // Try different ways to extract user ID from session
+      sessionUserId = (req.user as any).claims?.sub || 
+                      (req.user as any).userId || 
+                      (req.user as any).id || 
+                      (req.user as any).dbUser?.id;
       
-      user = await identityResolver.resolveUserByAnyMethod(userId, 'replit');
+      console.log('🌉 SESSION BRIDGE: Checking session data:', {
+        hasClaims: !!(req.user as any).claims,
+        hasUserId: !!(req.user as any).userId,
+        hasId: !!(req.user as any).id,
+        hasDbUser: !!(req.user as any).dbUser,
+        extractedId: sessionUserId
+      });
+    }
+    
+    if (sessionUserId) {
+      console.log('🌉 SESSION BRIDGE: Found session user ID:', sessionUserId);
+      
+      user = await identityResolver.resolveUserByAnyMethod(sessionUserId, 'replit');
       if (user) {
         method = 'replit';
-        console.log('✅ SESSION BRIDGE: Resolved Replit user:', user.fullName);
+        console.log('✅ SESSION BRIDGE: Resolved session user:', user.fullName);
         
         // Ensure user has unified identity
-        await identityResolver.ensureUserHasUnifiedIdentity(user, 'replit', userId);
+        await identityResolver.ensureUserHasUnifiedIdentity(user, 'replit', sessionUserId);
+      } else {
+        console.log('❌ SESSION BRIDGE: Session user ID found but user not in database:', sessionUserId);
       }
     }
 
-    // Check 2: If Replit session exists but no user found, force re-authentication
-    if (req.user && !user) {
-      console.log('⚠️ SESSION BRIDGE: Session exists but user not found - clearing session');
-      req.logout(() => {});
-      req.session?.destroy(() => {});
+    // Check 2: If session exists but no user found, try to find user by any method
+    if (req.user && !user && sessionUserId) {
+      console.log('🔍 SESSION BRIDGE: Session exists but user not found, trying comprehensive lookup');
+      
+      // Try to find user by the session ID using any method
+      user = await identityResolver.resolveUserByAnyMethod(sessionUserId);
+      
+      if (user) {
+        method = 'replit';
+        console.log('✅ SESSION BRIDGE: Found user via comprehensive lookup:', user.fullName);
+      } else {
+        console.log('⚠️ SESSION BRIDGE: Session exists but user not found anywhere - clearing session');
+        req.logout(() => {});
+        req.session?.destroy(() => {});
+      }
     }
 
     // Check 3: JWT token authentication
