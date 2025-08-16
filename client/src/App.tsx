@@ -33,7 +33,9 @@ import { GlossaryPage } from "@/pages/glossary";
 import NotFound from "@/pages/not-found";
 import BottomNav from "@/components/bottom-nav";
 import { PasswordCreationModal } from "@/components/PasswordCreationModal";
+import { MaritimeRankConfirmationModal } from "@/components/MaritimeRankConfirmationModal";
 import { usePasswordCheck } from "@/hooks/usePasswordCheck";
+import { useMaritimeRankConfirmation } from "@/hooks/useMaritimeRankConfirmation";
 import { getStoredToken, getStoredUser, type User } from "@/lib/auth";
 
 function Router() {
@@ -42,6 +44,9 @@ function Router() {
   
   // Check password requirements for logged-in users
   const { showPasswordModal, isRenewal, closeModal } = usePasswordCheck(user?.id);
+  
+  // Check maritime rank confirmation requirements
+  const { needsConfirmation: needsRankConfirmation, handleRankConfirmed } = useMaritimeRankConfirmation();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -182,6 +187,16 @@ function Router() {
           onClose={closeModal}
           userId={user.id}
           isRenewal={isRenewal}
+        />
+      )}
+      
+      {/* Maritime Rank Confirmation Modal */}
+      {needsRankConfirmation && user && (
+        <MaritimeRankConfirmationModal
+          isOpen={needsRankConfirmation}
+          userId={user.id}
+          currentRank={user.maritimeRank}
+          onConfirm={handleRankConfirmed}
         />
       )}
     </div>

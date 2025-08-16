@@ -158,6 +158,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   } catch (err) {
     console.log('⚠️ Email verification table creation failed:', err.message);
   }
+
+  // Add has_confirmed_maritime_rank column if it doesn't exist
+  try {
+    await pool.query(`
+      ALTER TABLE users 
+      ADD COLUMN IF NOT EXISTS has_confirmed_maritime_rank BOOLEAN DEFAULT false
+    `);
+    console.log('✅ Maritime rank confirmation column ready');
+  } catch (err) {
+    console.log('⚠️ Maritime rank confirmation column creation failed:', err.message);
+  }
   
   // Setup merge routes for robust authentication
   setupMergeRoutes(app);
@@ -5534,6 +5545,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ===================== RANK GROUPS API =====================
+
+  // Confirm maritime rank for user
+  app.post('/api/user/confirm-maritime-rank', authenticateToken, async (req: any, res) => {
+    try {
+      const { maritimeRank } = req.body;
+      const userId = req.userId;
+      
+      if (!maritimeRank) {
+        return res.status(400).json({ error: 'Maritime rank is required' });
+      }
+      
+      console.log(`🔄 Confirming maritime rank for user ${userId}: ${maritimeRank}`);
+      
+      // Update user's maritime rank in database
+      await pool.query(`
+        UPDATE users 
+        SET maritime_rank = $1, 
+            rank = $1,
+            last_updated = NOW(),
+            has_confirmed_maritime_rank = true
+        WHERE id = $2
+      `, [maritimeRank, userId]);
+      
+      console.log(`✅ Maritime rank confirmed for user ${userId}: ${maritimeRank}`);
+      
+      res.json({ 
+        success: true, 
+        message: 'Maritime rank confirmed successfully',
+        maritimeRank 
+      });
+    } catch (error) {
+      console.error('❌ Error confirming maritime rank:', error);
+      res.status(500).json({ error: 'Failed to confirm maritime rank' });
+    }
+  });
 
   // Test endpoint to examine maritime ranks for debugging
   app.get('/api/admin/maritime-ranks-debug', authenticateToken, isAdmin, async (req: any, res) => {

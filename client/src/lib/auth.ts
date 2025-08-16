@@ -9,6 +9,10 @@ export interface User {
   nickname?: string;
   isVerified: boolean;
   loginCount: number;
+  maritimeRank?: string;
+  rank?: string;
+  company?: string;
+  profilePictureUrl?: string;
 }
 
 export interface AuthResponse {
