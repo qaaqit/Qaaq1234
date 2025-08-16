@@ -1142,9 +1142,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get current user profile
-  app.get("/api/profile", authenticateToken, async (req, res) => {
+  app.get("/api/profile", requireBridgedAuth, async (req, res) => {
     try {
-      const user = await storage.getUser(req.userId!);
+      const userId = req.currentUser?.id || req.userId;
+      const user = await storage.getUser(userId!);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -4485,9 +4486,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get user profile by ID endpoint
-  app.get('/api/users/profile/:userId', authenticateToken, async (req, res) => {
+  app.get('/api/users/profile/:userId', requireBridgedAuth, async (req, res) => {
     try {
       const { userId } = req.params;
+      const currentUserId = req.currentUser?.id || req.userId;
       console.log(`Fetching profile for user: ${userId}`);
 
       // Query user from PostgreSQL database
@@ -4677,9 +4679,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get user profile with questions
-  app.get('/api/users/:userId/profile', authenticateToken, async (req, res) => {
+  app.get('/api/users/:userId/profile', requireBridgedAuth, async (req, res) => {
     try {
       const { userId } = req.params;
+      const currentUserId = req.currentUser?.id || req.userId;
       console.log(`Looking for user profile with ID: ${userId}`);
       
       const users = await storage.getUsersWithLocation();
