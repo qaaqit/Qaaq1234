@@ -208,7 +208,6 @@ export default function Profile() {
           </div>
         </div>
       </div>
-
       <div className="max-w-4xl mx-auto px-4 py-8">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -339,7 +338,7 @@ export default function Profile() {
                     name="shipName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Current Ship Name</FormLabel>
+                        <FormLabel>Current/ Last Ship Name</FormLabel>
                         <FormControl>
                           <Input {...field} placeholder="MV Ocean Star" disabled={!isEditing} />
                         </FormControl>
