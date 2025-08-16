@@ -62,42 +62,44 @@ function Router() {
       
       // Then check for Replit Auth session
       try {
-        // Get JWT token from localStorage for QAAQ authentication
-        const token = localStorage.getItem('auth_token');
-        const headers: Record<string, string> = {
-          'Content-Type': 'application/json',
-        };
-        
-        if (token) {
-          headers.Authorization = `Bearer ${token}`;
-        }
+        console.log('🔍 Checking Replit Auth session...');
         
         const response = await fetch('/api/auth/user', {
           credentials: 'include', // Important for session cookies
-          headers,
+          headers: {
+            'Content-Type': 'application/json',
+          },
         });
         
+        console.log('🔍 Auth check response status:', response.status);
+        
         if (response.ok) {
-          const replitUser = await response.json();
-          if (replitUser) {
-            // Convert Replit user to our User format
+          const userData = await response.json();
+          console.log('✅ Auth check successful:', userData.fullName);
+          
+          if (userData) {
+            // Convert to our User format
             const user: User = {
-              id: replitUser.id,
-              fullName: replitUser.fullName || replitUser.email,
-              email: replitUser.email,
-              userType: replitUser.userType || 'sailor',
-              isAdmin: replitUser.isAdmin || false,
-              nickname: replitUser.nickname,
-              isVerified: true, // Replit users are always verified
-              loginCount: replitUser.loginCount || 0
+              id: userData.id,
+              fullName: userData.fullName || userData.email || 'User',
+              email: userData.email,
+              userType: userData.userType || 'sailor',
+              isAdmin: userData.isAdmin || false,
+              nickname: userData.nickname,
+              isVerified: true, // Authenticated users are verified
+              loginCount: userData.loginCount || 0,
+              maritimeRank: userData.maritimeRank
             };
+            
             setUser(user);
             setLoading(false);
             return;
           }
+        } else {
+          console.log('❌ Auth check failed with status:', response.status);
         }
       } catch (error) {
-        console.log('No Replit Auth session found');
+        console.log('❌ Auth check error:', error);
       }
       
       setLoading(false);
@@ -144,13 +146,22 @@ function Router() {
     <div className="min-h-screen bg-slate-50">
       <div className={currentUser ? "pb-16" : ""}>
         <Switch>
-          <Route path="/" component={() => currentUser ? <QBOTPage user={currentUser} /> : <Login onSuccess={setUser} />} />
+          <Route path="/" component={() => {
+            console.log('🏠 Root route - Current user:', currentUser ? currentUser.fullName : 'None');
+            return currentUser ? <QBOTPage user={currentUser} /> : <Login onSuccess={setUser} />;
+          }} />
           <Route path="/login" component={() => <Login onSuccess={setUser} />} />
           <Route path="/register" component={() => <Register onSuccess={setUser} />} />
           <Route path="/verify" component={() => <Verify onSuccess={setUser} />} />
           <Route path="/oauth-callback" component={() => <OAuthCallback />} />
           <Route path="/discover" component={() => currentUser ? <Discover user={currentUser} /> : <Login onSuccess={setUser} />} />
-          <Route path="/qbot" component={() => currentUser ? <QBOTPage user={currentUser} /> : <Login onSuccess={setUser} />} />
+          <Route path="/qbot" component={() => {
+            console.log('🤖 QBOT route - Current user:', currentUser ? currentUser.fullName : 'None');
+            if (!currentUser && !loading) {
+              console.log('❌ QBOT route - No user found, redirecting to login');
+            }
+            return currentUser ? <QBOTPage user={currentUser} /> : <Login onSuccess={setUser} />;
+          }} />
           <Route path="/post" component={() => currentUser ? <Post user={currentUser} /> : <Login onSuccess={setUser} />} />
 
           <Route path="/chat/:connectionId" component={() => <Chat1v1Page />} />

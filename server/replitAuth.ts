@@ -39,7 +39,6 @@ export function getSession() {
   
   // Test the connection immediately
   try {
-    sessionStore.query = sessionStore.query || function() {};
     console.log('🔍 Session store: Testing database connection...');
   } catch (error) {
     console.error('❌ Session store: Failed to initialize:', error);
@@ -158,9 +157,26 @@ export async function setupAuth(app: Express) {
     console.log('🔄 Replit Auth: Callback received for hostname:', req.hostname);
     console.log('🔄 Replit Auth: Callback query params:', req.query);
     
-    passport.authenticate(`replitauth:${req.hostname}`, {
-      successRedirect: "/qbot",
-      failureRedirect: "/login?error=auth_failed",
+    passport.authenticate(`replitauth:${req.hostname}`, (err, user, info) => {
+      if (err) {
+        console.error('❌ Replit Auth: Authentication error:', err);
+        return res.redirect('/login?error=auth_failed');
+      }
+      
+      if (!user) {
+        console.error('❌ Replit Auth: No user returned:', info);
+        return res.redirect('/login?error=no_user');
+      }
+      
+      req.logIn(user, (loginErr) => {
+        if (loginErr) {
+          console.error('❌ Replit Auth: Login error:', loginErr);
+          return res.redirect('/login?error=login_failed');
+        }
+        
+        console.log('✅ Replit Auth: Login successful, redirecting to /qbot');
+        res.redirect('/qbot');
+      });
     })(req, res, next);
   });
 
