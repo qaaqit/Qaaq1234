@@ -253,17 +253,7 @@ export const emailVerificationTokens = pgTable("email_verification_tokens", {
 
 
 
-// Relations
-export const usersRelations = relations(users, ({ many }) => ({
-  posts: many(posts),
-  likes: many(likes),
-  verificationCodes: many(verificationCodes),
-  sentConnections: many(chatConnections, { relationName: 'sentConnections' }),
-  receivedConnections: many(chatConnections, { relationName: 'receivedConnections' }),
-  sentMessages: many(chatMessages, { relationName: 'sentMessages' }),
-  rankGroupMemberships: many(rankGroupMembers),
-  rankGroupMessages: many(rankGroupMessages),
-}));
+// Relations - Note: usersRelations defined later with identity support
 
 export const postsRelations = relations(posts, ({ one, many }) => ({
   user: one(users, {

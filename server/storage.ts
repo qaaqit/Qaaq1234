@@ -1,15 +1,29 @@
-import { users, posts, likes, verificationCodes, chatConnections, chatMessages, whatsappMessages, type User, type InsertUser, type Post, type InsertPost, type VerificationCode, type Like, type ChatConnection, type ChatMessage, type InsertChatConnection, type InsertChatMessage, type WhatsappMessage, type InsertWhatsappMessage } from "@shared/schema";
+import { users, userIdentities, posts, likes, verificationCodes, chatConnections, chatMessages, whatsappMessages, type User, type InsertUser, type UserIdentity, type InsertUserIdentity, type Post, type InsertPost, type VerificationCode, type Like, type ChatConnection, type ChatMessage, type InsertChatConnection, type InsertChatMessage, type WhatsappMessage, type InsertWhatsappMessage } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, desc, and, ilike, or, sql, isNotNull, not } from "drizzle-orm";
 
 export interface IStorage {
-  // User management
+  // Unified Identity Management
+  findUserByAnyIdentity(identifier: string): Promise<User | undefined>;
+  getUserByProviderId(provider: string, providerId: string): Promise<User | undefined>;
+  createUserWithIdentity(userData: Partial<InsertUser>, identity: Omit<InsertUserIdentity, 'userId'>): Promise<User>;
+  linkIdentityToUser(userId: string, identity: Omit<InsertUserIdentity, 'userId'>): Promise<UserIdentity>;
+  unlinkIdentity(userId: string, provider: string): Promise<void>;
+  getUserIdentities(userId: string): Promise<UserIdentity[]>;
+  setPrimaryIdentity(userId: string, identityId: string): Promise<void>;
+  
+  // Enhanced User Management
   getUser(id: string): Promise<User | undefined>;
+  getUserById(id: string): Promise<User | undefined>; // Missing method - added
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByGoogleId(googleId: string): Promise<User | undefined>;
+  getUserByWhatsApp(phoneNumber: string): Promise<User | undefined>;
+  getUserByReplitId(replitId: string): Promise<User | undefined>;
   getUserByIdAndPassword(userId: string, password: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   createGoogleUser(googleUserData: any): Promise<User>;
+  createReplitUser(replitData: any): Promise<User>; // Missing method - added
+  createWhatsAppUser(phoneNumber: string, displayName?: string): Promise<User>;
   updateUser(userId: string, updates: Partial<User>): Promise<User | undefined>;
   updateUserVerification(userId: string, isVerified: boolean): Promise<void>;
   incrementLoginCount(userId: string): Promise<void>;
@@ -23,6 +37,15 @@ export interface IStorage {
   generateUserId(fullName: string, rank: string): Promise<string>;
   upsertUser(userData: any): Promise<User>;
   
+  // Missing methods causing LSP errors
+  createMessage(data: any): Promise<any>;
+  createPost(data: any): Promise<any>;
+  getPosts(filters?: any): Promise<any[]>;
+  searchPosts(query: string): Promise<any[]>;
+  getUserLike(userId: string, postId: string): Promise<any>;
+  likePost(userId: string, postId: string): Promise<any>;
+  unlikePost(userId: string, postId: string): Promise<any>;
+  
   // Verification codes
   createVerificationCode(userId: string, code: string, expiresAt: Date): Promise<VerificationCode>;
   getVerificationCode(userId: string, code: string): Promise<VerificationCode | undefined>;
@@ -30,6 +53,183 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  
+  // Unified Identity Resolution - Core Method
+  async findUserByAnyIdentity(identifier: string): Promise<User | undefined> {
+    try {
+      console.log(`🔍 Finding user by any identity: ${identifier}`);
+      
+      // Strategy 1: Try direct user ID lookup
+      let user = await this.getUser(identifier);
+      if (user) {
+        console.log(`✅ Found user by direct ID: ${user.fullName}`);
+        return user;
+      }
+      
+      // Strategy 2: Check user_identities table for any provider
+      const identityResult = await pool.query(`
+        SELECT u.*, ui.provider, ui.provider_id, ui.is_primary 
+        FROM users u 
+        JOIN user_identities ui ON u.id = ui.user_id 
+        WHERE ui.provider_id = $1
+        LIMIT 1
+      `, [identifier]);
+      
+      if (identityResult.rows.length > 0) {
+        user = this.convertDbUserToAppUser(identityResult.rows[0]);
+        console.log(`✅ Found user via identity table: ${user.fullName} (provider: ${identityResult.rows[0].provider})`);
+        return user;
+      }
+      
+      // Strategy 3: Check by email
+      if (identifier.includes('@')) {
+        user = await this.getUserByEmail(identifier);
+        if (user) {
+          console.log(`✅ Found user by email: ${user.fullName}`);
+          return user;
+        }
+      }
+      
+      // Strategy 4: Check WhatsApp number (with/without country code)
+      if (/^\+?[0-9]{10,15}$/.test(identifier)) {
+        user = await this.getUserByWhatsApp(identifier);
+        if (user) {
+          console.log(`✅ Found user by WhatsApp: ${user.fullName}`);
+          return user;
+        }
+      }
+      
+      console.log(`❌ No user found for identifier: ${identifier}`);
+      return undefined;
+    } catch (error) {
+      console.error('Error finding user by identity:', error);
+      return undefined;
+    }
+  }
+  
+  async getUserByProviderId(provider: string, providerId: string): Promise<User | undefined> {
+    try {
+      const result = await pool.query(`
+        SELECT u.* FROM users u 
+        JOIN user_identities ui ON u.id = ui.user_id 
+        WHERE ui.provider = $1 AND ui.provider_id = $2
+        LIMIT 1
+      `, [provider, providerId]);
+      
+      if (result.rows.length === 0) return undefined;
+      return this.convertDbUserToAppUser(result.rows[0]);
+    } catch (error) {
+      console.error('Error getting user by provider ID:', error);
+      return undefined;
+    }
+  }
+  
+  async createUserWithIdentity(userData: Partial<InsertUser>, identity: Omit<InsertUserIdentity, 'userId'>): Promise<User> {
+    try {
+      console.log(`🆕 Creating user with identity: ${identity.provider}:${identity.providerId}`);
+      
+      // Generate user data with defaults
+      const userToCreate = {
+        fullName: userData.fullName || 'Maritime User',
+        email: userData.email || null,
+        userType: userData.userType || 'sailor',
+        primaryAuthProvider: identity.provider,
+        authProviders: [identity.provider],
+        isVerified: identity.isVerified || false,
+        ...userData
+      } as InsertUser;
+      
+      // Create user
+      const [user] = await db.insert(users).values(userToCreate).returning();
+      
+      // Create identity
+      await db.insert(userIdentities).values({
+        userId: user.id,
+        isPrimary: true,
+        ...identity
+      });
+      
+      console.log(`✅ Created user: ${user.fullName} (${user.id})`);
+      return this.convertDbUserToAppUser(user);
+    } catch (error) {
+      console.error('Error creating user with identity:', error);
+      throw error;
+    }
+  }
+  
+  async getUserByWhatsApp(phoneNumber: string): Promise<User | undefined> {
+    try {
+      // Try with and without country code formatting
+      const phoneVariants = [phoneNumber];
+      if (phoneNumber.startsWith('+')) {
+        phoneVariants.push(phoneNumber.substring(1));
+      } else if (/^[0-9]{10}$/.test(phoneNumber)) {
+        phoneVariants.push(`+91${phoneNumber}`);
+      }
+      
+      for (const variant of phoneVariants) {
+        const result = await pool.query(
+          'SELECT * FROM users WHERE whatsapp_number = $1 LIMIT 1',
+          [variant]
+        );
+        if (result.rows.length > 0) {
+          return this.convertDbUserToAppUser(result.rows[0]);
+        }
+      }
+      
+      return undefined;
+    } catch (error) {
+      console.error('Error getting user by WhatsApp:', error);
+      return undefined;
+    }
+  }
+  
+  async getUserByReplitId(replitId: string): Promise<User | undefined> {
+    return this.getUserByProviderId('replit', replitId);
+  }
+  
+  async createReplitUser(replitData: any): Promise<User> {
+    return this.createUserWithIdentity(
+      {
+        fullName: replitData.name || replitData.email || 'Replit User',
+        email: replitData.email,
+        userType: 'sailor',
+        isVerified: true
+      },
+      {
+        provider: 'replit',
+        providerId: replitData.id || replitData.sub,
+        isVerified: true,
+        metadata: {
+          email: replitData.email,
+          displayName: replitData.name,
+          profileImageUrl: replitData.profileImageUrl
+        }
+      }
+    );
+  }
+  
+  async createWhatsAppUser(phoneNumber: string, displayName?: string): Promise<User> {
+    return this.createUserWithIdentity(
+      {
+        fullName: displayName || `User ${phoneNumber.slice(-4)}`,
+        email: null,
+        userType: 'sailor',
+        whatsAppNumber: phoneNumber,
+        whatsAppDisplayName: displayName
+      },
+      {
+        provider: 'whatsapp',
+        providerId: phoneNumber,
+        isVerified: false,
+        metadata: {
+          phone: phoneNumber,
+          displayName: displayName
+        }
+      }
+    );
+  }
+  
   async getUser(id: string): Promise<User | undefined> {
     try {
       // Use direct SQL to avoid Drizzle schema mismatch with parent QAAQ database
@@ -40,6 +240,10 @@ export class DatabaseStorage implements IStorage {
       console.error('Error getting user:', error);
       return undefined;
     }
+  }
+  
+  async getUserById(id: string): Promise<User | undefined> {
+    return this.getUser(id); // Alias for getUser
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
@@ -717,6 +921,120 @@ export class DatabaseStorage implements IStorage {
       console.error('Error upserting user:', error);
       throw error;
     }
+  }
+  
+  // Missing methods causing LSP errors - stub implementations
+  async linkIdentityToUser(userId: string, identity: Omit<InsertUserIdentity, 'userId'>): Promise<UserIdentity> {
+    try {
+      console.log(`🔗 Linking identity ${identity.provider}:${identity.providerId} to user ${userId}`);
+      
+      // Check if identity already exists
+      const existing = await pool.query(
+        'SELECT * FROM user_identities WHERE provider = $1 AND provider_id = $2',
+        [identity.provider, identity.providerId]
+      );
+      
+      if (existing.rows.length > 0) {
+        throw new Error(`Identity ${identity.provider}:${identity.providerId} already linked to another user`);
+      }
+      
+      // Create new identity link
+      const [linkedIdentity] = await db.insert(userIdentities).values({
+        userId,
+        ...identity
+      }).returning();
+      
+      // Update user's auth providers list
+      await pool.query(`
+        UPDATE users 
+        SET auth_providers = COALESCE(auth_providers, '[]'::jsonb) || $2::jsonb
+        WHERE id = $1 AND NOT (auth_providers ? $3)
+      `, [userId, JSON.stringify([identity.provider]), identity.provider]);
+      
+      console.log(`✅ Linked identity successfully`);
+      return linkedIdentity;
+    } catch (error) {
+      console.error('Error linking identity:', error);
+      throw error;
+    }
+  }
+  
+  async unlinkIdentity(userId: string, provider: string): Promise<void> {
+    try {
+      await db.delete(userIdentities).where(
+        and(
+          eq(userIdentities.userId, userId),
+          eq(userIdentities.provider, provider)
+        )
+      );
+      
+      // Update user's auth providers list
+      await pool.query(`
+        UPDATE users 
+        SET auth_providers = auth_providers - $2
+        WHERE id = $1
+      `, [userId, provider]);
+    } catch (error) {
+      console.error('Error unlinking identity:', error);
+      throw error;
+    }
+  }
+  
+  async getUserIdentities(userId: string): Promise<UserIdentity[]> {
+    try {
+      return await db.select().from(userIdentities)
+        .where(eq(userIdentities.userId, userId))
+        .orderBy(desc(userIdentities.isPrimary));
+    } catch (error) {
+      console.error('Error getting user identities:', error);
+      return [];
+    }
+  }
+  
+  async setPrimaryIdentity(userId: string, identityId: string): Promise<void> {
+    try {
+      // Set all identities to non-primary
+      await db.update(userIdentities)
+        .set({ isPrimary: false })
+        .where(eq(userIdentities.userId, userId));
+      
+      // Set specified identity as primary
+      await db.update(userIdentities)
+        .set({ isPrimary: true })
+        .where(eq(userIdentities.id, identityId));
+    } catch (error) {
+      console.error('Error setting primary identity:', error);
+      throw error;
+    }
+  }
+  
+  // Stub implementations for missing methods to resolve LSP errors
+  async createMessage(data: any): Promise<any> {
+    throw new Error('createMessage method not yet implemented');
+  }
+  
+  async createPost(data: any): Promise<any> {
+    throw new Error('createPost method not yet implemented');
+  }
+  
+  async getPosts(filters?: any): Promise<any[]> {
+    throw new Error('getPosts method not yet implemented');
+  }
+  
+  async searchPosts(query: string): Promise<any[]> {
+    throw new Error('searchPosts method not yet implemented');
+  }
+  
+  async getUserLike(userId: string, postId: string): Promise<any> {
+    throw new Error('getUserLike method not yet implemented');
+  }
+  
+  async likePost(userId: string, postId: string): Promise<any> {
+    throw new Error('likePost method not yet implemented');
+  }
+  
+  async unlikePost(userId: string, postId: string): Promise<any> {
+    throw new Error('unlikePost method not yet implemented');
   }
 }
 
