@@ -81,15 +81,32 @@ export class IdentityResolver {
     try {
       console.log(`🔗 Ensuring ${provider} identity for user ${user.id} (legacy mode - shared database)`);
       
-      // In shared database mode, we can't create unified identity tables
-      // Instead, update legacy fields in users table based on provider
+      // Use the proper unified identity system now that table exists
+      const existingIdentity = await storage.getUserByProviderId(provider, providerId);
+      if (existingIdentity && existingIdentity.id === user.id) {
+        console.log(`✅ User ${user.id} already has ${provider} identity`);
+        return;
+      }
+
+      // Create missing identity in unified table
+      console.log(`🔗 Creating ${provider} identity for user ${user.id}`);
+      await storage.linkIdentityToUser(user.id, {
+        provider,
+        providerId,
+        isVerified: true,
+        metadata: {
+          autoCreated: true,
+          createdAt: new Date().toISOString()
+        }
+      });
       
+      console.log(`✅ Created ${provider} identity for user ${user.id}`);
+      
+      // Also update legacy fields for backward compatibility
       if (provider === 'replit' || provider === 'google') {
-        // Update googleId field for Replit/Google logins
         await storage.updateUser(user.id, {
           googleId: providerId,
-          authProvider: provider,
-          primaryAuthProvider: provider
+          authProvider: provider
         });
         console.log(`✅ Updated legacy ${provider} fields for user ${user.id}`);
       }
