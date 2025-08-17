@@ -20,6 +20,7 @@ import UserProfile from "@/pages/user-profile";
 import Profile from "@/pages/profile";
 import MyQuestions from "@/pages/my-questions";
 import QuestionPage from "@/pages/question";
+import QuestionBank from "@/pages/question-bank";
 import RankGroupsPage from "@/pages/rank-groups";
 import QBOTPage from "@/pages/qbot";
 import MergeAccountsPage from "@/pages/merge-accounts";
@@ -172,6 +173,7 @@ function Router() {
           <Route path="/user-profile/:userId" component={() => <UserProfile />} />
           <Route path="/profile" component={() => <Profile />} />
           <Route path="/my-questions" component={() => <MyQuestions />} />
+          <Route path="/question-bank" component={() => <QuestionBank />} />
           <Route path="/share/question/:id" component={() => <QuestionPage />} />
           <Route path="/questions/:id" component={() => <QuestionPage />} />
           <Route path="/rank-groups" component={() => <RankGroupsPage />} />

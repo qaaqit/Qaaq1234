@@ -251,7 +251,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                     <span className="text-gray-700 font-medium">Shipping Dictionary</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    onClick={() => setLocation("/my-questions")}
+                    onClick={() => setLocation("/question-bank")}
                     className="cursor-pointer flex items-center space-x-3 px-4 py-3 hover:bg-orange-50 transition-colors"
                     data-testid="menu-item-questions"
                   >
