@@ -159,7 +159,7 @@ export default function SemmEquipmentPage() {
               className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 transition-colors"
             >
               <Home className="h-4 w-4" />
-              <span>Home</span>
+              <span>Machine Tree</span>
             </button>
             <ChevronRight className="h-4 w-4 text-gray-400" />
             <button
