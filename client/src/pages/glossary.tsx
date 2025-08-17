@@ -246,9 +246,7 @@ export function GlossaryPage() {
                 </div>
               </button>
               <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">
-                  Shipping Dictionary
-                </h1>
+                <h1 className="text-xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">Dictionary</h1>
                 <p className="text-sm text-gray-600">Maritime Terms & Definitions</p>
               </div>
             </div>
@@ -262,7 +260,6 @@ export function GlossaryPage() {
           </div>
         </div>
       </header>
-
       {/* Main Content */}
       <div className="container mx-auto px-4 py-6">
         {/* Search Controls */}
