@@ -258,6 +258,14 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                     <i className="fas fa-question-circle text-orange-600 w-4"></i>
                     <span className="text-gray-700 font-medium">QuestionBank</span>
                   </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => setLocation("/machine-tree")}
+                    className="cursor-pointer flex items-center space-x-3 px-4 py-3 hover:bg-orange-50 transition-colors"
+                    data-testid="menu-item-machine-tree"
+                  >
+                    <i className="fas fa-sitemap text-orange-600 w-4"></i>
+                    <span className="text-gray-700 font-medium">Machine Tree</span>
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
               <div className="min-w-0">
