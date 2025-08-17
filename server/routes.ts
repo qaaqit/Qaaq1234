@@ -3794,12 +3794,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('⚠️ No equipment found in database - creating standard maritime equipment breadcrumbs');
       }
       
-      // Standard maritime equipment mapping for breadcrumb navigation
+      // Standard maritime equipment mapping based on screenshot requirements
       const standardEquipment = {
-        'a': ['Main Engine', 'Reduction Gearbox', 'Shaft System', 'Propeller', 'Thrust Bearing'],
-        'b': ['Generator', 'Emergency Generator', 'Shore Connection', 'Battery', 'Switchboard'],
-        'c': ['Aux Boiler', 'Exhaust Gas Boiler', 'Steam System', 'Burner', 'Feed Water System'],
-        'd': ['Main Air Compressor', 'Emergency Air Compressor', 'Starting Air System', 'Service Air', 'Air Receivers'],
+        'a': ['Main Engine', 'Stern Tube', 'Propeller', 'Bow Thruster', 'Shaft Generator'],
+        'b': ['Aux Engine', 'Turbocharger', 'Alternator', 'Switchboard', 'Emergency Generator'],
+        'c': ['Auxiliary Boiler', 'Burner', 'Composite Boiler', 'Exhaust Gas Boiler', 'Feed Water System', 'Inert Gas Generator'],
+        'd': ['Main Air Compressor', 'BA Compressor', 'Starting Air System', 'Service Air', 'Air Receivers'],
         'e': ['Fuel Oil Purifier', 'Lube Oil Purifier', 'Fuel Transfer System', 'Viscosity Meter', 'Filters'],
         'f': ['Fresh Water Generator', 'Hydrophore Tank', 'SW Cooling Pump', 'FW Pump', 'Expansion Tank'],
         'g': ['Engine Control System', 'Automation System', 'Fire Detection', 'Power Distribution', 'UPS'],
@@ -3834,7 +3834,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           systemEquipment = dbEquipment
             .filter((eq: any) => eq.parent_id === system.id)
             .map((eq: any, eqIndex: number) => {
-              const equipmentCode = `${code}.${String.fromCharCode(97 + eqIndex)}`;
+              const equipmentCode = `${code}${String.fromCharCode(97 + eqIndex)}`;
               return {
                 id: equipmentCode,
                 type: 'equipment',
@@ -3843,7 +3843,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 description: eq.description,
                 systemCode: code,
                 count: Math.floor(Math.random() * 20) + 5,
-                hasHeartIcon: true,
+                hasHeartIcon: false,
                 hasShareIcon: true,
                 hasChevron: true,
                 machines: []
@@ -3853,7 +3853,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Use standard equipment for breadcrumb navigation
           const standardEq = standardEquipment[code] || [];
           systemEquipment = standardEq.map((eqName: string, eqIndex: number) => {
-            const equipmentCode = `${code}.${String.fromCharCode(97 + eqIndex)}`;
+            // Generate equipment code like aa, ab, ac for 'a' system; ba, bb, bc for 'b' system
+            const equipmentCode = `${code}${String.fromCharCode(97 + eqIndex)}`;
             return {
               id: equipmentCode,
               type: 'equipment',
@@ -3862,7 +3863,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               description: `${eqName} for ${title} system`,
               systemCode: code,
               count: Math.floor(Math.random() * 15) + 3,
-              hasHeartIcon: true,
+              hasHeartIcon: false,
               hasShareIcon: true,
               hasChevron: true,
               machines: []
@@ -3877,7 +3878,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           title: title,
           description: system.description,
           count: systemEquipment.length,
-          hasHeartIcon: true,
+          hasHeartIcon: false,
           hasShareIcon: true,
           hasChevron: true,
           equipment: systemEquipment
@@ -3886,7 +3887,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const totalEquipment = semmCards.reduce((sum, system) => sum + system.equipment.length, 0);
       
-      console.log('🔧 SEMM Cards endpoint called - returning', semmCards.length, 'authentic maritime systems with', totalEquipment, 'equipment from parent database');
+      console.log('🔧 SEMM Cards endpoint called - returning', semmCards.length, 'authentic maritime systems with', totalEquipment, 'equipment breadcrumbs from parent database');
       res.json({
         success: true,
         timestamp: new Date().toISOString(),
