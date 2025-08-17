@@ -189,7 +189,7 @@ function Router() {
           <Route path="/top-professionals" component={TopQProfessionalsPage} />
           <Route path="/qh13" component={TopQProfessionalsPage} />
           <Route path="/glossary" component={() => <GlossaryPage />} />
-          <Route path="/machine-tree" component={() => <MachineTreePage />} />
+          <Route path="/machinetree" component={() => <MachineTreePage />} />
           <Route path="/machinetree/system/:code" component={SemmSystemPage} />
           <Route path="/machinetree/:code" component={SemmEquipmentPage} />
           <Route path="/privacy-policy" component={() => <PrivacyPolicyPage />} />
