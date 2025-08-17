@@ -3,88 +3,103 @@ import { useParams, useLocation } from 'wouter';
 import { ArrowLeft, Settings, Package, Share2, Building, ChevronRight, Home } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-// Split-flap flip card component matching airport departure boards
+// Enhanced split-flap flip card with mechanical animation
 const FlipCard = ({ char, index, large = false }: { char: string; index: number; large?: boolean }) => {
-  const [cardFlipped, setCardFlipped] = useState(false);
+  const [animationStage, setAnimationStage] = useState(0); // 0: loading, 1: flipping, 2: complete
   
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setCardFlipped(true);
-    }, 800 + (index * 200)); // Stagger the flip animation
-    return () => clearTimeout(timer);
+    // Stage 1: Initial delay + start flipping
+    const timer1 = setTimeout(() => {
+      setAnimationStage(1);
+    }, 600 + (index * 150));
+    
+    // Stage 2: Complete flip
+    const timer2 = setTimeout(() => {
+      setAnimationStage(2);
+    }, 1000 + (index * 150));
+    
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
   }, [index]);
 
-  const cardSize = large ? 'w-12 h-16' : 'w-8 h-12';
-  const textSize = large ? 'text-xl' : 'text-sm';
+  const cardSize = large ? 'w-16 h-20' : 'w-10 h-14';
+  const textSize = large ? 'text-4xl' : 'text-xl';
 
   return (
-    <div className={`relative ${cardSize} bg-black rounded-md overflow-hidden border border-gray-600 shadow-xl`}>
-      {/* Center horizontal split line */}
-      <div className="absolute inset-x-0 top-1/2 h-px bg-gray-800 z-20 shadow-sm"></div>
+    <div className={`relative ${cardSize} bg-black rounded-lg overflow-hidden border-2 border-gray-600 shadow-2xl`}>
+      {/* Center horizontal split line with metallic effect */}
+      <div className="absolute inset-x-0 top-1/2 h-0.5 bg-gradient-to-r from-gray-600 via-gray-400 to-gray-600 z-20 shadow-lg"></div>
       
       {/* Top half container */}
-      <div className="relative h-1/2 overflow-hidden" style={{ perspective: '600px' }}>
+      <div className="relative h-1/2 overflow-hidden" style={{ perspective: '800px' }}>
         {/* Top half loading state */}
         <div
-          className="absolute inset-0 bg-gradient-to-b from-gray-700 to-gray-800 flex items-end justify-center"
+          className="absolute inset-0 bg-gradient-to-b from-gray-800 via-gray-700 to-gray-800 flex items-end justify-center"
           style={{
             transformOrigin: 'bottom center',
-            transform: cardFlipped ? 'rotateX(-90deg)' : 'rotateX(0deg)',
-            transition: 'transform 0.4s ease-in-out',
+            transform: animationStage >= 1 ? 'rotateX(-90deg)' : 'rotateX(0deg)',
+            transition: 'transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
             backfaceVisibility: 'hidden'
           }}
         >
-          <div className="w-2 h-2 border border-white border-t-transparent rounded-full animate-spin mb-1"></div>
+          <div className="w-3 h-3 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin mb-2"></div>
         </div>
         
         {/* Top half with character */}
         <div
-          className="absolute inset-0 bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 flex items-end justify-center"
+          className="absolute inset-0 bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 flex items-end justify-center shadow-inner"
           style={{
             transformOrigin: 'bottom center',
-            transform: cardFlipped ? 'rotateX(0deg)' : 'rotateX(90deg)',
-            transition: 'transform 0.4s ease-in-out',
-            transitionDelay: cardFlipped ? '0.2s' : '0s',
+            transform: animationStage >= 2 ? 'rotateX(0deg)' : 'rotateX(90deg)',
+            transition: 'transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+            transitionDelay: animationStage >= 2 ? '0.1s' : '0s',
             backfaceVisibility: 'hidden'
           }}
         >
-          <span className={`${textSize} font-bold text-white font-mono tracking-wider drop-shadow-lg leading-none`}>
+          <span className={`${textSize} font-bold text-white font-mono tracking-wider drop-shadow-2xl leading-none pb-1`}>
             {char}
           </span>
         </div>
       </div>
       
       {/* Bottom half container */}
-      <div className="relative h-1/2 overflow-hidden" style={{ perspective: '600px' }}>
+      <div className="relative h-1/2 overflow-hidden" style={{ perspective: '800px' }}>
         {/* Bottom half loading state */}
         <div
-          className="absolute inset-0 bg-gradient-to-t from-gray-700 to-gray-800 flex items-start justify-center"
+          className="absolute inset-0 bg-gradient-to-t from-gray-800 via-gray-700 to-gray-800 flex items-start justify-center"
           style={{
             transformOrigin: 'top center',
-            transform: cardFlipped ? 'rotateX(90deg)' : 'rotateX(0deg)',
-            transition: 'transform 0.4s ease-in-out',
+            transform: animationStage >= 1 ? 'rotateX(90deg)' : 'rotateX(0deg)',
+            transition: 'transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
             backfaceVisibility: 'hidden'
           }}
         >
-          <div className="w-2 h-2 border border-white border-t-transparent rounded-full animate-spin mt-1"></div>
+          <div className="w-3 h-3 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin mt-2"></div>
         </div>
         
         {/* Bottom half with character */}
         <div
-          className="absolute inset-0 bg-gradient-to-t from-blue-900 via-blue-800 to-blue-900 flex items-start justify-center"
+          className="absolute inset-0 bg-gradient-to-t from-blue-900 via-blue-800 to-blue-900 flex items-start justify-center shadow-inner"
           style={{
             transformOrigin: 'top center',
-            transform: cardFlipped ? 'rotateX(0deg)' : 'rotateX(-90deg)',
-            transition: 'transform 0.4s ease-in-out',
-            transitionDelay: cardFlipped ? '0.2s' : '0s',
+            transform: animationStage >= 2 ? 'rotateX(0deg)' : 'rotateX(-90deg)',
+            transition: 'transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+            transitionDelay: animationStage >= 2 ? '0.1s' : '0s',
             backfaceVisibility: 'hidden'
           }}
         >
-          <span className={`${textSize} font-bold text-white font-mono tracking-wider drop-shadow-lg leading-none`}>
+          <span className={`${textSize} font-bold text-white font-mono tracking-wider drop-shadow-2xl leading-none pt-1`}>
             {char}
           </span>
         </div>
       </div>
+      
+      {/* Mechanical click sound effect visual */}
+      {animationStage === 1 && (
+        <div className="absolute inset-0 bg-white bg-opacity-10 animate-pulse pointer-events-none"></div>
+      )}
     </div>
   );
 };
