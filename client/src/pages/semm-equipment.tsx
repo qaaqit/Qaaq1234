@@ -1,6 +1,61 @@
 import { useQuery } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
 import { ArrowLeft, Settings, Package, Share2, Building, ChevronRight, Home } from 'lucide-react';
+import { useState, useEffect } from 'react';
+
+// Individual card flip component - moved outside to prevent hooks violations
+const FlipCard = ({ char, index, large = false }: { char: string; index: number; large?: boolean }) => {
+  const [cardFlipped, setCardFlipped] = useState(false);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCardFlipped(true);
+    }, 800 + (index * 200)); // Stagger the flip animation
+    return () => clearTimeout(timer);
+  }, [index]);
+
+  const cardSize = large ? 'w-16 h-20' : 'w-12 h-16';
+  const textSize = large ? 'text-2xl' : 'text-lg';
+
+  return (
+    <div className={`relative ${cardSize}`} style={{ perspective: '1000px' }}>
+      <div
+        className={`${cardSize} relative transition-transform duration-700`}
+        style={{ 
+          transformStyle: 'preserve-3d',
+          transform: cardFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
+        }}
+      >
+        {/* Front face (blank/loading) */}
+        <div
+          className={`absolute inset-0 ${cardSize} flex items-center justify-center rounded-lg border-2 border-gray-400`}
+          style={{
+            background: 'linear-gradient(145deg, #374151, #4b5563)',
+            boxShadow: '2px 2px 6px rgba(0,0,0,0.4), inset 1px 1px 2px rgba(255,255,255,0.1)',
+            backfaceVisibility: 'hidden'
+          }}
+        >
+          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+        </div>
+        
+        {/* Back face (final character) */}
+        <div
+          className={`absolute inset-0 ${cardSize} flex items-center justify-center rounded-lg border-2 border-gray-400`}
+          style={{
+            background: 'linear-gradient(145deg, #1e3a8a, #1e40af)',
+            boxShadow: '2px 2px 6px rgba(0,0,0,0.4), inset 1px 1px 2px rgba(255,255,255,0.1)',
+            backfaceVisibility: 'hidden',
+            transform: 'rotateY(180deg)'
+          }}
+        >
+          <span className={`${textSize} font-bold text-white font-mono tracking-wider`}>
+            {char}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 interface SemmEquipmentProps {
   code: string;
@@ -9,6 +64,7 @@ interface SemmEquipmentProps {
 export default function SemmEquipmentPage() {
   const { code } = useParams<{ code: string }>();
   const [, setLocation] = useLocation();
+  const [isFlipped, setIsFlipped] = useState(false);
 
   // Fetch SEMM data to find the specific equipment
   const { data: semmData, isLoading, error } = useQuery({
@@ -16,6 +72,14 @@ export default function SemmEquipmentPage() {
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 3,
   });
+
+  // Flip animation effect on page load - must be before early returns
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsFlipped(true);
+    }, 500); // Start flip after 500ms
+    return () => clearTimeout(timer);
+  }, []);
 
   // Find the equipment by code
   const findEquipmentByCode = (code: string) => {
@@ -79,6 +143,10 @@ export default function SemmEquipmentPage() {
     }
   };
 
+
+
+
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-100 to-blue-50">
       {/* Breadcrumb Navigation */}
@@ -117,21 +185,10 @@ export default function SemmEquipmentPage() {
               <ArrowLeft className="h-6 w-6 text-gray-600" />
             </button>
             
-            {/* Airport Analog Card Style Code Display */}
+            {/* Airport Analog Card Style Code Display with Flip Animation */}
             <div className="flex items-center space-x-1">
               {equipment.code.split('').map((char, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-center w-16 h-20 bg-blue-900 rounded-lg shadow-lg border-2 border-gray-300"
-                  style={{
-                    background: 'linear-gradient(145deg, #1e3a8a, #1e40af)',
-                    boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.3), inset -2px -2px 4px rgba(255,255,255,0.1)'
-                  }}
-                >
-                  <span className="text-2xl font-bold text-white font-mono tracking-wider">
-                    {char}
-                  </span>
-                </div>
+                <FlipCard key={index} char={char} index={index} large={true} />
               ))}
             </div>
             
@@ -184,18 +241,7 @@ export default function SemmEquipmentPage() {
                 {/* Airport Analog Card Style Code Display */}
                 <div className="flex items-center space-x-1">
                   {equipment.code.split('').map((char, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-center w-12 h-16 bg-blue-900 rounded border border-gray-300"
-                      style={{
-                        background: 'linear-gradient(145deg, #1e3a8a, #1e40af)',
-                        boxShadow: 'inset 1px 1px 2px rgba(0,0,0,0.3), inset -1px -1px 2px rgba(255,255,255,0.1)'
-                      }}
-                    >
-                      <span className="text-lg font-bold text-white font-mono">
-                        {char}
-                      </span>
-                    </div>
+                    <FlipCard key={`inline-${index}`} char={char} index={index} large={false} />
                   ))}
                 </div>
                 <div>

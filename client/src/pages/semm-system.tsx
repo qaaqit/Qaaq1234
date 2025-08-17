@@ -1,10 +1,67 @@
 import { useQuery } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
 import { ArrowLeft, Settings, Package, Share2, Building, ChevronRight, ChevronDown, Home, ExternalLink } from 'lucide-react';
+import { useState, useEffect } from 'react';
+
+// Individual card flip component - moved outside to prevent hooks violations
+const FlipCard = ({ char, index, large = false }: { char: string; index: number; large?: boolean }) => {
+  const [cardFlipped, setCardFlipped] = useState(false);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCardFlipped(true);
+    }, 800 + (index * 200)); // Stagger the flip animation
+    return () => clearTimeout(timer);
+  }, [index]);
+
+  const cardSize = large ? 'w-16 h-20' : 'w-8 h-10';
+  const textSize = large ? 'text-2xl' : 'text-sm';
+
+  return (
+    <div className={`relative ${cardSize}`} style={{ perspective: '1000px' }}>
+      <div
+        className={`${cardSize} relative transition-transform duration-700`}
+        style={{ 
+          transformStyle: 'preserve-3d',
+          transform: cardFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
+        }}
+      >
+        {/* Front face (blank/loading) */}
+        <div
+          className={`absolute inset-0 ${cardSize} flex items-center justify-center rounded-lg border-2 border-gray-400`}
+          style={{
+            background: 'linear-gradient(145deg, #374151, #4b5563)',
+            boxShadow: '2px 2px 6px rgba(0,0,0,0.4), inset 1px 1px 2px rgba(255,255,255,0.1)',
+            backfaceVisibility: 'hidden'
+          }}
+        >
+          <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+        </div>
+        
+        {/* Back face (final character) */}
+        <div
+          className={`absolute inset-0 ${cardSize} flex items-center justify-center rounded-lg border-2 border-gray-400`}
+          style={{
+            background: 'linear-gradient(145deg, #1e3a8a, #1e40af)',
+            boxShadow: '2px 2px 6px rgba(0,0,0,0.4), inset 1px 1px 2px rgba(255,255,255,0.1)',
+            backfaceVisibility: 'hidden',
+            transform: 'rotateY(180deg)'
+          }}
+        >
+          <span className={`${textSize} font-bold text-white font-mono tracking-wider`}>
+            {char}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default function SemmSystemPage() {
   const { code } = useParams<{ code: string }>();
   const [, setLocation] = useLocation();
+
+
 
   // Fetch SEMM data to find the specific system
   const { data: semmData, isLoading, error } = useQuery({
@@ -97,21 +154,10 @@ export default function SemmSystemPage() {
               <ArrowLeft className="h-6 w-6 text-gray-600" />
             </button>
             
-            {/* Airport Analog Card Style Code Display */}
+            {/* Airport Analog Card Style Code Display with Flip Animation */}
             <div className="flex items-center space-x-1">
               {systemData.code.split('').map((char, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-center w-16 h-20 bg-blue-900 rounded-lg shadow-lg border-2 border-gray-300"
-                  style={{
-                    background: 'linear-gradient(145deg, #1e3a8a, #1e40af)',
-                    boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.3), inset -2px -2px 4px rgba(255,255,255,0.1)'
-                  }}
-                >
-                  <span className="text-2xl font-bold text-white font-mono tracking-wider">
-                    {char}
-                  </span>
-                </div>
+                <FlipCard key={index} char={char} index={index} large={true} />
               ))}
             </div>
             
@@ -163,18 +209,7 @@ export default function SemmSystemPage() {
                       {/* Airport Analog Card Style Equipment Code */}
                       <div className="flex items-center space-x-1">
                         {equipment.code.split('').map((char, charIndex) => (
-                          <div
-                            key={charIndex}
-                            className="flex items-center justify-center w-8 h-10 bg-blue-900 rounded border border-gray-300"
-                            style={{
-                              background: 'linear-gradient(145deg, #1e3a8a, #1e40af)',
-                              boxShadow: 'inset 1px 1px 2px rgba(0,0,0,0.3), inset -1px -1px 2px rgba(255,255,255,0.1)'
-                            }}
-                          >
-                            <span className="text-sm font-bold text-white font-mono">
-                              {char}
-                            </span>
-                          </div>
+                          <FlipCard key={`eq-${equipment.id}-${charIndex}`} char={char} index={charIndex} large={false} />
                         ))}
                       </div>
                       
