@@ -160,7 +160,7 @@ export default function SemmSystemPage() {
               {/* Right side - Actions */}
               <div className="flex items-center">
                 <button
-                  className="p-2 bg-orange-500 hover:bg-orange-600 text-white rounded-full transition-colors"
+                  className="p-2 hover:bg-gray-100 text-gray-600 rounded-full transition-colors"
                   data-testid="button-share"
                 >
                   <Share2 className="w-4 h-4" />
