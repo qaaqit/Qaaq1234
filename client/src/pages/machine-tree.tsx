@@ -167,13 +167,12 @@ export default function MachineTreePage() {
           <div className="flex items-center space-x-3">
             <Settings className="h-8 w-8 text-white" />
             <div>
-              <h1 className="text-2xl font-bold text-white">Machine Tree (SEMM)</h1>
+              <h1 className="text-2xl font-bold text-[#e1381d]">Machine Tree (SEMM)</h1>
               <p className="text-orange-100">System-Equipment-Make-Model Classification</p>
             </div>
           </div>
         </div>
       </div>
-
       {/* Stats Bar */}
       <div className="bg-white border-b shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4">
@@ -198,7 +197,6 @@ export default function MachineTreePage() {
 
         </div>
       </div>
-
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
