@@ -262,12 +262,6 @@ export default function QBOTPage({ user }: QBOTPageProps) {
               </DropdownMenu>
               <div className="min-w-0">
                 <h1 className="text-base sm:text-xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent whitespace-nowrap">QaaqConnect</h1>
-                <button
-                  onClick={() => setLocation('/glossary')}
-                  className="text-xs sm:text-sm text-gray-600 italic font-medium whitespace-nowrap hover:text-orange-600 hover:underline transition-colors cursor-pointer"
-                >
-                  (shipping dictionary)
-                </button>
               </div>
             </div>
             <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
