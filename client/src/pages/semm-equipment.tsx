@@ -19,10 +19,10 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
   const textSize = large ? 'text-4xl' : 'text-xl';
 
   return (
-    <div className={`relative ${cardSize} bg-black rounded-lg overflow-hidden border-2 border-gray-600 shadow-2xl`} style={{ perspective: '1000px' }}>
+    <div className={`relative ${cardSize} rounded-lg overflow-hidden border-2 border-gray-400 shadow-lg`} style={{ perspective: '1000px' }}>
       {/* Loading state card */}
       <div
-        className="absolute inset-0 bg-gradient-to-b from-gray-800 via-gray-700 to-gray-800 flex items-center justify-center"
+        className="absolute inset-0 bg-slate-700 flex items-center justify-center"
         style={{
           transformOrigin: 'bottom center',
           transform: isFlipped ? 'rotateX(-180deg)' : 'rotateX(0deg)',
@@ -30,12 +30,12 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
           backfaceVisibility: 'hidden'
         }}
       >
-        <div className="w-3 h-3 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-3 h-3 border-2 border-teal-400 border-t-transparent rounded-full animate-spin"></div>
       </div>
       
       {/* Character reveal card */}
       <div
-        className="absolute inset-0 bg-gradient-to-b from-orange-600 via-red-600 to-orange-600 flex items-center justify-center shadow-inner"
+        className="absolute inset-0 bg-slate-700 flex items-center justify-center"
         style={{
           transformOrigin: 'bottom center',
           transform: isFlipped ? 'rotateX(0deg)' : 'rotateX(180deg)',
@@ -43,7 +43,7 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
           backfaceVisibility: 'hidden'
         }}
       >
-        <span className={`${textSize} font-bold text-white font-mono tracking-wider drop-shadow-2xl leading-none`}>
+        <span className={`${textSize} font-bold text-teal-300 font-mono tracking-wider drop-shadow-lg leading-none`}>
           {char}
         </span>
       </div>
