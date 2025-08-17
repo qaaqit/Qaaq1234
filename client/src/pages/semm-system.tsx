@@ -23,7 +23,8 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
         className={`${cardSize} relative transition-transform duration-700`}
         style={{ 
           transformStyle: 'preserve-3d',
-          transform: cardFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
+          transformOrigin: 'top center',
+          transform: cardFlipped ? 'rotateX(180deg)' : 'rotateX(0deg)'
         }}
       >
         {/* Front face (blank/loading) */}
@@ -45,7 +46,7 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
             background: 'linear-gradient(145deg, #1e3a8a, #1e40af)',
             boxShadow: '2px 2px 6px rgba(0,0,0,0.4), inset 1px 1px 2px rgba(255,255,255,0.1)',
             backfaceVisibility: 'hidden',
-            transform: 'rotateY(180deg)'
+            transform: 'rotateX(180deg)'
           }}
         >
           <span className={`${textSize} font-bold text-white font-mono tracking-wider`}>
