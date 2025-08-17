@@ -223,7 +223,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                   >
                     <div className="flex items-center space-x-2">
                       <ChevronDown className={`w-4 h-4 text-white transition-transform duration-200 ${isMenuOpen ? 'rotate-180' : ''}`} />
-                      <div className="w-10 h-10 rounded-full bg-white p-1 shadow-lg">
+                      <div className="w-10 h-10 rounded-full bg-white border-2 border-white shadow-lg flex items-center justify-center">
                         <img 
                           src={qaaqLogo} 
                           alt="QAAQ Logo" 
