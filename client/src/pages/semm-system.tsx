@@ -157,9 +157,6 @@ export default function SemmSystemPage() {
 
               {/* Center - QAAQ Branding */}
               <div className="flex-1 text-center">
-                <h1 className="text-2xl font-bold text-orange-700 tracking-wider">
-                  QAAQ
-                </h1>
                 <p className="text-sm text-orange-600 font-medium">MACHINE TREE</p>
               </div>
 
