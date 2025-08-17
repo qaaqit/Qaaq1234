@@ -186,19 +186,31 @@ export default function SemmEquipmentPage() {
               <ArrowLeft className="h-6 w-6 text-gray-600" />
             </button>
             
-            {/* Airport Analog Card Style Code Display with Flip Animation */}
-            <div className="flex items-center space-x-1">
-              {equipment.code.split('').map((char, index) => (
-                <FlipCard key={index} char={char} index={index} large={true} />
-              ))}
-            </div>
-            
+            {/* Airport Departure Board Style Display */}
             <div className="flex-1">
-              <h1 className="text-4xl font-bold text-blue-900 mb-2">{equipment.title}</h1>
-              <p className="text-gray-600 text-lg">{breadcrumb}</p>
-              {equipment.description && (
-                <p className="text-gray-500 mt-2">{equipment.description}</p>
-              )}
+              {/* Departures Header Style */}
+              <div className="bg-gray-700 text-white px-6 py-2 rounded-t-lg flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <span className="text-yellow-300 font-mono text-lg tracking-wider">EQUIPMENT</span>
+                  <div className="w-6 h-6 border-2 border-yellow-300 rounded flex items-center justify-center">
+                    <Package className="h-4 w-4 text-yellow-300" />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Orange Background with Code Display */}
+              <div className="bg-orange-400 px-6 py-4 rounded-b-lg">
+                <div className="flex items-center space-x-1 mb-2">
+                  {equipment.code.split('').map((char, index) => (
+                    <FlipCard key={index} char={char} index={index} large={true} />
+                  ))}
+                </div>
+                <h1 className="text-3xl font-bold text-gray-800 mb-1">{equipment.title}</h1>
+                <p className="text-gray-700 text-lg">{breadcrumb}</p>
+                {equipment.description && (
+                  <p className="text-gray-600 mt-1">{equipment.description}</p>
+                )}
+              </div>
             </div>
             
             <button
@@ -237,17 +249,24 @@ export default function SemmEquipmentPage() {
             </div>
             
             <div className="p-6 space-y-6">
-              {/* Equipment Code and Title */}
-              <div className="flex items-center space-x-4">
-                {/* Airport Analog Card Style Code Display */}
-                <div className="flex items-center space-x-1">
-                  {equipment.code.split('').map((char, index) => (
-                    <FlipCard key={`inline-${index}`} char={char} index={index} large={false} />
-                  ))}
+              {/* Equipment Code and Title - Departure Board Style */}
+              <div className="space-y-3">
+                {/* Mini Departure Board Header */}
+                <div className="bg-gray-700 text-white px-4 py-2 rounded-t flex items-center justify-between">
+                  <span className="text-yellow-300 font-mono text-sm tracking-wider">EQUIPMENT CODE</span>
                 </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-blue-900">{equipment.title}</h2>
-                  <p className="text-gray-600">Maritime Equipment Code: {equipment.code}</p>
+                
+                {/* Orange Background with Code */}
+                <div className="bg-orange-400 px-4 py-3 rounded-b flex items-center space-x-4">
+                  <div className="flex items-center space-x-1">
+                    {equipment.code.split('').map((char, index) => (
+                      <FlipCard key={`inline-${index}`} char={char} index={index} large={false} />
+                    ))}
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-800">{equipment.title}</h2>
+                    <p className="text-gray-700 text-sm">Maritime Equipment Code: {equipment.code}</p>
+                  </div>
                 </div>
               </div>
 

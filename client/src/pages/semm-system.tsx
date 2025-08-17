@@ -155,24 +155,36 @@ export default function SemmSystemPage() {
               <ArrowLeft className="h-6 w-6 text-gray-600" />
             </button>
             
-            {/* Airport Analog Card Style Code Display with Flip Animation */}
-            <div className="flex items-center space-x-1">
-              {systemData.code.split('').map((char, index) => (
-                <FlipCard key={index} char={char} index={index} large={true} />
-              ))}
-            </div>
-            
+            {/* Airport Departure Board Style Display */}
             <div className="flex-1">
-              <h1 className="text-4xl font-bold text-blue-900 mb-2 flex items-center">
-                {systemData.title}
-                <ChevronDown className="h-6 w-6 ml-2 text-gray-400" />
-              </h1>
-              <p className="text-gray-600 text-lg">
-                {systemData.equipment?.length || 0} equipment types • {systemData.count || 0} questions
-              </p>
-              {systemData.description && (
-                <p className="text-gray-500 mt-2">{systemData.description}</p>
-              )}
+              {/* Departures Header Style */}
+              <div className="bg-gray-700 text-white px-6 py-2 rounded-t-lg flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <span className="text-yellow-300 font-mono text-lg tracking-wider">SYSTEM</span>
+                  <div className="w-6 h-6 border-2 border-yellow-300 rounded flex items-center justify-center">
+                    <Settings className="h-4 w-4 text-yellow-300" />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Orange Background with Code Display */}
+              <div className="bg-orange-400 px-6 py-4 rounded-b-lg">
+                <div className="flex items-center space-x-1 mb-2">
+                  {systemData.code.split('').map((char, index) => (
+                    <FlipCard key={index} char={char} index={index} large={true} />
+                  ))}
+                </div>
+                <h1 className="text-3xl font-bold text-gray-800 mb-1 flex items-center">
+                  {systemData.title}
+                  <ChevronDown className="h-5 w-5 ml-2 text-gray-600" />
+                </h1>
+                <p className="text-gray-700 text-lg">
+                  {systemData.equipment?.length || 0} equipment types • {systemData.count || 0} questions
+                </p>
+                {systemData.description && (
+                  <p className="text-gray-600 mt-1">{systemData.description}</p>
+                )}
+              </div>
             </div>
             
             <button
