@@ -181,7 +181,7 @@ export default function MachineTreePage() {
                         <span className="text-sm font-bold text-orange-600">{category.code}</span>
                       </div>
                       <div>
-                        <div className="font-medium text-gray-800">{category.code}. {category.title}</div>
+                        <div className="font-medium text-gray-800">{category.title}</div>
                         {category.description && (
                           <div className="text-sm text-gray-500">{category.description}</div>
                         )}
