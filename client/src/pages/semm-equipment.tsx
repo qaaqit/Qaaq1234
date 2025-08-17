@@ -3,7 +3,7 @@ import { useParams, useLocation } from 'wouter';
 import { ArrowLeft, Settings, Package, Share2, Building, ChevronRight, Home } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-// Individual card flip component - moved outside to prevent hooks violations
+// Split-flap flip card component matching airport departure boards
 const FlipCard = ({ char, index, large = false }: { char: string; index: number; large?: boolean }) => {
   const [cardFlipped, setCardFlipped] = useState(false);
   
@@ -18,38 +18,69 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
   const textSize = large ? 'text-2xl' : 'text-lg';
 
   return (
-    <div className={`relative ${cardSize}`} style={{ perspective: '1000px' }}>
-      <div
-        className={`${cardSize} relative transition-transform duration-700`}
-        style={{ 
-          transformStyle: 'preserve-3d',
-          transformOrigin: 'top center',
-          transform: cardFlipped ? 'rotateX(180deg)' : 'rotateX(0deg)'
-        }}
-      >
-        {/* Front face (blank/loading) */}
+    <div className={`relative ${cardSize} bg-black rounded-lg overflow-hidden border border-gray-600 shadow-2xl`}>
+      {/* Center horizontal split line */}
+      <div className="absolute inset-x-0 top-1/2 h-0.5 bg-gray-800 z-20 shadow-lg"></div>
+      
+      {/* Top half container */}
+      <div className="relative h-1/2 overflow-hidden" style={{ perspective: '800px' }}>
+        {/* Top half loading state */}
         <div
-          className={`absolute inset-0 ${cardSize} flex items-center justify-center rounded-lg border-2 border-gray-400`}
+          className="absolute inset-0 bg-gradient-to-b from-gray-700 to-gray-800 flex items-end justify-center pb-1"
           style={{
-            background: 'linear-gradient(145deg, #374151, #4b5563)',
-            boxShadow: '2px 2px 6px rgba(0,0,0,0.4), inset 1px 1px 2px rgba(255,255,255,0.1)',
+            transformOrigin: 'bottom center',
+            transform: cardFlipped ? 'rotateX(-90deg)' : 'rotateX(0deg)',
+            transition: 'transform 0.4s ease-in-out',
             backfaceVisibility: 'hidden'
           }}
         >
-          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
         </div>
         
-        {/* Back face (final character) */}
+        {/* Top half with character */}
         <div
-          className={`absolute inset-0 ${cardSize} flex items-center justify-center rounded-lg border-2 border-gray-400`}
+          className="absolute inset-0 bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 flex items-end justify-center pb-1"
           style={{
-            background: 'linear-gradient(145deg, #1e3a8a, #1e40af)',
-            boxShadow: '2px 2px 6px rgba(0,0,0,0.4), inset 1px 1px 2px rgba(255,255,255,0.1)',
-            backfaceVisibility: 'hidden',
-            transform: 'rotateX(180deg)'
+            transformOrigin: 'bottom center',
+            transform: cardFlipped ? 'rotateX(0deg)' : 'rotateX(90deg)',
+            transition: 'transform 0.4s ease-in-out',
+            transitionDelay: cardFlipped ? '0.2s' : '0s',
+            backfaceVisibility: 'hidden'
           }}
         >
-          <span className={`${textSize} font-bold text-white font-mono tracking-wider`}>
+          <span className={`${textSize} font-bold text-white font-mono tracking-wider drop-shadow-lg`}>
+            {char}
+          </span>
+        </div>
+      </div>
+      
+      {/* Bottom half container */}
+      <div className="relative h-1/2 overflow-hidden" style={{ perspective: '800px' }}>
+        {/* Bottom half loading state */}
+        <div
+          className="absolute inset-0 bg-gradient-to-t from-gray-700 to-gray-800 flex items-start justify-center pt-1"
+          style={{
+            transformOrigin: 'top center',
+            transform: cardFlipped ? 'rotateX(90deg)' : 'rotateX(0deg)',
+            transition: 'transform 0.4s ease-in-out',
+            backfaceVisibility: 'hidden'
+          }}
+        >
+          <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+        </div>
+        
+        {/* Bottom half with character */}
+        <div
+          className="absolute inset-0 bg-gradient-to-t from-blue-900 via-blue-800 to-blue-900 flex items-start justify-center pt-1"
+          style={{
+            transformOrigin: 'top center',
+            transform: cardFlipped ? 'rotateX(0deg)' : 'rotateX(-90deg)',
+            transition: 'transform 0.4s ease-in-out',
+            transitionDelay: cardFlipped ? '0.2s' : '0s',
+            backfaceVisibility: 'hidden'
+          }}
+        >
+          <span className={`${textSize} font-bold text-white font-mono tracking-wider drop-shadow-lg`}>
             {char}
           </span>
         </div>
@@ -186,29 +217,38 @@ export default function SemmEquipmentPage() {
               <ArrowLeft className="h-6 w-6 text-gray-600" />
             </button>
             
-            {/* Airport Departure Board Style Display */}
+            {/* Sleek Marine Header */}
             <div className="flex-1">
-              {/* Departures Header Style */}
-              <div className="bg-gray-700 text-white px-6 py-2 rounded-t-lg flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <span className="text-yellow-300 font-mono text-lg tracking-wider">EQUIPMENT</span>
-                  <div className="w-6 h-6 border-2 border-yellow-300 rounded flex items-center justify-center">
-                    <Package className="h-4 w-4 text-yellow-300" />
+              {/* Navy Header with Sleek Design */}
+              <div className="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 text-white px-8 py-4 rounded-t-xl shadow-2xl border-b-2 border-blue-700">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                      <Package className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <span className="text-white font-semibold text-lg tracking-wide">MARITIME EQUIPMENT</span>
+                      <div className="w-16 h-0.5 bg-white bg-opacity-50 mt-1"></div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs text-blue-200 uppercase tracking-wider">Classification</div>
+                    <div className="text-sm text-white font-mono">{equipment.code}</div>
                   </div>
                 </div>
               </div>
               
-              {/* Orange Background with Code Display */}
-              <div className="bg-orange-400 px-6 py-4 rounded-b-lg">
-                <div className="flex items-center space-x-1 mb-2">
+              {/* White Background with Code Display */}
+              <div className="bg-white px-8 py-6 rounded-b-xl shadow-lg border border-gray-200">
+                <div className="flex items-center space-x-2 mb-4">
                   {equipment.code.split('').map((char, index) => (
                     <FlipCard key={index} char={char} index={index} large={true} />
                   ))}
                 </div>
-                <h1 className="text-3xl font-bold text-gray-800 mb-1">{equipment.title}</h1>
-                <p className="text-gray-700 text-lg">{breadcrumb}</p>
+                <h1 className="text-4xl font-bold text-gray-900 mb-2">{equipment.title}</h1>
+                <p className="text-gray-600 text-lg">{breadcrumb}</p>
                 {equipment.description && (
-                  <p className="text-gray-600 mt-1">{equipment.description}</p>
+                  <p className="text-gray-500 mt-2">{equipment.description}</p>
                 )}
               </div>
             </div>
@@ -249,23 +289,28 @@ export default function SemmEquipmentPage() {
             </div>
             
             <div className="p-6 space-y-6">
-              {/* Equipment Code and Title - Departure Board Style */}
-              <div className="space-y-3">
-                {/* Mini Departure Board Header */}
-                <div className="bg-gray-700 text-white px-4 py-2 rounded-t flex items-center justify-between">
-                  <span className="text-yellow-300 font-mono text-sm tracking-wider">EQUIPMENT CODE</span>
+              {/* Equipment Code and Title - Marine Style */}
+              <div className="space-y-0 shadow-lg rounded-lg overflow-hidden border border-gray-300">
+                {/* Mini Marine Header */}
+                <div className="bg-gradient-to-r from-blue-900 to-blue-800 text-white px-6 py-3 flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-6 h-6 bg-white bg-opacity-20 rounded flex items-center justify-center">
+                      <Package className="h-4 w-4 text-white" />
+                    </div>
+                    <span className="text-white font-medium text-sm tracking-wider">EQUIPMENT CLASSIFICATION</span>
+                  </div>
                 </div>
                 
-                {/* Orange Background with Code */}
-                <div className="bg-orange-400 px-4 py-3 rounded-b flex items-center space-x-4">
+                {/* White Background with Code */}
+                <div className="bg-white px-6 py-4 flex items-center space-x-4">
                   <div className="flex items-center space-x-1">
                     {equipment.code.split('').map((char, index) => (
                       <FlipCard key={`inline-${index}`} char={char} index={index} large={false} />
                     ))}
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-gray-800">{equipment.title}</h2>
-                    <p className="text-gray-700 text-sm">Maritime Equipment Code: {equipment.code}</p>
+                    <h2 className="text-xl font-bold text-gray-900">{equipment.title}</h2>
+                    <p className="text-gray-600 text-sm">Maritime Equipment Code: {equipment.code}</p>
                   </div>
                 </div>
               </div>
