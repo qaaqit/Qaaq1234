@@ -3835,11 +3835,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .filter((eq: any) => eq.parent_id === system.id)
             .map((eq: any, eqIndex: number) => {
               const equipmentCode = `${code}${String.fromCharCode(97 + eqIndex)}`;
+              // Clean title by removing any code prefix (e.g., "aa. Main Engine" -> "Main Engine")
+              const cleanTitle = eq.name.replace(/^[a-z]{1,2}\.\s*/, '');
               return {
                 id: equipmentCode,
                 type: 'equipment',
                 code: equipmentCode,
-                title: eq.name,
+                title: cleanTitle,
                 description: eq.description,
                 systemCode: code,
                 count: Math.floor(Math.random() * 20) + 5,
@@ -3859,7 +3861,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               id: equipmentCode,
               type: 'equipment',
               code: equipmentCode,
-              title: eqName,
+              title: eqName, // Clean title without code prefix
               description: `${eqName} for ${title} system`,
               systemCode: code,
               count: Math.floor(Math.random() * 15) + 3,
