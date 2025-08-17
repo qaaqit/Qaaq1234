@@ -134,41 +134,27 @@ export default function SemmSystemPage() {
         <div className="bg-gradient-to-r from-orange-50 to-orange-100 px-4">
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center justify-between py-4">
-              {/* Left side - Navigation */}
+              {/* Left side - Code Card with Back Arrow */}
               <div className="flex items-center space-x-4">
-                <button
-                  onClick={goHome}
-                  className="flex items-center space-x-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors"
-                  data-testid="button-home"
-                >
-                  <Home className="w-4 h-4" />
-                  <span className="font-medium">Home</span>
-                </button>
-                
-                <button
-                  onClick={goBack}
-                  className="flex items-center space-x-2 px-4 py-2 bg-orange-50 hover:bg-orange-100 text-orange-700 rounded-lg transition-colors"
-                  data-testid="button-back"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  <span className="font-medium">Back</span>
-                </button>
+                <div className="text-center">
+                  <div className="text-xs font-bold text-gray-500 mb-1 tracking-widest">SYSTEM</div>
+                  <FlipCard char={foundSystem.code} index={0} large={true} />
+                  <button
+                    onClick={goBack}
+                    className="mt-2 p-1 hover:bg-orange-100 text-orange-600 rounded-full transition-colors"
+                    data-testid="button-back"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
 
-              {/* Center - Code Card and Title */}
-              <div className="flex-1 flex items-center justify-center space-x-6">
-                <div className="flex items-center space-x-4">
-                  <div className="text-center">
-                    <div className="text-xs font-bold text-gray-500 mb-1 tracking-widest">SYSTEM</div>
-                    <FlipCard char={foundSystem.code} index={0} large={true} />
-                  </div>
-                  <div className="text-center">
-                    <h1 className="text-2xl font-black text-gray-900">
-                      {foundSystem.title}
-                    </h1>
-                    <p className="text-sm text-orange-600 font-medium">MACHINE TREE</p>
-                  </div>
-                </div>
+              {/* Center - Title */}
+              <div className="flex-1 text-center">
+                <h1 className="text-2xl font-black text-gray-900">
+                  {foundSystem.title}
+                </h1>
+                <p className="text-sm text-orange-600 font-medium">MACHINE TREE</p>
               </div>
 
               {/* Right side - Actions */}
