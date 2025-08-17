@@ -168,7 +168,7 @@ export default function MachineTreePage() {
             <Settings className="h-8 w-8 text-white" />
             <div>
               <h1 className="text-2xl font-bold text-[#e1381d]">Machine Tree (SEMM)</h1>
-              <p className="text-orange-100">System-Equipment-Make-Model Classification</p>
+              <p className="text-[#e74f10]">System-Equipment-Make-Model Classification</p>
             </div>
           </div>
         </div>
