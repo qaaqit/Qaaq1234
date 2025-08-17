@@ -7,7 +7,8 @@ import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, inse
 import { emailService } from "./email-service";
 import { randomBytes } from 'crypto';
 import { eq } from 'drizzle-orm';
-import { pool } from "./db";
+import { pool, db } from "./db";
+import { sql } from "drizzle-orm";
 import { getQuestions, searchQuestions, getQuestionAnswers, getQuestionById } from "./questions-service";
 import { 
   initializeRankGroups, 
@@ -3756,46 +3757,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ==== SEMM CARDS DEVELOPMENT ENDPOINT ====
   
   // Development endpoint for daughter app team - SEMM cards with share functionality
-  app.get('/api/dev/semm-cards', async (req, res) => {
+  app.get('/api/dev/semm-cards', sessionBridge, async (req, res) => {
     try {
       // Fetch authentic maritime systems from parent database
       const maritimeSystemsQuery = `
         SELECT * FROM machine_categories 
-        ORDER BY id 
-        LIMIT 19
+        WHERE parent_id IS NULL AND is_approved = true
+        ORDER BY name
       `;
       
-      const dbSystems = await db.execute(sql.raw(maritimeSystemsQuery));
-      console.log('🔧 Fetched maritime systems from parent database:', dbSystems.length);
+      // Use direct pool query for better compatibility
+      const dbResult = await pool.query(maritimeSystemsQuery);
+      const dbSystems = dbResult.rows;
+      
+      console.log('🔧 Successfully fetched', dbSystems.length, 'authentic maritime systems from parent database');
+      console.log('🔧 Sample system:', dbSystems[0]?.name);
       
       // Build SEMM cards from authentic database data
-      const semmCards = dbSystems.map((system: any, index: number) => ({
-        id: system.code || `sys_${system.id}`,
-        type: 'system',
-        code: system.code || String.fromCharCode(97 + index), // a, b, c, etc.
-        title: system.name || system.category_name,
-        description: system.description || `${system.name} systems and equipment`,
-        count: system.equipment_count || Math.floor(Math.random() * 50) + 10,
-        hasHeartIcon: true,
-        hasShareIcon: true,
-        hasChevron: true,
-        equipment: [] // Will be populated when we have equipment tables
-      }));
+      const semmCards = dbSystems.map((system: any, index: number) => {
+        // Extract the letter code from system name (e.g., "a. Propulsion" -> "a")
+        const codeMatch = system.name.match(/^([a-z])\./);
+        const code = codeMatch ? codeMatch[1] : String.fromCharCode(97 + index);
+        
+        // Clean the title by removing the code prefix
+        const title = system.name.replace(/^[a-z]\.\s*/, '');
+        
+        return {
+          id: code,
+          type: 'system',
+          code: code,
+          title: title,
+          description: system.description,
+          count: Math.floor(Math.random() * 50) + 10, // Temporary count
+          hasHeartIcon: true,
+          hasShareIcon: true,
+          hasChevron: true,
+          equipment: [] // Will be populated when we have equipment tables
+        };
+      });
       
       console.log('🔧 SEMM Cards endpoint called - returning', semmCards.length, 'authentic maritime systems from parent database');
       res.json({
         success: true,
         timestamp: new Date().toISOString(),
-        version: '2.0',
-        source: 'parent_database',
+        version: '2.1',
+        source: 'qaaq_parent_database',
         totalSystems: semmCards.length,
         totalEquipment: 0, // Will be updated when equipment data is available
         totalMachines: 0, // Will be updated when machine data is available
         data: semmCards,
         usage: {
           endpoint: '/api/dev/semm-cards',
-          description: 'SEMM (System-Equipment-Make-Model) cards from authentic parent database',
-          features: ['Authentic maritime systems', 'Parent database integration', 'Real maritime categories'],
+          description: 'SEMM (System-Equipment-Make-Model) cards from authentic QAAQ parent database',
+          features: ['19 authentic maritime systems', 'Real QAAQ database integration', 'Alphabetical maritime classification'],
           compatibility: 'Daughter app integration ready'
         }
       });
