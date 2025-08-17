@@ -5,6 +5,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import { pool } from "./db"; // Import database pool for image serving
 import QoiGPTBot from "./whatsapp-bot";
 import { initializeRankGroups } from "./rank-groups-service";
+import { setupGlossaryDatabase } from "./setup-glossary-db";
 
 const app = express();
 app.use(express.json());
@@ -190,6 +191,19 @@ let whatsappBot: QoiGPTBot | null = null;
       }
     } catch (error) {
       console.error('❌ Error during rank groups initialization:', error);
+    }
+
+    // Initialize glossary database and auto-update service
+    try {
+      await setupGlossaryDatabase();
+      console.log('📚 Glossary database setup completed');
+      
+      // Import and initialize glossary auto-updater
+      const { glossaryAutoUpdater } = await import("./glossary-auto-update");
+      console.log('🔄 Glossary auto-update service initialized');
+      console.log('📅 Next updates scheduled at: 3:00 AM, 9:00 AM, 3:00 PM, 9:00 PM UTC');
+    } catch (error) {
+      console.error('❌ Error setting up glossary system:', error);
     }
   });
 

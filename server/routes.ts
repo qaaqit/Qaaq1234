@@ -3579,6 +3579,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ==== GLOSSARY AUTO-UPDATE ADMIN ENDPOINTS ====
+  
+  // Admin endpoint to manually trigger glossary update
+  app.post('/api/admin/glossary/update', authenticateToken, async (req, res) => {
+    try {
+      console.log('🔧 Manual glossary update triggered by admin');
+      
+      // Import the glossary auto-updater dynamically
+      const { glossaryAutoUpdater } = await import('./glossary-auto-update');
+      await glossaryAutoUpdater.manualUpdate();
+      
+      res.json({
+        success: true,
+        message: 'Glossary update completed successfully',
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('❌ Manual glossary update failed:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to update glossary',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Admin endpoint to get glossary update status and statistics
+  app.get('/api/admin/glossary/status', authenticateToken, async (req, res) => {
+    try {
+      // Import both services dynamically
+      const { glossaryAutoUpdater } = await import('./glossary-auto-update');
+      const { getGlossaryStats } = await import('./setup-glossary-db');
+      
+      const status = glossaryAutoUpdater.getStatus();
+      const stats = await getGlossaryStats();
+      
+      res.json({
+        success: true,
+        status: {
+          ...status,
+          statistics: stats
+        }
+      });
+    } catch (error) {
+      console.error('❌ Failed to get glossary status:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to get glossary status'
+      });
+    }
+  });
+
   // ==== WATI WHATSAPP BOT INTEGRATION ====
   
   // WATI webhook endpoint for incoming WhatsApp messages
