@@ -198,10 +198,8 @@ let whatsappBot: QoiGPTBot | null = null;
       await setupGlossaryDatabase();
       console.log('📚 Glossary database setup completed');
       
-      // Import and initialize glossary auto-updater
-      const { glossaryAutoUpdater } = await import("./glossary-auto-update");
-      console.log('🔄 Glossary auto-update service initialized');
-      console.log('📅 Next updates scheduled at: 3:00 AM, 9:00 AM, 3:00 PM, 9:00 PM UTC');
+      // Auto-updater disabled - manual updates only via Admin panel
+      console.log('🚫 Glossary auto-update service DISABLED - Manual updates only');
     } catch (error) {
       console.error('❌ Error setting up glossary system:', error);
     }

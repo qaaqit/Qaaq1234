@@ -13,11 +13,8 @@ interface QuestionAnalysis {
 /**
  * Glossary Auto-Update Service
  * 
- * Automatically checks for "What is..." questions every 6 hours:
- * - 3:00 AM
- * - 9:00 AM  
- * - 3:00 PM
- * - 9:00 PM
+ * MANUAL UPDATES ONLY - Auto-updates disabled for security.
+ * Use Admin panel button or /api/admin/glossary/update endpoint.
  * 
  * Processes new maritime terminology questions and adds them to the glossary.
  */
@@ -26,54 +23,26 @@ export class GlossaryAutoUpdateService {
   private lastCheckTimestamp: Date | null = null;
   
   constructor() {
-    this.initializeScheduler();
-    console.log('🕒 Glossary Auto-Update Service initialized');
-    console.log('📅 Scheduled to run at: 3:00 AM, 9:00 AM, 3:00 PM, 9:00 PM daily');
+    // Auto-scheduler disabled - manual updates only
+    console.log('📚 Glossary Manual-Update Service initialized');
+    console.log('🚫 Auto-updates DISABLED - Use Admin panel for manual updates');
   }
 
   /**
    * Initialize the scheduler for 6-hour intervals
+   * DISABLED - Manual updates only
    */
   private initializeScheduler() {
-    // Calculate next scheduled time (3:00, 9:00, 15:00, 21:00)
-    this.scheduleNextUpdate();
-    console.log('🔄 Glossary update scheduler started');
+    // Auto-scheduler disabled for security
+    console.log('🚫 Glossary auto-scheduler DISABLED - Manual updates only');
   }
 
   /**
    * Schedule the next update based on current time
+   * DISABLED - Manual updates only
    */
   private scheduleNextUpdate() {
-    const now = new Date();
-    const currentHour = now.getUTCHours();
-    
-    // Target hours: 3, 9, 15, 21
-    const targetHours = [3, 9, 15, 21];
-    let nextHour = targetHours.find(hour => hour > currentHour);
-    
-    if (!nextHour) {
-      // If past last target for today, schedule for first target tomorrow
-      nextHour = targetHours[0];
-    }
-    
-    const nextRun = new Date(now);
-    nextRun.setUTCHours(nextHour, 0, 0, 0);
-    
-    // If the next run is for tomorrow, add 24 hours
-    if (nextHour <= currentHour) {
-      nextRun.setUTCDate(nextRun.getUTCDate() + 1);
-    }
-    
-    const timeUntilNext = nextRun.getTime() - now.getTime();
-    
-    console.log(`⏰ Next glossary update scheduled for: ${nextRun.toISOString()}`);
-    console.log(`⏳ Time until next update: ${Math.round(timeUntilNext / (1000 * 60))} minutes`);
-    
-    setTimeout(async () => {
-      await this.performGlossaryUpdate();
-      // Schedule the next update after this one completes
-      this.scheduleNextUpdate();
-    }, timeUntilNext);
+    console.log('🚫 Auto-scheduling disabled - Use Admin panel for manual glossary updates');
   }
 
   /**

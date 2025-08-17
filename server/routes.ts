@@ -34,6 +34,7 @@ import { PasswordManager } from "./password-manager";
 import { AIService } from "./ai-service";
 import { FeedbackService } from "./feedback-service";
 import { WatiBotService } from "./wati-bot-service";
+import { GlossaryAutoUpdateService } from "./glossary-auto-update";
 
 // Import new unified authentication system
 import { sessionBridge, bridgedAuth, requireBridgedAuth } from "./session-bridge";

@@ -105,6 +105,7 @@ export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState("analytics");
   const [qbotRules, setQbotRules] = useState<string>("");
   const [loadingRules, setLoadingRules] = useState(false);
+  const [glossaryUpdating, setGlossaryUpdating] = useState(false);
 
   // Fetch admin stats
   const { data: stats, isLoading: statsLoading } = useQuery<AdminStats>({
@@ -120,6 +121,37 @@ export default function AdminPanel() {
   const { data: countryAnalytics, isLoading: countryLoading } = useQuery<CountryAnalytics[]>({
     queryKey: ["/api/admin/analytics/countries"],
   });
+
+  // Manual glossary update mutation
+  const glossaryUpdateMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("/api/admin/glossary/update", {
+        method: "POST"
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Glossary update completed successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error", 
+        description: error instanceof Error ? error.message : "Failed to update glossary",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleGlossaryUpdate = async () => {
+    setGlossaryUpdating(true);
+    try {
+      await glossaryUpdateMutation.mutateAsync();
+    } finally {
+      setGlossaryUpdating(false);
+    }
+  };
 
   // Fetch chat metrics
   const { data: chatMetrics, isLoading: chatMetricsLoading } = useQuery<ChatMetrics[]>({
@@ -640,6 +672,41 @@ export default function AdminPanel() {
                       <li>• No ship position tracking</li>
                       <li>• No confidential data access</li>
                     </ul>
+                  </div>
+                  
+                  {/* Glossary Management Section */}
+                  <div className="border-t pt-4 mt-4">
+                    <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
+                      <i className="fas fa-book mr-2 text-purple-600"></i>
+                      Maritime Glossary Management
+                    </h3>
+                    <div className="space-y-3">
+                      <p className="text-sm text-gray-600">
+                        Auto-updates have been disabled. Use the button below to manually update the maritime glossary with new "What is..." questions.
+                      </p>
+                      <Button
+                        onClick={handleGlossaryUpdate}
+                        disabled={glossaryUpdating || glossaryUpdateMutation.isPending}
+                        className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                        data-testid="button-update-glossary"
+                      >
+                        {glossaryUpdating || glossaryUpdateMutation.isPending ? (
+                          <>
+                            <i className="fas fa-spinner fa-spin mr-2"></i>
+                            Updating Glossary...
+                          </>
+                        ) : (
+                          <>
+                            <i className="fas fa-sync-alt mr-2"></i>
+                            Update Maritime Glossary
+                          </>
+                        )}
+                      </Button>
+                      <div className="text-xs text-gray-500">
+                        <i className="fas fa-info-circle mr-1"></i>
+                        This will scan for new maritime terminology questions and add them to the glossary database.
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
