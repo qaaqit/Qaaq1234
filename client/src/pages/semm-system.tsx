@@ -70,7 +70,7 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
         />
       )}
       
-      <style jsx>{`
+      <style>{`
         @keyframes flash {
           0% { opacity: 0.3; }
           100% { opacity: 0; }
@@ -99,7 +99,7 @@ export default function SemmSystemPage() {
     );
   }
 
-  if (error || !semmData?.data) {
+  if (error || !semmData) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
         <div className="text-xl text-red-600">Failed to load system data</div>
@@ -108,7 +108,7 @@ export default function SemmSystemPage() {
   }
 
   // Find the specific system by code
-  const systems = Array.isArray(semmData.data) ? semmData.data : semmData.data.systems || [];
+  const systems = Array.isArray((semmData as any)?.data) ? (semmData as any).data : (semmData as any)?.systems || [];
   const foundSystem = systems.find((system: any) => system.code === code);
 
   if (!foundSystem) {
@@ -129,11 +129,11 @@ export default function SemmSystemPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Simple Minimalistic Header */}
+      {/* Header with Code Card and Title */}
       <div className="bg-white border-b-4 border-orange-300 shadow-lg">
         <div className="bg-gradient-to-r from-orange-50 to-orange-100 px-4">
           <div className="max-w-7xl mx-auto">
-            <div className="flex items-center justify-between h-16">
+            <div className="flex items-center justify-between py-4">
               {/* Left side - Navigation */}
               <div className="flex items-center space-x-4">
                 <button
@@ -155,9 +155,20 @@ export default function SemmSystemPage() {
                 </button>
               </div>
 
-              {/* Center - QAAQ Branding */}
-              <div className="flex-1 text-center">
-                <p className="text-sm text-orange-600 font-medium">MACHINE TREE</p>
+              {/* Center - Code Card and Title */}
+              <div className="flex-1 flex items-center justify-center space-x-6">
+                <div className="flex items-center space-x-4">
+                  <div className="text-center">
+                    <div className="text-xs font-bold text-gray-500 mb-1 tracking-widest">SYSTEM</div>
+                    <FlipCard char={foundSystem.code} index={0} large={true} />
+                  </div>
+                  <div className="text-center">
+                    <h1 className="text-2xl font-black text-gray-900">
+                      {foundSystem.title}
+                    </h1>
+                    <p className="text-sm text-orange-600 font-medium">MACHINE TREE</p>
+                  </div>
+                </div>
               </div>
 
               {/* Right side - Actions */}
@@ -193,25 +204,13 @@ export default function SemmSystemPage() {
           </span>
         </nav>
 
-        {/* System Header Card */}
+        {/* Content area for future system details */}
         <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
-          
-          {/* System Code Display */}
-          <div className="mb-6">
-            <div className="text-sm font-bold text-gray-500 mb-4 tracking-widest">SYSTEM</div>
-            <div className="flex items-center space-x-1">
-              <FlipCard char={foundSystem.code} index={0} large={true} />
-            </div>
-          </div>
-
-          {/* System Title */}
-          <div>
-            <h1 className="text-4xl font-black text-gray-900 mb-4">
-              {foundSystem.title}
-            </h1>
-            <p className="text-lg text-gray-600 leading-relaxed">
-              Maritime system classification: <span className="font-bold text-orange-600">SEMM Tree Navigation</span>
-            </p>
+          <p className="text-lg text-gray-600 leading-relaxed">
+            Maritime system classification: <span className="font-bold text-orange-600">SEMM Tree Navigation</span>
+          </p>
+          <div className="mt-6 text-gray-500">
+            System details and equipment listings will be displayed here.
           </div>
         </div>
 
