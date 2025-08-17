@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
-import { ArrowLeft, Settings, Package, Share2, Building, ChevronRight, ChevronDown, Home, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Share2, Home, ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 // Bottom edge roll out flip card animation
@@ -35,7 +35,7 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
       
       {/* Character reveal card */}
       <div
-        className="absolute inset-0 bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 flex items-center justify-center shadow-inner"
+        className="absolute inset-0 bg-gradient-to-b from-orange-600 via-red-600 to-orange-600 flex items-center justify-center shadow-inner"
         style={{
           transformOrigin: 'bottom center',
           transform: isFlipped ? 'rotateX(0deg)' : 'rotateX(180deg)',
@@ -73,8 +73,6 @@ export default function SemmSystemPage() {
   const { code } = useParams<{ code: string }>();
   const [, setLocation] = useLocation();
 
-
-
   // Fetch SEMM data to find the specific system
   const { data: semmData, isLoading, error } = useQuery({
     queryKey: ['/api/dev/semm-cards'],
@@ -82,251 +80,138 @@ export default function SemmSystemPage() {
     retry: 3,
   });
 
-  // Find the system by code
-  const findSystemByCode = (code: string) => {
-    if (!semmData?.data) return null;
-    
-    return semmData.data.find((system: any) => system.code === code);
-  };
-
-  const systemData = code ? findSystemByCode(code) : null;
-
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-100 to-blue-50 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <h2 className="text-xl font-semibold text-gray-700">Loading System...</h2>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="text-xl text-gray-600 animate-pulse">Loading system details...</div>
       </div>
     );
   }
 
-  if (error || !systemData) {
+  if (error || !semmData?.data) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-100 to-blue-50 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="text-red-600 text-6xl">⚠️</div>
-          <h2 className="text-xl font-semibold text-gray-700">System Not Found</h2>
-          <p className="text-gray-500">System with code "{code}" was not found.</p>
-          <button
-            onClick={() => setLocation('/machine-tree')}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-          >
-            Back to Machine Tree
-          </button>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="text-xl text-red-600">Failed to load system data</div>
       </div>
     );
   }
 
-  const shareUrl = `${window.location.origin}/machinetree/system/${code}`;
-  
-  const copyShareLink = async () => {
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      console.log('Share link copied:', shareUrl);
-    } catch (err) {
-      console.error('Failed to copy share link:', err);
-    }
+  // Find the specific system by code
+  const systems = Array.isArray(semmData.data) ? semmData.data : semmData.data.systems || [];
+  const foundSystem = systems.find((system: any) => system.code === code);
+
+  if (!foundSystem) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="text-xl text-red-600">System with code "{code}" not found</div>
+      </div>
+    );
+  }
+
+  const goBack = () => {
+    setLocation('/machinetree');
   };
 
-  const navigateToEquipment = (equipmentCode: string) => {
-    setLocation(`/machinetree/${equipmentCode}`);
+  const goHome = () => {
+    setLocation('/machinetree');
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-blue-50">
-      {/* Breadcrumb Navigation */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center space-x-2 text-sm">
-            <button
-              onClick={() => setLocation('/machine-tree')}
-              className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 transition-colors"
-            >
-              <Home className="h-4 w-4" />
-              <span>Machine Tree</span>
-            </button>
-            <ChevronRight className="h-4 w-4 text-gray-400" />
-            <span className="text-gray-700">{systemData.title}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Header */}
-      <div className="bg-white shadow-lg border-b">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="flex items-center space-x-6">
-            <button
-              onClick={() => setLocation('/machine-tree')}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              title="Back to Machine Tree"
-            >
-              <ArrowLeft className="h-6 w-6 text-gray-600" />
-            </button>
-            
-            {/* Sleek Marine Header */}
-            <div className="flex-1">
-              {/* Navy Header with Sleek Design */}
-              <div className="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 text-white px-8 py-4 rounded-t-xl shadow-2xl border-b-2 border-blue-700">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                      <Settings className="h-6 w-6 text-white" />
-                    </div>
-                    <div>
-                      <span className="text-white font-semibold text-lg tracking-wide">MARITIME SYSTEM</span>
-                      <div className="w-16 h-0.5 bg-white bg-opacity-50 mt-1"></div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xs text-blue-200 uppercase tracking-wider">Classification</div>
-                    <div className="text-sm text-white font-mono">{systemData.code}</div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* White Background with Code Display */}
-              <div className="bg-white px-8 py-6 rounded-b-xl shadow-lg border border-gray-200">
-                <div className="flex items-center space-x-2 mb-4">
-                  {systemData.code.split('').map((char, index) => (
-                    <FlipCard key={index} char={char} index={index} large={true} />
-                  ))}
-                </div>
-                <h1 className="text-4xl font-bold text-gray-900 mb-2 flex items-center">
-                  {systemData.title}
-                  <ChevronDown className="h-6 w-6 ml-3 text-gray-500" />
-                </h1>
-                <p className="text-gray-600 text-lg">
-                  {systemData.equipment?.length || 0} equipment types • {systemData.count || 0} questions
-                </p>
-                {systemData.description && (
-                  <p className="text-gray-500 mt-2">{systemData.description}</p>
-                )}
-              </div>
-            </div>
-            
-            <button
-              onClick={copyShareLink}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
-              title="Share this system"
-            >
-              <Share2 className="h-4 w-4" />
-              <span>Share</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Equipment List */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-lg shadow-lg border border-gray-200">
-          <div className="px-6 py-4 border-b bg-gradient-to-r from-blue-50 to-blue-100">
-            <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-              <Package className="h-5 w-5 text-blue-600 mr-2" />
-              Equipment Types
-            </h3>
-          </div>
-          
-          <div className="p-6">
-            {systemData.equipment && systemData.equipment.length > 0 ? (
-              <div className="space-y-4">
-                {systemData.equipment.map((equipment: any) => (
-                  <div
-                    key={equipment.id}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border hover:bg-blue-50 hover:border-blue-200 transition-colors group cursor-pointer"
-                    onClick={() => navigateToEquipment(equipment.code)}
-                  >
-                    <div className="flex items-center space-x-4">
-                      {/* Airport Analog Card Style Equipment Code */}
-                      <div className="flex items-center space-x-1">
-                        {equipment.code.split('').map((char, charIndex) => (
-                          <FlipCard key={`eq-${equipment.id}-${charIndex}`} char={char} index={charIndex} large={false} />
-                        ))}
-                      </div>
-                      
-                      <div>
-                        <h4 className="font-medium text-blue-900 group-hover:text-blue-700 transition-colors">
-                          {equipment.title}
-                        </h4>
-                        {equipment.description && (
-                          <p className="text-sm text-gray-500 mt-1">{equipment.description}</p>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-3">
-                      {equipment.count && (
-                        <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
-                          {equipment.count} machines
-                        </span>
-                      )}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigateToEquipment(equipment.code);
-                        }}
-                        className="p-2 hover:bg-blue-100 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                        title="View Equipment Details"
-                      >
-                        <ExternalLink className="h-4 w-4 text-blue-600" />
-                      </button>
-                      <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                <h4 className="text-lg font-medium text-gray-600 mb-2">No Equipment Found</h4>
-                <p className="text-gray-500">This system doesn't have any equipment types configured yet.</p>
-              </div>
-            )}
-          </div>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      {/* Super Stylish Header with QAAQ Colors */}
+      <div className="relative bg-gradient-to-r from-black via-red-900 to-orange-600 shadow-2xl overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-orange-500/20"></div>
+        <div className="absolute inset-0" style={{
+          backgroundImage: `radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.1) 0%, transparent 50%), 
+                           radial-gradient(circle at 75% 75%, rgba(234, 88, 12, 0.1) 0%, transparent 50%)`
+        }}></div>
         
-        {/* System Statistics */}
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-blue-100">
-                <Package className="h-6 w-6 text-blue-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Equipment Types</p>
-                <p className="text-2xl font-semibold text-gray-900">{systemData.equipment?.length || 0}</p>
-              </div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-20">
+            {/* Left side - Navigation */}
+            <div className="flex items-center space-x-6">
+              <button
+                onClick={goHome}
+                className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                data-testid="button-home"
+              >
+                <Home className="w-5 h-5" />
+                <span className="font-bold">Home</span>
+              </button>
+              
+              <button
+                onClick={goBack}
+                className="flex items-center space-x-2 px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/30 text-white rounded-xl backdrop-blur-sm transition-all duration-200 transform hover:scale-105"
+                data-testid="button-back"
+              >
+                <ArrowLeft className="w-5 h-5" />
+                <span className="font-medium">Back to Machine Tree</span>
+              </button>
             </div>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-green-100">
-                <Settings className="h-6 w-6 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Machines</p>
-                <p className="text-2xl font-semibold text-gray-900">
-                  {systemData.equipment?.reduce((total: number, eq: any) => total + (eq.count || 0), 0) || 0}
-                </p>
-              </div>
+
+            {/* Center - QAAQ Branding */}
+            <div className="flex-1 text-center">
+              <h1 className="text-3xl font-black bg-gradient-to-r from-white via-orange-200 to-white bg-clip-text text-transparent tracking-wider">
+                QAAQ
+              </h1>
+              <p className="text-orange-200/80 text-sm font-medium tracking-widest">MACHINE TREE</p>
             </div>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-orange-100">
-                <Building className="h-6 w-6 text-orange-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Questions</p>
-                <p className="text-2xl font-semibold text-gray-900">{systemData.count || 0}</p>
-              </div>
+
+            {/* Right side - Actions */}
+            <div className="flex items-center space-x-4">
+              <button
+                className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                data-testid="button-share"
+              >
+                <Share2 className="w-5 h-5" />
+                <span className="font-bold">Share</span>
+              </button>
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        
+        {/* Breadcrumb Navigation */}
+        <nav className="flex items-center space-x-2 text-sm mb-8" data-testid="breadcrumb-nav">
+          <button 
+            onClick={goHome}
+            className="text-red-600 hover:text-red-800 font-medium transition-colors"
+            data-testid="breadcrumb-home"
+          >
+            Machine Tree
+          </button>
+          <ChevronRight className="w-4 h-4 text-gray-400" />
+          <span className="text-gray-600 font-medium" data-testid="breadcrumb-current">
+            {foundSystem.title}
+          </span>
+        </nav>
+
+        {/* System Header Card */}
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
+          
+          {/* System Code Display */}
+          <div className="mb-6">
+            <div className="text-sm font-bold text-gray-500 mb-4 tracking-widest">SYSTEM</div>
+            <div className="flex items-center space-x-4">
+              <FlipCard char={foundSystem.code} index={0} large={true} />
+            </div>
+          </div>
+
+          {/* System Title */}
+          <div>
+            <h1 className="text-4xl font-black text-gray-900 mb-4">
+              {foundSystem.title}
+            </h1>
+            <p className="text-lg text-gray-600 leading-relaxed">
+              Maritime system classification: <span className="font-bold text-red-600">SEMM Tree Navigation</span>
+            </p>
+          </div>
+        </div>
+
       </div>
     </div>
   );

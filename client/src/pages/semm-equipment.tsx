@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
-import { ArrowLeft, Settings, Package, Share2, Building, ChevronRight, Home } from 'lucide-react';
+import { ArrowLeft, Share2, Home, ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 // Bottom edge roll out flip card animation
@@ -35,7 +35,7 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
       
       {/* Character reveal card */}
       <div
-        className="absolute inset-0 bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 flex items-center justify-center shadow-inner"
+        className="absolute inset-0 bg-gradient-to-b from-orange-600 via-red-600 to-orange-600 flex items-center justify-center shadow-inner"
         style={{
           transformOrigin: 'bottom center',
           transform: isFlipped ? 'rotateX(0deg)' : 'rotateX(180deg)',
@@ -69,14 +69,9 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
   );
 };
 
-interface SemmEquipmentProps {
-  code: string;
-}
-
 export default function SemmEquipmentPage() {
   const { code } = useParams<{ code: string }>();
   const [, setLocation] = useLocation();
-  const [isFlipped, setIsFlipped] = useState(false);
 
   // Fetch SEMM data to find the specific equipment
   const { data: semmData, isLoading, error } = useQuery({
@@ -85,316 +80,163 @@ export default function SemmEquipmentPage() {
     retry: 3,
   });
 
-  // Flip animation effect on page load - must be before early returns
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsFlipped(true);
-    }, 500); // Start flip after 500ms
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Find the equipment by code
-  const findEquipmentByCode = (code: string) => {
-    if (!semmData?.data) return null;
-    
-    for (const system of semmData.data) {
-      const equipment = system.equipment?.find((eq: any) => eq.code === code);
-      if (equipment) {
-        return {
-          equipment,
-          system: system,
-          breadcrumb: `${system.title} > ${equipment.title}`
-        };
-      }
-    }
-    return null;
-  };
-
-  const equipmentData = code ? findEquipmentByCode(code) : null;
-
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto"></div>
-          <h2 className="text-xl font-semibold text-gray-700">Loading Equipment...</h2>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="text-xl text-gray-600 animate-pulse">Loading equipment details...</div>
       </div>
     );
   }
 
-  if (error || !equipmentData) {
+  if (error || !semmData?.data) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="text-red-600 text-6xl">⚠️</div>
-          <h2 className="text-xl font-semibold text-gray-700">Equipment Not Found</h2>
-          <p className="text-gray-500">Equipment with code "{code}" was not found.</p>
-          <button
-            onClick={() => setLocation('/machine-tree')}
-            className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 transition-colors"
-          >
-            Back to Machine Tree
-          </button>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="text-xl text-red-600">Failed to load equipment data</div>
       </div>
     );
   }
 
-  const { equipment, system, breadcrumb } = equipmentData;
+  // Find the specific equipment by code
+  let foundEquipment = null;
+  let parentSystem = null;
 
-  const shareUrl = `${window.location.origin}/machinetree/${code}`;
+  // Check if semmData.data is an array of systems or has a systems property
+  const systems = Array.isArray(semmData.data) ? semmData.data : semmData.data.systems || [];
   
-  const copyShareLink = async () => {
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      // Could add toast notification here
-      console.log('Share link copied:', shareUrl);
-    } catch (err) {
-      console.error('Failed to copy share link:', err);
+  for (const system of systems) {
+    if (system.equipment && Array.isArray(system.equipment)) {
+      for (const equipment of system.equipment) {
+        if (equipment.code === code) {
+          foundEquipment = equipment;
+          parentSystem = system;
+          break;
+        }
+      }
     }
+    if (foundEquipment) break;
+  }
+
+  if (!foundEquipment || !parentSystem) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="text-xl text-red-600">Equipment with code "{code}" not found</div>
+      </div>
+    );
+  }
+
+  const goBack = () => {
+    setLocation(`/machinetree/${parentSystem.code}`);
   };
 
-
-
-
+  const goHome = () => {
+    setLocation('/machinetree');
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-blue-50">
-      {/* Breadcrumb Navigation */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center space-x-2 text-sm">
-            <button
-              onClick={() => setLocation('/machine-tree')}
-              className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 transition-colors"
-            >
-              <Home className="h-4 w-4" />
-              <span>Machine Tree</span>
-            </button>
-            <ChevronRight className="h-4 w-4 text-gray-400" />
-            <button
-              onClick={() => setLocation(`/machinetree/system/${equipmentData.system.code}`)}
-              className="text-blue-600 hover:text-blue-700 transition-colors"
-            >
-              {equipmentData.system.title}
-            </button>
-            <ChevronRight className="h-4 w-4 text-gray-400" />
-            <span className="text-gray-700">{equipment.title}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Header */}
-      <div className="bg-white shadow-lg border-b">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="flex items-center space-x-6">
-            <button
-              onClick={() => setLocation('/machine-tree')}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              title="Back to Machine Tree"
-            >
-              <ArrowLeft className="h-6 w-6 text-gray-600" />
-            </button>
-            
-            {/* Sleek Marine Header */}
-            <div className="flex-1">
-              {/* Navy Header with Sleek Design */}
-              <div className="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 text-white px-8 py-4 rounded-t-xl shadow-2xl border-b-2 border-blue-700">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                      <Package className="h-6 w-6 text-white" />
-                    </div>
-                    <div>
-                      <span className="text-white font-semibold text-lg tracking-wide">MARITIME EQUIPMENT</span>
-                      <div className="w-16 h-0.5 bg-white bg-opacity-50 mt-1"></div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xs text-blue-200 uppercase tracking-wider">Classification</div>
-                    <div className="text-sm text-white font-mono">{equipment.code}</div>
-                  </div>
-                </div>
-              </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      {/* Super Stylish Header with QAAQ Colors */}
+      <div className="relative bg-gradient-to-r from-black via-red-900 to-orange-600 shadow-2xl overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-orange-500/20"></div>
+        <div className="absolute inset-0" style={{
+          backgroundImage: `radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.1) 0%, transparent 50%), 
+                           radial-gradient(circle at 75% 75%, rgba(234, 88, 12, 0.1) 0%, transparent 50%)`
+        }}></div>
+        
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-20">
+            {/* Left side - Navigation */}
+            <div className="flex items-center space-x-6">
+              <button
+                onClick={goHome}
+                className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                data-testid="button-home"
+              >
+                <Home className="w-5 h-5" />
+                <span className="font-bold">Home</span>
+              </button>
               
-              {/* White Background with Code Display */}
-              <div className="bg-white px-8 py-6 rounded-b-xl shadow-lg border border-gray-200">
-                <div className="flex items-center space-x-2 mb-4">
-                  {equipment.code.split('').map((char, index) => (
-                    <FlipCard key={index} char={char} index={index} large={true} />
-                  ))}
-                </div>
-                <h1 className="text-4xl font-bold text-gray-900 mb-2">{equipment.title}</h1>
-                <p className="text-gray-600 text-lg">{breadcrumb}</p>
-                {equipment.description && (
-                  <p className="text-gray-500 mt-2">{equipment.description}</p>
-                )}
-              </div>
+              <button
+                onClick={goBack}
+                className="flex items-center space-x-2 px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/30 text-white rounded-xl backdrop-blur-sm transition-all duration-200 transform hover:scale-105"
+                data-testid="button-back"
+              >
+                <ArrowLeft className="w-5 h-5" />
+                <span className="font-medium">Back to {parentSystem.title}</span>
+              </button>
             </div>
-            
-            <button
-              onClick={copyShareLink}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
-              title="Share this equipment"
-            >
-              <Share2 className="h-4 w-4" />
-              <span>Share</span>
-            </button>
+
+            {/* Center - QAAQ Branding */}
+            <div className="flex-1 text-center">
+              <h1 className="text-3xl font-black bg-gradient-to-r from-white via-orange-200 to-white bg-clip-text text-transparent tracking-wider">
+                QAAQ
+              </h1>
+              <p className="text-orange-200/80 text-sm font-medium tracking-widest">MACHINE TREE</p>
+            </div>
+
+            {/* Right side - Actions */}
+            <div className="flex items-center space-x-4">
+              <button
+                className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                data-testid="button-share"
+              >
+                <Share2 className="w-5 h-5" />
+                <span className="font-bold">Share</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Equipment Details */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        
+        {/* Breadcrumb Navigation */}
+        <nav className="flex items-center space-x-2 text-sm mb-8" data-testid="breadcrumb-nav">
+          <button 
+            onClick={goHome}
+            className="text-red-600 hover:text-red-800 font-medium transition-colors"
+            data-testid="breadcrumb-home"
+          >
+            Machine Tree
+          </button>
+          <ChevronRight className="w-4 h-4 text-gray-400" />
+          <button 
+            onClick={goBack}
+            className="text-red-600 hover:text-red-800 font-medium transition-colors"
+            data-testid="breadcrumb-system"
+          >
+            {parentSystem.title}
+          </button>
+          <ChevronRight className="w-4 h-4 text-gray-400" />
+          <span className="text-gray-600 font-medium" data-testid="breadcrumb-current">
+            {foundEquipment.title}
+          </span>
+        </nav>
+
+        {/* Equipment Header Card */}
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
           
-          {/* Main Equipment Info */}
-          <div className="lg:col-span-2 bg-white rounded-lg shadow-lg border border-gray-200">
-            <div className="px-6 py-4 border-b bg-gradient-to-r from-blue-50 to-blue-100">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-                  <Package className="h-5 w-5 text-blue-600 mr-2" />
-                  Equipment Details
-                </h3>
-                <button
-                  onClick={copyShareLink}
-                  className="flex items-center space-x-2 px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
-                  title="Share this equipment"
-                >
-                  <Share2 className="h-4 w-4" />
-                  <span className="text-sm">Share</span>
-                </button>
-              </div>
-            </div>
-            
-            <div className="p-6 space-y-6">
-              {/* Equipment Code and Title - Marine Style */}
-              <div className="space-y-0 shadow-lg rounded-lg overflow-hidden border border-gray-300">
-                {/* Mini Marine Header */}
-                <div className="bg-gradient-to-r from-blue-900 to-blue-800 text-white px-6 py-3 flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-6 h-6 bg-white bg-opacity-20 rounded flex items-center justify-center">
-                      <Package className="h-4 w-4 text-white" />
-                    </div>
-                    <span className="text-white font-medium text-sm tracking-wider">EQUIPMENT CLASSIFICATION</span>
-                  </div>
-                </div>
-                
-                {/* White Background with Code */}
-                <div className="bg-white px-6 py-4 flex items-center space-x-4">
-                  <div className="flex items-center space-x-1">
-                    {equipment.code.split('').map((char, index) => (
-                      <FlipCard key={`inline-${index}`} char={char} index={index} large={false} />
-                    ))}
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900">{equipment.title}</h2>
-                    <p className="text-gray-600 text-sm">Maritime Equipment Code: {equipment.code}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* System Information */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="font-semibold text-gray-800 mb-2">System Classification</h4>
-                <div className="flex items-center space-x-3">
-                  <div className="flex items-center justify-center w-8 h-8 bg-blue-900 rounded-lg">
-                    <span className="text-sm font-bold text-white">{system.code}</span>
-                  </div>
-                  <div>
-                    <div className="font-medium text-gray-700">{system.title}</div>
-                    {system.description && (
-                      <div className="text-sm text-gray-500">{system.description}</div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Equipment Description */}
-              {equipment.description && (
-                <div>
-                  <h4 className="font-semibold text-gray-800 mb-2">Description</h4>
-                  <p className="text-gray-600">{equipment.description}</p>
-                </div>
-              )}
-
-              {/* Machines/Makes */}
-              {equipment.machines && equipment.machines.length > 0 && (
-                <div>
-                  <h4 className="font-semibold text-gray-800 mb-3">Available Makes & Models</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {equipment.machines.map((machine: any) => (
-                      <div key={machine.id} className="p-4 bg-gray-50 rounded-lg border">
-                        <div className="font-medium text-gray-800">{machine.name}</div>
-                        <div className="text-sm text-gray-600 mt-1">Make: {machine.make}</div>
-                        {machine.model && (
-                          <div className="text-sm text-orange-600">Model: {machine.model}</div>
-                        )}
-                        {machine.description && (
-                          <div className="text-xs text-gray-500 mt-2">{machine.description}</div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+          {/* Equipment Code Display */}
+          <div className="mb-6">
+            <div className="text-sm font-bold text-gray-500 mb-4 tracking-widest">EQUIPMENT</div>
+            <div className="flex items-center space-x-4">
+              <FlipCard char={foundEquipment.code[0]} index={0} large={true} />
+              <FlipCard char={foundEquipment.code[1]} index={1} large={true} />
             </div>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Quick Actions */}
-            <div className="bg-white rounded-lg shadow-lg border border-gray-200">
-              <div className="px-4 py-3 border-b bg-gradient-to-r from-blue-50 to-blue-100">
-                <h4 className="font-semibold text-gray-800">Quick Actions</h4>
-              </div>
-              <div className="p-4 space-y-3">
-                <button
-                  onClick={copyShareLink}
-                  className="w-full flex items-center space-x-2 px-3 py-2 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors"
-                >
-                  <Share2 className="h-4 w-4" />
-                  <span>Share Equipment</span>
-                </button>
-                <button
-                  onClick={() => setLocation('/machine-tree')}
-                  className="w-full flex items-center space-x-2 px-3 py-2 bg-gray-50 text-gray-700 rounded hover:bg-gray-100 transition-colors"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  <span>Back to Tree</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Equipment Stats */}
-            <div className="bg-white rounded-lg shadow-lg border border-gray-200">
-              <div className="px-4 py-3 border-b bg-gradient-to-r from-blue-50 to-blue-100">
-                <h4 className="font-semibold text-gray-800">Equipment Info</h4>
-              </div>
-              <div className="p-4 space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Code:</span>
-                  <span className="font-medium">{equipment.code}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">System:</span>
-                  <span className="font-medium">{system.code}</span>
-                </div>
-                {equipment.count && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Items:</span>
-                    <span className="font-medium">{equipment.count}</span>
-                  </div>
-                )}
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Share URL:</span>
-                  <span className="text-xs text-blue-600 break-all">/machinetree/{code}</span>
-                </div>
-              </div>
-            </div>
+          {/* Equipment Title */}
+          <div>
+            <h1 className="text-4xl font-black text-gray-900 mb-4">
+              {foundEquipment.title}
+            </h1>
+            <p className="text-lg text-gray-600 leading-relaxed">
+              Maritime equipment classification: <span className="font-bold text-red-600">{parentSystem.title}</span>
+            </p>
           </div>
         </div>
+
       </div>
     </div>
   );
