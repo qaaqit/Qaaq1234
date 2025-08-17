@@ -36,35 +36,20 @@ export default function MachineTreePage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedEquipment, setSelectedEquipment] = useState<string | null>(null);
 
-  // Fetch categories
-  const { data: categories = [], isLoading: categoriesLoading } = useQuery({
-    queryKey: ['/api/export/categories'],
+  // Fetch SEMM cards from parent app
+  const { data: semmData, isLoading: semmLoading } = useQuery({
+    queryKey: ['/api/dev/semm-cards'],
     queryFn: async () => {
-      const response = await fetch('/api/export/categories');
-      if (!response.ok) throw new Error('Failed to fetch categories');
+      const response = await fetch('https://ae593ff5-1a4d-4129-8a7a-84788dd6900e-00-3cfncjt0ai8yg.worf.replit.dev/api/dev/semm-cards');
+      if (!response.ok) throw new Error('Failed to fetch SEMM data');
       return response.json();
     }
   });
 
-  // Fetch equipment subcategories
-  const { data: equipment = [], isLoading: equipmentLoading } = useQuery({
-    queryKey: ['/api/export/makes'],
-    queryFn: async () => {
-      const response = await fetch('/api/export/makes');
-      if (!response.ok) throw new Error('Failed to fetch equipment');
-      return response.json();
-    }
-  });
-
-  // Fetch machines
-  const { data: machines = [], isLoading: machinesLoading } = useQuery({
-    queryKey: ['/api/export/machines'],
-    queryFn: async () => {
-      const response = await fetch('/api/export/machines');
-      if (!response.ok) throw new Error('Failed to fetch machines');
-      return response.json();
-    }
-  });
+  // Extract data from the parent app response
+  const categories = semmData?.data || [];
+  const equipment = categories.flatMap((cat: any) => cat.equipment || []);
+  const machines = equipment.flatMap((eq: any) => eq.machines || []);
 
   const toggleCategory = (categoryId: string) => {
     const newExpanded = new Set(expandedCategories);
@@ -89,11 +74,14 @@ export default function MachineTreePage() {
   };
 
   const getFilteredEquipment = (categoryId: string) => {
-    return equipment.filter((eq: any) => eq.category === categoryId);
+    const category = categories.find((cat: any) => cat.id === categoryId);
+    return category?.equipment || [];
   };
 
   const getFilteredMachines = (equipmentId: string) => {
-    return machines.filter((machine: any) => machine.equipment === equipmentId);
+    const equipment = categories.flatMap((cat: any) => cat.equipment || []);
+    const eq = equipment.find((e: any) => e.id === equipmentId);
+    return eq?.machines || [];
   };
 
   const copyShareLink = async (machine: any) => {
@@ -107,13 +95,13 @@ export default function MachineTreePage() {
     }
   };
 
-  if (categoriesLoading || equipmentLoading || machinesLoading) {
+  if (semmLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50 flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto"></div>
           <h2 className="text-xl font-semibold text-gray-700">Loading Machine Tree...</h2>
-          <p className="text-gray-500">Organizing maritime equipment database</p>
+          <p className="text-gray-500">Loading SEMM data from parent app...</p>
         </div>
       </div>
     );
@@ -127,8 +115,8 @@ export default function MachineTreePage() {
           <div className="flex items-center space-x-3">
             <Settings className="h-8 w-8 text-white" />
             <div>
-              <h1 className="text-2xl font-bold text-white">Machine Tree</h1>
-              <p className="text-orange-100">Maritime Equipment Classification System</p>
+              <h1 className="text-2xl font-bold text-white">Machine Tree (SEMM)</h1>
+              <p className="text-orange-100">System-Equipment-Make-Model Classification | Data from Parent App</p>
             </div>
           </div>
         </div>
@@ -137,20 +125,29 @@ export default function MachineTreePage() {
       {/* Stats Bar */}
       <div className="bg-white border-b shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-4 gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-red-600">{categories.length}</div>
-              <div className="text-sm text-gray-600">System Categories</div>
+              <div className="text-sm text-gray-600">Systems</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-orange-600">{equipment.length}</div>
-              <div className="text-sm text-gray-600">Equipment Types</div>
+              <div className="text-sm text-gray-600">Equipment</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-gray-700">{machines.length}</div>
-              <div className="text-sm text-gray-600">Total Machines</div>
+              <div className="text-sm text-gray-600">Machines</div>
+            </div>
+            <div className="text-center">
+              <div className="text-xs font-bold text-blue-600">PARENT APP</div>
+              <div className="text-sm text-gray-600">Data Source</div>
             </div>
           </div>
+          {semmData?.usage && (
+            <div className="mt-3 p-2 bg-blue-50 rounded text-center">
+              <span className="text-xs text-blue-600">Connected to: {semmData.usage.endpoint} | Version: {semmData.version}</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -179,7 +176,7 @@ export default function MachineTreePage() {
                         <span className="text-sm font-bold text-orange-600">{category.code}</span>
                       </div>
                       <div>
-                        <div className="font-medium text-gray-800">{category.code}. {category.name}</div>
+                        <div className="font-medium text-gray-800">{category.code}. {category.title}</div>
                         {category.description && (
                           <div className="text-sm text-gray-500">{category.description}</div>
                         )}
@@ -218,7 +215,7 @@ export default function MachineTreePage() {
                               <div className="flex items-center justify-center w-6 h-6 bg-white rounded border">
                                 <span className="text-xs font-bold text-gray-600">{eq.code}</span>
                               </div>
-                              <span className="text-sm font-medium text-gray-700">{eq.code} {eq.name}</span>
+                              <span className="text-sm font-medium text-gray-700">{eq.code} {eq.title}</span>
                             </div>
                             <div className="flex items-center space-x-2">
                               {eq.count && (
@@ -300,7 +297,7 @@ export default function MachineTreePage() {
                 <div className="space-y-6">
                   <div>
                     <h4 className="text-lg font-semibold text-gray-800 mb-2">
-                      {categories.find((c: any) => c.id === selectedCategory)?.name}
+                      {categories.find((c: any) => c.id === selectedCategory)?.title}
                     </h4>
                     <p className="text-gray-600">
                       {categories.find((c: any) => c.id === selectedCategory)?.description || 
@@ -311,7 +308,7 @@ export default function MachineTreePage() {
                   {selectedEquipment && (
                     <div className="border-t pt-6">
                       <h5 className="text-md font-semibold text-gray-800 mb-3">
-                        {equipment.find((eq: any) => eq.id === selectedEquipment)?.name} Machines
+                        {equipment.find((eq: any) => eq.id === selectedEquipment)?.title} Machines (from Parent App)
                       </h5>
                       <div className="grid gap-4">
                         {getFilteredMachines(selectedEquipment).map((machine: any) => (
