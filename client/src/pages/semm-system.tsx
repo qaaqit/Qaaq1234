@@ -3,107 +3,68 @@ import { useParams, useLocation } from 'wouter';
 import { ArrowLeft, Settings, Package, Share2, Building, ChevronRight, ChevronDown, Home, ExternalLink } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-// Enhanced split-flap flip card with mechanical animation
+// Bottom edge roll out flip card animation
 const FlipCard = ({ char, index, large = false }: { char: string; index: number; large?: boolean }) => {
-  const [animationStage, setAnimationStage] = useState(0); // 0: loading, 1: flipping, 2: complete
+  const [isFlipped, setIsFlipped] = useState(false);
   
   useEffect(() => {
-    // Stage 1: Initial delay + start flipping
-    const timer1 = setTimeout(() => {
-      setAnimationStage(1);
+    const timer = setTimeout(() => {
+      setIsFlipped(true);
     }, 600 + (index * 150));
     
-    // Stage 2: Complete flip
-    const timer2 = setTimeout(() => {
-      setAnimationStage(2);
-    }, 1000 + (index * 150));
-    
-    return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-    };
+    return () => clearTimeout(timer);
   }, [index]);
 
   const cardSize = large ? 'w-16 h-20' : 'w-8 h-12';
   const textSize = large ? 'text-4xl' : 'text-lg';
 
   return (
-    <div className={`relative ${cardSize} bg-black rounded-lg overflow-hidden border-2 border-gray-600 shadow-2xl`}>
-      {/* Center horizontal split line with metallic effect */}
-      <div className="absolute inset-x-0 top-1/2 h-0.5 bg-gradient-to-r from-gray-600 via-gray-400 to-gray-600 z-20 shadow-lg"></div>
-      
-      {/* Top half container */}
-      <div className="relative h-1/2 overflow-hidden" style={{ perspective: '800px' }}>
-        {/* Top half loading state */}
-        <div
-          className="absolute inset-0 bg-gradient-to-b from-gray-800 via-gray-700 to-gray-800 flex items-end justify-center"
-          style={{
-            transformOrigin: 'bottom center',
-            transform: animationStage >= 1 ? 'rotateX(-90deg)' : 'rotateX(0deg)',
-            transition: 'transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-            backfaceVisibility: 'hidden'
-          }}
-        >
-          <div className="w-2 h-2 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin mb-1"></div>
-        </div>
-        
-        {/* Top half with character */}
-        <div
-          className="absolute inset-0 bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 flex justify-center shadow-inner"
-          style={{
-            transformOrigin: 'bottom center',
-            transform: animationStage >= 2 ? 'rotateX(0deg)' : 'rotateX(90deg)',
-            transition: 'transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-            transitionDelay: animationStage >= 2 ? '0.1s' : '0s',
-            backfaceVisibility: 'hidden',
-            alignItems: 'center',
-            paddingTop: '10px' // Shift alphabet down by 3 rows
-          }}
-        >
-          <span className={`${textSize} font-bold text-white font-mono tracking-wider drop-shadow-2xl leading-none`}>
-            {char}
-          </span>
-        </div>
+    <div className={`relative ${cardSize} bg-black rounded-lg overflow-hidden border-2 border-gray-600 shadow-2xl`} style={{ perspective: '1000px' }}>
+      {/* Loading state card */}
+      <div
+        className="absolute inset-0 bg-gradient-to-b from-gray-800 via-gray-700 to-gray-800 flex items-center justify-center"
+        style={{
+          transformOrigin: 'bottom center',
+          transform: isFlipped ? 'rotateX(-180deg)' : 'rotateX(0deg)',
+          transition: 'transform 0.8s cubic-bezier(0.23, 1, 0.32, 1)',
+          backfaceVisibility: 'hidden'
+        }}
+      >
+        <div className="w-2 h-2 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
       </div>
       
-      {/* Bottom half container */}
-      <div className="relative h-1/2 overflow-hidden" style={{ perspective: '800px' }}>
-        {/* Bottom half loading state */}
-        <div
-          className="absolute inset-0 bg-gradient-to-t from-gray-800 via-gray-700 to-gray-800 flex items-start justify-center"
-          style={{
-            transformOrigin: 'top center',
-            transform: animationStage >= 1 ? 'rotateX(90deg)' : 'rotateX(0deg)',
-            transition: 'transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-            backfaceVisibility: 'hidden'
-          }}
-        >
-          <div className="w-2 h-2 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin mt-1"></div>
-        </div>
-        
-        {/* Bottom half with character */}
-        <div
-          className="absolute inset-0 bg-gradient-to-t from-blue-900 via-blue-800 to-blue-900 flex justify-center shadow-inner"
-          style={{
-            transformOrigin: 'top center',
-            transform: animationStage >= 2 ? 'rotateX(0deg)' : 'rotateX(-90deg)',
-            transition: 'transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-            transitionDelay: animationStage >= 2 ? '0.1s' : '0s',
-            backfaceVisibility: 'hidden',
-            alignItems: 'center',
-            paddingBottom: '10px' // Shift alphabet up by 3 rows
-          }}
-        >
-          <span className={`${textSize} font-bold text-white font-mono tracking-wider drop-shadow-2xl leading-none`}>
-            {char}
-          </span>
-        </div>
+      {/* Character reveal card */}
+      <div
+        className="absolute inset-0 bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 flex items-center justify-center shadow-inner"
+        style={{
+          transformOrigin: 'bottom center',
+          transform: isFlipped ? 'rotateX(0deg)' : 'rotateX(180deg)',
+          transition: 'transform 0.8s cubic-bezier(0.23, 1, 0.32, 1)',
+          backfaceVisibility: 'hidden'
+        }}
+      >
+        <span className={`${textSize} font-bold text-white font-mono tracking-wider drop-shadow-2xl leading-none`}>
+          {char}
+        </span>
       </div>
       
-      {/* Mechanical click sound effect visual */}
-      {animationStage === 1 && (
-        <div className="absolute inset-0 bg-white bg-opacity-10 animate-pulse pointer-events-none"></div>
+      {/* Mechanical click flash effect */}
+      {isFlipped && (
+        <div 
+          className="absolute inset-0 bg-white pointer-events-none"
+          style={{
+            opacity: 0,
+            animation: 'flash 0.1s ease-out',
+          }}
+        />
       )}
+      
+      <style jsx>{`
+        @keyframes flash {
+          0% { opacity: 0.3; }
+          100% { opacity: 0; }
+        }
+      `}</style>
     </div>
   );
 };
