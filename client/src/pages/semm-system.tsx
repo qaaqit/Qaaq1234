@@ -49,16 +49,18 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
         
         {/* Top half with character */}
         <div
-          className="absolute inset-0 bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 flex items-end justify-center shadow-inner"
+          className="absolute inset-0 bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 flex justify-center shadow-inner"
           style={{
             transformOrigin: 'bottom center',
             transform: animationStage >= 2 ? 'rotateX(0deg)' : 'rotateX(90deg)',
             transition: 'transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
             transitionDelay: animationStage >= 2 ? '0.1s' : '0s',
-            backfaceVisibility: 'hidden'
+            backfaceVisibility: 'hidden',
+            alignItems: 'center',
+            paddingTop: '10px' // Shift alphabet down by 3 rows
           }}
         >
-          <span className={`${textSize} font-bold text-white font-mono tracking-wider drop-shadow-2xl leading-none pb-0.5`}>
+          <span className={`${textSize} font-bold text-white font-mono tracking-wider drop-shadow-2xl leading-none`}>
             {char}
           </span>
         </div>
@@ -81,16 +83,18 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
         
         {/* Bottom half with character */}
         <div
-          className="absolute inset-0 bg-gradient-to-t from-blue-900 via-blue-800 to-blue-900 flex items-start justify-center shadow-inner"
+          className="absolute inset-0 bg-gradient-to-t from-blue-900 via-blue-800 to-blue-900 flex justify-center shadow-inner"
           style={{
             transformOrigin: 'top center',
             transform: animationStage >= 2 ? 'rotateX(0deg)' : 'rotateX(-90deg)',
             transition: 'transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
             transitionDelay: animationStage >= 2 ? '0.1s' : '0s',
-            backfaceVisibility: 'hidden'
+            backfaceVisibility: 'hidden',
+            alignItems: 'center',
+            paddingBottom: '10px' // Shift alphabet up by 3 rows
           }}
         >
-          <span className={`${textSize} font-bold text-white font-mono tracking-wider drop-shadow-2xl leading-none pt-0.5`}>
+          <span className={`${textSize} font-bold text-white font-mono tracking-wider drop-shadow-2xl leading-none`}>
             {char}
           </span>
         </div>
