@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronRight, ChevronDown, Package, Settings, Building, Ship, Heart, Share2, RotateCcw, Edit3, Plus, GripVertical } from 'lucide-react';
+import { useLocation } from 'wouter';
+import { ChevronRight, ChevronDown, Package, Settings, Building, Ship, Heart, Share2, RotateCcw, Edit3, Plus, GripVertical, ExternalLink } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 interface Category {
@@ -36,6 +37,7 @@ export default function MachineTreePage() {
   const [expandedEquipment, setExpandedEquipment] = useState<Set<string>>(new Set());
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedEquipment, setSelectedEquipment] = useState<string | null>(null);
+  const [, setLocation] = useLocation();
   
   // Get user authentication info
   const { user, isAuthenticated } = useAuth();
@@ -126,6 +128,11 @@ export default function MachineTreePage() {
   const handleAddNewEquipment = (systemId: string) => {
     console.log('Add new equipment to system:', systemId);
     // TODO: Implement add new equipment modal
+  };
+
+  // Navigation to individual equipment pages
+  const navigateToEquipment = (equipmentCode: string) => {
+    setLocation(`/machinetree/${equipmentCode}`);
   };
 
   if (semmLoading) {
@@ -297,16 +304,27 @@ export default function MachineTreePage() {
                       
                       {getFilteredEquipment(category.id).map((eq: any) => (
                         <div key={eq.id} className="py-2 border-b border-gray-200 last:border-b-0">
-                          <button
+                          <div
+                            className="w-full text-left flex items-center justify-between hover:text-orange-600 transition-colors cursor-pointer group"
                             onClick={() => toggleEquipment(eq.id)}
-                            className="w-full text-left flex items-center justify-between hover:text-orange-600 transition-colors"
                             data-testid={`equipment-${eq.id}`}
                           >
-                            <div className="flex items-center space-x-2 group">
+                            <div className="flex items-center space-x-2">
                               <div className="flex items-center justify-center w-6 h-6 bg-white rounded border">
                                 <span className="text-xs font-bold text-gray-600">{eq.code}</span>
                               </div>
                               <span className="text-sm font-medium text-gray-700">{eq.title}</span>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigateToEquipment(eq.code);
+                                }}
+                                className="p-1 hover:bg-blue-100 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                                title="View Equipment Page"
+                                data-testid={`view-equipment-${eq.id}`}
+                              >
+                                <ExternalLink className="h-3 w-3 text-blue-600" />
+                              </button>
                               {isAdmin && (
                                 <button
                                   onClick={(e) => {
@@ -333,7 +351,7 @@ export default function MachineTreePage() {
                                 <ChevronRight className="h-3 w-3 text-gray-400" />
                               )}
                             </div>
-                          </button>
+                          </div>
                           
                           {/* Machines under this equipment */}
                           {expandedEquipment.has(eq.id) && (
