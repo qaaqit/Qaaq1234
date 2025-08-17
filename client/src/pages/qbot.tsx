@@ -3,6 +3,13 @@ import { useLocation } from "wouter";
 import type { User } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown } from "lucide-react";
 import UserDropdown from "@/components/user-dropdown";
 import QBOTChatContainer from "@/components/qbot-chat/QBOTChatContainer";
 import QBOTChatHeader from "@/components/qbot-chat/QBOTChatHeader";
@@ -27,6 +34,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
   const [isQBotTyping, setIsQBotTyping] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [activeTab, setActiveTab] = useState("chat");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
@@ -206,14 +214,52 @@ export default function QBOTPage({ user }: QBOTPageProps) {
         <div className="relative z-10 px-2 py-2 sm:px-4 sm:py-3">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-shrink-0">
-              <button 
-                onClick={() => setLocation('/')}
-                className="hover:bg-white/10 rounded-lg p-1 sm:p-2 transition-colors"
-              >
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
-                  <img src={qaaqLogo} alt="QAAQ Logo" className="w-full h-full object-cover" />
-                </div>
-              </button>
+              <DropdownMenu onOpenChange={setIsMenuOpen}>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="p-1 h-auto w-auto rounded-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200"
+                    data-testid="button-main-menu"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <ChevronDown className={`w-4 h-4 sm:w-5 sm:h-5 text-white transition-transform duration-200 ${isMenuOpen ? 'rotate-180' : ''}`} />
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white p-1 shadow-lg">
+                        <img 
+                          src={qaaqLogo} 
+                          alt="QAAQ Logo" 
+                          className="w-full h-full rounded-full object-cover"
+                        />
+                      </div>
+                    </div>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48 bg-white border border-gray-200 shadow-lg rounded-lg">
+                  <DropdownMenuItem 
+                    onClick={() => setLocation("/")}
+                    className="cursor-pointer flex items-center space-x-3 px-4 py-3 hover:bg-orange-50 transition-colors"
+                    data-testid="menu-item-home"
+                  >
+                    <i className="fas fa-home text-orange-600 w-4"></i>
+                    <span className="text-gray-700 font-medium">Home</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => setLocation("/glossary")}
+                    className="cursor-pointer flex items-center space-x-3 px-4 py-3 hover:bg-orange-50 transition-colors"
+                    data-testid="menu-item-dictionary"
+                  >
+                    <i className="fas fa-ship text-orange-600 w-4"></i>
+                    <span className="text-gray-700 font-medium">Shipping Dictionary</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => setLocation("/my-questions")}
+                    className="cursor-pointer flex items-center space-x-3 px-4 py-3 hover:bg-orange-50 transition-colors"
+                    data-testid="menu-item-questions"
+                  >
+                    <i className="fas fa-question-circle text-orange-600 w-4"></i>
+                    <span className="text-gray-700 font-medium">QuestionBank</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <div className="min-w-0">
                 <h1 className="text-base sm:text-xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent whitespace-nowrap">QaaqConnect</h1>
                 <button
