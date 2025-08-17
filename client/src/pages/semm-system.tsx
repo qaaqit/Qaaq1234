@@ -39,7 +39,7 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
         
         {/* Top half with character */}
         <div
-          className="absolute inset-0 bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 flex items-end justify-center pb-1"
+          className="absolute inset-0 bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 flex items-center justify-center overflow-hidden"
           style={{
             transformOrigin: 'bottom center',
             transform: cardFlipped ? 'rotateX(0deg)' : 'rotateX(90deg)',
@@ -48,9 +48,11 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
             backfaceVisibility: 'hidden'
           }}
         >
-          <span className={`${textSize} font-bold text-white font-mono tracking-wider drop-shadow-lg`}>
-            {char}
-          </span>
+          <div className="w-full h-full flex items-center justify-center" style={{ clipPath: 'inset(0 0 50% 0)' }}>
+            <span className={`${textSize} font-bold text-white font-mono tracking-wider drop-shadow-lg`}>
+              {char}
+            </span>
+          </div>
         </div>
       </div>
       
@@ -71,7 +73,7 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
         
         {/* Bottom half with character */}
         <div
-          className="absolute inset-0 bg-gradient-to-t from-blue-900 via-blue-800 to-blue-900 flex items-start justify-center pt-1"
+          className="absolute inset-0 bg-gradient-to-t from-blue-900 via-blue-800 to-blue-900 flex items-center justify-center overflow-hidden"
           style={{
             transformOrigin: 'top center',
             transform: cardFlipped ? 'rotateX(0deg)' : 'rotateX(-90deg)',
@@ -80,9 +82,11 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
             backfaceVisibility: 'hidden'
           }}
         >
-          <span className={`${textSize} font-bold text-white font-mono tracking-wider drop-shadow-lg`}>
-            {char}
-          </span>
+          <div className="w-full h-full flex items-center justify-center" style={{ clipPath: 'inset(50% 0 0 0)' }}>
+            <span className={`${textSize} font-bold text-white font-mono tracking-wider drop-shadow-lg`}>
+              {char}
+            </span>
+          </div>
         </div>
       </div>
     </div>
