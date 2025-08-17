@@ -15,8 +15,8 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
     return () => clearTimeout(timer);
   }, [index]);
 
-  const cardSize = large ? 'w-16 h-20' : 'w-8 h-12';
-  const textSize = large ? 'text-4xl' : 'text-lg';
+  const cardSize = large ? 'w-8 h-10' : 'w-8 h-12';
+  const textSize = large ? 'text-2xl' : 'text-lg';
 
   return (
     <div className={`relative ${cardSize} rounded-lg overflow-hidden border-2 border-white shadow-lg`} 
@@ -129,35 +129,40 @@ export default function SemmSystemPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Header with Code Card and Title */}
-      <div className="bg-white border-b-4 border-orange-300 shadow-lg">
-        <div className="bg-gradient-to-r from-orange-50 to-orange-100 px-4">
+      {/* Header with Compact Layout */}
+      <div className="bg-white shadow-lg">
+        <div className="bg-gradient-to-r from-orange-50 to-orange-100 px-4 py-3">
           <div className="max-w-7xl mx-auto">
-            <div className="flex items-center justify-between py-4">
-              {/* Left side - Code Card with Back Arrow */}
+            {/* Back Arrow - Top Left Corner */}
+            <div className="flex justify-start mb-2">
+              <button
+                onClick={goBack}
+                className="p-1 hover:bg-orange-100 text-orange-600 rounded-full transition-colors"
+                data-testid="button-back"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+            </div>
+            
+            {/* Code Card, Title & Share Icon - Compact Layout */}
+            <div className="flex items-center justify-between">
+              {/* Left side - Code Card */}
               <div className="flex items-center space-x-4">
                 <div className="text-center">
                   <div className="text-xs font-bold text-gray-500 mb-1 tracking-widest">SYSTEM</div>
                   <FlipCard char={foundSystem.code} index={0} large={true} />
-                  <button
-                    onClick={goBack}
-                    className="mt-2 p-1 hover:bg-orange-100 text-orange-600 rounded-full transition-colors"
-                    data-testid="button-back"
-                  >
-                    <ArrowLeft className="w-4 h-4" />
-                  </button>
                 </div>
               </div>
 
               {/* Center - Title */}
               <div className="flex-1 text-center">
-                <h1 className="text-2xl font-black text-gray-900">
+                <h1 className="text-xl font-black text-gray-900">
                   {foundSystem.title}
                 </h1>
-                <p className="text-sm text-orange-600 font-medium">MACHINE TREE</p>
+                <p className="text-xs text-orange-600 font-medium">MACHINE TREE</p>
               </div>
 
-              {/* Right side - Actions */}
+              {/* Right side - Share Icon */}
               <div className="flex items-center">
                 <button
                   className="p-2 hover:bg-gray-100 text-gray-600 rounded-full transition-colors"
@@ -169,6 +174,8 @@ export default function SemmSystemPage() {
             </div>
           </div>
         </div>
+        {/* Orange Horizontal Line */}
+        <div className="h-1 bg-orange-400"></div>
       </div>
 
       {/* Main Content */}
