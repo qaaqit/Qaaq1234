@@ -273,13 +273,38 @@ export default function AdminPanel() {
 
       <div className="max-w-7xl mx-auto p-4 sm:p-6">
         <div className="mb-4 sm:mb-6">
-          <Button
-            onClick={() => setLocation("/admin/bot-rules")}
-            className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
-          >
-            <i className="fas fa-file-text mr-2"></i>
-            Edit QBOT Rules
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button
+              onClick={() => setLocation("/admin/bot-rules")}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <i className="fas fa-file-text mr-2"></i>
+              Edit QBOT Rules
+            </Button>
+            
+            <Button
+              onClick={handleGlossaryUpdate}
+              disabled={glossaryUpdating || glossaryUpdateMutation.isPending}
+              className="bg-purple-600 hover:bg-purple-700 text-white"
+              data-testid="button-update-glossary"
+            >
+              {glossaryUpdating || glossaryUpdateMutation.isPending ? (
+                <>
+                  <i className="fas fa-spinner fa-spin mr-2"></i>
+                  Updating Glossary...
+                </>
+              ) : (
+                <>
+                  <i className="fas fa-sync-alt mr-2"></i>
+                  Update Maritime Glossary
+                </>
+              )}
+            </Button>
+          </div>
+          <p className="text-sm text-gray-600 mt-2">
+            <i className="fas fa-info-circle mr-1"></i>
+            Manual glossary update scans for new "What is..." questions and adds maritime terms to the database.
+          </p>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -672,41 +697,6 @@ export default function AdminPanel() {
                       <li>• No ship position tracking</li>
                       <li>• No confidential data access</li>
                     </ul>
-                  </div>
-                  
-                  {/* Glossary Management Section */}
-                  <div className="border-t pt-4 mt-4">
-                    <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
-                      <i className="fas fa-book mr-2 text-purple-600"></i>
-                      Maritime Glossary Management
-                    </h3>
-                    <div className="space-y-3">
-                      <p className="text-sm text-gray-600">
-                        Auto-updates have been disabled. Use the button below to manually update the maritime glossary with new "What is..." questions.
-                      </p>
-                      <Button
-                        onClick={handleGlossaryUpdate}
-                        disabled={glossaryUpdating || glossaryUpdateMutation.isPending}
-                        className="w-full bg-purple-600 hover:bg-purple-700 text-white"
-                        data-testid="button-update-glossary"
-                      >
-                        {glossaryUpdating || glossaryUpdateMutation.isPending ? (
-                          <>
-                            <i className="fas fa-spinner fa-spin mr-2"></i>
-                            Updating Glossary...
-                          </>
-                        ) : (
-                          <>
-                            <i className="fas fa-sync-alt mr-2"></i>
-                            Update Maritime Glossary
-                          </>
-                        )}
-                      </Button>
-                      <div className="text-xs text-gray-500">
-                        <i className="fas fa-info-circle mr-1"></i>
-                        This will scan for new maritime terminology questions and add them to the glossary database.
-                      </div>
-                    </div>
                   </div>
                 </CardContent>
               </Card>
