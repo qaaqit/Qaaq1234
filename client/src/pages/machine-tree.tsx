@@ -220,7 +220,7 @@ export default function MachineTreePage() {
                               <div className="flex items-center justify-center w-6 h-6 bg-white rounded border">
                                 <span className="text-xs font-bold text-gray-600">{eq.code}</span>
                               </div>
-                              <span className="text-sm font-medium text-gray-700">{eq.code} {eq.title}</span>
+                              <span className="text-sm font-medium text-gray-700">{eq.title}</span>
                             </div>
                             <div className="flex items-center space-x-2">
                               {eq.count && (
