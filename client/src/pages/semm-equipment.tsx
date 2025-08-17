@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
-import { ArrowLeft, Settings, Package, Share2, Building } from 'lucide-react';
+import { ArrowLeft, Settings, Package, Share2, Building, ChevronRight, Home } from 'lucide-react';
 
 interface SemmEquipmentProps {
   code: string;
@@ -80,9 +80,33 @@ export default function SemmEquipmentPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-blue-50">
+      {/* Breadcrumb Navigation */}
+      <div className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="flex items-center space-x-2 text-sm">
+            <button
+              onClick={() => setLocation('/machine-tree')}
+              className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 transition-colors"
+            >
+              <Home className="h-4 w-4" />
+              <span>Home</span>
+            </button>
+            <ChevronRight className="h-4 w-4 text-gray-400" />
+            <button
+              onClick={() => setLocation(`/machinetree/system/${equipmentData.system.code}`)}
+              className="text-blue-600 hover:text-blue-700 transition-colors"
+            >
+              {equipmentData.system.title}
+            </button>
+            <ChevronRight className="h-4 w-4 text-gray-400" />
+            <span className="text-gray-700">{equipment.title}</span>
+          </div>
+        </div>
+      </div>
+
       {/* Header */}
-      <div className="bg-gradient-to-r from-red-600 to-orange-600 shadow-lg">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center space-x-3">
             <button
@@ -92,10 +116,17 @@ export default function SemmEquipmentPage() {
             >
               <ArrowLeft className="h-6 w-6 text-white" />
             </button>
-            <Package className="h-8 w-8 text-white" />
-            <div>
-              <h1 className="text-2xl font-bold text-white">{equipment.title}</h1>
-              <p className="text-orange-100">{breadcrumb}</p>
+            {/* Navy Blue Code Indicator */}
+            <div className="flex items-center justify-center w-20 h-20 bg-blue-900 rounded-lg shadow-lg">
+              <span className="text-2xl font-bold text-white">{equipment.code}</span>
+            </div>
+            
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold text-white">{equipment.title}</h1>
+              <p className="text-blue-100 mt-1">{breadcrumb}</p>
+              {equipment.description && (
+                <p className="text-blue-100 mt-2">{equipment.description}</p>
+              )}
             </div>
           </div>
         </div>
@@ -107,19 +138,19 @@ export default function SemmEquipmentPage() {
           
           {/* Main Equipment Info */}
           <div className="lg:col-span-2 bg-white rounded-lg shadow-lg border border-gray-200">
-            <div className="px-6 py-4 border-b bg-gradient-to-r from-orange-50 to-red-50">
+            <div className="px-6 py-4 border-b bg-gradient-to-r from-blue-50 to-blue-100">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-                  <Package className="h-5 w-5 text-orange-600 mr-2" />
+                  <Package className="h-5 w-5 text-blue-600 mr-2" />
                   Equipment Details
                 </h3>
                 <button
                   onClick={copyShareLink}
-                  className="flex items-center space-x-2 px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                  className="flex items-center space-x-2 px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors"
                   title="Share this equipment"
                 >
                   <Share2 className="h-4 w-4" />
-                  <span className="text-sm">Share</span>
+                  <span>Share</span>
                 </button>
               </div>
             </div>
@@ -127,8 +158,8 @@ export default function SemmEquipmentPage() {
             <div className="p-6 space-y-6">
               {/* Equipment Code and Title */}
               <div className="flex items-center space-x-4">
-                <div className="flex items-center justify-center w-16 h-16 bg-orange-100 rounded-full">
-                  <span className="text-xl font-bold text-orange-600">{equipment.code}</span>
+                <div className="flex items-center justify-center w-16 h-16 bg-blue-900 rounded-lg">
+                  <span className="text-xl font-bold text-white">{equipment.code}</span>
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-gray-800">{equipment.title}</h2>
@@ -140,8 +171,8 @@ export default function SemmEquipmentPage() {
               <div className="bg-gray-50 rounded-lg p-4">
                 <h4 className="font-semibold text-gray-800 mb-2">System Classification</h4>
                 <div className="flex items-center space-x-3">
-                  <div className="flex items-center justify-center w-8 h-8 bg-red-100 rounded-full">
-                    <span className="text-sm font-bold text-red-600">{system.code}</span>
+                  <div className="flex items-center justify-center w-8 h-8 bg-blue-900 rounded-lg">
+                    <span className="text-sm font-bold text-white">{system.code}</span>
                   </div>
                   <div>
                     <div className="font-medium text-gray-700">{system.title}</div>
@@ -187,7 +218,7 @@ export default function SemmEquipmentPage() {
           <div className="space-y-6">
             {/* Quick Actions */}
             <div className="bg-white rounded-lg shadow-lg border border-gray-200">
-              <div className="px-4 py-3 border-b bg-gradient-to-r from-orange-50 to-red-50">
+              <div className="px-4 py-3 border-b bg-gradient-to-r from-blue-50 to-blue-100">
                 <h4 className="font-semibold text-gray-800">Quick Actions</h4>
               </div>
               <div className="p-4 space-y-3">
@@ -210,7 +241,7 @@ export default function SemmEquipmentPage() {
 
             {/* Equipment Stats */}
             <div className="bg-white rounded-lg shadow-lg border border-gray-200">
-              <div className="px-4 py-3 border-b bg-gradient-to-r from-orange-50 to-red-50">
+              <div className="px-4 py-3 border-b bg-gradient-to-r from-blue-50 to-blue-100">
                 <h4 className="font-semibold text-gray-800">Equipment Info</h4>
               </div>
               <div className="p-4 space-y-3">

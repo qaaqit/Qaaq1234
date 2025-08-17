@@ -240,11 +240,16 @@ export default function MachineTreePage() {
             <div className="max-h-[600px] overflow-y-auto">
               {categories.map((category: any) => (
                 <div key={category.id} className="border-b border-gray-100 last:border-b-0">
-                  <button
-                    onClick={() => toggleCategory(category.id)}
-                    className="w-full px-6 py-4 text-left hover:bg-orange-50 transition-colors flex items-center justify-between group"
-                    data-testid={`category-${category.id}`}
-                  >
+                  <div className="relative">
+                    <button
+                      onClick={() => toggleCategory(category.id)}
+                      className="w-full px-6 py-4 text-left hover:bg-orange-50 transition-colors flex items-center justify-between group"
+                      data-testid={`category-${category.id}`}
+                    >
+                      <div className="absolute inset-0 cursor-pointer" onClick={(e) => {
+                        e.stopPropagation();
+                        setLocation(`/machinetree/system/${category.code}`);
+                      }}></div>
                     <div className="flex items-center space-x-3">
                       <div className="flex items-center justify-center w-8 h-8 bg-orange-100 rounded-full">
                         <span className="text-sm font-bold text-orange-600">{category.code}</span>
@@ -283,7 +288,8 @@ export default function MachineTreePage() {
                         <ChevronRight className="h-4 w-4 text-gray-400" />
                       )}
                     </div>
-                  </button>
+                    </button>
+                  </div>
                   
                   {/* Equipment under this category */}
                   {expandedCategories.has(category.id) && (

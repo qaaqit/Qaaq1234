@@ -32,6 +32,7 @@ import TopQProfessionalsPage from "@/pages/TopQProfessionalsPage";
 import { GlossaryPage } from "@/pages/glossary";
 import MachineTreePage from "@/pages/machine-tree";
 import SemmEquipmentPage from "@/pages/semm-equipment";
+import SemmSystemPage from "@/pages/semm-system";
 import PrivacyPolicyPage from "@/pages/privacy-policy";
 
 import NotFound from "@/pages/not-found";
@@ -189,6 +190,7 @@ function Router() {
           <Route path="/qh13" component={TopQProfessionalsPage} />
           <Route path="/glossary" component={() => <GlossaryPage />} />
           <Route path="/machine-tree" component={() => <MachineTreePage />} />
+          <Route path="/machinetree/system/:code" component={SemmSystemPage} />
           <Route path="/machinetree/:code" component={SemmEquipmentPage} />
           <Route path="/privacy-policy" component={() => <PrivacyPolicyPage />} />
           <Route path="/home-old" component={() => <Login onSuccess={setUser} />} />
