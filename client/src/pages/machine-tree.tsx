@@ -1,37 +1,40 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronRight, ChevronDown, Package, Settings, Building, Ship } from 'lucide-react';
+import { ChevronRight, ChevronDown, Package, Settings, Building, Ship, Heart, Share2, RotateCcw } from 'lucide-react';
 
 interface Category {
   id: string;
+  code: string;
   name: string;
   description?: string;
   count?: number;
 }
 
-interface Make {
+interface Equipment {
   id: string;
+  code: string;
   name: string;
-  category?: string;
-  country?: string;
+  category: string;
+  description?: string;
   count?: number;
 }
 
 interface Machine {
   id: string;
   name: string;
+  equipment: string;
   make: string;
-  category: string;
   model?: string;
   description?: string;
+  shareUrl?: string;
   specifications?: any;
 }
 
 export default function MachineTreePage() {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
-  const [expandedMakes, setExpandedMakes] = useState<Set<string>>(new Set());
+  const [expandedEquipment, setExpandedEquipment] = useState<Set<string>>(new Set());
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedMake, setSelectedMake] = useState<string | null>(null);
+  const [selectedEquipment, setSelectedEquipment] = useState<string | null>(null);
 
   // Fetch categories
   const { data: categories = [], isLoading: categoriesLoading } = useQuery({
@@ -43,12 +46,12 @@ export default function MachineTreePage() {
     }
   });
 
-  // Fetch makes
-  const { data: makes = [], isLoading: makesLoading } = useQuery({
+  // Fetch equipment subcategories
+  const { data: equipment = [], isLoading: equipmentLoading } = useQuery({
     queryKey: ['/api/export/makes'],
     queryFn: async () => {
       const response = await fetch('/api/export/makes');
-      if (!response.ok) throw new Error('Failed to fetch makes');
+      if (!response.ok) throw new Error('Failed to fetch equipment');
       return response.json();
     }
   });
@@ -74,34 +77,37 @@ export default function MachineTreePage() {
     setSelectedCategory(categoryId);
   };
 
-  const toggleMake = (makeId: string) => {
-    const newExpanded = new Set(expandedMakes);
-    if (newExpanded.has(makeId)) {
-      newExpanded.delete(makeId);
+  const toggleEquipment = (equipmentId: string) => {
+    const newExpanded = new Set(expandedEquipment);
+    if (newExpanded.has(equipmentId)) {
+      newExpanded.delete(equipmentId);
     } else {
-      newExpanded.add(makeId);
+      newExpanded.add(equipmentId);
     }
-    setExpandedMakes(newExpanded);
-    setSelectedMake(makeId);
+    setExpandedEquipment(newExpanded);
+    setSelectedEquipment(equipmentId);
   };
 
-  const getFilteredMakes = (categoryName: string) => {
-    return makes.filter((make: any) => 
-      !selectedCategory || 
-      make.category === categoryName || 
-      categoryName.toLowerCase().includes(make.category?.toLowerCase()) ||
-      make.category?.toLowerCase().includes(categoryName.toLowerCase())
-    );
+  const getFilteredEquipment = (categoryId: string) => {
+    return equipment.filter((eq: any) => eq.category === categoryId);
   };
 
-  const getFilteredMachines = (makeName: string, categoryName?: string) => {
-    return machines.filter((machine: any) => 
-      machine.make === makeName && 
-      (!categoryName || machine.category === categoryName)
-    );
+  const getFilteredMachines = (equipmentId: string) => {
+    return machines.filter((machine: any) => machine.equipment === equipmentId);
   };
 
-  if (categoriesLoading || makesLoading || machinesLoading) {
+  const copyShareLink = async (machine: any) => {
+    const shareUrl = `${window.location.origin}${machine.shareUrl}`;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      // You could add a toast notification here
+      console.log('Share link copied:', shareUrl);
+    } catch (err) {
+      console.error('Failed to copy share link:', err);
+    }
+  };
+
+  if (categoriesLoading || equipmentLoading || machinesLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50 flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -137,8 +143,8 @@ export default function MachineTreePage() {
               <div className="text-sm text-gray-600">System Categories</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">{makes.length}</div>
-              <div className="text-sm text-gray-600">Equipment Makes</div>
+              <div className="text-2xl font-bold text-orange-600">{equipment.length}</div>
+              <div className="text-sm text-gray-600">Equipment Types</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-gray-700">{machines.length}</div>
@@ -169,9 +175,11 @@ export default function MachineTreePage() {
                     data-testid={`category-${category.id}`}
                   >
                     <div className="flex items-center space-x-3">
-                      <Package className="h-4 w-4 text-orange-600" />
+                      <div className="flex items-center justify-center w-8 h-8 bg-orange-100 rounded-full">
+                        <span className="text-sm font-bold text-orange-600">{category.code}</span>
+                      </div>
                       <div>
-                        <div className="font-medium text-gray-800">{category.name}</div>
+                        <div className="font-medium text-gray-800">{category.code}. {category.name}</div>
                         {category.description && (
                           <div className="text-sm text-gray-500">{category.description}</div>
                         )}
@@ -191,30 +199,34 @@ export default function MachineTreePage() {
                     </div>
                   </button>
                   
-                  {/* Makes under this category */}
+                  {/* Equipment under this category */}
                   {expandedCategories.has(category.id) && (
                     <div className="bg-gray-50 px-6 py-2">
-                      {getFilteredMakes(category.name).map((make: any) => (
-                        <div key={make.id} className="py-2 border-b border-gray-200 last:border-b-0">
+                      <div className="flex items-center space-x-2 mb-3 p-2 bg-orange-50 rounded">
+                        <RotateCcw className="h-4 w-4 text-orange-600" />
+                        <span className="text-sm font-medium text-orange-700">Reorder Equipment</span>
+                      </div>
+                      
+                      {getFilteredEquipment(category.id).map((eq: any) => (
+                        <div key={eq.id} className="py-2 border-b border-gray-200 last:border-b-0">
                           <button
-                            onClick={() => toggleMake(make.id)}
+                            onClick={() => toggleEquipment(eq.id)}
                             className="w-full text-left flex items-center justify-between hover:text-orange-600 transition-colors"
-                            data-testid={`make-${make.id}`}
+                            data-testid={`equipment-${eq.id}`}
                           >
                             <div className="flex items-center space-x-2">
-                              <Building className="h-3 w-3 text-gray-400" />
-                              <span className="text-sm font-medium text-gray-700">{make.name}</span>
-                              {make.country && (
-                                <span className="text-xs text-gray-500">({make.country})</span>
-                              )}
+                              <div className="flex items-center justify-center w-6 h-6 bg-white rounded border">
+                                <span className="text-xs font-bold text-gray-600">{eq.code}</span>
+                              </div>
+                              <span className="text-sm font-medium text-gray-700">{eq.code} {eq.name}</span>
                             </div>
                             <div className="flex items-center space-x-2">
-                              {make.count && (
+                              {eq.count && (
                                 <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs">
-                                  {make.count}
+                                  {eq.count}
                                 </span>
                               )}
-                              {expandedMakes.has(make.id) ? (
+                              {expandedEquipment.has(eq.id) ? (
                                 <ChevronDown className="h-3 w-3 text-gray-400" />
                               ) : (
                                 <ChevronRight className="h-3 w-3 text-gray-400" />
@@ -222,22 +234,43 @@ export default function MachineTreePage() {
                             </div>
                           </button>
                           
-                          {/* Machines under this make */}
-                          {expandedMakes.has(make.id) && (
-                            <div className="ml-6 mt-2 space-y-1">
-                              {getFilteredMachines(make.name, category.name).map((machine: any) => (
+                          {/* Machines under this equipment */}
+                          {expandedEquipment.has(eq.id) && (
+                            <div className="ml-8 mt-2 space-y-2">
+                              {getFilteredMachines(eq.id).map((machine: any) => (
                                 <div
                                   key={machine.id}
-                                  className="p-2 bg-white rounded border text-sm hover:shadow-sm transition-shadow"
+                                  className="p-3 bg-white rounded border hover:shadow-sm transition-shadow"
                                   data-testid={`machine-${machine.id}`}
                                 >
-                                  <div className="font-medium text-gray-800">{machine.name}</div>
-                                  {machine.model && (
-                                    <div className="text-xs text-orange-600">Model: {machine.model}</div>
-                                  )}
-                                  {machine.description && (
-                                    <div className="text-xs text-gray-500 mt-1">{machine.description}</div>
-                                  )}
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex-1">
+                                      <div className="font-medium text-gray-800">{machine.name}</div>
+                                      <div className="text-xs text-gray-500 mt-1">Make: {machine.make}</div>
+                                      {machine.model && (
+                                        <div className="text-xs text-orange-600">Model: {machine.model}</div>
+                                      )}
+                                      {machine.description && (
+                                        <div className="text-xs text-gray-500 mt-1">{machine.description}</div>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center space-x-2 ml-3">
+                                      <button
+                                        className="p-1 hover:bg-red-50 rounded transition-colors"
+                                        title="Add to favorites"
+                                      >
+                                        <Heart className="h-4 w-4 text-gray-400 hover:text-red-500" />
+                                      </button>
+                                      <button
+                                        onClick={() => copyShareLink(machine)}
+                                        className="p-1 hover:bg-blue-50 rounded transition-colors"
+                                        title="Share machine"
+                                      >
+                                        <Share2 className="h-4 w-4 text-gray-400 hover:text-blue-500" />
+                                      </button>
+                                      <ChevronRight className="h-4 w-4 text-gray-400" />
+                                    </div>
+                                  </div>
                                 </div>
                               ))}
                             </div>
@@ -275,28 +308,41 @@ export default function MachineTreePage() {
                     </p>
                   </div>
                   
-                  {selectedMake && (
+                  {selectedEquipment && (
                     <div className="border-t pt-6">
                       <h5 className="text-md font-semibold text-gray-800 mb-3">
-                        {makes.find((m: any) => m.id === selectedMake)?.name} Equipment
+                        {equipment.find((eq: any) => eq.id === selectedEquipment)?.name} Machines
                       </h5>
                       <div className="grid gap-4">
-                        {getFilteredMachines(
-                          makes.find((m: any) => m.id === selectedMake)?.name || '',
-                          categories.find((c: any) => c.id === selectedCategory)?.name
-                        ).map((machine: any) => (
+                        {getFilteredMachines(selectedEquipment).map((machine: any) => (
                           <div
                             key={machine.id}
                             className="p-4 border border-gray-200 rounded-lg hover:border-orange-300 transition-colors"
                           >
                             <div className="flex justify-between items-start mb-2">
                               <h6 className="font-medium text-gray-800">{machine.name}</h6>
-                              {machine.model && (
-                                <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded text-sm">
-                                  {machine.model}
-                                </span>
-                              )}
+                              <div className="flex items-center space-x-2">
+                                {machine.model && (
+                                  <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded text-sm">
+                                    {machine.model}
+                                  </span>
+                                )}
+                                <button
+                                  className="p-1 hover:bg-red-50 rounded transition-colors"
+                                  title="Add to favorites"
+                                >
+                                  <Heart className="h-4 w-4 text-gray-400 hover:text-red-500" />
+                                </button>
+                                <button
+                                  onClick={() => copyShareLink(machine)}
+                                  className="p-1 hover:bg-blue-50 rounded transition-colors"
+                                  title="Share machine"
+                                >
+                                  <Share2 className="h-4 w-4 text-gray-400 hover:text-blue-500" />
+                                </button>
+                              </div>
                             </div>
+                            <div className="text-xs text-gray-500 mb-2">Make: {machine.make}</div>
                             {machine.description && (
                               <p className="text-gray-600 text-sm mb-2">{machine.description}</p>
                             )}
