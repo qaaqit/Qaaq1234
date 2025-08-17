@@ -119,15 +119,15 @@ export default function SemmSystemPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Simple Minimalistic Header */}
-      <div className="bg-white border-b-4 border-red-500 shadow-lg">
-        <div className="bg-gradient-to-r from-red-50 to-orange-50 px-4">
+      <div className="bg-white border-b-4 border-orange-300 shadow-lg">
+        <div className="bg-gradient-to-r from-orange-50 to-orange-100 px-4">
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center justify-between h-16">
               {/* Left side - Navigation */}
               <div className="flex items-center space-x-4">
                 <button
                   onClick={goHome}
-                  className="flex items-center space-x-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                  className="flex items-center space-x-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors"
                   data-testid="button-home"
                 >
                   <Home className="w-4 h-4" />
@@ -136,7 +136,7 @@ export default function SemmSystemPage() {
                 
                 <button
                   onClick={goBack}
-                  className="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+                  className="flex items-center space-x-2 px-4 py-2 bg-orange-50 hover:bg-orange-100 text-orange-700 rounded-lg transition-colors"
                   data-testid="button-back"
                 >
                   <ArrowLeft className="w-4 h-4" />
@@ -146,7 +146,7 @@ export default function SemmSystemPage() {
 
               {/* Center - QAAQ Branding */}
               <div className="flex-1 text-center">
-                <h1 className="text-2xl font-bold text-red-600 tracking-wider">
+                <h1 className="text-2xl font-bold text-orange-700 tracking-wider">
                   QAAQ
                 </h1>
                 <p className="text-sm text-orange-600 font-medium">MACHINE TREE</p>
@@ -174,7 +174,7 @@ export default function SemmSystemPage() {
         <nav className="flex items-center space-x-2 text-sm mb-8" data-testid="breadcrumb-nav">
           <button 
             onClick={goHome}
-            className="text-red-600 hover:text-red-800 font-medium transition-colors"
+            className="text-orange-600 hover:text-orange-800 font-medium transition-colors"
             data-testid="breadcrumb-home"
           >
             Machine Tree
@@ -202,7 +202,7 @@ export default function SemmSystemPage() {
               {foundSystem.title}
             </h1>
             <p className="text-lg text-gray-600 leading-relaxed">
-              Maritime system classification: <span className="font-bold text-red-600">SEMM Tree Navigation</span>
+              Maritime system classification: <span className="font-bold text-orange-600">SEMM Tree Navigation</span>
             </p>
           </div>
         </div>
