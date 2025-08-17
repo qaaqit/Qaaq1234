@@ -354,6 +354,3 @@ export class GlossaryAutoUpdateService {
 
 // Initialize the service
 export const glossaryAutoUpdater = new GlossaryAutoUpdateService();
-
-// Export for manual control
-export { GlossaryAutoUpdateService };
