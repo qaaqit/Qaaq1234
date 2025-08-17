@@ -125,9 +125,7 @@ export default function AdminPanel() {
   // Manual glossary update mutation
   const glossaryUpdateMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest("/api/admin/glossary/update", {
-        method: "POST"
-      });
+      return apiRequest("/api/admin/glossary/update", "POST");
     },
     onSuccess: () => {
       toast({
