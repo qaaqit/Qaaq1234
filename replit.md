@@ -92,6 +92,7 @@ Login Roadblock Design: Single minimizable login roadblock with chevron control 
 - **Machine Tree System Implemented**: Complete SEMM (System-Equipment-Make-Model) hierarchy with alphabetical ordering (a-s for systems, a.a-c.d for equipment), share link functionality for individual machines, and "Reorder Equipment" controls matching the reference design
 - **Alphabetical Maritime Classification**: Restructured from numeric to alphabetical system with 19 maritime systems (a. Propulsion through s. Spare Parts & Consumables) and equipment subcategories (e.g., a.a Main Engine, a.b Stern Tube, etc.)
 - **SEMM Cards Development Endpoint**: Created `/api/dev/semm-cards` structured endpoint for daughter app team integration with hierarchical data, share functionality, and complete maritime equipment classification system
+- **Manual Glossary Update System (August 17, 2025)**: Disabled automatic glossary updates for security and implemented manual Admin panel button at `/api/admin/glossary/update` endpoint. Purple "Update Maritime Glossary" button successfully scans for new "What is..." questions and adds maritime terms to database on demand.
 
 ## External Dependencies
 - **Shared QAAQ Database**: PostgreSQL database for authentic maritime user data and Q&A records.
