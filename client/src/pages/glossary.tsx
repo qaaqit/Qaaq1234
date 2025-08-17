@@ -247,7 +247,7 @@ export function GlossaryPage() {
               </button>
               <div>
                 <h1 className="text-xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">Dictionary</h1>
-                <p className="text-sm text-gray-600">Maritime Terms & Definitions</p>
+                <p className="text-sm text-gray-600">Maritime Terms</p>
               </div>
             </div>
             <Button
