@@ -19,7 +19,11 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
   const textSize = large ? 'text-4xl' : 'text-lg';
 
   return (
-    <div className={`relative ${cardSize} rounded-lg overflow-hidden border-2 border-gray-400 shadow-lg`} style={{ perspective: '1000px' }}>
+    <div className={`relative ${cardSize} rounded-lg overflow-hidden border-2 border-white shadow-lg`} 
+         style={{ 
+           perspective: '1000px',
+           boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 -2px 4px rgba(255, 255, 255, 0.1), 0 4px 8px rgba(0, 0, 0, 0.2)'
+         }}>
       {/* Loading state card */}
       <div
         className="absolute inset-0 bg-slate-700 flex items-center justify-center"
@@ -27,7 +31,9 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
           transformOrigin: 'bottom center',
           transform: isFlipped ? 'rotateX(-180deg)' : 'rotateX(0deg)',
           transition: 'transform 0.8s cubic-bezier(0.23, 1, 0.32, 1)',
-          backfaceVisibility: 'hidden'
+          backfaceVisibility: 'hidden',
+          textShadow: '0 1px 2px rgba(0, 0, 0, 0.5), 0 -1px 1px rgba(255, 255, 255, 0.1)',
+          background: 'linear-gradient(145deg, #475569, #334155)'
         }}
       >
         <div className="w-2 h-2 border-2 border-teal-400 border-t-transparent rounded-full animate-spin"></div>
@@ -40,10 +46,15 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
           transformOrigin: 'bottom center',
           transform: isFlipped ? 'rotateX(0deg)' : 'rotateX(180deg)',
           transition: 'transform 0.8s cubic-bezier(0.23, 1, 0.32, 1)',
-          backfaceVisibility: 'hidden'
+          backfaceVisibility: 'hidden',
+          background: 'linear-gradient(145deg, #475569, #334155)'
         }}
       >
-        <span className={`${textSize} font-bold text-white font-mono tracking-wider drop-shadow-lg leading-none`}>
+        <span className={`${textSize} font-bold text-white font-mono tracking-wider leading-none`}
+              style={{
+                textShadow: '0 1px 2px rgba(0, 0, 0, 0.8), 0 -1px 1px rgba(255, 255, 255, 0.2)',
+                filter: 'drop-shadow(0 1px 1px rgba(255, 255, 255, 0.1))'
+              }}>
           {char}
         </span>
       </div>
@@ -191,7 +202,7 @@ export default function SemmSystemPage() {
           {/* System Code Display */}
           <div className="mb-6">
             <div className="text-sm font-bold text-gray-500 mb-4 tracking-widest">SYSTEM</div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-1">
               <FlipCard char={foundSystem.code} index={0} large={true} />
             </div>
           </div>
