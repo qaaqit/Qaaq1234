@@ -14,19 +14,19 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
     return () => clearTimeout(timer);
   }, [index]);
 
-  const cardSize = large ? 'w-16 h-20' : 'w-12 h-16';
-  const textSize = large ? 'text-2xl' : 'text-lg';
+  const cardSize = large ? 'w-12 h-16' : 'w-8 h-12';
+  const textSize = large ? 'text-xl' : 'text-sm';
 
   return (
-    <div className={`relative ${cardSize} bg-black rounded-lg overflow-hidden border border-gray-600 shadow-2xl`}>
+    <div className={`relative ${cardSize} bg-black rounded-md overflow-hidden border border-gray-600 shadow-xl`}>
       {/* Center horizontal split line */}
-      <div className="absolute inset-x-0 top-1/2 h-0.5 bg-gray-800 z-20 shadow-lg"></div>
+      <div className="absolute inset-x-0 top-1/2 h-px bg-gray-800 z-20 shadow-sm"></div>
       
       {/* Top half container */}
-      <div className="relative h-1/2 overflow-hidden" style={{ perspective: '800px' }}>
+      <div className="relative h-1/2 overflow-hidden" style={{ perspective: '600px' }}>
         {/* Top half loading state */}
         <div
-          className="absolute inset-0 bg-gradient-to-b from-gray-700 to-gray-800 flex items-end justify-center pb-1"
+          className="absolute inset-0 bg-gradient-to-b from-gray-700 to-gray-800 flex items-end justify-center"
           style={{
             transformOrigin: 'bottom center',
             transform: cardFlipped ? 'rotateX(-90deg)' : 'rotateX(0deg)',
@@ -34,12 +34,12 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
             backfaceVisibility: 'hidden'
           }}
         >
-          <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-2 h-2 border border-white border-t-transparent rounded-full animate-spin mb-1"></div>
         </div>
         
         {/* Top half with character */}
         <div
-          className="absolute inset-0 bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 flex items-center justify-center overflow-hidden"
+          className="absolute inset-0 bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 overflow-hidden"
           style={{
             transformOrigin: 'bottom center',
             transform: cardFlipped ? 'rotateX(0deg)' : 'rotateX(90deg)',
@@ -48,8 +48,8 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
             backfaceVisibility: 'hidden'
           }}
         >
-          <div className="w-full h-full flex items-center justify-center" style={{ clipPath: 'inset(0 0 50% 0)' }}>
-            <span className={`${textSize} font-bold text-white font-mono tracking-wider drop-shadow-lg`}>
+          <div className="absolute bottom-0 left-0 right-0 flex justify-center" style={{ height: '200%' }}>
+            <span className={`${textSize} font-bold text-white font-mono tracking-wider drop-shadow-lg leading-none`} style={{ transform: 'translateY(-50%)' }}>
               {char}
             </span>
           </div>
@@ -57,10 +57,10 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
       </div>
       
       {/* Bottom half container */}
-      <div className="relative h-1/2 overflow-hidden" style={{ perspective: '800px' }}>
+      <div className="relative h-1/2 overflow-hidden" style={{ perspective: '600px' }}>
         {/* Bottom half loading state */}
         <div
-          className="absolute inset-0 bg-gradient-to-t from-gray-700 to-gray-800 flex items-start justify-center pt-1"
+          className="absolute inset-0 bg-gradient-to-t from-gray-700 to-gray-800 flex items-start justify-center"
           style={{
             transformOrigin: 'top center',
             transform: cardFlipped ? 'rotateX(90deg)' : 'rotateX(0deg)',
@@ -68,12 +68,12 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
             backfaceVisibility: 'hidden'
           }}
         >
-          <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-2 h-2 border border-white border-t-transparent rounded-full animate-spin mt-1"></div>
         </div>
         
         {/* Bottom half with character */}
         <div
-          className="absolute inset-0 bg-gradient-to-t from-blue-900 via-blue-800 to-blue-900 flex items-center justify-center overflow-hidden"
+          className="absolute inset-0 bg-gradient-to-t from-blue-900 via-blue-800 to-blue-900 overflow-hidden"
           style={{
             transformOrigin: 'top center',
             transform: cardFlipped ? 'rotateX(0deg)' : 'rotateX(-90deg)',
@@ -82,8 +82,8 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
             backfaceVisibility: 'hidden'
           }}
         >
-          <div className="w-full h-full flex items-center justify-center" style={{ clipPath: 'inset(50% 0 0 0)' }}>
-            <span className={`${textSize} font-bold text-white font-mono tracking-wider drop-shadow-lg`}>
+          <div className="absolute top-0 left-0 right-0 flex justify-center" style={{ height: '200%' }}>
+            <span className={`${textSize} font-bold text-white font-mono tracking-wider drop-shadow-lg leading-none`} style={{ transform: 'translateY(-50%)' }}>
               {char}
             </span>
           </div>
