@@ -39,7 +39,7 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
         
         {/* Top half with character */}
         <div
-          className="absolute inset-0 bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 overflow-hidden"
+          className="absolute inset-0 bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 flex items-end justify-center"
           style={{
             transformOrigin: 'bottom center',
             transform: cardFlipped ? 'rotateX(0deg)' : 'rotateX(90deg)',
@@ -48,11 +48,9 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
             backfaceVisibility: 'hidden'
           }}
         >
-          <div className="absolute bottom-0 left-0 right-0 flex justify-center" style={{ height: '200%' }}>
-            <span className={`${textSize} font-bold text-white font-mono tracking-wider drop-shadow-lg leading-none`} style={{ transform: 'translateY(-50%)' }}>
-              {char}
-            </span>
-          </div>
+          <span className={`${textSize} font-bold text-white font-mono tracking-wider drop-shadow-lg leading-none`}>
+            {char}
+          </span>
         </div>
       </div>
       
@@ -73,7 +71,7 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
         
         {/* Bottom half with character */}
         <div
-          className="absolute inset-0 bg-gradient-to-t from-blue-900 via-blue-800 to-blue-900 overflow-hidden"
+          className="absolute inset-0 bg-gradient-to-t from-blue-900 via-blue-800 to-blue-900 flex items-start justify-center"
           style={{
             transformOrigin: 'top center',
             transform: cardFlipped ? 'rotateX(0deg)' : 'rotateX(-90deg)',
@@ -82,11 +80,9 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
             backfaceVisibility: 'hidden'
           }}
         >
-          <div className="absolute top-0 left-0 right-0 flex justify-center" style={{ height: '200%' }}>
-            <span className={`${textSize} font-bold text-white font-mono tracking-wider drop-shadow-lg leading-none`} style={{ transform: 'translateY(-50%)' }}>
-              {char}
-            </span>
-          </div>
+          <span className={`${textSize} font-bold text-white font-mono tracking-wider drop-shadow-lg leading-none`}>
+            {char}
+          </span>
         </div>
       </div>
     </div>
