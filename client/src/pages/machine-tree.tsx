@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronRight, ChevronDown, Package, Settings, Building, Ship, Heart, Share2, RotateCcw } from 'lucide-react';
+import { ChevronRight, ChevronDown, Package, Settings, Building, Ship, Heart, Share2, RotateCcw, Edit3, Plus, GripVertical } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Category {
   id: string;
@@ -35,6 +36,10 @@ export default function MachineTreePage() {
   const [expandedEquipment, setExpandedEquipment] = useState<Set<string>>(new Set());
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedEquipment, setSelectedEquipment] = useState<string | null>(null);
+  
+  // Get user authentication info
+  const { user, isAuthenticated } = useAuth();
+  const isAdmin = user?.isAdmin || user?.role === 'admin';
 
   // Fetch SEMM cards from local endpoint
   const { data: semmData, isLoading: semmLoading, error: semmError } = useQuery({
@@ -90,6 +95,37 @@ export default function MachineTreePage() {
     } catch (err) {
       console.error('Failed to copy share link:', err);
     }
+  };
+
+  // Admin edit functions
+  const handleEditSystem = (systemId: string) => {
+    console.log('Edit system:', systemId);
+    // TODO: Implement edit system modal
+  };
+
+  const handleReorderSystems = () => {
+    console.log('Reorder systems');
+    // TODO: Implement reorder systems modal
+  };
+
+  const handleAddNewSystem = () => {
+    console.log('Add new system');
+    // TODO: Implement add new system modal
+  };
+
+  const handleEditEquipment = (equipmentId: string) => {
+    console.log('Edit equipment:', equipmentId);
+    // TODO: Implement edit equipment modal
+  };
+
+  const handleReorderEquipment = (systemId: string) => {
+    console.log('Reorder equipment for system:', systemId);
+    // TODO: Implement reorder equipment modal
+  };
+
+  const handleAddNewEquipment = (systemId: string) => {
+    console.log('Add new equipment to system:', systemId);
+    // TODO: Implement add new equipment modal
   };
 
   if (semmLoading) {
@@ -163,11 +199,37 @@ export default function MachineTreePage() {
           {/* Categories Panel */}
           <div className="bg-white rounded-lg shadow-lg border border-gray-200">
             <div className="px-6 py-4 border-b bg-gradient-to-r from-red-50 to-orange-50">
-              <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-                <Ship className="h-5 w-5 text-red-600 mr-2" />
-                Maritime Systems
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+                  <Ship className="h-5 w-5 text-red-600 mr-2" />
+                  Maritime Systems
+                  {isAdmin && (
+                    <button
+                      onClick={handleEditSystem}
+                      className="ml-2 p-1 hover:bg-orange-100 rounded"
+                      title="Edit SEMM Title"
+                      data-testid="edit-semm-title"
+                    >
+                      <Edit3 className="h-4 w-4 text-orange-600" />
+                    </button>
+                  )}
+                </h3>
+              </div>
             </div>
+            
+            {/* Admin Controls for Systems */}
+            {isAdmin && (
+              <div className="px-6 py-3 bg-gray-50 border-b">
+                <button
+                  onClick={handleReorderSystems}
+                  className="flex items-center space-x-2 text-sm text-orange-600 hover:text-orange-700 mb-2"
+                  data-testid="reorder-systems"
+                >
+                  <GripVertical className="h-4 w-4" />
+                  <span>Reorder Systems</span>
+                </button>
+              </div>
+            )}
             <div className="max-h-[600px] overflow-y-auto">
               {categories.map((category: any) => (
                 <div key={category.id} className="border-b border-gray-100 last:border-b-0">
@@ -180,8 +242,23 @@ export default function MachineTreePage() {
                       <div className="flex items-center justify-center w-8 h-8 bg-orange-100 rounded-full">
                         <span className="text-sm font-bold text-orange-600">{category.code}</span>
                       </div>
-                      <div>
-                        <div className="font-medium text-gray-800">{category.title}</div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <div className="font-medium text-gray-800">{category.title}</div>
+                          {isAdmin && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditSystem(category.id);
+                              }}
+                              className="p-1 hover:bg-orange-100 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                              title="Edit System"
+                              data-testid={`edit-system-${category.id}`}
+                            >
+                              <Edit3 className="h-3 w-3 text-orange-600" />
+                            </button>
+                          )}
+                        </div>
                         {category.description && (
                           <div className="text-sm text-gray-500">{category.description}</div>
                         )}
@@ -204,10 +281,19 @@ export default function MachineTreePage() {
                   {/* Equipment under this category */}
                   {expandedCategories.has(category.id) && (
                     <div className="bg-gray-50 px-6 py-2">
-                      <div className="flex items-center space-x-2 mb-3 p-2 bg-orange-50 rounded">
-                        <RotateCcw className="h-4 w-4 text-orange-600" />
-                        <span className="text-sm font-medium text-orange-700">Reorder Equipment</span>
-                      </div>
+                      {/* Admin Controls for Equipment */}
+                      {isAdmin && (
+                        <div className="mb-3 p-2 bg-orange-50 rounded">
+                          <button
+                            onClick={() => handleReorderEquipment(category.id)}
+                            className="flex items-center space-x-2 text-sm text-orange-600 hover:text-orange-700 mb-2"
+                            data-testid={`reorder-equipment-${category.id}`}
+                          >
+                            <GripVertical className="h-4 w-4" />
+                            <span>Reorder Equipment</span>
+                          </button>
+                        </div>
+                      )}
                       
                       {getFilteredEquipment(category.id).map((eq: any) => (
                         <div key={eq.id} className="py-2 border-b border-gray-200 last:border-b-0">
@@ -216,11 +302,24 @@ export default function MachineTreePage() {
                             className="w-full text-left flex items-center justify-between hover:text-orange-600 transition-colors"
                             data-testid={`equipment-${eq.id}`}
                           >
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-2 group">
                               <div className="flex items-center justify-center w-6 h-6 bg-white rounded border">
                                 <span className="text-xs font-bold text-gray-600">{eq.code}</span>
                               </div>
                               <span className="text-sm font-medium text-gray-700">{eq.title}</span>
+                              {isAdmin && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEditEquipment(eq.id);
+                                  }}
+                                  className="p-1 hover:bg-orange-100 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                                  title="Edit Equipment"
+                                  data-testid={`edit-equipment-${eq.id}`}
+                                >
+                                  <Edit3 className="h-3 w-3 text-orange-600" />
+                                </button>
+                              )}
                             </div>
                             <div className="flex items-center space-x-2">
                               {eq.count && (
@@ -258,12 +357,6 @@ export default function MachineTreePage() {
                                     </div>
                                     <div className="flex items-center space-x-2 ml-3">
                                       <button
-                                        className="p-1 hover:bg-red-50 rounded transition-colors"
-                                        title="Add to favorites"
-                                      >
-                                        <Heart className="h-4 w-4 text-gray-400 hover:text-red-500" />
-                                      </button>
-                                      <button
                                         onClick={() => copyShareLink(machine)}
                                         className="p-1 hover:bg-blue-50 rounded transition-colors"
                                         title="Share machine"
@@ -279,10 +372,38 @@ export default function MachineTreePage() {
                           )}
                         </div>
                       ))}
+                      
+                      {/* Add New Equipment Button */}
+                      {isAdmin && (
+                        <div className="mt-3 p-2">
+                          <button
+                            onClick={() => handleAddNewEquipment(category.id)}
+                            className="flex items-center space-x-2 text-sm text-orange-600 hover:text-orange-700 w-full justify-center py-2 border-2 border-dashed border-orange-300 rounded hover:border-orange-400 transition-colors"
+                            data-testid={`add-equipment-${category.id}`}
+                          >
+                            <Plus className="h-4 w-4" />
+                            <span>Add New Equipment</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
               ))}
+              
+              {/* Add New System Button */}
+              {isAdmin && (
+                <div className="p-4 border-t border-gray-200">
+                  <button
+                    onClick={handleAddNewSystem}
+                    className="flex items-center space-x-2 text-sm text-orange-600 hover:text-orange-700 w-full justify-center py-3 border-2 border-dashed border-orange-300 rounded hover:border-orange-400 transition-colors"
+                    data-testid="add-new-system"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Add New System</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
