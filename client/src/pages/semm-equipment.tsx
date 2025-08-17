@@ -134,55 +134,50 @@ export default function SemmEquipmentPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Super Stylish Header with QAAQ Colors */}
-      <div className="relative bg-gradient-to-r from-black via-red-900 to-orange-600 shadow-2xl overflow-hidden">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-orange-500/20"></div>
-        <div className="absolute inset-0" style={{
-          backgroundImage: `radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.1) 0%, transparent 50%), 
-                           radial-gradient(circle at 75% 75%, rgba(234, 88, 12, 0.1) 0%, transparent 50%)`
-        }}></div>
-        
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20">
-            {/* Left side - Navigation */}
-            <div className="flex items-center space-x-6">
-              <button
-                onClick={goHome}
-                className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-                data-testid="button-home"
-              >
-                <Home className="w-5 h-5" />
-                <span className="font-bold">Home</span>
-              </button>
-              
-              <button
-                onClick={goBack}
-                className="flex items-center space-x-2 px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/30 text-white rounded-xl backdrop-blur-sm transition-all duration-200 transform hover:scale-105"
-                data-testid="button-back"
-              >
-                <ArrowLeft className="w-5 h-5" />
-                <span className="font-medium">Back to {parentSystem.title}</span>
-              </button>
-            </div>
+      {/* Simple Minimalistic Header */}
+      <div className="bg-white border-b-4 border-red-500 shadow-lg">
+        <div className="bg-gradient-to-r from-red-50 to-orange-50 px-4">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex items-center justify-between h-16">
+              {/* Left side - Navigation */}
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={goHome}
+                  className="flex items-center space-x-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                  data-testid="button-home"
+                >
+                  <Home className="w-4 h-4" />
+                  <span className="font-medium">Home</span>
+                </button>
+                
+                <button
+                  onClick={goBack}
+                  className="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+                  data-testid="button-back"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span className="font-medium">Back</span>
+                </button>
+              </div>
 
-            {/* Center - QAAQ Branding */}
-            <div className="flex-1 text-center">
-              <h1 className="text-3xl font-black bg-gradient-to-r from-white via-orange-200 to-white bg-clip-text text-transparent tracking-wider">
-                QAAQ
-              </h1>
-              <p className="text-orange-200/80 text-sm font-medium tracking-widest">MACHINE TREE</p>
-            </div>
+              {/* Center - QAAQ Branding */}
+              <div className="flex-1 text-center">
+                <h1 className="text-2xl font-bold text-red-600 tracking-wider">
+                  QAAQ
+                </h1>
+                <p className="text-sm text-orange-600 font-medium">MACHINE TREE</p>
+              </div>
 
-            {/* Right side - Actions */}
-            <div className="flex items-center space-x-4">
-              <button
-                className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-                data-testid="button-share"
-              >
-                <Share2 className="w-5 h-5" />
-                <span className="font-bold">Share</span>
-              </button>
+              {/* Right side - Actions */}
+              <div className="flex items-center">
+                <button
+                  className="flex items-center space-x-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors"
+                  data-testid="button-share"
+                >
+                  <Share2 className="w-4 h-4" />
+                  <span className="font-medium">Share</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
