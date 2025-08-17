@@ -36,14 +36,11 @@ export default function MachineTreePage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedEquipment, setSelectedEquipment] = useState<string | null>(null);
 
-  // Fetch SEMM cards from parent app
-  const { data: semmData, isLoading: semmLoading } = useQuery({
+  // Fetch SEMM cards from local endpoint
+  const { data: semmData, isLoading: semmLoading, error: semmError } = useQuery({
     queryKey: ['/api/dev/semm-cards'],
-    queryFn: async () => {
-      const response = await fetch('https://ae593ff5-1a4d-4129-8a7a-84788dd6900e-00-3cfncjt0ai8yg.worf.replit.dev/api/dev/semm-cards');
-      if (!response.ok) throw new Error('Failed to fetch SEMM data');
-      return response.json();
-    }
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 3,
   });
 
   // Extract data from the parent app response
@@ -101,7 +98,19 @@ export default function MachineTreePage() {
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto"></div>
           <h2 className="text-xl font-semibold text-gray-700">Loading Machine Tree...</h2>
-          <p className="text-gray-500">Loading SEMM data from parent app...</p>
+          <p className="text-gray-500">Loading maritime equipment data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (semmError) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="text-red-600 text-6xl">⚠️</div>
+          <h2 className="text-xl font-semibold text-gray-700">Failed to Load SEMM Data</h2>
+          <p className="text-gray-500">Error: {semmError.message}</p>
         </div>
       </div>
     );
@@ -116,7 +125,7 @@ export default function MachineTreePage() {
             <Settings className="h-8 w-8 text-white" />
             <div>
               <h1 className="text-2xl font-bold text-white">Machine Tree (SEMM)</h1>
-              <p className="text-orange-100">System-Equipment-Make-Model Classification | Data from Parent App</p>
+              <p className="text-orange-100">System-Equipment-Make-Model Classification</p>
             </div>
           </div>
         </div>
@@ -139,15 +148,11 @@ export default function MachineTreePage() {
               <div className="text-sm text-gray-600">Machines</div>
             </div>
             <div className="text-center">
-              <div className="text-xs font-bold text-blue-600">PARENT APP</div>
-              <div className="text-sm text-gray-600">Data Source</div>
+              <div className="text-2xl font-bold text-green-600">{semmData?.totalMachines || 0}</div>
+              <div className="text-sm text-gray-600">Total</div>
             </div>
           </div>
-          {semmData?.usage && (
-            <div className="mt-3 p-2 bg-blue-50 rounded text-center">
-              <span className="text-xs text-blue-600">Connected to: {semmData.usage.endpoint} | Version: {semmData.version}</span>
-            </div>
-          )}
+
         </div>
       </div>
 
