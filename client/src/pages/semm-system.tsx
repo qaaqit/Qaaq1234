@@ -43,7 +43,7 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
           backfaceVisibility: 'hidden'
         }}
       >
-        <span className={`${textSize} font-bold text-teal-300 font-mono tracking-wider drop-shadow-lg leading-none`}>
+        <span className={`${textSize} font-bold text-white font-mono tracking-wider drop-shadow-lg leading-none`}>
           {char}
         </span>
       </div>
