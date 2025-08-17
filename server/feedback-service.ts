@@ -120,6 +120,13 @@ export class FeedbackService {
    */
   static parseFeedbackRating(userResponse: string): { rating: number | null, category: string } {
     const response = userResponse.toLowerCase().trim();
+    const originalTrimmed = userResponse.trim();
+    
+    // Letter grades A/B/C/D (standalone letters only, exact match - check first before other text matches)
+    if (originalTrimmed === 'A' || originalTrimmed === 'a') return { rating: 5, category: 'grade' };
+    if (originalTrimmed === 'B' || originalTrimmed === 'b') return { rating: 4, category: 'grade' };
+    if (originalTrimmed === 'C' || originalTrimmed === 'c') return { rating: 2, category: 'grade' };
+    if (originalTrimmed === 'D' || originalTrimmed === 'd') return { rating: 1, category: 'grade' };
     
     // Star ratings ⭐⭐⭐⭐⭐
     const starMatch = response.match(/⭐/g);
@@ -152,11 +159,6 @@ export class FeedbackService {
     if (response.includes('terrible') || response.includes('useless') || response.includes('wrong')) {
       return { rating: 1, category: 'text' };
     }
-    
-    // Letter grades A/B/C
-    if (response.includes('a')) return { rating: 5, category: 'grade' };
-    if (response.includes('b')) return { rating: 4, category: 'grade' };
-    if (response.includes('c')) return { rating: 2, category: 'grade' };
     
     // Thumbs up/down
     if (response.includes('👍') || response.includes('yes')) {

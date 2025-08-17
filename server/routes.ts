@@ -2974,6 +2974,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Message is required' });
       }
 
+      // CHECK IF MESSAGE IS FEEDBACK FIRST
+      const feedbackParsed = FeedbackService.parseFeedbackRating(message);
+      if (feedbackParsed.rating !== null) {
+        console.log(`🎯 Detected feedback: "${message}" → Rating: ${feedbackParsed.rating}/5 (${feedbackParsed.category})`);
+        
+        // Store feedback in database
+        try {
+          await pool.query(`
+            INSERT INTO ai_feedback (rating, category, feedback_text, user_context, created_at)
+            VALUES ($1, $2, $3, $4, NOW())
+          `, [feedbackParsed.rating, feedbackParsed.category, message, userId || 'anonymous']);
+        } catch (error) {
+          console.log('Could not store feedback in database:', error instanceof Error ? error.message : 'Unknown error');
+        }
+        
+        // Return thank you response for feedback
+        const thankYouMessages = [
+          "Thank you for your feedback! Your input helps improve QBOT responses.",
+          "Appreciated! Your feedback helps make QBOT better for the maritime community.",
+          "Thanks! Your rating helps improve QBOT's maritime expertise.",
+          "Great feedback! This helps QBOT provide better technical guidance.",
+          "Thank you! Your input is valuable for enhancing QBOT's responses."
+        ];
+        
+        const thankYouMessage = thankYouMessages[Math.floor(Math.random() * thankYouMessages.length)];
+        
+        return res.json({
+          response: thankYouMessage,
+          feedbackReceived: true,
+          rating: feedbackParsed.rating,
+          category: feedbackParsed.category,
+          timestamp: new Date().toISOString()
+        });
+      }
+
       // Get user info if authenticated
       let user = null;
       if (userId) {
