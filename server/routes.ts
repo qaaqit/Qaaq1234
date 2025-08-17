@@ -3794,27 +3794,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('⚠️ No equipment found in database - creating standard maritime equipment breadcrumbs');
       }
       
-      // Standard maritime equipment mapping based on screenshot requirements
+      // Authentic maritime equipment mapping from screenshots - exact names only
       const standardEquipment = {
         'a': ['Main Engine', 'Stern Tube', 'Propeller', 'Bow Thruster', 'Shaft Generator'],
         'b': ['Aux Engine', 'Turbocharger', 'Alternator', 'Switchboard', 'Emergency Generator'],
         'c': ['Auxiliary Boiler', 'Burner', 'Composite Boiler', 'Exhaust Gas Boiler', 'Feed Water System', 'Inert Gas Generator'],
-        'd': ['Main Air Compressor', 'BA Compressor', 'Starting Air System', 'Service Air', 'Air Receivers'],
-        'e': ['Fuel Oil Purifier', 'Lube Oil Purifier', 'Fuel Transfer System', 'Viscosity Meter', 'Filters'],
-        'f': ['Fresh Water Generator', 'Hydrophore Tank', 'SW Cooling Pump', 'FW Pump', 'Expansion Tank'],
-        'g': ['Engine Control System', 'Automation System', 'Fire Detection', 'Power Distribution', 'UPS'],
-        'h': ['AC Unit', 'Refrigeration Compressor', 'Ventilation Fan', 'Provision Store', 'Insulation'],
-        'i': ['Fixed Fire Fighting', 'Breathing Apparatus', 'Life Boats', 'Life Rafts', 'Immersion Suits'],
-        'j': ['Central Cooling Pump', 'Charge Air Cooler', 'LT Cooler', 'HT Cooler', 'Preheater'],
-        'k': ['Cargo Pumps', 'Manifold', 'Tank Radar', 'VRCS', 'Loadicator'],
-        'l': ['Steering Gear', 'Autopilot', 'Compass', 'Rudder System', 'Tiller'],
-        'm': ['Windlass', 'Mooring Winch', 'Cargo Winch', 'Davit', 'Hydraulic System'],
-        'n': ['Provision Crane', 'Deck Crane', 'Gantry Crane', 'ER Crane', 'Hose Crane'],
-        'o': ['BWMS', 'Scrubber', 'HPSCR', 'OWS', 'Sewage Treatment'],
-        'p': ['Galley Equipment', 'Oven', 'Refrigerator', 'Freezer', 'Coffee Machine'],
-        'q': ['Radar', 'GPS', 'ECDIS', 'VHF Radio', 'Gyro Compass'],
-        'r': ['Hull Structure', 'Bulkhead', 'Deck Plating', 'Rudder', 'Mast'],
-        'z': ['Spare Parts', 'Tools', 'Consumables', 'Safety Equipment', 'General Stores']
+        'd': ['Main Air Compressor', 'BA Compressor', 'Control Air Drier'],
+        'e': ['Fuel Oil Purifier', 'Lube Oil Purifier', 'Oily Water Treatment', 'Oil Water Separator', 'Air Purifier', 'Fuel oil AutoFilter'],
+        'f': ['Fresh Water Generator'],
+        'g': ['Alarm Monitoring System (AMS)', 'Main Switchboard', 'Power Management (PMS)'],
+        'h': ['Air Handling Unit'],
+        'i': [], // LSA FFA - no equipment shown in screenshots
+        'j': [], // Pumps & Coolers - no equipment shown in screenshots
+        'k': ['VRCS'],
+        'l': [], // Steering Navigation - no equipment shown in screenshots
+        'm': [], // Deck Machinery - no equipment shown in screenshots
+        'n': ['Engine Room Crane'],
+        'o': ['Bilge Separator OWS', 'Incinerator', 'Ballast Water Management System', 'HPSCR', 'Scrubber EGCS', 'Sewage Treatment Plant (STP)', 'Vacuum Toilet System'],
+        'p': [], // Galley - no equipment shown in screenshots
+        'q': [], // Bridge Equipment - no equipment shown in screenshots
+        'r': [], // Ship Construction - no equipment shown in screenshots
+        'z': [] // Miscellaneous - no equipment shown in screenshots
       };
       
       // Build SEMM cards from authentic database data with standard equipment breadcrumbs
