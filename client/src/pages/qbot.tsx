@@ -222,8 +222,8 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                     data-testid="button-main-menu"
                   >
                     <div className="flex items-center space-x-2">
-                      <ChevronDown className={`w-4 h-4 sm:w-5 sm:h-5 text-white transition-transform duration-200 ${isMenuOpen ? 'rotate-180' : ''}`} />
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white p-1 shadow-lg">
+                      <ChevronDown className={`w-4 h-4 text-white transition-transform duration-200 ${isMenuOpen ? 'rotate-180' : ''}`} />
+                      <div className="w-10 h-10 rounded-full bg-white p-1 shadow-lg">
                         <img 
                           src={qaaqLogo} 
                           alt="QAAQ Logo" 

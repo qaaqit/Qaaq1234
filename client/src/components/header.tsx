@@ -32,7 +32,7 @@ export default function Header({ user }: HeaderProps) {
                 data-testid="button-main-menu"
               >
                 <div className="flex items-center space-x-2">
-                  <ChevronDown className={`w-5 h-5 text-white transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-4 h-4 text-white transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
                   <div className="w-10 h-10 rounded-full bg-white p-1 shadow-lg">
                     <img 
                       src={qaaqLogo} 
