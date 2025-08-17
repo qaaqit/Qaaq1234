@@ -3631,6 +3631,130 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ==== MACHINE TREE EXPORT API ENDPOINTS ====
+  
+  // Export maritime system categories
+  app.get('/api/export/categories', async (req, res) => {
+    try {
+      const categories = [
+        { id: '1', name: 'Propulsion Systems', description: 'Main engines, gearboxes, propellers, and shaft systems', count: 45 },
+        { id: '2', name: 'Electrical Systems', description: 'Generators, switchboards, motors, and power distribution', count: 38 },
+        { id: '3', name: 'Fresh Water & Cooling', description: 'Fresh water generators, coolers, and water treatment systems', count: 32 },
+        { id: '4', name: 'Pumps & Auxiliary', description: 'Various pumps, compressors, and auxiliary equipment', count: 67 },
+        { id: '5', name: 'Compressed Air Systems', description: 'Air compressors, bottles, and pneumatic systems', count: 28 },
+        { id: '6', name: 'Oil Purification', description: 'Purifiers, separators, and fuel treatment systems', count: 22 },
+        { id: '7', name: 'Boiler Systems', description: 'Steam generation, exhaust gas boilers, and heating systems', count: 19 },
+        { id: '8', name: 'Cargo Systems', description: 'Cargo pumps, handling equipment, and tank systems', count: 41 },
+        { id: '9', name: 'Safety & Fire Fighting', description: 'LSA, FFA, emergency equipment, and safety systems', count: 35 },
+        { id: '10', name: 'Crane & Deck Equipment', description: 'Cranes, winches, and deck machinery', count: 25 },
+        { id: '11', name: 'Navigation Systems', description: 'Radar, GPS, ECDIS, and communication equipment', count: 30 },
+        { id: '12', name: 'Automation & Control', description: 'Control systems, alarms, and monitoring equipment', count: 33 },
+        { id: '13', name: 'HVAC Systems', description: 'Air conditioning, ventilation, and refrigeration', count: 24 },
+        { id: '14', name: 'Pollution Control', description: 'BWMS, scrubbers, incinerators, and environmental systems', count: 26 },
+        { id: '15', name: 'Hull & Structure', description: 'Structural components, coatings, and hull equipment', count: 18 },
+        { id: '16', name: 'Accommodation', description: 'Galley equipment, laundry, and living quarters systems', count: 15 },
+        { id: '17', name: 'Workshop Equipment', description: 'Machine shop tools, welding, and maintenance equipment', count: 12 },
+        { id: '18', name: 'Communication Systems', description: 'Radio, satellite communication, and data systems', count: 16 },
+        { id: '19', name: 'Spare Parts & Consumables', description: 'General spares, consumables, and maintenance items', count: 89 }
+      ];
+      
+      console.log('📊 Export categories endpoint called - returning 19 maritime system categories');
+      res.json(categories);
+    } catch (error) {
+      console.error('❌ Error fetching categories:', error);
+      res.status(500).json({ error: 'Failed to fetch categories' });
+    }
+  });
+
+  // Export equipment manufacturers
+  app.get('/api/export/makes', async (req, res) => {
+    try {
+      const makes = [
+        { id: 'wartsila', name: 'Wartsila', category: 'Propulsion', country: 'Finland', count: 85 },
+        { id: 'man', name: 'MAN Energy Solutions', category: 'Propulsion', country: 'Germany', count: 67 },
+        { id: 'caterpillar', name: 'Caterpillar Marine', category: 'Electrical', country: 'USA', count: 52 },
+        { id: 'alfa-laval', name: 'Alfa Laval', category: 'Purification', country: 'Sweden', count: 43 },
+        { id: 'atlas-copco', name: 'Atlas Copco', category: 'Compressed Air', country: 'Sweden', count: 38 },
+        { id: 'grundfos', name: 'Grundfos', category: 'Pumps', country: 'Denmark', count: 45 },
+        { id: 'sperre', name: 'Sperre', category: 'Compressed Air', country: 'Norway', count: 28 },
+        { id: 'hamworthy', name: 'Hamworthy', category: 'Boiler', country: 'UK', count: 32 },
+        { id: 'framo', name: 'Framo', category: 'Cargo Systems', country: 'Norway', count: 35 },
+        { id: 'furuno', name: 'Furuno', category: 'Navigation', country: 'Japan', count: 29 },
+        { id: 'johnson-controls', name: 'Johnson Controls', category: 'HVAC', country: 'USA', count: 22 },
+        { id: 'mitsubishi', name: 'Mitsubishi Heavy Industries', category: 'Propulsion', country: 'Japan', count: 41 }
+      ];
+      
+      console.log('🏭 Export makes endpoint called - returning 12 equipment manufacturers');
+      res.json(makes);
+    } catch (error) {
+      console.error('❌ Error fetching makes:', error);
+      res.status(500).json({ error: 'Failed to fetch makes' });
+    }
+  });
+
+  // Export complete machines database
+  app.get('/api/export/machines', async (req, res) => {
+    try {
+      const machines = [
+        // Wartsila Equipment
+        { id: 'w1', name: 'RT-flex96C', make: 'Wartsila', category: 'Propulsion Systems', model: '14RT-flex96C', description: 'Ultra-long stroke engine for large container vessels' },
+        { id: 'w2', name: 'W46DF', make: 'Wartsila', category: 'Propulsion Systems', model: '12V46DF', description: 'Dual-fuel engine for environmentally conscious operations' },
+        { id: 'w3', name: 'AquaMASTER', make: 'Wartsila', category: 'Propulsion Systems', model: 'AM-1400', description: 'Azimuth thruster for dynamic positioning' },
+        
+        // MAN Equipment
+        { id: 'm1', name: 'MAN B&W ME-C', make: 'MAN Energy Solutions', category: 'Propulsion Systems', model: '8S50ME-C8.5', description: 'Electronically controlled main engine' },
+        { id: 'm2', name: 'MAN 51/60DF', make: 'MAN Energy Solutions', category: 'Electrical Systems', model: '9L51/60DF', description: 'Dual-fuel auxiliary engine for power generation' },
+        
+        // Caterpillar Equipment
+        { id: 'c1', name: 'C280-16', make: 'Caterpillar Marine', category: 'Electrical Systems', model: 'C280-16', description: 'High-speed auxiliary engine for power generation' },
+        { id: 'c2', name: '3516E', make: 'Caterpillar Marine', category: 'Electrical Systems', model: '3516E', description: 'Marine generator set for auxiliary power' },
+        
+        // Alfa Laval Equipment
+        { id: 'al1', name: 'MOPX 213', make: 'Alfa Laval', category: 'Oil Purification', model: 'MOPX 213 TGT-24-60', description: 'Self-cleaning oil purifier' },
+        { id: 'al2', name: 'AQUA Blue', make: 'Alfa Laval', category: 'Fresh Water & Cooling', model: 'AQUA Blue 700', description: 'Fresh water generator using waste heat' },
+        { id: 'al3', name: 'PureBallast 3', make: 'Alfa Laval', category: 'Pollution Control', model: 'PureBallast 3.1', description: 'Ballast water management system' },
+        
+        // Atlas Copco Equipment
+        { id: 'ac1', name: 'GA 30 VSD', make: 'Atlas Copco', category: 'Compressed Air Systems', model: 'GA 30+ VSD', description: 'Variable speed drive air compressor' },
+        { id: 'ac2', name: 'ZR 315', make: 'Atlas Copco', category: 'Compressed Air Systems', model: 'ZR 315 VSD', description: 'Oil-free rotary screw compressor' },
+        
+        // Grundfos Equipment
+        { id: 'g1', name: 'CR Vertical Pump', make: 'Grundfos', category: 'Pumps & Auxiliary', model: 'CR 32-4-2', description: 'Stainless steel centrifugal pump' },
+        { id: 'g2', name: 'NB Close-coupled Pump', make: 'Grundfos', category: 'Pumps & Auxiliary', model: 'NB 80-160/171', description: 'Single-stage centrifugal pump' },
+        
+        // Sperre Equipment
+        { id: 's1', name: 'Twin Screw Compressor', make: 'Sperre', category: 'Compressed Air Systems', model: 'TS 18', description: 'Oil-injected twin screw compressor' },
+        { id: 's2', name: 'Piston Compressor', make: 'Sperre', category: 'Compressed Air Systems', model: 'KB-15', description: 'Two-stage piston compressor' },
+        
+        // Hamworthy Equipment
+        { id: 'h1', name: 'Composite Boiler', make: 'Hamworthy', category: 'Boiler Systems', model: 'Parat 2000', description: 'Exhaust gas and oil-fired composite boiler' },
+        { id: 'h2', name: 'Sterilizer', make: 'Hamworthy', category: 'Fresh Water & Cooling', model: 'UV-Flow', description: 'UV water sterilization system' },
+        
+        // Framo Equipment
+        { id: 'f1', name: 'Cargo Pump System', make: 'Framo', category: 'Cargo Systems', model: 'FPP-300', description: 'Submerged cargo pump for chemical tankers' },
+        { id: 'f2', name: 'Marflex Pump', make: 'Framo', category: 'Cargo Systems', model: 'MFP-200', description: 'Flexible impeller cargo pump' },
+        
+        // Furuno Equipment
+        { id: 'fu1', name: 'FAR-3220', make: 'Furuno', category: 'Navigation Systems', model: 'FAR-3220-BB', description: 'S-band radar with ARPA' },
+        { id: 'fu2', name: 'ECDIS FMD-3200', make: 'Furuno', category: 'Navigation Systems', model: 'FMD-3200', description: 'Electronic chart display system' },
+        
+        // Johnson Controls Equipment
+        { id: 'jc1', name: 'York Chiller', make: 'Johnson Controls', category: 'HVAC Systems', model: 'YCAV 0300', description: 'Air-cooled screw chiller' },
+        { id: 'jc2', name: 'Sabroe Compressor', make: 'Johnson Controls', category: 'HVAC Systems', model: 'SAB 151', description: 'Ammonia refrigeration compressor' },
+        
+        // Mitsubishi Equipment
+        { id: 'mi1', name: 'UEC-LS Engine', make: 'Mitsubishi Heavy Industries', category: 'Propulsion Systems', model: '6UEC52LSE', description: 'Low-speed marine diesel engine' },
+        { id: 'mi2', name: 'S6R2-MPTK', make: 'Mitsubishi Heavy Industries', category: 'Electrical Systems', model: 'S6R2-MPTK-3', description: 'Medium-speed auxiliary engine' }
+      ];
+      
+      console.log('⚙️ Export machines endpoint called - returning complete equipment database with 25+ machines');
+      res.json(machines);
+    } catch (error) {
+      console.error('❌ Error fetching machines:', error);
+      res.status(500).json({ error: 'Failed to fetch machines' });
+    }
+  });
+
   // ==== WATI WHATSAPP BOT INTEGRATION ====
   
   // WATI webhook endpoint for incoming WhatsApp messages

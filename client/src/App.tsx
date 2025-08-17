@@ -30,6 +30,7 @@ import PasswordDemoPage from "@/pages/password-demo";
 import OAuthCallback from "@/pages/oauth-callback";
 import TopQProfessionalsPage from "@/pages/TopQProfessionalsPage";
 import { GlossaryPage } from "@/pages/glossary";
+import MachineTreePage from "@/pages/machine-tree";
 import PrivacyPolicyPage from "@/pages/privacy-policy";
 
 import NotFound from "@/pages/not-found";
@@ -186,6 +187,7 @@ function Router() {
           <Route path="/top-professionals" component={TopQProfessionalsPage} />
           <Route path="/qh13" component={TopQProfessionalsPage} />
           <Route path="/glossary" component={() => <GlossaryPage />} />
+          <Route path="/machine-tree" component={() => <MachineTreePage />} />
           <Route path="/privacy-policy" component={() => <PrivacyPolicyPage />} />
           <Route path="/home-old" component={() => <Login onSuccess={setUser} />} />
 
