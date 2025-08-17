@@ -106,28 +106,51 @@ export default function SemmEquipmentPage() {
       </div>
 
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex items-center space-x-3">
+      <div className="bg-white shadow-lg border-b">
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="flex items-center space-x-6">
             <button
               onClick={() => setLocation('/machine-tree')}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               title="Back to Machine Tree"
             >
-              <ArrowLeft className="h-6 w-6 text-white" />
+              <ArrowLeft className="h-6 w-6 text-gray-600" />
             </button>
-            {/* Navy Blue Code Indicator */}
-            <div className="flex items-center justify-center w-20 h-20 bg-blue-900 rounded-lg shadow-lg">
-              <span className="text-2xl font-bold text-white">{equipment.code}</span>
+            
+            {/* Airport Analog Card Style Code Display */}
+            <div className="flex items-center space-x-1">
+              {equipment.code.split('').map((char, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-center w-16 h-20 bg-blue-900 rounded-lg shadow-lg border-2 border-gray-300"
+                  style={{
+                    background: 'linear-gradient(145deg, #1e3a8a, #1e40af)',
+                    boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.3), inset -2px -2px 4px rgba(255,255,255,0.1)'
+                  }}
+                >
+                  <span className="text-2xl font-bold text-white font-mono tracking-wider">
+                    {char}
+                  </span>
+                </div>
+              ))}
             </div>
             
             <div className="flex-1">
-              <h1 className="text-3xl font-bold text-white">{equipment.title}</h1>
-              <p className="text-blue-100 mt-1">{breadcrumb}</p>
+              <h1 className="text-4xl font-bold text-blue-900 mb-2">{equipment.title}</h1>
+              <p className="text-gray-600 text-lg">{breadcrumb}</p>
               {equipment.description && (
-                <p className="text-blue-100 mt-2">{equipment.description}</p>
+                <p className="text-gray-500 mt-2">{equipment.description}</p>
               )}
             </div>
+            
+            <button
+              onClick={copyShareLink}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+              title="Share this equipment"
+            >
+              <Share2 className="h-4 w-4" />
+              <span>Share</span>
+            </button>
           </div>
         </div>
       </div>
@@ -146,11 +169,11 @@ export default function SemmEquipmentPage() {
                 </h3>
                 <button
                   onClick={copyShareLink}
-                  className="flex items-center space-x-2 px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors"
+                  className="flex items-center space-x-2 px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
                   title="Share this equipment"
                 >
                   <Share2 className="h-4 w-4" />
-                  <span>Share</span>
+                  <span className="text-sm">Share</span>
                 </button>
               </div>
             </div>
@@ -158,11 +181,25 @@ export default function SemmEquipmentPage() {
             <div className="p-6 space-y-6">
               {/* Equipment Code and Title */}
               <div className="flex items-center space-x-4">
-                <div className="flex items-center justify-center w-16 h-16 bg-blue-900 rounded-lg">
-                  <span className="text-xl font-bold text-white">{equipment.code}</span>
+                {/* Airport Analog Card Style Code Display */}
+                <div className="flex items-center space-x-1">
+                  {equipment.code.split('').map((char, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-center w-12 h-16 bg-blue-900 rounded border border-gray-300"
+                      style={{
+                        background: 'linear-gradient(145deg, #1e3a8a, #1e40af)',
+                        boxShadow: 'inset 1px 1px 2px rgba(0,0,0,0.3), inset -1px -1px 2px rgba(255,255,255,0.1)'
+                      }}
+                    >
+                      <span className="text-lg font-bold text-white font-mono">
+                        {char}
+                      </span>
+                    </div>
+                  ))}
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-800">{equipment.title}</h2>
+                  <h2 className="text-2xl font-bold text-blue-900">{equipment.title}</h2>
                   <p className="text-gray-600">Maritime Equipment Code: {equipment.code}</p>
                 </div>
               </div>
