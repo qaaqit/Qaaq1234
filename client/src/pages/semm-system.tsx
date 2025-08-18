@@ -255,8 +255,8 @@ export default function SemmSystemPage() {
                     className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center space-x-3 border-b border-gray-100 last:border-b-0"
                     data-testid={`dropdown-equipment-${equipment.code}`}
                   >
-                    <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center flex-shrink-0">
-                      <span className="text-blue-600 text-xs font-bold">{equipment.code}</span>
+                    <div className="w-8 h-8 bg-orange-100 rounded flex items-center justify-center flex-shrink-0">
+                      <span className="text-orange-600 text-xs font-bold">{equipment.code}</span>
                     </div>
                     <span className="text-gray-800 font-medium">{equipment.title}</span>
                   </button>
@@ -271,7 +271,7 @@ export default function SemmSystemPage() {
           <div className="mt-8">
             <div className="mb-6">
               <h2 className="text-xl font-semibold text-gray-800 flex items-center mb-4">
-                <Ship className="h-6 w-6 text-blue-600 mr-3" />
+                <Ship className="h-6 w-6 text-orange-600 mr-3" />
                 Equipment in {foundSystem.title}
                 {isAdmin && (
                   <button
@@ -307,17 +307,17 @@ export default function SemmSystemPage() {
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <span className="text-blue-600 font-bold">{equipment.code}</span>
+                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <span className="text-orange-600 font-bold">{equipment.code}</span>
                       </div>
                       <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-800 group-hover:text-blue-600 transition-colors">
+                        <h3 className="text-lg font-semibold text-gray-800 group-hover:text-orange-600 transition-colors">
                           {equipment.title}
                         </h3>
                         <p className="text-sm text-gray-500">Equipment Type</p>
                       </div>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
+                    <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-orange-500 transition-colors" />
                   </div>
                   
                   <div className="space-y-2">
@@ -329,10 +329,10 @@ export default function SemmSystemPage() {
                       <div className="flex items-center justify-between pt-2 border-t border-gray-100">
                         <span className="text-xs text-gray-500">Makes Available</span>
                         <div className="flex items-center space-x-2">
-                          <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                          <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
                             {equipment.makes.length} {equipment.makes.length === 1 ? 'Make' : 'Makes'}
                           </span>
-                          <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                          <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
                             {equipment.makes.reduce((sum: number, make: any) => sum + (make.models?.length || 0), 0)} Models
                           </span>
                         </div>
@@ -348,7 +348,7 @@ export default function SemmSystemPage() {
                           e.stopPropagation();
                           handleEditEquipment(equipment.code);
                         }}
-                        className="flex items-center space-x-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors w-full justify-center"
+                        className="flex items-center space-x-2 px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors w-full justify-center"
                         title="Edit Equipment"
                         data-testid={`edit-equipment-${equipment.code}`}
                       >

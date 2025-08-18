@@ -226,7 +226,7 @@ export default function SemmModelPage() {
                 {foundModel.title}
               </h1>
               <p className="text-sm text-gray-600">
-                Maritime model specification: <span className="font-bold text-orange-600">{parentSystem.title}</span> → <span className="font-bold text-blue-600">{parentEquipment.title}</span> → <span className="font-bold text-purple-600">{parentMake.title}</span>
+                Maritime model specification: <span className="font-bold text-orange-600">{parentSystem.title}</span> → <span className="font-bold text-orange-600">{parentEquipment.title}</span> → <span className="font-bold text-orange-600">{parentMake.title}</span>
               </p>
             </div>
           </div>
@@ -261,11 +261,11 @@ export default function SemmModelPage() {
                 </div>
                 <div>
                   <span className="text-sm font-medium text-gray-500">Make</span>
-                  <p className="text-lg text-purple-600 font-medium">{parentMake.title}</p>
+                  <p className="text-lg text-orange-600 font-medium">{parentMake.title}</p>
                 </div>
                 <div>
                   <span className="text-sm font-medium text-gray-500">Equipment Type</span>
-                  <p className="text-lg text-blue-600 font-medium">{parentEquipment.title}</p>
+                  <p className="text-lg text-orange-600 font-medium">{parentEquipment.title}</p>
                 </div>
                 <div>
                   <span className="text-sm font-medium text-gray-500">System Category</span>

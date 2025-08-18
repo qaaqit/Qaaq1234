@@ -260,7 +260,7 @@ export default function SemmMakePage() {
                 {foundMake.title}
               </h1>
               <p className="text-sm text-gray-600">
-                Maritime make classification: <span className="font-bold text-orange-600">{parentSystem.title}</span> → <span className="font-bold text-blue-600">{parentEquipment.title}</span>
+                Maritime make classification: <span className="font-bold text-orange-600">{parentSystem.title}</span> → <span className="font-bold text-orange-600">{parentEquipment.title}</span>
               </p>
             </div>
           </div>
@@ -287,7 +287,7 @@ export default function SemmMakePage() {
               {isAdmin && (
                 <button
                   onClick={handleReorderModels}
-                  className="flex items-center space-x-2 px-3 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors"
+                  className="flex items-center space-x-2 px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors"
                   title="Reorder Models"
                   data-testid="reorder-models-btn"
                 >
@@ -306,17 +306,17 @@ export default function SemmMakePage() {
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <span className="text-purple-600 font-bold text-xs">{model.code}</span>
+                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <span className="text-orange-600 font-bold text-xs">{model.code}</span>
                       </div>
                       <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-800 group-hover:text-purple-600 transition-colors">
+                        <h3 className="text-lg font-semibold text-gray-800 group-hover:text-orange-600 transition-colors">
                           {model.title}
                         </h3>
                         <p className="text-sm text-gray-500">Model Type</p>
                       </div>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-purple-500 transition-colors" />
+                    <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-orange-500 transition-colors" />
                   </div>
                   
                   <div className="space-y-2">
@@ -337,7 +337,7 @@ export default function SemmMakePage() {
                           e.stopPropagation();
                           handleEditModel(model.code);
                         }}
-                        className="flex items-center space-x-2 px-3 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors w-full justify-center"
+                        className="flex items-center space-x-2 px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors w-full justify-center"
                         title="Edit Model"
                         data-testid={`edit-model-${model.code}`}
                       >

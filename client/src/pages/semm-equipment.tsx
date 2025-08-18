@@ -289,17 +289,17 @@ export default function SemmEquipmentPage() {
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                        <span className="text-green-600 font-bold">{make.code}</span>
+                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <span className="text-orange-600 font-bold">{make.code}</span>
                       </div>
                       <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-800 group-hover:text-green-600 transition-colors">
+                        <h3 className="text-lg font-semibold text-gray-800 group-hover:text-orange-600 transition-colors">
                           {make.title}
                         </h3>
                         <p className="text-sm text-gray-500">Make Type</p>
                       </div>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-green-500 transition-colors" />
+                    <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-orange-500 transition-colors" />
                   </div>
                   
                   <div className="space-y-2">
@@ -310,7 +310,7 @@ export default function SemmEquipmentPage() {
                     {make.models && make.models.length > 0 && (
                       <div className="flex items-center justify-between pt-2 border-t border-gray-100">
                         <span className="text-xs text-gray-500">Models Available</span>
-                        <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
+                        <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
                           {make.models.length} {make.models.length === 1 ? 'Model' : 'Models'}
                         </span>
                       </div>
@@ -325,7 +325,7 @@ export default function SemmEquipmentPage() {
                           e.stopPropagation();
                           handleEditMake(make.code);
                         }}
-                        className="flex items-center space-x-2 px-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors w-full justify-center"
+                        className="flex items-center space-x-2 px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors w-full justify-center"
                         title="Edit Make"
                         data-testid={`edit-make-${make.code}`}
                       >
