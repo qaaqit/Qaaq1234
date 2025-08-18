@@ -52,7 +52,7 @@ export default function MachineTreePage() {
   });
 
   // Extract data from the parent app response
-  const categories = semmData?.data || [];
+  const categories = (semmData as any)?.data || [];
   const equipment = categories.flatMap((cat: any) => cat.equipment || []);
   const machines = equipment.flatMap((eq: any) => eq.machines || []);
 
@@ -207,7 +207,7 @@ export default function MachineTreePage() {
               <div className="text-sm text-gray-600">Machines</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{semmData?.totalMachines || 0}</div>
+              <div className="text-2xl font-bold text-green-600">{(semmData as any)?.totalMachines || machines.length}</div>
               <div className="text-sm text-gray-600">Total</div>
             </div>
           </div>
@@ -227,7 +227,7 @@ export default function MachineTreePage() {
                   Maritime Systems
                   {isAdmin && (
                     <button
-                      onClick={handleEditSystem}
+                      onClick={() => handleEditSystem('title')}
                       className="ml-2 p-1 hover:bg-orange-100 rounded"
                       title="Edit SEMM Title"
                       data-testid="edit-semm-title"

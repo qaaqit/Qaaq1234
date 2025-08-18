@@ -86,5 +86,6 @@ export default function SemmModelPage() {
         </div>
       </div>
     </div>
+    </div>
   );
 }
