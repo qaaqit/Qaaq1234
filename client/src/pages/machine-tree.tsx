@@ -37,6 +37,7 @@ export default function MachineTreePage() {
   const [expandedEquipment, setExpandedEquipment] = useState<Set<string>>(new Set());
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedEquipment, setSelectedEquipment] = useState<string | null>(null);
+  const [showDropdowns, setShowDropdowns] = useState<Set<string>>(new Set());
   const [, setLocation] = useLocation();
   
   // Get user authentication info
@@ -133,6 +134,22 @@ export default function MachineTreePage() {
   // Navigation to individual equipment pages
   const navigateToEquipment = (equipmentCode: string) => {
     setLocation(`/machinetree/${equipmentCode}`);
+  };
+
+  // Toggle dropdown for system cards
+  const toggleDropdown = (categoryCode: string) => {
+    const newDropdowns = new Set(showDropdowns);
+    if (newDropdowns.has(categoryCode)) {
+      newDropdowns.delete(categoryCode);
+    } else {
+      newDropdowns.add(categoryCode);
+    }
+    setShowDropdowns(newDropdowns);
+  };
+
+  // Navigate to system page when clicking on card body (not chevron)
+  const navigateToSystem = (categoryCode: string) => {
+    setLocation(`/machinetree/system/${categoryCode}`);
   };
 
   if (semmLoading) {
@@ -237,18 +254,15 @@ export default function MachineTreePage() {
             )}
             <div className="max-h-[600px] overflow-y-auto">
               {categories.map((category: any) => (
-                <div key={category.id} className="border-b border-gray-100 last:border-b-0">
-                  <div className="relative">
-                    <button
-                      onClick={() => toggleCategory(category.id)}
-                      className="w-full px-6 py-4 text-left hover:bg-orange-50 transition-colors flex items-center justify-between group"
+                <div key={category.id} className="border-b border-gray-100 last:border-b-0 relative">
+                  <div className="flex items-center px-6 py-4 hover:bg-orange-50 transition-colors group">
+                    
+                    {/* Clickable card body - goes to system page */}
+                    <div 
+                      className="flex items-center space-x-3 flex-1 cursor-pointer"
+                      onClick={() => navigateToSystem(category.code)}
                       data-testid={`category-${category.id}`}
                     >
-                      <div className="absolute inset-0 cursor-pointer" onClick={(e) => {
-                        e.stopPropagation();
-                        setLocation(`/machinetree/system/${category.code}`);
-                      }}></div>
-                    <div className="flex items-center space-x-3">
                       <div className="flex items-center justify-center w-8 h-8 bg-orange-100 rounded-full">
                         <span className="text-sm font-bold text-orange-600">{category.code}</span>
                       </div>
@@ -274,19 +288,52 @@ export default function MachineTreePage() {
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
+
+                    {/* Chevron dropdown - shows equipment list */}
+                    <div className="relative flex items-center space-x-2">
                       {category.count && (
                         <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
                           {category.count}
                         </span>
                       )}
-                      {expandedCategories.has(category.id) ? (
-                        <ChevronDown className="h-4 w-4 text-gray-400" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4 text-gray-400" />
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleDropdown(category.code);
+                        }}
+                        className="p-2 hover:bg-orange-100 rounded-full transition-colors"
+                        data-testid={`dropdown-${category.code}`}
+                        title="Show equipment in this system"
+                      >
+                        {showDropdowns.has(category.code) ? (
+                          <ChevronDown className="h-4 w-4 text-gray-400" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 text-gray-400" />
+                        )}
+                      </button>
+
+                      {/* Equipment Dropdown */}
+                      {showDropdowns.has(category.code) && (
+                        <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-64">
+                          {category.equipment?.map((equipment: any) => (
+                            <button
+                              key={equipment.code}
+                              onClick={() => {
+                                setLocation(`/machinetree/equipment/${equipment.code}`);
+                                setShowDropdowns(new Set());
+                              }}
+                              className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center space-x-3 border-b border-gray-100 last:border-b-0"
+                              data-testid={`dropdown-equipment-${equipment.code}`}
+                            >
+                              <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center flex-shrink-0">
+                                <span className="text-blue-600 text-xs font-bold">{equipment.code}</span>
+                              </div>
+                              <span className="text-gray-800 font-medium">{equipment.title}</span>
+                            </button>
+                          ))}
+                        </div>
                       )}
                     </div>
-                    </button>
                   </div>
                   
                   {/* Equipment under this category */}
