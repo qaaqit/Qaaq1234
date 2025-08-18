@@ -161,15 +161,15 @@ export default function SemmModelPage() {
   };
 
   const goToSystem = () => {
-    setLocation(`/machinetree/system/${parentSystem.code}`);
+    setLocation(`/machinetree/${parentSystem.code}`);
   };
 
   const goToEquipment = () => {
-    setLocation(`/machinetree/equipment/${parentEquipment.code}`);
+    setLocation(`/machinetree/${parentEquipment.code}`);
   };
 
   const goToMake = () => {
-    setLocation(`/machinetree/make/${parentMake.code}`);
+    setLocation(`/machinetree/${parentMake.code}`);
   };
 
   return (

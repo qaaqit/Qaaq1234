@@ -193,11 +193,15 @@ function Router() {
           <Route path="/glossary" component={() => <GlossaryPage />} />
           <Route path="/machinetree" component={() => <MachineTreePage />} />
           <Route path="/machine-tree" component={() => <MachineTreePage />} />
-          <Route path="/machinetree/system/:code" component={SemmSystemPage} />
-          <Route path="/machinetree/equipment/:code" component={SemmEquipmentPage} />
-          <Route path="/machinetree/make/:code" component={SemmMakePage} />
-          <Route path="/machinetree/model/:code" component={SemmModelPage} />
-          <Route path="/machinetree/:code" component={SemmEquipmentPage} />
+          <Route path="/machinetree/:code" component={({ params }: any) => {
+            const code = params.code;
+            // Determine page type based on code length
+            if (code.length === 1) return <SemmSystemPage />;
+            if (code.length === 2) return <SemmEquipmentPage />;
+            if (code.length === 3) return <SemmMakePage />;
+            if (code.length === 4) return <SemmModelPage />;
+            return <SemmEquipmentPage />;
+          }} />
           <Route path="/privacy-policy" component={() => <PrivacyPolicyPage />} />
           <Route path="/home-old" component={() => <Login onSuccess={setUser} />} />
 

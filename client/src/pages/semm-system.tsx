@@ -1,7 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
-import { ArrowLeft, Share2, Home, ChevronRight, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Share2, Home, ChevronRight, ChevronDown, GripVertical, Plus, Edit3, Ship } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { SemmReorderModal } from '@/components/semm-reorder-modal';
+import { apiRequest } from '@/lib/queryClient';
+import { useAuth } from '@/hooks/useAuth';
 
 // Bottom edge roll out flip card animation
 const FlipCard = ({ char, index, large = false }: { char: string; index: number; large?: boolean }) => {
@@ -84,6 +87,18 @@ export default function SemmSystemPage() {
   const { code } = useParams<{ code: string }>();
   const [, setLocation] = useLocation();
   const [showEquipmentDropdown, setShowEquipmentDropdown] = useState(false);
+  const [reorderModal, setReorderModal] = useState<{
+    isOpen: boolean;
+    items: Array<{ code: string; title: string }>;
+    type: string;
+  }>({
+    isOpen: false,
+    items: [],
+    type: ''
+  });
+  
+  const { data: user } = useAuth();
+  const isAdmin = user?.isAdmin || false;
 
   // Fetch SEMM data to find the specific system
   const { data: semmData, isLoading, error } = useQuery({
@@ -126,6 +141,49 @@ export default function SemmSystemPage() {
 
   const goHome = () => {
     setLocation('/machinetree');
+  };
+
+  const handleEditSystem = (systemCode: string) => {
+    console.log('Edit system:', systemCode);
+  };
+
+  const handleEditEquipment = (equipmentCode: string) => {
+    console.log('Edit equipment:', equipmentCode);
+  };
+
+  const handleAddNewEquipment = () => {
+    console.log('Add new equipment');
+  };
+
+  const handleReorderEquipment = () => {
+    if (!foundSystem.equipment) return;
+    
+    const equipment = foundSystem.equipment.map((eq: any) => ({
+      code: eq.code,
+      title: eq.title
+    }));
+    
+    setReorderModal({
+      isOpen: true,
+      type: 'equipment',
+      items: equipment
+    });
+  };
+
+  const handleReorderSubmit = async (orderedCodes: string[]) => {
+    try {
+      await apiRequest('/api/dev/semm/reorder-equipment', 'POST', { 
+        systemCode: foundSystem.code,
+        orderedCodes 
+      });
+      console.log('✅ Successfully reordered equipment');
+    } catch (error) {
+      console.error('❌ Error reordering equipment:', error);
+    }
+  };
+
+  const closeReorderModal = () => {
+    setReorderModal(prev => ({ ...prev, isOpen: false }));
   };
 
   return (
@@ -191,7 +249,7 @@ export default function SemmSystemPage() {
                   <button
                     key={equipment.code}
                     onClick={() => {
-                      setLocation(`/machinetree/equipment/${equipment.code}`);
+                      setLocation(`/machinetree/${equipment.code}`);
                       setShowEquipmentDropdown(false);
                     }}
                     className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center space-x-3 border-b border-gray-100 last:border-b-0"
@@ -210,14 +268,41 @@ export default function SemmSystemPage() {
 
         {/* Equipment Cards Grid */}
         {foundSystem.equipment && foundSystem.equipment.length > 0 ? (
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Equipment in {foundSystem.title}</h2>
+          <div className="mt-8">
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold text-gray-800 flex items-center mb-4">
+                <Ship className="h-6 w-6 text-blue-600 mr-3" />
+                Equipment in {foundSystem.title}
+                {isAdmin && (
+                  <button
+                    onClick={() => handleEditSystem(foundSystem.code)}
+                    className="ml-2 p-1 hover:bg-orange-100 rounded"
+                    title="Edit System"
+                    data-testid="edit-system"
+                  >
+                    <Edit3 className="h-4 w-4 text-orange-600" />
+                  </button>
+                )}
+              </h2>
+              
+              {/* Admin Controls for Equipment */}
+              {isAdmin && (
+                <button
+                  onClick={handleReorderEquipment}
+                  className="flex items-center space-x-2 text-sm text-orange-600 hover:text-orange-700 mb-4 px-3 py-2 bg-orange-50 rounded-lg"
+                  data-testid="reorder-equipment"
+                >
+                  <GripVertical className="h-4 w-4" />
+                  <span>Reorder Equipment</span>
+                </button>
+              )}
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {foundSystem.equipment.map((equipment: any) => (
                 <div 
                   key={equipment.code}
                   className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow cursor-pointer group"
-                  onClick={() => setLocation(`/machinetree/equipment/${equipment.code}`)}
+                  onClick={() => setLocation(`/machinetree/${equipment.code}`)}
                   data-testid={`equipment-card-${equipment.code}`}
                 >
                   <div className="flex items-start justify-between mb-4">
@@ -254,9 +339,41 @@ export default function SemmSystemPage() {
                       </div>
                     )}
                   </div>
+
+                  {/* Admin edit button */}
+                  {isAdmin && (
+                    <div className="mt-4 pt-2 border-t border-gray-100">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditEquipment(equipment.code);
+                        }}
+                        className="flex items-center space-x-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors w-full justify-center"
+                        title="Edit Equipment"
+                        data-testid={`edit-equipment-${equipment.code}`}
+                      >
+                        <Edit3 className="w-4 h-4" />
+                        <span>Edit Equipment</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
+
+            {/* Add New Equipment Button for Admins */}
+            {isAdmin && (
+              <div className="mt-6">
+                <button
+                  onClick={handleAddNewEquipment}
+                  className="flex items-center space-x-2 text-sm text-orange-600 hover:text-orange-700 px-4 py-3 border-2 border-dashed border-orange-300 rounded-lg hover:border-orange-400 transition-colors"
+                  data-testid="add-new-equipment"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Add New Equipment</span>
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8 text-center">
@@ -265,6 +382,15 @@ export default function SemmSystemPage() {
         )}
 
       </div>
+      
+      {/* Reorder Modal */}
+      <SemmReorderModal
+        isOpen={reorderModal.isOpen}
+        onClose={closeReorderModal}
+        title="Equipment"
+        items={reorderModal.items}
+        onReorder={handleReorderSubmit}
+      />
     </div>
   );
 }

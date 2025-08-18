@@ -133,15 +133,17 @@ export default function SemmMakePage() {
   };
 
   const handleReorderSubmit = async (orderedCodes: string[]) => {
-    await apiRequest('/api/dev/semm/reorder-models', {
-      method: 'POST',
-      body: { 
+    try {
+      await apiRequest('/api/dev/semm/reorder-models', 'POST', { 
         systemCode: parentSystem.code, 
         equipmentCode: parentEquipment.code,
         makeCode: foundMake.code,
         orderedCodes 
-      }
-    });
+      });
+      console.log('✅ Successfully reordered models');
+    } catch (error) {
+      console.error('❌ Error reordering models:', error);
+    }
   };
 
   const closeReorderModal = () => {
@@ -200,11 +202,11 @@ export default function SemmMakePage() {
   };
 
   const goToSystem = () => {
-    setLocation(`/machinetree/system/${parentSystem.code}`);
+    setLocation(`/machinetree/${parentSystem.code}`);
   };
 
   const goToEquipment = () => {
-    setLocation(`/machinetree/equipment/${parentEquipment.code}`);
+    setLocation(`/machinetree/${parentEquipment.code}`);
   };
 
   return (
@@ -299,7 +301,7 @@ export default function SemmMakePage() {
                 <div 
                   key={model.code}
                   className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow cursor-pointer group"
-                  onClick={() => setLocation(`/machinetree/model/${model.code}`)}
+                  onClick={() => setLocation(`/machinetree/${model.code}`)}
                   data-testid={`model-card-${model.code}`}
                 >
                   <div className="flex items-start justify-between mb-4">

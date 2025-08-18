@@ -127,14 +127,16 @@ export default function SemmEquipmentPage() {
   };
 
   const handleReorderSubmit = async (orderedCodes: string[]) => {
-    await apiRequest('/api/dev/semm/reorder-makes', {
-      method: 'POST',
-      body: { 
+    try {
+      await apiRequest('/api/dev/semm/reorder-makes', 'POST', { 
         systemCode: parentSystem.code, 
         equipmentCode: foundEquipment.code,
         orderedCodes 
-      }
-    });
+      });
+      console.log('✅ Successfully reordered makes');
+    } catch (error) {
+      console.error('❌ Error reordering makes:', error);
+    }
   };
 
   const closeReorderModal = () => {
@@ -282,7 +284,7 @@ export default function SemmEquipmentPage() {
                 <div 
                   key={make.code}
                   className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow cursor-pointer group"
-                  onClick={() => setLocation(`/machinetree/make/${make.code}`)}
+                  onClick={() => setLocation(`/machinetree/${make.code}`)}
                   data-testid={`make-card-${make.code}`}
                 >
                   <div className="flex items-start justify-between mb-4">
