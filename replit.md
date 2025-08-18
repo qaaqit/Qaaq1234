@@ -47,58 +47,36 @@ Login Roadblock Design: Single minimizable login roadblock with chevron control 
 - **State Management**: TanStack Query for server state, local React state for UI
 - **Build Tool**: Vite (web), Expo CLI (mobile)
 - **Maps**: Google Maps JavaScript API (web), React Native Maps (mobile)
-- **UI/UX Decisions**: QAAQ branding with orange, red, and white color scheme. Consistent UI across web and mobile. Optimized z-index hierarchy for UI elements. QBOT chat interface with consistent design across all pages. Mobile-first responsive design with bottom navigation. Card-based layout for user management. Streamlined QBOT answer display.
+- **UI/UX Decisions**: QAAQ branding with orange, cream, and white color scheme. Consistent UI across web and mobile. Optimized z-index hierarchy for UI elements. QBOT chat interface with consistent design across all pages. Mobile-first responsive design with bottom navigation. Card-based layout for user management. Streamlined QBOT answer display. Airport departure board design aesthetic for SEMM code displays.
 
 ### Backend Architecture
 - **Runtime**: Node.js with Express.js
 - **Language**: TypeScript with ES modules
 - **Database**: Enhanced PostgreSQL with advanced connection pooling, retry logic, health monitoring, and hibernation prevention. Shared QAAQ Admin Database with subscription tables.
-- **Database Management**: Comprehensive database services including DatabaseKeeper (prevents hibernation), ConnectionPoolManager (optimizes performance), SyncManager (ensures data consistency), and automated migration helper with daily maintenance scheduling.
-- **Questions System**: Authentic QAAQ database with 1,244 real maritime Q&A records, with redesigned question card layout. Dedicated `question_attachments` table for tracking questions with images/attachments stored locally in `server/uploads/`.
+- **Database Management**: Comprehensive database services including DatabaseKeeper, ConnectionPoolManager, SyncManager, and automated migration helper.
+- **Questions System**: Authentic QAAQ database with real maritime Q&A records. Dedicated `question_attachments` table.
 - **Image Storage**: Local filesystem storage (`server/uploads/`) with `ImageManagementService`.
 - **Authentication**: Dual OTP verification (WhatsApp + Email) with JWT tokens. Universal password acceptance with automatic user creation.
 - **Session Management**: Express sessions with PostgreSQL storage.
-- **Payment System**: Production Razorpay integration with enhanced database connection reliability, automatic retry logic for payment processing, and comprehensive subscription management.
+- **Payment System**: Production Razorpay integration with enhanced database connection reliability, automatic retry logic, and comprehensive subscription management.
 
 ### Bot Integration Architecture
-- **QBOT**: WhatsApp bot for maritime networking assistance, location discovery, QAAQ Store services, and Q&A functionality.
-- **QOI GPT**: WhatsApp bot for Q&A functionality, professional experience sharing, and maritime guidance.
+- **QBOT**: WhatsApp bot for maritime networking assistance, location discovery, QAAQ Store services, and Q&A functionality. Integrated with OpenAI GPT-4o for intelligent maritime assistance.
+- **QOI GPT**: WhatsApp bot for Q&A functionality, professional experience sharing, and maritime guidance. Integrated with OpenAI and Gemini for structured maritime technical responses.
 - **Shared Service**: Both bots serve QAAQ, QaaqConnect, and other Replit apps through unified WhatsApp interface.
 - **Database Access**: Direct access to shared QAAQ database.
-- **AI-Powered Responses**: Connected QBOT to OpenAI GPT-4o for intelligent maritime assistance.
-- **SEMM Hierarchy System**: Complete 4-level System > Equipment > Make > Model categorization with integrated header breadcrumbs, dropdown navigation for deeper levels, and authentic maritime equipment classification from QAAQ database.
+- **SEMM Hierarchy System**: Complete 4-level System > Equipment > Make > Model categorization with integrated header breadcrumbs, dropdown navigation, and authentic maritime equipment classification from QAAQ database.
 - **File Attachments**: Clip icon attachment system to QBOT chat supporting JPG, PNG, PDF and similar formats up to 50MB with object storage integration.
 
 ### System Design Choices
 - **Dual Authentication System**: QAAQ JWT token and Replit OpenID Connect. All successful logins redirect to "/qbot" (QBOT Chat).
 - **WhatsApp Cross-Platform Integration**: Users see their previous WhatsApp Q&A history when logging into webapp.
 - **Social Features**: Post creation with content categories and location tagging, like/unlike functionality, author display options.
-- **Discovery System**: Interactive world map with light grey theme, proximity-based user discovery showing nearest users, city-based location display for sailors and locals, color-coded map pins. Mobile GPS integration for real-time location.
+- **Discovery System**: Interactive world map with light grey theme, proximity-based user discovery showing nearest users, city-based location display for sailors and locals, color-coded map pins. Mobile GPS integration for real-time location. Map zoom and navigation controls.
 - **Real-Time Messaging**: WebSocket-based real-time messaging with live typing indicators, instant message delivery, and read receipts.
 - **QBOT Integration**: Fully functional QBOT chat system integrated across all pages.
-
-## Database Synchronization & Performance Features
-- **Keep-Alive Service**: Prevents database hibernation with automated ping every 5 minutes and health checks every 30 seconds
-- **Connection Pool Management**: Advanced pool optimization with monitoring, query tracking, and automatic retry logic
-- **Data Synchronization**: Queue-based sync manager for user locations, message status, activity logs, and subscription updates
-- **Performance Monitoring**: Real-time database metrics, connection statistics, and query performance tracking
-- **Automated Maintenance**: Daily cleanup of old data, index optimization, and database analysis scheduled at 2 AM
-- **Admin Controls**: Database restart, pool optimization, sync queue management, and real-time health monitoring endpoints
-
-## Recent Technical Fixes (August 2025)
-- **QBOT Web Interface Fixed**: Resolved "trouble connecting to AI" issue by switching from `/api/qbot/message` to `/api/qbot/chat` endpoint and removing authentication requirements for web interface
-- **Database Storage Optimization**: Fixed foreign key constraint errors in QBOT Q&A storage system with proper author attribution
-- **Dual AI Model System**: Operational with OpenAI and Gemini integration providing structured maritime technical responses
-- **Machine Tree System Implemented**: Complete SEMM (System-Equipment-Make-Model) hierarchy with alphabetical ordering (a-s for systems, a.a-c.d for equipment), share link functionality for individual machines, and "Reorder Equipment" controls matching the reference design
-- **Alphabetical Maritime Classification**: Restructured from numeric to alphabetical system with 19 maritime systems (a. Propulsion through s. Spare Parts & Consumables) and equipment subcategories (e.g., a.a Main Engine, a.b Stern Tube, etc.)
-- **SEMM Cards Development Endpoint**: Created `/api/dev/semm-cards` structured endpoint for daughter app team integration with hierarchical data, share functionality, and complete maritime equipment classification system
-- **Manual Glossary Update System (August 17, 2025)**: Disabled automatic glossary updates for security and implemented manual Admin panel button at `/api/admin/glossary/update` endpoint. Purple "Update Maritime Glossary" button successfully scans for new "What is..." questions and adds maritime terms to database on demand.
-- **Authentic Maritime Systems Integration (August 17, 2025)**: Successfully connected SEMM endpoint to parent database's machine_categories table. Now serving 19 authentic maritime systems from QAAQ parent database instead of placeholder data. SEMM tree displays real maritime categories with proper alphabetical classification (a. Propulsion, b. Power Generation, etc.) directly from shared maritime database.
-- **SEMM Header Integration (August 18, 2025)**: Restructured SEMM pages to implement user-requested header layout: Back Arrow | Breadcrumb | Title | Chevron Down | Share Icon. Chevron dropdown shows next level options in SEMM hierarchy (System shows Equipment, Equipment shows Makes, etc.) for seamless navigation through System > Equipment > Make > Model structure. Moved breadcrumb navigation to header for cleaner layout matching user specifications.
-- **SEMM Database Integration (August 18, 2025)**: Updated SEMM Cards API endpoint (`/api/dev/semm-cards`) to query parent database using single table structure as per user specifications. Removed obsolete local SEMM tables and fallback data that was showing only 3 systems. API now correctly queries `semm_structure` table from parent database with SID (System ID), System, EID (Equipment ID), Equipment, Make, Model columns. Eliminated all hardcoded seed data for authentic database-driven SEMM hierarchy.
-- **Individual SEMM Equipment Pages (August 17, 2025)**: Created dedicated pages for each equipment with unique URLs following format `/machinetree/{code}` (e.g., qaaq.app/machinetree/bc for Alternator). Each page displays complete equipment details, system classification, breadcrumb navigation, and share functionality. Added external link icons on equipment items in machine tree for easy navigation.
-- **Admin-Only SEMM Edit Controls (August 17, 2025)**: Implemented comprehensive admin editing interface with pen icons for SEMM title and all system/equipment titles (visible only to admin users). Added "Reorder" controls at beginning of systems and equipment lists, and "Add New" buttons at end of each list. Fixed DOM nesting warnings by replacing nested button structures.
-- **Airport Departure Board Design (August 17, 2025)**: Redesigned SEMM code displays to match airport departure board aesthetic with gray header sections labeled "EQUIPMENT"/"SYSTEM", orange background sections containing flip cards and titles, vertical flip animations with top-edge rotation axis, and authentic split-flap board timing effects. Maintains exact colors from user requirements with yellow accent text in headers.
+- **Database Synchronization & Performance Features**: Keep-Alive service, Connection Pool Management, Data Synchronization, Performance Monitoring, Automated Maintenance, Admin Controls for database management.
+- **SEMM Implementation**: Complete System > Equipment > Make > Model hierarchy with authentic data, dedicated equipment pages, and admin-only editing controls.
 
 ## External Dependencies
 - **Shared QAAQ Database**: PostgreSQL database for authentic maritime user data and Q&A records.
@@ -113,5 +91,8 @@ Login Roadblock Design: Single minimizable login roadblock with chevron control 
 - **Vite**: Fast development server and build tool.
 - **TanStack Query**: Server state management.
 - **Wouter**: Lightweight routing solution.
+- **Google Maps JavaScript API**: For web mapping.
+- **React Native Maps**: For mobile mapping.
 - **OpenAI GPT-4o**: For QBOT AI-powered responses.
+- **Google Gemini API**: For QOI GPT AI-powered responses.
 - **Razorpay**: Production-ready subscription system for payments.
