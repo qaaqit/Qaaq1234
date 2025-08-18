@@ -585,10 +585,10 @@ export class RazorpayService {
       const statusResult = await pool.query(`
         SELECT 
           is_premium,
-          is_super_user,
+          COALESCE(is_super_user, false) as is_super_user,
           premium_expires_at,
-          super_user_expires_at,
-          questions_remaining,
+          COALESCE(super_user_expires_at, NULL) as super_user_expires_at,
+          COALESCE(questions_remaining, 0) as questions_remaining,
           subscription_type
         FROM user_subscription_status 
         WHERE user_id = $1
@@ -960,9 +960,9 @@ export class RazorpayService {
               user_id, subscription_type, razorpay_payment_id, amount, currency, 
               status, notes, razorpay_plan_id
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
-            ON CONFLICT (user_id, subscription_type) 
+            ON CONFLICT (razorpay_payment_id) 
             DO UPDATE SET 
-              razorpay_payment_id = $3,
+              user_id = $1,
               amount = $4,
               status = 'active',
               updated_at = NOW()
