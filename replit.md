@@ -64,7 +64,7 @@ Enhanced Reorder System: Admin reorder modals now feature editable code cards al
 - **AI Token Management**: Configurable token limits system with admin controls for free (15-25 tokens) and premium users (50-100 tokens). Dynamic adjustment via admin dashboard with real-time database updates.
 
 ### Bot Integration Architecture
-- **QBOT**: WhatsApp bot for maritime networking assistance, location discovery, QAAQ Store services, and Q&A functionality. Integrated with OpenAI GPT-4o for intelligent maritime assistance.
+- **QBOT**: WhatsApp bot for maritime networking assistance, location discovery, QAAQ Store services, and Q&A functionality. Integrated with multiple AI models (OpenAI GPT-4o, Gemini, Deepseek) for intelligent maritime assistance with user-selectable model preferences.
 - **QOI GPT**: WhatsApp bot for Q&A functionality, professional experience sharing, and maritime guidance. Integrated with OpenAI and Gemini for structured maritime technical responses.
 - **Shared Service**: Both bots serve QAAQ, QaaqConnect, and other Replit apps through unified WhatsApp interface.
 - **Database Access**: Direct access to shared QAAQ database.
@@ -77,7 +77,7 @@ Enhanced Reorder System: Admin reorder modals now feature editable code cards al
 - **Social Features**: Post creation with content categories and location tagging, like/unlike functionality, author display options.
 - **Discovery System**: Interactive world map with light grey theme, proximity-based user discovery showing nearest users, city-based location display for sailors and locals, color-coded map pins. Mobile GPS integration for real-time location. Map zoom and navigation controls.
 - **Real-Time Messaging**: WebSocket-based real-time messaging with live typing indicators, instant message delivery, and read receipts.
-- **QBOT Integration**: Fully functional QBOT chat system integrated across all pages.
+- **QBOT Integration**: Fully functional QBOT chat system integrated across all pages with multi-AI model selection (ChatGPT, Gemini, Deepseek). Users can toggle models on/off to get responses from selected AI systems simultaneously.
 - **Database Synchronization & Performance Features**: Keep-Alive service, Connection Pool Management, Data Synchronization, Performance Monitoring, Automated Maintenance, Admin Controls for database management.
 - **SEMM Implementation**: Complete System > Equipment > Make > Model hierarchy with authentic data, dedicated equipment pages, admin-only editing controls, and enhanced reorder functionality with editable code cards.
 
