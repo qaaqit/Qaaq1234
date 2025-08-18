@@ -282,32 +282,34 @@ export default function SemmSystemPage() {
         {foundSystem.equipment && foundSystem.equipment.length > 0 ? (
           <div className="mt-8">
             <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-800 flex items-center mb-4">
-                <Ship className="h-6 w-6 text-orange-600 mr-3" />
-                Equipment in {foundSystem.title}
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-gray-800 flex items-center">
+                  <Ship className="h-6 w-6 text-orange-600 mr-3" />
+                  Equipment in {foundSystem.title}
+                  {isAdmin && (
+                    <button
+                      onClick={() => handleEditSystem(foundSystem.code)}
+                      className="ml-2 p-1 hover:bg-orange-100 rounded"
+                      title="Edit System"
+                      data-testid="edit-system"
+                    >
+                      <Edit3 className="h-4 w-4 text-orange-600" />
+                    </button>
+                  )}
+                </h2>
+                
+                {/* Admin Controls for Equipment - Right Edge */}
                 {isAdmin && (
                   <button
-                    onClick={() => handleEditSystem(foundSystem.code)}
-                    className="ml-2 p-1 hover:bg-orange-100 rounded"
-                    title="Edit System"
-                    data-testid="edit-system"
+                    onClick={handleReorderEquipment}
+                    className="p-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-lg"
+                    title="Reorder Equipment"
+                    data-testid="reorder-equipment"
                   >
-                    <Edit3 className="h-4 w-4 text-orange-600" />
+                    <RotateCcw className="h-5 w-5" />
                   </button>
                 )}
-              </h2>
-              
-              {/* Admin Controls for Equipment */}
-              {isAdmin && (
-                <button
-                  onClick={handleReorderEquipment}
-                  className="p-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-lg mb-4"
-                  title="Reorder Equipment"
-                  data-testid="reorder-equipment"
-                >
-                  <RotateCcw className="h-5 w-5" />
-                </button>
-              )}
+              </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {foundSystem.equipment.map((equipment: any) => (
