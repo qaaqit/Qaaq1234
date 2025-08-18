@@ -68,7 +68,7 @@ export const SUBSCRIPTION_PLANS: {
 } = {
   premium: {
     monthly: {
-      planId: 'plan_premium_monthly',
+      planId: 'plan_R6tDNXxZMxBIJR', // Real Razorpay plan ID created
       amount: 45100, // ₹451 in paise
       period: 'monthly',
       interval: 1,
@@ -233,7 +233,7 @@ export class RazorpayService {
     description: string,
     maxRetries: number = 3
   ): Promise<T> {
-    let lastError: Error;
+    let lastError: Error | null = null;
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
@@ -243,7 +243,7 @@ export class RazorpayService {
         return result;
       } catch (error) {
         lastError = error as Error;
-        console.error(`❌ ${description} failed (attempt ${attempt}):`, error.message);
+        console.error(`❌ ${description} failed (attempt ${attempt}):`, (error as Error).message);
         
         // Don't retry for certain errors
         if (this.isNonRetryableError(error as Error)) {
@@ -259,7 +259,7 @@ export class RazorpayService {
       }
     }
     
-    throw new Error(`${description} failed after ${maxRetries} attempts. Last error: ${lastError.message}`);
+    throw new Error(`${description} failed after ${maxRetries} attempts. Last error: ${lastError?.message || 'Unknown error'}`);
   }
 
   // Check if error should not be retried
