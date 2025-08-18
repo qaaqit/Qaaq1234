@@ -3999,16 +3999,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('🔄 Reordering makes in equipment', equipmentCode, ':', orderedCodes);
       
-      // Update the order for each make
-      for (let i = 0; i < orderedCodes.length; i++) {
+      // Generate new alphabetical codes based on position (aba, abb, abc, etc.)
+      const generateMakeCode = (index: number): string => {
+        const letter = String.fromCharCode(97 + index); // 97 is 'a'
+        return `a${equipmentCode}${letter}`; // Format: a + equipmentCode + position letter
+      };
+      
+      // First, get all records that need to be updated to avoid conflicts
+      const recordsResult = await pool.query(`
+        SELECT mid, make, model, moid 
+        FROM semm_structure 
+        WHERE sid = $1 AND eid = $2 AND mid = ANY($3::text[])
+        ORDER BY CASE 
+          ${orderedCodes.map((code, idx) => `WHEN mid = '${code}' THEN ${idx}`).join(' ')}
+        END
+      `, [systemCode, equipmentCode, orderedCodes]);
+      
+      const records = recordsResult.rows;
+      
+      // Temporarily update to avoid unique constraint violations
+      for (let i = 0; i < records.length; i++) {
         await pool.query(`
           UPDATE semm_structure 
-          SET make_order = $1 
+          SET mid = $1
           WHERE sid = $2 AND eid = $3 AND mid = $4
-        `, [i + 1, systemCode, equipmentCode, orderedCodes[i]]);
+        `, [`temp_${i}`, systemCode, equipmentCode, orderedCodes[i]]);
       }
       
-      console.log('✅ Successfully reordered makes');
+      // Now update with final codes
+      for (let i = 0; i < records.length; i++) {
+        const newCode = generateMakeCode(i);
+        await pool.query(`
+          UPDATE semm_structure 
+          SET mid = $1, make_order = $2 
+          WHERE sid = $3 AND eid = $4 AND mid = $5
+        `, [newCode, i + 1, systemCode, equipmentCode, `temp_${i}`]);
+      }
+      
+      console.log('✅ Successfully reordered makes with new codes');
       res.json({ success: true, message: 'Makes reordered successfully' });
       
     } catch (error) {
