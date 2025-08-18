@@ -7332,6 +7332,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin endpoint to manually activate premium subscription
+  app.post('/api/admin/activate-premium', async (req, res) => {
+    try {
+      const { userId, email, subscriptionType, paymentId } = req.body;
+      
+      console.log('🔧 Admin activating premium for:', { userId, email, subscriptionType, paymentId });
+      
+      // Determine expiry based on subscription type
+      const expiryInterval = subscriptionType.includes('yearly') ? '1 year' : '1 month';
+      
+      // Update user subscription status
+      await storage.db.query(`
+        INSERT INTO user_subscription_status (
+          user_id, is_premium, premium_expires_at, subscription_type
+        ) VALUES ($1, true, NOW() + INTERVAL '${expiryInterval}', $2)
+        ON CONFLICT (user_id) DO UPDATE SET
+          is_premium = true,
+          premium_expires_at = NOW() + INTERVAL '${expiryInterval}',
+          subscription_type = $2
+      `, [userId, subscriptionType]);
+
+      // Also update the subscription record if it exists
+      if (paymentId) {
+        await storage.db.query(`
+          UPDATE subscriptions 
+          SET user_id = $1, status = 'active'
+          WHERE razorpay_payment_id = $2
+        `, [userId, paymentId]);
+      }
+
+      console.log('✅ Premium status activated successfully');
+      
+      res.json({
+        success: true,
+        message: 'Premium status activated successfully',
+        userId,
+        subscriptionType,
+        expiresAt: `Now + ${expiryInterval}`
+      });
+    } catch (error) {
+      console.error('❌ Failed to activate premium:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to activate premium status'
+      });
+    }
+  });
+
   // Razorpay webhook endpoint
   app.post('/api/razorpay/webhook', async (req, res) => {
     try {
