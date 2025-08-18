@@ -256,7 +256,9 @@ export default function PremiumPage() {
                 ← Back
               </Button>
               <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">/premium</h1>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">
+                  /premium
+                </h1>
                 <p className="text-gray-600">advanced maritime features</p>
               </div>
             </div>
@@ -271,22 +273,24 @@ export default function PremiumPage() {
           <div className="mb-8">
             <Tabs
               value={selectedPeriod}
-              onValueChange={(value) => setSelectedPeriod(value as "monthly" | "yearly")}
+              onValueChange={(value) =>
+                setSelectedPeriod(value as "monthly" | "yearly")
+              }
               className="flex flex-col"
             >
               {/* Tab Navigation - Red/Orange Signature Bar */}
               <div className="bg-gradient-to-r from-red-500 to-orange-500 shadow-lg rounded-t-lg">
                 <div className="px-4 py-3">
                   <TabsList className="grid w-full grid-cols-2 bg-white/10 backdrop-blur-sm border-0 rounded-lg p-1">
-                    <TabsTrigger 
-                      value="yearly" 
+                    <TabsTrigger
+                      value="yearly"
                       className="data-[state=active]:bg-white data-[state=active]:text-red-600 text-white hover:bg-white/20 font-semibold transition-all duration-200 rounded-md py-2 relative"
                       data-testid="tab-yearly"
                     >
                       Yearly
                     </TabsTrigger>
-                    <TabsTrigger 
-                      value="monthly" 
+                    <TabsTrigger
+                      value="monthly"
                       className="data-[state=active]:bg-white data-[state=active]:text-red-600 text-white hover:bg-white/20 font-semibold transition-all duration-200 rounded-md py-2"
                       data-testid="tab-monthly"
                     >
@@ -300,8 +304,12 @@ export default function PremiumPage() {
               <TabsContent value="yearly" className="mt-0">
                 <Card className="border-2 border-orange-200 rounded-t-none">
                   <CardHeader>
-                    <CardTitle className="text-center">Payment Options</CardTitle>
-                    <p className="text-center text-gray-600">Rs218 /month (Billed annually ₹2,611)</p>
+                    <CardTitle className="text-center">
+                      Payment Options
+                    </CardTitle>
+                    <p className="text-center text-gray-600">
+                      Rs218 /month (Billed annually ₹2,611)
+                    </p>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -333,7 +341,9 @@ export default function PremiumPage() {
               <TabsContent value="monthly" className="mt-0">
                 <Card className="border-2 border-orange-200 rounded-t-none">
                   <CardHeader>
-                    <CardTitle className="text-center">Payment Options</CardTitle>
+                    <CardTitle className="text-center">
+                      Payment Options
+                    </CardTitle>
                     <p className="text-center text-gray-600">
                       Monthly Plan - ₹451 (Billed monthly)
                     </p>
@@ -374,9 +384,9 @@ export default function PremiumPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-2xl">
                 <Crown className="h-6 w-6 text-orange-500" />
-                QAAQ CHIEF (Most Advanced Version)
+                Upgrade now
               </CardTitle>
-              <p className="text-gray-600">Advanced reasoning model</p>
+              <p className="text-gray-600">to best reasoning models</p>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
@@ -405,21 +415,32 @@ export default function PremiumPage() {
               {/* Current Status Alert */}
               {(userStatus.isPremium || userStatus.isSuperUser) && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-4">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-green-600" />
-                    <span className="font-semibold text-green-800">
-                      {userStatus.isSuperUser
-                        ? "Super User Active"
-                        : "Premium Active"}
-                    </span>
-                    {userStatus.premiumExpiresAt && (
-                      <span className="text-sm text-green-600">
-                        • Expires{" "}
-                        {new Date(
-                          userStatus.premiumExpiresAt,
-                        ).toLocaleDateString()}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-5 w-5 text-green-600" />
+                      <span className="font-semibold text-green-800">
+                        {userStatus.isSuperUser
+                          ? "Super User Active"
+                          : "Premium Active"}
                       </span>
-                    )}
+                      {userStatus.premiumExpiresAt && (
+                        <span className="text-sm text-green-600">
+                          • Expires{" "}
+                          {new Date(
+                            userStatus.premiumExpiresAt,
+                          ).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setLocation("/premium-status")}
+                      className="bg-white hover:bg-green-50 border-green-300 text-green-700 hover:text-green-800"
+                      data-testid="button-view-status"
+                    >
+                      View Status
+                    </Button>
                   </div>
                 </div>
               )}
