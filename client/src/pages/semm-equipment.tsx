@@ -70,12 +70,7 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
         />
       )}
       
-      <style jsx>{`
-        @keyframes flash {
-          0% { opacity: 0.3; }
-          100% { opacity: 0; }
-        }
-      `}</style>
+
     </div>
   );
 };

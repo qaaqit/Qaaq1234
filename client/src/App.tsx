@@ -192,6 +192,7 @@ function Router() {
           <Route path="/qh13" component={TopQProfessionalsPage} />
           <Route path="/glossary" component={() => <GlossaryPage />} />
           <Route path="/machinetree" component={() => <MachineTreePage />} />
+          <Route path="/machine-tree" component={() => <MachineTreePage />} />
           <Route path="/machinetree/system/:code" component={SemmSystemPage} />
           <Route path="/machinetree/equipment/:code" component={SemmEquipmentPage} />
           <Route path="/machinetree/make/:code" component={SemmMakePage} />

@@ -52,9 +52,16 @@ export default function MachineTreePage() {
   });
 
   // Extract data from the parent app response
-  const categories = (semmData as any)?.data || [];
-  const equipment = categories.flatMap((cat: any) => cat.equipment || []);
-  const machines = equipment.flatMap((eq: any) => eq.machines || []);
+  // The API returns data as an array of systems with nested equipment/makes/models
+  const systems = (semmData as any)?.data || [];
+  const allEquipment = systems.flatMap((system: any) => system.equipment || []);
+  const allMakes = allEquipment.flatMap((equipment: any) => equipment.makes || []);
+  const allModels = allMakes.flatMap((make: any) => make.models || []);
+  
+  // For backwards compatibility, treat systems as categories
+  const categories = systems;
+  const equipment = allEquipment;
+  const machines = allModels; // Models are the most specific level
 
   const toggleCategory = (categoryId: string) => {
     const newExpanded = new Set(expandedCategories);
