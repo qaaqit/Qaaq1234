@@ -4005,17 +4005,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return `${systemCode}${equipmentCode}${letter}`; // Format: systemCode + equipmentCode + position letter
       };
       
-      // First, get all records that need to be updated to avoid conflicts
-      const recordsResult = await pool.query(`
-        SELECT mid, make, model, moid 
-        FROM semm_structure 
-        WHERE sid = $1 AND eid = $2 AND mid = ANY($3::text[])
-        ORDER BY CASE 
-          ${orderedCodes.map((code, idx) => `WHEN mid = '${code}' THEN ${idx}`).join(' ')}
-        END
-      `, [systemCode, equipmentCode, orderedCodes]);
-      
-      const records = recordsResult.rows;
+      // First, get all records that need to be updated in the desired order
+      const records = [];
+      for (const oldCode of orderedCodes) {
+        const result = await pool.query(`
+          SELECT mid, make, model, moid 
+          FROM semm_structure 
+          WHERE sid = $1 AND eid = $2 AND mid = $3
+        `, [systemCode, equipmentCode, oldCode]);
+        
+        if (result.rows.length > 0) {
+          records.push(result.rows[0]);
+        }
+      }
       
       // Temporarily update to avoid unique constraint violations
       for (let i = 0; i < records.length; i++) {
