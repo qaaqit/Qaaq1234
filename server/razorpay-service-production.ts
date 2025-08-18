@@ -570,33 +570,93 @@ export class RazorpayService {
     }
   }
 
-  // Check user's premium status - handle missing columns gracefully  
+  // Check user's premium status - production ready
   async checkUserPremiumStatus(userId: string): Promise<{
-    isPremium: boolean, 
+    isPremium: boolean,
+    isSuperUser: boolean,
     subscriptionType: string | null, 
-    validUntil: Date | null, 
+    premiumExpiresAt: string | null, 
     questionsRemaining: number | null
   }> {
     try {
-      // For now, return default free status until database columns are properly added
-      // This prevents the application from breaking due to missing columns
-      console.log('⚠️ Subscription status check: returning default free status (columns being added)');
+      console.log(`🔍 Checking premium status for user: ${userId}`);
       
+      // Check user_subscription_status table first
+      const statusResult = await pool.query(`
+        SELECT 
+          is_premium,
+          is_super_user,
+          premium_expires_at,
+          super_user_expires_at,
+          questions_remaining,
+          subscription_type
+        FROM user_subscription_status 
+        WHERE user_id = $1
+      `, [userId]);
+
+      if (statusResult.rows.length > 0) {
+        const status = statusResult.rows[0];
+        const now = new Date();
+        
+        // Check if premium is still valid
+        const isPremiumValid = status.is_premium && 
+          (!status.premium_expires_at || new Date(status.premium_expires_at) > now);
+        
+        // Check if super user is still valid
+        const isSuperUserValid = status.is_super_user && 
+          (!status.super_user_expires_at || new Date(status.super_user_expires_at) > now);
+
+        return {
+          isPremium: isPremiumValid || false,
+          isSuperUser: isSuperUserValid || false,
+          subscriptionType: status.subscription_type,
+          premiumExpiresAt: status.premium_expires_at,
+          questionsRemaining: status.questions_remaining
+        };
+      }
+
+      // Fallback: check subscriptions table for active subscriptions
+      const subscriptionResult = await pool.query(`
+        SELECT 
+          subscription_type,
+          status,
+          created_at,
+          notes
+        FROM subscriptions 
+        WHERE user_id = $1 AND status = 'active'
+        ORDER BY created_at DESC 
+        LIMIT 1
+      `, [userId]);
+
+      if (subscriptionResult.rows.length > 0) {
+        const subscription = subscriptionResult.rows[0];
+        return {
+          isPremium: subscription.subscription_type === 'premium',
+          isSuperUser: subscription.subscription_type === 'super_user',
+          subscriptionType: subscription.subscription_type,
+          premiumExpiresAt: null,
+          questionsRemaining: null
+        };
+      }
+
+      // No subscription found
       return {
         isPremium: false,
+        isSuperUser: false,
         subscriptionType: null,
-        validUntil: null,
+        premiumExpiresAt: null,
         questionsRemaining: null
       };
       
     } catch (error: any) {
       console.error('❌ Error checking premium status:', error);
       
-      // Return safe default
+      // Return safe default on error
       return {
         isPremium: false,
+        isSuperUser: false,
         subscriptionType: null,
-        validUntil: null,
+        premiumExpiresAt: null,
         questionsRemaining: null
       };
     }
@@ -831,7 +891,7 @@ export class RazorpayService {
       let billingPeriod = null;
       
       // Match payment amount to subscription plans
-      if (amount === 55100) { // ₹551 monthly premium
+      if (amount === 45100) { // ₹451 monthly premium
         subscriptionType = 'premium';
         billingPeriod = 'monthly';
       } else if (amount === 261100) { // ₹2611 yearly premium
