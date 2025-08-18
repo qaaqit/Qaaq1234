@@ -167,20 +167,18 @@ export default function SemmEquipmentPage() {
 
   const handleReorderSubmit = async () => {
     try {
-      // Generate new alphabetical codes based on current order within parent equipment
-      // Equipment aa: aaa, aab, aac; Equipment ab: aba, abb, abc, etc.
-      const systemCode = parentSystem.code; // 'a' 
-      const equipmentCode = foundEquipment.code.slice(1); // 'a' from 'aa' or 'b' from 'ab'
-      
-      const orderedCodes = reorderItems.map((_, index) => {
-        const letter = String.fromCharCode(97 + index); // a, b, c, etc.
-        return systemCode + equipmentCode + letter; // stays within parent: aba, abb, abc for equipment ab
-      });
+      // Send the reordered makes with their original codes in new order
+      // Backend will assign new sequential codes based on this order
+      const orderedMakeData = reorderItems.map((item, index) => ({
+        oldCode: item.code,
+        makeName: item.title,
+        newPosition: index
+      }));
       
       await apiRequest('/api/dev/semm/reorder-makes', 'POST', { 
         systemCode: parentSystem.code, 
         equipmentCode: foundEquipment.code,
-        orderedCodes 
+        orderedMakes: orderedMakeData
       });
       console.log('✅ Successfully reordered makes');
       setReorderEnabled(false);

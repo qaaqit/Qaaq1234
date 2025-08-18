@@ -3988,54 +3988,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Reorder Makes within an Equipment
   app.post('/api/dev/semm/reorder-makes', sessionBridge, async (req, res) => {
     try {
-      const { systemCode, equipmentCode, orderedCodes } = req.body;
+      const { systemCode, equipmentCode, orderedMakes } = req.body;
       
-      if (!systemCode || !equipmentCode || !Array.isArray(orderedCodes) || orderedCodes.length === 0) {
+      if (!systemCode || !equipmentCode || !Array.isArray(orderedMakes) || orderedMakes.length === 0) {
         return res.status(400).json({ 
           success: false, 
-          error: 'systemCode, equipmentCode, and orderedCodes are required' 
+          error: 'systemCode, equipmentCode, and orderedMakes are required' 
         });
       }
       
-      console.log('🔄 Reordering makes in equipment', equipmentCode, ':', orderedCodes);
+      console.log('🔄 Reordering makes in equipment', equipmentCode);
+      console.log('🔄 New order:', orderedMakes.map(m => `${m.makeName} (${m.oldCode} -> position ${m.newPosition})`));
       
-      // Generate new alphabetical codes based on position (aaa, aab, aac, etc.)
+      // Generate new alphabetical codes based on position
       const generateMakeCode = (index: number): string => {
-        const letter = String.fromCharCode(97 + index); // 97 is 'a' (a, b, c, etc.)
-        return `${systemCode}${equipmentCode}${letter}`; // Format: systemCode + equipmentCode + position letter
+        const letter = String.fromCharCode(97 + index); // a, b, c, etc.
+        return `${systemCode}${equipmentCode.slice(1)}${letter}`; // aba, abb, abc for equipment ab
       };
       
-      // First, get all records that need to be updated in the desired order
-      const records = [];
-      for (const oldCode of orderedCodes) {
-        const result = await pool.query(`
-          SELECT mid, make, model, moid 
-          FROM semm_structure 
-          WHERE sid = $1 AND eid = $2 AND mid = $3
-        `, [systemCode, equipmentCode, oldCode]);
+      // Process each make in the desired order
+      for (let i = 0; i < orderedMakes.length; i++) {
+        const make = orderedMakes[i];
+        const newCode = generateMakeCode(i);
         
-        if (result.rows.length > 0) {
-          records.push(result.rows[0]);
-        }
-      }
-      
-      // Temporarily update to avoid unique constraint violations
-      for (let i = 0; i < records.length; i++) {
+        console.log(`🔄 Updating ${make.makeName}: ${make.oldCode} -> ${newCode}`);
+        
+        // First, update to a temporary code to avoid conflicts
         await pool.query(`
           UPDATE semm_structure 
           SET mid = $1
           WHERE sid = $2 AND eid = $3 AND mid = $4
-        `, [`temp_${i}`, systemCode, equipmentCode, orderedCodes[i]]);
+        `, [`temp_reorder_${i}`, systemCode, equipmentCode, make.oldCode]);
       }
       
       // Now update with final codes
-      for (let i = 0; i < records.length; i++) {
+      for (let i = 0; i < orderedMakes.length; i++) {
         const newCode = generateMakeCode(i);
+        
         await pool.query(`
           UPDATE semm_structure 
           SET mid = $1, make_order = $2 
           WHERE sid = $3 AND eid = $4 AND mid = $5
-        `, [newCode, i + 1, systemCode, equipmentCode, `temp_${i}`]);
+        `, [newCode, i + 1, systemCode, equipmentCode, `temp_reorder_${i}`]);
       }
       
       console.log('✅ Successfully reordered makes with new codes');
