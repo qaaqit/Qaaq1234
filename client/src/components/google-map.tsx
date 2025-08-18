@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { Button } from '@/components/ui/button';
+import { Plus, Minus } from 'lucide-react';
 
 interface MapUser {
   id: string;
@@ -51,6 +53,55 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
   const [boundsUpdateTrigger, setBoundsUpdateTrigger] = useState(0);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
+  const [currentZoom, setCurrentZoom] = useState(9);
+
+  // Zoom control functions
+  const zoomIn = useCallback(() => {
+    if (mapInstanceRef.current) {
+      const currentZoom = mapInstanceRef.current.getZoom();
+      mapInstanceRef.current.setZoom(currentZoom + 1);
+    }
+  }, []);
+
+  const zoomOut = useCallback(() => {
+    if (mapInstanceRef.current) {
+      const currentZoom = mapInstanceRef.current.getZoom();
+      mapInstanceRef.current.setZoom(currentZoom - 1);
+    }
+  }, []);
+
+  // Pan control functions
+  const panLeft = useCallback(() => {
+    if (mapInstanceRef.current) {
+      const center = mapInstanceRef.current.getCenter();
+      const newLng = center.lng() - 0.01;
+      mapInstanceRef.current.panTo({ lat: center.lat(), lng: newLng });
+    }
+  }, []);
+
+  const panRight = useCallback(() => {
+    if (mapInstanceRef.current) {
+      const center = mapInstanceRef.current.getCenter();
+      const newLng = center.lng() + 0.01;
+      mapInstanceRef.current.panTo({ lat: center.lat(), lng: newLng });
+    }
+  }, []);
+
+  const panUp = useCallback(() => {
+    if (mapInstanceRef.current) {
+      const center = mapInstanceRef.current.getCenter();
+      const newLat = center.lat() + 0.01;
+      mapInstanceRef.current.panTo({ lat: newLat, lng: center.lng() });
+    }
+  }, []);
+
+  const panDown = useCallback(() => {
+    if (mapInstanceRef.current) {
+      const center = mapInstanceRef.current.getCenter();
+      const newLat = center.lat() - 0.01;
+      mapInstanceRef.current.panTo({ lat: newLat, lng: center.lng() });
+    }
+  }, []);
 
   // Load Google Maps API
   useEffect(() => {
@@ -118,6 +169,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
       mapTypeId: mapType,
       mapTypeControl: false, // Hide default map type control
       streetViewControl: false, // Hide street view control
+      zoomControl: false, // Hide default zoom control - we'll add custom ones
       styles: [
         // Water bodies - light grey
         {
@@ -203,6 +255,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
     if (onZoomChange) {
       const zoomListener = mapInstanceRef.current.addListener('zoom_changed', () => {
         const zoom = mapInstanceRef.current.getZoom();
+        setCurrentZoom(zoom);
         onZoomChange(zoom);
       });
       listeners.push(zoomListener);
@@ -538,6 +591,55 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
 
   }, [isMapLoaded, userLocation, showScanElements, scanAngle, boundsUpdateTrigger]);
 
+  // Keyboard navigation event handler
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Only handle keyboard events if map is focused or if there are no other focused elements
+      const activeElement = document.activeElement;
+      const isInputFocused = activeElement?.tagName === 'INPUT' || 
+                            activeElement?.tagName === 'TEXTAREA' || 
+                            activeElement?.getAttribute('contenteditable') === 'true';
+
+      if (isInputFocused) return;
+
+      switch (event.key) {
+        case '+':
+        case '=':
+          event.preventDefault();
+          zoomIn();
+          break;
+        case '-':
+        case '_':
+          event.preventDefault();
+          zoomOut();
+          break;
+        case 'ArrowLeft':
+          event.preventDefault();
+          panLeft();
+          break;
+        case 'ArrowRight':
+          event.preventDefault();
+          panRight();
+          break;
+        case 'ArrowUp':
+          event.preventDefault();
+          panUp();
+          break;
+        case 'ArrowDown':
+          event.preventDefault();
+          panDown();
+          break;
+      }
+    };
+
+    // Add event listener to document for keyboard navigation
+    document.addEventListener('keydown', handleKeyDown);
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [zoomIn, zoomOut, panLeft, panRight, panUp, panDown]);
+
   // Show error message if map failed to load
   if (mapError) {
     return (
@@ -567,6 +669,37 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
   return (
     <div className="w-full h-full relative">
       <div ref={mapRef} className="w-full h-full" />
+      
+      {/* Zoom Controls */}
+      <div className="absolute bottom-4 left-4 flex flex-col space-y-2 z-[1000]">
+        <Button
+          onClick={zoomIn}
+          className="w-10 h-10 p-0 bg-white hover:bg-gray-50 border border-gray-300 shadow-lg rounded-lg"
+          data-testid="button-zoom-in"
+          title="Zoom in (+ key)"
+        >
+          <Plus className="w-5 h-5 text-gray-700" />
+        </Button>
+        <Button
+          onClick={zoomOut}
+          className="w-10 h-10 p-0 bg-white hover:bg-gray-50 border border-gray-300 shadow-lg rounded-lg"
+          data-testid="button-zoom-out"
+          title="Zoom out (- key)"
+        >
+          <Minus className="w-5 h-5 text-gray-700" />
+        </Button>
+      </div>
+
+      {/* Keyboard Navigation Helper (only show for admin users initially) */}
+      <div className="absolute top-4 right-4 z-[999] bg-black/75 text-white text-xs px-3 py-2 rounded-lg backdrop-blur-sm opacity-0 hover:opacity-100 transition-opacity duration-300">
+        <div className="text-center">
+          <div className="font-semibold mb-1">Keyboard Controls</div>
+          <div className="space-y-1">
+            <div>+/- : Zoom in/out</div>
+            <div>← → ↑ ↓ : Pan map</div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
