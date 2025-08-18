@@ -171,19 +171,31 @@ export async function getQuestionById(questionId: number): Promise<Question | nu
     console.log(`🔍 Question ${questionId} Author Debug:`, {
       raw_author_id: row.author_id,
       raw_author_name: row.author_name,
-      processed_author_name: row.author_name?.trim() || 'Anonymous'
+      processed_author_name: row.author_name?.trim() || 'Anonymous',
+      content_preview: row.content?.substring(0, 200) + '...'
     });
     
     // Handle cases where questions are wrongly attributed to current session user
     let authorName = row.author_name?.trim() || 'Anonymous';
     
-    // If the question content suggests it's from WhatsApp Q&A or QBOT, override the author
-    if (row.content && (
+    // If the question content suggests it's from WhatsApp Q&A or QBOT, extract the original author
+    if (row.content && row.content.includes('[QBOT Q&A')) {
+      // Try to extract original author from QBOT content format
+      const userMatch = row.content.match(/User:\s*([^(]+)\s*\(/);
+      if (userMatch) {
+        const extractedUser = userMatch[1].trim();
+        if (extractedUser && extractedUser !== 'QBOT User') {
+          authorName = extractedUser + ' (via QBOT)';
+        } else {
+          authorName = 'QBOT User';
+        }
+      } else {
+        authorName = 'QBOT User';
+      }
+    } else if (row.content && (
         row.content.includes('Category: General') ||
-        row.content.includes('question::') ||
-        row.content.includes('[QBOT Q&A')
+        row.content.includes('question::')
       )) {
-      // For QBOT Q&A questions, use 'QBOT User' as the author
       authorName = 'QBOT User';
     }
     
