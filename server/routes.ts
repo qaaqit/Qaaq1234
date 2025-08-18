@@ -7359,6 +7359,111 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Get pending payments that need user linking
+  app.get('/api/admin/pending-payments', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      const result = await pool.query(`
+        SELECT 
+          s.*,
+          p.razorpay_payment_id,
+          p.amount as payment_amount,
+          p.method as payment_method,
+          p.notes as payment_notes
+        FROM subscriptions s
+        LEFT JOIN payments p ON s.razorpay_payment_id = p.razorpay_payment_id
+        WHERE s.status = 'pending_user' AND s.user_id IS NULL
+        ORDER BY s.created_at DESC
+      `);
+
+      res.json({
+        success: true,
+        pendingPayments: result.rows
+      });
+    } catch (error) {
+      console.error('Error fetching pending payments:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch pending payments'
+      });
+    }
+  });
+
+  // Admin: Link pending payment to user
+  app.post('/api/admin/link-payment', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      const { subscriptionId, userId } = req.body;
+
+      if (!subscriptionId || !userId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Subscription ID and User ID are required'
+        });
+      }
+
+      // Get subscription details
+      const subscriptionResult = await pool.query(`
+        SELECT * FROM subscriptions WHERE id = $1 AND status = 'pending_user'
+      `, [subscriptionId]);
+
+      if (subscriptionResult.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Pending subscription not found'
+        });
+      }
+
+      const subscription = subscriptionResult.rows[0];
+      const notes = JSON.parse(subscription.notes || '{}');
+      const billingPeriod = notes.billingPeriod;
+
+      // Update subscription with user ID and activate
+      await pool.query(`
+        UPDATE subscriptions 
+        SET user_id = $1, status = 'active', updated_at = NOW()
+        WHERE id = $2
+      `, [userId, subscriptionId]);
+
+      // Update payment record with user ID
+      if (subscription.razorpay_payment_id) {
+        await pool.query(`
+          UPDATE payments 
+          SET user_id = $1, updated_at = NOW()
+          WHERE razorpay_payment_id = $2
+        `, [userId, subscription.razorpay_payment_id]);
+      }
+
+      // Update user premium status
+      const expiryDate = billingPeriod === 'yearly' ? 
+        'NOW() + INTERVAL \'1 year\'' : 
+        'NOW() + INTERVAL \'1 month\'';
+
+      await pool.query(`
+        INSERT INTO user_subscription_status (
+          user_id, is_premium, premium_expires_at, subscription_type, updated_at
+        ) VALUES ($1, true, ${expiryDate}, $2, NOW())
+        ON CONFLICT (user_id) 
+        DO UPDATE SET 
+          is_premium = true, 
+          premium_expires_at = ${expiryDate},
+          subscription_type = $2,
+          updated_at = NOW()
+      `, [userId, subscription.subscription_type]);
+
+      console.log(`✅ Admin linked payment to user: subscription ${subscriptionId} -> user ${userId}`);
+
+      res.json({
+        success: true,
+        message: 'Payment successfully linked to user and premium activated'
+      });
+    } catch (error) {
+      console.error('Error linking payment to user:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to link payment to user'
+      });
+    }
+  });
+
   // Admin: Get all subscriptions (admin only)
   app.get('/api/admin/subscriptions', authenticateToken, isAdmin, async (req: any, res) => {
     try {

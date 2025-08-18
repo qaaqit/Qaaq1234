@@ -814,10 +814,18 @@ export class RazorpayService {
     }
   }
 
-  // Handle payment captured webhook - includes QR code payments
+  // Handle payment captured webhook - includes Card and UPI payments
   private async handlePaymentCaptured(payment: any) {
     try {
-      // Check if this is a QR code or direct payment that matches subscription amounts
+      console.log('📨 Processing payment capture webhook:', {
+        paymentId: payment.id,
+        amount: payment.amount,
+        email: payment.email,
+        contact: payment.contact,
+        method: payment.method
+      });
+
+      // Check if this is a payment that matches subscription amounts
       const amount = payment.amount;
       let subscriptionType = null;
       let billingPeriod = null;
@@ -831,51 +839,136 @@ export class RazorpayService {
         billingPeriod = 'yearly';
       }
 
+      // Try to identify user by email from payment details
+      let userId = null;
+      if (payment.email) {
+        try {
+          const userResult = await pool.query(`
+            SELECT id, full_name, email FROM users WHERE email = $1 LIMIT 1
+          `, [payment.email]);
+          
+          if (userResult.rows.length > 0) {
+            userId = userResult.rows[0].id;
+            console.log('✅ Found user by email:', {
+              userId,
+              email: payment.email,
+              name: userResult.rows[0].full_name
+            });
+          } else {
+            console.log('⚠️ No user found with email:', payment.email);
+          }
+        } catch (error) {
+          console.error('❌ Error looking up user by email:', error);
+        }
+      }
+
       // Store the payment record
       await pool.query(`
         INSERT INTO payments (
-          razorpay_payment_id, amount, currency, status, method, 
+          user_id, razorpay_payment_id, amount, currency, status, method, 
           description, payment_source, notes
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
         ON CONFLICT (razorpay_payment_id) DO UPDATE SET
           status = 'captured', updated_at = NOW()
       `, [
+        userId, // Include user_id if found
         payment.id,
         payment.amount,
         payment.currency,
         'captured',
         payment.method,
-        subscriptionType ? `QR Code Payment - ${subscriptionType} ${billingPeriod}` : 'Payment via Razorpay',
-        payment.method === 'upi' ? 'qr_code' : 'direct',
+        subscriptionType ? `Premium Payment - ${subscriptionType} ${billingPeriod}` : 'Payment via Razorpay',
+        payment.method === 'upi' ? 'upi' : 'card',
         JSON.stringify({
           subscriptionType,
           billingPeriod,
           contact: payment.contact,
+          email: payment.email,
           vpa: payment.vpa,
-          isQRPayment: payment.method === 'upi'
+          paymentMethod: payment.method
         })
       ]);
 
-      // If this matches a subscription plan, create a pending subscription
-      if (subscriptionType) {
-        console.log(`🎯 QR payment matches ${billingPeriod} ${subscriptionType} plan:`, payment.id);
+      // If this matches a subscription plan and we found the user, activate premium
+      if (subscriptionType && userId) {
+        console.log(`🎯 Premium payment matched for user ${userId}: ${billingPeriod} ${subscriptionType}`);
         
-        // Create a pending subscription for manual user association
-        const pendingResult = await pool.query(`
+        // Create or update subscription record
+        const subscriptionResult = await this.executeWithRetry(async () => {
+          return await pool.query(`
+            INSERT INTO subscriptions (
+              user_id, subscription_type, razorpay_payment_id, amount, currency, 
+              status, notes, razorpay_plan_id
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+            ON CONFLICT (user_id, subscription_type) 
+            DO UPDATE SET 
+              razorpay_payment_id = $3,
+              amount = $4,
+              status = 'active',
+              updated_at = NOW()
+            RETURNING *
+          `, [
+            userId,
+            subscriptionType,
+            payment.id,
+            payment.amount,
+            payment.currency,
+            'active',
+            JSON.stringify({
+              billingPeriod,
+              paymentMethod: payment.method,
+              email: payment.email,
+              activatedAt: new Date()
+            }),
+            billingPeriod === 'monthly' ? 'plan_R6tDNXxZMxBIJR' : 'plan_premium_yearly'
+          ]);
+        }, `Create/update subscription for user ${userId}`);
+
+        // Update user premium status
+        const expiryDate = billingPeriod === 'yearly' ? 
+          'NOW() + INTERVAL \'1 year\'' : 
+          'NOW() + INTERVAL \'1 month\'';
+
+        await this.executeWithRetry(async () => {
+          return await pool.query(`
+            INSERT INTO user_subscription_status (
+              user_id, is_premium, premium_expires_at, subscription_type, updated_at
+            ) VALUES ($1, true, ${expiryDate}, $2, NOW())
+            ON CONFLICT (user_id) 
+            DO UPDATE SET 
+              is_premium = true, 
+              premium_expires_at = ${expiryDate},
+              subscription_type = $2,
+              updated_at = NOW()
+          `, [userId, subscriptionType]);
+        }, `Update user premium status for user ${userId}`);
+
+        console.log('✅ User upgraded to premium:', {
+          userId,
+          email: payment.email,
+          plan: `${billingPeriod} ${subscriptionType}`,
+          amount: `₹${payment.amount / 100}`
+        });
+
+      } else if (subscriptionType && !userId) {
+        // Payment matches subscription but no user found - create pending record
+        console.log(`⚠️ Premium payment without user match - creating pending record`);
+        
+        await pool.query(`
           INSERT INTO subscriptions (
             subscription_type, razorpay_payment_id, amount, currency, 
             status, notes, razorpay_plan_id
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7) 
-          RETURNING *
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7)
         `, [
           subscriptionType,
           payment.id,
           payment.amount,
           payment.currency,
-          'qr_pending', // Special status for QR payments awaiting user association
+          'pending_user', // Status indicating payment captured but user not identified
           JSON.stringify({
             billingPeriod,
             paymentMethod: payment.method,
+            email: payment.email,
             contact: payment.contact,
             awaitingUserLink: true,
             paymentCapturedAt: new Date()
@@ -883,11 +976,10 @@ export class RazorpayService {
           billingPeriod === 'monthly' ? 'plan_R6tDNXxZMxBIJR' : 'plan_premium_yearly'
         ]);
 
-        console.log('✅ Pending QR subscription created for payment:', payment.id);
-        console.log('📋 Admin can manually link this to a user account');
+        console.log('📋 Pending subscription created - admin can manually link to user');
       }
 
-      console.log('✅ Payment captured:', payment.id);
+      console.log('✅ Payment captured and processed:', payment.id);
     } catch (error) {
       console.error('❌ Failed to handle payment captured:', error);
     }
