@@ -415,28 +415,55 @@ export function PremiumSubscriptionDialog({
 
         <div className="flex items-center justify-between pt-4 pb-8 border-t mt-6 mb-4">
           <div className="text-sm text-muted-foreground">Secured by Razorpay</div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleSubscribe}
-              disabled={createSubscriptionMutation.isPending}
-              className="bg-orange-500 hover:bg-orange-600"
-            >
-              {createSubscriptionMutation.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Creating...
-                </>
-              ) : (
-                <>
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Subscribe Now
-                </>
-              )}
-            </Button>
-          </div>
+          
+          {/* Show QR Code for Monthly Premium, Subscribe button for others */}
+          {selectedPlan === 'premium' && selectedPeriod === 'monthly' ? (
+            <div className="flex flex-col items-center gap-3">
+              <div className="text-center">
+                <h4 className="font-semibold text-sm mb-2">Scan to Pay ₹451</h4>
+                {/* QR Code for Monthly Premium Payment */}
+                <div className="bg-white p-4 border-2 border-orange-200 rounded-lg shadow-lg">
+                  <img 
+                    src="/attached_assets/QrCode (2)_1755542052056.jpeg" 
+                    alt="QR Code for ₹451 Monthly Premium Payment"
+                    className="w-32 h-32 object-contain"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Use any UPI app to scan & pay
+                </p>
+                <p className="text-xs font-medium text-orange-600 mt-1">
+                  Monthly Premium - ₹451
+                </p>
+              </div>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Close
+              </Button>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSubscribe}
+                disabled={createSubscriptionMutation.isPending}
+                className="bg-orange-500 hover:bg-orange-600"
+              >
+                {createSubscriptionMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Subscribe Now
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
