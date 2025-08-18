@@ -149,8 +149,6 @@ export default function SemmSystemPage() {
               {/* Breadcrumb */}
               <nav className="flex items-center space-x-2 text-sm text-gray-500 flex-shrink-0">
                 <span className="text-orange-600 font-medium">e. Purification System</span>
-                <ChevronRight className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-600">Equipment</span>
               </nav>
 
               {/* Code Card and Title - Centered */}
