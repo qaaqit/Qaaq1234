@@ -259,9 +259,7 @@ export default function PremiumPage() {
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">
                   Premium Subscription
                 </h1>
-                <p className="text-gray-600">
-                  Unlock advanced maritime features
-                </p>
+                <p className="text-gray-600">advanced maritime features</p>
               </div>
             </div>
             <Crown className="w-8 h-8 text-yellow-500" />
