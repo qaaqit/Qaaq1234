@@ -7613,6 +7613,166 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Manually process a payment (for missing webhook events)
+  app.post('/api/admin/process-payment', async (req, res) => {
+    try {
+      const {
+        paymentId,
+        userEmail,
+        amount,
+        orderId,
+        method = 'upi',
+        description = 'Manual Payment Processing'
+      } = req.body;
+
+      if (!paymentId || !userEmail || !amount) {
+        return res.status(400).json({
+          success: false,
+          message: 'paymentId, userEmail, and amount are required'
+        });
+      }
+
+      // Find user by email
+      const userResult = await pool.query(`
+        SELECT id, full_name, email FROM users WHERE email = $1 LIMIT 1
+      `, [userEmail]);
+
+      if (userResult.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found with this email'
+        });
+      }
+
+      const user = userResult.rows[0];
+      
+      // Check if payment already exists
+      const existingPayment = await pool.query(`
+        SELECT * FROM payments WHERE razorpay_payment_id = $1
+      `, [paymentId]);
+
+      if (existingPayment.rows.length > 0) {
+        return res.json({
+          success: false,
+          message: 'Payment already exists in database',
+          payment: existingPayment.rows[0]
+        });
+      }
+
+      // Determine subscription type based on amount
+      let subscriptionType = null;
+      let billingPeriod = null;
+      
+      if (amount === 45100) { // ₹451 monthly premium
+        subscriptionType = 'premium';
+        billingPeriod = 'monthly';
+      } else if (amount === 261100) { // ₹2611 yearly premium  
+        subscriptionType = 'premium';
+        billingPeriod = 'yearly';
+      }
+
+      // Insert payment record
+      await pool.query(`
+        INSERT INTO payments (
+          user_id, razorpay_payment_id, amount, currency, status, method, 
+          description, payment_source, notes, razorpay_order_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      `, [
+        user.id,
+        paymentId,
+        amount,
+        'INR',
+        'captured',
+        method,
+        subscriptionType ? `Premium Payment - ${subscriptionType} ${billingPeriod}` : description,
+        method === 'upi' ? 'upi' : 'card',
+        JSON.stringify({
+          subscriptionType,
+          billingPeriod,
+          email: userEmail,
+          processedManually: true,
+          processedAt: new Date().toISOString()
+        }),
+        orderId
+      ]);
+
+      // If this is a subscription payment, activate premium
+      if (subscriptionType) {
+        // Create subscription record
+        await pool.query(`
+          INSERT INTO subscriptions (
+            user_id, subscription_type, razorpay_payment_id, amount, currency, 
+            status, notes, razorpay_plan_id
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+          ON CONFLICT (user_id, subscription_type) 
+          DO UPDATE SET 
+            razorpay_payment_id = $3,
+            amount = $4,
+            status = 'active',
+            updated_at = NOW()
+        `, [
+          user.id,
+          subscriptionType,
+          paymentId,
+          amount,
+          'INR',
+          'active',
+          JSON.stringify({
+            billingPeriod,
+            email: userEmail,
+            activatedAt: new Date(),
+            processedManually: true
+          }),
+          billingPeriod === 'monthly' ? 'plan_R6tDNXxZMxBIJR' : 'plan_premium_yearly'
+        ]);
+
+        // Update user premium status
+        const expiryInterval = billingPeriod === 'yearly' ? '1 year' : '1 month';
+        await pool.query(`
+          INSERT INTO user_subscription_status (
+            user_id, is_premium, premium_expires_at, subscription_type, updated_at
+          ) VALUES ($1, true, NOW() + INTERVAL '${expiryInterval}', $2, NOW())
+          ON CONFLICT (user_id) 
+          DO UPDATE SET 
+            is_premium = true, 
+            premium_expires_at = NOW() + INTERVAL '${expiryInterval}',
+            subscription_type = $2,
+            updated_at = NOW()
+        `, [user.id, subscriptionType]);
+
+        console.log('✅ User upgraded to premium manually:', {
+          userId: user.id,
+          email: userEmail,
+          plan: `${billingPeriod} ${subscriptionType}`,
+          amount: `₹${amount / 100}`,
+          paymentId
+        });
+      }
+
+      res.json({
+        success: true,
+        message: 'Payment processed successfully',
+        payment: {
+          paymentId,
+          userId: user.id,
+          userEmail,
+          amount,
+          subscriptionType,
+          billingPeriod,
+          status: 'captured'
+        }
+      });
+
+    } catch (error) {
+      console.error('Error processing payment manually:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to process payment',
+        error: error.message
+      });
+    }
+  });
+
   // Database health monitoring endpoint
   app.get('/api/health/database', async (req, res) => {
     try {
