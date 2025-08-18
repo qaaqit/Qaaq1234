@@ -36,6 +36,7 @@ Onboard Search: Special "onboard" keyword search filters for sailing users and d
 Shipping Dictionary Access: Users can access maritime dictionary definitions without authentication
 Login Roadblock Design: Single minimizable login roadblock with chevron control in top-right corner, no separate roadblocks for individual features
 🔒 SEMM LAYOUT REDESIGN: Breadcrumb positioned next to back arrow as small text in one line, code cards positioned in top-left corner with back arrow above
+Enhanced Reorder System: Admin reorder modals now feature editable code cards allowing direct code modification alongside position changes for comprehensive hierarchy management
 
 ## System Architecture
 
@@ -77,7 +78,7 @@ Login Roadblock Design: Single minimizable login roadblock with chevron control 
 - **Real-Time Messaging**: WebSocket-based real-time messaging with live typing indicators, instant message delivery, and read receipts.
 - **QBOT Integration**: Fully functional QBOT chat system integrated across all pages.
 - **Database Synchronization & Performance Features**: Keep-Alive service, Connection Pool Management, Data Synchronization, Performance Monitoring, Automated Maintenance, Admin Controls for database management.
-- **SEMM Implementation**: Complete System > Equipment > Make > Model hierarchy with authentic data, dedicated equipment pages, and admin-only editing controls.
+- **SEMM Implementation**: Complete System > Equipment > Make > Model hierarchy with authentic data, dedicated equipment pages, admin-only editing controls, and enhanced reorder functionality with editable code cards.
 
 ## External Dependencies
 - **Shared QAAQ Database**: PostgreSQL database for authentic maritime user data and Q&A records.
