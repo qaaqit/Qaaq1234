@@ -1,10 +1,26 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Crown, Check, Star, Zap, Shield, Users, Loader2, ExternalLink, Sparkles } from "lucide-react";
+import {
+  Crown,
+  Check,
+  Star,
+  Zap,
+  Shield,
+  Users,
+  Loader2,
+  ExternalLink,
+  Sparkles,
+} from "lucide-react";
 import { useLocation } from "wouter";
 
 interface User {
@@ -57,34 +73,39 @@ const features = [
   {
     icon: Crown,
     title: "Premium Maps",
-    description: "Access Google Maps with satellite view and enhanced navigation"
+    description:
+      "Access Google Maps with satellite view and enhanced navigation",
   },
   {
     icon: Users,
     title: "Advanced Discovery",
-    description: "Enhanced user discovery and networking features"
+    description: "Enhanced user discovery and networking features",
   },
   {
     icon: Star,
     title: "Priority Support",
-    description: "Get priority assistance and faster response times"
+    description: "Get priority assistance and faster response times",
   },
   {
     icon: Zap,
     title: "Unlimited QBOT Queries",
-    description: "No daily limits on AI-powered maritime assistance"
+    description: "No daily limits on AI-powered maritime assistance",
   },
   {
     icon: Shield,
     title: "Premium Security",
-    description: "Enhanced security features and data protection"
-  }
+    description: "Enhanced security features and data protection",
+  },
 ];
 
 export default function PremiumPage() {
   const [, setLocation] = useLocation();
-  const [selectedPlan, setSelectedPlan] = useState<"premium" | "super_user">("premium");
-  const [selectedPeriod, setSelectedPeriod] = useState<"monthly" | "yearly">("monthly");
+  const [selectedPlan, setSelectedPlan] = useState<"premium" | "super_user">(
+    "premium",
+  );
+  const [selectedPeriod, setSelectedPeriod] = useState<"monthly" | "yearly">(
+    "monthly",
+  );
   const [selectedTopup, setSelectedTopup] = useState<string>("topup_451");
 
   const queryClient = useQueryClient();
@@ -238,7 +259,9 @@ export default function PremiumPage() {
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">
                   Premium Subscription
                 </h1>
-                <p className="text-gray-600">Unlock advanced maritime features</p>
+                <p className="text-gray-600">
+                  Unlock advanced maritime features
+                </p>
               </div>
             </div>
             <Crown className="w-8 h-8 text-yellow-500" />
@@ -248,6 +271,40 @@ export default function PremiumPage() {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
+        {/* Payment Options at Top */}
+        {!isPremium && (
+          <Card className="mb-8 border-2 border-orange-200">
+            <CardHeader>
+              <CardTitle className="text-center">Payment Options</CardTitle>
+              <p className="text-center text-gray-600">Choose your preferred payment method</p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <a
+                  href="https://rzp.io/rzp/jwQW9TW"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg text-lg font-medium transition-colors w-full justify-center"
+                  data-testid="button-pay-card-top"
+                >
+                  <ExternalLink className="h-5 w-5" />
+                  Pay via Card - ₹451
+                </a>
+                <a
+                  href="https://rzp.io/rzp/QACUUpcD"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg text-lg font-medium transition-colors w-full justify-center"
+                  data-testid="button-pay-upi-top"
+                >
+                  <ExternalLink className="h-5 w-5" />
+                  Pay via UPI - ₹451
+                </a>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Current Status */}
         {user && (
           <Card className="mb-8 border-2 border-orange-200">
@@ -265,17 +322,23 @@ export default function PremiumPage() {
                   <p className="text-gray-600">{user.email}</p>
                 </div>
                 <div className="text-right">
-                  <Badge variant={isPremium ? "default" : "secondary"} className="mb-2">
+                  <Badge
+                    variant={isPremium ? "default" : "secondary"}
+                    className="mb-2"
+                  >
                     {isPremium ? "Premium Active" : "Free Plan"}
                   </Badge>
                   {isPremium && userStatus?.premiumExpiresAt && (
                     <p className="text-sm text-gray-600">
-                      Expires: {new Date(userStatus.premiumExpiresAt).toLocaleDateString()}
+                      Expires:{" "}
+                      {new Date(
+                        userStatus.premiumExpiresAt,
+                      ).toLocaleDateString()}
                     </p>
                   )}
                 </div>
               </div>
-              
+
               {/* Current Status Alert */}
               {(userStatus.isPremium || userStatus.isSuperUser) && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-4">
@@ -289,7 +352,9 @@ export default function PremiumPage() {
                     {userStatus.premiumExpiresAt && (
                       <span className="text-sm text-green-600">
                         • Expires{" "}
-                        {new Date(userStatus.premiumExpiresAt).toLocaleDateString()}
+                        {new Date(
+                          userStatus.premiumExpiresAt,
+                        ).toLocaleDateString()}
                       </span>
                     )}
                   </div>
@@ -399,9 +464,13 @@ export default function PremiumPage() {
             <Card className="border-2 border-orange-200">
               <CardHeader>
                 <CardTitle className="text-center">
-                  {selectedPeriod === "monthly" ? "Pay ₹551 - Monthly Premium" : "Pay ₹2,611 - Yearly Premium"}
+                  {selectedPeriod === "monthly"
+                    ? "Pay ₹451 - Monthly Premium"
+                    : "Pay ₹2,611 - Yearly Premium"}
                 </CardTitle>
-                <CardDescription className="text-center">Payment Options</CardDescription>
+                <CardDescription className="text-center">
+                  Payment Options
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -415,7 +484,7 @@ export default function PremiumPage() {
                         data-testid="button-pay-card-monthly"
                       >
                         <ExternalLink className="h-4 w-4" />
-                        Pay via Card - ₹551
+                        Pay via Card - ₹451
                       </a>
                       <a
                         href="https://rzp.io/rzp/QACUUpcD"
@@ -425,7 +494,7 @@ export default function PremiumPage() {
                         data-testid="button-pay-upi-monthly"
                       >
                         <ExternalLink className="h-4 w-4" />
-                        Pay via UPI - ₹551
+                        Pay via UPI - ₹451
                       </a>
                     </>
                   ) : (
@@ -678,9 +747,7 @@ export default function PremiumPage() {
 
         {/* Footer Info */}
         <div className="mt-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            Secured by Razorpay
-          </p>
+          <p className="text-sm text-muted-foreground">Secured by Razorpay</p>
         </div>
       </div>
     </div>
