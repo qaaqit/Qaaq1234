@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
-import { ArrowLeft, Share2, Home, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Share2, Home, ChevronRight, Edit3 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 
 // Bottom edge roll out flip card animation
 const FlipCard = ({ char, index, large = false }: { char: string; index: number; large?: boolean }) => {
@@ -79,12 +80,32 @@ export default function SemmEquipmentPage() {
   const { code } = useParams<{ code: string }>();
   const [, setLocation] = useLocation();
 
+  // Get user authentication info
+  const { user, isAuthenticated } = useAuth();
+  const isAdmin = user?.isAdmin || user?.role === 'admin';
+
   // Fetch SEMM data to find the specific equipment
   const { data: semmData, isLoading, error } = useQuery({
     queryKey: ['/api/dev/semm-cards'],
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 3,
   });
+
+  // Admin edit functions
+  const handleEditEquipment = (equipmentCode: string) => {
+    console.log('Edit equipment:', equipmentCode);
+    // TODO: Implement edit equipment modal
+  };
+
+  const handleEditMake = (makeCode: string) => {
+    console.log('Edit make:', makeCode);
+    // TODO: Implement edit make modal
+  };
+
+  const handleEditModel = (modelCode: string) => {
+    console.log('Edit model:', modelCode);
+    // TODO: Implement edit model modal
+  };
 
   if (isLoading) {
     return (
@@ -190,14 +211,111 @@ export default function SemmEquipmentPage() {
 
           {/* Equipment Title */}
           <div>
-            <h1 className="text-4xl font-black text-gray-900 mb-4">
-              {foundEquipment.title}
-            </h1>
+            <div className="flex items-center justify-between mb-4">
+              <h1 className="text-4xl font-black text-gray-900">
+                {foundEquipment.title}
+              </h1>
+              {isAdmin && (
+                <button
+                  onClick={() => handleEditEquipment(foundEquipment.code)}
+                  className="flex items-center space-x-2 px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors"
+                  title="Edit Equipment"
+                  data-testid="edit-equipment-btn"
+                >
+                  <Edit3 className="w-4 h-4" />
+                  <span>Edit</span>
+                </button>
+              )}
+            </div>
             <p className="text-lg text-gray-600 leading-relaxed">
               Maritime equipment classification: <span className="font-bold text-orange-600">{parentSystem.title}</span>
             </p>
           </div>
         </div>
+
+        {/* Makes and Models Section */}
+        {foundEquipment.makes && foundEquipment.makes.length > 0 && (
+          <div className="mt-8 bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+              <span className="mr-2">Available Makes & Models</span>
+              {isAdmin && (
+                <button
+                  onClick={() => handleEditEquipment(foundEquipment.code)}
+                  className="p-2 hover:bg-orange-100 rounded-full transition-colors"
+                  title="Edit Equipment Structure"
+                  data-testid="edit-equipment-structure"
+                >
+                  <Edit3 className="h-4 w-4 text-orange-600" />
+                </button>
+              )}
+            </h2>
+            
+            <div className="space-y-6">
+              {foundEquipment.makes.map((make: any, makeIndex: number) => (
+                <div key={make.code} className="border border-gray-200 rounded-lg p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <span className="text-blue-600 font-bold">{make.code}</span>
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-semibold text-gray-800">{make.title}</h3>
+                        <p className="text-sm text-gray-500">{make.description}</p>
+                      </div>
+                    </div>
+                    {isAdmin && (
+                      <button
+                        onClick={() => handleEditMake(make.code)}
+                        className="flex items-center space-x-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                        title="Edit Make"
+                        data-testid={`edit-make-${make.code}`}
+                      >
+                        <Edit3 className="w-4 h-4" />
+                        <span>Edit Make</span>
+                      </button>
+                    )}
+                  </div>
+                  
+                  {make.models && make.models.length > 0 && (
+                    <div>
+                      <h4 className="text-lg font-medium text-gray-700 mb-3">Models</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {make.models.map((model: any, modelIndex: number) => (
+                          <div 
+                            key={model.code} 
+                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors group"
+                          >
+                            <div className="flex items-center space-x-3">
+                              <div className="w-8 h-8 bg-green-100 rounded flex items-center justify-center">
+                                <span className="text-green-600 text-xs font-bold">{model.code}</span>
+                              </div>
+                              <div>
+                                <span className="font-medium text-gray-800">{model.title}</span>
+                                {model.description && (
+                                  <p className="text-xs text-gray-500">{model.description}</p>
+                                )}
+                              </div>
+                            </div>
+                            {isAdmin && (
+                              <button
+                                onClick={() => handleEditModel(model.code)}
+                                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-green-100 rounded transition-all"
+                                title="Edit Model"
+                                data-testid={`edit-model-${model.code}`}
+                              >
+                                <Edit3 className="h-3 w-3 text-green-600" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

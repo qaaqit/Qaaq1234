@@ -323,20 +323,38 @@ export default function MachineTreePage() {
                       {showDropdowns.has(category.code) && (
                         <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-64">
                           {category.equipment?.map((equipment: any) => (
-                            <button
+                            <div
                               key={equipment.code}
-                              onClick={() => {
-                                setLocation(`/machinetree/equipment/${equipment.code}`);
-                                setShowDropdowns(new Set());
-                              }}
-                              className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center space-x-3 border-b border-gray-100 last:border-b-0"
-                              data-testid={`dropdown-equipment-${equipment.code}`}
+                              className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 group"
                             >
-                              <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center flex-shrink-0">
-                                <span className="text-blue-600 text-xs font-bold">{equipment.code}</span>
-                              </div>
-                              <span className="text-gray-800 font-medium">{equipment.title}</span>
-                            </button>
+                              <button
+                                onClick={() => {
+                                  setLocation(`/machinetree/equipment/${equipment.code}`);
+                                  setShowDropdowns(new Set());
+                                }}
+                                className="flex items-center space-x-3 flex-1 text-left"
+                                data-testid={`dropdown-equipment-${equipment.code}`}
+                              >
+                                <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center flex-shrink-0">
+                                  <span className="text-blue-600 text-xs font-bold">{equipment.code}</span>
+                                </div>
+                                <span className="text-gray-800 font-medium">{equipment.title}</span>
+                              </button>
+                              {isAdmin && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEditEquipment(equipment.code);
+                                    setShowDropdowns(new Set());
+                                  }}
+                                  className="p-1 hover:bg-orange-100 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                                  title="Edit Equipment"
+                                  data-testid={`edit-dropdown-equipment-${equipment.code}`}
+                                >
+                                  <Edit3 className="h-3 w-3 text-orange-600" />
+                                </button>
+                              )}
+                            </div>
                           ))}
                         </div>
                       )}
