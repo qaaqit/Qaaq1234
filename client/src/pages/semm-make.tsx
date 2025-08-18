@@ -1,6 +1,8 @@
 import { useParams, useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Share2, ChevronRight, Edit3 } from 'lucide-react';
+import { ArrowLeft, Share2, ChevronRight, Edit3, RotateCcw } from 'lucide-react';
+import { SemmReorderModal } from '@/components/semm-reorder-modal';
+import { apiRequest } from '@/lib/queryClient';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -105,6 +107,45 @@ export default function SemmMakePage() {
   const handleEditModel = (modelCode: string) => {
     console.log('Edit model:', modelCode);
     // TODO: Implement edit model modal
+  };
+
+  // Reorder functionality
+  const [reorderModal, setReorderModal] = useState<{
+    isOpen: boolean;
+    items: Array<{ code: string; title: string }>;
+  }>({
+    isOpen: false,
+    items: []
+  });
+
+  const handleReorderModels = () => {
+    if (!foundMake?.models) return;
+    
+    const models = foundMake.models.map((model: any) => ({
+      code: model.code,
+      title: model.title
+    }));
+    
+    setReorderModal({
+      isOpen: true,
+      items: models
+    });
+  };
+
+  const handleReorderSubmit = async (orderedCodes: string[]) => {
+    await apiRequest('/api/dev/semm/reorder-models', {
+      method: 'POST',
+      body: { 
+        systemCode: parentSystem.code, 
+        equipmentCode: parentEquipment.code,
+        makeCode: foundMake.code,
+        orderedCodes 
+      }
+    });
+  };
+
+  const closeReorderModal = () => {
+    setReorderModal(prev => ({ ...prev, isOpen: false }));
   };
 
   if (isLoading) {
@@ -239,7 +280,20 @@ export default function SemmMakePage() {
         {/* Models Cards Grid */}
         {foundMake.models && foundMake.models.length > 0 ? (
           <div className="mt-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Models for {foundMake.title}</h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Models for {foundMake.title}</h2>
+              {isAdmin && (
+                <button
+                  onClick={handleReorderModels}
+                  className="flex items-center space-x-2 px-3 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors"
+                  title="Reorder Models"
+                  data-testid="reorder-models-btn"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  <span>Reorder Models</span>
+                </button>
+              )}
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {foundMake.models.map((model: any) => (
                 <div 
@@ -301,6 +355,15 @@ export default function SemmMakePage() {
         )}
 
       </div>
+      
+      {/* Reorder Modal */}
+      <SemmReorderModal
+        isOpen={reorderModal.isOpen}
+        onClose={closeReorderModal}
+        title="Models"
+        items={reorderModal.items}
+        onReorder={handleReorderSubmit}
+      />
     </div>
   );
 }

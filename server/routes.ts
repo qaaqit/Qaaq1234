@@ -3919,6 +3919,136 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ==== SEMM REORDER ENDPOINTS ====
+  
+  // Reorder Systems
+  app.post('/api/dev/semm/reorder-systems', sessionBridge, async (req, res) => {
+    try {
+      const { orderedCodes } = req.body;
+      
+      if (!Array.isArray(orderedCodes) || orderedCodes.length === 0) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'orderedCodes must be a non-empty array' 
+        });
+      }
+      
+      console.log('🔄 Reordering systems:', orderedCodes);
+      
+      // Update the order for each system by modifying their sort order
+      for (let i = 0; i < orderedCodes.length; i++) {
+        await pool.query(`
+          UPDATE semm_structure 
+          SET system_order = $1 
+          WHERE sid = $2
+        `, [i + 1, orderedCodes[i]]);
+      }
+      
+      console.log('✅ Successfully reordered systems');
+      res.json({ success: true, message: 'Systems reordered successfully' });
+      
+    } catch (error) {
+      console.error('❌ Error reordering systems:', error);
+      res.status(500).json({ success: false, error: 'Failed to reorder systems' });
+    }
+  });
+  
+  // Reorder Equipment within a System
+  app.post('/api/dev/semm/reorder-equipment', sessionBridge, async (req, res) => {
+    try {
+      const { systemCode, orderedCodes } = req.body;
+      
+      if (!systemCode || !Array.isArray(orderedCodes) || orderedCodes.length === 0) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'systemCode and orderedCodes are required' 
+        });
+      }
+      
+      console.log('🔄 Reordering equipment in system', systemCode, ':', orderedCodes);
+      
+      // Update the order for each equipment item
+      for (let i = 0; i < orderedCodes.length; i++) {
+        await pool.query(`
+          UPDATE semm_structure 
+          SET equipment_order = $1 
+          WHERE sid = $2 AND eid = $3
+        `, [i + 1, systemCode, orderedCodes[i]]);
+      }
+      
+      console.log('✅ Successfully reordered equipment');
+      res.json({ success: true, message: 'Equipment reordered successfully' });
+      
+    } catch (error) {
+      console.error('❌ Error reordering equipment:', error);
+      res.status(500).json({ success: false, error: 'Failed to reorder equipment' });
+    }
+  });
+  
+  // Reorder Makes within an Equipment
+  app.post('/api/dev/semm/reorder-makes', sessionBridge, async (req, res) => {
+    try {
+      const { systemCode, equipmentCode, orderedCodes } = req.body;
+      
+      if (!systemCode || !equipmentCode || !Array.isArray(orderedCodes) || orderedCodes.length === 0) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'systemCode, equipmentCode, and orderedCodes are required' 
+        });
+      }
+      
+      console.log('🔄 Reordering makes in equipment', equipmentCode, ':', orderedCodes);
+      
+      // Update the order for each make
+      for (let i = 0; i < orderedCodes.length; i++) {
+        await pool.query(`
+          UPDATE semm_structure 
+          SET make_order = $1 
+          WHERE sid = $2 AND eid = $3 AND mid = $4
+        `, [i + 1, systemCode, equipmentCode, orderedCodes[i]]);
+      }
+      
+      console.log('✅ Successfully reordered makes');
+      res.json({ success: true, message: 'Makes reordered successfully' });
+      
+    } catch (error) {
+      console.error('❌ Error reordering makes:', error);
+      res.status(500).json({ success: false, error: 'Failed to reorder makes' });
+    }
+  });
+  
+  // Reorder Models within a Make
+  app.post('/api/dev/semm/reorder-models', sessionBridge, async (req, res) => {
+    try {
+      const { systemCode, equipmentCode, makeCode, orderedCodes } = req.body;
+      
+      if (!systemCode || !equipmentCode || !makeCode || !Array.isArray(orderedCodes) || orderedCodes.length === 0) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'systemCode, equipmentCode, makeCode, and orderedCodes are required' 
+        });
+      }
+      
+      console.log('🔄 Reordering models in make', makeCode, ':', orderedCodes);
+      
+      // Update the order for each model
+      for (let i = 0; i < orderedCodes.length; i++) {
+        await pool.query(`
+          UPDATE semm_structure 
+          SET model_order = $1 
+          WHERE sid = $2 AND eid = $3 AND mid = $4 AND moid = $5
+        `, [i + 1, systemCode, equipmentCode, makeCode, orderedCodes[i]]);
+      }
+      
+      console.log('✅ Successfully reordered models');
+      res.json({ success: true, message: 'Models reordered successfully' });
+      
+    } catch (error) {
+      console.error('❌ Error reordering models:', error);
+      res.status(500).json({ success: false, error: 'Failed to reorder models' });
+    }
+  });
+
   // Add machine share route
   app.get('/share/machine/:id', async (req, res) => {
     try {

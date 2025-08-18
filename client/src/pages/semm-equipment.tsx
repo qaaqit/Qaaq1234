@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
-import { ArrowLeft, Share2, Home, ChevronRight, Edit3 } from 'lucide-react';
+import { ArrowLeft, Share2, Home, ChevronRight, Edit3, RotateCcw } from 'lucide-react';
+import { SemmReorderModal } from '@/components/semm-reorder-modal';
+import { apiRequest } from '@/lib/queryClient';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -91,7 +93,15 @@ export default function SemmEquipmentPage() {
     retry: 3,
   });
 
-  // Admin edit functions
+  // Admin edit and reorder functions
+  const [reorderModal, setReorderModal] = useState<{
+    isOpen: boolean;
+    items: Array<{ code: string; title: string }>;
+  }>({
+    isOpen: false,
+    items: []
+  });
+
   const handleEditEquipment = (equipmentCode: string) => {
     console.log('Edit equipment:', equipmentCode);
     // TODO: Implement edit equipment modal
@@ -102,9 +112,33 @@ export default function SemmEquipmentPage() {
     // TODO: Implement edit make modal
   };
 
-  const handleEditModel = (modelCode: string) => {
-    console.log('Edit model:', modelCode);
-    // TODO: Implement edit model modal
+  const handleReorderMakes = () => {
+    if (!foundEquipment?.makes) return;
+    
+    const makes = foundEquipment.makes.map((make: any) => ({
+      code: make.code,
+      title: make.title
+    }));
+    
+    setReorderModal({
+      isOpen: true,
+      items: makes
+    });
+  };
+
+  const handleReorderSubmit = async (orderedCodes: string[]) => {
+    await apiRequest('/api/dev/semm/reorder-makes', {
+      method: 'POST',
+      body: { 
+        systemCode: parentSystem.code, 
+        equipmentCode: foundEquipment.code,
+        orderedCodes 
+      }
+    });
+  };
+
+  const closeReorderModal = () => {
+    setReorderModal(prev => ({ ...prev, isOpen: false }));
   };
 
   if (isLoading) {
@@ -229,7 +263,20 @@ export default function SemmEquipmentPage() {
         {/* Makes Cards Grid */}
         {foundEquipment.makes && foundEquipment.makes.length > 0 ? (
           <div className="mt-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Makes for {foundEquipment.title}</h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Makes for {foundEquipment.title}</h2>
+              {isAdmin && (
+                <button
+                  onClick={handleReorderMakes}
+                  className="flex items-center space-x-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                  title="Reorder Makes"
+                  data-testid="reorder-makes-btn"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  <span>Reorder Makes</span>
+                </button>
+              )}
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {foundEquipment.makes.map((make: any) => (
                 <div 
@@ -296,6 +343,15 @@ export default function SemmEquipmentPage() {
         )}
 
       </div>
+      
+      {/* Reorder Modal */}
+      <SemmReorderModal
+        isOpen={reorderModal.isOpen}
+        onClose={closeReorderModal}
+        title="Makes"
+        items={reorderModal.items}
+        onReorder={handleReorderSubmit}
+      />
     </div>
   );
 }

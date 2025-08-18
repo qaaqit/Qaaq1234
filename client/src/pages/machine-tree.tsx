@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { ChevronRight, ChevronDown, Package, Settings, Building, Ship, Heart, Share2, RotateCcw, Edit3, Plus, GripVertical, ExternalLink } from 'lucide-react';
+import { SemmReorderModal } from '@/components/semm-reorder-modal';
+import { apiRequest } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/useAuth';
 
 interface Category {
@@ -43,6 +45,17 @@ export default function MachineTreePage() {
   // Get user authentication info
   const { user, isAuthenticated } = useAuth();
   const isAdmin = user?.isAdmin || user?.role === 'admin';
+
+  // Reorder modal state
+  const [reorderModal, setReorderModal] = useState<{
+    isOpen: boolean;
+    type: 'systems' | 'equipment';
+    items: Array<{ code: string; title: string }>;
+  }>({
+    isOpen: false,
+    type: 'systems',
+    items: []
+  });
 
   // Fetch SEMM cards from local endpoint
   const { data: semmData, isLoading: semmLoading, error: semmError } = useQuery({
@@ -113,9 +126,21 @@ export default function MachineTreePage() {
     // TODO: Implement edit system modal
   };
 
+  // Admin functions - reorder systems and equipment
+
   const handleReorderSystems = () => {
-    console.log('Reorder systems');
-    // TODO: Implement reorder systems modal
+    if (!semmData?.data) return;
+    
+    const systems = semmData.data.map((system: any) => ({
+      code: system.code,
+      title: system.title
+    }));
+    
+    setReorderModal({
+      type: 'systems',
+      isOpen: true,
+      items: systems
+    });
   };
 
   const handleAddNewSystem = () => {
@@ -128,9 +153,51 @@ export default function MachineTreePage() {
     // TODO: Implement edit equipment modal
   };
 
-  const handleReorderEquipment = (systemId: string) => {
-    console.log('Reorder equipment for system:', systemId);
-    // TODO: Implement reorder equipment modal
+  const handleReorderEquipment = (systemCode: string) => {
+    if (!semmData?.data) return;
+    
+    const system = semmData.data.find((s: any) => s.code === systemCode);
+    if (!system) return;
+    
+    const equipment = system.equipment.map((eq: any) => ({
+      code: eq.code,
+      title: eq.title
+    }));
+    
+    setReorderModal({
+      type: 'equipment',
+      isOpen: true,
+      items: equipment
+    });
+  };
+
+  const handleReorderSubmit = async (orderedCodes: string[]) => {
+    if (reorderModal.type === 'systems') {
+      await apiRequest('/api/dev/semm/reorder-systems', {
+        method: 'POST',
+        body: { orderedCodes }
+      });
+    } else if (reorderModal.type === 'equipment') {
+      const system = semmData.data.find((s: any) => 
+        s.equipment.some((eq: any) => 
+          reorderModal.items.some(item => item.code === eq.code)
+        )
+      );
+      
+      if (system) {
+        await apiRequest('/api/dev/semm/reorder-equipment', {
+          method: 'POST',
+          body: { 
+            systemCode: system.code,
+            orderedCodes 
+          }
+        });
+      }
+    }
+  };
+
+  const closeReorderModal = () => {
+    setReorderModal(prev => ({ ...prev, isOpen: false }));
   };
 
   const handleAddNewEquipment = (systemId: string) => {
@@ -579,6 +646,15 @@ export default function MachineTreePage() {
           </div>
         </div>
       </div>
+      
+      {/* Reorder Modal */}
+      <SemmReorderModal
+        isOpen={reorderModal.isOpen}
+        onClose={closeReorderModal}
+        title={reorderModal.type === 'systems' ? 'Systems' : 'Equipment'}
+        items={reorderModal.items}
+        onReorder={handleReorderSubmit}
+      />
     </div>
   );
 }
