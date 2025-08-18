@@ -4044,7 +4044,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate new alphabetical codes based on position
       const generateMakeCode = (index: number): string => {
         const letter = String.fromCharCode(97 + index); // a, b, c, etc.
-        return `${systemCode}${equipmentCode.slice(1)}${letter}`; // aba, abb, abc for equipment ab
+        return `${equipmentCode}${letter}`; // aaa, aab, aac for equipment aa
       };
       
       // Process each make in the desired order
