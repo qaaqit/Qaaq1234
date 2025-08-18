@@ -247,7 +247,7 @@ export function PremiumSubscriptionDialog({
             </TabsTrigger>
             <TabsTrigger value="super_user" className="flex items-center gap-2">
               <Sparkles className="h-4 w-4" />
-              Super Private User
+              Coming Soon plans
             </TabsTrigger>
           </TabsList>
 
@@ -630,7 +630,7 @@ export function PremiumSubscriptionDialog({
                 ) : (
                   <>
                     <ExternalLink className="h-4 w-4 mr-2" />
-                    Subscribe Now
+                    Coming Soon
                   </>
                 )}
               </Button>
