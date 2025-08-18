@@ -91,9 +91,19 @@ export function SemmReorderModal({ isOpen, onClose, title, items, onReorder }: R
         </DialogHeader>
         
         <div className="space-y-3">
-          <div className="text-sm text-gray-600 bg-orange-50 p-3 rounded-lg border border-orange-200">
-            <Edit3 className="w-4 h-4 text-orange-600 inline mr-2" />
-            Edit codes directly to reorder. Modified codes will be saved with new positions.
+          <div className="text-sm text-gray-700 bg-orange-50 p-4 rounded-lg border border-orange-200">
+            <div className="flex items-start space-x-2 mb-2">
+              <Edit3 className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <div className="font-semibold text-orange-800 mb-1">How to Reorder:</div>
+                <div className="space-y-1 text-xs">
+                  <div>• <strong>Click in code input fields</strong> and type new codes to reorder</div>
+                  <div>• <strong>Alphabetical order:</strong> "aa" comes before "ab", "ab" before "ac"</div>
+                  <div>• <strong>Quick position change:</strong> Use ↑↓ arrows beside each item</div>
+                  <div>• <strong>Save:</strong> Click "Save Changes" to apply all modifications</div>
+                </div>
+              </div>
+            </div>
           </div>
           
           {orderedItems.map((item, index) => (
@@ -106,14 +116,17 @@ export function SemmReorderModal({ isOpen, onClose, title, items, onReorder }: R
                 <GripVertical className="w-4 h-4 text-gray-400" />
                 
                 <div className="flex items-center space-x-3 flex-1">
-                  <div className="w-20">
+                  <div className="w-24 relative">
                     <Input
                       value={editingCodes[item.code] || item.code}
                       onChange={(e) => handleCodeEdit(item.code, e.target.value.toLowerCase())}
-                      className="text-sm font-mono text-center bg-orange-50 border-orange-200 focus:border-orange-400 focus:ring-orange-200"
+                      className="text-sm font-mono text-center bg-orange-50 border-2 border-orange-300 focus:border-orange-500 focus:ring-orange-200 font-bold"
                       placeholder="Code"
                       data-testid={`edit-code-${item.code}`}
                     />
+                    {editingCodes[item.code] && editingCodes[item.code] !== item.code && (
+                      <div className="absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+                    )}
                   </div>
                   
                   <div className="flex-1">
@@ -121,10 +134,10 @@ export function SemmReorderModal({ isOpen, onClose, title, items, onReorder }: R
                       {item.title}
                     </div>
                     <div className="text-xs text-gray-500">
-                      Original: {item.code.toUpperCase()}
+                      Original: <span className="font-mono">{item.code.toUpperCase()}</span>
                       {editingCodes[item.code] && editingCodes[item.code] !== item.code && (
-                        <span className="text-orange-600 ml-2">
-                          → {editingCodes[item.code].toUpperCase()}
+                        <span className="text-orange-600 ml-2 font-semibold">
+                          → <span className="font-mono">{editingCodes[item.code].toUpperCase()}</span> ✓
                         </span>
                       )}
                     </div>
