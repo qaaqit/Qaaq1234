@@ -4049,6 +4049,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+
   // Add machine share route
   app.get('/share/machine/:id', async (req, res) => {
     try {
