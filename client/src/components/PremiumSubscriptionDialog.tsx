@@ -542,20 +542,33 @@ export function PremiumSubscriptionDialog({
                       Pay ₹451 - Monthly Premium
                     </h4>
 
-                    {/* Card Payment Option */}
-                    <div>
+                    {/* Payment Options */}
+                    <div className="space-y-3">
                       <h5 className="text-sm font-medium mb-2">
-                        Pay via Card
+                        Payment Options
                       </h5>
-                      <a
-                        href="https://rzp.io/rzp/jwQW9TW"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                        Pay via Card - ₹451
-                      </a>
+                      <div className="space-y-2">
+                        <a
+                          href="https://rzp.io/rzp/jwQW9TW"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors w-full justify-center"
+                          data-testid="button-pay-card-monthly"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          Pay via Card - ₹451
+                        </a>
+                        <a
+                          href="https://rzp.io/rzp/QACUUpcD"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors w-full justify-center"
+                          data-testid="button-pay-upi-monthly"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          Pay via UPI - ₹451
+                        </a>
+                      </div>
                     </div>
                   </>
                 ) : (
@@ -564,20 +577,33 @@ export function PremiumSubscriptionDialog({
                       Pay ₹2,611 - Yearly Premium
                     </h4>
 
-                    {/* Card Payment Option */}
-                    <div>
+                    {/* Payment Options */}
+                    <div className="space-y-3">
                       <h5 className="text-sm font-medium mb-2">
-                        Pay via Card
+                        Payment Options
                       </h5>
-                      <a
-                        href="https://rzp.io/rzp/NAU59cv"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                        Pay via Card - ₹2,611
-                      </a>
+                      <div className="space-y-2">
+                        <a
+                          href="https://rzp.io/rzp/NAU59cv"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors w-full justify-center"
+                          data-testid="button-pay-card-yearly"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          Pay via Card - ₹2,611
+                        </a>
+                        <a
+                          href="https://rzp.io/rzp/COgnl5fN"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors w-full justify-center"
+                          data-testid="button-pay-upi-yearly"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          Pay via UPI - ₹2,611
+                        </a>
+                      </div>
                     </div>
                   </>
                 )}
