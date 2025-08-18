@@ -3780,12 +3780,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('🔧 Successfully fetched', semmData.length, 'SEMM records from parent database');
       console.log('🔧 Sample SEMM record:', semmData[0]);
       
-      // Group data by system code
+      // Group data by system code with code correction mapping
       const systemsMap = new Map();
       semmData.forEach(record => {
         if (!systemsMap.has(record.system_code)) {
+          // Fix data integrity issue: system "s" should have code "z" since title is "z. Miscellaneous"
+          let correctedCode = record.system_code;
+          if (record.system_code === 's' && record.system && record.system.startsWith('z.')) {
+            correctedCode = 'z';
+          }
+          
           systemsMap.set(record.system_code, {
-            code: record.system_code,
+            code: correctedCode,
             title: record.system,
             equipment: []
           });
