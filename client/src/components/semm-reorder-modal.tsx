@@ -19,6 +19,8 @@ export function SemmReorderModal({ isOpen, onClose, title, items, onReorder }: R
   const [orderedItems, setOrderedItems] = useState(items);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  console.log('🔧 Modal props:', { isOpen, title, itemsCount: items.length });
 
   const reorderMutation = useMutation({
     mutationFn: async () => {

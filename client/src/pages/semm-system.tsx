@@ -156,18 +156,27 @@ export default function SemmSystemPage() {
   };
 
   const handleReorderEquipment = () => {
-    if (!foundSystem.equipment) return;
+    console.log('🔄 Reorder button clicked');
+    
+    if (!foundSystem.equipment) {
+      console.log('❌ No equipment found');
+      return;
+    }
     
     const equipment = foundSystem.equipment.map((eq: any) => ({
       code: eq.code,
       title: eq.title
     }));
     
+    console.log('📦 Equipment items:', equipment);
+    
     setReorderModal({
       isOpen: true,
-      type: 'equipment',
+      type: 'equipment', 
       items: equipment
     });
+    
+    console.log('✅ Modal state set to open');
   };
 
   const handleReorderSubmit = async (orderedCodes: string[]) => {
