@@ -86,7 +86,8 @@ export const SUBSCRIPTION_PLANS: {
       name: 'Premium Yearly Plan',
       description: 'Enhanced QBOT features and priority support - Save ₹2,801',
       displayPrice: '₹2,611',
-      savings: '₹2,801 (6+ months free)'
+      savings: '₹2,801 (6+ months free)',
+      checkoutUrl: 'https://rzp.io/rzp/NAU59cv' // Fixed yearly subscription link
     }
   },
   super_user: {
