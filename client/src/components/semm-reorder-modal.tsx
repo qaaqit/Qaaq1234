@@ -97,10 +97,10 @@ export function SemmReorderModal({ isOpen, onClose, title, items, onReorder }: R
               <div>
                 <div className="font-semibold text-orange-800 mb-1">How to Reorder:</div>
                 <div className="space-y-1 text-xs">
-                  <div>• <strong>Click in code input fields</strong> and type new codes to reorder</div>
-                  <div>• <strong>Alphabetical order:</strong> "aa" comes before "ab", "ab" before "ac"</div>
-                  <div>• <strong>Quick position change:</strong> Use ↑↓ arrows beside each item</div>
-                  <div>• <strong>Save:</strong> Click "Save Changes" to apply all modifications</div>
+                  <div>• <strong>Click directly in the orange code input boxes</strong> below to edit</div>
+                  <div>• <strong>Type new codes:</strong> "aa" comes before "ab", "ab" before "ac"</div>
+                  <div>• <strong>Position arrows:</strong> Use ↑↓ buttons to quickly move items</div>
+                  <div>• <strong>Save changes:</strong> Click "Save Changes" button when ready</div>
                 </div>
               </div>
             </div>
@@ -111,6 +111,7 @@ export function SemmReorderModal({ isOpen, onClose, title, items, onReorder }: R
               key={item.code}
               className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200 hover:border-orange-300 transition-colors"
               data-testid={`reorder-item-${item.code}`}
+              onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center space-x-4 flex-1">
                 <GripVertical className="w-4 h-4 text-gray-400" />
@@ -119,10 +120,16 @@ export function SemmReorderModal({ isOpen, onClose, title, items, onReorder }: R
                   <div className="w-24 relative">
                     <Input
                       value={editingCodes[item.code] || item.code}
-                      onChange={(e) => handleCodeEdit(item.code, e.target.value.toLowerCase())}
-                      className="text-sm font-mono text-center bg-orange-50 border-2 border-orange-300 focus:border-orange-500 focus:ring-orange-200 font-bold"
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        handleCodeEdit(item.code, e.target.value.toLowerCase());
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      onFocus={(e) => e.stopPropagation()}
+                      className="text-sm font-mono text-center bg-orange-50 border-2 border-orange-300 focus:border-orange-500 focus:ring-orange-200 font-bold cursor-text hover:bg-orange-100 hover:border-orange-400 transition-colors"
                       placeholder="Code"
                       data-testid={`edit-code-${item.code}`}
+                      autoComplete="off"
                     />
                     {editingCodes[item.code] && editingCodes[item.code] !== item.code && (
                       <div className="absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
