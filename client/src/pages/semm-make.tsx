@@ -1,7 +1,7 @@
 import { useParams, useLocation } from 'wouter';
-import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Share2, ChevronRight, Edit3, RotateCcw } from 'lucide-react';
-import { SemmReorderModal } from '@/components/semm-reorder-modal';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft, Share2, ChevronRight, Edit3, RotateCcw, ChevronUp, ChevronDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { apiRequest } from '@/lib/queryClient';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
@@ -86,6 +86,7 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
 export default function SemmMakePage() {
   const { code } = useParams<{ code: string }>();
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
 
   // Get user authentication info
   const { user, isAuthenticated } = useAuth();
@@ -110,31 +111,22 @@ export default function SemmMakePage() {
   };
 
   // Reorder functionality
-  const [reorderModal, setReorderModal] = useState<{
-    isOpen: boolean;
-    items: Array<{ code: string; title: string }>;
-  }>({
-    isOpen: false,
-    items: []
-  });
+  const [reorderMode, setReorderMode] = useState(false);
+  const [tempModels, setTempModels] = useState<any[]>([]);
 
   const handleReorderModels = () => {
     if (!foundMake?.models) return;
+    console.log('🔄 Reorder button clicked');
+    console.log('📦 Model items:', foundMake.models.map((model: any) => ({ code: model.code, title: model.title })));
     
-    const models = foundMake.models.map((model: any) => ({
-      code: model.code,
-      title: model.title
-    }));
-    
-    setReorderModal({
-      isOpen: true,
-      items: models
-    });
+    setTempModels([...foundMake.models]);
+    setReorderMode(true);
+    console.log('✅ Reorder mode enabled');
   };
 
-  const handleReorderSubmit = async (orderedItems: Array<{ code: string; title: string }>) => {
+  const handleReorderSubmit = async () => {
     try {
-      const orderedModels = orderedItems.map((item, index) => ({
+      const orderedModels = tempModels.map((item, index) => ({
         modelName: item.title,
         oldCode: item.code,
         newPosition: index
@@ -147,13 +139,32 @@ export default function SemmMakePage() {
         orderedModels 
       });
       console.log('✅ Successfully reordered models');
+      
+      // Reset reorder mode and refresh data
+      setReorderMode(false);
+      setTempModels([]);
+      
+      // Invalidate and refetch the query
+      queryClient.invalidateQueries({ queryKey: ['/api/dev/semm-cards'] });
+      
     } catch (error) {
       console.error('❌ Error reordering models:', error);
     }
   };
 
-  const closeReorderModal = () => {
-    setReorderModal(prev => ({ ...prev, isOpen: false }));
+  const cancelReorder = () => {
+    setReorderMode(false);
+    setTempModels([]);
+  };
+
+  const moveModel = (index: number, direction: 'up' | 'down') => {
+    const newModels = [...tempModels];
+    if (direction === 'up' && index > 0) {
+      [newModels[index], newModels[index - 1]] = [newModels[index - 1], newModels[index]];
+    } else if (direction === 'down' && index < newModels.length - 1) {
+      [newModels[index], newModels[index + 1]] = [newModels[index + 1], newModels[index]];
+    }
+    setTempModels(newModels);
   };
 
   if (isLoading) {
@@ -290,7 +301,7 @@ export default function SemmMakePage() {
           <div className="mt-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">Models for {foundMake.title}</h2>
-              {isAdmin && (
+              {isAdmin && !reorderMode && (
                 <button
                   onClick={handleReorderModels}
                   className="p-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-lg"
@@ -300,13 +311,32 @@ export default function SemmMakePage() {
                   <RotateCcw className="w-5 h-5" />
                 </button>
               )}
+              {reorderMode && (
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={cancelReorder}
+                    data-testid="cancel-reorder"
+                    className="border-orange-300 text-orange-600 hover:bg-orange-100"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleReorderSubmit}
+                    data-testid="save-reorder"
+                    className="bg-orange-500 hover:bg-orange-600 text-white"
+                  >
+                    Save Order
+                  </Button>
+                </div>
+              )}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {foundMake.models.map((model: any) => (
+              {(reorderMode ? tempModels : foundMake.models).map((model: any, index: number) => (
                 <div 
                   key={model.code}
-                  className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow cursor-pointer group"
-                  onClick={() => setLocation(`/machinetree/${model.code}`)}
+                  className={`bg-white rounded-xl shadow-lg border border-gray-200 p-6 transition-shadow ${!reorderMode ? 'hover:shadow-xl cursor-pointer' : ''} group`}
+                  onClick={!reorderMode ? () => setLocation(`/machinetree/${model.code}`) : undefined}
                   data-testid={`model-card-${model.code}`}
                 >
                   <div className="flex items-start justify-between mb-4">
@@ -321,7 +351,30 @@ export default function SemmMakePage() {
                         <p className="text-sm text-gray-500">Model Type</p>
                       </div>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-orange-500 transition-colors" />
+                    {reorderMode ? (
+                      <div className="flex flex-col space-y-1">
+                        <button
+                          onClick={() => moveModel(index, 'up')}
+                          disabled={index === 0}
+                          className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed rounded hover:bg-orange-50 transition-colors"
+                          data-testid={`move-up-${model.code}`}
+                          title="Move up"
+                        >
+                          <ChevronUp className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => moveModel(index, 'down')}
+                          disabled={index === tempModels.length - 1}
+                          className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed rounded hover:bg-orange-50 transition-colors"
+                          data-testid={`move-down-${model.code}`}
+                          title="Move down"
+                        >
+                          <ChevronDown className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-orange-500 transition-colors" />
+                    )}
                   </div>
                   
                   <div className="space-y-2">
@@ -335,7 +388,7 @@ export default function SemmMakePage() {
                   </div>
 
                   {/* Admin edit button */}
-                  {isAdmin && (
+                  {isAdmin && !reorderMode && (
                     <div className="mt-4 pt-2 border-t border-gray-100">
                       <button
                         onClick={(e) => {
@@ -362,15 +415,6 @@ export default function SemmMakePage() {
         )}
 
       </div>
-      
-      {/* Reorder Modal */}
-      <SemmReorderModal
-        isOpen={reorderModal.isOpen}
-        onClose={closeReorderModal}
-        title="Models"
-        items={reorderModal.items}
-        onReorder={handleReorderSubmit}
-      />
     </div>
   );
 }
