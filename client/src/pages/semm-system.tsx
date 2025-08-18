@@ -90,7 +90,7 @@ export default function SemmSystemPage() {
   const [reorderEnabled, setReorderEnabled] = useState(false);
   const [reorderItems, setReorderItems] = useState<Array<{ code: string; title: string }>>([]);
   
-  const { data: user } = useAuth();
+  const { user } = useAuth();
   const isAdmin = user?.isAdmin || false;
 
   // Fetch SEMM data to find the specific system
@@ -471,91 +471,6 @@ export default function SemmSystemPage() {
         )}
 
       </div>
-    </div>
-  );
-}
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-800 group-hover:text-orange-600 transition-colors">
-                          {equipment.title}
-                        </h3>
-                        <p className="text-sm text-gray-500">Equipment Type</p>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-orange-500 transition-colors" />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-600">
-                      {equipment.description || `${equipment.title} equipment classification`}
-                    </p>
-                    
-                    {equipment.makes && equipment.makes.length > 0 && (
-                      <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                        <span className="text-xs text-gray-500">Makes Available</span>
-                        <div className="flex items-center space-x-2">
-                          <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
-                            {equipment.makes.length} {equipment.makes.length === 1 ? 'Make' : 'Makes'}
-                          </span>
-                          <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
-                            {equipment.makes.reduce((sum: number, make: any) => sum + (make.models?.length || 0), 0)} Models
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Admin edit button */}
-                  {isAdmin && (
-                    <div className="mt-4 pt-2 border-t border-gray-100">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditEquipment(equipment.code);
-                        }}
-                        className="flex items-center space-x-2 px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors w-full justify-center"
-                        title="Edit Equipment"
-                        data-testid={`edit-equipment-${equipment.code}`}
-                      >
-                        <Edit3 className="w-4 h-4" />
-                        <span>Edit Equipment</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {/* Add New Equipment Button for Admins */}
-            {isAdmin && (
-              <div className="mt-6">
-                <button
-                  onClick={handleAddNewEquipment}
-                  className="flex items-center space-x-2 text-sm text-orange-600 hover:text-orange-700 px-4 py-3 border-2 border-dashed border-orange-300 rounded-lg hover:border-orange-400 transition-colors"
-                  data-testid="add-new-equipment"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>Add New Equipment</span>
-                </button>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8 text-center">
-            <p className="text-lg text-gray-600">No equipment found for this system.</p>
-          </div>
-        )}
-
-      </div>
-      
-      {/* Reorder Modal */}
-      <SemmReorderModal
-        isOpen={reorderModal.isOpen}
-        onClose={closeReorderModal}
-        title="Equipment"
-        items={reorderModal.items}
-        onReorder={handleReorderSubmit}
-      />
     </div>
   );
 }

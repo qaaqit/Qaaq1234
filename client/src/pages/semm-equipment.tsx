@@ -73,7 +73,12 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
         />
       )}
       
-
+      <style>{`
+        @keyframes flash {
+          0% { opacity: 0.3; }
+          100% { opacity: 0; }
+        }
+      `}</style>
     </div>
   );
 };
@@ -106,7 +111,7 @@ export default function SemmEquipmentPage() {
     );
   }
 
-  if (error || !semmData?.data) {
+  if (error || !semmData) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
         <div className="text-xl text-red-600">Failed to load equipment data</div>
@@ -119,7 +124,7 @@ export default function SemmEquipmentPage() {
   let parentSystem = null;
 
   // Check if semmData.data is an array of systems or has a systems property
-  const systems = Array.isArray(semmData.data) ? semmData.data : semmData.data.systems || [];
+  const systems = Array.isArray((semmData as any)?.data) ? (semmData as any).data : (semmData as any)?.systems || [];
   
   for (const system of systems) {
     if (system.equipment && Array.isArray(system.equipment)) {
