@@ -54,11 +54,6 @@ export default function MachineTreePage() {
   // Extract data from the parent app response
   // The API returns data as an array of systems with nested equipment/makes/models
   const systems = (semmData as any)?.data || [];
-  
-  // Debug log to check system codes
-  if (systems.length > 0) {
-    console.log('System codes from API:', systems.map((s: any) => ({ code: s.code, title: s.title })));
-  }
   const allEquipment = systems.flatMap((system: any) => system.equipment || []);
   const allMakes = allEquipment.flatMap((equipment: any) => equipment.makes || []);
   const allModels = allMakes.flatMap((make: any) => make.models || []);

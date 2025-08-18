@@ -233,87 +233,72 @@ export default function SemmEquipmentPage() {
           </div>
         </div>
 
-        {/* Makes and Models Section */}
-        {foundEquipment.makes && foundEquipment.makes.length > 0 && (
-          <div className="mt-8 bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-              <span className="mr-2">Available Makes & Models</span>
-              {isAdmin && (
-                <button
-                  onClick={() => handleEditEquipment(foundEquipment.code)}
-                  className="p-2 hover:bg-orange-100 rounded-full transition-colors"
-                  title="Edit Equipment Structure"
-                  data-testid="edit-equipment-structure"
+        {/* Makes Cards Grid */}
+        {foundEquipment.makes && foundEquipment.makes.length > 0 ? (
+          <div className="mt-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Makes for {foundEquipment.title}</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {foundEquipment.makes.map((make: any) => (
+                <div 
+                  key={make.code}
+                  className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow cursor-pointer group"
+                  onClick={() => setLocation(`/machinetree/make/${make.code}`)}
+                  data-testid={`make-card-${make.code}`}
                 >
-                  <Edit3 className="h-4 w-4 text-orange-600" />
-                </button>
-              )}
-            </h2>
-            
-            <div className="space-y-6">
-              {foundEquipment.makes.map((make: any, makeIndex: number) => (
-                <div key={make.code} className="border border-gray-200 rounded-lg p-6">
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <span className="text-blue-600 font-bold">{make.code}</span>
+                      <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <span className="text-green-600 font-bold">{make.code}</span>
                       </div>
-                      <div>
-                        <h3 className="text-xl font-semibold text-gray-800">{make.title}</h3>
-                        <p className="text-sm text-gray-500">{make.description}</p>
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-gray-800 group-hover:text-green-600 transition-colors">
+                          {make.title}
+                        </h3>
+                        <p className="text-sm text-gray-500">Make Type</p>
                       </div>
                     </div>
-                    {isAdmin && (
+                    <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-green-500 transition-colors" />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-600">
+                      {make.description || `${make.title} make classification`}
+                    </p>
+                    
+                    {make.models && make.models.length > 0 && (
+                      <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                        <span className="text-xs text-gray-500">Models Available</span>
+                        <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
+                          {make.models.length} {make.models.length === 1 ? 'Model' : 'Models'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Admin edit button */}
+                  {isAdmin && (
+                    <div className="mt-4 pt-2 border-t border-gray-100">
                       <button
-                        onClick={() => handleEditMake(make.code)}
-                        className="flex items-center space-x-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditMake(make.code);
+                        }}
+                        className="flex items-center space-x-2 px-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors w-full justify-center"
                         title="Edit Make"
                         data-testid={`edit-make-${make.code}`}
                       >
                         <Edit3 className="w-4 h-4" />
                         <span>Edit Make</span>
                       </button>
-                    )}
-                  </div>
-                  
-                  {make.models && make.models.length > 0 && (
-                    <div>
-                      <h4 className="text-lg font-medium text-gray-700 mb-3">Models</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {make.models.map((model: any, modelIndex: number) => (
-                          <div 
-                            key={model.code} 
-                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors group"
-                          >
-                            <div className="flex items-center space-x-3">
-                              <div className="w-8 h-8 bg-green-100 rounded flex items-center justify-center">
-                                <span className="text-green-600 text-xs font-bold">{model.code}</span>
-                              </div>
-                              <div>
-                                <span className="font-medium text-gray-800">{model.title}</span>
-                                {model.description && (
-                                  <p className="text-xs text-gray-500">{model.description}</p>
-                                )}
-                              </div>
-                            </div>
-                            {isAdmin && (
-                              <button
-                                onClick={() => handleEditModel(model.code)}
-                                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-green-100 rounded transition-all"
-                                title="Edit Model"
-                                data-testid={`edit-model-${model.code}`}
-                              >
-                                <Edit3 className="h-3 w-3 text-green-600" />
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                      </div>
                     </div>
                   )}
                 </div>
               ))}
             </div>
+          </div>
+        ) : (
+          <div className="mt-8 bg-white rounded-2xl shadow-xl border border-gray-200 p-8 text-center">
+            <p className="text-lg text-gray-600">No makes found for this equipment.</p>
           </div>
         )}
 
