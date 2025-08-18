@@ -4085,27 +4085,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Reorder Models within a Make
   app.post('/api/dev/semm/reorder-models', sessionBridge, async (req, res) => {
     try {
-      const { systemCode, equipmentCode, makeCode, orderedCodes } = req.body;
+      const { systemCode, equipmentCode, makeCode, orderedModels } = req.body;
       
-      if (!systemCode || !equipmentCode || !makeCode || !Array.isArray(orderedCodes) || orderedCodes.length === 0) {
+      if (!systemCode || !equipmentCode || !makeCode || !Array.isArray(orderedModels) || orderedModels.length === 0) {
         return res.status(400).json({ 
           success: false, 
-          error: 'systemCode, equipmentCode, makeCode, and orderedCodes are required' 
+          error: 'systemCode, equipmentCode, makeCode, and orderedModels are required' 
         });
       }
       
-      console.log('🔄 Reordering models in make', makeCode, ':', orderedCodes);
+      console.log('🔄 Reordering models in make', makeCode);
+      console.log('🔄 New order:', orderedModels.map(m => `${m.modelName} (${m.oldCode} -> position ${m.newPosition})`));
       
-      // Update the order for each model
-      for (let i = 0; i < orderedCodes.length; i++) {
+      // Generate new alphabetical codes based on position
+      const generateModelCode = (index: number): string => {
+        const letter = String.fromCharCode(97 + index); // a, b, c, etc.
+        return `${makeCode}${letter}`; // aaaa, aaab, aaac for make aaa
+      };
+      
+      // Process each model in the desired order
+      for (let i = 0; i < orderedModels.length; i++) {
+        const model = orderedModels[i];
+        const newCode = generateModelCode(i);
+        
+        console.log(`🔄 Updating ${model.modelName}: ${model.oldCode} -> ${newCode}`);
+        
+        // First, update to a temporary code to avoid conflicts
         await pool.query(`
           UPDATE semm_structure 
-          SET model_order = $1 
+          SET moid = $1
           WHERE sid = $2 AND eid = $3 AND mid = $4 AND moid = $5
-        `, [i + 1, systemCode, equipmentCode, makeCode, orderedCodes[i]]);
+        `, [`tmp${i}`, systemCode, equipmentCode, makeCode, model.oldCode]);
       }
       
-      console.log('✅ Successfully reordered models');
+      // Now update with final codes
+      for (let i = 0; i < orderedModels.length; i++) {
+        const newCode = generateModelCode(i);
+        
+        await pool.query(`
+          UPDATE semm_structure 
+          SET moid = $1, model_order = $2 
+          WHERE sid = $3 AND eid = $4 AND mid = $5 AND moid = $6
+        `, [newCode, i + 1, systemCode, equipmentCode, makeCode, `tmp${i}`]);
+      }
+      
+      console.log('✅ Successfully reordered models with new codes');
       res.json({ success: true, message: 'Models reordered successfully' });
       
     } catch (error) {

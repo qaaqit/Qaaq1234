@@ -11,7 +11,7 @@ interface ReorderModalProps {
   onClose: () => void;
   title: string;
   items: Array<{ code: string; title: string }>;
-  onReorder: (orderedCodes: string[]) => Promise<void>;
+  onReorder: (orderedItems: Array<{ code: string; title: string }>) => Promise<void>;
 }
 
 export function SemmReorderModal({ isOpen, onClose, title, items, onReorder }: ReorderModalProps) {
@@ -22,15 +22,7 @@ export function SemmReorderModal({ isOpen, onClose, title, items, onReorder }: R
 
   const reorderMutation = useMutation({
     mutationFn: async () => {
-      // Generate new alphabetical codes based on current order
-      const baseChar = items[0]?.code?.[0] || 'a';
-      const codeLength = items[0]?.code?.length || 2;
-      
-      const reorderedCodes = orderedItems.map((_, index) => {
-        return baseChar + String.fromCharCode(97 + index).repeat(codeLength - 1);
-      });
-      
-      await onReorder(reorderedCodes);
+      await onReorder(orderedItems);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/dev/semm-cards'] });
@@ -129,7 +121,7 @@ export function SemmReorderModal({ isOpen, onClose, title, items, onReorder }: R
             onClick={() => reorderMutation.mutate()}
             disabled={reorderMutation.isPending}
             data-testid="save-reorder"
-            className="bg-blue-500 hover:bg-blue-600 text-white"
+            className="bg-orange-500 hover:bg-orange-600 text-white"
           >
             {reorderMutation.isPending ? 'Saving...' : 'Save Order'}
           </Button>

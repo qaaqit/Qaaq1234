@@ -132,13 +132,19 @@ export default function SemmMakePage() {
     });
   };
 
-  const handleReorderSubmit = async (orderedCodes: string[]) => {
+  const handleReorderSubmit = async (orderedItems: Array<{ code: string; title: string }>) => {
     try {
+      const orderedModels = orderedItems.map((item, index) => ({
+        modelName: item.title,
+        oldCode: item.code,
+        newPosition: index
+      }));
+
       await apiRequest('/api/dev/semm/reorder-models', 'POST', { 
         systemCode: parentSystem.code, 
         equipmentCode: parentEquipment.code,
         makeCode: foundMake.code,
-        orderedCodes 
+        orderedModels 
       });
       console.log('✅ Successfully reordered models');
     } catch (error) {
