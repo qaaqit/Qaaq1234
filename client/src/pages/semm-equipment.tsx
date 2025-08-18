@@ -167,12 +167,13 @@ export default function SemmEquipmentPage() {
 
   const handleReorderSubmit = async () => {
     try {
-      // Generate new alphabetical codes based on current order
-      const baseChar = reorderItems[0]?.code?.[0] || 'a';
-      const codeLength = reorderItems[0]?.code?.length || 2;
+      // Generate new alphabetical codes based on current order (aaa, aab, aac format)
+      const systemCode = parentSystem.code; // 'a'
+      const equipmentCode = foundEquipment.code.slice(1); // 'a' from 'aa' or 'b' from 'ab'
       
       const orderedCodes = reorderItems.map((_, index) => {
-        return baseChar + String.fromCharCode(97 + index).repeat(codeLength - 1);
+        const letter = String.fromCharCode(97 + index); // a, b, c, etc.
+        return systemCode + equipmentCode + letter; // aaa, aab, aac OR aba, abb, abc
       });
       
       await apiRequest('/api/dev/semm/reorder-makes', 'POST', { 

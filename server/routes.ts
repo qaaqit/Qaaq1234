@@ -3999,9 +3999,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('🔄 Reordering makes in equipment', equipmentCode, ':', orderedCodes);
       
-      // Generate new alphabetical codes based on position (aaa, abb, acc, etc.)
+      // Generate new alphabetical codes based on position (aaa, aab, aac, etc.)
       const generateMakeCode = (index: number): string => {
-        const letter = String.fromCharCode(97 + index); // 97 is 'a'
+        const letter = String.fromCharCode(97 + index); // 97 is 'a' (a, b, c, etc.)
         return `${systemCode}${equipmentCode}${letter}`; // Format: systemCode + equipmentCode + position letter
       };
       
