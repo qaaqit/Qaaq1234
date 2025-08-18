@@ -42,6 +42,7 @@ interface PremiumPlan {
   description: string;
   displayPrice: string;
   savings?: string;
+  checkoutUrl?: string; // Fixed subscription link
 }
 
 interface SuperUserPlan {
@@ -74,7 +75,8 @@ export const SUBSCRIPTION_PLANS: {
       interval: 1,
       name: 'Premium Monthly Plan',
       description: 'Enhanced QBOT features and priority support',
-      displayPrice: '₹451'
+      displayPrice: '₹451',
+      checkoutUrl: 'https://rzp.io/rzp/jwQW9TW' // Fixed subscription link
     },
     yearly: {
       planId: 'plan_premium_yearly',
@@ -350,8 +352,49 @@ export class RazorpayService {
         };
       }
 
-      // For premium subscriptions, create actual Razorpay subscription
+      // For premium subscriptions, use the fixed checkout URL
       const premiumPlanConfig = planConfig as PremiumPlan;
+      
+      // Use fixed checkout URL if available, otherwise create subscription
+      if (premiumPlanConfig.checkoutUrl) {
+        // Generate a unique subscription ID for tracking
+        const subscriptionId = `fixed_sub_${userId}_${Date.now()}`;
+        
+        // Store the subscription in our database with the fixed checkout URL
+        const result = await this.executeWithRetry(async () => {
+          return await pool.query(`
+            INSERT INTO subscriptions (
+              user_id, subscription_type, razorpay_subscription_id, razorpay_plan_id, 
+              status, amount, currency, short_url, notes
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+            RETURNING *
+          `, [
+            userId,
+            planType,
+            subscriptionId, // Use our generated ID
+            planId,
+            'created', // Initial status
+            planConfig.amount,
+            'INR',
+            premiumPlanConfig.checkoutUrl, // Use fixed URL
+            JSON.stringify({ userId, planType, billingPeriod, source: 'fixed_checkout' })
+          ]);
+        }, `Create subscription for user ${userId}`);
+
+        console.log('✅ Subscription created with fixed checkout URL:', subscriptionId);
+
+        return {
+          subscription: result.rows[0],
+          checkoutUrl: premiumPlanConfig.checkoutUrl, // Use your provided URL
+          razorpaySubscriptionId: subscriptionId,
+          razorpayOrderId: null,
+          planType: planType,
+          amount: planConfig.amount,
+          status: 'created'
+        };
+      }
+
+      // Fallback: create dynamic subscription if no fixed URL
       const subscriptionData = {
         plan_id: planId,
         total_count: premiumPlanConfig.period === 'yearly' ? 1 : 12, // 1 year for yearly, 12 months for monthly
@@ -393,7 +436,6 @@ export class RazorpayService {
         subscription: result.rows[0],
         checkoutUrl: razorpaySubscription.short_url,
         razorpaySubscriptionId: razorpaySubscription.id,
-        razorpayOrderId: null,
         isOrderMode: false
       };
     } catch (error) {
