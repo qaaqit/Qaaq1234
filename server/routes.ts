@@ -2476,14 +2476,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         if (responses.length > 0) {
-          // Combine responses from multiple models with better formatting
-          const combinedContent = responses.map((resp, index) => {
+          // Display each AI model response as separate, distinct answers
+          const separateAnswers = responses.map((resp, index) => {
             const modelName = resp.model === 'openai' ? 'ChatGPT' : 
                             resp.model === 'gemini' ? 'Gemini' :
                             resp.model === 'deepseek' ? 'Deepseek' : 
                             resp.model.toUpperCase();
-            return `🤖 **${modelName}:**\n${resp.content}`;
-          }).join('\n\n\n---\n\n\n');
+            return `🤖 **${modelName} Response:**\n\n${resp.content}`;
+          }).join('\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n');
           
           const totalResponseTime = responses.reduce((sum, resp) => sum + (resp.responseTime || 0), 0);
           const totalTokens = responses.reduce((sum, resp) => sum + (resp.tokens || 0), 0);
@@ -2491,7 +2491,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`🤖 Multi-AI Response: Generated ${responses.length} responses from models: ${responses.map(r => r.model).join(', ')}`);
           
           return {
-            content: combinedContent,
+            content: separateAnswers,
             aiModel: responses.map(r => r.model).join('+'),
             responseTime: totalResponseTime,
             tokens: totalTokens
