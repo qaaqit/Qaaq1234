@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
-import { ArrowLeft, Share2, Home, ChevronRight, ChevronDown, GripVertical, Plus, Edit3, Ship, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Share2, Home, ChevronRight, ChevronDown, ChevronUp, GripVertical, Plus, Edit3, Ship, RotateCcw, Save, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { SemmReorderModal } from '@/components/semm-reorder-modal';
+
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -87,15 +87,8 @@ export default function SemmSystemPage() {
   const { code } = useParams<{ code: string }>();
   const [, setLocation] = useLocation();
   const [showEquipmentDropdown, setShowEquipmentDropdown] = useState(false);
-  const [reorderModal, setReorderModal] = useState<{
-    isOpen: boolean;
-    items: Array<{ code: string; title: string }>;
-    type: string;
-  }>({
-    isOpen: false,
-    items: [],
-    type: ''
-  });
+  const [reorderEnabled, setReorderEnabled] = useState(false);
+  const [reorderItems, setReorderItems] = useState<Array<{ code: string; title: string }>>([]);
   
   const { data: user } = useAuth();
   const isAdmin = user?.isAdmin || false;
@@ -169,18 +162,15 @@ export default function SemmSystemPage() {
     }));
     
     console.log('📦 Equipment items:', equipment);
+    setReorderItems(equipment);
+    setReorderEnabled(true);
     
-    setReorderModal({
-      isOpen: true,
-      type: 'equipment', 
-      items: equipment
-    });
-    
-    console.log('✅ Modal state set to open');
+    console.log('✅ Reorder mode enabled');
   };
 
-  const handleReorderSubmit = async (orderedCodes: string[]) => {
+  const handleSaveReorder = async () => {
     try {
+      const orderedCodes = reorderItems.map(item => item.code);
       await apiRequest('/api/dev/semm/reorder-equipment', 'POST', { 
         systemCode: foundSystem.code,
         orderedCodes 
@@ -189,13 +179,29 @@ export default function SemmSystemPage() {
       
       // Refresh the data to show updated codes
       queryClient.invalidateQueries({ queryKey: ['/api/dev/semm-cards'] });
+      setReorderEnabled(false);
     } catch (error) {
       console.error('❌ Error reordering equipment:', error);
     }
   };
 
-  const closeReorderModal = () => {
-    setReorderModal(prev => ({ ...prev, isOpen: false }));
+  const handleCancelReorder = () => {
+    setReorderEnabled(false);
+    setReorderItems([]);
+  };
+
+  const moveItemUp = (index: number) => {
+    if (index === 0) return;
+    const newItems = [...reorderItems];
+    [newItems[index], newItems[index - 1]] = [newItems[index - 1], newItems[index]];
+    setReorderItems(newItems);
+  };
+
+  const moveItemDown = (index: number) => {
+    if (index === reorderItems.length - 1) return;
+    const newItems = [...reorderItems];
+    [newItems[index], newItems[index + 1]] = [newItems[index + 1], newItems[index]];
+    setReorderItems(newItems);
   };
 
   return (
@@ -299,28 +305,175 @@ export default function SemmSystemPage() {
                 </h2>
                 
                 {/* Admin Controls for Equipment - Right Edge */}
-                <button
-                  onClick={handleReorderEquipment}
-                  className="p-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-lg"
-                  title="Reorder Equipment"
-                  data-testid="reorder-equipment"
-                >
-                  <RotateCcw className="h-5 w-5" />
-                </button>
+                {!reorderEnabled ? (
+                  <button
+                    onClick={handleReorderEquipment}
+                    className="p-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-lg"
+                    title="Reorder Equipment"
+                    data-testid="reorder-equipment"
+                  >
+                    <RotateCcw className="h-5 w-5" />
+                  </button>
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={handleSaveReorder}
+                      className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                      data-testid="save-reorder"
+                    >
+                      <Save className="h-4 w-4" />
+                      <span>Save Order</span>
+                    </button>
+                    <button
+                      onClick={handleCancelReorder}
+                      className="flex items-center space-x-2 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                      data-testid="cancel-reorder"
+                    >
+                      <X className="h-4 w-4" />
+                      <span>Cancel</span>
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {foundSystem.equipment.map((equipment: any) => (
-                <div 
-                  key={equipment.code}
-                  className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow cursor-pointer group"
-                  onClick={() => setLocation(`/machinetree/${equipment.code}`)}
-                  data-testid={`equipment-card-${equipment.code}`}
+            {reorderEnabled ? (
+              // Reorder Mode - Show ordered list with up/down controls
+              <div className="space-y-3">
+                {reorderItems.map((equipment, index) => (
+                  <div 
+                    key={equipment.code}
+                    className="bg-white rounded-lg shadow-md border border-gray-200 p-4 flex items-center justify-between"
+                  >
+                    <div className="flex items-center space-x-4">
+                      <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <span className="text-orange-600 font-bold text-sm">{equipment.code}</span>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-800">{equipment.title}</h3>
+                        <p className="text-sm text-gray-500">Position {index + 1}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => moveItemUp(index)}
+                        disabled={index === 0}
+                        className={`p-2 rounded-lg transition-colors ${
+                          index === 0 
+                            ? 'text-gray-300 cursor-not-allowed' 
+                            : 'text-orange-600 hover:bg-orange-50 hover:text-orange-700'
+                        }`}
+                        data-testid={`move-up-${equipment.code}`}
+                      >
+                        <ChevronUp className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => moveItemDown(index)}
+                        disabled={index === reorderItems.length - 1}
+                        className={`p-2 rounded-lg transition-colors ${
+                          index === reorderItems.length - 1 
+                            ? 'text-gray-300 cursor-not-allowed' 
+                            : 'text-orange-600 hover:bg-orange-50 hover:text-orange-700'
+                        }`}
+                        data-testid={`move-down-${equipment.code}`}
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              // Normal Mode - Show equipment cards
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {foundSystem.equipment.map((equipment: any) => (
+                  <div 
+                    key={equipment.code}
+                    className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow cursor-pointer group"
+                    onClick={() => setLocation(`/machinetree/${equipment.code}`)}
+                    data-testid={`equipment-card-${equipment.code}`}
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                          <span className="text-orange-600 font-bold">{equipment.code}</span>
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-gray-800 group-hover:text-orange-600 transition-colors">
+                            {equipment.title}
+                          </h3>
+                          <p className="text-sm text-gray-500">Equipment Type</p>
+                        </div>
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-orange-500 transition-colors" />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <p className="text-sm text-gray-600">
+                        {equipment.description || `${equipment.title} equipment classification`}
+                      </p>
+                      
+                      {equipment.makes && equipment.makes.length > 0 && (
+                        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                          <span className="text-xs text-gray-500">Makes Available</span>
+                          <div className="flex items-center space-x-2">
+                            <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
+                              {equipment.makes.length} {equipment.makes.length === 1 ? 'Make' : 'Makes'}
+                            </span>
+                            <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
+                              {equipment.makes.reduce((sum: number, make: any) => sum + (make.models?.length || 0), 0)} Models
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Admin edit button */}
+                    {isAdmin && (
+                      <div className="mt-4 pt-2 border-t border-gray-100">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditEquipment(equipment.code);
+                          }}
+                          className="flex items-center space-x-2 px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors w-full justify-center"
+                          title="Edit Equipment"
+                          data-testid={`edit-equipment-${equipment.code}`}
+                        >
+                          <Edit3 className="w-4 h-4" />
+                          <span>Edit Equipment</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Add New Equipment Button for Admins - Only show in normal mode */}
+            {isAdmin && !reorderEnabled && (
+              <div className="mt-6">
+                <button
+                  onClick={handleAddNewEquipment}
+                  className="flex items-center space-x-2 text-sm text-orange-600 hover:text-orange-700 px-4 py-3 border-2 border-dashed border-orange-300 rounded-lg hover:border-orange-400 transition-colors"
+                  data-testid="add-new-equipment"
                 >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                        <span className="text-orange-600 font-bold">{equipment.code}</span>
+                  <Plus className="h-4 w-4" />
+                  <span>Add New Equipment</span>
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8 text-center">
+            <p className="text-lg text-gray-600">No equipment found for this system.</p>
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+}
                       </div>
                       <div className="flex-1">
                         <h3 className="text-lg font-semibold text-gray-800 group-hover:text-orange-600 transition-colors">
