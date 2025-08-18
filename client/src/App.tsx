@@ -33,6 +33,8 @@ import { GlossaryPage } from "@/pages/glossary";
 import MachineTreePage from "@/pages/machine-tree";
 import SemmEquipmentPage from "@/pages/semm-equipment";
 import SemmSystemPage from "@/pages/semm-system";
+import SemmMakePage from "@/pages/semm-make";
+import SemmModelPage from "@/pages/semm-model";
 import PrivacyPolicyPage from "@/pages/privacy-policy";
 
 import NotFound from "@/pages/not-found";
@@ -191,6 +193,9 @@ function Router() {
           <Route path="/glossary" component={() => <GlossaryPage />} />
           <Route path="/machinetree" component={() => <MachineTreePage />} />
           <Route path="/machinetree/system/:code" component={SemmSystemPage} />
+          <Route path="/machinetree/equipment/:code" component={SemmEquipmentPage} />
+          <Route path="/machinetree/make/:code" component={SemmMakePage} />
+          <Route path="/machinetree/model/:code" component={SemmModelPage} />
           <Route path="/machinetree/:code" component={SemmEquipmentPage} />
           <Route path="/privacy-policy" component={() => <PrivacyPolicyPage />} />
           <Route path="/home-old" component={() => <Login onSuccess={setUser} />} />

@@ -251,6 +251,72 @@ export const emailVerificationTokens = pgTable("email_verification_tokens", {
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`)
 });
 
+// SEMM (System > Equipment > Make > Model) Hierarchy Tables
+// Maritime classification system following the complete 4-level hierarchy
+
+// Systems (Top level - e.g., 'a' = Propulsion, 'b' = Power Generation)
+export const semmSystems = pgTable("semm_systems", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  code: text("code").notNull().unique(), // e.g., 'a', 'b', 'c'
+  title: text("title").notNull(), // e.g., 'Propulsion', 'Power Generation'
+  description: text("description"),
+  order: integer("order").notNull(), // Display order
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`)
+});
+
+// Equipment (Second level - e.g., 'aa' = Main Engine, 'ab' = Gearbox)
+export const semmEquipment = pgTable("semm_equipment", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  systemCode: text("system_code").notNull(), // References system code (e.g., 'a')
+  code: text("code").notNull().unique(), // e.g., 'aa', 'ab', 'ba', 'bb'
+  title: text("title").notNull(), // e.g., 'Main Engine', 'Gearbox'
+  description: text("description"),
+  order: integer("order").notNull(), // Display order within system
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`)
+});
+
+// Makes (Third level - e.g., 'Wartsila', 'MAN', 'Caterpillar')
+export const semmMakes = pgTable("semm_makes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  equipmentCode: text("equipment_code").notNull(), // References equipment code (e.g., 'aa')
+  code: text("code").notNull().unique(), // e.g., 'aa-wartsila', 'aa-man'
+  name: text("name").notNull(), // e.g., 'Wartsila', 'MAN B&W'
+  description: text("description"),
+  country: text("country"), // Manufacturer country
+  website: text("website"), // Manufacturer website
+  order: integer("order").notNull(), // Display order within equipment
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`)
+});
+
+// Models (Fourth level - e.g., 'W6L32', 'ME-C', 'C280')
+export const semmModels = pgTable("semm_models", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  makeCode: text("make_code").notNull(), // References make code (e.g., 'aa-wartsila')
+  code: text("code").notNull().unique(), // e.g., 'aa-wartsila-w6l32'
+  model: text("model").notNull(), // e.g., 'W6L32', 'ME-C 7S60'
+  description: text("description"),
+  specifications: jsonb("specifications").$type<{
+    power?: string;
+    rpm?: string;
+    cylinders?: number;
+    displacement?: string;
+    weight?: string;
+    dimensions?: string;
+    [key: string]: any;
+  }>().default({}), // Technical specifications
+  yearIntroduced: integer("year_introduced"),
+  isActive: boolean("is_active").default(true),
+  order: integer("order").notNull(), // Display order within make
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`)
+});
+
 
 
 // Relations - Note: usersRelations defined later with identity support
@@ -334,6 +400,34 @@ export const rankGroupMessagesRelations = relations(rankGroupMessages, ({ one })
   }),
 }));
 
+// SEMM Hierarchy Relations
+export const semmSystemsRelations = relations(semmSystems, ({ many }) => ({
+  equipment: many(semmEquipment),
+}));
+
+export const semmEquipmentRelations = relations(semmEquipment, ({ one, many }) => ({
+  system: one(semmSystems, {
+    fields: [semmEquipment.systemCode],
+    references: [semmSystems.code],
+  }),
+  makes: many(semmMakes),
+}));
+
+export const semmMakesRelations = relations(semmMakes, ({ one, many }) => ({
+  equipment: one(semmEquipment, {
+    fields: [semmMakes.equipmentCode],
+    references: [semmEquipment.code],
+  }),
+  models: many(semmModels),
+}));
+
+export const semmModelsRelations = relations(semmModels, ({ one }) => ({
+  make: one(semmMakes, {
+    fields: [semmModels.makeCode],
+    references: [semmMakes.code],
+  }),
+}));
+
 
 
 // Schemas
@@ -409,6 +503,31 @@ export const insertEmailVerificationTokenSchema = createInsertSchema(emailVerifi
   token: true,
   userData: true,
   expiresAt: true,
+});
+
+// SEMM Insert Schemas for System > Equipment > Make > Model hierarchy
+export const insertSemmSystemSchema = createInsertSchema(semmSystems).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSemmEquipmentSchema = createInsertSchema(semmEquipment).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSemmMakeSchema = createInsertSchema(semmMakes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSemmModelSchema = createInsertSchema(semmModels).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 export const insertChatConnectionSchema = createInsertSchema(chatConnections).pick({

@@ -83,6 +83,7 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
 export default function SemmSystemPage() {
   const { code } = useParams<{ code: string }>();
   const [, setLocation] = useLocation();
+  const [showEquipmentDropdown, setShowEquipmentDropdown] = useState(false);
 
   // Fetch SEMM data to find the specific system
   const { data: semmData, isLoading, error } = useQuery({
@@ -133,44 +134,78 @@ export default function SemmSystemPage() {
       <div className="bg-white shadow-lg">
         <div className="bg-gradient-to-r from-orange-50 to-orange-100 px-4 py-3">
           <div className="max-w-7xl mx-auto">
-            {/* Back Arrow - Top Left Corner */}
-            <div className="flex justify-start mb-2">
+            {/* New Layout: Back Arrow | Breadcrumb | Title | Chevron Down | Share */}
+            <div className="flex items-center space-x-4">
+              
+              {/* Back Arrow */}
               <button
                 onClick={goBack}
-                className="p-1 hover:bg-orange-100 text-orange-600 rounded-full transition-colors"
+                className="p-2 hover:bg-orange-100 text-orange-600 rounded-full transition-colors flex-shrink-0"
                 data-testid="button-back"
               >
-                <ArrowLeft className="w-4 h-4" />
+                <ArrowLeft className="w-5 h-5" />
               </button>
-            </div>
-            
-            {/* Code Card, Title & Share Icon - Compact Layout */}
-            <div className="flex items-center justify-between">
-              {/* Left side - Code Card */}
-              <div className="flex items-center space-x-4">
+
+              {/* Breadcrumb */}
+              <nav className="flex items-center space-x-2 text-sm text-gray-500 flex-shrink-0">
+                <span className="text-orange-600 font-medium">e. Purification System</span>
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+                <span className="text-gray-600">Equipment</span>
+              </nav>
+
+              {/* Code Card and Title - Centered */}
+              <div className="flex items-center space-x-3 flex-1 justify-center">
                 <div className="text-center">
                   <div className="text-xs font-bold text-gray-500 mb-1 tracking-widest">SYSTEM</div>
                   <FlipCard char={foundSystem.code} index={0} large={true} />
                 </div>
-              </div>
-
-              {/* Center - Title */}
-              <div className="flex-1 text-center">
+                
                 <h1 className="text-xl font-black text-gray-900">
                   {foundSystem.title}
                 </h1>
-                <p className="text-xs text-orange-600 font-medium">MACHINE TREE</p>
+
+                {/* Chevron Down with Equipment Dropdown */}
+                <div className="relative">
+                  <button 
+                    className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
+                    data-testid="dropdown-equipment"
+                    title="Show equipment in this system"
+                    onClick={() => setShowEquipmentDropdown(!showEquipmentDropdown)}
+                  >
+                    <ChevronDown className="w-5 h-5" />
+                  </button>
+
+                  {/* Equipment Dropdown Menu */}
+                  {showEquipmentDropdown && (
+                    <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-64">
+                      {foundSystem.equipment?.map((equipment: any) => (
+                        <button
+                          key={equipment.code}
+                          onClick={() => {
+                            setLocation(`/machinetree/equipment/${equipment.code}`);
+                            setShowEquipmentDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center space-x-3 border-b border-gray-100 last:border-b-0"
+                          data-testid={`dropdown-equipment-${equipment.code}`}
+                        >
+                          <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center flex-shrink-0">
+                            <span className="text-blue-600 text-xs font-bold">{equipment.code}</span>
+                          </div>
+                          <span className="text-gray-800 font-medium">{equipment.title}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Right side - Share Icon */}
-              <div className="flex items-center">
-                <button
-                  className="p-2 hover:bg-gray-100 text-gray-600 rounded-full transition-colors"
-                  data-testid="button-share"
-                >
-                  <Share2 className="w-4 h-4" />
-                </button>
-              </div>
+              {/* Share Icon */}
+              <button
+                className="p-2 hover:bg-gray-100 text-gray-600 rounded-full transition-colors flex-shrink-0"
+                data-testid="button-share"
+              >
+                <Share2 className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </div>
@@ -181,29 +216,11 @@ export default function SemmSystemPage() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         
-        {/* Breadcrumb Navigation */}
-        <nav className="flex items-center space-x-2 text-sm mb-8" data-testid="breadcrumb-nav">
-          <button 
-            onClick={goHome}
-            className="text-orange-600 hover:text-orange-800 font-medium transition-colors"
-            data-testid="breadcrumb-home"
-          >
-            Machine Tree
-          </button>
-          <ChevronRight className="w-4 h-4 text-gray-400" />
-          <div className="flex items-center space-x-1">
-            <span className="text-gray-600 font-medium" data-testid="breadcrumb-current">
-              {foundSystem.title}
-            </span>
-            <button 
-              className="p-1 hover:bg-gray-100 text-gray-500 hover:text-gray-700 rounded transition-colors"
-              data-testid="breadcrumb-expand"
-              title="Explore equipment and components"
-            >
-              <ChevronDown className="w-4 h-4" />
-            </button>
-          </div>
-        </nav>
+        {/* Content Section Header */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">System Overview</h2>
+          <p className="text-gray-600">Maritime classification: System → Equipment → Make → Model hierarchy</p>
+        </div>
 
         {/* Content area for future system details */}
         <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
