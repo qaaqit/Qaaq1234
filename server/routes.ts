@@ -4059,7 +4059,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           UPDATE semm_structure 
           SET mid = $1
           WHERE sid = $2 AND eid = $3 AND mid = $4
-        `, [`temp_reorder_${i}`, systemCode, equipmentCode, make.oldCode]);
+        `, [`tmp${i}`, systemCode, equipmentCode, make.oldCode]);
       }
       
       // Now update with final codes
@@ -4070,7 +4070,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           UPDATE semm_structure 
           SET mid = $1, make_order = $2 
           WHERE sid = $3 AND eid = $4 AND mid = $5
-        `, [newCode, i + 1, systemCode, equipmentCode, `temp_reorder_${i}`]);
+        `, [newCode, i + 1, systemCode, equipmentCode, `tmp${i}`]);
       }
       
       console.log('✅ Successfully reordered makes with new codes');
