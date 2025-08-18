@@ -416,45 +416,95 @@ export function PremiumSubscriptionDialog({
         <div className="flex items-center justify-between pt-4 pb-8 border-t mt-6 mb-4">
           <div className="text-sm text-muted-foreground">Secured by Razorpay</div>
           
-          {/* Show QR Code for Premium plans, Subscribe button for Super User */}
+          {/* Show payment options for Premium plans, Subscribe button for Super User */}
           {selectedPlan === 'premium' ? (
-            <div className="flex flex-col items-center gap-3">
+            <div className="flex flex-col items-center gap-4">
               <div className="text-center">
                 {selectedPeriod === 'monthly' ? (
                   <>
-                    <h4 className="font-semibold text-sm mb-2">Scan to Pay ₹451</h4>
-                    {/* QR Code for Monthly Premium Payment */}
-                    <div className="bg-white p-4 border-2 border-orange-200 rounded-lg shadow-lg">
-                      <img 
-                        src="/attached_assets/QrCode (2)_1755542052056.jpeg" 
-                        alt="QR Code for ₹451 Monthly Premium Payment"
-                        className="w-32 h-32 object-contain"
-                      />
+                    <h4 className="font-semibold text-lg mb-3">Pay ₹451 - Monthly Premium</h4>
+                    
+                    {/* QR Code Section */}
+                    <div className="mb-4">
+                      <h5 className="text-sm font-medium mb-2">Scan QR Code</h5>
+                      <div className="bg-white p-4 border-2 border-orange-200 rounded-lg shadow-lg">
+                        <img 
+                          src="/attached_assets/QrCode (2)_1755542052056.jpeg" 
+                          alt="QR Code for ₹451 Monthly Premium Payment"
+                          className="w-32 h-32 object-contain"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            const nextSibling = e.currentTarget.nextElementSibling as HTMLElement;
+                            if (nextSibling) {
+                              nextSibling.style.display = 'flex';
+                            }
+                          }}
+                        />
+                        <div className="hidden w-32 h-32 bg-gray-100 border-2 border-dashed border-gray-300 rounded flex items-center justify-center">
+                          <span className="text-xs text-gray-500">QR Code</span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Use any UPI app to scan & pay
+                      </p>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Use any UPI app to scan & pay
-                    </p>
-                    <p className="text-xs font-medium text-orange-600 mt-1">
-                      Monthly Premium - ₹451
-                    </p>
+
+                    {/* Card Payment Option */}
+                    <div className="border-t pt-3">
+                      <h5 className="text-sm font-medium mb-2">Or Pay via Card/UPI</h5>
+                      <a 
+                        href="https://rzp.io/rzp/jwQW9TW" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        Pay via Card - ₹451
+                      </a>
+                    </div>
                   </>
                 ) : (
                   <>
-                    <h4 className="font-semibold text-sm mb-2">Scan to Pay ₹2,611</h4>
-                    {/* QR Code for Yearly Premium Payment */}
-                    <div className="bg-white p-4 border-2 border-orange-200 rounded-lg shadow-lg">
-                      <img 
-                        src="/attached_assets/QrCode (4)_1755542673629.jpeg" 
-                        alt="QR Code for ₹2,611 Yearly Premium Payment"
-                        className="w-32 h-32 object-contain"
-                      />
+                    <h4 className="font-semibold text-lg mb-3">Pay ₹2,611 - Yearly Premium</h4>
+                    
+                    {/* QR Code Section */}
+                    <div className="mb-4">
+                      <h5 className="text-sm font-medium mb-2">Scan QR Code</h5>
+                      <div className="bg-white p-4 border-2 border-orange-200 rounded-lg shadow-lg">
+                        <img 
+                          src="/attached_assets/QrCode (4)_1755542673629.jpeg" 
+                          alt="QR Code for ₹2,611 Yearly Premium Payment"
+                          className="w-32 h-32 object-contain"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            const nextSibling = e.currentTarget.nextElementSibling as HTMLElement;
+                            if (nextSibling) {
+                              nextSibling.style.display = 'flex';
+                            }
+                          }}
+                        />
+                        <div className="hidden w-32 h-32 bg-gray-100 border-2 border-dashed border-gray-300 rounded flex items-center justify-center">
+                          <span className="text-xs text-gray-500">QR Code</span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Use any UPI app to scan & pay
+                      </p>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Use any UPI app to scan & pay
-                    </p>
-                    <p className="text-xs font-medium text-orange-600 mt-1">
-                      Yearly Premium - ₹2,611
-                    </p>
+
+                    {/* Card Payment Option */}
+                    <div className="border-t pt-3">
+                      <h5 className="text-sm font-medium mb-2">Or Pay via Card/UPI</h5>
+                      <a 
+                        href="https://rzp.io/rzp/NAU59cv" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        Pay via Card - ₹2,611
+                      </a>
+                    </div>
                   </>
                 )}
               </div>
