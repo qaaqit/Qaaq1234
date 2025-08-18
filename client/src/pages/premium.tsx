@@ -104,7 +104,7 @@ export default function PremiumPage() {
     "premium",
   );
   const [selectedPeriod, setSelectedPeriod] = useState<"monthly" | "yearly">(
-    "monthly",
+    "yearly",
   );
   const [selectedTopup, setSelectedTopup] = useState<string>("topup_451");
 
@@ -283,24 +283,57 @@ export default function PremiumPage() {
                 <div className="px-4 py-3">
                   <TabsList className="grid w-full grid-cols-2 bg-white/10 backdrop-blur-sm border-0 rounded-lg p-1">
                     <TabsTrigger 
-                      value="monthly" 
-                      className="data-[state=active]:bg-white data-[state=active]:text-red-600 text-white hover:bg-white/20 font-semibold transition-all duration-200 rounded-md py-2"
-                      data-testid="tab-monthly"
-                    >
-                      Monthly
-                    </TabsTrigger>
-                    <TabsTrigger 
                       value="yearly" 
                       className="data-[state=active]:bg-white data-[state=active]:text-red-600 text-white hover:bg-white/20 font-semibold transition-all duration-200 rounded-md py-2 relative"
                       data-testid="tab-yearly"
                     >
                       Yearly
                     </TabsTrigger>
+                    <TabsTrigger 
+                      value="monthly" 
+                      className="data-[state=active]:bg-white data-[state=active]:text-red-600 text-white hover:bg-white/20 font-semibold transition-all duration-200 rounded-md py-2"
+                      data-testid="tab-monthly"
+                    >
+                      Monthly
+                    </TabsTrigger>
                   </TabsList>
                 </div>
               </div>
 
               {/* Payment Options Card */}
+              <TabsContent value="yearly" className="mt-0">
+                <Card className="border-2 border-orange-200 rounded-t-none">
+                  <CardHeader>
+                    <CardTitle className="text-center">Payment Options</CardTitle>
+                    <p className="text-center text-gray-600">Rs218 /month (Billed annually ₹2,611)</p>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <a
+                        href="https://rzp.io/rzp/NAU59cv"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg text-lg font-medium transition-colors w-full justify-center"
+                        data-testid="button-pay-card-yearly-top"
+                      >
+                        <ExternalLink className="h-5 w-5" />
+                        Pay via Card - ₹2,611
+                      </a>
+                      <a
+                        href="https://rzp.io/rzp/COgnl5fN"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg text-lg font-medium transition-colors w-full justify-center"
+                        data-testid="button-pay-upi-yearly-top"
+                      >
+                        <ExternalLink className="h-5 w-5" />
+                        Pay via UPI - ₹2,611
+                      </a>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
               <TabsContent value="monthly" className="mt-0">
                 <Card className="border-2 border-orange-200 rounded-t-none">
                   <CardHeader>
@@ -330,39 +363,6 @@ export default function PremiumPage() {
                       >
                         <ExternalLink className="h-5 w-5" />
                         Pay via UPI - ₹451
-                      </a>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="yearly" className="mt-0">
-                <Card className="border-2 border-orange-200 rounded-t-none">
-                  <CardHeader>
-                    <CardTitle className="text-center">Payment Options</CardTitle>
-                    <p className="text-center text-gray-600">Rs218 /month (Billed annually ₹2,611)</p>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <a
-                        href="https://rzp.io/rzp/NAU59cv"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg text-lg font-medium transition-colors w-full justify-center"
-                        data-testid="button-pay-card-yearly-top"
-                      >
-                        <ExternalLink className="h-5 w-5" />
-                        Pay via Card - ₹2,611
-                      </a>
-                      <a
-                        href="https://rzp.io/rzp/COgnl5fN"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg text-lg font-medium transition-colors w-full justify-center"
-                        data-testid="button-pay-upi-yearly-top"
-                      >
-                        <ExternalLink className="h-5 w-5" />
-                        Pay via UPI - ₹2,611
                       </a>
                     </div>
                   </CardContent>
