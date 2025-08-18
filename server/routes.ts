@@ -3280,8 +3280,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // QBOT chat endpoint - responds to user messages with AI
   app.post('/api/qbot/chat', optionalAuth, async (req, res) => {
     try {
-      const { message } = req.body;
+      const { message, attachments, isPrivate, aiModels } = req.body;
       const userId = req.userId;
+      
+      // Log AI models selection for debugging
+      if (aiModels && aiModels.length > 0) {
+        console.log(`🤖 User selected AI models: ${aiModels.join(', ')}`);
+      }
       
       if (!message || typeof message !== 'string') {
         return res.status(400).json({ message: 'Message is required' });
@@ -3351,8 +3356,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Generate AI response using dual AI service
-      const aiResponse = await aiService.generateDualResponse(message, 'Maritime Technical Support', user);
+      // Generate AI response using multi-model selection or dual AI service
+      const category = categorizeMessage(message);
+      const aiResponse = await generateAIResponse(message, category, user, null, aiModels);
       
       // Store QBOT response in Questions database with SEMM breadcrumb and AI model info
       await storeQBOTResponseInDatabase(message, aiResponse.content, user, [], aiResponse.aiModel, aiResponse.responseTime, aiResponse.tokens);
