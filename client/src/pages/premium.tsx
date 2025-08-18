@@ -268,7 +268,6 @@ export default function PremiumPage() {
           </div>
         </div>
       </header>
-
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
         {/* Plan Selection Tabs */}
@@ -342,9 +341,7 @@ export default function PremiumPage() {
                 <Card className="border-2 border-orange-200 rounded-t-none">
                   <CardHeader>
                     <CardTitle className="text-center">Payment Options</CardTitle>
-                    <p className="text-center text-gray-600">
-                      Yearly Plan - ₹2,611 (Billed annually • Save ₹2,801 per year)
-                    </p>
+                    <p className="text-center text-gray-600">₹2,611 (Billed annually @  Rs218 /month)</p>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
