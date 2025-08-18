@@ -92,7 +92,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
     fetchWhatsAppHistory();
   }, [user?.id, toast]);
 
-  const handleSendQBotMessage = async (messageText: string, attachments?: string[], isPrivate?: boolean) => {
+  const handleSendQBotMessage = async (messageText: string, attachments?: string[], isPrivate?: boolean, aiModels?: string[]) => {
     const newMessage: Message = {
       id: Date.now().toString(),
       text: messageText,
@@ -111,7 +111,12 @@ export default function QBOTPage({ user }: QBOTPageProps) {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ message: messageText })
+        body: JSON.stringify({ 
+          message: messageText, 
+          attachments: attachments,
+          isPrivate: isPrivate,
+          aiModels: aiModels || ['chatgpt']
+        })
       });
 
       if (response.ok) {

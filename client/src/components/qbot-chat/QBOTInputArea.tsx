@@ -1,5 +1,5 @@
 import { useState, useRef, KeyboardEvent, useEffect } from 'react';
-import { Paperclip, Send, Crown, Shield, ShieldCheck } from 'lucide-react';
+import { Paperclip, Send, Crown, Shield, ShieldCheck, Bot, Zap, Brain } from 'lucide-react';
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { PremiumSubscriptionDialog } from "@/components/PremiumSubscriptionDialog";
 
@@ -39,7 +39,7 @@ const DEFAULT_CHATBOT_INVITES = [
 ];
 
 interface QBOTInputAreaProps {
-  onSendMessage: (message: string, attachments?: string[], isPrivate?: boolean) => void;
+  onSendMessage: (message: string, attachments?: string[], isPrivate?: boolean, aiModels?: string[]) => void;
   disabled?: boolean;
 }
 
@@ -55,6 +55,11 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
   const [isPremiumMode, setIsPremiumMode] = useState(false);
   const [isPrivateMode, setIsPrivateMode] = useState(false);
   const [showSubscriptionDialog, setShowSubscriptionDialog] = useState(false);
+  const [aiModels, setAiModels] = useState({
+    chatgpt: true,  // Default enabled
+    gemini: false,
+    deepseek: false
+  });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Fetch user subscription status
@@ -101,7 +106,17 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
 
   const handleSend = () => {
     if ((message.trim() || attachments.length > 0) && !disabled) {
-      onSendMessage(message.trim() || "📎 Attachment(s) sent", attachments, isPrivateMode);
+      // Get enabled AI models
+      const enabledModels = Object.entries(aiModels)
+        .filter(([_, enabled]) => enabled)
+        .map(([model, _]) => model);
+      
+      onSendMessage(
+        message.trim() || "📎 Attachment(s) sent", 
+        attachments, 
+        isPrivateMode,
+        enabledModels.length > 0 ? enabledModels : ['chatgpt'] // Default to ChatGPT if none selected
+      );
       setMessage('');
       setAttachments([]);
       
@@ -168,6 +183,14 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
     if (isUserPremium || isUserAdmin) {
       setIsPrivateMode(!isPrivateMode);
     }
+  };
+
+  // Toggle AI models
+  const toggleAiModel = (model: 'chatgpt' | 'gemini' | 'deepseek') => {
+    setAiModels(prev => ({
+      ...prev,
+      [model]: !prev[model]
+    }));
   };
 
   const handleKeyPress = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -274,8 +297,51 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
           </div>
         </div>
       )}
-      {/* Crown icon positioned above input area */}
-      <div className="flex justify-start mb-2">
+      {/* AI Model toggles and Crown icon positioned above input area */}
+      <div className="flex justify-start items-center mb-2 gap-1">
+        {/* ChatGPT Toggle */}
+        <button
+          onClick={() => toggleAiModel('chatgpt')}
+          className={`p-2 rounded-lg transition-all duration-200 flex-shrink-0 ${
+            aiModels.chatgpt 
+              ? 'bg-green-100 text-green-600 hover:bg-green-200' 
+              : 'text-gray-400 hover:bg-gray-100'
+          }`}
+          title={`ChatGPT ${aiModels.chatgpt ? 'Enabled' : 'Disabled'}`}
+        >
+          <Bot size={16} />
+        </button>
+
+        {/* Gemini Toggle */}
+        <button
+          onClick={() => toggleAiModel('gemini')}
+          className={`p-2 rounded-lg transition-all duration-200 flex-shrink-0 ${
+            aiModels.gemini 
+              ? 'bg-blue-100 text-blue-600 hover:bg-blue-200' 
+              : 'text-gray-400 hover:bg-gray-100'
+          }`}
+          title={`Gemini ${aiModels.gemini ? 'Enabled' : 'Disabled'}`}
+        >
+          <Zap size={16} />
+        </button>
+
+        {/* Deepseek Toggle */}
+        <button
+          onClick={() => toggleAiModel('deepseek')}
+          className={`p-2 rounded-lg transition-all duration-200 flex-shrink-0 ${
+            aiModels.deepseek 
+              ? 'bg-purple-100 text-purple-600 hover:bg-purple-200' 
+              : 'text-gray-400 hover:bg-gray-100'
+          }`}
+          title={`Deepseek ${aiModels.deepseek ? 'Enabled' : 'Disabled'}`}
+        >
+          <Brain size={16} />
+        </button>
+
+        {/* Divider */}
+        <div className="w-px h-6 bg-gray-300 mx-1"></div>
+
+        {/* Crown icon for premium mode */}
         <button
           onClick={togglePremiumMode}
           className="p-2 rounded-lg transition-all duration-200 text-gray-400 hover:bg-gray-100 flex-shrink-0"

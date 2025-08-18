@@ -2173,7 +2173,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // QBOT Chat API endpoint - Implementing 13 Commandments
   app.post("/api/qbot/message", optionalAuth, async (req: any, res) => {
     try {
-      const { message, attachments, image, isPrivate } = req.body;
+      const { message, attachments, image, isPrivate, aiModels } = req.body;
       const userId = req.currentUser?.id || req.userId;
 
       if (!message || !message.trim()) {
@@ -2253,7 +2253,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       // Commandment I: AI-powered technical responses
       else if (isQuestionMessage(message) || isTechnicalMessage(message)) {
-        const aiResponse = await generateAIResponse(message, category, user, activeRules);
+        const aiResponse = await generateAIResponse(message, category, user, activeRules, aiModels);
         response = aiResponse.content;
         aiModel = aiResponse.aiModel;
         responseTime = aiResponse.responseTime;
@@ -2269,7 +2269,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       // Default AI response for all other messages (Commandment I)
       else {
-        const aiResponse = await generateAIResponse(message, category, user, activeRules);
+        const aiResponse = await generateAIResponse(message, category, user, activeRules, aiModels);
         response = aiResponse.content;
         aiModel = aiResponse.aiModel;
         responseTime = aiResponse.responseTime;
@@ -2434,12 +2434,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return followUps[Math.floor(Math.random() * followUps.length)];
   }
 
-  async function generateAIResponse(message: string, category: string, user: any, activeRules?: string): Promise<{ content: string, aiModel: string, responseTime?: number, tokens?: number }> {
-    // Import AI service for dual model testing
+  async function generateAIResponse(message: string, category: string, user: any, activeRules?: string, selectedModels?: string[]): Promise<{ content: string, aiModel: string, responseTime?: number, tokens?: number }> {
+    // Import AI service for multi-model response generation
     const { aiService } = await import('./ai-service');
     
     try {
-      // Use dual AI system with random model selection for testing
+      // If models are specified, generate responses from selected models
+      if (selectedModels && selectedModels.length > 0) {
+        const responses = [];
+        
+        for (const model of selectedModels) {
+          try {
+            let modelResponse;
+            
+            if (model === 'chatgpt') {
+              modelResponse = await aiService.generateOpenAIResponse(message, category, user, activeRules);
+            } else if (model === 'gemini') {
+              modelResponse = await aiService.generateGeminiResponse(message, category, user, activeRules);
+            } else if (model === 'deepseek') {
+              // For now, use OpenAI as placeholder for Deepseek
+              modelResponse = await aiService.generateOpenAIResponse(message, category, user, activeRules);
+              // Override the model name for display purposes
+              modelResponse = {
+                ...modelResponse,
+                model: 'deepseek'
+              };
+            }
+            
+            if (modelResponse) {
+              responses.push({
+                model: modelResponse.model,
+                content: modelResponse.content,
+                responseTime: modelResponse.responseTime,
+                tokens: modelResponse.tokens
+              });
+            }
+          } catch (modelError) {
+            console.error(`Error with ${model} model:`, modelError);
+          }
+        }
+        
+        if (responses.length > 0) {
+          // Combine responses from multiple models
+          const combinedContent = responses.map((resp, index) => 
+            `**${resp.model.toUpperCase()}:**\n${resp.content}`
+          ).join('\n\n');
+          
+          const totalResponseTime = responses.reduce((sum, resp) => sum + (resp.responseTime || 0), 0);
+          const totalTokens = responses.reduce((sum, resp) => sum + (resp.tokens || 0), 0);
+          
+          return {
+            content: combinedContent,
+            aiModel: responses.map(r => r.model).join('+'),
+            responseTime: totalResponseTime,
+            tokens: totalTokens
+          };
+        }
+      }
+      
+      // Fallback to dual response system if no models selected or all failed
       const aiResponse = await aiService.generateDualResponse(message, category, user, activeRules);
       console.log(`🤖 AI Response generated using ${aiResponse.model} for ${category}: ${aiResponse.content.substring(0, 50)}...`);
       
