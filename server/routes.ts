@@ -7544,6 +7544,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Check specific payment by ID or user email (no auth for testing)
+  app.get('/api/admin/check-payment', async (req, res) => {
+    try {
+      const { paymentId, userId, email, phone } = req.query;
+      
+      // Check specific payment
+      if (paymentId) {
+        const paymentResult = await pool.query(`
+          SELECT *
+          FROM payments
+          WHERE razorpay_payment_id = $1
+        `, [paymentId]);
+        
+        return res.json({
+          success: true,
+          payment: paymentResult.rows[0] || null,
+          found: paymentResult.rows.length > 0
+        });
+      }
+      
+      // Find user by email and get their info
+      if (email) {
+        const userResult = await pool.query(`
+          SELECT id, full_name, email, whatsapp_number
+          FROM users 
+          WHERE email = $1
+        `, [email]);
+        
+        if (userResult.rows.length === 0) {
+          return res.json({
+            success: true,
+            user: null,
+            payments: [],
+            found: false
+          });
+        }
+        
+        const user = userResult.rows[0];
+        
+        // Get payments for this user
+        const paymentsResult = await pool.query(`
+          SELECT *
+          FROM payments
+          WHERE user_id = $1
+          ORDER BY created_at DESC
+        `, [user.id]);
+        
+        return res.json({
+          success: true,
+          user,
+          payments: paymentsResult.rows,
+          found: true
+        });
+      }
+      
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide paymentId or email'
+      });
+      
+    } catch (error) {
+      console.error('Error checking payment:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to check payment'
+      });
+    }
+  });
+
   // Database health monitoring endpoint
   app.get('/api/health/database', async (req, res) => {
     try {
