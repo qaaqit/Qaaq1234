@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
 import { ArrowLeft, Share2, Home, ChevronRight, Edit3, RotateCcw, ChevronUp, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -183,6 +183,9 @@ export default function SemmEquipmentPage() {
       console.log('✅ Successfully reordered makes');
       setReorderEnabled(false);
       setReorderItems([]);
+      
+      // Refresh the data to show updated codes
+      queryClient.invalidateQueries({ queryKey: ['/api/dev/semm-cards'] });
     } catch (error) {
       console.error('❌ Error reordering makes:', error);
     }
