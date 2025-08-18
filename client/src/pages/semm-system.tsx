@@ -3,7 +3,7 @@ import { useParams, useLocation } from 'wouter';
 import { ArrowLeft, Share2, Home, ChevronRight, ChevronDown, GripVertical, Plus, Edit3, Ship, RotateCcw } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { SemmReorderModal } from '@/components/semm-reorder-modal';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/useAuth';
 
 // Bottom edge roll out flip card animation
@@ -186,6 +186,9 @@ export default function SemmSystemPage() {
         orderedCodes 
       });
       console.log('✅ Successfully reordered equipment');
+      
+      // Refresh the data to show updated codes
+      queryClient.invalidateQueries({ queryKey: ['/api/dev/semm-cards'] });
     } catch (error) {
       console.error('❌ Error reordering equipment:', error);
     }

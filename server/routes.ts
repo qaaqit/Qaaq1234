@@ -3967,17 +3967,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('🔄 Reordering equipment in system', systemCode, ':', orderedCodes);
       
-      // Update the order for each equipment item
+      // Generate new equipment codes based on position
+      const generateEquipmentCode = (index: number): string => {
+        const letter = String.fromCharCode(97 + index); // a, b, c, etc.
+        return `${systemCode}${letter}`; // aa, ab, ac for system a
+      };
+      
+      // Step 1: Update equipment codes first, using temporary codes to avoid conflicts
       for (let i = 0; i < orderedCodes.length; i++) {
         await pool.query(`
           UPDATE semm_structure 
-          SET equipment_order = $1 
-          WHERE sid = $2 AND eid = $3
-        `, [i + 1, systemCode, orderedCodes[i]]);
+          SET eid = $1, equipment_order = $2
+          WHERE sid = $3 AND eid = $4
+        `, [`temp_eq_${i}`, i + 1, systemCode, orderedCodes[i]]);
       }
       
-      console.log('✅ Successfully reordered equipment');
-      res.json({ success: true, message: 'Equipment reordered successfully' });
+      // Step 2: Update to final equipment codes and regenerate make codes
+      for (let i = 0; i < orderedCodes.length; i++) {
+        const newEquipmentCode = generateEquipmentCode(i);
+        console.log(`🔄 Updating equipment: ${orderedCodes[i]} -> ${newEquipmentCode}`);
+        
+        // Get all makes for this equipment to regenerate their codes
+        const makesResult = await pool.query(`
+          SELECT mid, make, make_order 
+          FROM semm_structure 
+          WHERE sid = $1 AND eid = $2 
+          ORDER BY make_order ASC
+        `, [systemCode, `temp_eq_${i}`]);
+        
+        const makes = makesResult.rows;
+        
+        // Update equipment code
+        await pool.query(`
+          UPDATE semm_structure 
+          SET eid = $1
+          WHERE sid = $2 AND eid = $3
+        `, [newEquipmentCode, systemCode, `temp_eq_${i}`]);
+        
+        // Regenerate make codes for this equipment
+        for (let j = 0; j < makes.length; j++) {
+          const newMakeCode = `${systemCode}${newEquipmentCode.slice(1)}${String.fromCharCode(97 + j)}`;
+          console.log(`🔄 Updating make: ${makes[j].mid} -> ${newMakeCode}`);
+          
+          await pool.query(`
+            UPDATE semm_structure 
+            SET mid = $1 
+            WHERE sid = $2 AND eid = $3 AND mid = $4
+          `, [newMakeCode, systemCode, newEquipmentCode, makes[j].mid]);
+        }
+      }
+      
+      console.log('✅ Successfully reordered equipment and regenerated codes');
+      res.json({ success: true, message: 'Equipment reordered successfully with updated codes' });
       
     } catch (error) {
       console.error('❌ Error reordering equipment:', error);
