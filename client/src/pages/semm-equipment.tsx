@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
-import { ArrowLeft, Share2, Home, ChevronRight, Edit3, RotateCcw } from 'lucide-react';
-import { SemmReorderModal } from '@/components/semm-reorder-modal';
+import { ArrowLeft, Share2, Home, ChevronRight, Edit3, RotateCcw, ChevronUp, ChevronDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { apiRequest } from '@/lib/queryClient';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
@@ -89,21 +89,13 @@ export default function SemmEquipmentPage() {
   // Admin state
   const [currentMakeIndex, setCurrentMakeIndex] = useState(0);
   const [reorderEnabled, setReorderEnabled] = useState(false);
+  const [reorderItems, setReorderItems] = useState<Array<{ code: string; title: string }>>([]);
 
   // Fetch SEMM data to find the specific equipment
   const { data: semmData, isLoading, error } = useQuery({
     queryKey: ['/api/dev/semm-cards'],
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 3,
-  });
-
-  // Admin edit and reorder functions
-  const [reorderModal, setReorderModal] = useState<{
-    isOpen: boolean;
-    items: Array<{ code: string; title: string }>;
-  }>({
-    isOpen: false,
-    items: []
   });
 
   if (isLoading) {
@@ -169,27 +161,50 @@ export default function SemmEquipmentPage() {
       title: make.title
     }));
     
-    setReorderModal({
-      isOpen: true,
-      items: makes
-    });
+    setReorderItems(makes);
+    setReorderEnabled(true);
   };
 
-  const handleReorderSubmit = async (orderedCodes: string[]) => {
+  const handleReorderSubmit = async () => {
     try {
+      // Generate new alphabetical codes based on current order
+      const baseChar = reorderItems[0]?.code?.[0] || 'a';
+      const codeLength = reorderItems[0]?.code?.length || 2;
+      
+      const orderedCodes = reorderItems.map((_, index) => {
+        return baseChar + String.fromCharCode(97 + index).repeat(codeLength - 1);
+      });
+      
       await apiRequest('/api/dev/semm/reorder-makes', 'POST', { 
         systemCode: parentSystem.code, 
         equipmentCode: foundEquipment.code,
         orderedCodes 
       });
       console.log('✅ Successfully reordered makes');
+      setReorderEnabled(false);
+      setReorderItems([]);
     } catch (error) {
       console.error('❌ Error reordering makes:', error);
     }
   };
 
-  const closeReorderModal = () => {
-    setReorderModal(prev => ({ ...prev, isOpen: false }));
+  const handleCancelReorder = () => {
+    setReorderEnabled(false);
+    setReorderItems([]);
+  };
+
+  const moveItemUp = (index: number) => {
+    if (index === 0) return;
+    const newItems = [...reorderItems];
+    [newItems[index], newItems[index - 1]] = [newItems[index - 1], newItems[index]];
+    setReorderItems(newItems);
+  };
+
+  const moveItemDown = (index: number) => {
+    if (index === reorderItems.length - 1) return;
+    const newItems = [...reorderItems];
+    [newItems[index], newItems[index + 1]] = [newItems[index + 1], newItems[index]];
+    setReorderItems(newItems);
   };
 
   const goBack = () => {
@@ -272,7 +287,7 @@ export default function SemmEquipmentPage() {
           <div className="mt-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">Makes for {foundEquipment.title}</h2>
-              {isAdmin && (
+              {isAdmin && !reorderEnabled && (
                 <button
                   onClick={handleReorderMakes}
                   className="p-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-lg"
@@ -283,12 +298,41 @@ export default function SemmEquipmentPage() {
                 </button>
               )}
             </div>
+
+            {/* Reorder Controls - Fixed buttons when in reorder mode */}
+            {reorderEnabled && (
+              <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-medium text-orange-800">Reorder Makes</h3>
+                  <div className="flex space-x-3">
+                    <Button
+                      variant="outline"
+                      onClick={handleCancelReorder}
+                      data-testid="cancel-reorder"
+                      className="border-orange-300 text-orange-600 hover:bg-orange-100"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleReorderSubmit}
+                      data-testid="save-reorder"
+                      className="bg-blue-500 hover:bg-blue-600 text-white"
+                    >
+                      Save Order
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {foundEquipment.makes.map((make: any) => (
+              {(reorderEnabled ? reorderItems : foundEquipment.makes).map((make: any, index: number) => (
                 <div 
                   key={make.code}
-                  className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow cursor-pointer group"
-                  onClick={() => setLocation(`/machinetree/${make.code}`)}
+                  className={`bg-white rounded-xl shadow-lg border border-gray-200 p-6 transition-shadow group ${
+                    reorderEnabled ? 'cursor-default' : 'cursor-pointer hover:shadow-xl'
+                  }`}
+                  onClick={reorderEnabled ? undefined : () => setLocation(`/machinetree/${make.code}`)}
                   data-testid={`make-card-${make.code}`}
                 >
                   <div className="flex items-start justify-between mb-4">
@@ -303,7 +347,32 @@ export default function SemmEquipmentPage() {
                         <p className="text-sm text-gray-500">Make Type</p>
                       </div>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-orange-500 transition-colors" />
+                    
+                    {/* Reorder controls when in reorder mode */}
+                    {reorderEnabled ? (
+                      <div className="flex flex-col space-y-1">
+                        <button
+                          onClick={() => moveItemUp(index)}
+                          disabled={index === 0}
+                          className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed rounded hover:bg-white transition-colors"
+                          data-testid={`move-up-${make.code}`}
+                          title="Move up"
+                        >
+                          <ChevronUp className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => moveItemDown(index)}
+                          disabled={index === reorderItems.length - 1}
+                          className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed rounded hover:bg-white transition-colors"
+                          data-testid={`move-down-${make.code}`}
+                          title="Move down"
+                        >
+                          <ChevronDown className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-orange-500 transition-colors" />
+                    )}
                   </div>
                   
                   <div className="space-y-2">
@@ -321,8 +390,8 @@ export default function SemmEquipmentPage() {
                     )}
                   </div>
 
-                  {/* Admin edit button */}
-                  {isAdmin && (
+                  {/* Admin edit button - only show when not in reorder mode */}
+                  {isAdmin && !reorderEnabled && (
                     <div className="mt-4 pt-2 border-t border-gray-100">
                       <button
                         onClick={(e) => {
@@ -349,15 +418,6 @@ export default function SemmEquipmentPage() {
         )}
 
       </div>
-      
-      {/* Reorder Modal */}
-      <SemmReorderModal
-        isOpen={reorderModal.isOpen}
-        onClose={closeReorderModal}
-        title="Makes"
-        items={reorderModal.items}
-        onReorder={handleReorderSubmit}
-      />
     </div>
   );
 }
