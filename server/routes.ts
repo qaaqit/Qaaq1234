@@ -110,6 +110,43 @@ const noAuth = async (req: Request, res: Response, next: NextFunction) => {
   next();
 };
 
+// Session-based authentication for admin routes
+const authenticateSession = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // First, check for token in Authorization header
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+        req.userId = decoded.userId;
+        return next();
+      } catch (error) {
+        console.log('🔒 JWT token invalid, falling back to session auth');
+      }
+    }
+
+    // Fallback to session-based authentication
+    if (req.session && req.session.userId) {
+      req.userId = req.session.userId;
+      return next();
+    }
+
+    // Check if user is authenticated via session bridge
+    const sessionUser = (req as any).session?.dbUser;
+    if (sessionUser && sessionUser.id) {
+      req.userId = sessionUser.id;
+      return next();
+    }
+
+    return res.status(401).json({ message: 'Authentication required' });
+  } catch (error) {
+    console.error('Session authentication error:', error);
+    return res.status(500).json({ message: 'Authentication failed' });
+  }
+};
+
 // Generate random 6-digit verification code
 const generateVerificationCode = (): string => {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -2721,7 +2758,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ==== SYSTEM CONFIGURATION ENDPOINTS ====
   
   // Get system configuration values
-  app.get('/api/admin/config', authenticateToken, isAdmin, async (req: any, res) => {
+  app.get('/api/admin/config', authenticateSession, isAdmin, async (req: any, res) => {
     try {
       const result = await pool.query(`
         SELECT config_key, config_value, description, value_type, updated_by, updated_at
@@ -2737,7 +2774,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get specific config value
-  app.get('/api/admin/config/:key', authenticateToken, isAdmin, async (req: any, res) => {
+  app.get('/api/admin/config/:key', authenticateSession, isAdmin, async (req: any, res) => {
     try {
       const { key } = req.params;
       const result = await pool.query(`
@@ -2758,7 +2795,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update or create system configuration
-  app.put('/api/admin/config/:key', authenticateToken, isAdmin, async (req: any, res) => {
+  app.put('/api/admin/config/:key', authenticateSession, isAdmin, async (req: any, res) => {
     try {
       const { key } = req.params;
       const { value, description, valueType = 'string' } = req.body;
@@ -2800,7 +2837,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Initialize default token limit configurations if they don't exist
-  app.post('/api/admin/config/init-defaults', authenticateToken, isAdmin, async (req: any, res) => {
+  app.post('/api/admin/config/init-defaults', authenticateSession, isAdmin, async (req: any, res) => {
     try {
       const userId = req.userId;
       const defaultConfigs = [
