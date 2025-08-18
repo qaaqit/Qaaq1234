@@ -129,9 +129,10 @@ export default function MachineTreePage() {
   // Admin functions - reorder systems and equipment
 
   const handleReorderSystems = () => {
-    if (!semmData?.data) return;
+    const systems = Array.isArray(semmData) ? semmData : (semmData as any)?.data || [];
+    if (!systems.length) return;
     
-    const systems = semmData.data.map((system: any) => ({
+    const systemItems = systems.map((system: any) => ({
       code: system.code,
       title: system.title
     }));
@@ -139,7 +140,7 @@ export default function MachineTreePage() {
     setReorderModal({
       type: 'systems',
       isOpen: true,
-      items: systems
+      items: systemItems
     });
   };
 
@@ -154,10 +155,11 @@ export default function MachineTreePage() {
   };
 
   const handleReorderEquipment = (systemCode: string) => {
-    if (!semmData?.data) return;
+    const systems = Array.isArray(semmData) ? semmData : (semmData as any)?.data || [];
+    if (!systems.length) return;
     
-    const system = semmData.data.find((s: any) => s.code === systemCode);
-    if (!system) return;
+    const system = systems.find((s: any) => s.code === systemCode);
+    if (!system?.equipment) return;
     
     const equipment = system.equipment.map((eq: any) => ({
       code: eq.code,
@@ -172,27 +174,26 @@ export default function MachineTreePage() {
   };
 
   const handleReorderSubmit = async (orderedCodes: string[]) => {
-    if (reorderModal.type === 'systems') {
-      await apiRequest('/api/dev/semm/reorder-systems', {
-        method: 'POST',
-        body: { orderedCodes }
-      });
-    } else if (reorderModal.type === 'equipment') {
-      const system = semmData.data.find((s: any) => 
-        s.equipment.some((eq: any) => 
-          reorderModal.items.some(item => item.code === eq.code)
-        )
-      );
-      
-      if (system) {
-        await apiRequest('/api/dev/semm/reorder-equipment', {
-          method: 'POST',
-          body: { 
+    try {
+      if (reorderModal.type === 'systems') {
+        await apiRequest('/api/dev/semm/reorder-systems', 'POST', { orderedCodes });
+      } else if (reorderModal.type === 'equipment') {
+        const systems = Array.isArray(semmData) ? semmData : (semmData as any)?.data || [];
+        const system = systems.find((s: any) => 
+          s.equipment?.some((eq: any) => 
+            reorderModal.items.some(item => item.code === eq.code)
+          )
+        );
+        
+        if (system) {
+          await apiRequest('/api/dev/semm/reorder-equipment', 'POST', { 
             systemCode: system.code,
             orderedCodes 
-          }
-        });
+          });
+        }
       }
+    } catch (error) {
+      console.error('Reorder failed:', error);
     }
   };
 
@@ -288,363 +289,134 @@ export default function MachineTreePage() {
 
         </div>
       </div>
-      {/* Main Content */}
+      {/* Main Content - Systems Cards Stacked */}
       <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* Categories Panel */}
-          <div className="bg-white rounded-lg shadow-lg border border-gray-200">
-            <div className="px-6 py-4 border-b bg-gradient-to-r from-red-50 to-orange-50">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-                  <Ship className="h-5 w-5 text-red-600 mr-2" />
-                  Maritime Systems
-                  {isAdmin && (
-                    <button
-                      onClick={() => handleEditSystem('title')}
-                      className="ml-2 p-1 hover:bg-orange-100 rounded"
-                      title="Edit SEMM Title"
-                      data-testid="edit-semm-title"
-                    >
-                      <Edit3 className="h-4 w-4 text-orange-600" />
-                    </button>
-                  )}
-                </h3>
-              </div>
-            </div>
-            
-            {/* Admin Controls for Systems */}
+        {/* Header with Admin Controls */}
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold text-gray-800 flex items-center mb-4">
+            <Ship className="h-6 w-6 text-red-600 mr-3" />
+            Maritime Systems
             {isAdmin && (
-              <div className="px-6 py-3 bg-gray-50 border-b">
-                <button
-                  onClick={handleReorderSystems}
-                  className="flex items-center space-x-2 text-sm text-orange-600 hover:text-orange-700 mb-2"
-                  data-testid="reorder-systems"
-                >
-                  <GripVertical className="h-4 w-4" />
-                  <span>Reorder Systems</span>
-                </button>
-              </div>
+              <button
+                onClick={() => handleEditSystem('title')}
+                className="ml-2 p-1 hover:bg-orange-100 rounded"
+                title="Edit SEMM Title"
+                data-testid="edit-semm-title"
+              >
+                <Edit3 className="h-4 w-4 text-orange-600" />
+              </button>
             )}
-            <div className="max-h-[600px] overflow-y-auto">
-              {categories.map((category: any) => (
-                <div key={category.id} className="border-b border-gray-100 last:border-b-0 relative">
-                  <div className="flex items-center px-6 py-4 hover:bg-orange-50 transition-colors group">
-                    
-                    {/* Clickable card body - goes to system page */}
-                    <div 
-                      className="flex items-center space-x-3 flex-1 cursor-pointer"
-                      onClick={() => navigateToSystem(category.code)}
-                      data-testid={`category-${category.id}`}
-                    >
-                      <div className="flex items-center justify-center w-8 h-8 bg-orange-100 rounded-full">
-                        <span className="text-sm font-bold text-orange-600">{category.code?.toUpperCase() || 'N/A'}</span>
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2">
-                          <div className="font-medium text-gray-800">{category.title}</div>
-                          {isAdmin && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEditSystem(category.id);
-                              }}
-                              className="p-1 hover:bg-orange-100 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                              title="Edit System"
-                              data-testid={`edit-system-${category.id}`}
-                            >
-                              <Edit3 className="h-3 w-3 text-orange-600" />
-                            </button>
-                          )}
-                        </div>
-                        {category.description && (
-                          <div className="text-sm text-gray-500">{category.description}</div>
-                        )}
-                      </div>
-                    </div>
+          </h2>
+          
+          {/* Admin Controls for Systems */}
+          {isAdmin && (
+            <button
+              onClick={handleReorderSystems}
+              className="flex items-center space-x-2 text-sm text-orange-600 hover:text-orange-700 mb-4 px-3 py-2 bg-orange-50 rounded-lg"
+              data-testid="reorder-systems"
+            >
+              <GripVertical className="h-4 w-4" />
+              <span>Reorder Systems</span>
+            </button>
+          )}
+        </div>
 
-                    {/* Chevron dropdown - shows equipment list */}
-                    <div className="relative flex items-center space-x-2">
-                      {category.count && (
-                        <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
-                          {category.count}
-                        </span>
+        {/* Stacked Systems Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {categories.map((category: any) => (
+            <div key={category.id} className="bg-white rounded-lg shadow-lg border border-gray-200 hover:shadow-xl transition-shadow">
+              {/* Card Header */}
+              <div className="p-6 border-b border-gray-100">
+                <div className="flex items-center justify-between">
+                  <div 
+                    className="flex items-center space-x-3 cursor-pointer flex-1"
+                    onClick={() => navigateToSystem(category.code)}
+                    data-testid={`category-${category.id}`}
+                  >
+                    <div className="flex items-center justify-center w-10 h-10 bg-orange-100 rounded-full">
+                      <span className="text-sm font-bold text-orange-600">{category.code?.toUpperCase() || 'N/A'}</span>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-800">{category.title}</h3>
+                      {category.description && (
+                        <p className="text-sm text-gray-500 mt-1">{category.description}</p>
                       )}
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    {category.count && (
+                      <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
+                        {category.count}
+                      </span>
+                    )}
+                    {isAdmin && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          toggleDropdown(category.code);
+                          handleEditSystem(category.id);
                         }}
-                        className="p-2 hover:bg-orange-100 rounded-full transition-colors"
-                        data-testid={`dropdown-${category.code}`}
-                        title="Show equipment in this system"
+                        className="p-1 hover:bg-orange-100 rounded"
+                        title="Edit System"
+                        data-testid={`edit-system-${category.id}`}
                       >
-                        {showDropdowns.has(category.code) ? (
-                          <ChevronDown className="h-4 w-4 text-gray-400" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4 text-gray-400" />
-                        )}
+                        <Edit3 className="h-3 w-3 text-orange-600" />
                       </button>
-
-                      {/* Equipment Dropdown */}
-                      {showDropdowns.has(category.code) && (
-                        <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-64">
-                          {category.equipment?.map((equipment: any) => (
-                            <div
-                              key={equipment.code}
-                              className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 group"
-                            >
-                              <button
-                                onClick={() => {
-                                  setLocation(`/machinetree/equipment/${equipment.code}`);
-                                  setShowDropdowns(new Set());
-                                }}
-                                className="flex items-center space-x-3 flex-1 text-left"
-                                data-testid={`dropdown-equipment-${equipment.code}`}
-                              >
-                                <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center flex-shrink-0">
-                                  <span className="text-blue-600 text-xs font-bold">{equipment.code}</span>
-                                </div>
-                                <span className="text-gray-800 font-medium">{equipment.title}</span>
-                              </button>
-                              {isAdmin && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleEditEquipment(equipment.code);
-                                    setShowDropdowns(new Set());
-                                  }}
-                                  className="p-1 hover:bg-orange-100 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                                  title="Edit Equipment"
-                                  data-testid={`edit-dropdown-equipment-${equipment.code}`}
-                                >
-                                  <Edit3 className="h-3 w-3 text-orange-600" />
-                                </button>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                    )}
                   </div>
-                  
-                  {/* Equipment under this category */}
-                  {expandedCategories.has(category.id) && (
-                    <div className="bg-gray-50 px-6 py-2">
-                      {/* Admin Controls for Equipment */}
-                      {isAdmin && (
-                        <div className="mb-3 p-2 bg-orange-50 rounded">
-                          <button
-                            onClick={() => handleReorderEquipment(category.id)}
-                            className="flex items-center space-x-2 text-sm text-orange-600 hover:text-orange-700 mb-2"
-                            data-testid={`reorder-equipment-${category.id}`}
-                          >
-                            <GripVertical className="h-4 w-4" />
-                            <span>Reorder Equipment</span>
-                          </button>
-                        </div>
-                      )}
-                      
-                      {getFilteredEquipment(category.id).map((eq: any) => (
-                        <div key={eq.id} className="py-2 border-b border-gray-200 last:border-b-0">
-                          <div
-                            className="w-full text-left flex items-center justify-between hover:text-orange-600 transition-colors cursor-pointer group"
-                            onClick={() => toggleEquipment(eq.id)}
-                            data-testid={`equipment-${eq.id}`}
-                          >
-                            <div className="flex items-center space-x-2">
-                              <div className="flex items-center justify-center w-6 h-6 bg-white rounded border">
-                                <span className="text-xs font-bold text-gray-600">{eq.code}</span>
-                              </div>
-                              <span className="text-sm font-medium text-gray-700">{eq.title}</span>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigateToEquipment(eq.code);
-                                }}
-                                className="p-1 hover:bg-blue-100 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                                title="View Equipment Page"
-                                data-testid={`view-equipment-${eq.id}`}
-                              >
-                                <ExternalLink className="h-3 w-3 text-blue-600" />
-                              </button>
-                              {isAdmin && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleEditEquipment(eq.id);
-                                  }}
-                                  className="p-1 hover:bg-orange-100 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                                  title="Edit Equipment"
-                                  data-testid={`edit-equipment-${eq.id}`}
-                                >
-                                  <Edit3 className="h-3 w-3 text-orange-600" />
-                                </button>
-                              )}
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              {eq.count && (
-                                <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs">
-                                  {eq.count}
-                                </span>
-                              )}
-                              {expandedEquipment.has(eq.id) ? (
-                                <ChevronDown className="h-3 w-3 text-gray-400" />
-                              ) : (
-                                <ChevronRight className="h-3 w-3 text-gray-400" />
-                              )}
-                            </div>
-                          </div>
-                          
-                          {/* Machines under this equipment */}
-                          {expandedEquipment.has(eq.id) && (
-                            <div className="ml-8 mt-2 space-y-2">
-                              {getFilteredMachines(eq.id).map((machine: any) => (
-                                <div
-                                  key={machine.id}
-                                  className="p-3 bg-white rounded border hover:shadow-sm transition-shadow"
-                                  data-testid={`machine-${machine.id}`}
-                                >
-                                  <div className="flex items-start justify-between">
-                                    <div className="flex-1">
-                                      <div className="font-medium text-gray-800">{machine.name}</div>
-                                      <div className="text-xs text-gray-500 mt-1">Make: {machine.make}</div>
-                                      {machine.model && (
-                                        <div className="text-xs text-orange-600">Model: {machine.model}</div>
-                                      )}
-                                      {machine.description && (
-                                        <div className="text-xs text-gray-500 mt-1">{machine.description}</div>
-                                      )}
-                                    </div>
-                                    <div className="flex items-center space-x-2 ml-3">
-                                      <button
-                                        onClick={() => copyShareLink(machine)}
-                                        className="p-1 hover:bg-blue-50 rounded transition-colors"
-                                        title="Share machine"
-                                      >
-                                        <Share2 className="h-4 w-4 text-gray-400 hover:text-blue-500" />
-                                      </button>
-                                      <ChevronRight className="h-4 w-4 text-gray-400" />
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                      
-                      {/* Add New Equipment Button */}
-                      {isAdmin && (
-                        <div className="mt-3 p-2">
-                          <button
-                            onClick={() => handleAddNewEquipment(category.id)}
-                            className="flex items-center space-x-2 text-sm text-orange-600 hover:text-orange-700 w-full justify-center py-2 border-2 border-dashed border-orange-300 rounded hover:border-orange-400 transition-colors"
-                            data-testid={`add-equipment-${category.id}`}
-                          >
-                            <Plus className="h-4 w-4" />
-                            <span>Add New Equipment</span>
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
-              ))}
-              
-              {/* Add New System Button */}
-              {isAdmin && (
-                <div className="p-4 border-t border-gray-200">
-                  <button
-                    onClick={handleAddNewSystem}
-                    className="flex items-center space-x-2 text-sm text-orange-600 hover:text-orange-700 w-full justify-center py-3 border-2 border-dashed border-orange-300 rounded hover:border-orange-400 transition-colors"
-                    data-testid="add-new-system"
-                  >
-                    <Plus className="h-4 w-4" />
-                    <span>Add New System</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
+              </div>
 
-          {/* Details Panel */}
-          <div className="lg:col-span-2 bg-white rounded-lg shadow-lg border border-gray-200">
-            <div className="px-6 py-4 border-b bg-gradient-to-r from-orange-50 to-red-50">
-              <h3 className="text-lg font-semibold text-gray-800">Equipment Details</h3>
-            </div>
-            <div className="p-6">
-              {!selectedCategory ? (
-                <div className="text-center py-12">
-                  <Settings className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                  <h4 className="text-lg font-medium text-gray-600 mb-2">Select a System Category</h4>
-                  <p className="text-gray-500">Choose a maritime system category to explore equipment and manufacturers</p>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  <div>
-                    <h4 className="text-lg font-semibold text-gray-800 mb-2">
-                      {categories.find((c: any) => c.id === selectedCategory)?.title}
-                    </h4>
-                    <p className="text-gray-600">
-                      {categories.find((c: any) => c.id === selectedCategory)?.description || 
-                       'Explore the equipment and manufacturers in this maritime system category.'}
-                    </p>
-                  </div>
-                  
-                  {selectedEquipment && (
-                    <div className="border-t pt-6">
-                      <h5 className="text-md font-semibold text-gray-800 mb-3">
-                        {equipment.find((eq: any) => eq.id === selectedEquipment)?.title} Machines (from Parent App)
-                      </h5>
-                      <div className="grid gap-4">
-                        {getFilteredMachines(selectedEquipment).map((machine: any) => (
-                          <div
-                            key={machine.id}
-                            className="p-4 border border-gray-200 rounded-lg hover:border-orange-300 transition-colors"
-                          >
-                            <div className="flex justify-between items-start mb-2">
-                              <h6 className="font-medium text-gray-800">{machine.name}</h6>
-                              <div className="flex items-center space-x-2">
-                                {machine.model && (
-                                  <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded text-sm">
-                                    {machine.model}
-                                  </span>
-                                )}
-                                <button
-                                  className="p-1 hover:bg-red-50 rounded transition-colors"
-                                  title="Add to favorites"
-                                >
-                                  <Heart className="h-4 w-4 text-gray-400 hover:text-red-500" />
-                                </button>
-                                <button
-                                  onClick={() => copyShareLink(machine)}
-                                  className="p-1 hover:bg-blue-50 rounded transition-colors"
-                                  title="Share machine"
-                                >
-                                  <Share2 className="h-4 w-4 text-gray-400 hover:text-blue-500" />
-                                </button>
-                              </div>
-                            </div>
-                            <div className="text-xs text-gray-500 mb-2">Make: {machine.make}</div>
-                            {machine.description && (
-                              <p className="text-gray-600 text-sm mb-2">{machine.description}</p>
-                            )}
-                            {machine.specifications && (
-                              <div className="text-xs text-gray-500">
-                                <strong>Specifications:</strong> {JSON.stringify(machine.specifications)}
-                              </div>
-                            )}
-                          </div>
-                        ))}
+              {/* Equipment Preview */}
+              <div className="p-4">
+                <div className="space-y-2">
+                  {category.equipment?.slice(0, 3).map((equipment: any) => (
+                    <button
+                      key={equipment.code}
+                      onClick={() => setLocation(`/machinetree/equipment/${equipment.code}`)}
+                      className="w-full flex items-center space-x-3 p-2 hover:bg-gray-50 rounded text-left"
+                      data-testid={`card-equipment-${equipment.code}`}
+                    >
+                      <div className="w-6 h-6 bg-blue-100 rounded flex items-center justify-center">
+                        <span className="text-blue-600 text-xs font-bold">{equipment.code}</span>
                       </div>
+                      <span className="text-sm text-gray-700 truncate">{equipment.title}</span>
+                    </button>
+                  ))}
+                  
+                  {category.equipment?.length > 3 && (
+                    <div className="text-xs text-gray-500 text-center py-2">
+                      +{category.equipment.length - 3} more equipment
                     </div>
                   )}
                 </div>
-              )}
+
+                {/* View All Button */}
+                <button
+                  onClick={() => navigateToSystem(category.code)}
+                  className="w-full mt-4 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium"
+                  data-testid={`view-system-${category.code}`}
+                >
+                  View System Details →
+                </button>
+              </div>
             </div>
-          </div>
+          ))}
         </div>
+
+        {/* Add New System Button for Admins */}
+        {isAdmin && (
+          <div className="mt-6">
+            <button
+              onClick={handleAddNewSystem}
+              className="flex items-center space-x-2 text-sm text-orange-600 hover:text-orange-700 px-4 py-3 border-2 border-dashed border-orange-300 rounded-lg hover:border-orange-400 transition-colors"
+              data-testid="add-new-system"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add New System</span>
+            </button>
+          </div>
+        )}
       </div>
       
       {/* Reorder Modal */}
