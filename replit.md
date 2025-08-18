@@ -61,6 +61,7 @@ Enhanced Reorder System: Admin reorder modals now feature editable code cards al
 - **Authentication**: Dual OTP verification (WhatsApp + Email) with JWT tokens. Universal password acceptance with automatic user creation.
 - **Session Management**: Express sessions with PostgreSQL storage.
 - **Payment System**: Production Razorpay integration with enhanced database connection reliability, automatic retry logic, and comprehensive subscription management.
+- **AI Token Management**: Configurable token limits system with admin controls for free (15-25 tokens) and premium users (50-100 tokens). Dynamic adjustment via admin dashboard with real-time database updates.
 
 ### Bot Integration Architecture
 - **QBOT**: WhatsApp bot for maritime networking assistance, location discovery, QAAQ Store services, and Q&A functionality. Integrated with OpenAI GPT-4o for intelligent maritime assistance.
