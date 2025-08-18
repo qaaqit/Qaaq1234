@@ -216,6 +216,10 @@ export function QuestionsTab() {
     const userPattern = /^User:\s*[^(]*\(via Q[^)]*\)\s*/;
     cleanContent = cleanContent.replace(userPattern, '');
     
+    // Remove category patterns like "Category: General - General ......... question::"
+    const categoryPattern = /^Category:\s*[^:]*\s*\.+\s*question::\s*/i;
+    cleanContent = cleanContent.replace(categoryPattern, '');
+    
     // Remove any extra whitespace and newlines at the beginning
     cleanContent = cleanContent.replace(/^\s+/, '');
     
