@@ -340,7 +340,7 @@ export default function PremiumPage() {
                 <Card className="border-2 border-orange-200 rounded-t-none">
                   <CardHeader>
                     <CardTitle className="text-center">Payment Options</CardTitle>
-                    <p className="text-center text-gray-600">₹2,611 (Billed annually @  Rs218 /month)</p>
+                    <p className="text-center text-gray-600">Rs218 /month (Billed annually ₹2,611)</p>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
