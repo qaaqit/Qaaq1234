@@ -60,7 +60,7 @@ Enhanced Reorder System: Admin reorder modals now feature editable code cards al
 - **Image Storage**: Local filesystem storage (`server/uploads/`) with `ImageManagementService`.
 - **Authentication**: Dual OTP verification (WhatsApp + Email) with JWT tokens. Universal password acceptance with automatic user creation.
 - **Session Management**: Express sessions with PostgreSQL storage.
-- **Payment System**: Production Razorpay integration with enhanced database connection reliability, automatic retry logic, and comprehensive subscription management. Premium plans configured with fixed checkout URLs: Monthly (₹451) - https://rzp.io/rzp/jwQW9TW, Yearly (₹2,611) - https://rzp.io/rzp/NAU59cv
+- **Payment System**: Production Razorpay integration with enhanced database connection reliability, automatic retry logic, and comprehensive subscription management. Premium plans configured with fixed checkout URLs: Monthly (₹451) - https://rzp.io/rzp/jwQW9TW, Yearly (₹2,611) - https://rzp.io/rzp/NAU59cv. QR code payments automatically processed via webhooks with admin linking capability.
 - **AI Token Management**: Configurable token limits system with admin controls for free (15-25 tokens) and premium users (50-100 tokens). Dynamic adjustment via admin dashboard with real-time database updates.
 
 ### Bot Integration Architecture

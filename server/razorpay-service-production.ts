@@ -624,6 +624,101 @@ export class RazorpayService {
     return SUBSCRIPTION_PLANS;
   }
 
+  // Admin method to manually link QR payment to user
+  async linkQRPaymentToUser(paymentId: string, userId: string): Promise<boolean> {
+    try {
+      console.log(`🔗 Linking QR payment ${paymentId} to user ${userId}`);
+      
+      // Find the pending subscription
+      const pendingResult = await pool.query(`
+        SELECT * FROM subscriptions 
+        WHERE razorpay_payment_id = $1 AND status = 'qr_pending'
+      `, [paymentId]);
+
+      if (pendingResult.rows.length === 0) {
+        throw new Error('No pending QR subscription found for this payment');
+      }
+
+      const subscription = pendingResult.rows[0];
+      const notes = JSON.parse(subscription.notes || '{}');
+      const billingPeriod = notes.billingPeriod;
+      
+      // Update subscription with user ID and activate it
+      await this.executeWithRetry(async () => {
+        return await pool.query(`
+          UPDATE subscriptions 
+          SET user_id = $1, status = 'active',
+              current_period_start = NOW(),
+              current_period_end = NOW() + INTERVAL '1 ${billingPeriod === 'yearly' ? 'year' : 'month'}'
+          WHERE razorpay_payment_id = $2
+        `, [userId, paymentId]);
+      }, `Link QR payment ${paymentId} to user ${userId}`);
+
+      // Update user premium status
+      const expiryInterval = billingPeriod === 'yearly' ? '1 year' : '1 month';
+      await this.executeWithRetry(async () => {
+        return await pool.query(`
+          INSERT INTO user_subscription_status (
+            user_id, is_premium, premium_expires_at
+          ) VALUES ($1, true, NOW() + INTERVAL '${expiryInterval}')
+          ON CONFLICT (user_id) DO UPDATE SET
+            is_premium = true,
+            premium_expires_at = NOW() + INTERVAL '${expiryInterval}'
+        `, [userId]);
+      }, `Update premium status for user ${userId}`);
+
+      // Link the payment to the user
+      await pool.query(`
+        UPDATE payments 
+        SET user_id = $1 
+        WHERE razorpay_payment_id = $2
+      `, [userId, paymentId]);
+
+      console.log(`✅ Successfully linked QR payment ${paymentId} to user ${userId}`);
+      return true;
+    } catch (error) {
+      console.error(`❌ Failed to link QR payment to user:`, error);
+      return false;
+    }
+  }
+
+  // Get pending QR payments (admin function)
+  async getPendingQRPayments() {
+    try {
+      const result = await pool.query(`
+        SELECT 
+          s.id,
+          s.razorpay_payment_id,
+          s.subscription_type,
+          s.amount,
+          s.currency,
+          s.notes,
+          p.method,
+          p.created_at,
+          p.contact
+        FROM subscriptions s
+        JOIN payments p ON s.razorpay_payment_id = p.razorpay_payment_id
+        WHERE s.status = 'qr_pending'
+        ORDER BY p.created_at DESC
+      `);
+
+      return result.rows.map(row => ({
+        id: row.id,
+        paymentId: row.razorpay_payment_id,
+        subscriptionType: row.subscription_type,
+        amount: row.amount,
+        currency: row.currency,
+        method: row.method,
+        contact: row.contact,
+        createdAt: row.created_at,
+        notes: JSON.parse(row.notes || '{}')
+      }));
+    } catch (error) {
+      console.error('❌ Error fetching pending QR payments:', error);
+      return [];
+    }
+  }
+
   // Cancel subscription
   async cancelSubscription(userId: string, subscriptionId: string) {
     await this.ensureInitialized();
@@ -694,6 +789,7 @@ export class RazorpayService {
 
       switch (event) {
         case 'payment.captured':
+        case 'qr_code.credited':
           await this.handlePaymentCaptured(payload.payment.entity);
           break;
         
@@ -718,14 +814,78 @@ export class RazorpayService {
     }
   }
 
-  // Handle payment captured webhook
+  // Handle payment captured webhook - includes QR code payments
   private async handlePaymentCaptured(payment: any) {
     try {
+      // Check if this is a QR code or direct payment that matches subscription amounts
+      const amount = payment.amount;
+      let subscriptionType = null;
+      let billingPeriod = null;
+      
+      // Match payment amount to subscription plans
+      if (amount === 45100) { // ₹451 monthly premium
+        subscriptionType = 'premium';
+        billingPeriod = 'monthly';
+      } else if (amount === 261100) { // ₹2611 yearly premium
+        subscriptionType = 'premium';
+        billingPeriod = 'yearly';
+      }
+
+      // Store the payment record
       await pool.query(`
-        UPDATE payments 
-        SET status = 'captured', updated_at = NOW()
-        WHERE razorpay_payment_id = $1
-      `, [payment.id]);
+        INSERT INTO payments (
+          razorpay_payment_id, amount, currency, status, method, 
+          description, payment_source, notes
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+        ON CONFLICT (razorpay_payment_id) DO UPDATE SET
+          status = 'captured', updated_at = NOW()
+      `, [
+        payment.id,
+        payment.amount,
+        payment.currency,
+        'captured',
+        payment.method,
+        subscriptionType ? `QR Code Payment - ${subscriptionType} ${billingPeriod}` : 'Payment via Razorpay',
+        payment.method === 'upi' ? 'qr_code' : 'direct',
+        JSON.stringify({
+          subscriptionType,
+          billingPeriod,
+          contact: payment.contact,
+          vpa: payment.vpa,
+          isQRPayment: payment.method === 'upi'
+        })
+      ]);
+
+      // If this matches a subscription plan, create a pending subscription
+      if (subscriptionType) {
+        console.log(`🎯 QR payment matches ${billingPeriod} ${subscriptionType} plan:`, payment.id);
+        
+        // Create a pending subscription for manual user association
+        const pendingResult = await pool.query(`
+          INSERT INTO subscriptions (
+            subscription_type, razorpay_payment_id, amount, currency, 
+            status, notes, razorpay_plan_id
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7) 
+          RETURNING *
+        `, [
+          subscriptionType,
+          payment.id,
+          payment.amount,
+          payment.currency,
+          'qr_pending', // Special status for QR payments awaiting user association
+          JSON.stringify({
+            billingPeriod,
+            paymentMethod: payment.method,
+            contact: payment.contact,
+            awaitingUserLink: true,
+            paymentCapturedAt: new Date()
+          }),
+          billingPeriod === 'monthly' ? 'plan_R6tDNXxZMxBIJR' : 'plan_premium_yearly'
+        ]);
+
+        console.log('✅ Pending QR subscription created for payment:', payment.id);
+        console.log('📋 Admin can manually link this to a user account');
+      }
 
       console.log('✅ Payment captured:', payment.id);
     } catch (error) {
