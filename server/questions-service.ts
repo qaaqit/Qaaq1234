@@ -166,9 +166,30 @@ export async function getQuestionById(questionId: number): Promise<Question | nu
     
     // Process the raw data to handle null values like getQuestions does
     const row = result.rows[0];
+    
+    // Debug logging to understand author attribution issue
+    console.log(`🔍 Question ${questionId} Author Debug:`, {
+      raw_author_id: row.author_id,
+      raw_author_name: row.author_name,
+      processed_author_name: row.author_name?.trim() || 'Anonymous'
+    });
+    
+    // Handle cases where questions are wrongly attributed to current session user
+    let authorName = row.author_name?.trim() || 'Anonymous';
+    
+    // If the question content suggests it's from WhatsApp Q&A or QBOT, override the author
+    if (row.content && (
+        row.content.includes('Category: General') ||
+        row.content.includes('question::') ||
+        row.content.includes('[QBOT Q&A')
+      )) {
+      // For QBOT Q&A questions, use 'QBOT User' as the author
+      authorName = 'QBOT User';
+    }
+    
     return {
       ...row,
-      author_name: row.author_name?.trim() || 'Anonymous',
+      author_name: authorName,
       author_rank: row.author_rank || null,
       tags: row.tags || [],
       image_urls: row.image_urls || [],
@@ -213,15 +234,42 @@ export async function getQuestionAnswers(questionId: number): Promise<any[]> {
         a.created_at ASC
     `, [questionId]);
     
-    const answers = result.rows.map(row => ({
-      ...row,
-      author_name: row.author_name?.trim() || 'Anonymous',
-      author_whatsapp_profile_picture_url: row.author_whatsapp_profile_picture_url || null,
-      author_whatsapp_display_name: row.author_whatsapp_display_name || null,
-      author_profile_picture_url: row.author_profile_picture_url || null,
-      image_urls: row.image_urls || [],
-      is_from_whatsapp: row.is_from_whatsapp || false
-    }));
+    const answers = result.rows.map(row => {
+      // Debug logging for answer author attribution
+      console.log(`🔍 Answer ${row.id} Author Debug:`, {
+        raw_author_id: row.author_id,
+        raw_author_name: row.author_name,
+        processed_author_name: row.author_name?.trim() || 'Anonymous'
+      });
+      
+      // Handle AI/Bot generated answers - if author_id is 'bot' or contains 'ai' or specific patterns
+      let authorName = row.author_name?.trim() || 'Anonymous';
+      
+      // Check if this is a bot/AI generated answer based on author_id or content patterns
+      if (row.author_id === 'bot' || 
+          row.author_id === 'qbot' || 
+          row.author_id === 'ai' ||
+          row.author_id?.toString().toLowerCase().includes('bot') ||
+          row.author_id?.toString().toLowerCase().includes('ai') ||
+          // Check if content indicates it's an AI response
+          (row.content && (
+            row.content.includes('UNKNOWN AI in') ||
+            row.content.includes('QBOT') ||
+            row.content.startsWith('•') // Bullet point responses are typically AI
+          ))) {
+        authorName = 'QBOT';
+      }
+      
+      return {
+        ...row,
+        author_name: authorName,
+        author_whatsapp_profile_picture_url: row.author_whatsapp_profile_picture_url || null,
+        author_whatsapp_display_name: row.author_whatsapp_display_name || null,
+        author_profile_picture_url: row.author_profile_picture_url || null,
+        image_urls: row.image_urls || [],
+        is_from_whatsapp: row.is_from_whatsapp || false
+      };
+    });
     
     client.release();
     return answers;

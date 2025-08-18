@@ -1,5 +1,6 @@
 import { useParams, Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -50,6 +51,29 @@ export default function QuestionPage() {
     queryKey: [`/api/questions/${questionId}/answers`],
     enabled: !!questionId,
   });
+
+  // Debug logging for API responses  
+  useEffect(() => {
+    if (question) {
+      console.log('🔍 Question API Response:', {
+        id: question.id,
+        author_id: question.author_id,
+        author_name: question.author_name,
+        content: question.content?.slice(0, 100)
+      });
+    }
+  }, [question]);
+
+  useEffect(() => {
+    if (answers.length > 0) {
+      console.log('🔍 Answers API Response:', answers.map(answer => ({
+        id: answer.id,
+        author_id: answer.author_id,
+        author_name: answer.author_name,
+        content: answer.content?.slice(0, 50)
+      })));
+    }
+  }, [answers]);
 
   const getInitials = (name: string) => {
     return name
