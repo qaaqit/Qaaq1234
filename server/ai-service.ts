@@ -82,7 +82,7 @@ export class AIService {
       const responseTime = Date.now() - startTime;
 
       // Apply free user limits if user is not premium
-      const finalContent = this.applyFreeUserLimits(content, user);
+      const finalContent = await this.applyFreeUserLimits(content, user);
 
       return {
         content: finalContent,
@@ -198,7 +198,7 @@ export class AIService {
       const responseTime = Date.now() - startTime;
 
       // Apply free user limits if user is not premium
-      const finalContent = this.applyFreeUserLimits(content, user);
+      const finalContent = await this.applyFreeUserLimits(content, user);
 
       return {
         content: finalContent,
@@ -278,8 +278,42 @@ export class AIService {
     };
   }
 
-  // Apply free user limits - truncate to 10-20 words for non-premium users
-  private applyFreeUserLimits(content: string, user: any): string {
+  // Get token limits from system configuration
+  private async getTokenLimits(): Promise<{ min: number; max: number }> {
+    try {
+      const pool = (global as any).pool;
+      if (!pool) {
+        console.log('⚠️ Database pool not available, using default token limits');
+        return { min: 10, max: 20 };
+      }
+
+      const result = await pool.query(`
+        SELECT config_key, config_value 
+        FROM system_configs 
+        WHERE config_key IN ('free_user_min_tokens', 'free_user_max_tokens')
+      `);
+
+      let minTokens = 10;
+      let maxTokens = 20;
+
+      result.rows.forEach((row: any) => {
+        if (row.config_key === 'free_user_min_tokens') {
+          minTokens = parseInt(row.config_value) || 10;
+        } else if (row.config_key === 'free_user_max_tokens') {
+          maxTokens = parseInt(row.config_value) || 20;
+        }
+      });
+
+      console.log(`⚙️ Token limits from config: ${minTokens}-${maxTokens} words`);
+      return { min: minTokens, max: maxTokens };
+    } catch (error) {
+      console.error('Error fetching token limits from config:', error);
+      return { min: 10, max: 20 }; // Fallback to defaults
+    }
+  }
+
+  // Apply free user limits - truncate based on configurable token limits for non-premium users
+  private async applyFreeUserLimits(content: string, user: any): Promise<string> {
     // Check if user is premium (assuming userType field exists)
     const userType = user?.userType || 'Free';
     const subscriptionStatus = user?.subscriptionStatus || 'inactive';
@@ -290,14 +324,20 @@ export class AIService {
       return content;
     }
     
-    // For free users, limit to 10-20 words with upgrade prompt
+    // Get configurable token limits
+    const tokenLimits = await this.getTokenLimits();
+    
+    // For free users, limit to configured word count with upgrade prompt
     const words = content.split(' ');
     const wordCount = words.length;
     
-    console.log(`🆓 Free user - limiting response from ${wordCount} words to ~15 words`);
+    // Use average of min and max for target word count
+    const targetWordCount = Math.round((tokenLimits.min + tokenLimits.max) / 2);
     
-    // Take first 10-20 words and add upgrade prompt
-    const limitedWords = words.slice(0, 15); // Target ~15 words
+    console.log(`🆓 Free user - limiting response from ${wordCount} words to ~${targetWordCount} words (${tokenLimits.min}-${tokenLimits.max} range)`);
+    
+    // Take configured number of words and add upgrade prompt
+    const limitedWords = words.slice(0, targetWordCount);
     const limitedContent = limitedWords.join(' ');
     
     // Ensure it ends with ... and add upgrade prompt

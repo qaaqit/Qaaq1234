@@ -13,6 +13,7 @@ import Discover from "@/pages/discover";
 import Post from "@/pages/post";
 import Admin from "@/pages/admin";
 import BotRulesAdmin from "@/pages/admin/bot-rules";
+import TokenLimitsAdmin from "@/pages/admin/token-limits";
 
 import DMPage from "@/pages/dm";
 import Chat1v1Page from "@/pages/Chat1v1Page";
@@ -184,6 +185,7 @@ function Router() {
           <Route path="/rank-groups" component={() => <RankGroupsPage />} />
           <Route path="/admin" component={() => <Admin />} />
           <Route path="/admin/bot-rules" component={() => <BotRulesAdmin />} />
+          <Route path="/admin/token-limits" component={() => <TokenLimitsAdmin />} />
           <Route path="/merge-accounts/:sessionId" component={MergeAccountsPage} />
           <Route path="/auth-test" component={AuthTestPage} />
           <Route path="/set-password" component={SetPasswordPage} />

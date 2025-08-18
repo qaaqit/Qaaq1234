@@ -14,6 +14,18 @@ export const sessions = pgTable(
   }
 );
 
+// System configuration table for admin settings
+export const systemConfigs = pgTable("system_configs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  configKey: text("config_key").notNull().unique(),
+  configValue: text("config_value").notNull(),
+  description: text("description"),
+  valueType: text("value_type").notNull().default("string"), // 'string', 'number', 'boolean', 'json'
+  updatedBy: text("updated_by"), // User ID who last updated
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`),
+});
+
 // Unified Identity Management Tables
 export const userIdentities = pgTable("user_identities", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -864,6 +876,10 @@ export const insertPaymentSchema = createInsertSchema(payments)
 export const insertUserSubscriptionStatusSchema = createInsertSchema(userSubscriptionStatus)
   .omit({ id: true, updatedAt: true });
 
+// Insert schemas for system configs
+export const insertSystemConfigSchema = createInsertSchema(systemConfigs)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+
 // Types for payments
 export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
 export type Subscription = typeof subscriptions.$inferSelect;
@@ -871,3 +887,7 @@ export type InsertPayment = z.infer<typeof insertPaymentSchema>;
 export type Payment = typeof payments.$inferSelect;
 export type InsertUserSubscriptionStatus = z.infer<typeof insertUserSubscriptionStatusSchema>;
 export type UserSubscriptionStatus = typeof userSubscriptionStatus.$inferSelect;
+
+// Types for system configs
+export type InsertSystemConfig = z.infer<typeof insertSystemConfigSchema>;
+export type SystemConfig = typeof systemConfigs.$inferSelect;

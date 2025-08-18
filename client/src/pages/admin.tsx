@@ -281,6 +281,15 @@ export default function AdminPanel() {
             </Button>
             
             <Button
+              onClick={() => setLocation("/admin/token-limits")}
+              className="bg-green-600 hover:bg-green-700 text-white"
+              data-testid="button-token-limits"
+            >
+              <i className="fas fa-cog mr-2"></i>
+              Configure Token Limits
+            </Button>
+            
+            <Button
               onClick={handleGlossaryUpdate}
               disabled={glossaryUpdating || glossaryUpdateMutation.isPending}
               className="bg-purple-600 hover:bg-purple-700 text-white"

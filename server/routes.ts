@@ -2718,6 +2718,135 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ==== SYSTEM CONFIGURATION ENDPOINTS ====
+  
+  // Get system configuration values
+  app.get('/api/admin/config', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      const result = await pool.query(`
+        SELECT config_key, config_value, description, value_type, updated_by, updated_at
+        FROM system_configs 
+        ORDER BY config_key
+      `);
+      
+      res.json(result.rows);
+    } catch (error) {
+      console.error('Error fetching system configs:', error);
+      res.status(500).json({ message: 'Failed to fetch system configurations' });
+    }
+  });
+
+  // Get specific config value
+  app.get('/api/admin/config/:key', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      const { key } = req.params;
+      const result = await pool.query(`
+        SELECT config_key, config_value, description, value_type, updated_by, updated_at
+        FROM system_configs 
+        WHERE config_key = $1
+      `, [key]);
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ message: 'Configuration not found' });
+      }
+      
+      res.json(result.rows[0]);
+    } catch (error) {
+      console.error('Error fetching config:', error);
+      res.status(500).json({ message: 'Failed to fetch configuration' });
+    }
+  });
+
+  // Update or create system configuration
+  app.put('/api/admin/config/:key', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      const { key } = req.params;
+      const { value, description, valueType = 'string' } = req.body;
+      const userId = req.userId;
+
+      if (value === undefined || value === null) {
+        return res.status(400).json({ message: 'Configuration value is required' });
+      }
+
+      // Check if config exists
+      const existingResult = await pool.query(`
+        SELECT id FROM system_configs WHERE config_key = $1
+      `, [key]);
+
+      let result;
+      if (existingResult.rows.length > 0) {
+        // Update existing config
+        result = await pool.query(`
+          UPDATE system_configs 
+          SET config_value = $1, description = $2, value_type = $3, updated_by = $4, updated_at = NOW()
+          WHERE config_key = $5
+          RETURNING *
+        `, [value, description, valueType, userId, key]);
+      } else {
+        // Create new config
+        result = await pool.query(`
+          INSERT INTO system_configs (config_key, config_value, description, value_type, updated_by)
+          VALUES ($1, $2, $3, $4, $5)
+          RETURNING *
+        `, [key, value, description, valueType, userId]);
+      }
+
+      console.log(`⚙️ System config ${key} updated by admin ${userId} to value: ${value}`);
+      res.json(result.rows[0]);
+    } catch (error) {
+      console.error('Error updating system config:', error);
+      res.status(500).json({ message: 'Failed to update system configuration' });
+    }
+  });
+
+  // Initialize default token limit configurations if they don't exist
+  app.post('/api/admin/config/init-defaults', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      const userId = req.userId;
+      const defaultConfigs = [
+        {
+          key: 'free_user_min_tokens',
+          value: '10',
+          description: 'Minimum word count for free user responses',
+          valueType: 'number'
+        },
+        {
+          key: 'free_user_max_tokens',
+          value: '20',
+          description: 'Maximum word count for free user responses',
+          valueType: 'number'
+        }
+      ];
+
+      const results = [];
+      for (const config of defaultConfigs) {
+        // Check if exists
+        const existing = await pool.query(`
+          SELECT id FROM system_configs WHERE config_key = $1
+        `, [config.key]);
+
+        if (existing.rows.length === 0) {
+          // Create if doesn't exist
+          const result = await pool.query(`
+            INSERT INTO system_configs (config_key, config_value, description, value_type, updated_by)
+            VALUES ($1, $2, $3, $4, $5)
+            RETURNING *
+          `, [config.key, config.value, config.description, config.valueType, userId]);
+          results.push(result.rows[0]);
+        }
+      }
+
+      res.json({
+        message: 'Default configurations initialized',
+        created: results.length,
+        configurations: results
+      });
+    } catch (error) {
+      console.error('Error initializing default configs:', error);
+      res.status(500).json({ message: 'Failed to initialize default configurations' });
+    }
+  });
+
   // ==== QBOT CHAT API ENDPOINTS ====
   
   // Function to store QBOT response in Questions database with SEMM breadcrumb and attachments
