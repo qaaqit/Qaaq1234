@@ -132,69 +132,24 @@ export default function SemmSystemPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Breadcrumb and Title Section */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center space-x-4">
-            {/* Breadcrumb */}
-            <nav className="flex items-center space-x-2 text-sm">
-              <button 
-                onClick={goBack}
-                className="text-orange-600 hover:text-orange-800 font-medium transition-colors"
-                data-testid="breadcrumb-home"
-              >
-                Machine Tree
-              </button>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
-              <span className="text-gray-600 font-medium" data-testid="breadcrumb-current">
-                {foundSystem.title}
-              </span>
-            </nav>
+        {/* Header with Back Arrow and Breadcrumb */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-3">
+            <button 
+              onClick={goBack}
+              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
+              data-testid="button-back"
+              title="Back to Machine Tree"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
             
-            {/* Code Card and Title */}
-            <div className="flex items-center space-x-3">
-              <div className="text-center">
-                <div className="text-xs font-bold text-gray-500 mb-1 tracking-widest">SYSTEM</div>
-                <FlipCard char={foundSystem.code} index={0} large={true} />
-              </div>
-              
-              <h1 className="text-2xl font-black text-gray-900">
-                {foundSystem.title}
-              </h1>
-
-              {/* Chevron Down with Equipment Dropdown */}
-              <div className="relative">
-                <button 
-                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
-                  data-testid="dropdown-equipment"
-                  title="Show equipment in this system"
-                  onClick={() => setShowEquipmentDropdown(!showEquipmentDropdown)}
-                >
-                  <ChevronDown className="w-5 h-5" />
-                </button>
-
-                {/* Equipment Dropdown Menu */}
-                {showEquipmentDropdown && (
-                  <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-64">
-                    {foundSystem.equipment?.map((equipment: any) => (
-                      <button
-                        key={equipment.code}
-                        onClick={() => {
-                          setLocation(`/machinetree/equipment/${equipment.code}`);
-                          setShowEquipmentDropdown(false);
-                        }}
-                        className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center space-x-3 border-b border-gray-100 last:border-b-0"
-                        data-testid={`dropdown-equipment-${equipment.code}`}
-                      >
-                        <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center flex-shrink-0">
-                          <span className="text-blue-600 text-xs font-bold">{equipment.code}</span>
-                        </div>
-                        <span className="text-gray-800 font-medium">{equipment.title}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+            {/* Breadcrumb as small text */}
+            <nav className="flex items-center space-x-1 text-xs text-gray-500">
+              <span className="hover:text-gray-700 cursor-pointer" onClick={goBack}>Machine Tree</span>
+              <ChevronRight className="w-3 h-3" />
+              <span className="text-gray-700 font-medium">{foundSystem.title}</span>
+            </nav>
           </div>
 
           {/* Share Icon */}
@@ -204,6 +159,57 @@ export default function SemmSystemPage() {
           >
             <Share2 className="w-4 h-4" />
           </button>
+        </div>
+
+        {/* Code Card - Top Left */}
+        <div className="flex items-start justify-between mb-6">
+          <div className="flex items-center space-x-4">
+            <div className="text-left">
+              <div className="text-xs font-bold text-gray-500 mb-2 tracking-widest">SYSTEM</div>
+              <FlipCard char={foundSystem.code} index={0} large={true} />
+            </div>
+            
+            <div>
+              <h1 className="text-3xl font-black text-gray-900 mb-2">
+                {foundSystem.title}
+              </h1>
+              <p className="text-sm text-gray-600">Maritime system classification</p>
+            </div>
+          </div>
+
+          {/* Equipment Dropdown */}
+          <div className="relative">
+            <button 
+              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
+              data-testid="dropdown-equipment"
+              title="Show equipment in this system"
+              onClick={() => setShowEquipmentDropdown(!showEquipmentDropdown)}
+            >
+              <ChevronDown className="w-5 h-5" />
+            </button>
+
+            {/* Equipment Dropdown Menu */}
+            {showEquipmentDropdown && (
+              <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-64">
+                {foundSystem.equipment?.map((equipment: any) => (
+                  <button
+                    key={equipment.code}
+                    onClick={() => {
+                      setLocation(`/machinetree/equipment/${equipment.code}`);
+                      setShowEquipmentDropdown(false);
+                    }}
+                    className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center space-x-3 border-b border-gray-100 last:border-b-0"
+                    data-testid={`dropdown-equipment-${equipment.code}`}
+                  >
+                    <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center flex-shrink-0">
+                      <span className="text-blue-600 text-xs font-bold">{equipment.code}</span>
+                    </div>
+                    <span className="text-gray-800 font-medium">{equipment.title}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Equipment Cards Grid */}

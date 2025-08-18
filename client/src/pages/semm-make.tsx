@@ -171,38 +171,30 @@ export default function SemmMakePage() {
       
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Breadcrumb and Title Section */}
-        <nav className="flex items-center justify-between mb-8">
-          <div className="flex items-center space-x-2 text-sm">
-            <button 
-              onClick={goHome}
-              className="text-orange-600 hover:text-orange-800 font-medium transition-colors"
-              data-testid="breadcrumb-home"
-            >
-              Machine Tree
-            </button>
-            <ChevronRight className="w-4 h-4 text-gray-400" />
-            <button 
-              onClick={goToSystem}
-              className="text-orange-600 hover:text-orange-800 font-medium transition-colors"
-              data-testid="breadcrumb-system"
-            >
-              {parentSystem.title}
-            </button>
-            <ChevronRight className="w-4 h-4 text-gray-400" />
+        {/* Header with Back Arrow and Breadcrumb */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-3">
             <button 
               onClick={goToEquipment}
-              className="text-orange-600 hover:text-orange-800 font-medium transition-colors"
-              data-testid="breadcrumb-equipment"
+              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
+              data-testid="button-back"
+              title="Back to Equipment"
             >
-              {parentEquipment.title}
+              <ArrowLeft className="w-5 h-5" />
             </button>
-            <ChevronRight className="w-4 h-4 text-gray-400" />
-            <span className="text-gray-600 font-medium" data-testid="breadcrumb-current">
-              {foundMake.title}
-            </span>
+            
+            {/* Breadcrumb as small text */}
+            <nav className="flex items-center space-x-1 text-xs text-gray-500">
+              <span className="hover:text-gray-700 cursor-pointer" onClick={goHome}>Machine Tree</span>
+              <ChevronRight className="w-3 h-3" />
+              <span className="hover:text-gray-700 cursor-pointer" onClick={goToSystem}>{parentSystem.title}</span>
+              <ChevronRight className="w-3 h-3" />
+              <span className="hover:text-gray-700 cursor-pointer" onClick={goToEquipment}>{parentEquipment.title}</span>
+              <ChevronRight className="w-3 h-3" />
+              <span className="text-gray-700 font-medium">{foundMake.title}</span>
+            </nav>
           </div>
-          
+
           {/* Share Icon */}
           <button
             className="flex items-center space-x-2 px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors"
@@ -210,43 +202,42 @@ export default function SemmMakePage() {
           >
             <Share2 className="w-4 h-4" />
           </button>
-        </nav>
+        </div>
 
-        {/* Make Header Card */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
-          
-          {/* Make Code Display */}
-          <div className="mb-6">
-            <div className="text-sm font-bold text-gray-500 mb-4 tracking-widest">MAKE</div>
-            <div className="flex items-center space-x-1">
-              <FlipCard char={foundMake.code[0]} index={0} large={true} />
-              <FlipCard char={foundMake.code[1]} index={1} large={true} />
-              <FlipCard char={foundMake.code[2]} index={2} large={true} />
+        {/* Code Card - Top Left */}
+        <div className="flex items-start justify-between mb-6">
+          <div className="flex items-center space-x-4">
+            <div className="text-left">
+              <div className="text-xs font-bold text-gray-500 mb-2 tracking-widest">MAKE</div>
+              <div className="flex items-center space-x-1">
+                <FlipCard char={foundMake.code[0]} index={0} large={true} />
+                <FlipCard char={foundMake.code[1]} index={1} large={true} />
+                <FlipCard char={foundMake.code[2]} index={2} large={true} />
+              </div>
             </div>
-          </div>
-
-          {/* Make Title */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h1 className="text-4xl font-black text-gray-900">
+            
+            <div>
+              <h1 className="text-3xl font-black text-gray-900 mb-2">
                 {foundMake.title}
               </h1>
-              {isAdmin && (
-                <button
-                  onClick={() => handleEditMake(foundMake.code)}
-                  className="flex items-center space-x-2 px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors"
-                  title="Edit Make"
-                  data-testid="edit-make-btn"
-                >
-                  <Edit3 className="w-4 h-4" />
-                  <span>Edit</span>
-                </button>
-              )}
+              <p className="text-sm text-gray-600">
+                Maritime make classification: <span className="font-bold text-orange-600">{parentSystem.title}</span> → <span className="font-bold text-blue-600">{parentEquipment.title}</span>
+              </p>
             </div>
-            <p className="text-lg text-gray-600 leading-relaxed">
-              Maritime make classification: <span className="font-bold text-orange-600">{parentSystem.title}</span> → <span className="font-bold text-blue-600">{parentEquipment.title}</span>
-            </p>
           </div>
+
+          {/* Admin Edit Button */}
+          {isAdmin && (
+            <button
+              onClick={() => handleEditMake(foundMake.code)}
+              className="flex items-center space-x-2 px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors"
+              title="Edit Make"
+              data-testid="edit-make-btn"
+            >
+              <Edit3 className="w-4 h-4" />
+              <span>Edit</span>
+            </button>
+          )}
         </div>
 
         {/* Models Cards Grid */}

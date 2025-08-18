@@ -35,6 +35,7 @@ User Card Interactions: Profile photo circles are clickable for chat, clicking c
 Onboard Search: Special "onboard" keyword search filters for sailing users and displays ship name & IMO number prominently
 Shipping Dictionary Access: Users can access maritime dictionary definitions without authentication
 Login Roadblock Design: Single minimizable login roadblock with chevron control in top-right corner, no separate roadblocks for individual features
+🔒 SEMM LAYOUT REDESIGN: Breadcrumb positioned next to back arrow as small text in one line, code cards positioned in top-left corner with back arrow above
 
 ## System Architecture
 
