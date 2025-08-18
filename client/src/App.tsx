@@ -37,7 +37,6 @@ import SemmSystemPage from "@/pages/semm-system";
 import SemmMakePage from "@/pages/semm-make";
 import SemmModelPage from "@/pages/semm-model";
 import PrivacyPolicyPage from "@/pages/privacy-policy";
-import PremiumPage from "@/pages/premium";
 
 import NotFound from "@/pages/not-found";
 import BottomNav from "@/components/bottom-nav";
@@ -206,7 +205,6 @@ function Router() {
             return <SemmEquipmentPage />;
           }} />
           <Route path="/privacy-policy" component={() => <PrivacyPolicyPage />} />
-          <Route path="/premium" component={() => <PremiumPage />} />
           <Route path="/home-old" component={() => <Login onSuccess={setUser} />} />
 
           <Route component={NotFound} />

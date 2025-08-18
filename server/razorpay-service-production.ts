@@ -45,10 +45,26 @@ interface PremiumPlan {
   checkoutUrl?: string; // Fixed subscription link
 }
 
+interface SuperUserPlan {
+  planId: string;
+  amount: number;
+  name: string;
+  description: string;
+  displayPrice: string;
+  questions: number;
+  perQuestionRate: number;
+  validityMonths: number;
+  features: string[];
+}
+
 export const SUBSCRIPTION_PLANS: {
   premium: {
     monthly: PremiumPlan;
     yearly: PremiumPlan;
+  };
+  super_user: {
+    topup_451: SuperUserPlan;
+    topup_4510: SuperUserPlan;
   };
 } = {
   premium: {
@@ -72,6 +88,31 @@ export const SUBSCRIPTION_PLANS: {
       displayPrice: '₹2,611',
       savings: '₹2,801 (6+ months free)',
       checkoutUrl: 'https://rzp.io/rzp/NAU59cv' // Fixed yearly subscription link
+    }
+  },
+  super_user: {
+    topup_451: {
+      planId: 'plan_super_topup_451',
+      amount: 45100, // ₹451 in paise (minimum topup)
+      name: 'Super User Starter Pack',
+      description: 'Pay per question - 100 questions included',
+      displayPrice: '₹451',
+      questions: 100, // ₹451 ÷ ₹4.51 = 100 questions
+      perQuestionRate: 4.51,
+      validityMonths: 1,
+      features: ['100 questions', '1 month validity', '₹4.51 per question']
+    },
+
+    topup_4510: {
+      planId: 'plan_super_topup_4510',
+      amount: 451000, // ₹4,510 in paise (maximum topup)
+      name: 'Super User Max Pack',
+      description: 'Pay per question - 1000 questions included',
+      displayPrice: '₹4,510',
+      questions: 1000, // ₹4,510 ÷ ₹4.51 = 1000 questions
+      perQuestionRate: 4.51,
+      validityMonths: 24,
+      features: ['1000 questions', '2 years validity', '₹4.51 per question', 'Maximum value pack']
     }
   }
 };
@@ -282,8 +323,34 @@ export class RazorpayService {
         }
         planConfig = SUBSCRIPTION_PLANS.premium[billingPeriod as 'monthly' | 'yearly'];
         planId = planConfig.planId;
+      } else if (planType === 'super_user') {
+        if (!topupPlan || !['topup_451', 'topup_4510'].includes(topupPlan)) {
+          throw new Error('Invalid topup plan for super user');
+        }
+        planConfig = SUBSCRIPTION_PLANS.super_user[topupPlan as 'topup_451' | 'topup_4510'];
+        planId = planConfig.planId;
       } else {
-        throw new Error('Invalid plan type. Only premium plans are supported.');
+        throw new Error('Invalid plan type');
+      }
+
+      // For super user plans, we use one-time payments instead of subscriptions
+      if (planType === 'super_user') {
+        const receiptId = `qaaq_topup_${userId}_${Date.now()}`;
+        const order = await this.createOrder(planConfig.amount, 'INR', receiptId);
+
+        console.log('✅ Created one-time order for super user topup:', order.id);
+
+        return {
+          subscriptionId: null, // No subscription for one-time payments
+          checkoutUrl: `https://rzp.io/l/${order.id}`, // Standard Razorpay checkout URL for orders
+          razorpayOrderId: order.id,
+          razorpaySubscriptionId: null,
+          planType: planType,
+          amount: planConfig.amount,
+          status: 'created',
+          isOrderMode: true,
+          orderDetails: order
+        };
       }
 
       // For premium subscriptions, use the fixed checkout URL

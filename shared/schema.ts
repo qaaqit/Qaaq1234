@@ -122,7 +122,7 @@ export const users = pgTable("users", {
   // Subscription/Premium fields - REMOVED subscription_id to match parent QAAQ database
   isPremium: boolean("is_premium").default(false), // Premium subscription status
   premiumExpiresAt: timestamp("premium_expires_at"), // Premium subscription expiry
-  subscriptionType: text("subscription_type"), // 'premium_monthly', 'premium_yearly'
+  subscriptionType: text("subscription_type"), // 'premium_monthly', 'premium_yearly', 'super_user'
   subscriptionStatus: text("subscription_status").default("inactive"), // 'active', 'inactive', 'cancelled', 'paused'
   razorpayCustomerId: text("razorpay_customer_id"), // Razorpay customer ID for recurring payments
   paymentMethod: text("payment_method"), // Last used payment method ('card', 'upi', 'netbanking', etc.)
