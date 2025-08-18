@@ -296,7 +296,7 @@ export default function PremiumPage() {
                       data-testid="tab-yearly"
                     >
                       Yearly
-                      <Badge className="ml-1 bg-green-500 text-xs">Save 60%</Badge>
+                      <Badge className="ml-1 text-xs bg-[#3b82f6]">Save 60%</Badge>
                     </TabsTrigger>
                   </TabsList>
                 </div>
