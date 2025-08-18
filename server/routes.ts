@@ -3759,17 +3759,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Development endpoint for daughter app team - SEMM cards with share functionality
   app.get('/api/dev/semm-cards', sessionBridge, async (req, res) => {
     try {
-      // Query SEMM structure from parent database - single table approach
+      // Query SEMM structure from parent database - single table approach with 4-level hierarchy
       const semmQuery = `
         SELECT DISTINCT 
           sid as system_code,
           system,
           eid as equipment_code,
           equipment,
+          mid as make_code,
           make,
+          moid as model_code,
           model
         FROM semm_structure 
-        ORDER BY sid, eid
+        ORDER BY sid, eid, mid, moid
       `;
       
       const semmResult = await pool.query(semmQuery);
@@ -3791,12 +3793,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         if (record.equipment_code && record.equipment) {
           const system = systemsMap.get(record.system_code);
-          system.equipment.push({
-            code: record.equipment_code,
-            title: record.equipment,
-            make: record.make,
-            model: record.model
-          });
+          // Check if equipment already exists to avoid duplicates
+          let equipment = system.equipment.find(eq => eq.code === record.equipment_code);
+          if (!equipment) {
+            equipment = {
+              code: record.equipment_code,
+              title: record.equipment,
+              makes: []
+            };
+            system.equipment.push(equipment);
+          }
+          
+          // Add make and model data if available
+          if (record.make_code && record.make) {
+            let make = equipment.makes.find(m => m.code === record.make_code);
+            if (!make) {
+              make = {
+                code: record.make_code,
+                title: record.make,
+                models: []
+              };
+              equipment.makes.push(make);
+            }
+            
+            if (record.model_code && record.model) {
+              const modelExists = make.models.find(m => m.code === record.model_code);
+              if (!modelExists) {
+                make.models.push({
+                  code: record.model_code,
+                  title: record.model
+                });
+              }
+            }
+          }
         }
       });
       
@@ -3817,37 +3846,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
             type: 'equipment',
             code: eq.code,
             title: eq.title,
-            description: `${eq.title} equipment`,
+            description: `${eq.title} equipment with ${eq.makes.length} manufacturers`,
             systemCode: system.code,
-            count: 1, // Each equipment entry
+            count: eq.makes.reduce((sum, make) => sum + make.models.length, 0),
             hasHeartIcon: false,
             hasShareIcon: true,
             hasChevron: true,
-            machines: eq.make && eq.model ? [{
-              make: eq.make,
-              model: eq.model
-            }] : []
+            makes: eq.makes.map(make => ({
+              id: make.code,
+              type: 'make',
+              code: make.code,
+              title: make.title,
+              description: `${make.title} manufacturer with ${make.models.length} models`,
+              equipmentCode: eq.code,
+              count: make.models.length,
+              hasHeartIcon: false,
+              hasShareIcon: true,
+              hasChevron: true,
+              models: make.models.map(model => ({
+                id: model.code,
+                type: 'model',
+                code: model.code,
+                title: model.title,
+                description: `${model.title} model`,
+                makeCode: make.code,
+                count: 1,
+                hasHeartIcon: false,
+                hasShareIcon: true,
+                hasChevron: false
+              }))
+            }))
           }))
         };
       });
       
       const totalEquipment = semmCards.reduce((sum, system) => sum + system.equipment.length, 0);
+      const totalMakes = semmCards.reduce((sum, system) => sum + system.equipment.reduce((eqSum, eq) => eqSum + eq.makes.length, 0), 0);
+      const totalModels = semmCards.reduce((sum, system) => sum + system.equipment.reduce((eqSum, eq) => eqSum + eq.makes.reduce((makeSum, make) => makeSum + make.models.length, 0), 0), 0);
       
-      console.log('🔧 SEMM Cards endpoint called - returning', semmCards.length, 'systems with', totalEquipment, 'equipment items from parent database');
+      console.log('🔧 SEMM Cards endpoint called - returning', semmCards.length, 'systems,', totalEquipment, 'equipment,', totalMakes, 'makes,', totalModels, 'models from parent database');
       res.json({
         success: true,
         timestamp: new Date().toISOString(),
-        version: '3.0',
+        version: '4.0',
         source: 'parent_semm_database',
         totalSystems: semmCards.length,
         totalEquipment: totalEquipment,
-        totalMachines: semmData.filter(r => r.make && r.model).length,
+        totalMakes: totalMakes,
+        totalModels: totalModels,
         data: semmCards,
         usage: {
           endpoint: '/api/dev/semm-cards',
-          description: 'SEMM (System-Equipment-Make-Model) cards from parent database single table',
-          features: ['Parent database integration', 'System-Equipment-Make-Model hierarchy', 'Authenticated access', 'Maritime equipment classification'],
-          compatibility: 'Parent database SEMM structure'
+          description: 'SEMM (System-Equipment-Make-Model) cards with complete 4-level hierarchy from parent database',
+          features: ['Parent database integration', 'Complete S-E-M-M 4-level hierarchy', 'SID-EID-MID-MOID code structure', 'Maritime equipment classification'],
+          compatibility: 'Parent database SEMM structure with MID and MOID codes'
         }
       });
     } catch (error) {
