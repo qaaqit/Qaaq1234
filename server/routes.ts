@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import ws from 'ws';
 import jwt from 'jsonwebtoken';
 import { storage } from "./storage";
-import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, insertChatConnectionSchema, insertChatMessageSchema, insertRankGroupSchema, insertRankGroupMemberSchema, insertRankGroupMessageSchema, insertRankChatMessageSchema, insertEmailVerificationTokenSchema, emailVerificationTokens, rankChatMessages } from "@shared/schema";
+import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, insertChatConnectionSchema, insertChatMessageSchema, insertRankGroupSchema, insertRankGroupMemberSchema, insertRankGroupMessageSchema, insertRankChatMessageSchema, insertEmailVerificationTokenSchema, emailVerificationTokens, rankChatMessages, semmSystems, semmEquipment, semmMakes, semmModels } from "@shared/schema";
 import { emailService } from "./email-service";
 import { randomBytes } from 'crypto';
 import { eq } from 'drizzle-orm';
@@ -3775,17 +3775,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ORDER BY parent.name, mc.name
       `;
       
-      // Use direct pool query for better compatibility
-      const [systemsResult, equipmentResult] = await Promise.all([
-        pool.query(maritimeSystemsQuery),
-        pool.query(equipmentQuery)
-      ]);
+      // Query local SEMM database instead of parent database
+      const dbSystems = await db.select().from(semmSystems).orderBy(semmSystems.order);
+      const dbEquipment = await db.select().from(semmEquipment).orderBy(semmEquipment.order);
       
-      const dbSystems = systemsResult.rows;
-      const dbEquipment = equipmentResult.rows;
-      
-      console.log('🔧 Successfully fetched', dbSystems.length, 'authentic maritime systems and', dbEquipment.length, 'equipment from parent database');
-      console.log('🔧 Sample system:', dbSystems[0]?.name);
+      console.log('🔧 Successfully fetched', dbSystems.length, 'systems and', dbEquipment.length, 'equipment from local SEMM database');
+      console.log('🔧 Sample system:', dbSystems[0]?.title);
       
       // Debug equipment data structure
       if (dbEquipment.length > 0) {
@@ -3817,67 +3812,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'z': [] // Miscellaneous - no equipment shown in screenshots
       };
       
-      // Build SEMM cards from authentic database data with standard equipment breadcrumbs
-      const semmCards = dbSystems.map((system: any, index: number) => {
-        // Extract the letter code from system name (e.g., "a. Propulsion" -> "a")
-        const codeMatch = system.name.match(/^([a-z])\./);
-        const code = codeMatch ? codeMatch[1] : String.fromCharCode(97 + index);
-        
-        // Clean the title by removing the code prefix
-        const title = system.name.replace(/^[a-z]\.\s*/, '');
-        
-        // Create equipment breadcrumb from standard equipment or database
-        let systemEquipment = [];
-        
-        if (dbEquipment.length > 0) {
-          // Use database equipment if available
-          systemEquipment = dbEquipment
-            .filter((eq: any) => eq.parent_id === system.id)
-            .map((eq: any, eqIndex: number) => {
-              const equipmentCode = `${code}${String.fromCharCode(97 + eqIndex)}`;
-              // Clean title by removing any code prefix (e.g., "aa. Main Engine" -> "Main Engine")
-              const cleanTitle = eq.name.replace(/^[a-z]{1,2}\.\s*/, '');
-              return {
-                id: equipmentCode,
-                type: 'equipment',
-                code: equipmentCode,
-                title: cleanTitle,
-                description: eq.description,
-                systemCode: code,
-                count: Math.floor(Math.random() * 20) + 5,
-                hasHeartIcon: false,
-                hasShareIcon: true,
-                hasChevron: true,
-                machines: []
-              };
-            });
-        } else {
-          // Use standard equipment for breadcrumb navigation
-          const standardEq = standardEquipment[code] || [];
-          systemEquipment = standardEq.map((eqName: string, eqIndex: number) => {
-            // Generate equipment code like aa, ab, ac for 'a' system; ba, bb, bc for 'b' system
-            const equipmentCode = `${code}${String.fromCharCode(97 + eqIndex)}`;
-            return {
-              id: equipmentCode,
-              type: 'equipment',
-              code: equipmentCode,
-              title: eqName, // Clean title without code prefix
-              description: `${eqName} for ${title} system`,
-              systemCode: code,
-              count: Math.floor(Math.random() * 15) + 3,
-              hasHeartIcon: false,
-              hasShareIcon: true,
-              hasChevron: true,
-              machines: []
-            };
-          });
-        }
+      // Group equipment by system code
+      const equipmentBySystem = dbEquipment.reduce((acc, eq) => {
+        if (!acc[eq.systemCode]) acc[eq.systemCode] = [];
+        acc[eq.systemCode].push({
+          id: eq.code,
+          type: 'equipment',
+          code: eq.code,
+          title: eq.title,
+          description: eq.description,
+          systemCode: eq.systemCode,
+          count: Math.floor(Math.random() * 15) + 3,
+          hasHeartIcon: false,
+          hasShareIcon: true,
+          hasChevron: true,
+          machines: []
+        });
+        return acc;
+      }, {} as Record<string, any[]>);
+      
+      // Build SEMM cards from local database
+      const semmCards = dbSystems.map((system) => {
+        const systemEquipment = equipmentBySystem[system.code] || [];
         
         return {
-          id: code,
+          id: system.code,
           type: 'system',
-          code: code,
-          title: title,
+          code: system.code,
+          title: system.title,
           description: system.description,
           count: systemEquipment.length,
           hasHeartIcon: false,
@@ -3889,21 +3851,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const totalEquipment = semmCards.reduce((sum, system) => sum + system.equipment.length, 0);
       
-      console.log('🔧 SEMM Cards endpoint called - returning', semmCards.length, 'authentic maritime systems with', totalEquipment, 'equipment breadcrumbs from parent database');
+      console.log('🔧 SEMM Cards endpoint called - returning', semmCards.length, 'systems with', totalEquipment, 'equipment items from local SEMM database');
       res.json({
         success: true,
         timestamp: new Date().toISOString(),
-        version: '2.2',
-        source: 'qaaq_parent_database',
+        version: '3.0',
+        source: 'local_semm_database',
         totalSystems: semmCards.length,
         totalEquipment: totalEquipment,
         totalMachines: 0, // Will be updated when machine data is available
         data: semmCards,
         usage: {
           endpoint: '/api/dev/semm-cards',
-          description: 'SEMM (System-Equipment-Make-Model) cards with breadcrumb equipment from authentic QAAQ parent database',
-          features: ['19 authentic maritime systems', 'Equipment breadcrumb navigation (E)', 'Real QAAQ database integration', 'Alphabetical maritime classification'],
-          compatibility: 'Daughter app integration ready'
+          description: 'SEMM (System-Equipment-Make-Model) cards from centralized local database',
+          features: ['PostgreSQL SEMM database', 'System-Equipment hierarchy', 'Authenticated access', 'Maritime equipment classification'],
+          compatibility: 'Database-driven SEMM tree navigation'
         }
       });
     } catch (error) {
