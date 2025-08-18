@@ -36,7 +36,7 @@ Onboard Search: Special "onboard" keyword search filters for sailing users and d
 Shipping Dictionary Access: Users can access maritime dictionary definitions without authentication
 Login Roadblock Design: Single minimizable login roadblock with chevron control in top-right corner, no separate roadblocks for individual features
 🔒 SEMM LAYOUT REDESIGN: Breadcrumb positioned next to back arrow as small text in one line, code cards positioned in top-left corner with back arrow above
-Enhanced Reorder System: Admin reorder modals now feature editable code cards allowing direct code modification alongside position changes for comprehensive hierarchy management
+Enhanced Reorder System: Admin reorder modals now feature editable code cards allowing direct code modification alongside position changes for comprehensive hierarchy management. Simplified reorder buttons use only RotateCcw icon without text or colored backgrounds for cleaner interface.
 
 ## System Architecture
 

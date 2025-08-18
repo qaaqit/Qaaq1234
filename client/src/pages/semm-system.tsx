@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
-import { ArrowLeft, Share2, Home, ChevronRight, ChevronDown, GripVertical, Plus, Edit3, Ship } from 'lucide-react';
+import { ArrowLeft, Share2, Home, ChevronRight, ChevronDown, GripVertical, Plus, Edit3, Ship, RotateCcw } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { SemmReorderModal } from '@/components/semm-reorder-modal';
 import { apiRequest } from '@/lib/queryClient';
@@ -289,11 +289,11 @@ export default function SemmSystemPage() {
               {isAdmin && (
                 <button
                   onClick={handleReorderEquipment}
-                  className="flex items-center space-x-2 text-sm text-orange-600 hover:text-orange-700 mb-4 px-3 py-2 bg-orange-50 rounded-lg"
+                  className="p-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-lg mb-4"
+                  title="Reorder Equipment"
                   data-testid="reorder-equipment"
                 >
-                  <GripVertical className="h-4 w-4" />
-                  <span>Reorder Equipment</span>
+                  <RotateCcw className="h-5 w-5" />
                 </button>
               )}
             </div>

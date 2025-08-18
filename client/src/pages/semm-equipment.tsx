@@ -270,12 +270,11 @@ export default function SemmEquipmentPage() {
               {isAdmin && (
                 <button
                   onClick={handleReorderMakes}
-                  className="flex items-center space-x-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                  className="p-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-lg"
                   title="Reorder Makes"
                   data-testid="reorder-makes-btn"
                 >
-                  <RotateCcw className="w-4 h-4" />
-                  <span>Reorder Makes</span>
+                  <RotateCcw className="w-5 h-5" />
                 </button>
               )}
             </div>

@@ -287,12 +287,11 @@ export default function SemmMakePage() {
               {isAdmin && (
                 <button
                   onClick={handleReorderModels}
-                  className="flex items-center space-x-2 px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors"
+                  className="p-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-lg"
                   title="Reorder Models"
                   data-testid="reorder-models-btn"
                 >
-                  <RotateCcw className="w-4 h-4" />
-                  <span>Reorder Models</span>
+                  <RotateCcw className="w-5 h-5" />
                 </button>
               )}
             </div>
