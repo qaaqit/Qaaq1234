@@ -67,7 +67,7 @@ Enhanced Reorder System: Admin reorder modals now feature editable code cards al
 - **QOI GPT**: WhatsApp bot for Q&A functionality, professional experience sharing, and maritime guidance. Integrated with OpenAI and Gemini for structured maritime technical responses.
 - **Shared Service**: Both bots serve QAAQ, QaaqConnect, and other Replit apps through unified WhatsApp interface.
 - **Database Access**: Direct access to shared QAAQ database.
-- **SEMM Hierarchy System**: Complete 4-level System > Equipment > Make > Model categorization with integrated header breadcrumbs, dropdown navigation, and authentic maritime equipment classification from QAAQ database.
+- **SEMM Hierarchy System**: Complete 4-level System > Equipment > Make > Model categorization with integrated header breadcrumbs, dropdown navigation, and authentic maritime equipment classification from QAAQ database. ✅ **AUGUST 2025 COMPLETED**: Full admin reordering system with inline controls, orange branding, and alphabetical code generation across all levels.
 - **File Attachments**: Clip icon attachment system to QBOT chat supporting JPG, PNG, PDF and similar formats up to 50MB with object storage integration.
 
 ### System Design Choices
