@@ -54,6 +54,11 @@ export default function MachineTreePage() {
   // Extract data from the parent app response
   // The API returns data as an array of systems with nested equipment/makes/models
   const systems = (semmData as any)?.data || [];
+  
+  // Debug log to check system codes
+  if (systems.length > 0) {
+    console.log('System codes from API:', systems.map((s: any) => ({ code: s.code, title: s.title })));
+  }
   const allEquipment = systems.flatMap((system: any) => system.equipment || []);
   const allMakes = allEquipment.flatMap((equipment: any) => equipment.makes || []);
   const allModels = allMakes.flatMap((make: any) => make.models || []);
@@ -271,7 +276,7 @@ export default function MachineTreePage() {
                       data-testid={`category-${category.id}`}
                     >
                       <div className="flex items-center justify-center w-8 h-8 bg-orange-100 rounded-full">
-                        <span className="text-sm font-bold text-orange-600">{category.code}</span>
+                        <span className="text-sm font-bold text-orange-600">{category.code?.toUpperCase() || 'N/A'}</span>
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center space-x-2">
