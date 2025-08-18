@@ -224,7 +224,7 @@ export default function MachineTreePage() {
 
   // Navigate to system page when clicking on card body (not chevron)
   const navigateToSystem = (categoryCode: string) => {
-    setLocation(`/machinetree/system/${categoryCode}`);
+    setLocation(`/machinetree/${categoryCode}`);
   };
 
   if (semmLoading) {
@@ -373,7 +373,7 @@ export default function MachineTreePage() {
                   {category.equipment?.slice(0, 3).map((equipment: any) => (
                     <button
                       key={equipment.code}
-                      onClick={() => setLocation(`/machinetree/equipment/${equipment.code}`)}
+                      onClick={() => setLocation(`/machinetree/${equipment.code}`)}
                       className="w-full flex items-center space-x-3 p-2 hover:bg-gray-50 rounded text-left"
                       data-testid={`card-equipment-${equipment.code}`}
                     >
