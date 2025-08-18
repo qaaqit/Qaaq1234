@@ -542,36 +542,10 @@ export function PremiumSubscriptionDialog({
                       Pay ₹451 - Monthly Premium
                     </h4>
 
-                    {/* QR Code Section */}
-                    <div className="mb-4">
-                      <h5 className="text-sm font-medium mb-2">Scan QR Code</h5>
-                      <div className="bg-white p-4 border-2 border-orange-200 rounded-lg shadow-lg">
-                        <img
-                          src="/attached_assets/QrCode (2)_1755542052056.jpeg"
-                          alt="QR Code for ₹451 Monthly Premium Payment"
-                          className="w-32 h-32 object-contain"
-                          onError={(e) => {
-                            e.currentTarget.style.display = "none";
-                            const nextSibling = e.currentTarget
-                              .nextElementSibling as HTMLElement;
-                            if (nextSibling) {
-                              nextSibling.style.display = "flex";
-                            }
-                          }}
-                        />
-                        <div className="hidden w-32 h-32 bg-gray-100 border-2 border-dashed border-gray-300 rounded flex items-center justify-center">
-                          <span className="text-xs text-gray-500">QR Code</span>
-                        </div>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Use any UPI app to scan & pay
-                      </p>
-                    </div>
-
                     {/* Card Payment Option */}
-                    <div className="border-t pt-3">
+                    <div>
                       <h5 className="text-sm font-medium mb-2">
-                        Or Pay via Card/UPI
+                        Pay via Card
                       </h5>
                       <a
                         href="https://rzp.io/rzp/jwQW9TW"
@@ -590,36 +564,10 @@ export function PremiumSubscriptionDialog({
                       Pay ₹2,611 - Yearly Premium
                     </h4>
 
-                    {/* QR Code Section */}
-                    <div className="mb-4">
-                      <h5 className="text-sm font-medium mb-2">Scan QR Code</h5>
-                      <div className="bg-white p-4 border-2 border-orange-200 rounded-lg shadow-lg">
-                        <img
-                          src="/attached_assets/QrCode (4)_1755542673629.jpeg"
-                          alt="QR Code for ₹2,611 Yearly Premium Payment"
-                          className="w-32 h-32 object-contain"
-                          onError={(e) => {
-                            e.currentTarget.style.display = "none";
-                            const nextSibling = e.currentTarget
-                              .nextElementSibling as HTMLElement;
-                            if (nextSibling) {
-                              nextSibling.style.display = "flex";
-                            }
-                          }}
-                        />
-                        <div className="hidden w-32 h-32 bg-gray-100 border-2 border-dashed border-gray-300 rounded flex items-center justify-center">
-                          <span className="text-xs text-gray-500">QR Code</span>
-                        </div>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Use any UPI app to scan & pay
-                      </p>
-                    </div>
-
                     {/* Card Payment Option */}
-                    <div className="border-t pt-3">
+                    <div>
                       <h5 className="text-sm font-medium mb-2">
-                        Or Pay via Card/UPI
+                        Pay via Card
                       </h5>
                       <a
                         href="https://rzp.io/rzp/NAU59cv"
