@@ -875,7 +875,7 @@ export class RazorpayService {
   }
 
   // Handle payment captured webhook - includes Card and UPI payments
-  private async handlePaymentCaptured(payment: any) {
+  async handlePaymentCaptured(payment: any) {
     try {
       console.log('📨 Processing payment capture webhook:', {
         paymentId: payment.id,
