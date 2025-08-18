@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { GripVertical, X, ChevronUp, ChevronDown } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
 
 interface ReorderModalProps {
   isOpen: boolean;
@@ -17,7 +16,6 @@ interface ReorderModalProps {
 
 export function SemmReorderModal({ isOpen, onClose, title, items, onReorder }: ReorderModalProps) {
   const [orderedItems, setOrderedItems] = useState(items);
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   
   console.log('🔧 Modal props:', { isOpen, title, itemsCount: items.length });
