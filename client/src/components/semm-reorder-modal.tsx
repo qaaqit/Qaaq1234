@@ -73,9 +73,6 @@ export function SemmReorderModal({ isOpen, onClose, title, items, onReorder }: R
               <X className="w-5 h-5" />
             </button>
           </DialogTitle>
-          <DialogDescription className="text-gray-600">
-            Drag equipment up or down to change their display order. The alphabetical IDs will be reassigned based on the new order.
-          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-3">
