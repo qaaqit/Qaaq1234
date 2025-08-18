@@ -35,19 +35,11 @@ export function SemmReorderModal({ isOpen, onClose, title, items, onReorder }: R
       await onReorder(reorderedCodes);
     },
     onSuccess: () => {
-      toast({
-        title: "Success",
-        description: `${title} order saved successfully`
-      });
       queryClient.invalidateQueries({ queryKey: ['/api/dev/semm-cards'] });
       onClose();
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: `Failed to save ${title.toLowerCase()} order`,
-        variant: "destructive"
-      });
+      console.error('Failed to reorder:', error);
     }
   });
 
