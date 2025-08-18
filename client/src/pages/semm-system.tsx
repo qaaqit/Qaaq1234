@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
-import { ArrowLeft, Share2, Home, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Share2, Home, ChevronRight, ChevronDown } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 // Bottom edge roll out flip card animation
@@ -191,9 +191,18 @@ export default function SemmSystemPage() {
             Machine Tree
           </button>
           <ChevronRight className="w-4 h-4 text-gray-400" />
-          <span className="text-gray-600 font-medium" data-testid="breadcrumb-current">
-            {foundSystem.title}
-          </span>
+          <div className="flex items-center space-x-1">
+            <span className="text-gray-600 font-medium" data-testid="breadcrumb-current">
+              {foundSystem.title}
+            </span>
+            <button 
+              className="p-1 hover:bg-gray-100 text-gray-500 hover:text-gray-700 rounded transition-colors"
+              data-testid="breadcrumb-expand"
+              title="Explore equipment and components"
+            >
+              <ChevronDown className="w-4 h-4" />
+            </button>
+          </div>
         </nav>
 
         {/* Content area for future system details */}
