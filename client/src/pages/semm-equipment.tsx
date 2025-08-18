@@ -86,6 +86,10 @@ export default function SemmEquipmentPage() {
   const { user, isAuthenticated } = useAuth();
   const isAdmin = user?.isAdmin || user?.role === 'admin';
 
+  // Admin state
+  const [currentMakeIndex, setCurrentMakeIndex] = useState(0);
+  const [reorderEnabled, setReorderEnabled] = useState(false);
+
   // Fetch SEMM data to find the specific equipment
   const { data: semmData, isLoading, error } = useQuery({
     queryKey: ['/api/dev/semm-cards'],
@@ -101,47 +105,6 @@ export default function SemmEquipmentPage() {
     isOpen: false,
     items: []
   });
-
-  const handleEditEquipment = (equipmentCode: string) => {
-    console.log('Edit equipment:', equipmentCode);
-    // TODO: Implement edit equipment modal
-  };
-
-  const handleEditMake = (makeCode: string) => {
-    console.log('Edit make:', makeCode);
-    // TODO: Implement edit make modal
-  };
-
-  const handleReorderMakes = () => {
-    if (!foundEquipment?.makes) return;
-    
-    const makes = foundEquipment.makes.map((make: any) => ({
-      code: make.code,
-      title: make.title
-    }));
-    
-    setReorderModal({
-      isOpen: true,
-      items: makes
-    });
-  };
-
-  const handleReorderSubmit = async (orderedCodes: string[]) => {
-    try {
-      await apiRequest('/api/dev/semm/reorder-makes', 'POST', { 
-        systemCode: parentSystem.code, 
-        equipmentCode: foundEquipment.code,
-        orderedCodes 
-      });
-      console.log('✅ Successfully reordered makes');
-    } catch (error) {
-      console.error('❌ Error reordering makes:', error);
-    }
-  };
-
-  const closeReorderModal = () => {
-    setReorderModal(prev => ({ ...prev, isOpen: false }));
-  };
 
   if (isLoading) {
     return (
@@ -186,6 +149,48 @@ export default function SemmEquipmentPage() {
       </div>
     );
   }
+
+  // Admin edit and reorder functions
+  const handleEditEquipment = (equipmentCode: string) => {
+    console.log('Edit equipment:', equipmentCode);
+    // TODO: Implement edit equipment modal
+  };
+
+  const handleEditMake = (makeCode: string) => {
+    console.log('Edit make:', makeCode);
+    // TODO: Implement edit make modal
+  };
+
+  const handleReorderMakes = () => {
+    if (!foundEquipment?.makes) return;
+    
+    const makes = foundEquipment.makes.map((make: any) => ({
+      code: make.code,
+      title: make.title
+    }));
+    
+    setReorderModal({
+      isOpen: true,
+      items: makes
+    });
+  };
+
+  const handleReorderSubmit = async (orderedCodes: string[]) => {
+    try {
+      await apiRequest('/api/dev/semm/reorder-makes', 'POST', { 
+        systemCode: parentSystem.code, 
+        equipmentCode: foundEquipment.code,
+        orderedCodes 
+      });
+      console.log('✅ Successfully reordered makes');
+    } catch (error) {
+      console.error('❌ Error reordering makes:', error);
+    }
+  };
+
+  const closeReorderModal = () => {
+    setReorderModal(prev => ({ ...prev, isOpen: false }));
+  };
 
   const goBack = () => {
     setLocation(`/machinetree/${parentSystem.code}`);
