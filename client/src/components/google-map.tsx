@@ -70,11 +70,11 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
     }
   }, []);
 
-  // Pan control functions
+  // Pan control functions with 3x faster movement
   const panLeft = useCallback(() => {
     if (mapInstanceRef.current) {
       const center = mapInstanceRef.current.getCenter();
-      const newLng = center.lng() - 0.01;
+      const newLng = center.lng() - 0.03; // 3x faster: 0.01 -> 0.03
       mapInstanceRef.current.panTo({ lat: center.lat(), lng: newLng });
     }
   }, []);
@@ -82,7 +82,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
   const panRight = useCallback(() => {
     if (mapInstanceRef.current) {
       const center = mapInstanceRef.current.getCenter();
-      const newLng = center.lng() + 0.01;
+      const newLng = center.lng() + 0.03; // 3x faster: 0.01 -> 0.03
       mapInstanceRef.current.panTo({ lat: center.lat(), lng: newLng });
     }
   }, []);
@@ -90,7 +90,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
   const panUp = useCallback(() => {
     if (mapInstanceRef.current) {
       const center = mapInstanceRef.current.getCenter();
-      const newLat = center.lat() + 0.01;
+      const newLat = center.lat() + 0.03; // 3x faster: 0.01 -> 0.03
       mapInstanceRef.current.panTo({ lat: newLat, lng: center.lng() });
     }
   }, []);
@@ -98,7 +98,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
   const panDown = useCallback(() => {
     if (mapInstanceRef.current) {
       const center = mapInstanceRef.current.getCenter();
-      const newLat = center.lat() - 0.01;
+      const newLat = center.lat() - 0.03; // 3x faster: 0.01 -> 0.03
       mapInstanceRef.current.panTo({ lat: newLat, lng: center.lng() });
     }
   }, []);
