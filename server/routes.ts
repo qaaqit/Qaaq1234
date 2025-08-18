@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import ws from 'ws';
 import jwt from 'jsonwebtoken';
 import { storage } from "./storage";
-import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, insertChatConnectionSchema, insertChatMessageSchema, insertRankGroupSchema, insertRankGroupMemberSchema, insertRankGroupMessageSchema, insertRankChatMessageSchema, insertEmailVerificationTokenSchema, emailVerificationTokens, rankChatMessages, semmSystems, semmEquipment, semmMakes, semmModels } from "@shared/schema";
+import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, insertChatConnectionSchema, insertChatMessageSchema, insertRankGroupSchema, insertRankGroupMemberSchema, insertRankGroupMessageSchema, insertRankChatMessageSchema, insertEmailVerificationTokenSchema, emailVerificationTokens, rankChatMessages } from "@shared/schema";
 import { emailService } from "./email-service";
 import { randomBytes } from 'crypto';
 import { eq } from 'drizzle-orm';
@@ -3759,147 +3759,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Development endpoint for daughter app team - SEMM cards with share functionality
   app.get('/api/dev/semm-cards', sessionBridge, async (req, res) => {
     try {
-      // Fetch authentic maritime systems from parent database
-      const maritimeSystemsQuery = `
-        SELECT * FROM machine_categories 
-        WHERE parent_id IS NULL AND is_approved = true
-        ORDER BY name
+      // Query SEMM structure from parent database - single table approach
+      const semmQuery = `
+        SELECT DISTINCT 
+          sid as system_code,
+          system,
+          eid as equipment_code,
+          equipment,
+          make,
+          model
+        FROM semm_structure 
+        ORDER BY sid, eid
       `;
       
-      // Fetch equipment for each system
-      const equipmentQuery = `
-        SELECT mc.*, parent.name as parent_name
-        FROM machine_categories mc
-        JOIN machine_categories parent ON mc.parent_id = parent.id
-        WHERE mc.parent_id IS NOT NULL AND mc.is_approved = true
-        ORDER BY parent.name, mc.name
-      `;
+      const semmResult = await pool.query(semmQuery);
+      const semmData = semmResult.rows;
       
-      // Query local SEMM database instead of parent database
-      const dbSystems = await db.select().from(semmSystems).orderBy(semmSystems.order);
-      const dbEquipment = await db.select().from(semmEquipment).orderBy(semmEquipment.order);
+      console.log('🔧 Successfully fetched', semmData.length, 'SEMM records from parent database');
+      console.log('🔧 Sample SEMM record:', semmData[0]);
       
-      console.log('🔧 Successfully fetched', dbSystems.length, 'systems and', dbEquipment.length, 'equipment from local SEMM database');
-      console.log('🔧 Sample system:', dbSystems[0]?.title);
-      
-      // Debug equipment data structure
-      if (dbEquipment.length > 0) {
-        console.log('🔧 Found', dbEquipment.length, 'equipment items in database');
-      } else {
-        console.log('⚠️ No equipment found in database - creating standard maritime equipment breadcrumbs');
-      }
-      
-      // Authentic maritime equipment mapping from screenshots - exact names only
-      const standardEquipment = {
-        'a': ['Main Engine', 'Stern Tube', 'Propeller', 'Bow Thruster', 'Shaft Generator'],
-        'b': ['Aux Engine', 'Turbocharger', 'Alternator', 'Switchboard', 'Emergency Generator'],
-        'c': ['Auxiliary Boiler', 'Burner', 'Composite Boiler', 'Exhaust Gas Boiler', 'Feed Water System', 'Inert Gas Generator'],
-        'd': ['Main Air Compressor', 'BA Compressor', 'Control Air Drier'],
-        'e': ['Fuel Oil Purifier', 'Lube Oil Purifier', 'Oily Water Treatment', 'Oil Water Separator', 'Air Purifier', 'Fuel oil AutoFilter'],
-        'f': ['Fresh Water Generator'],
-        'g': ['Alarm Monitoring System (AMS)', 'Main Switchboard', 'Power Management (PMS)'],
-        'h': ['Air Handling Unit'],
-        'i': [], // LSA FFA - no equipment shown in screenshots
-        'j': [], // Pumps & Coolers - no equipment shown in screenshots
-        'k': ['VRCS'],
-        'l': [], // Steering Navigation - no equipment shown in screenshots
-        'm': [], // Deck Machinery - no equipment shown in screenshots
-        'n': ['Engine Room Crane'],
-        'o': ['Bilge Separator OWS', 'Incinerator', 'Ballast Water Management System', 'HPSCR', 'Scrubber EGCS', 'Sewage Treatment Plant (STP)', 'Vacuum Toilet System'],
-        'p': [], // Galley - no equipment shown in screenshots
-        'q': [], // Bridge Equipment - no equipment shown in screenshots
-        'r': [], // Ship Construction - no equipment shown in screenshots
-        'z': [] // Miscellaneous - no equipment shown in screenshots
-      };
-      
-      // Group equipment by system code
-      const equipmentBySystem = dbEquipment.reduce((acc, eq) => {
-        if (!acc[eq.systemCode]) acc[eq.systemCode] = [];
-        acc[eq.systemCode].push({
-          id: eq.code,
-          type: 'equipment',
-          code: eq.code,
-          title: eq.title,
-          description: eq.description,
-          systemCode: eq.systemCode,
-          count: Math.floor(Math.random() * 15) + 3,
-          hasHeartIcon: false,
-          hasShareIcon: true,
-          hasChevron: true,
-          machines: []
-        });
-        return acc;
-      }, {} as Record<string, any[]>);
-      
-      // Build SEMM cards from local database
-      const semmCards = dbSystems.map((system) => {
-        const systemEquipment = equipmentBySystem[system.code] || [];
+      // Group data by system code
+      const systemsMap = new Map();
+      semmData.forEach(record => {
+        if (!systemsMap.has(record.system_code)) {
+          systemsMap.set(record.system_code, {
+            code: record.system_code,
+            title: record.system,
+            equipment: []
+          });
+        }
         
+        if (record.equipment_code && record.equipment) {
+          const system = systemsMap.get(record.system_code);
+          system.equipment.push({
+            code: record.equipment_code,
+            title: record.equipment,
+            make: record.make,
+            model: record.model
+          });
+        }
+      });
+      
+      // Build SEMM cards from parent database structure
+      const semmCards = Array.from(systemsMap.values()).map((system) => {
         return {
           id: system.code,
           type: 'system',
           code: system.code,
           title: system.title,
-          description: system.description,
-          count: systemEquipment.length,
+          description: `${system.title} maritime system with ${system.equipment.length} equipment types`,
+          count: system.equipment.length,
           hasHeartIcon: false,
           hasShareIcon: true,
           hasChevron: true,
-          equipment: systemEquipment
+          equipment: system.equipment.map(eq => ({
+            id: eq.code,
+            type: 'equipment',
+            code: eq.code,
+            title: eq.title,
+            description: `${eq.title} equipment`,
+            systemCode: system.code,
+            count: 1, // Each equipment entry
+            hasHeartIcon: false,
+            hasShareIcon: true,
+            hasChevron: true,
+            machines: eq.make && eq.model ? [{
+              make: eq.make,
+              model: eq.model
+            }] : []
+          }))
         };
       });
       
       const totalEquipment = semmCards.reduce((sum, system) => sum + system.equipment.length, 0);
       
-      console.log('🔧 SEMM Cards endpoint called - returning', semmCards.length, 'systems with', totalEquipment, 'equipment items from local SEMM database');
+      console.log('🔧 SEMM Cards endpoint called - returning', semmCards.length, 'systems with', totalEquipment, 'equipment items from parent database');
       res.json({
         success: true,
         timestamp: new Date().toISOString(),
         version: '3.0',
-        source: 'local_semm_database',
+        source: 'parent_semm_database',
         totalSystems: semmCards.length,
         totalEquipment: totalEquipment,
-        totalMachines: 0, // Will be updated when machine data is available
+        totalMachines: semmData.filter(r => r.make && r.model).length,
         data: semmCards,
         usage: {
           endpoint: '/api/dev/semm-cards',
-          description: 'SEMM (System-Equipment-Make-Model) cards from centralized local database',
-          features: ['PostgreSQL SEMM database', 'System-Equipment hierarchy', 'Authenticated access', 'Maritime equipment classification'],
-          compatibility: 'Database-driven SEMM tree navigation'
+          description: 'SEMM (System-Equipment-Make-Model) cards from parent database single table',
+          features: ['Parent database integration', 'System-Equipment-Make-Model hierarchy', 'Authenticated access', 'Maritime equipment classification'],
+          compatibility: 'Parent database SEMM structure'
         }
       });
     } catch (error) {
       console.error('❌ Error fetching SEMM cards from parent database:', error);
-      
-      // Fallback to static data if database fails
-      const fallbackCards = [
-        {
-          id: 'a', type: 'system', code: 'a', title: 'Propulsion',
-          description: 'Main engines, gearboxes, propellers, and shaft systems',
-          count: 45, hasHeartIcon: true, hasShareIcon: true, hasChevron: true, equipment: []
-        },
-        {
-          id: 'b', type: 'system', code: 'b', title: 'Power Generation', 
-          description: 'Generators, auxiliary engines, and electrical systems',
-          count: 38, hasHeartIcon: true, hasShareIcon: true, hasChevron: true, equipment: []
-        },
-        {
-          id: 'c', type: 'system', code: 'c', title: 'Boiler',
-          description: 'Steam generation, exhaust gas boilers, and heating systems', 
-          count: 19, hasHeartIcon: true, hasShareIcon: true, hasChevron: true, equipment: []
-        }
-      ];
-      
-      res.json({
+      res.status(500).json({
         success: false,
-        error: 'Database connection failed',
-        fallback: true,
+        error: 'Failed to fetch SEMM data from parent database',
         timestamp: new Date().toISOString(),
-        version: '2.0',
-        totalSystems: fallbackCards.length,
-        totalEquipment: 0,
-        totalMachines: 0,
-        data: fallbackCards
+        message: 'SEMM table must be created in parent database first'
       });
     }
   });
