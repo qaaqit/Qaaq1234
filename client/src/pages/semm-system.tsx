@@ -299,16 +299,14 @@ export default function SemmSystemPage() {
                 </h2>
                 
                 {/* Admin Controls for Equipment - Right Edge */}
-                {isAdmin && (
-                  <button
-                    onClick={handleReorderEquipment}
-                    className="p-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-lg"
-                    title="Reorder Equipment"
-                    data-testid="reorder-equipment"
-                  >
-                    <RotateCcw className="h-5 w-5" />
-                  </button>
-                )}
+                <button
+                  onClick={handleReorderEquipment}
+                  className="p-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-lg"
+                  title="Reorder Equipment"
+                  data-testid="reorder-equipment"
+                >
+                  <RotateCcw className="h-5 w-5" />
+                </button>
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
