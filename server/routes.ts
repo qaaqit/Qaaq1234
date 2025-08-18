@@ -2441,6 +2441,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // If models are specified, generate responses from selected models
       if (selectedModels && selectedModels.length > 0) {
+        console.log(`🤖 Multi-AI Request: User selected ${selectedModels.length} models: ${selectedModels.join(', ')}`);
         const responses = [];
         
         for (const model of selectedModels) {
@@ -2475,13 +2476,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         if (responses.length > 0) {
-          // Combine responses from multiple models
-          const combinedContent = responses.map((resp, index) => 
-            `**${resp.model.toUpperCase()}:**\n${resp.content}`
-          ).join('\n\n');
+          // Combine responses from multiple models with better formatting
+          const combinedContent = responses.map((resp, index) => {
+            const modelName = resp.model === 'openai' ? 'ChatGPT' : 
+                            resp.model === 'gemini' ? 'Gemini' :
+                            resp.model === 'deepseek' ? 'Deepseek' : 
+                            resp.model.toUpperCase();
+            return `🤖 **${modelName}:**\n${resp.content}`;
+          }).join('\n\n---\n\n');
           
           const totalResponseTime = responses.reduce((sum, resp) => sum + (resp.responseTime || 0), 0);
           const totalTokens = responses.reduce((sum, resp) => sum + (resp.tokens || 0), 0);
+          
+          console.log(`🤖 Multi-AI Response: Generated ${responses.length} responses from models: ${responses.map(r => r.model).join(', ')}`);
           
           return {
             content: combinedContent,

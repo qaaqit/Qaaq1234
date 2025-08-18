@@ -9,7 +9,13 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Crown, Check, Loader2, ExternalLink, Sparkles } from "lucide-react";
 
@@ -51,65 +57,85 @@ interface SubscriptionPlans {
 interface PremiumSubscriptionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  defaultPlanType?: 'premium' | 'super_user';
+  defaultPlanType?: "premium" | "super_user";
 }
 
-export function PremiumSubscriptionDialog({ 
-  open, 
-  onOpenChange, 
-  defaultPlanType = 'premium' 
+export function PremiumSubscriptionDialog({
+  open,
+  onOpenChange,
+  defaultPlanType = "premium",
 }: PremiumSubscriptionDialogProps) {
-  const [selectedPlan, setSelectedPlan] = useState<'premium' | 'super_user'>(defaultPlanType);
-  const [selectedPeriod, setSelectedPeriod] = useState<'monthly' | 'yearly'>('monthly');
-  const [selectedTopup, setSelectedTopup] = useState<string>('topup_451');
+  const [selectedPlan, setSelectedPlan] = useState<"premium" | "super_user">(
+    defaultPlanType,
+  );
+  const [selectedPeriod, setSelectedPeriod] = useState<"monthly" | "yearly">(
+    "monthly",
+  );
+  const [selectedTopup, setSelectedTopup] = useState<string>("topup_451");
 
   const queryClient = useQueryClient();
 
   // Fetch subscription plans
   const { data: plansData, isLoading: plansLoading } = useQuery({
-    queryKey: ['/api/subscription-plans'],
+    queryKey: ["/api/subscription-plans"],
     enabled: open,
   });
 
   // Fetch user subscription status
   const { data: userStatusData } = useQuery({
-    queryKey: ['/api/user/subscription-status'],
+    queryKey: ["/api/user/subscription-status"],
     enabled: open,
   });
 
   // Create subscription/topup mutation
   const createSubscriptionMutation = useMutation({
-    mutationFn: async ({ planType, billingPeriod, topupPlan }: { planType: string; billingPeriod?: string; topupPlan?: string }) => {
-      const payload = planType === 'super_user' && topupPlan 
-        ? { planType: 'super_user', topupPlan } 
-        : { planType, billingPeriod };
-      
-      const response = await fetch('/api/subscriptions', {
-        method: 'POST',
+    mutationFn: async ({
+      planType,
+      billingPeriod,
+      topupPlan,
+    }: {
+      planType: string;
+      billingPeriod?: string;
+      topupPlan?: string;
+    }) => {
+      const payload =
+        planType === "super_user" && topupPlan
+          ? { planType: "super_user", topupPlan }
+          : { planType, billingPeriod };
+
+      const response = await fetch("/api/subscriptions", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
         },
         body: JSON.stringify(payload),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create subscription');
+        throw new Error(errorData.message || "Failed to create subscription");
       }
-      
+
       return response.json();
     },
     onSuccess: (data: any) => {
       // Open Razorpay checkout URL
       if (data.checkoutUrl) {
-        window.open(data.checkoutUrl, '_blank');
-        console.log("Checkout opened - Please complete your payment in the new tab.");
+        window.open(data.checkoutUrl, "_blank");
+        console.log(
+          "Checkout opened - Please complete your payment in the new tab.",
+        );
       }
-      queryClient.invalidateQueries({ queryKey: ['/api/user/subscription-status'] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/user/subscription-status"],
+      });
     },
     onError: (error: any) => {
-      console.error("Subscription Error:", error?.message || "Failed to create subscription");
+      console.error(
+        "Subscription Error:",
+        error?.message || "Failed to create subscription",
+      );
     },
   });
 
@@ -125,11 +151,18 @@ export function PremiumSubscriptionDialog({
     );
   }
 
-  const plans: SubscriptionPlans = (plansData as any)?.plans || { premium: { monthly: {} as PremiumPlan, yearly: {} as PremiumPlan }, super_user: {} };
-  const userStatus = (userStatusData as any) || { isPremium: false, isSuperUser: false, premiumExpiresAt: null };
+  const plans: SubscriptionPlans = (plansData as any)?.plans || {
+    premium: { monthly: {} as PremiumPlan, yearly: {} as PremiumPlan },
+    super_user: {},
+  };
+  const userStatus = (userStatusData as any) || {
+    isPremium: false,
+    isSuperUser: false,
+    premiumExpiresAt: null,
+  };
 
   const formatPrice = (amount: number) => {
-    return `₹${(amount / 100).toLocaleString('en-IN')}`;
+    return `₹${(amount / 100).toLocaleString("en-IN")}`;
   };
 
   const calculateSavings = (yearly: number, monthly: number) => {
@@ -145,7 +178,7 @@ export function PremiumSubscriptionDialog({
     "Advanced search filters",
     "Export chat history",
     "Premium maritime knowledge base",
-    "Ad-free experience"
+    "Ad-free experience",
   ];
 
   const superUserFeatures = [
@@ -155,11 +188,11 @@ export function PremiumSubscriptionDialog({
     "Advanced reporting features",
     "API access for integrations",
     "Custom branding options",
-    "Dedicated support line"
+    "Dedicated support line",
   ];
 
   const handleSubscribe = () => {
-    if (selectedPlan === 'super_user') {
+    if (selectedPlan === "super_user") {
       createSubscriptionMutation.mutate({
         planType: selectedPlan,
         topupPlan: selectedTopup,
@@ -178,11 +211,9 @@ export function PremiumSubscriptionDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-2xl">
             <Crown className="h-6 w-6 text-orange-500" />
-            QAAQ CHIEF (GPT5)
+            QAAQ CHIEF (Most Advanced Version)
           </DialogTitle>
-          <DialogDescription>
-            Advanced reasoning model 
-          </DialogDescription>
+          <DialogDescription>Advanced reasoning model</DialogDescription>
         </DialogHeader>
 
         {/* Current Status */}
@@ -191,18 +222,24 @@ export function PremiumSubscriptionDialog({
             <div className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-green-600" />
               <span className="font-semibold text-green-800">
-                {userStatus.isSuperUser ? 'Super User Active' : 'Premium Active'}
+                {userStatus.isSuperUser
+                  ? "Super User Active"
+                  : "Premium Active"}
               </span>
               {userStatus.premiumExpiresAt && (
                 <span className="text-sm text-green-600">
-                  • Expires {new Date(userStatus.premiumExpiresAt).toLocaleDateString()}
+                  • Expires{" "}
+                  {new Date(userStatus.premiumExpiresAt).toLocaleDateString()}
                 </span>
               )}
             </div>
           </div>
         )}
 
-        <Tabs value={selectedPlan} onValueChange={(value) => setSelectedPlan(value as any)}>
+        <Tabs
+          value={selectedPlan}
+          onValueChange={(value) => setSelectedPlan(value as any)}
+        >
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="premium" className="flex items-center gap-2">
               <Crown className="h-4 w-4" />
@@ -217,34 +254,57 @@ export function PremiumSubscriptionDialog({
           <TabsContent value="premium" className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Monthly Plan */}
-              <Card className={`${selectedPeriod === 'monthly' ? 'ring-2 ring-orange-500' : ''} cursor-pointer`}
-                    onClick={() => setSelectedPeriod('monthly')}>
+              <Card
+                className={`${selectedPeriod === "monthly" ? "ring-2 ring-orange-500" : ""} cursor-pointer`}
+                onClick={() => setSelectedPeriod("monthly")}
+              >
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
                     Premium Monthly
-                    {selectedPeriod === 'monthly' && <Badge variant="default">Selected</Badge>}
+                    {selectedPeriod === "monthly" && (
+                      <Badge variant="default">Selected</Badge>
+                    )}
                   </CardTitle>
                   <CardDescription>
-                    {formatPrice(plans.premium?.monthly?.amount || 29900)} per month
+                    {formatPrice(plans.premium?.monthly?.amount || 29900)} per
+                    month
                   </CardDescription>
                 </CardHeader>
               </Card>
 
               {/* Yearly Plan */}
-              <Card className={`${selectedPeriod === 'yearly' ? 'ring-2 ring-orange-500' : ''} cursor-pointer relative`}
-                    onClick={() => setSelectedPeriod('yearly')}>
+              <Card
+                className={`${selectedPeriod === "yearly" ? "ring-2 ring-orange-500" : ""} cursor-pointer relative`}
+                onClick={() => setSelectedPeriod("yearly")}
+              >
                 <Badge className="absolute -top-2 -right-2 bg-green-500">
-                  Save {calculateSavings(plans.premium?.yearly?.amount || 299900, plans.premium?.monthly?.amount || 29900).percentage}%
+                  Save{" "}
+                  {
+                    calculateSavings(
+                      plans.premium?.yearly?.amount || 299900,
+                      plans.premium?.monthly?.amount || 29900,
+                    ).percentage
+                  }
+                  %
                 </Badge>
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
                     Premium Yearly
-                    {selectedPeriod === 'yearly' && <Badge variant="default">Selected</Badge>}
+                    {selectedPeriod === "yearly" && (
+                      <Badge variant="default">Selected</Badge>
+                    )}
                   </CardTitle>
                   <CardDescription>
-                    {formatPrice(plans.premium?.yearly?.amount || 299900)} per year
+                    {formatPrice(plans.premium?.yearly?.amount || 299900)} per
+                    year
                     <span className="block text-sm text-green-600 mt-1">
-                      Save {calculateSavings(plans.premium?.yearly?.amount || 299900, plans.premium?.monthly?.amount || 29900).savings}
+                      Save{" "}
+                      {
+                        calculateSavings(
+                          plans.premium?.yearly?.amount || 299900,
+                          plans.premium?.monthly?.amount || 29900,
+                        ).savings
+                      }
                     </span>
                   </CardDescription>
                 </CardHeader>
@@ -254,7 +314,9 @@ export function PremiumSubscriptionDialog({
             <Card>
               <CardHeader>
                 <CardTitle>Premium Features</CardTitle>
-                <CardDescription>Everything you need for enhanced maritime networking</CardDescription>
+                <CardDescription>
+                  Everything you need for enhanced maritime networking
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -271,141 +333,193 @@ export function PremiumSubscriptionDialog({
 
           <TabsContent value="super_user" className="space-y-4">
             <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h3 className="font-semibold text-blue-800 mb-2">Pay Per Question - Prepaid Topup</h3>
+              <h3 className="font-semibold text-blue-800 mb-2">
+                Pay Per Question - Prepaid Topup
+              </h3>
               <p className="text-sm text-blue-700">
-                Super User plans work on a prepaid topup system. Pay ₹4.51 per question with flexible validity periods.
+                Super User plans work on a prepaid topup system. Pay ₹4.51 per
+                question with flexible validity periods.
               </p>
             </div>
 
             {/* Column Comparison */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {plans.super_user && Object.entries(plans.super_user).map(([key, topup]) => (
-                <Card 
-                  key={key}
-                  className={`${selectedTopup === key ? 'ring-2 ring-orange-500' : ''} cursor-pointer transition-all hover:shadow-md relative ${
-                    key === 'topup_451' ? 'border-orange-300' : 'border-green-300'
-                  }`}
-                  onClick={() => setSelectedTopup(key)}
-                >
-                  {key === 'topup_4510' && (
-                    <Badge className="absolute -top-2 -right-2 bg-green-500">Best Value</Badge>
-                  )}
-                  {key === 'topup_451' && (
-                    <Badge className="absolute -top-2 -right-2 bg-orange-500">Starter</Badge>
-                  )}
-                  
-                  <CardHeader className="text-center pb-4">
-                    <CardTitle className="text-xl mb-2">
-                      {key === 'topup_451' ? 'Starter Pack' : 'Max Pack'}
-                    </CardTitle>
-                    <div className="space-y-2">
-                      <div className="text-3xl font-bold text-orange-600">{topup.displayPrice}</div>
-                      <div className="text-sm text-muted-foreground">{topup.description}</div>
-                    </div>
-                    {selectedTopup === key && (
-                      <Badge variant="default" className="mt-2">Selected</Badge>
+              {plans.super_user &&
+                Object.entries(plans.super_user).map(([key, topup]) => (
+                  <Card
+                    key={key}
+                    className={`${selectedTopup === key ? "ring-2 ring-orange-500" : ""} cursor-pointer transition-all hover:shadow-md relative ${
+                      key === "topup_451"
+                        ? "border-orange-300"
+                        : "border-green-300"
+                    }`}
+                    onClick={() => setSelectedTopup(key)}
+                  >
+                    {key === "topup_4510" && (
+                      <Badge className="absolute -top-2 -right-2 bg-green-500">
+                        Best Value
+                      </Badge>
                     )}
-                  </CardHeader>
-                  
-                  <CardContent className="pt-0">
-                    <div className="space-y-4">
-                      {/* Key Metrics */}
-                      <div className="grid grid-cols-1 gap-3 p-4 bg-gray-50 rounded-lg">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm font-medium">Questions</span>
-                          <span className="text-lg font-bold text-orange-600">{topup.questions}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm font-medium">Validity</span>
-                          <span className="text-lg font-bold text-green-600">
-                            {topup.validityMonths === 1 ? '1 Month' : '2 Years'}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm font-medium">Per Question</span>
-                          <span className="text-lg font-bold">₹{topup.perQuestionRate}</span>
-                        </div>
-                      </div>
+                    {key === "topup_451" && (
+                      <Badge className="absolute -top-2 -right-2 bg-orange-500">
+                        Starter
+                      </Badge>
+                    )}
 
-                      {/* Pack-specific highlights */}
+                    <CardHeader className="text-center pb-4">
+                      <CardTitle className="text-xl mb-2">
+                        {key === "topup_451" ? "Starter Pack" : "Max Pack"}
+                      </CardTitle>
                       <div className="space-y-2">
-                        {key === 'topup_451' ? (
-                          <>
-                            <div className="flex items-center gap-2 text-sm">
-                              <Check className="h-4 w-4 text-orange-500" />
-                              <span>Perfect for trying out Super User features</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm">
-                              <Check className="h-4 w-4 text-orange-500" />
-                              <span>Short-term validity for immediate needs</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm">
-                              <Check className="h-4 w-4 text-orange-500" />
-                              <span>Minimum commitment required</span>
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <div className="flex items-center gap-2 text-sm">
-                              <Check className="h-4 w-4 text-green-500" />
-                              <span>Maximum value with bulk questions</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm">
-                              <Check className="h-4 w-4 text-green-500" />
-                              <span>Extended 2-year validity period</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm">
-                              <Check className="h-4 w-4 text-green-500" />
-                              <span>Best for regular maritime professionals</span>
-                            </div>
-                          </>
-                        )}
+                        <div className="text-3xl font-bold text-orange-600">
+                          {topup.displayPrice}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {topup.description}
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                      {selectedTopup === key && (
+                        <Badge variant="default" className="mt-2">
+                          Selected
+                        </Badge>
+                      )}
+                    </CardHeader>
+
+                    <CardContent className="pt-0">
+                      <div className="space-y-4">
+                        {/* Key Metrics */}
+                        <div className="grid grid-cols-1 gap-3 p-4 bg-gray-50 rounded-lg">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium">
+                              Questions
+                            </span>
+                            <span className="text-lg font-bold text-orange-600">
+                              {topup.questions}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium">
+                              Validity
+                            </span>
+                            <span className="text-lg font-bold text-green-600">
+                              {topup.validityMonths === 1
+                                ? "1 Month"
+                                : "2 Years"}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium">
+                              Per Question
+                            </span>
+                            <span className="text-lg font-bold">
+                              ₹{topup.perQuestionRate}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Pack-specific highlights */}
+                        <div className="space-y-2">
+                          {key === "topup_451" ? (
+                            <>
+                              <div className="flex items-center gap-2 text-sm">
+                                <Check className="h-4 w-4 text-orange-500" />
+                                <span>
+                                  Perfect for trying out Super User features
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm">
+                                <Check className="h-4 w-4 text-orange-500" />
+                                <span>
+                                  Short-term validity for immediate needs
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm">
+                                <Check className="h-4 w-4 text-orange-500" />
+                                <span>Minimum commitment required</span>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="flex items-center gap-2 text-sm">
+                                <Check className="h-4 w-4 text-green-500" />
+                                <span>Maximum value with bulk questions</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm">
+                                <Check className="h-4 w-4 text-green-500" />
+                                <span>Extended 2-year validity period</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm">
+                                <Check className="h-4 w-4 text-green-500" />
+                                <span>
+                                  Best for regular maritime professionals
+                                </span>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
             </div>
 
             {/* Common Premium Features */}
             <Card className="mt-6">
               <CardHeader>
                 <CardTitle>Common Premium Features</CardTitle>
-                <CardDescription>All Super User packs include these premium features</CardDescription>
+                <CardDescription>
+                  All Super User packs include these premium features
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Expert AI- detailed analysis</span>
+                    <span className="text-sm">
+                      Expert AI- detailed analysis
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Priority support and faster response </span>
+                    <span className="text-sm">
+                      Priority support and faster response{" "}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Advanced maritime knowledge base access</span>
+                    <span className="text-sm">
+                      Advanced maritime knowledge base access
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Technical diagrams and visual explanations</span>
+                    <span className="text-sm">
+                      Technical diagrams and visual explanations
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Question balance tracking and usage analytics</span>
+                    <span className="text-sm">
+                      Question balance tracking and usage analytics
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Ad-free enhanced QBOT experience</span>
+                    <span className="text-sm">
+                      Ad-free enhanced QBOT experience
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Export chat history and responses</span>
+                    <span className="text-sm">
+                      Export chat history and responses
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Premium maritime content download</span>
+                    <span className="text-sm">
+                      Premium maritime content download
+                    </span>
                   </div>
                 </div>
               </CardContent>
@@ -414,29 +528,34 @@ export function PremiumSubscriptionDialog({
         </Tabs>
 
         <div className="flex items-center justify-between pt-4 pb-8 border-t mt-6 mb-4">
-          <div className="text-sm text-muted-foreground">Secured by Razorpay</div>
-          
+          <div className="text-sm text-muted-foreground">
+            Secured by Razorpay
+          </div>
+
           {/* Show payment options for Premium plans, Subscribe button for Super User */}
-          {selectedPlan === 'premium' ? (
+          {selectedPlan === "premium" ? (
             <div className="flex flex-col items-center gap-4">
               <div className="text-center">
-                {selectedPeriod === 'monthly' ? (
+                {selectedPeriod === "monthly" ? (
                   <>
-                    <h4 className="font-semibold text-lg mb-3">Pay ₹451 - Monthly Premium</h4>
-                    
+                    <h4 className="font-semibold text-lg mb-3">
+                      Pay ₹451 - Monthly Premium
+                    </h4>
+
                     {/* QR Code Section */}
                     <div className="mb-4">
                       <h5 className="text-sm font-medium mb-2">Scan QR Code</h5>
                       <div className="bg-white p-4 border-2 border-orange-200 rounded-lg shadow-lg">
-                        <img 
-                          src="/attached_assets/QrCode (2)_1755542052056.jpeg" 
+                        <img
+                          src="/attached_assets/QrCode (2)_1755542052056.jpeg"
                           alt="QR Code for ₹451 Monthly Premium Payment"
                           className="w-32 h-32 object-contain"
                           onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                            const nextSibling = e.currentTarget.nextElementSibling as HTMLElement;
+                            e.currentTarget.style.display = "none";
+                            const nextSibling = e.currentTarget
+                              .nextElementSibling as HTMLElement;
                             if (nextSibling) {
-                              nextSibling.style.display = 'flex';
+                              nextSibling.style.display = "flex";
                             }
                           }}
                         />
@@ -451,10 +570,12 @@ export function PremiumSubscriptionDialog({
 
                     {/* Card Payment Option */}
                     <div className="border-t pt-3">
-                      <h5 className="text-sm font-medium mb-2">Or Pay via Card/UPI</h5>
-                      <a 
-                        href="https://rzp.io/rzp/jwQW9TW" 
-                        target="_blank" 
+                      <h5 className="text-sm font-medium mb-2">
+                        Or Pay via Card/UPI
+                      </h5>
+                      <a
+                        href="https://rzp.io/rzp/jwQW9TW"
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                       >
@@ -465,21 +586,24 @@ export function PremiumSubscriptionDialog({
                   </>
                 ) : (
                   <>
-                    <h4 className="font-semibold text-lg mb-3">Pay ₹2,611 - Yearly Premium</h4>
-                    
+                    <h4 className="font-semibold text-lg mb-3">
+                      Pay ₹2,611 - Yearly Premium
+                    </h4>
+
                     {/* QR Code Section */}
                     <div className="mb-4">
                       <h5 className="text-sm font-medium mb-2">Scan QR Code</h5>
                       <div className="bg-white p-4 border-2 border-orange-200 rounded-lg shadow-lg">
-                        <img 
-                          src="/attached_assets/QrCode (4)_1755542673629.jpeg" 
+                        <img
+                          src="/attached_assets/QrCode (4)_1755542673629.jpeg"
                           alt="QR Code for ₹2,611 Yearly Premium Payment"
                           className="w-32 h-32 object-contain"
                           onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                            const nextSibling = e.currentTarget.nextElementSibling as HTMLElement;
+                            e.currentTarget.style.display = "none";
+                            const nextSibling = e.currentTarget
+                              .nextElementSibling as HTMLElement;
                             if (nextSibling) {
-                              nextSibling.style.display = 'flex';
+                              nextSibling.style.display = "flex";
                             }
                           }}
                         />
@@ -494,10 +618,12 @@ export function PremiumSubscriptionDialog({
 
                     {/* Card Payment Option */}
                     <div className="border-t pt-3">
-                      <h5 className="text-sm font-medium mb-2">Or Pay via Card/UPI</h5>
-                      <a 
-                        href="https://rzp.io/rzp/NAU59cv" 
-                        target="_blank" 
+                      <h5 className="text-sm font-medium mb-2">
+                        Or Pay via Card/UPI
+                      </h5>
+                      <a
+                        href="https://rzp.io/rzp/NAU59cv"
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                       >
@@ -517,7 +643,7 @@ export function PremiumSubscriptionDialog({
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button 
+              <Button
                 onClick={handleSubscribe}
                 disabled={createSubscriptionMutation.isPending}
                 className="bg-orange-500 hover:bg-orange-600"
