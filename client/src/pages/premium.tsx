@@ -192,7 +192,7 @@ export default function PremiumPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="text-center">
-                  <div className="text-3xl font-bold text-gray-900 mb-2">₹451</div>
+                  <div className="text-3xl font-bold text-gray-900 mb-2">₹551</div>
                   <p className="text-gray-600">per month</p>
                 </CardContent>
               </Card>

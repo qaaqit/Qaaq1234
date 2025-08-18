@@ -247,7 +247,7 @@ export function PremiumSubscriptionDialog({
             </TabsTrigger>
             <TabsTrigger value="super_user" className="flex items-center gap-2">
               <Sparkles className="h-4 w-4" />
-              Super User
+              Super Private User
             </TabsTrigger>
           </TabsList>
 
@@ -539,7 +539,7 @@ export function PremiumSubscriptionDialog({
                 {selectedPeriod === "monthly" ? (
                   <>
                     <h4 className="font-semibold text-lg mb-3">
-                      Pay ₹451 - Monthly Premium
+                      Pay ₹551 - Monthly Premium
                     </h4>
 
                     {/* Payment Options */}
@@ -556,7 +556,7 @@ export function PremiumSubscriptionDialog({
                           data-testid="button-pay-card-monthly"
                         >
                           <ExternalLink className="h-4 w-4" />
-                          Pay via Card - ₹451
+                          Pay via Card - ₹551
                         </a>
                         <a
                           href="https://rzp.io/rzp/QACUUpcD"
@@ -566,7 +566,7 @@ export function PremiumSubscriptionDialog({
                           data-testid="button-pay-upi-monthly"
                         >
                           <ExternalLink className="h-4 w-4" />
-                          Pay via UPI - ₹451
+                          Pay via UPI - ₹551
                         </a>
                       </div>
                     </div>

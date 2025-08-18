@@ -93,14 +93,14 @@ export const SUBSCRIPTION_PLANS: {
   super_user: {
     topup_451: {
       planId: 'plan_super_topup_451',
-      amount: 45100, // ₹451 in paise (minimum topup)
+      amount: 55100, // ₹551 in paise (minimum topup)
       name: 'Super User Starter Pack',
-      description: 'Pay per question - 100 questions included',
+      description: 'Pay per question - 122 questions included',
       displayPrice: '₹451',
-      questions: 100, // ₹451 ÷ ₹4.51 = 100 questions
+      questions: 122, // ₹551 ÷ ₹4.51 = 122 questions
       perQuestionRate: 4.51,
       validityMonths: 1,
-      features: ['100 questions', '1 month validity', '₹4.51 per question']
+      features: ['122 questions', '1 month validity', '₹4.51 per question']
     },
 
     topup_4510: {
@@ -831,7 +831,7 @@ export class RazorpayService {
       let billingPeriod = null;
       
       // Match payment amount to subscription plans
-      if (amount === 45100) { // ₹451 monthly premium
+      if (amount === 55100) { // ₹551 monthly premium
         subscriptionType = 'premium';
         billingPeriod = 'monthly';
       } else if (amount === 261100) { // ₹2611 yearly premium
