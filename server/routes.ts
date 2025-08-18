@@ -2483,7 +2483,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                             resp.model === 'deepseek' ? 'Deepseek' : 
                             resp.model.toUpperCase();
             return `🤖 **${modelName}:**\n${resp.content}`;
-          }).join('\n\n---\n\n');
+          }).join('\n\n\n---\n\n\n');
           
           const totalResponseTime = responses.reduce((sum, resp) => sum + (resp.responseTime || 0), 0);
           const totalTokens = responses.reduce((sum, resp) => sum + (resp.tokens || 0), 0);
