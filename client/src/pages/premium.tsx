@@ -279,28 +279,82 @@ export default function PremiumPage() {
               <p className="text-center text-gray-600">Choose your preferred payment method</p>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <a
-                  href="https://rzp.io/rzp/jwQW9TW"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg text-lg font-medium transition-colors w-full justify-center"
-                  data-testid="button-pay-card-top"
-                >
-                  <ExternalLink className="h-5 w-5" />
-                  Pay via Card - ₹451
-                </a>
-                <a
-                  href="https://rzp.io/rzp/QACUUpcD"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg text-lg font-medium transition-colors w-full justify-center"
-                  data-testid="button-pay-upi-top"
-                >
-                  <ExternalLink className="h-5 w-5" />
-                  Pay via UPI - ₹451
-                </a>
-              </div>
+              {/* Plan Tabs */}
+              <Tabs
+                value={selectedPeriod}
+                onValueChange={(value) => setSelectedPeriod(value as "monthly" | "yearly")}
+                className="mb-6"
+              >
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="monthly" className="flex items-center gap-2">
+                    <Crown className="h-4 w-4" />
+                    Monthly
+                  </TabsTrigger>
+                  <TabsTrigger value="yearly" className="flex items-center gap-2 relative">
+                    <Crown className="h-4 w-4" />
+                    Yearly
+                    <Badge className="ml-1 bg-green-500 text-xs">Save 60%</Badge>
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="monthly" className="mt-4">
+                  <div className="text-center mb-4">
+                    <h3 className="text-xl font-bold text-gray-900">Monthly Plan - ₹451</h3>
+                    <p className="text-gray-600">Billed monthly</p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <a
+                      href="https://rzp.io/rzp/jwQW9TW"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg text-lg font-medium transition-colors w-full justify-center"
+                      data-testid="button-pay-card-monthly-top"
+                    >
+                      <ExternalLink className="h-5 w-5" />
+                      Pay via Card - ₹451
+                    </a>
+                    <a
+                      href="https://rzp.io/rzp/QACUUpcD"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg text-lg font-medium transition-colors w-full justify-center"
+                      data-testid="button-pay-upi-monthly-top"
+                    >
+                      <ExternalLink className="h-5 w-5" />
+                      Pay via UPI - ₹451
+                    </a>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="yearly" className="mt-4">
+                  <div className="text-center mb-4">
+                    <h3 className="text-xl font-bold text-gray-900">Yearly Plan - ₹2,611</h3>
+                    <p className="text-gray-600">Billed annually • Save ₹2,801 per year</p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <a
+                      href="https://rzp.io/rzp/NAU59cv"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg text-lg font-medium transition-colors w-full justify-center"
+                      data-testid="button-pay-card-yearly-top"
+                    >
+                      <ExternalLink className="h-5 w-5" />
+                      Pay via Card - ₹2,611
+                    </a>
+                    <a
+                      href="https://rzp.io/rzp/COgnl5fN"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg text-lg font-medium transition-colors w-full justify-center"
+                      data-testid="button-pay-upi-yearly-top"
+                    >
+                      <ExternalLink className="h-5 w-5" />
+                      Pay via UPI - ₹2,611
+                    </a>
+                  </div>
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
         )}
