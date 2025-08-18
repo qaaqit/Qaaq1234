@@ -81,8 +81,11 @@ export class AIService {
       console.log('🤖 OpenAI: Response generated successfully:', content.substring(0, 100) + '...');
       const responseTime = Date.now() - startTime;
 
+      // Apply free user limits if user is not premium
+      const finalContent = this.applyFreeUserLimits(content, user);
+
       return {
-        content,
+        content: finalContent,
         model: 'openai',
         tokens: response.usage?.total_tokens,
         responseTime
@@ -194,8 +197,11 @@ export class AIService {
       }
       const responseTime = Date.now() - startTime;
 
+      // Apply free user limits if user is not premium
+      const finalContent = this.applyFreeUserLimits(content, user);
+
       return {
-        content,
+        content: finalContent,
         model: 'gemini',
         responseTime
       };
@@ -270,6 +276,36 @@ export class AIService {
       model: 'openai', // Default fallback attribution
       responseTime: 0
     };
+  }
+
+  // Apply free user limits - truncate to 10-20 words for non-premium users
+  private applyFreeUserLimits(content: string, user: any): string {
+    // Check if user is premium (assuming userType field exists)
+    const userType = user?.userType || 'Free';
+    const subscriptionStatus = user?.subscriptionStatus || 'inactive';
+    
+    // If user is premium or has active subscription, return full content
+    if (userType === 'Premium' || subscriptionStatus === 'active') {
+      console.log(`✅ Premium user - returning full response (${content.split(' ').length} words)`);
+      return content;
+    }
+    
+    // For free users, limit to 10-20 words with upgrade prompt
+    const words = content.split(' ');
+    const wordCount = words.length;
+    
+    console.log(`🆓 Free user - limiting response from ${wordCount} words to ~15 words`);
+    
+    // Take first 10-20 words and add upgrade prompt
+    const limitedWords = words.slice(0, 15); // Target ~15 words
+    const limitedContent = limitedWords.join(' ');
+    
+    // Ensure it ends with ... and add upgrade prompt
+    const truncatedContent = limitedContent.endsWith('.') 
+      ? limitedContent.slice(0, -1) + '...'
+      : limitedContent + '...';
+    
+    return `${truncatedContent} (For detailed unlimited answers & whatsapp chat support, please upgrade to premium)`;
   }
 
   // Get available models
