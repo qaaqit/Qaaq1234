@@ -36,42 +36,42 @@ export default function SemmMakePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Header */}
-      <div className="bg-white shadow-lg">
-        <div className="bg-gradient-to-r from-orange-50 to-orange-100 px-4 py-3">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex items-center space-x-4">
-              
-              {/* Back Arrow */}
-              <button
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
+        {/* Breadcrumb and Title */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center space-x-4">
+            {/* Breadcrumb */}
+            <nav className="flex items-center space-x-2 text-sm">
+              <button 
                 onClick={goBack}
-                className="p-2 hover:bg-orange-100 text-orange-600 rounded-full transition-colors flex-shrink-0"
-                data-testid="button-back"
+                className="text-orange-600 hover:text-orange-800 font-medium transition-colors"
+                data-testid="breadcrumb-home"
               >
-                <ArrowLeft className="w-5 h-5" />
+                Machine Tree
               </button>
+              <ChevronRight className="w-4 h-4 text-gray-400" />
+              <span className="text-gray-600 font-medium" data-testid="breadcrumb-current">
+                Make Details
+              </span>
+            </nav>
+            
+            {/* Title and Chevron */}
+            <div className="flex items-center space-x-3">
+              <h1 className="text-2xl font-black text-gray-900">
+                Make Details
+              </h1>
 
-              {/* Breadcrumb */}
-              <nav className="flex items-center space-x-2 text-sm text-gray-500 flex-shrink-0">
-                <span className="text-orange-600 font-medium">ea. Main Engine</span>
-              </nav>
-
-              {/* Title - Centered */}
-              <div className="flex items-center space-x-3 flex-1 justify-center">
-                <h1 className="text-xl font-black text-gray-900">
-                  Make Details
-                </h1>
-
-                {/* Chevron Down with Model Dropdown */}
-                <div className="relative">
-                  <button 
-                    className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
-                    data-testid="dropdown-models"
-                    title="Show models for this make"
-                    onClick={() => setShowModelDropdown(!showModelDropdown)}
-                  >
-                    <ChevronDown className="w-5 h-5" />
-                  </button>
+              {/* Chevron Down with Model Dropdown */}
+              <div className="relative">
+                <button 
+                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
+                  data-testid="dropdown-models"
+                  title="Show models for this make"
+                  onClick={() => setShowModelDropdown(!showModelDropdown)}
+                >
+                  <ChevronDown className="w-5 h-5" />
+                </button>
 
                   {/* Models Dropdown Menu */}
                   {showModelDropdown && (
@@ -84,18 +84,17 @@ export default function SemmMakePage() {
                 </div>
               </div>
 
-              {/* Share Icon */}
-              <button
-                className="p-2 hover:bg-gray-100 text-gray-600 rounded-full transition-colors flex-shrink-0"
-                data-testid="button-share"
-              >
-                <Share2 className="w-5 h-5" />
-              </button>
             </div>
           </div>
+
+          {/* Share Icon */}
+          <button
+            className="flex items-center space-x-2 px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors"
+            data-testid="button-share"
+          >
+            <Share2 className="w-4 h-4" />
+          </button>
         </div>
-        <div className="h-1 bg-orange-400"></div>
-      </div>
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
