@@ -211,7 +211,7 @@ export default function MachineTreePage() {
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-gray-700">{machines.length}</div>
-              <div className="text-sm text-gray-600">Machines</div>
+              <div className="text-sm text-gray-600">Makes</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">{(semmData as any)?.totalMachines || machines.length}</div>
