@@ -3999,10 +3999,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('🔄 Reordering makes in equipment', equipmentCode, ':', orderedCodes);
       
-      // Generate new alphabetical codes based on position (aba, abb, abc, etc.)
+      // Generate new alphabetical codes based on position (aaa, abb, acc, etc.)
       const generateMakeCode = (index: number): string => {
         const letter = String.fromCharCode(97 + index); // 97 is 'a'
-        return `a${equipmentCode}${letter}`; // Format: a + equipmentCode + position letter
+        return `${systemCode}${equipmentCode}${letter}`; // Format: systemCode + equipmentCode + position letter
       };
       
       // First, get all records that need to be updated to avoid conflicts
