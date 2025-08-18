@@ -256,9 +256,7 @@ export default function PremiumPage() {
                 ← Back
               </Button>
               <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">
-                  Premium Subscription
-                </h1>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">/premium</h1>
                 <p className="text-gray-600">advanced maritime features</p>
               </div>
             </div>
