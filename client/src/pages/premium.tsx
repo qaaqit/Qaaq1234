@@ -474,25 +474,6 @@ export default function PremiumPage() {
 
           <TabsContent value="premium" className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Monthly Plan */}
-              <Card
-                className={`${selectedPeriod === "monthly" ? "ring-2 ring-orange-500" : ""} cursor-pointer`}
-                onClick={() => setSelectedPeriod("monthly")}
-              >
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    Premium Monthly
-                    {selectedPeriod === "monthly" && (
-                      <Badge variant="default">Selected</Badge>
-                    )}
-                  </CardTitle>
-                  <CardDescription>
-                    {formatPrice(plans.premium?.monthly?.amount || 55100)} per
-                    month
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-
               {/* Yearly Plan */}
               <Card
                 className={`${selectedPeriod === "yearly" ? "ring-2 ring-orange-500" : ""} cursor-pointer relative`}
@@ -527,6 +508,25 @@ export default function PremiumPage() {
                         ).savings
                       }
                     </span>
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+
+              {/* Monthly Plan */}
+              <Card
+                className={`${selectedPeriod === "monthly" ? "ring-2 ring-orange-500" : ""} cursor-pointer`}
+                onClick={() => setSelectedPeriod("monthly")}
+              >
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    Premium Monthly
+                    {selectedPeriod === "monthly" && (
+                      <Badge variant="default">Selected</Badge>
+                    )}
+                  </CardTitle>
+                  <CardDescription>
+                    {formatPrice(plans.premium?.monthly?.amount || 55100)} per
+                    month
                   </CardDescription>
                 </CardHeader>
               </Card>
