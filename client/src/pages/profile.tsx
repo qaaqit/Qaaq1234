@@ -49,6 +49,8 @@ const profileUpdateSchema = z.object({
   imoNumber: z.string().optional(),    // Will map to current_ship_imo
   city: z.string().optional(),         // Will map to current_city
   country: z.string().optional(),      // Will map to current_country
+  countryCode: z.string().optional(),  // Country code for WhatsApp
+  whatsAppNumber: z.string().optional(), // WhatsApp phone number
 });
 
 type ProfileUpdate = z.infer<typeof profileUpdateSchema>;
@@ -78,6 +80,8 @@ export default function Profile() {
       imoNumber: profile.imoNumber || '',
       city: profile.city || '',
       country: profile.country || '',
+      countryCode: profile.countryCode || '',
+      whatsAppNumber: profile.whatsAppNumber || '',
     } : {
       fullName: '',
       email: '',
@@ -87,6 +91,8 @@ export default function Profile() {
       imoNumber: '',
       city: '',
       country: '',
+      countryCode: '',
+      whatsAppNumber: '',
     },
   });
 
@@ -291,6 +297,52 @@ export default function Profile() {
                       </FormItem>
                     )}
                   />
+                </div>
+
+                {/* WhatsApp Contact Information */}
+                <div className="space-y-4">
+                  <div className="text-sm font-medium text-gray-700">WhatsApp Contact</div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="countryCode"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Country Code</FormLabel>
+                          <FormControl>
+                            <Input 
+                              {...field} 
+                              placeholder="+91" 
+                              disabled={!isEditing}
+                              data-testid="input-country-code"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="md:col-span-2">
+                      <FormField
+                        control={form.control}
+                        name="whatsAppNumber"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>WhatsApp Number</FormLabel>
+                            <FormControl>
+                              <Input 
+                                {...field} 
+                                placeholder="1234567890" 
+                                disabled={!isEditing}
+                                data-testid="input-whatsapp-number"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

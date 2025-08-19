@@ -89,6 +89,7 @@ export const users = pgTable("users", {
   // Personal Information
   dateOfBirth: text("date_of_birth"), // QAAQ field
   gender: text("gender"), // QAAQ field
+  countryCode: text("country_code"), // Country code for WhatsApp number (e.g., +91, +1)
   whatsAppNumber: text("whatsapp_number"), // QAAQ field
   whatsAppProfilePictureUrl: text("whatsapp_profile_picture_url"), // WhatsApp profile picture from QBOT
   whatsAppDisplayName: text("whatsapp_display_name"), // WhatsApp display name from QBOT
@@ -608,6 +609,7 @@ export const updateProfileSchema = createInsertSchema(users).omit({
 }).extend({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
+  countryCode: z.string().optional(),
   whatsAppNumber: z.string().optional(),
   nationality: z.string().optional(),
   dateOfBirth: z.string().optional(),
