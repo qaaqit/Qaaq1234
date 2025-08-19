@@ -499,7 +499,7 @@ export default function PremiumPage() {
                   <CardDescription>
                     {formatPrice(plans.premium?.yearly?.amount || 261100)} per
                     year
-                    <span className="block text-sm text-green-600 mt-1">
+                    <span className="block text-sm mt-1 text-[#23252e]">
                       Save{" "}
                       {
                         calculateSavings(
