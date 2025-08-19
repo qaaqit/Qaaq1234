@@ -341,13 +341,28 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
         {/* Divider */}
         <div className="w-px h-6 bg-gray-300 mx-1"></div>
 
-        {/* Crown icon for premium mode */}
+        {/* Crown icon for premium mode - stays lit for premium users */}
         <button
           onClick={togglePremiumMode}
-          className="p-2 rounded-lg transition-all duration-200 text-gray-400 hover:bg-gray-100 flex-shrink-0"
-          title={isPremiumMode ? "Premium Mode Active" : "Enable Premium Mode"}
+          className={`p-2 rounded-lg transition-all duration-200 flex-shrink-0 ${
+            ((userStatus as any)?.isPremium || (userStatus as any)?.isSuperUser || localStorage.getItem('isAdmin') === 'true') 
+              ? 'text-yellow-600 hover:bg-yellow-50' 
+              : 'text-gray-400 hover:bg-gray-100'
+          }`}
+          title={
+            ((userStatus as any)?.isPremium || (userStatus as any)?.isSuperUser || localStorage.getItem('isAdmin') === 'true')
+              ? "Premium User - Unlimited Responses" 
+              : "Upgrade to Premium for Unlimited Responses"
+          }
         >
-          <Crown size={18} className={isPremiumMode ? "fill-current text-yellow-600" : ""} />
+          <Crown 
+            size={18} 
+            className={
+              ((userStatus as any)?.isPremium || (userStatus as any)?.isSuperUser || localStorage.getItem('isAdmin') === 'true') 
+                ? "fill-current text-yellow-600" 
+                : ""
+            } 
+          />
         </button>
       </div>
       {/* Chat input container */}
