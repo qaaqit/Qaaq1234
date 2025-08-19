@@ -1,7 +1,8 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { Users, Ship, UserCheck, Crown, Globe, TrendingUp } from 'lucide-react';
+import { Users, Ship, UserCheck, Crown, Globe, TrendingUp, RefreshCw } from 'lucide-react';
 
 interface DashboardData {
   timeSeriesData: { date: string; newUsers: number; verifiedUsers: number; }[];
@@ -17,11 +18,19 @@ const COLORS = ['#0969da', '#7c3aed', '#059669', '#dc2626', '#ea580c', '#0891b2'
 const PIE_COLORS = ['#0969da', '#7c3aed', '#059669', '#dc2626'];
 
 export default function DashboardAnalytics() {
-  const { data, isLoading, error } = useQuery<DashboardData>({
+  const queryClient = useQueryClient();
+  
+  const { data, isLoading, error, refetch } = useQuery<DashboardData>({
     queryKey: ['/api/admin/analytics/dashboard'],
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchInterval: 30 * 1000, // 30 seconds
+    staleTime: 10 * 60 * 1000, // 10 minutes cache
+    refetchInterval: false, // No auto-refresh - load only on demand
+    refetchOnWindowFocus: false, // No refresh on window focus
+    refetchOnReconnect: false, // No refresh on network reconnect
   });
+
+  const handleManualRefresh = () => {
+    refetch();
+  };
 
   if (isLoading) {
     return (
@@ -65,6 +74,20 @@ export default function DashboardAnalytics() {
 
   return (
     <div className="min-h-screen bg-gray-950 p-6">
+      {/* Header with Manual Refresh Button */}
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-white">Analytics Dashboard</h2>
+        <Button 
+          onClick={handleManualRefresh}
+          disabled={isLoading}
+          variant="outline"
+          className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700"
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+          {isLoading ? 'Refreshing...' : 'Refresh Data'}
+        </Button>
+      </div>
+
       {/* Header Stats - Replit Style */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <Card className="bg-gray-900 border-gray-800">

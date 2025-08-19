@@ -39,12 +39,14 @@ export default function QBOTPage({ user }: QBOTPageProps) {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
-  // Check user premium status
+  // Check user premium status - only on page load
   const { data: subscriptionStatus } = useQuery({
     queryKey: ["/api/user/subscription-status"],
     retry: 1,
-    staleTime: 30 * 1000, // Refresh every 30 seconds to catch new payments
-    refetchInterval: 30 * 1000
+    staleTime: 5 * 60 * 1000, // 5 minutes cache
+    refetchInterval: false, // No auto-refresh - check only on page load/manual refresh
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   const isPremium = (subscriptionStatus as any)?.isPremium || (subscriptionStatus as any)?.isSuperUser;
