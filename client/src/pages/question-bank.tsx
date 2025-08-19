@@ -174,9 +174,13 @@ export default function QuestionBank() {
     const userPattern = /^User:\s*[^(]*\(via Q[^)]*\)\s*/;
     cleanContent = cleanContent.replace(userPattern, '');
     
-    // Remove category patterns like "Category: General - General ......... question::"
-    const categoryPattern = /^Category:\s*[^:]*\s*\.+\s*question::\s*/i;
+    // Remove category patterns like "Category: General - General Equipment. Question"
+    const categoryPattern = /^Category:\s*[^\.]*\.\s*(Question:?\s*)?/i;
     cleanContent = cleanContent.replace(categoryPattern, '');
+    
+    // Remove additional category-like patterns and numbering
+    const numberPattern = /^\d+:\s*/;
+    cleanContent = cleanContent.replace(numberPattern, '');
     
     cleanContent = cleanContent.replace(/^\s+/, '');
     

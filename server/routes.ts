@@ -3055,7 +3055,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ) VALUES ($1, $2, $3, NOW(), NOW())
         RETURNING id
       `, [
-        `[QBOT Q&A - ${semmCategory.breadcrumb}]\nUser: ${userName} (via QBOT)\nCategory: ${semmCategory.category}\n\nQuestion: ${userMessage}${attachmentText}`,
+        `${userMessage}${attachmentText}`,
         authorId, // Use valid user ID
         false // Mark as QBOT (not WhatsApp but still bot-originated)
       ]);
