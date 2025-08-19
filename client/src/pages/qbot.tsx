@@ -39,17 +39,99 @@ export default function QBOTPage({ user }: QBOTPageProps) {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
-  // Check user premium status - only on page load
-  const { data: subscriptionStatus } = useQuery({
+  // Check user premium status - required for QBOT access
+  const { data: subscriptionStatus, isLoading: isCheckingPremium } = useQuery({
     queryKey: ["/api/user/subscription-status"],
     retry: 1,
-    staleTime: 5 * 60 * 1000, // 5 minutes cache
-    refetchInterval: false, // No auto-refresh - check only on page load/manual refresh
+    staleTime: 10 * 60 * 1000, // 10 minutes cache
+    refetchInterval: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });
 
   const isPremium = (subscriptionStatus as any)?.isPremium || (subscriptionStatus as any)?.isSuperUser;
+
+  // Premium subscription component for free users
+  const PremiumSubscriptionPrompt = () => (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-6 text-center">
+        <div className="mb-6">
+          <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+            <span className="text-2xl">⭐</span>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">QBOT Premium Required</h2>
+          <p className="text-gray-600">
+            QBOT is now exclusively available for premium subscribers. Upgrade to access unlimited AI assistance for maritime professionals.
+          </p>
+        </div>
+
+        <div className="mb-6 space-y-3">
+          <div className="flex items-center text-sm text-gray-700">
+            <span className="text-green-500 mr-2">✓</span>
+            Unlimited QBOT responses
+          </div>
+          <div className="flex items-center text-sm text-gray-700">
+            <span className="text-green-500 mr-2">✓</span>
+            Multi-AI model access (GPT-4, Gemini, Deepseek)
+          </div>
+          <div className="flex items-center text-sm text-gray-700">
+            <span className="text-green-500 mr-2">✓</span>
+            Priority maritime assistance
+          </div>
+          <div className="flex items-center text-sm text-gray-700">
+            <span className="text-green-500 mr-2">✓</span>
+            Advanced file attachments
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <a
+            href="https://rzp.io/rzp/jwQW9TW"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-semibold py-3 px-4 rounded-lg hover:from-yellow-600 hover:to-orange-600 transition-all duration-200"
+          >
+            Monthly Plan - ₹451
+          </a>
+          <a
+            href="https://rzp.io/rzp/NAU59cv"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block w-full bg-gradient-to-r from-green-500 to-blue-500 text-white font-semibold py-3 px-4 rounded-lg hover:from-green-600 hover:to-blue-600 transition-all duration-200"
+          >
+            Yearly Plan - ₹2,611 (Save 50%)
+          </a>
+          <button
+            onClick={() => setLocation("/dm")}
+            className="block w-full bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+          >
+            Continue to QaaqConnect
+          </button>
+        </div>
+
+        <p className="text-xs text-gray-500 mt-4">
+          Payment processed securely via Razorpay. Premium access activates automatically upon successful payment.
+        </p>
+      </div>
+    </div>
+  );
+
+  // Show premium prompt for free users
+  if (subscriptionStatus && !isPremium) {
+    return <PremiumSubscriptionPrompt />;
+  }
+
+  // Show loading while checking premium status
+  if (isCheckingPremium) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Verifying premium access...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Fetch WhatsApp chat history when component loads
   useEffect(() => {
@@ -128,7 +210,8 @@ export default function QBOTPage({ user }: QBOTPageProps) {
           message: messageText, 
           attachments: attachments,
           isPrivate: isPrivate,
-          aiModels: aiModels || ['chatgpt']
+          aiModels: aiModels || ['chatgpt'],
+          isPremium: true
         })
       });
 
