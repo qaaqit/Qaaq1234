@@ -3449,9 +3449,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           const userResult = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
           user = userResult.rows[0];
+          console.log(`🔍 User found in QBOT route: ${user?.full_name} (ID: ${user?.id}) - Premium: ${user?.subscription_status}`);
         } catch (error) {
           console.log('User not found or not authenticated, proceeding without user context');
         }
+      } else {
+        console.log('⚠️ No userId provided to QBOT route - user context will be lost');
       }
 
       // CHECK 20 FREE QUESTIONS LIMIT FOR AUTHENTICATED USERS
