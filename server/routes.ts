@@ -2615,10 +2615,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await pool.query(`
         SELECT 
           COUNT(*) as total_users,
-          COUNT(CASE WHEN ship_name IS NOT NULL THEN 1 END) as sailors,
-          COUNT(CASE WHEN ship_name IS NULL THEN 1 END) as locals,
+          COUNT(CASE WHEN user_type = 'On Ship' THEN 1 END) as sailors,
+          COUNT(CASE WHEN user_type != 'On Ship' OR user_type IS NULL THEN 1 END) as locals,
           COUNT(CASE WHEN is_verified = true THEN 1 END) as verified_users,
-          COUNT(CASE WHEN last_login > NOW() - INTERVAL '30 days' THEN 1 END) as active_users,
+          COUNT(CASE WHEN last_activity_at > NOW() - INTERVAL '30 days' THEN 1 END) as active_users,
           COALESCE(SUM(login_count), 0) as total_logins
         FROM users
       `);
@@ -2642,9 +2642,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const result = await pool.query(`
         SELECT u.id, u.full_name, u.nickname, u.email, u.is_admin, u.maritime_rank,
-               u.ship_name, u.imo_number,
+               u.user_type, u.current_ship, 
                u.city, u.country,
-               u.is_verified, u.login_count, u.last_login, u.created_at, u.whatsapp_number,
+               u.is_verified, u.login_count, u.last_activity_at, u.created_at, u.whatsapp_number,
                COALESCE(q.question_count, 0) as question_count
         FROM users u
         LEFT JOIN (
@@ -2653,23 +2653,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           WHERE is_archived = false AND is_hidden = false
           GROUP BY author_id
         ) q ON CAST(u.id AS TEXT) = CAST(q.author_id AS TEXT)
-        ORDER BY u.last_login DESC NULLS LAST, u.created_at DESC
+        ORDER BY u.last_activity_at DESC NULLS LAST, u.created_at DESC
       `);
 
       const users = result.rows.map(user => ({
         id: user.id,
         fullName: user.full_name || user.nickname || user.email,
         email: user.email,
-        userType: user.ship_name ? 'sailor' : 'local',
+        userType: user.user_type === 'On Ship' ? 'sailor' : 'local',
         isAdmin: user.is_admin || false,
         rank: user.maritime_rank,
-        shipName: user.ship_name,
-        imoNumber: user.imo_number,
+        shipName: user.current_ship,
         city: user.city,
         country: user.country,
         isVerified: user.is_verified || false,
         loginCount: user.login_count || 0,
-        lastLogin: user.last_login,
+        lastLogin: user.last_activity_at,
         whatsappNumber: user.whatsapp_number,
         questionCount: parseInt(user.question_count) || 0
       }));
@@ -2678,6 +2677,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching admin users:", error);
       res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  // Analytics endpoint for dashboard charts
+  app.get('/api/admin/analytics/dashboard', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      // Get time series data for the last 30 days
+      const timeSeriesData = await pool.query(`
+        SELECT 
+          DATE(created_at) as date,
+          COUNT(*) as new_users,
+          COUNT(CASE WHEN is_verified THEN 1 END) as verified_users
+        FROM users 
+        WHERE created_at >= NOW() - INTERVAL '30 days'
+        GROUP BY DATE(created_at)
+        ORDER BY date
+      `);
+
+      // Get user distribution by type
+      const userTypeData = await pool.query(`
+        SELECT 
+          COALESCE(user_type, 'Unknown') as type,
+          COUNT(*) as count
+        FROM users
+        GROUP BY user_type
+      `);
+
+      // Get top countries
+      const countryData = await pool.query(`
+        SELECT 
+          COALESCE(country, 'Unknown') as country,
+          COUNT(*) as user_count
+        FROM users
+        GROUP BY country
+        ORDER BY user_count DESC
+        LIMIT 10
+      `);
+
+      // Get premium vs free users
+      const subscriptionData = await pool.query(`
+        SELECT 
+          COUNT(CASE WHEN is_premium = true THEN 1 END) as premium_users,
+          COUNT(CASE WHEN is_premium = false OR is_premium IS NULL THEN 1 END) as free_users,
+          COUNT(*) as total_users
+        FROM users
+      `);
+
+      // Get login activity for last 7 days
+      const loginActivity = await pool.query(`
+        WITH dates AS (
+          SELECT generate_series(
+            CURRENT_DATE - INTERVAL '6 days',
+            CURRENT_DATE,
+            INTERVAL '1 day'
+          )::date as date
+        )
+        SELECT 
+          d.date,
+          COALESCE(COUNT(u.last_activity_at), 0) as active_users
+        FROM dates d
+        LEFT JOIN users u ON DATE(u.last_activity_at) = d.date
+        GROUP BY d.date
+        ORDER BY d.date
+      `);
+
+      res.json({
+        timeSeriesData: timeSeriesData.rows.map(row => ({
+          date: row.date.toISOString().split('T')[0],
+          newUsers: parseInt(row.new_users),
+          verifiedUsers: parseInt(row.verified_users)
+        })),
+        userTypeData: userTypeData.rows.map(row => ({
+          name: row.type,
+          value: parseInt(row.count)
+        })),
+        countryData: countryData.rows.map(row => ({
+          country: row.country,
+          users: parseInt(row.user_count)
+        })),
+        subscriptionData: {
+          premium: parseInt(subscriptionData.rows[0].premium_users),
+          free: parseInt(subscriptionData.rows[0].free_users),
+          total: parseInt(subscriptionData.rows[0].total_users)
+        },
+        loginActivity: loginActivity.rows.map(row => ({
+          date: row.date.toISOString().split('T')[0],
+          activeUsers: parseInt(row.active_users)
+        }))
+      });
+    } catch (error) {
+      console.error("Error fetching dashboard analytics:", error);
+      res.status(500).json({ message: "Failed to fetch analytics" });
     }
   });
 

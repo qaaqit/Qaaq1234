@@ -12,6 +12,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, LineChart, Line } from "recharts";
 import { FileText } from "lucide-react";
 import AdminAnalytics from "@/components/admin/AdminAnalytics";
+import DashboardAnalytics from "@/components/admin/DashboardAnalytics";
 import SearchAnalyticsPanel from "@/components/search-analytics-panel";
 
 interface AdminUser {
@@ -392,53 +393,9 @@ export default function AdminPanel() {
             </div>
           </div>
 
-          {/* Analytics Tab - Replit-style Dashboard */}
+          {/* Analytics Tab - Modern Dashboard with Charts */}
           <TabsContent value="analytics" className="space-y-6">
-            {stats && countryAnalytics && users ? (
-              <AdminAnalytics data={{
-                totalViews: stats.totalLogins * 3.2, // Estimate views from login data
-                totalUsers: stats.totalUsers,
-                topUrls: [
-                  { url: '/qbot', views: Math.round(stats.totalLogins * 0.36), percentage: 36 },
-                  { url: '/map', views: Math.round(stats.totalLogins * 0.25), percentage: 25 },
-                  { url: '/questions', views: Math.round(stats.totalLogins * 0.22), percentage: 22 },
-                  { url: '/admin', views: Math.round(stats.totalLogins * 0.12), percentage: 12 },
-                  { url: '/profile', views: Math.round(stats.totalLogins * 0.05), percentage: 5 }
-                ],
-                topReferrers: [
-                  { referrer: 'Direct', visits: Math.round(stats.totalLogins * 0.45), percentage: 45 },
-                  { referrer: 'qaaq.app', visits: Math.round(stats.totalLogins * 0.30), percentage: 30 },
-                  { referrer: 'WhatsApp', visits: Math.round(stats.totalLogins * 0.15), percentage: 15 },
-                  { referrer: 'Google', visits: Math.round(stats.totalLogins * 0.07), percentage: 7 },
-                  { referrer: 'LinkedIn', visits: Math.round(stats.totalLogins * 0.03), percentage: 3 }
-                ],
-                topBrowsers: [
-                  { browser: 'Chrome', users: Math.round(stats.totalUsers * 0.65), percentage: 65 },
-                  { browser: 'Safari', users: Math.round(stats.totalUsers * 0.20), percentage: 20 },
-                  { browser: 'Firefox', users: Math.round(stats.totalUsers * 0.10), percentage: 10 },
-                  { browser: 'Edge', users: Math.round(stats.totalUsers * 0.05), percentage: 5 }
-                ],
-                topDevices: [
-                  { device: 'Mobile', users: Math.round(stats.totalUsers * 0.72), percentage: 72 },
-                  { device: 'Desktop', users: Math.round(stats.totalUsers * 0.20), percentage: 20 },
-                  { device: 'Tablet', users: Math.round(stats.totalUsers * 0.08), percentage: 8 }
-                ],
-                topCountries: countryAnalytics.slice(0, 8).map(country => ({
-                  country: country.country,
-                  users: country.userCount,
-                  percentage: (country.userCount / stats.totalUsers) * 100,
-                  code: getCountryCode(country.country)
-                })),
-                timeSeriesData: generateTimeSeriesFromStats(stats, countryAnalytics)
-              }} />
-            ) : (
-              <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
-                  <p className="text-gray-400">Loading analytics data...</p>
-                </div>
-              </div>
-            )}
+            <DashboardAnalytics />
           </TabsContent>
 
           {/* Metrics Tab */}
