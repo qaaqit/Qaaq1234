@@ -378,7 +378,13 @@ export class RazorpayService {
             planConfig.amount,
             'INR',
             premiumPlanConfig.checkoutUrl, // Use fixed URL
-            JSON.stringify({ userId, planType, billingPeriod, source: 'fixed_checkout' })
+            JSON.stringify({ 
+              user_id: userId, // Key field for webhook identification
+              userId, 
+              planType, 
+              billingPeriod, 
+              source: 'fixed_checkout' 
+            })
           ]);
         }, `Create subscription for user ${userId}`);
 
@@ -402,9 +408,11 @@ export class RazorpayService {
         quantity: 1,
         customer_notify: 1,
         notes: {
-          userId: userId,
+          user_id: userId, // Key field for webhook identification
+          userId: userId, // Backup field
           planType: planType,
-          billingPeriod: billingPeriod
+          billingPeriod: billingPeriod,
+          source: 'qaaq_connect_app'
         }
       };
 
@@ -899,27 +907,114 @@ export class RazorpayService {
         billingPeriod = 'yearly';
       }
 
-      // Try to identify user by email from payment details
+      // Enhanced user identification strategy
       let userId = null;
-      if (payment.email) {
+      let userInfo = null;
+      let identificationMethod = '';
+
+      // Method 1: Check for user_id in payment notes (most reliable)
+      if (payment.notes && payment.notes.user_id) {
+        console.log(`🎯 Found user_id in payment notes: ${payment.notes.user_id}`);
         try {
-          const userResult = await pool.query(`
-            SELECT id, full_name, email FROM users WHERE email = $1 LIMIT 1
-          `, [payment.email]);
+          const notesResult = await pool.query(`
+            SELECT id, full_name, email, whatsapp_number as phone FROM users WHERE id = $1 LIMIT 1
+          `, [payment.notes.user_id]);
+          if (notesResult.rows.length > 0) {
+            userId = notesResult.rows[0].id;
+            userInfo = notesResult.rows[0];
+            identificationMethod = 'payment_notes';
+          }
+        } catch (error) {
+          console.error('❌ Error looking up user by notes:', error);
+        }
+      }
+
+      // Method 2: Find by contact/phone number (reliable for UPI)
+      if (!userId && payment.contact) {
+        console.log(`📱 Searching by contact: ${payment.contact}`);
+        try {
+          const cleanContact = payment.contact.replace(/\D/g, ''); // Remove non-digits
+          const phoneVariants = [
+            payment.contact,
+            cleanContact,
+            `+91${cleanContact.slice(-10)}`, // Indian format
+            cleanContact.slice(-10) // Last 10 digits
+          ];
           
-          if (userResult.rows.length > 0) {
-            userId = userResult.rows[0].id;
-            console.log('✅ Found user by email:', {
-              userId,
-              email: payment.email,
-              name: userResult.rows[0].full_name
-            });
-          } else {
-            console.log('⚠️ No user found with email:', payment.email);
+          for (const phone of phoneVariants) {
+            const phoneResult = await pool.query(`
+              SELECT id, full_name, email, whatsapp_number as phone FROM users 
+              WHERE whatsapp_number LIKE $1 OR mobile_number LIKE $1 LIMIT 1
+            `, [`%${phone}%`]);
+            if (phoneResult.rows.length > 0) {
+              userId = phoneResult.rows[0].id;
+              userInfo = phoneResult.rows[0];
+              identificationMethod = 'phone_number';
+              break;
+            }
+          }
+        } catch (error) {
+          console.error('❌ Error looking up user by phone:', error);
+        }
+      }
+
+      // Method 3: Extract UPI ID and match with user records
+      if (!userId && payment.method === 'upi' && payment.contact) {
+        console.log(`💳 UPI payment - extracting UPI ID from contact: ${payment.contact}`);
+        try {
+          const upiIdMatch = payment.contact.match(/([a-zA-Z0-9.-]+@[a-zA-Z0-9.-]+)/);
+          if (upiIdMatch) {
+            const upiId = upiIdMatch[1];
+            console.log(`🆔 Extracted UPI ID: ${upiId}`);
+            
+            // Check if user has this UPI ID stored anywhere
+            const upiResult = await pool.query(`
+              SELECT id, full_name, email, whatsapp_number as phone FROM users 
+              WHERE email LIKE $1 OR whatsapp_number LIKE $1 OR full_name LIKE $1 
+              LIMIT 1
+            `, [`%${upiId}%`]);
+            if (upiResult.rows.length > 0) {
+              userId = upiResult.rows[0].id;
+              userInfo = upiResult.rows[0];
+              identificationMethod = 'upi_id';
+            }
+          }
+        } catch (error) {
+          console.error('❌ Error looking up user by UPI ID:', error);
+        }
+      }
+
+      // Method 4: Fall back to email (least reliable, skip generic emails)
+      if (!userId && payment.email && !payment.email.includes('void@razorpay.com') && !payment.email.includes('test@')) {
+        console.log(`📧 Searching by email: ${payment.email}`);
+        try {
+          const emailResult = await pool.query(`
+            SELECT id, full_name, email, whatsapp_number as phone FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1
+          `, [payment.email]);
+          if (emailResult.rows.length > 0) {
+            userId = emailResult.rows[0].id;
+            userInfo = emailResult.rows[0];
+            identificationMethod = 'email';
           }
         } catch (error) {
           console.error('❌ Error looking up user by email:', error);
         }
+      }
+
+      if (userId && userInfo) {
+        console.log('✅ Found user by', identificationMethod + ':', {
+          userId,
+          email: userInfo.email,
+          name: userInfo.full_name,
+          phone: userInfo.phone
+        });
+      } else {
+        console.log(`⚠️ No user found with any method:`, {
+          email: payment.email,
+          contact: payment.contact,
+          method: payment.method,
+          notes: payment.notes
+        });
       }
 
       // Store the payment record
@@ -962,8 +1057,8 @@ export class RazorpayService {
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
             ON CONFLICT (razorpay_payment_id) 
             DO UPDATE SET 
-              user_id = $1,
-              amount = $4,
+              user_id = EXCLUDED.user_id,
+              amount = EXCLUDED.amount,
               status = 'active',
               updated_at = NOW()
             RETURNING *
