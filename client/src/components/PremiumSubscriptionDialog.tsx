@@ -211,7 +211,7 @@ export function PremiumSubscriptionDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-2xl">
             <Crown className="h-6 w-6 text-orange-500" />
-            QAAQ CHIEF (Most Advanced Version)
+            premium
           </DialogTitle>
           <DialogDescription>Advanced reasoning model</DialogDescription>
         </DialogHeader>
@@ -538,9 +538,7 @@ export function PremiumSubscriptionDialog({
               <div className="text-center">
                 {selectedPeriod === "monthly" ? (
                   <>
-                    <h4 className="font-semibold text-lg mb-3">
-                      Pay ₹551 - Monthly Premium
-                    </h4>
+                    <h4 className="font-semibold text-lg mb-3">Pay ₹451 - Monthly Premium</h4>
 
                     {/* Payment Options */}
                     <div className="space-y-3">
