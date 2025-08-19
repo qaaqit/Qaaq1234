@@ -68,6 +68,30 @@ export default function Header({ user }: HeaderProps) {
                 <i className="fas fa-question-circle text-orange-600 w-4"></i>
                 <span className="text-gray-700 font-medium">QuestionBank</span>
               </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => setLocation("/machine-tree")}
+                className="cursor-pointer flex items-center space-x-3 px-4 py-3 hover:bg-orange-50 transition-colors"
+                data-testid="menu-item-machine-tree"
+              >
+                <i className="fas fa-sitemap text-orange-600 w-4"></i>
+                <span className="text-gray-700 font-medium">Machine Tree</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => setLocation("/premium")}
+                className="cursor-pointer flex items-center space-x-3 px-4 py-3 hover:bg-orange-50 transition-colors"
+                data-testid="menu-item-premium"
+              >
+                <i className="fas fa-crown text-orange-600 w-4"></i>
+                <span className="text-gray-700 font-medium">Premium Subscription</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => setLocation("/repair-workshops")}
+                className="cursor-pointer flex items-center space-x-3 px-4 py-3 hover:bg-orange-50 transition-colors"
+                data-testid="menu-item-repair-workshops"
+              >
+                <i className="fas fa-tools text-orange-600 w-4"></i>
+                <span className="text-gray-700 font-medium">Repair Workshops Directory</span>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <span className="font-bold text-navy text-lg ml-3">QaaqConnect</span>
