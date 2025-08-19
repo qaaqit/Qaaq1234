@@ -69,6 +69,39 @@ class EmailService {
   }
 
   /**
+   * Send premium purchase confirmation email (20 words max)
+   */
+  async sendPremiumWelcomeEmail(email: string, userName: string, planType: string): Promise<{ success: boolean; message: string }> {
+    try {
+      await this.ensureInitialized();
+
+      const subject = 'QaaqConnect Premium - Welcome!';
+      const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #f97316;">Welcome to QaaqConnect Premium!</h2>
+          <p>Hi ${userName},</p>
+          <p>Your ${planType} premium subscription is now active. Enjoy unlimited QBOT responses!</p>
+          <p style="color: #666; font-size: 12px;">- QaaqConnect Team</p>
+        </div>
+      `;
+
+      const result = await this.transporter.sendMail({
+        from: '"QaaqConnect" <support@qaaq.app>',
+        to: email,
+        subject: subject,
+        html: html
+      });
+
+      console.log('✅ Premium welcome email sent to:', email);
+      return { success: true, message: 'Premium welcome email sent successfully' };
+
+    } catch (error) {
+      console.error('❌ Failed to send premium welcome email:', error);
+      return { success: false, message: 'Failed to send premium welcome email' };
+    }
+  }
+
+  /**
    * Send email verification link
    */
   async sendVerificationEmail(email: string, verificationToken: string, userData: any): Promise<{ success: boolean; message: string }> {

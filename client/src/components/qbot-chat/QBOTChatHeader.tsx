@@ -1,5 +1,6 @@
-import { Trash2, Upload, Edit3 } from 'lucide-react';
+import { Trash2, Upload, Edit3, Crown } from 'lucide-react';
 import { useState } from 'react';
+import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -51,6 +52,16 @@ export default function QBOTChatHeader({ onClear, isAdmin = false }: QBOTChatHea
   });
   const [editText, setEditText] = useState('');
 
+  // Check user premium status for crown display
+  const { data: subscriptionStatus } = useQuery({
+    queryKey: ["/api/user/subscription-status"],
+    retry: 1,
+    staleTime: 30 * 1000, // Refresh every 30 seconds to catch new payments
+    refetchInterval: 30 * 1000
+  });
+
+  const isPremium = (subscriptionStatus as any)?.isPremium || (subscriptionStatus as any)?.isSuperUser;
+
   const handleEditInvites = () => {
     setEditText(chatbotInvites.join('\n'));
     setIsDialogOpen(true);
@@ -86,7 +97,17 @@ export default function QBOTChatHeader({ onClear, isAdmin = false }: QBOTChatHea
   };
 
   return (
-    <div className="relative z-10 bg-white border-b border-gray-100 flex items-center justify-end px-4 py-2 flex-shrink-0 engineering-grid">
+    <div className="relative z-10 bg-white border-b border-gray-100 flex items-center justify-between px-4 py-2 flex-shrink-0 engineering-grid">
+      {/* Left: Premium Crown (when active) */}
+      <div className="flex items-center">
+        {isPremium && (
+          <div className="flex items-center space-x-2 bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-3 py-1 rounded-full shadow-md">
+            <Crown className="w-4 h-4 text-yellow-200 animate-pulse" />
+            <span className="text-xs font-semibold">Premium</span>
+          </div>
+        )}
+      </div>
+      
       {/* Right: Action Icons Only */}
       <div className="flex items-center space-x-1">
         <button

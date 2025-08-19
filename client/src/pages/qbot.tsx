@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import type { User } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Crown } from "lucide-react";
 import UserDropdown from "@/components/user-dropdown";
 import QBOTChatContainer from "@/components/qbot-chat/QBOTChatContainer";
 import QBOTChatHeader from "@/components/qbot-chat/QBOTChatHeader";
@@ -37,6 +38,16 @@ export default function QBOTPage({ user }: QBOTPageProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+
+  // Check user premium status
+  const { data: subscriptionStatus } = useQuery({
+    queryKey: ["/api/user/subscription-status"],
+    retry: 1,
+    staleTime: 30 * 1000, // Refresh every 30 seconds to catch new payments
+    refetchInterval: 30 * 1000
+  });
+
+  const isPremium = (subscriptionStatus as any)?.isPremium || (subscriptionStatus as any)?.isSuperUser;
 
   // Fetch WhatsApp chat history when component loads
   useEffect(() => {
@@ -281,8 +292,13 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <div className="min-w-0">
-                <h1 className="text-base sm:text-xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent whitespace-nowrap">QaaqConnect</h1>
+              <div className="min-w-0 flex items-center space-x-2">
+                <h1 className="text-base sm:text-xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent whitespace-nowrap">
+                  QaaqConnect{isPremium ? " Premium" : ""}
+                </h1>
+                {isPremium && (
+                  <Crown className="w-5 h-5 text-yellow-500 animate-pulse" />
+                )}
               </div>
             </div>
             <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">

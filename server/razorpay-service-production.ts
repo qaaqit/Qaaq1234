@@ -1105,6 +1105,28 @@ export class RazorpayService {
           amount: `₹${payment.amount / 100}`
         });
 
+        // Send premium welcome email (20 words simple)
+        try {
+          const { EmailService } = await import('./email-service.js');
+          const emailService = new EmailService();
+          
+          // Get user details for personalized email
+          const userResult = await pool.query('SELECT full_name, email FROM users WHERE id = $1', [userId]);
+          const user = userResult.rows[0];
+          
+          if (user && user.email) {
+            await emailService.sendPremiumWelcomeEmail(
+              user.email, 
+              user.full_name || 'Maritime Professional',
+              `${billingPeriod} premium`
+            );
+            console.log('📧 Premium welcome email sent to:', user.email);
+          }
+        } catch (emailError) {
+          console.error('⚠️ Failed to send premium welcome email:', emailError);
+          // Don't fail the whole webhook if email fails
+        }
+
       } else if (subscriptionType && !userId) {
         // Payment matches subscription but no user found - create pending record
         console.log(`⚠️ Premium payment without user match - creating pending record`);
