@@ -44,7 +44,9 @@ export function RankGroupsPanel() {
   
   // Get user's maritime rank directly from Users table
   const userMaritimeRank = user?.maritimeRank || user?.rank;
-  const displayRank = userMaritimeRank?.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()) || 'Maritime Professional';
+  const displayRank = userMaritimeRank === 'chief_engineer' 
+    ? 'CE' 
+    : userMaritimeRank?.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()) || 'Maritime Professional';
   
   // If no rank is found, show message
   if (!userMaritimeRank) {
