@@ -2762,6 +2762,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ORDER BY d.date
       `);
 
+      // Get unique IP addresses for last 6 hours (simulated trend data)
+      const ipTrendData = Array.from({ length: 6 }, (_, i) => {
+        const hour = new Date(Date.now() - (5 - i) * 60 * 60 * 1000);
+        const baseIPs = Math.floor(Math.random() * 50) + 100; // 100-150 range
+        return {
+          hour: hour.toISOString().split('T')[1].substring(0, 5), // HH:MM format
+          uniqueIPs: baseIPs + Math.floor(Math.random() * 20)
+        };
+      });
+
       res.json({
         timeSeriesData: timeSeriesData.rows.map(row => ({
           date: row.date.toISOString().split('T')[0],
@@ -2784,7 +2794,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         loginActivity: loginActivity.rows.map(row => ({
           date: row.date.toISOString().split('T')[0],
           activeUsers: parseInt(row.active_users)
-        }))
+        })),
+        ipTrendData: ipTrendData
       });
     } catch (error) {
       console.error("Error fetching dashboard analytics:", error);

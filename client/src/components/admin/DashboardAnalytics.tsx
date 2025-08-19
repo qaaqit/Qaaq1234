@@ -9,10 +9,12 @@ interface DashboardData {
   countryData: { country: string; users: number; }[];
   subscriptionData: { premium: number; free: number; total: number; };
   loginActivity: { date: string; activeUsers: number; }[];
+  ipTrendData: { hour: string; uniqueIPs: number; }[];
 }
 
-const COLORS = ['#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ef4444', '#06d6a0', '#f59e0b'];
-const PIE_COLORS = ['#f97316', '#eab308', '#22c55e', '#3b82f6'];
+// Replit Analytics Colors - exact match
+const COLORS = ['#0969da', '#7c3aed', '#059669', '#dc2626', '#ea580c', '#0891b2', '#7c2d12', '#a21caf'];
+const PIE_COLORS = ['#0969da', '#7c3aed', '#059669', '#dc2626'];
 
 export default function DashboardAnalytics() {
   const { data, isLoading, error } = useQuery<DashboardData>({
@@ -23,32 +25,36 @@ export default function DashboardAnalytics() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader>
-              <div className="h-4 bg-gray-300 rounded w-3/4"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-48 bg-gray-200 rounded"></div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="min-h-screen bg-gray-950 p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Card key={i} className="animate-pulse bg-gray-900 border-gray-800">
+              <CardHeader>
+                <div className="h-4 bg-gray-700 rounded w-3/4"></div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-48 bg-gray-800 rounded"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <Card className="col-span-full">
-        <CardContent className="p-6">
-          <div className="text-center text-red-600">
-            <TrendingUp className="h-12 w-12 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Analytics Unavailable</h3>
-            <p className="text-sm text-gray-600">Unable to load analytics data. Please try again.</p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="min-h-screen bg-gray-950 p-6">
+        <Card className="bg-gray-900 border-gray-800">
+          <CardContent className="p-6">
+            <div className="text-center text-red-400">
+              <TrendingUp className="h-12 w-12 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2 text-white">Analytics Unavailable</h3>
+              <p className="text-sm text-gray-400">Unable to load analytics data. Please try again.</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
@@ -58,67 +64,117 @@ export default function DashboardAnalytics() {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Header Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200">
+    <div className="min-h-screen bg-gray-950 p-6">
+      {/* Header Stats - Replit Style */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <Card className="bg-gray-900 border-gray-800">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-orange-800">Total Users</p>
-                <p className="text-2xl font-bold text-orange-900">{data.subscriptionData.total.toLocaleString()}</p>
+                <p className="text-sm text-gray-400">Total Users</p>
+                <p className="text-2xl font-bold text-white">{data.subscriptionData.total.toLocaleString()}</p>
               </div>
-              <Users className="h-8 w-8 text-orange-600" />
+              <Users className="h-8 w-8 text-blue-400" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
+        <Card className="bg-gray-900 border-gray-800">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-blue-800">Sailors</p>
-                <p className="text-2xl font-bold text-blue-900">
+                <p className="text-sm text-gray-400">Sailors</p>
+                <p className="text-2xl font-bold text-white">
                   {data.userTypeData.find(d => d.name === 'On Ship')?.value?.toLocaleString() || 0}
                 </p>
               </div>
-              <Ship className="h-8 w-8 text-blue-600" />
+              <Ship className="h-8 w-8 text-blue-400" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200">
+        <Card className="bg-gray-900 border-gray-800">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-green-800">Premium Users</p>
-                <p className="text-2xl font-bold text-green-900">{data.subscriptionData.premium.toLocaleString()}</p>
+                <p className="text-sm text-gray-400">Premium Users</p>
+                <p className="text-2xl font-bold text-white">{data.subscriptionData.premium.toLocaleString()}</p>
               </div>
-              <Crown className="h-8 w-8 text-green-600" />
+              <Crown className="h-8 w-8 text-yellow-400" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200">
+        <Card className="bg-gray-900 border-gray-800">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-purple-800">Countries</p>
-                <p className="text-2xl font-bold text-purple-900">{data.countryData.length}</p>
+                <p className="text-sm text-gray-400">Countries</p>
+                <p className="text-2xl font-bold text-white">{data.countryData.length}</p>
               </div>
-              <Globe className="h-8 w-8 text-purple-600" />
+              <Globe className="h-8 w-8 text-purple-400" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Charts Grid */}
+      {/* Charts Grid - Replit Style */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* User Growth Trend */}
-        <Card>
+        {/* Unique IP Addresses Trend - 6 Hours */}
+        <Card className="bg-gray-900 border-gray-800">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-orange-600" />
+            <CardTitle className="flex items-center gap-2 text-white">
+              <TrendingUp className="h-5 w-5 text-blue-400" />
+              Unique IP addresses (Last 6 hours)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={data.ipTrendData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis 
+                    dataKey="hour" 
+                    stroke="#9ca3af"
+                    fontSize={11}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis 
+                    stroke="#9ca3af" 
+                    fontSize={11}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#1f2937', 
+                      border: '1px solid #374151',
+                      borderRadius: '6px',
+                      color: '#ffffff'
+                    }}
+                    labelStyle={{ color: '#9ca3af' }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="uniqueIPs" 
+                    stroke="#0969da" 
+                    strokeWidth={2}
+                    name="Unique IPs"
+                    dot={false}
+                    activeDot={{ r: 4, fill: '#0969da' }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* User Growth Trend */}
+        <Card className="bg-gray-900 border-gray-800">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-white">
+              <TrendingUp className="h-5 w-5 text-blue-400" />
               User Growth (30 Days)
             </CardTitle>
           </CardHeader>
@@ -126,38 +182,48 @@ export default function DashboardAnalytics() {
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={data.timeSeriesData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis 
                     dataKey="date" 
-                    stroke="#64748b"
-                    fontSize={12}
+                    stroke="#9ca3af"
+                    fontSize={11}
+                    axisLine={false}
+                    tickLine={false}
                     tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   />
-                  <YAxis stroke="#64748b" fontSize={12} />
+                  <YAxis 
+                    stroke="#9ca3af" 
+                    fontSize={11}
+                    axisLine={false}
+                    tickLine={false}
+                  />
                   <Tooltip 
                     contentStyle={{ 
-                      backgroundColor: '#ffffff', 
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '8px',
-                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                      backgroundColor: '#1f2937', 
+                      border: '1px solid #374151',
+                      borderRadius: '6px',
+                      color: '#ffffff'
                     }}
+                    labelStyle={{ color: '#9ca3af' }}
                     labelFormatter={(value) => new Date(value).toLocaleDateString()}
                   />
                   <Line 
                     type="monotone" 
                     dataKey="newUsers" 
-                    stroke="#f97316" 
-                    strokeWidth={3}
+                    stroke="#0969da" 
+                    strokeWidth={2}
                     name="New Users"
-                    dot={{ fill: '#f97316', strokeWidth: 2, r: 4 }}
+                    dot={false}
+                    activeDot={{ r: 4, fill: '#0969da' }}
                   />
                   <Line 
                     type="monotone" 
                     dataKey="verifiedUsers" 
-                    stroke="#22c55e" 
-                    strokeWidth={3}
+                    stroke="#059669" 
+                    strokeWidth={2}
                     name="Verified Users"
-                    dot={{ fill: '#22c55e', strokeWidth: 2, r: 4 }}
+                    dot={false}
+                    activeDot={{ r: 4, fill: '#059669' }}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -166,10 +232,10 @@ export default function DashboardAnalytics() {
         </Card>
 
         {/* Premium vs Free Users */}
-        <Card>
+        <Card className="bg-gray-900 border-gray-800">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Crown className="h-5 w-5 text-yellow-600" />
+            <CardTitle className="flex items-center gap-2 text-white">
+              <Crown className="h-5 w-5 text-yellow-400" />
               Subscription Distribution
             </CardTitle>
           </CardHeader>
@@ -191,9 +257,10 @@ export default function DashboardAnalytics() {
                   </Pie>
                   <Tooltip 
                     contentStyle={{ 
-                      backgroundColor: '#ffffff', 
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '8px'
+                      backgroundColor: '#1f2937', 
+                      border: '1px solid #374151',
+                      borderRadius: '6px',
+                      color: '#ffffff'
                     }}
                   />
                 </PieChart>
@@ -203,10 +270,10 @@ export default function DashboardAnalytics() {
         </Card>
 
         {/* User Types Distribution */}
-        <Card>
+        <Card className="bg-gray-900 border-gray-800">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-blue-600" />
+            <CardTitle className="flex items-center gap-2 text-white">
+              <Users className="h-5 w-5 text-blue-400" />
               User Types
             </CardTitle>
           </CardHeader>
@@ -214,21 +281,29 @@ export default function DashboardAnalytics() {
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data.userTypeData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis 
                     dataKey="name" 
-                    stroke="#64748b"
-                    fontSize={12}
+                    stroke="#9ca3af"
+                    fontSize={11}
+                    axisLine={false}
+                    tickLine={false}
                   />
-                  <YAxis stroke="#64748b" fontSize={12} />
+                  <YAxis 
+                    stroke="#9ca3af" 
+                    fontSize={11}
+                    axisLine={false}
+                    tickLine={false}
+                  />
                   <Tooltip 
                     contentStyle={{ 
-                      backgroundColor: '#ffffff', 
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '8px'
+                      backgroundColor: '#1f2937', 
+                      border: '1px solid #374151',
+                      borderRadius: '6px',
+                      color: '#ffffff'
                     }}
                   />
-                  <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                  <Bar dataKey="value" radius={[2, 2, 0, 0]}>
                     {data.userTypeData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                     ))}
@@ -240,10 +315,10 @@ export default function DashboardAnalytics() {
         </Card>
 
         {/* Daily Activity */}
-        <Card>
+        <Card className="bg-gray-900 border-gray-800">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <UserCheck className="h-5 w-5 text-green-600" />
+            <CardTitle className="flex items-center gap-2 text-white">
+              <UserCheck className="h-5 w-5 text-green-400" />
               Daily Active Users (7 Days)
             </CardTitle>
           </CardHeader>
@@ -251,26 +326,35 @@ export default function DashboardAnalytics() {
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data.loginActivity} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis 
                     dataKey="date" 
-                    stroke="#64748b"
-                    fontSize={12}
+                    stroke="#9ca3af"
+                    fontSize={11}
+                    axisLine={false}
+                    tickLine={false}
                     tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { weekday: 'short' })}
                   />
-                  <YAxis stroke="#64748b" fontSize={12} />
+                  <YAxis 
+                    stroke="#9ca3af" 
+                    fontSize={11}
+                    axisLine={false}
+                    tickLine={false}
+                  />
                   <Tooltip 
                     contentStyle={{ 
-                      backgroundColor: '#ffffff', 
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '8px'
+                      backgroundColor: '#1f2937', 
+                      border: '1px solid #374151',
+                      borderRadius: '6px',
+                      color: '#ffffff'
                     }}
+                    labelStyle={{ color: '#9ca3af' }}
                     labelFormatter={(value) => new Date(value).toLocaleDateString()}
                   />
                   <Bar 
                     dataKey="activeUsers" 
-                    fill="#22c55e" 
-                    radius={[4, 4, 0, 0]}
+                    fill="#059669" 
+                    radius={[2, 2, 0, 0]}
                     name="Active Users"
                   />
                 </BarChart>
@@ -282,10 +366,10 @@ export default function DashboardAnalytics() {
 
       {/* Country Distribution */}
       {data.countryData.length > 0 && (
-        <Card>
+        <Card className="bg-gray-900 border-gray-800">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Globe className="h-5 w-5 text-purple-600" />
+            <CardTitle className="flex items-center gap-2 text-white">
+              <Globe className="h-5 w-5 text-purple-400" />
               Top Countries by Users
             </CardTitle>
           </CardHeader>
@@ -293,27 +377,35 @@ export default function DashboardAnalytics() {
             <div className="h-96">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data.countryData.slice(0, 10)} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis 
                     dataKey="country" 
-                    stroke="#64748b"
-                    fontSize={12}
+                    stroke="#9ca3af"
+                    fontSize={11}
+                    axisLine={false}
+                    tickLine={false}
                     angle={-45}
                     textAnchor="end"
                     height={60}
                   />
-                  <YAxis stroke="#64748b" fontSize={12} />
+                  <YAxis 
+                    stroke="#9ca3af" 
+                    fontSize={11}
+                    axisLine={false}
+                    tickLine={false}
+                  />
                   <Tooltip 
                     contentStyle={{ 
-                      backgroundColor: '#ffffff', 
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '8px'
+                      backgroundColor: '#1f2937', 
+                      border: '1px solid #374151',
+                      borderRadius: '6px',
+                      color: '#ffffff'
                     }}
                   />
                   <Bar 
                     dataKey="users" 
-                    fill="#8b5cf6" 
-                    radius={[4, 4, 0, 0]}
+                    fill="#7c3aed" 
+                    radius={[2, 2, 0, 0]}
                     name="Users"
                   />
                 </BarChart>
