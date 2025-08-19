@@ -13,6 +13,7 @@ Username field label: "USER NAME (This may be ur country code +91 & whatsapp num
 Primary focus: "Koi Hai?" (Who's there?) discovery - helping sailors find who's nearby in ports
 Home page after login: QBOT Chat (not Map Radar) - users land on QBOT Chat immediately after authentication
 MARIANA BASE RULE: The app will NEVER carry out bulk assignment of users to rank groups - this functionality is permanently disabled for security
+🔒 PROFILE FIELD REMOVAL: current_ship_imo field permanently removed from profile form and backend - not needed per user request (August 2025)
 Color Scheme: Orange, cream, and white colors only - NO red, blue, purple, green or dark colors. All SEMM pages use consistent orange accent colors matching parent app branding.
 Search Interface: Crown icon must be present in search bar, filter/map/radar icons on right side of search bar
 Header Design: White header with QAAQ logo, admin shield, and QBOT button

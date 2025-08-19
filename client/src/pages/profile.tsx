@@ -46,7 +46,6 @@ const profileUpdateSchema = z.object({
   password: z.string().min(1, "Password is required"),     // Password field
   rank: z.string().optional(),         // Will map to maritime_rank
   shipName: z.string().optional(),     // Will map to current_lastShip  
-  imoNumber: z.string().optional(),    // Will map to current_ship_imo
   city: z.string().optional(),         // Will map to current_city
   country: z.string().optional(),      // Will map to current_country
   countryCode: z.string().optional(),  // Country code for WhatsApp
@@ -77,7 +76,6 @@ export default function Profile() {
       password: profile.password || '',
       rank: profile.rank || '',
       shipName: profile.currentLastShip || '',
-      imoNumber: profile.imoNumber || '',
       city: profile.city || '',
       country: profile.country || '',
       countryCode: profile.countryCode || '',
@@ -88,7 +86,6 @@ export default function Profile() {
       password: '',
       rank: '',
       shipName: '',
-      imoNumber: '',
       city: '',
       country: '',
       countryCode: '',
@@ -399,19 +396,7 @@ export default function Profile() {
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="imoNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>IMO Number</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="9123456" disabled={!isEditing} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+
                 </div>
               </CardContent>
             </Card>
