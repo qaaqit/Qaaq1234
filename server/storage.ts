@@ -538,6 +538,14 @@ export class DatabaseStorage implements IStorage {
         setClause.push(`country = $${paramCount++}`);
         values.push(profileData.country);
       }
+      if (profileData.countryCode !== undefined) {
+        setClause.push(`country_code = $${paramCount++}`);
+        values.push(profileData.countryCode);
+      }
+      if (profileData.whatsAppNumber !== undefined) {
+        setClause.push(`whatsapp_number = $${paramCount++}`);
+        values.push(profileData.whatsAppNumber);
+      }
       
       if (setClause.length === 0) {
         console.log('❌ No valid fields to update');

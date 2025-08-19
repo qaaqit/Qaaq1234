@@ -5982,9 +5982,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: req.body.email,                 // Maps to email
         maritimeRank: req.body.rank,           // Maps to maritime_rank
         currentLastShip: req.body.shipName,    // Maps to current_lastShip
-        currentShipIMO: req.body.imoNumber,    // Maps to current_ship_imo
-        city: req.body.city,                   // Maps to current_city
-        country: req.body.country,             // Maps to current_country
+        // currentShipIMO: req.body.imoNumber,    // Maps to current_ship_imo - temporarily disabled due to column issue
+        city: req.body.city,                   // Maps to city
+        country: req.body.country,             // Maps to country
         countryCode: req.body.countryCode,     // Maps to country_code
         whatsAppNumber: req.body.whatsAppNumber, // Maps to whatsapp_number
       };
