@@ -86,23 +86,9 @@ const authenticateToken = async (req: Request, res: Response, next: NextFunction
   }
 };
 
-// Optional authentication for questions API - checks token if present but doesn't require it
-const optionalAuth = async (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization;
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (token) {
-    try {
-      const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
-      req.userId = decoded.userId;
-    } catch (error) {
-      // Token invalid but continue without authentication for questions API
-      console.log('Invalid token provided, continuing without auth for questions API');
-    }
-  }
-  
-  next();
-};
+// DISABLED: optionalAuth removed to prevent silent authentication failures
+// All routes now use proper authentication (authenticateToken or noAuth)
+// const optionalAuth = DISABLED;
 
 // No authentication required - for public APIs like questions
 const noAuth = async (req: Request, res: Response, next: NextFunction) => {
@@ -2171,7 +2157,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // QBOT Chat API endpoint - Implementing 13 Commandments
-  app.post("/api/qbot/message", optionalAuth, async (req: any, res) => {
+  app.post("/api/qbot/message", authenticateToken, async (req: any, res) => {
     try {
       const { message, attachments, image, isPrivate, aiModels } = req.body;
       const userId = req.currentUser?.id || req.userId;
@@ -3288,7 +3274,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   // QBOT clear chat endpoint - parks conversation in database with SEMM and creates shareable links
-  app.post('/api/qbot/clear', optionalAuth, async (req, res) => {
+  app.post('/api/qbot/clear', authenticateToken, async (req, res) => {
     try {
       const { messages } = req.body;
       const userId = req.userId;
@@ -3523,7 +3509,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Handle user feedback responses
-  app.post('/api/qbot/feedback', optionalAuth, async (req, res) => {
+  app.post('/api/qbot/feedback', authenticateToken, async (req, res) => {
     try {
       const { message, questionId } = req.body;
       const userId = req.userId;
