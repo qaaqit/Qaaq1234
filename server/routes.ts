@@ -5985,6 +5985,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         currentShipIMO: req.body.imoNumber,    // Maps to current_ship_imo
         city: req.body.city,                   // Maps to current_city
         country: req.body.country,             // Maps to current_country
+        countryCode: req.body.countryCode,     // Maps to country_code
+        whatsAppNumber: req.body.whatsAppNumber, // Maps to whatsapp_number
       };
 
       // Filter out undefined values
