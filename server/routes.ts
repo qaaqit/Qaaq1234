@@ -7514,6 +7514,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Process manual payment (for payments that couldn't be auto-linked)
+  app.post('/api/admin/process-manual-payment', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      const { email, paymentId, planType = 'premium', billingPeriod = 'monthly' } = req.body;
+
+      if (!email || !paymentId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email and Payment ID are required'
+        });
+      }
+
+      console.log(`🔧 Manual payment processing: ${email} - Payment ID: ${paymentId}`);
+
+      // Find user by email
+      const userResult = await pool.query(`
+        SELECT id, full_name, email FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1
+      `, [email]);
+
+      if (userResult.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found with the provided email'
+        });
+      }
+
+      const user = userResult.rows[0];
+      const userId = user.id;
+
+      // Create a manual subscription record
+      const subscriptionId = `manual_${userId}_${Date.now()}`;
+      const amount = billingPeriod === 'yearly' ? 261100 : 45100; // ₹2611 or ₹451 in paise
+      
+      await pool.query(`
+        INSERT INTO subscriptions (
+          user_id, subscription_type, razorpay_subscription_id, razorpay_plan_id, 
+          status, amount, currency, notes
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `, [
+        userId,
+        planType,
+        subscriptionId,
+        billingPeriod === 'yearly' ? 'plan_premium_yearly' : 'plan_R6tDNXxZMxBIJR',
+        'active',
+        amount,
+        'INR',
+        JSON.stringify({ 
+          manual_processing: true,
+          payment_id: paymentId,
+          processed_by: 'admin',
+          billing_period: billingPeriod,
+          user_email: email,
+          processing_date: new Date().toISOString()
+        })
+      ]);
+
+      // Create payment record
+      await pool.query(`
+        INSERT INTO payments (
+          user_id, razorpay_payment_id, amount, currency, status, method, description
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `, [
+        userId,
+        paymentId,
+        amount,
+        'INR',
+        'captured',
+        'manual',
+        'Manually processed premium subscription payment'
+      ]);
+
+      // Update user premium status
+      const expiryInterval = billingPeriod === 'yearly' ? '1 year' : '1 month';
+      await pool.query(`
+        INSERT INTO user_subscription_status (
+          user_id, is_premium, premium_expires_at, subscription_type
+        ) VALUES ($1, true, NOW() + INTERVAL '${expiryInterval}', $2)
+        ON CONFLICT (user_id) DO UPDATE SET
+          is_premium = true,
+          premium_expires_at = NOW() + INTERVAL '${expiryInterval}',
+          subscription_type = $2,
+          updated_at = NOW()
+      `, [userId, planType]);
+
+      console.log(`✅ Manual payment processed successfully: ${email} - Payment ID: ${paymentId}`);
+
+      res.json({
+        success: true,
+        message: `Premium subscription activated for ${user.full_name} (${email})`,
+        user: {
+          id: userId,
+          name: user.full_name,
+          email: user.email
+        },
+        subscription: {
+          type: planType,
+          billingPeriod: billingPeriod,
+          expiryInterval: expiryInterval
+        }
+      });
+    } catch (error) {
+      console.error('Error processing manual payment:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to process manual payment'
+      });
+    }
+  });
+
   // Admin: Get all subscriptions (admin only)
   app.get('/api/admin/subscriptions', authenticateToken, isAdmin, async (req: any, res) => {
     try {

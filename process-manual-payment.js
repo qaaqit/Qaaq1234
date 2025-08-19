@@ -1,6 +1,16 @@
-import { pool } from './server/db.js';
+#!/usr/bin/env node
 
-async function processManualPayment(email: string, paymentId: string, planType = 'premium', billingPeriod = 'monthly') {
+import { Pool } from 'pg';
+import dotenv from 'dotenv';
+dotenv.config();
+
+// Database connection
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+});
+
+async function processManualPayment(email, paymentId, planType = 'premium', billingPeriod = 'monthly') {
   try {
     console.log(`🔧 Manual payment processing: ${email} - Payment ID: ${paymentId}`);
 
@@ -65,31 +75,18 @@ async function processManualPayment(email: string, paymentId: string, planType =
 
     console.log('✅ Payment record created');
 
-    // Update user premium status - Check if record exists first
-    const existingStatus = await pool.query(`
-      SELECT id FROM user_subscription_status WHERE user_id = $1
-    `, [userId]);
-
+    // Update user premium status
     const expiryInterval = billingPeriod === 'yearly' ? '1 year' : '1 month';
-    
-    if (existingStatus.rows.length > 0) {
-      // Update existing record
-      await pool.query(`
-        UPDATE user_subscription_status SET
-          is_premium = true,
-          premium_expires_at = NOW() + INTERVAL '${expiryInterval}',
-          subscription_type = $1,
-          updated_at = NOW()
-        WHERE user_id = $2
-      `, [planType, userId]);
-    } else {
-      // Insert new record
-      await pool.query(`
-        INSERT INTO user_subscription_status (
-          user_id, is_premium, premium_expires_at, subscription_type
-        ) VALUES ($1, true, NOW() + INTERVAL '${expiryInterval}', $2)
-      `, [userId, planType]);
-    }
+    await pool.query(`
+      INSERT INTO user_subscription_status (
+        user_id, is_premium, premium_expires_at, subscription_type
+      ) VALUES ($1, true, NOW() + INTERVAL '${expiryInterval}', $2)
+      ON CONFLICT (user_id) DO UPDATE SET
+        is_premium = true,
+        premium_expires_at = NOW() + INTERVAL '${expiryInterval}',
+        subscription_type = $2,
+        updated_at = NOW()
+    `, [userId, planType]);
 
     console.log('✅ User premium status updated');
 
@@ -136,6 +133,8 @@ async function main() {
   } else {
     console.log('💥 FAILED:', result.message);
   }
+  
+  await pool.end();
 }
 
 // Run the script
