@@ -41,6 +41,7 @@ declare global {
   interface Window {
     google: any;
     initMap?: (() => void) | undefined;
+    gm_authFailure?: boolean;
   }
 }
 
@@ -166,6 +167,9 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
           setIsMapLoaded(true);
           setMapError(null);
           delete window.initMap;
+        } else {
+          console.error('Google Maps API loaded but Map constructor not available');
+          setMapError('Maps service unavailable. Please try again later.');
         }
       };
 
@@ -177,7 +181,13 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
           setMapError(`Loading maps... (attempt ${retryCount}/${maxRetries})`);
           setTimeout(loadGoogleMaps, retryDelay * retryCount);
         } else {
-          setMapError('Failed to load maps. Please check your internet connection and refresh.');
+          // Check if it's a quota issue
+          const isQuotaError = document.querySelector('.gm-err-title')?.textContent?.includes('quota') ||
+                              (window as any).gm_authFailure;
+          const errorMsg = isQuotaError ? 
+            'Maps quota exceeded. Please refresh the page or try again later.' :
+            'Failed to load maps. Please check your internet connection and refresh.';
+          setMapError(errorMsg);
         }
       };
 
@@ -307,13 +317,25 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
         setMapError(null);
       } catch (error) {
         console.error('Error initializing Google Maps:', error);
-        setMapError('Failed to initialize map. Refreshing...');
-        // Retry after a short delay
-        setTimeout(() => {
-          if (mapRef.current && window.google?.maps) {
-            initializeMap();
-          }
-        }, 1000);
+        
+        // Check for specific error types
+        const errorString = error?.toString() || '';
+        if (errorString.includes('OverQuota') || errorString.includes('quota')) {
+          setMapError('Maps quota exceeded. Please refresh the page or try again later.');
+        } else if (errorString.includes('setAt') || errorString.includes('undefined')) {
+          setMapError('Maps service temporarily unavailable. Please refresh the page.');
+        } else {
+          setMapError('Failed to initialize map. Please refresh the page.');
+        }
+        
+        // Don't retry for quota errors
+        if (!errorString.includes('OverQuota') && !errorString.includes('quota')) {
+          setTimeout(() => {
+            if (mapRef.current && window.google?.maps) {
+              initializeMap();
+            }
+          }, 2000);
+        }
       }
     };
 
@@ -720,13 +742,54 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
 
   // Show error message if map failed to load
   if (mapError) {
+    const isQuotaError = mapError.includes('quota') || mapError.includes('OverQuota');
     return (
       <div className="w-full h-full flex items-center justify-center bg-gray-100">
         <div className="text-center p-8 max-w-md">
-          <div className="text-red-500 text-4xl mb-4">⚠️</div>
-          <h3 className="text-lg font-semibold text-gray-800 mb-2">Google Maps Error</h3>
+          <div className="text-red-500 text-4xl mb-4">{isQuotaError ? '📊' : '⚠️'}</div>
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">
+            {isQuotaError ? 'Maps Service Limit' : 'Google Maps Error'}
+          </h3>
           <p className="text-gray-600 mb-4">{mapError}</p>
-          <p className="text-sm text-gray-500">Please check your internet connection and try refreshing the page.</p>
+          {isQuotaError ? (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+              <p className="text-sm text-yellow-800">
+                The maps service has reached its daily limit. This will reset automatically.
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500">Please check your internet connection and try refreshing the page.</p>
+          )}
+          <div className="space-y-3">
+            <button 
+              onClick={() => window.location.reload()} 
+              className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+            >
+              Refresh Page
+            </button>
+            {isQuotaError && (
+              <div className="pt-4 border-t border-gray-200">
+                <p className="text-sm text-gray-600 mb-3">Alternative view - User locations:</p>
+                <div className="max-h-40 overflow-y-auto space-y-2">
+                  {users.slice(0, 5).map((user) => (
+                    <div key={user.id} className="flex items-center justify-between text-xs bg-white p-2 rounded border">
+                      <div>
+                        <span className="font-medium">{user.fullName}</span>
+                        <br />
+                        <span className="text-gray-500">{user.city || 'Location not specified'}</span>
+                      </div>
+                      <button 
+                        onClick={() => onUserClick(user.id)}
+                        className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
+                      >
+                        Chat
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );
