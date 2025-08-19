@@ -34,16 +34,17 @@ interface GoogleMapProps {
   onBoundsChange?: (bounds: { north: number; south: number; east: number; west: number }) => void;
   showScanElements?: boolean;
   scanAngle?: number;
+  radiusKm?: number;
 }
 
 declare global {
   interface Window {
     google: any;
-    initMap: () => void;
+    initMap?: (() => void) | undefined;
   }
 }
 
-const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser, mapType = 'roadmap', onUserHover, onUserClick, onZoomChange, onBoundsChange, showScanElements = false, scanAngle = 0 }) => {
+const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser, mapType = 'roadmap', onUserHover, onUserClick, onZoomChange, onBoundsChange, showScanElements = false, scanAngle = 0, radiusKm = 50 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
@@ -103,74 +104,134 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
     }
   }, []);
 
-  // Load Google Maps API
+  // Load Google Maps API with improved Android compatibility
   useEffect(() => {
-    if (window.google) {
-      setIsMapLoaded(true);
-      return;
-    }
+    let retryCount = 0;
+    const maxRetries = 3;
+    const retryDelay = 1000;
 
-    // Check if script is already loading
-    const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
-    if (existingScript) {
-      // Wait for existing script to load
-      const checkLoaded = () => {
-        if (window.google) {
+    const loadGoogleMaps = () => {
+      if (window.google?.maps?.Map) {
+        console.log('✅ Google Maps initialized for admin user');
+        setIsMapLoaded(true);
+        setMapError(null);
+        return;
+      }
+
+      // Check if script is already loading or loaded
+      const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
+      if (existingScript && !window.google) {
+        // Wait for existing script to load with timeout
+        const checkLoaded = (attempts = 0) => {
+          if (window.google?.maps?.Map) {
+            console.log('✅ Google Maps API loaded successfully');
+            setIsMapLoaded(true);
+            setMapError(null);
+          } else if (attempts < 50) { // 5 seconds total wait
+            setTimeout(() => checkLoaded(attempts + 1), 100);
+          } else {
+            console.error('Timeout waiting for Google Maps API');
+            setMapError('Map loading timeout. Retrying...');
+            if (retryCount < maxRetries) {
+              retryCount++;
+              existingScript.remove();
+              setTimeout(loadGoogleMaps, retryDelay);
+            }
+          }
+        };
+        checkLoaded();
+        return;
+      }
+
+      const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+      if (!apiKey) {
+        console.error('Google Maps API key not found. Please set VITE_GOOGLE_MAPS_API_KEY environment variable.');
+        setMapError('Maps API key missing');
+        return;
+      }
+
+      // Remove any existing failed scripts
+      const failedScripts = document.querySelectorAll('script[src*="maps.googleapis.com"]');
+      failedScripts.forEach(script => script.remove());
+
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geometry,places&loading=async&callback=initMap`;
+      script.async = true;
+      script.defer = false; // Remove defer for better Android compatibility
+      
+      // Create global callback for Android compatibility
+      window.initMap = () => {
+        if (window.google?.maps?.Map) {
+          console.log('✅ Google Maps API loaded via callback');
           setIsMapLoaded(true);
-        } else {
-          setTimeout(checkLoaded, 100);
+          setMapError(null);
+          delete window.initMap;
         }
       };
-      checkLoaded();
-      return;
-    }
 
-    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-    if (!apiKey) {
-      console.error('Google Maps API key not found. Please set VITE_GOOGLE_MAPS_API_KEY environment variable.');
-      return;
-    }
+      // Enhanced error handling with retry logic
+      script.onerror = () => {
+        console.error(`Failed to load Google Maps API (attempt ${retryCount + 1})`);
+        if (retryCount < maxRetries) {
+          retryCount++;
+          setMapError(`Loading maps... (attempt ${retryCount}/${maxRetries})`);
+          setTimeout(loadGoogleMaps, retryDelay * retryCount);
+        } else {
+          setMapError('Failed to load maps. Please check your internet connection and refresh.');
+        }
+      };
 
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geometry,places`;
-    script.async = true;
-    script.defer = true;
-    
-    // Add error handling
-    script.onerror = () => {
-      console.error('Failed to load Google Maps API. Please check your API key and network connection.');
-      setMapError('Failed to load Google Maps. Please check your internet connection.');
+      // Fallback onload handler
+      script.onload = () => {
+        // Give some time for the API to initialize
+        setTimeout(() => {
+          if (window.google?.maps?.Map && !isMapLoaded) {
+            console.log('✅ Google Maps API loaded via onload fallback');
+            setIsMapLoaded(true);
+            setMapError(null);
+          }
+        }, 100);
+      };
+
+      document.head.appendChild(script);
+
+      // Set timeout for script loading
+      setTimeout(() => {
+        if (!window.google?.maps?.Map && retryCount < maxRetries) {
+          console.warn('Google Maps API loading timeout, retrying...');
+          script.remove();
+          retryCount++;
+          loadGoogleMaps();
+        }
+      }, 10000); // 10 second timeout
     };
 
-    // Add onload handler
-    script.onload = () => {
-      if (window.google) {
-        console.log('✅ Google Maps API loaded successfully');
-        setIsMapLoaded(true);
-      }
-    };
-
-    document.head.appendChild(script);
+    loadGoogleMaps();
 
     return () => {
-      // Don't remove script as it might be used by other components
+      if (window.initMap) {
+        window.initMap = undefined;
+      }
     };
   }, []);
 
-  // Initialize map
+  // Initialize map with Android-specific error handling
   useEffect(() => {
     if (!isMapLoaded || !mapRef.current || !window.google?.maps) return;
 
-    const defaultCenter = userLocation || { lat: 19.076, lng: 72.8777 }; // Mumbai fallback
+    // Add extra delay for Android WebView initialization
+    const initializeMap = () => {
+      try {
+        const defaultCenter = userLocation || { lat: 19.076, lng: 72.8777 }; // Mumbai fallback
 
-    mapInstanceRef.current = new window.google.maps.Map(mapRef.current, {
-      zoom: 9,
-      center: defaultCenter,
-      mapTypeId: mapType,
-      mapTypeControl: false, // Hide default map type control
-      streetViewControl: false, // Hide street view control
-      zoomControl: false, // Hide default zoom control - we'll add custom ones
-      styles: [
+        mapInstanceRef.current = new window.google.maps.Map(mapRef.current, {
+          zoom: 9,
+          center: defaultCenter,
+          mapTypeId: mapType,
+          mapTypeControl: false, // Hide default map type control
+          streetViewControl: false, // Hide street view control
+          zoomControl: false, // Hide default zoom control - we'll add custom ones
+          styles: [
         // Water bodies - light grey
         {
           featureType: 'water',
@@ -238,12 +299,29 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
           featureType: 'transit',
           elementType: 'labels.text.fill',
           stylers: [{ color: '#8a8a8a' }],
-        }
-      ],
-    });
+            }
+          ],
+        });
 
-    console.log('✅ Google Maps initialized for admin user');
-  }, [isMapLoaded, userLocation]);
+        console.log('✅ Google Maps initialized for admin user');
+        setMapError(null);
+      } catch (error) {
+        console.error('Error initializing Google Maps:', error);
+        setMapError('Failed to initialize map. Refreshing...');
+        // Retry after a short delay
+        setTimeout(() => {
+          if (mapRef.current && window.google?.maps) {
+            initializeMap();
+          }
+        }, 1000);
+      }
+    };
+
+    // Use requestAnimationFrame for better Android compatibility
+    requestAnimationFrame(() => {
+      setTimeout(initializeMap, 100);
+    });
+  }, [isMapLoaded, userLocation, mapType]);
 
   // Separate effect for zoom and bounds listeners to avoid re-initialization
   useEffect(() => {
@@ -654,13 +732,14 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
     );
   }
 
-  // Show loading state while map is loading
+  // Show loading state while map is loading with Android-specific messaging
   if (!isMapLoaded) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-gray-100">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mb-4"></div>
-          <p className="text-gray-600">Loading Google Maps...</p>
+        <div className="text-center p-8">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500 mb-4 mx-auto"></div>
+          <p className="text-gray-600 mb-2">Loading Google Maps...</p>
+          <p className="text-sm text-gray-500">This may take a few moments on mobile networks</p>
         </div>
       </div>
     );
