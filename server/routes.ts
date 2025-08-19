@@ -3393,8 +3393,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return questionId;
   }
 
-  // QBOT chat endpoint - responds to user messages with AI
-  app.post('/api/qbot/chat', optionalAuth, async (req, res) => {
+  // QBOT chat endpoint - responds to user messages with AI  
+  app.post('/api/qbot/chat', authenticateToken, async (req: any, res) => {
     try {
       const { message, attachments, isPrivate, aiModels } = req.body;
       const userId = req.userId;
@@ -3443,18 +3443,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Get user info if authenticated
+      // Get user info using authenticated userId (same as subscription status endpoint)
       let user = null;
-      if (userId) {
+      const effectiveUserId = userId; // Provided by authenticateToken middleware
+      
+      console.log(`🔑 QBOT authenticated userId: ${effectiveUserId}`);
+      
+      if (effectiveUserId) {
         try {
-          const userResult = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
+          const userResult = await pool.query('SELECT * FROM users WHERE id = $1', [effectiveUserId]);
           user = userResult.rows[0];
-          console.log(`🔍 User found in QBOT route: ${user?.full_name} (ID: ${user?.id}) - Premium: ${user?.subscription_status}`);
+          if (user) {
+            console.log(`🔍 User found in QBOT route: ${user.full_name} (ID: ${user.id}) - Premium: ${user.subscription_status}`);
+          } else {
+            console.log(`⚠️ User ${effectiveUserId} not found in database`);
+          }
         } catch (error) {
-          console.log('User not found or not authenticated, proceeding without user context');
+          console.error('Database error fetching user:', error);
         }
       } else {
-        console.log('⚠️ No userId provided to QBOT route - user context will be lost');
+        console.log('⚠️ No userId from authentication - this should not happen with authenticateToken');
+        return res.status(401).json({ 
+          message: 'Authentication failed',
+          error: 'QBOT_AUTH_FAILED' 
+        });
       }
 
       // CHECK 20 FREE QUESTIONS LIMIT FOR AUTHENTICATED USERS
