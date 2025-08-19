@@ -548,58 +548,89 @@ export default function AdminPanel() {
                     <i className="fas fa-comments mr-2 text-orange-600"></i>
                     Daily Chat Questions Growth
                   </CardTitle>
-                  <p className="text-sm text-gray-600">Web Chat vs WhatsApp questions over the last 30 days</p>
+                  <p className="text-sm text-gray-600">Cumulative growth of Web Chat vs WhatsApp questions over the last 30 days</p>
                 </CardHeader>
                 <CardContent>
                   {chatMetrics && chatMetrics.length > 0 && !chatMetricsLoading ? (
-                    <ChartContainer
-                      config={{
-                        webchat: {
-                          label: "Web Chat",
-                          color: "#ea580c",
-                        },
-                        whatsapp: {
-                          label: "WhatsApp",
-                          color: "#25d366",
-                        },
-                      }}
-                      className="h-[400px]"
-                    >
-                      <LineChart data={chatMetrics}>
-                        <XAxis 
-                          dataKey="date" 
-                          tick={{ fontSize: 12 }}
-                          tickFormatter={(value) => {
-                            const date = new Date(value);
-                            return `${date.getMonth() + 1}/${date.getDate()}`;
+                    (() => {
+                      // Convert to cumulative data
+                      let webchatCumulative = 0;
+                      let whatsappCumulative = 0;
+                      const cumulativeData = chatMetrics.map(item => {
+                        webchatCumulative += item.webchat;
+                        whatsappCumulative += item.whatsapp;
+                        return {
+                          ...item,
+                          webchatCumulative,
+                          whatsappCumulative,
+                          totalCumulative: webchatCumulative + whatsappCumulative
+                        };
+                      });
+
+                      return (
+                        <ChartContainer
+                          config={{
+                            webchatCumulative: {
+                              label: "Web Chat (Cumulative)",
+                              color: "#ea580c",
+                            },
+                            whatsappCumulative: {
+                              label: "WhatsApp (Cumulative)",
+                              color: "#25d366",
+                            },
+                            totalCumulative: {
+                              label: "Total Questions",
+                              color: "#6b7280",
+                            },
                           }}
-                        />
-                        <YAxis tick={{ fontSize: 12 }} />
-                        <ChartTooltip 
-                          content={<ChartTooltipContent />}
-                          labelFormatter={(value) => {
-                            const date = new Date(value);
-                            return date.toLocaleDateString();
-                          }}
-                        />
-                        <Line 
-                          type="monotone" 
-                          dataKey="webchat" 
-                          stroke="#ea580c" 
-                          strokeWidth={3}
-                          dot={{ fill: "#ea580c", strokeWidth: 2, r: 4 }}
-                          activeDot={{ r: 6, stroke: "#ea580c", strokeWidth: 2 }}
-                        />
-                        <Line 
-                          type="monotone" 
-                          dataKey="whatsapp" 
-                          stroke="#25d366" 
-                          strokeWidth={3}
-                          dot={{ fill: "#25d366", strokeWidth: 2, r: 4 }}
-                          activeDot={{ r: 6, stroke: "#25d366", strokeWidth: 2 }}
-                        />
-                      </LineChart>
-                    </ChartContainer>
+                          className="h-[400px]"
+                        >
+                          <LineChart data={cumulativeData}>
+                            <XAxis 
+                              dataKey="date" 
+                              tick={{ fontSize: 12 }}
+                              tickFormatter={(value) => {
+                                const date = new Date(value);
+                                return `${date.getMonth() + 1}/${date.getDate()}`;
+                              }}
+                            />
+                            <YAxis tick={{ fontSize: 12 }} />
+                            <ChartTooltip 
+                              content={<ChartTooltipContent />}
+                              labelFormatter={(value) => {
+                                const date = new Date(value);
+                                return date.toLocaleDateString();
+                              }}
+                            />
+                            <Line 
+                              type="monotone" 
+                              dataKey="webchatCumulative" 
+                              stroke="#ea580c" 
+                              strokeWidth={3}
+                              dot={{ fill: "#ea580c", strokeWidth: 2, r: 3 }}
+                              activeDot={{ r: 6, stroke: "#ea580c", strokeWidth: 2 }}
+                            />
+                            <Line 
+                              type="monotone" 
+                              dataKey="whatsappCumulative" 
+                              stroke="#25d366" 
+                              strokeWidth={3}
+                              dot={{ fill: "#25d366", strokeWidth: 2, r: 3 }}
+                              activeDot={{ r: 6, stroke: "#25d366", strokeWidth: 2 }}
+                            />
+                            <Line 
+                              type="monotone" 
+                              dataKey="totalCumulative" 
+                              stroke="#6b7280" 
+                              strokeWidth={2}
+                              strokeDasharray="5 5"
+                              dot={false}
+                              activeDot={{ r: 5, stroke: "#6b7280", strokeWidth: 2 }}
+                            />
+                          </LineChart>
+                        </ChartContainer>
+                      );
+                    })()
                   ) : chatMetricsLoading ? (
                     <div className="flex items-center justify-center h-[400px]">
                       <div className="text-center">
