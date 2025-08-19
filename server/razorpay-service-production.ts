@@ -560,10 +560,7 @@ export class RazorpayService {
       const statusResult = await pool.query(`
         SELECT 
           is_premium,
-          COALESCE(is_super_user, false) as is_super_user,
           premium_expires_at,
-          COALESCE(super_user_expires_at, NULL) as super_user_expires_at,
-          COALESCE(questions_remaining, 0) as questions_remaining,
           subscription_type
         FROM user_subscription_status 
         WHERE user_id = $1
@@ -577,16 +574,12 @@ export class RazorpayService {
         const isPremiumValid = status.is_premium && 
           (!status.premium_expires_at || new Date(status.premium_expires_at) > now);
         
-        // Check if super user is still valid
-        const isSuperUserValid = status.is_super_user && 
-          (!status.super_user_expires_at || new Date(status.super_user_expires_at) > now);
-
         return {
           isPremium: isPremiumValid || false,
-          isSuperUser: isSuperUserValid || false,
+          isSuperUser: false, // Super user feature not implemented in current schema
           subscriptionType: status.subscription_type,
           premiumExpiresAt: status.premium_expires_at,
-          questionsRemaining: status.questions_remaining
+          questionsRemaining: 0 // Feature not implemented in current schema
         };
       }
 
