@@ -128,10 +128,14 @@ export default function AdminPanel() {
     mutationFn: async () => {
       return apiRequest("/api/admin/glossary/update", "POST");
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
+      const { newKeywordsAdded = 0, totalKeywords = 0, previousTotal = 0 } = data;
+      
       toast({
-        title: "Success",
-        description: "Glossary update completed successfully",
+        title: "Glossary Update Complete ✅",
+        description: newKeywordsAdded > 0 
+          ? `Added ${newKeywordsAdded} new keywords. Total: ${totalKeywords} (was ${previousTotal})`
+          : `No new keywords found. Total remains: ${totalKeywords}`,
       });
     },
     onError: (error) => {

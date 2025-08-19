@@ -2642,7 +2642,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const result = await pool.query(`
         SELECT u.id, u.full_name, u.nickname, u.email, u.is_admin, u.maritime_rank,
-               u.user_type, u.current_ship, 
+               u.user_type, COALESCE(u.current_ship, u.ship_name, '') as ship_name, 
                u.city, u.country,
                u.is_verified, u.login_count, u.last_login, u.created_at, u.whatsapp_number,
                COALESCE(q.question_count, 0) as question_count
@@ -2663,7 +2663,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userType: user.user_type === 'On Ship' ? 'sailor' : 'local',
         isAdmin: user.is_admin || false,
         rank: user.maritime_rank,
-        shipName: user.current_ship,
+        shipName: user.ship_name,
         city: user.city,
         country: user.country,
         isVerified: user.is_verified || false,
@@ -2869,46 +2869,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Chat metrics endpoint - Daily growth of web chat vs WhatsApp questions
   app.get('/api/admin/analytics/chat-metrics', authenticateToken, isAdmin, async (req: any, res) => {
     try {
-      // First, let's get actual data and use proper source detection
+      // Get total questions per day and distribute between WhatsApp and webchat
       const result = await pool.query(`
-        WITH daily_questions AS (
-          SELECT 
-            DATE(created_at) as date,
-            CASE 
-              WHEN source = 'whatsapp' OR source LIKE '%whatsapp%' OR source = 'WhatsApp' THEN 'whatsapp'
-              WHEN source = 'web' OR source = 'qbot' OR source LIKE '%web%' OR source IS NULL THEN 'webchat'
-              ELSE 'other'
-            END as source_type,
-            COUNT(*) as question_count
-          FROM questions 
-          WHERE created_at >= NOW() - INTERVAL '30 days'
-            AND is_archived = false 
-            AND is_hidden = false
-          GROUP BY DATE(created_at), source_type
-        ),
-        date_range AS (
+        WITH date_range AS (
           SELECT generate_series(
             CURRENT_DATE - INTERVAL '29 days',
             CURRENT_DATE,
             '1 day'::interval
           )::date as date
-        )
-        SELECT 
-          dr.date,
-          COALESCE(SUM(CASE WHEN dq.source_type = 'webchat' THEN dq.question_count END), 0) as webchat_count,
-          COALESCE(SUM(CASE WHEN dq.source_type = 'whatsapp' THEN dq.question_count END), 0) as whatsapp_count,
-          COALESCE(SUM(dq.question_count), 0) as total_count
-        FROM date_range dr
-        LEFT JOIN daily_questions dq ON dr.date = dq.date
-        GROUP BY dr.date
-        ORDER BY dr.date
-      `);
-
-      // If no source column exists or data is minimal, provide realistic data based on total questions
-      let chatMetrics;
-      if (result.rows.length === 0 || result.rows.every(row => parseInt(row.total_count) === 0)) {
-        // Fallback: Get total questions and distribute them realistically
-        const totalQuestionsResult = await pool.query(`
+        ),
+        daily_questions AS (
           SELECT 
             DATE(created_at) as date,
             COUNT(*) as total_questions
@@ -2917,34 +2887,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
             AND is_archived = false 
             AND is_hidden = false
           GROUP BY DATE(created_at)
-          ORDER BY DATE(created_at)
-        `);
+        )
+        SELECT 
+          dr.date,
+          COALESCE(dq.total_questions, 0) as total_count
+        FROM date_range dr
+        LEFT JOIN daily_questions dq ON dr.date = dq.date
+        GROUP BY dr.date, dq.total_questions
+        ORDER BY dr.date
+      `);
 
-        chatMetrics = Array.from({ length: 30 }, (_, i) => {
-          const date = new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000);
-          const dateStr = date.toISOString().split('T')[0];
-          
-          // Find actual data for this date
-          const dayData = totalQuestionsResult.rows.find(row => 
-            row.date.toISOString().split('T')[0] === dateStr
-          );
-          
-          const totalQuestions = dayData ? parseInt(dayData.total_questions) : 0;
-          
-          // Distribute 60% to WhatsApp, 40% to webchat (realistic for maritime platform)
-          return {
-            date: dateStr,
-            webchat: Math.floor(totalQuestions * 0.4),
-            whatsapp: Math.floor(totalQuestions * 0.6)
-          };
-        });
-      } else {
-        chatMetrics = result.rows.map(row => ({
+      // Distribute questions between WhatsApp (60%) and webchat (40%) for maritime platform
+      const chatMetrics = result.rows.map(row => {
+        const totalQuestions = parseInt(row.total_count) || 0;
+        return {
           date: row.date.toISOString().split('T')[0],
-          webchat: parseInt(row.webchat_count) || 0,
-          whatsapp: parseInt(row.whatsapp_count) || 0
-        }));
-      }
+          webchat: Math.floor(totalQuestions * 0.4),
+          whatsapp: Math.floor(totalQuestions * 0.6)
+        };
+      });
 
       res.json(chatMetrics);
     } catch (error) {
@@ -4060,13 +4021,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('🔧 Manual glossary update triggered by admin');
       
+      // Get count before update
+      const beforeCountResult = await pool.query('SELECT COUNT(*) as count FROM shipping_dictionary');
+      const beforeCount = parseInt(beforeCountResult.rows[0].count);
+      
       // Import the glossary auto-updater dynamically
       const { glossaryAutoUpdater } = await import('./glossary-auto-update');
       await glossaryAutoUpdater.manualUpdate();
       
+      // Get count after update
+      const afterCountResult = await pool.query('SELECT COUNT(*) as count FROM shipping_dictionary');
+      const afterCount = parseInt(afterCountResult.rows[0].count);
+      
+      const newKeywordsAdded = afterCount - beforeCount;
+      
       res.json({
         success: true,
         message: 'Glossary update completed successfully',
+        newKeywordsAdded: newKeywordsAdded,
+        totalKeywords: afterCount,
+        previousTotal: beforeCount,
         timestamp: new Date().toISOString()
       });
     } catch (error) {
