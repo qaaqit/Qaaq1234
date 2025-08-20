@@ -38,10 +38,20 @@ export default function QBOTPage({ user }: QBOTPageProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showRoadblock, setShowRoadblock] = useState(true);
 
-  // Debug function for tab switching
+  // Debug function for tab switching with persistence tracking
   const handleTabChange = (newTab: string) => {
-    console.log(`🔄 Tab switching from "${activeTab}" to "${newTab}"`, { user: user?.fullName || 'None', userId: user?.id });
+    console.log(`🔄 Tab switching from "${activeTab}" to "${newTab}"`, { 
+      user: user?.fullName || 'None', 
+      userId: user?.id,
+      timestamp: new Date().toISOString(),
+      componentRenderCount: Math.random().toString(36).substr(2, 9) // Unique render ID
+    });
     setActiveTab(newTab);
+    
+    // Extra logging for questions tab
+    if (newTab === "questions") {
+      console.log(`📚 QuestionBank tab activated - should remain stable now`);
+    }
   };
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -112,7 +122,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
     };
 
     fetchWhatsAppHistory();
-  }, [user?.id, toast]);
+  }, [user?.id]); // Removed 'toast' dependency to prevent unnecessary re-renders
 
   const handleSendQBotMessage = async (messageText: string, attachments?: string[], isPrivate?: boolean, aiModels?: string[]) => {
     // Check premium status only when user tries to send a message
