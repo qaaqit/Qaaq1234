@@ -6042,73 +6042,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // User Profile API endpoints
   
-  // Get user profile for CV/Profile page - supports both QAAQ JWT and Replit Auth
+  // Get user profile for CV/Profile page - session auth only
   app.get('/api/users/profile', async (req, res) => {
     try {
       let userId = null;
       
-      // First try QAAQ JWT authentication
-      const authHeader = req.headers.authorization;
-      if (authHeader && authHeader.startsWith('Bearer ')) {
-        try {
-          const token = authHeader.substring(7);
-          const decoded = jwt.verify(token, JWT_SECRET) as any;
-          userId = decoded.userId;
-          console.log(`🔑 QAAQ JWT auth - User: ${userId}`);
-        } catch (jwtError) {
-          console.log('JWT verification failed, trying session auth');
+      // Check session authentication only (Google/Replit Auth)
+      if (req.user) {
+        const sessionUserId = (req.user as any).claims?.sub || (req.user as any).id || (req.user as any).userId;
+        if (sessionUserId) {
+          // Use identity resolver to find the user
+          const user = await identityResolver.resolveUserByAnyMethod(sessionUserId, 'replit');
+          if (user) {
+            console.log(`📋 Profile found for session user: ${user.fullName}`);
+            return res.json(user);
+          }
         }
       }
       
-      // If no JWT token or JWT failed, try Replit Auth session
-      if (!userId && req.isAuthenticated && req.isAuthenticated()) {
-        userId = req.user?.claims?.sub;
-        console.log(`🔑 Replit session auth - User: ${userId}`);
-      }
-      
-      if (!userId) {
-        return res.status(401).json({ error: 'Authentication required' });
-      }
-      
-      console.log(`📋 Fetching profile for user: ${userId}`);
-      
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' });
-      }
-      
-      res.json(user);
+      return res.status(401).json({ error: 'Authentication required' });
     } catch (error) {
       console.error('Error fetching user profile:', error);
       res.status(500).json({ error: 'Failed to fetch profile' });
     }
   });
 
-  // Update user profile - supports both QAAQ JWT and Replit Auth
+  // Update user profile - session auth only
   app.put('/api/users/profile', async (req, res) => {
     try {
-      let userId = null;
+      let user = null;
       
-      // First try QAAQ JWT authentication
-      const authHeader = req.headers.authorization;
-      if (authHeader && authHeader.startsWith('Bearer ')) {
-        try {
-          const token = authHeader.substring(7);
-          const decoded = jwt.verify(token, JWT_SECRET) as any;
-          userId = decoded.userId;
-        } catch (jwtError) {
-          console.log('JWT verification failed, trying session auth');
+      // Check session authentication only (Google/Replit Auth)
+      if (req.user) {
+        const sessionUserId = (req.user as any).claims?.sub || (req.user as any).id || (req.user as any).userId;
+        if (sessionUserId) {
+          // Use identity resolver to find the user
+          user = await identityResolver.resolveUserByAnyMethod(sessionUserId, 'replit');
         }
       }
       
-      // If no JWT token or JWT failed, try Replit Auth session
-      if (!userId && req.isAuthenticated && req.isAuthenticated()) {
-        userId = req.user?.claims?.sub;
-      }
-      
-      if (!userId) {
+      if (!user) {
         return res.status(401).json({ error: 'Authentication required' });
       }
+      
+      const userId = user.id;
 
       console.log('🔄 Profile update request for user:', userId);
       console.log('🔄 Profile update request data:', req.body);
