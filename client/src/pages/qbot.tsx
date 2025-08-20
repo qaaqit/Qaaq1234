@@ -377,7 +377,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                               <div className="w-10 h-10 mx-auto mb-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-md">
                                 <span className="text-lg">⭐</span>
                               </div>
-                              <h2 className="text-lg font-bold text-gray-800 mb-1">QBOT Premium Required</h2>
+                              <h2 className="text-lg font-bold text-gray-800 mb-1">Premium Required</h2>
                             </div>
 
                             <div className="mb-3 space-y-1 bg-gray-50 rounded-md p-2">
