@@ -153,8 +153,8 @@ function Router() {
   const currentUser = user;
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className={currentUser ? "pb-16" : ""}>
+    <div className="h-screen bg-slate-50 overflow-hidden">
+      <div className={currentUser ? "h-full" : "h-full"}>
         <Switch>
           <Route path="/" component={() => {
             console.log('🏠 Root route - Current user:', currentUser ? currentUser.fullName : 'None');

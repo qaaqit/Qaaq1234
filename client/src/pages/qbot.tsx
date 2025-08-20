@@ -239,7 +239,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
   }
 
   return (
-    <div className="h-[90vh] bg-gradient-to-br from-orange-50 via-white to-yellow-50 flex flex-col">
+    <div className="h-full bg-gradient-to-br from-orange-50 via-white to-yellow-50 flex flex-col overflow-hidden">
       {/* Header - Exactly Same as Map Radar Page */}
       <header className="bg-white text-black shadow-md relative overflow-hidden flex-shrink-0 z-[1002] border-b-2 border-orange-400">
         <div className="absolute inset-0 bg-gradient-to-r from-red-50 via-orange-50 to-yellow-50 opacity-50"></div>
@@ -327,28 +327,28 @@ export default function QBOTPage({ user }: QBOTPageProps) {
       {/* Main Content Area - Chat + Carousel + Questions */}
       <div className="flex-1 flex flex-col">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-          {/* Tab Navigation - Red/Orange Signature Bar */}
-          <div className="bg-gradient-to-r from-red-500 to-orange-500 shadow-lg">
-            <div className="px-4 py-3">
-              <TabsList className="grid w-full grid-cols-2 bg-white/10 backdrop-blur-sm border-0 rounded-lg p-1">
+          {/* Tab Navigation - Compact Mobile Bar */}
+          <div className="bg-gradient-to-r from-red-500 to-orange-500 shadow-lg flex-shrink-0">
+            <div className="px-2 py-1.5">
+              <TabsList className="grid w-full grid-cols-2 bg-white/10 backdrop-blur-sm border-0 rounded-lg p-0.5">
                 <TabsTrigger 
                   value="chat" 
-                  className="data-[state=active]:bg-white data-[state=active]:text-red-600 text-white hover:bg-white/20 font-semibold transition-all duration-200 rounded-md py-2"
+                  className="data-[state=active]:bg-white data-[state=active]:text-red-600 text-white hover:bg-white/20 font-semibold transition-all duration-200 rounded text-sm py-1.5"
                 >
                   QBOT Chat
                 </TabsTrigger>
                 <TabsTrigger 
                   value="questions" 
-                  className="data-[state=active]:bg-white data-[state=active]:text-red-600 text-white hover:bg-white/20 font-semibold transition-all duration-200 rounded-md py-2"
+                  className="data-[state=active]:bg-white data-[state=active]:text-red-600 text-white hover:bg-white/20 font-semibold transition-all duration-200 rounded text-sm py-1.5"
                 >QuestionBank</TabsTrigger>
               </TabsList>
             </div>
           </div>
 
           {/* Chat Tab Content */}
-          <TabsContent value="chat" className="flex-1 flex flex-col">
-            {/* QBOT Chat Container - No padding to flush with red bar */}
-            <div className="flex-1">
+          <TabsContent value="chat" className="flex-1 flex flex-col min-h-0">
+            {/* QBOT Chat Container - Mobile optimized */}
+            <div className="flex-1 min-h-0">
               <QBOTChatContainer>
                 <div className="flex flex-col h-full bg-white overflow-hidden border-l border-r border-orange-500">
                   {/* Minimalist Header */}
@@ -357,9 +357,9 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                     isAdmin={user?.isAdmin}
                   />
                   
-                  {/* Chat Area with Engineering Grid Background */}
+                  {/* Chat Area - Mobile optimized */}
                   <QBOTChatArea>
-                    <div className="flex flex-col h-full p-4 relative">
+                    <div className="flex flex-col h-full p-2 relative min-h-0">
                       {/* Premium Roadblock for Free Users - Contained within chat area */}
                       {!isPremiumUser && showRoadblock && (
                         <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-40 flex items-center justify-center">

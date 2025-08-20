@@ -39,9 +39,10 @@
 
 /* Prevent white screen on resize */
 html, body, #root {
-  min-height: 100vh;
-  min-height: -webkit-fill-available;
+  height: 100vh;
+  height: -webkit-fill-available;
   background-color: #f3f4f6;
+  overflow: hidden;
 }
 
 :root {
