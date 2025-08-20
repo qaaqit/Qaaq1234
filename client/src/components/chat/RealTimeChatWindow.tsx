@@ -44,7 +44,7 @@ export default function RealTimeChatWindow({
       const response = await apiRequest(`/api/chat/messages/${connectionId}`);
       return response.json();
     },
-    refetchInterval: !isConnected ? 5000 : false // Poll when not connected
+    refetchInterval: false, // DISABLED - no polling to prevent auth requests
   });
 
   // Initialize WebSocket connection

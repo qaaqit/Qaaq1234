@@ -9,17 +9,11 @@ import { Crown, Sparkles, TrendingUp, Users, DollarSign, Calendar } from 'lucide
 export function AdminSubscriptionPanel() {
   const [activeTab, setActiveTab] = useState('overview');
 
-  // Fetch subscription data
-  const { data: subscriptions, isLoading: subscriptionsLoading } = useQuery({
-    queryKey: ['/api/admin/subscriptions'],
-    refetchInterval: false, // DISABLED for stability testing
-  });
-
-  // Fetch payment analytics
-  const { data: analytics, isLoading: analyticsLoading } = useQuery({
-    queryKey: ['/api/admin/payment-analytics'],
-    refetchInterval: false, // DISABLED for stability testing
-  });
+  // COMPLETELY DISABLED - no admin metrics requests
+  const subscriptions = { subscriptions: [] };
+  const analytics = { analytics: [] };
+  const subscriptionsLoading = false;
+  const analyticsLoading = false;
 
   if (subscriptionsLoading || analyticsLoading) {
     return (

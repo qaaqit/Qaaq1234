@@ -156,10 +156,9 @@ export default function AdminPanel() {
     }
   };
 
-  // Fetch chat metrics
-  const { data: chatMetrics, isLoading: chatMetricsLoading } = useQuery<ChatMetrics[]>({
-    queryKey: ["/api/admin/analytics/chat-metrics"],
-  });
+  // COMPLETELY DISABLED - no admin metrics requests
+  const chatMetrics = null;
+  const chatMetricsLoading = false;
 
   // Fetch QBOT rules from database
   useEffect(() => {
