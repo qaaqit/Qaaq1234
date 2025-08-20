@@ -362,7 +362,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                     <div className="flex flex-col h-full p-4 relative">
                       {/* Premium Roadblock for Free Users - Redesigned */}
                       {!isPremiumUser && showRoadblock && (
-                        <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+                        <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-40 flex items-center justify-center p-4">
                           <div className="max-w-xs w-[64%] bg-white rounded-lg shadow-xl border border-orange-400 p-3 text-center relative max-h-[42vh] overflow-y-auto">
                             {/* Minimize/Restore Chevron */}
                             <button
