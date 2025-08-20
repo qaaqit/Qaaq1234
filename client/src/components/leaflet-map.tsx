@@ -12,31 +12,46 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-interface User {
+interface MapUser {
   id: string;
   fullName: string;
-  latitude?: number;
-  longitude?: number;
-  userType: 'sailor' | 'local';
-  rank?: string;
-  shipName?: string;
-  city?: string;
-  port?: string;
-  whatsAppDisplayName?: string;
-  whatsAppProfilePictureUrl?: string;
-  isOnline?: boolean;
+  userType: string;
+  rank: string | null;
+  maritimeRank?: string | null;
+  shipName: string | null;
+  lastShip?: string | null;
+  lastCompany?: string | null;
+  currentShipName?: string | null;
+  company?: string | null;
+  imoNumber: string | null;
+  port: string | null;
+  visitWindow: string | null;
+  city: string | null;
+  country: string | null;
+  latitude: number;
+  longitude: number;
+  deviceLatitude?: number | null;
+  deviceLongitude?: number | null;
+  locationUpdatedAt?: Date | string | null;
+  questionCount?: number;
+  answerCount?: number;
+  onboardStatus?: string | null;
+  profilePictureUrl?: string | null;
+  whatsAppProfilePictureUrl?: string | null;
+  whatsAppDisplayName?: string | null;
 }
 
 interface LeafletMapProps {
-  users: User[];
-  userLocation?: { latitude: number; longitude: number } | null;
-  selectedUser?: User | null;
+  users: MapUser[];
+  userLocation?: { lat: number; lng: number } | null;
+  selectedUser?: MapUser | null;
   mapType?: 'roadmap' | 'satellite' | 'hybrid';
-  onUserHover?: (user: User | null, position?: { x: number; y: number } | null) => void;
+  onUserHover?: (user: MapUser | null, position?: { x: number; y: number } | null) => void;
   onUserClick?: (userId: string) => void;
   onZoomChange?: (zoom: number) => void;
   showScanElements?: boolean;
   scanAngle?: number;
+  radiusKm?: number;
 }
 
 // Custom map component to handle events and control
@@ -48,12 +63,12 @@ function MapController({
   onUserClick,
   onUserHover 
 }: {
-  userLocation?: { latitude: number; longitude: number } | null;
-  users: User[];
+  userLocation?: { lat: number; lng: number } | null;
+  users: MapUser[];
   onZoomChange?: (zoom: number) => void;
   mapType?: string;
   onUserClick?: (userId: string) => void;
-  onUserHover?: (user: User | null, position?: { x: number; y: number } | null) => void;
+  onUserHover?: (user: MapUser | null, position?: { x: number; y: number } | null) => void;
 }) {
   const map = useMap();
   const [currentZoom, setCurrentZoom] = useState(map.getZoom());
@@ -71,12 +86,16 @@ function MapController({
     }
   });
 
-  // Center map on user location
+  // Center map on user location - with proper validation
   useEffect(() => {
-    if (userLocation) {
-      map.setView([userLocation.latitude, userLocation.longitude], Math.max(currentZoom, 10));
+    if (userLocation && 
+        typeof userLocation.lat === 'number' && 
+        typeof userLocation.lng === 'number' && 
+        !isNaN(userLocation.lat) && 
+        !isNaN(userLocation.lng)) {
+      map.setView([userLocation.lat, userLocation.lng], Math.max(currentZoom, 10));
     }
-  }, [userLocation?.latitude, userLocation?.longitude]);
+  }, [userLocation?.lat, userLocation?.lng]);
 
   return null;
 }
@@ -87,14 +106,14 @@ function UserMarker({
   onUserClick, 
   onUserHover 
 }: { 
-  user: User; 
+  user: MapUser; 
   onUserClick?: (userId: string) => void;
-  onUserHover?: (user: User | null, position?: { x: number; y: number } | null) => void;
+  onUserHover?: (user: MapUser | null, position?: { x: number; y: number } | null) => void;
 }) {
   const markerRef = useRef<any>(null);
 
   // Create custom marker icon based on user type
-  const createCustomIcon = (user: User) => {
+  const createCustomIcon = (user: MapUser) => {
     const color = user.userType === 'sailor' ? '#2563eb' : '#dc2626'; // Blue for sailors, red for locals
     const isOnline = user.isOnline !== false; // Default to online if not specified
     
@@ -155,7 +174,12 @@ function UserMarker({
     onUserHover?.(null);
   };
 
-  if (!user.latitude || !user.longitude) return null;
+  // Validate coordinates before rendering
+  if (!user.latitude || !user.longitude || 
+      isNaN(user.latitude) || isNaN(user.longitude) ||
+      user.latitude === 0 && user.longitude === 0) {
+    return null;
+  }
 
   return (
     <Marker
@@ -235,10 +259,14 @@ export default function LeafletMap({
   const [center, setCenter] = useState<[number, number]>([19.0760, 72.8777]); // Default to Mumbai
   const [zoom, setZoom] = useState(9);
 
-  // Update center when user location changes
+  // Update center when user location changes - with proper validation
   useEffect(() => {
-    if (userLocation) {
-      setCenter([userLocation.latitude, userLocation.longitude]);
+    if (userLocation && 
+        typeof userLocation.lat === 'number' && 
+        typeof userLocation.lng === 'number' && 
+        !isNaN(userLocation.lat) && 
+        !isNaN(userLocation.lng)) {
+      setCenter([userLocation.lat, userLocation.lng]);
       setZoom(Math.max(zoom, 12));
     }
   }, [userLocation]);
@@ -307,8 +335,8 @@ export default function LeafletMap({
   }, []);
 
   const resetToUserLocation = useCallback(() => {
-    if (userLocation && mapRef.current) {
-      mapRef.current.setView([userLocation.latitude, userLocation.longitude], 12);
+    if (userLocation && userLocation.lat && userLocation.lng && mapRef.current) {
+      mapRef.current.setView([userLocation.lat, userLocation.lng], 12);
     }
   }, [userLocation]);
 
@@ -344,10 +372,14 @@ export default function LeafletMap({
           onUserHover={onUserHover}
         />
 
-        {/* User Location Marker */}
-        {userLocation && (
+        {/* User Location Marker - with proper validation */}
+        {userLocation && 
+         typeof userLocation.lat === 'number' && 
+         typeof userLocation.lng === 'number' && 
+         !isNaN(userLocation.lat) && 
+         !isNaN(userLocation.lng) && (
           <Marker
-            position={[userLocation.latitude, userLocation.longitude]}
+            position={[userLocation.lat, userLocation.lng]}
             icon={L.divIcon({
               className: 'user-location-marker',
               html: `
@@ -373,8 +405,14 @@ export default function LeafletMap({
           </Marker>
         )}
 
-        {/* User Markers */}
-        {users.filter(user => user.latitude && user.longitude).map(user => (
+        {/* User Markers - with proper validation */}
+        {users.filter(user => 
+          user.latitude && 
+          user.longitude && 
+          !isNaN(user.latitude) && 
+          !isNaN(user.longitude) &&
+          !(user.latitude === 0 && user.longitude === 0)
+        ).map(user => (
           <UserMarker
             key={user.id}
             user={user}
