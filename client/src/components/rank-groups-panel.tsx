@@ -84,7 +84,7 @@ export function RankGroupsPanel() {
       setMessages(data);
       return data;
     },
-    enabled: !!userMaritimeRank,
+    enabled: false, // DISABLED for stability testing
   });
   
   // WebSocket connection for real-time messaging

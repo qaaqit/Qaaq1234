@@ -121,7 +121,7 @@ export default function DMPage() {
   // Fetch user's chat connections - Re-enabled for search card navigation fix
   const { data: connections = [], isLoading: connectionsLoading, error: connectionsError } = useQuery<ExtendedChatConnection[]>({
     queryKey: ['/api/chat/connections'],
-    enabled: !!user, // Enable when user is authenticated
+    enabled: false, // DISABLED for stability testing
     refetchInterval: false, // Disable polling but allow initial fetch
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
@@ -155,7 +155,7 @@ export default function DMPage() {
       }
     },
     refetchInterval: false, // No auto-refresh - only manual refresh when user clicks radar
-    enabled: !!user, // Only fetch when user is authenticated
+    enabled: false, // DISABLED for stability testing
   });
 
   // Fetch rank groups for displaying group cards
@@ -185,7 +185,7 @@ export default function DMPage() {
       console.log('📊 Frontend: Rank groups data received:', data.length, 'groups');
       return data;
     },
-    enabled: !!user,
+    enabled: false, // DISABLED for stability testing
   });
 
   // Global radar refresh handler - exposed for external components
