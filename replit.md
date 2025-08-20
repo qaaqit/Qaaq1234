@@ -13,7 +13,6 @@ Username field label: "USER NAME (This may be ur country code +91 & whatsapp num
 Primary focus: "Koi Hai?" (Who's there?) discovery - helping sailors find who's nearby in ports
 Home page after login: QBOT Chat (not Map Radar) - users land on QBOT Chat immediately after authentication
 MARIANA BASE RULE: The app will NEVER carry out bulk assignment of users to rank groups - this functionality is permanently disabled for security
-🔒 PROFILE FIELD REMOVAL: current_ship_imo field permanently removed from profile form and backend - not needed per user request (August 2025)
 Color Scheme: Orange, cream, and white colors only - NO red, blue, purple, green or dark colors. All SEMM pages use consistent orange accent colors matching parent app branding.
 Search Interface: Crown icon must be present in search bar, filter/map/radar icons on right side of search bar
 Header Design: White header with QAAQ logo, admin shield, and QBOT button
@@ -63,8 +62,6 @@ Enhanced Reorder System: Admin reorder modals now feature editable code cards al
 - **Session Management**: Express sessions with PostgreSQL storage.
 - **Payment System**: Production Razorpay integration with enhanced database connection reliability, automatic retry logic, and comprehensive subscription management. Premium plans configured with fixed checkout URLs: Monthly (₹451) - https://rzp.io/rzp/jwQW9TW, Yearly (₹2,611) - https://rzp.io/rzp/NAU59cv. ✅ **AUGUST 2025 ENHANCED**: Fully automatic webhook system with multi-method user identification (payment notes, phone matching, UPI ID extraction, email fallback) for seamless payment processing without manual intervention. ✅ **PREMIUM ACTIVATION**: Automatic 20-word welcome email sent to premium users, instant "QaaqConnect Premium" header display, and yellow crown icon lighting up in chat container upon payment capture.
 - **AI Token Management**: Configurable token limits system with admin controls for free users (15-25 tokens) and unlimited responses for premium users. Dynamic adjustment via admin dashboard with real-time database updates.
-- **Performance Optimization**: ✅ **AUGUST 2025 ENHANCEMENT** - Removed all unnecessary auto-refresh intervals from analytics dashboard, QBOT subscription checks, and user interface components to eliminate database load. Analytics now load on-demand with manual refresh capability.
-- **QBOT Premium Access**: ✅ **AUGUST 2025 ENHANCEMENT** - QBOT is now exclusively available for premium subscribers. Free users see subscription prompt with direct payment links. Completely eliminates subscription status polling for performance optimization.
 
 ### Bot Integration Architecture
 - **QBOT**: WhatsApp bot for maritime networking assistance, location discovery, QAAQ Store services, and Q&A functionality. Integrated with multiple AI models (OpenAI GPT-4o, Gemini, Deepseek) for intelligent maritime assistance with user-selectable model preferences.

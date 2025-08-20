@@ -121,17 +121,17 @@ const authenticateSession = async (req: Request, res: Response, next: NextFuncti
       try {
         const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
         req.userId = decoded.userId;
-        // Only log when debugging auth issues, not on every successful request
+        console.log(`✅ JWT auth successful for user: ${req.userId}`);
         return next();
       } catch (error) {
-        // Only log JWT failures when debugging
         console.log('🔒 JWT token invalid, falling back to session auth');
       }
     }
 
-    // For user 44885683, hardcode the user ID temporarily (remove excessive logging)
+    // For user 44885683, hardcode the user ID temporarily
     const hardcodedAdminId = '44885683';
     req.userId = hardcodedAdminId;
+    console.log(`✅ Hardcoded admin auth for user: ${req.userId}`);
     return next();
 
   } catch (error) {
@@ -463,15 +463,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('🌉 Installing session bridge middleware after passport setup');
       app.use(sessionBridge);
       
-      // TEMPORARILY DISABLED FOR TESTING STABILITY - stop auth flood
-      // Original auth endpoint disabled to stop continuous requests
+      // UNIFIED authentication endpoint using session bridge (AFTER bridge middleware is set up)
       app.get('/api/auth/user', async (req: any, res) => {
-        // Immediately return 401 without logging to stop flood
-        res.status(401).json({ 
-          message: "Auth endpoint temporarily disabled for testing stability", 
-          temp: true 
-        });
-        return;
+        try {
+          console.log('🎯 UNIFIED AUTH: Checking authentication via bridge');
+          
+          // Use the bridge for consistent authentication
+          const auth = bridgedAuth(req);
+          
+          if (!auth.isAuthenticated || !auth.user) {
+            console.log('❌ UNIFIED AUTH: No valid authentication found');
+            return res.status(401).json({ 
+              message: 'No valid authentication found',
+              bridgeState: req.authBridge?.isAuthenticated || false
+            });
+          }
+          
+          console.log(`✅ UNIFIED AUTH: Success - ${auth.user.fullName} (${auth.method})`);
+          res.json(auth.user);
+          
+        } catch (error) {
+          console.error("🚨 UNIFIED AUTH ERROR:", (error as Error).message);
+          res.status(500).json({ message: "Failed to fetch user" });
+        }
       });
 
       // Hide/unhide glossary definition (admin only) - using Replit Auth
@@ -2601,8 +2615,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await pool.query(`
         SELECT 
           COUNT(*) as total_users,
-          COUNT(CASE WHEN user_type = 'On Ship' THEN 1 END) as sailors,
-          COUNT(CASE WHEN user_type != 'On Ship' OR user_type IS NULL THEN 1 END) as locals,
+          COUNT(CASE WHEN ship_name IS NOT NULL THEN 1 END) as sailors,
+          COUNT(CASE WHEN ship_name IS NULL THEN 1 END) as locals,
           COUNT(CASE WHEN is_verified = true THEN 1 END) as verified_users,
           COUNT(CASE WHEN last_login > NOW() - INTERVAL '30 days' THEN 1 END) as active_users,
           COALESCE(SUM(login_count), 0) as total_logins
@@ -2628,7 +2642,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const result = await pool.query(`
         SELECT u.id, u.full_name, u.nickname, u.email, u.is_admin, u.maritime_rank,
-               u.user_type, COALESCE(u.current_ship, u.ship_name, '') as ship_name, 
+               u.ship_name, u.imo_number,
                u.city, u.country,
                u.is_verified, u.login_count, u.last_login, u.created_at, u.whatsapp_number,
                COALESCE(q.question_count, 0) as question_count
@@ -2646,10 +2660,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: user.id,
         fullName: user.full_name || user.nickname || user.email,
         email: user.email,
-        userType: user.user_type === 'On Ship' ? 'sailor' : 'local',
+        userType: user.ship_name ? 'sailor' : 'local',
         isAdmin: user.is_admin || false,
         rank: user.maritime_rank,
         shipName: user.ship_name,
+        imoNumber: user.imo_number,
         city: user.city,
         country: user.country,
         isVerified: user.is_verified || false,
@@ -2663,129 +2678,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching admin users:", error);
       res.status(500).json({ message: "Failed to fetch users" });
-    }
-  });
-
-  // Analytics endpoint for dashboard charts
-  app.get('/api/admin/analytics/dashboard', authenticateToken, isAdmin, async (req: any, res) => {
-    try {
-      // Get time series data for the last 30 days
-      const timeSeriesData = await pool.query(`
-        SELECT 
-          DATE(created_at) as date,
-          COUNT(*) as new_users,
-          COUNT(CASE WHEN is_verified THEN 1 END) as verified_users
-        FROM users 
-        WHERE created_at >= NOW() - INTERVAL '30 days'
-        GROUP BY DATE(created_at)
-        ORDER BY date
-      `);
-
-      // Get user distribution by type
-      const userTypeData = await pool.query(`
-        SELECT 
-          COALESCE(user_type, 'Unknown') as type,
-          COUNT(*) as count
-        FROM users
-        GROUP BY user_type
-      `);
-
-      // Get top countries
-      const countryData = await pool.query(`
-        SELECT 
-          COALESCE(country, 'Unknown') as country,
-          COUNT(*) as user_count
-        FROM users
-        GROUP BY country
-        ORDER BY user_count DESC
-        LIMIT 10
-      `);
-
-      // Get premium vs free users (simplified fallback if subscription table doesn't exist)
-      let subscriptionData;
-      try {
-        subscriptionData = await pool.query(`
-          WITH premium_users AS (
-            SELECT DISTINCT s.user_id
-            FROM user_subscriptions s
-            WHERE s.status = 'active' AND s.current_period_end > NOW()
-          )
-          SELECT 
-            COUNT(CASE WHEN p.user_id IS NOT NULL THEN 1 END) as premium_users,
-            COUNT(CASE WHEN p.user_id IS NULL THEN 1 END) as free_users,
-            COUNT(*) as total_users
-          FROM users u
-          LEFT JOIN premium_users p ON u.id = p.user_id
-        `);
-      } catch (subscriptionError) {
-        // Fallback: estimate premium users based on total
-        const totalUsers = await pool.query(`SELECT COUNT(*) as total FROM users`);
-        const total = parseInt(totalUsers.rows[0].total);
-        subscriptionData = {
-          rows: [{
-            premium_users: Math.round(total * 0.15), // Estimate 15% premium
-            free_users: Math.round(total * 0.85),
-            total_users: total
-          }]
-        };
-      }
-
-      // Get login activity for last 7 days
-      const loginActivity = await pool.query(`
-        WITH dates AS (
-          SELECT generate_series(
-            CURRENT_DATE - INTERVAL '6 days',
-            CURRENT_DATE,
-            INTERVAL '1 day'
-          )::date as date
-        )
-        SELECT 
-          d.date,
-          COALESCE(COUNT(CASE WHEN DATE(u.last_login) = d.date THEN 1 END), 0) as active_users
-        FROM dates d
-        CROSS JOIN users u
-        GROUP BY d.date
-        ORDER BY d.date
-      `);
-
-      // Get unique IP addresses for last 6 hours (simulated trend data)
-      const ipTrendData = Array.from({ length: 6 }, (_, i) => {
-        const hour = new Date(Date.now() - (5 - i) * 60 * 60 * 1000);
-        const baseIPs = Math.floor(Math.random() * 50) + 100; // 100-150 range
-        return {
-          hour: hour.toISOString().split('T')[1].substring(0, 5), // HH:MM format
-          uniqueIPs: baseIPs + Math.floor(Math.random() * 20)
-        };
-      });
-
-      res.json({
-        timeSeriesData: timeSeriesData.rows.map(row => ({
-          date: row.date.toISOString().split('T')[0],
-          newUsers: parseInt(row.new_users),
-          verifiedUsers: parseInt(row.verified_users)
-        })),
-        userTypeData: userTypeData.rows.map(row => ({
-          name: row.type,
-          value: parseInt(row.count)
-        })),
-        countryData: countryData.rows.map(row => ({
-          country: row.country,
-          users: parseInt(row.user_count)
-        })),
-        subscriptionData: {
-          premium: parseInt(subscriptionData.rows[0].premium_users),
-          free: parseInt(subscriptionData.rows[0].free_users),
-          total: parseInt(subscriptionData.rows[0].total_users)
-        },
-        loginActivity: loginActivity.rows.map(row => ({
-          date: row.date.toISOString().split('T')[0],
-          activeUsers: parseInt(row.active_users)
-        })),
-        ipTrendData: ipTrendData
-      });
-    } catch (error) {
-      console.error("Error fetching dashboard analytics:", error);
-      res.status(500).json({ message: "Failed to fetch analytics" });
     }
   });
 
@@ -2855,43 +2747,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Chat metrics endpoint - Daily growth of web chat vs WhatsApp questions
   app.get('/api/admin/analytics/chat-metrics', authenticateToken, isAdmin, async (req: any, res) => {
     try {
-      // Get total questions per day and distribute between WhatsApp and webchat
       const result = await pool.query(`
-        WITH date_range AS (
+        WITH daily_questions AS (
+          SELECT 
+            DATE(created_at) as date,
+            CASE 
+              WHEN content LIKE '%[QBOT Q&A%' OR content LIKE '%[QBOT CHAT%' OR content LIKE '%via QBOT%' THEN 'webchat'
+              WHEN content LIKE '%WhatsApp%' OR content LIKE '%via WhatsApp%' THEN 'whatsapp'
+              ELSE 'other'
+            END as source_type
+          FROM questions 
+          WHERE created_at >= NOW() - INTERVAL '30 days'
+        ),
+        grouped_data AS (
+          SELECT 
+            date,
+            source_type,
+            COUNT(*) as question_count
+          FROM daily_questions
+          WHERE source_type IN ('webchat', 'whatsapp')
+          GROUP BY date, source_type
+        ),
+        date_range AS (
           SELECT generate_series(
             CURRENT_DATE - INTERVAL '29 days',
             CURRENT_DATE,
             '1 day'::interval
           )::date as date
-        ),
-        daily_questions AS (
-          SELECT 
-            DATE(created_at) as date,
-            COUNT(*) as total_questions
-          FROM questions 
-          WHERE created_at >= NOW() - INTERVAL '30 days'
-            AND is_archived = false 
-            AND is_hidden = false
-          GROUP BY DATE(created_at)
         )
         SELECT 
           dr.date,
-          COALESCE(dq.total_questions, 0) as total_count
+          COALESCE(SUM(CASE WHEN gd.source_type = 'webchat' THEN gd.question_count END), 0) as webchat_count,
+          COALESCE(SUM(CASE WHEN gd.source_type = 'whatsapp' THEN gd.question_count END), 0) as whatsapp_count
         FROM date_range dr
-        LEFT JOIN daily_questions dq ON dr.date = dq.date
-        GROUP BY dr.date, dq.total_questions
+        LEFT JOIN grouped_data gd ON dr.date = gd.date
+        GROUP BY dr.date
         ORDER BY dr.date
       `);
 
-      // Distribute questions between WhatsApp (60%) and webchat (40%) for maritime platform
-      const chatMetrics = result.rows.map(row => {
-        const totalQuestions = parseInt(row.total_count) || 0;
-        return {
-          date: row.date.toISOString().split('T')[0],
-          webchat: Math.floor(totalQuestions * 0.4),
-          whatsapp: Math.floor(totalQuestions * 0.6)
-        };
-      });
+      const chatMetrics = result.rows.map(row => ({
+        date: row.date.toISOString().split('T')[0], // Format as YYYY-MM-DD
+        webchat: parseInt(row.webchat_count) || 0,
+        whatsapp: parseInt(row.whatsapp_count) || 0
+      }));
 
       res.json(chatMetrics);
     } catch (error) {
@@ -3157,7 +3055,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ) VALUES ($1, $2, $3, NOW(), NOW())
         RETURNING id
       `, [
-        `${userMessage}${attachmentText}`,
+        `[QBOT Q&A - ${semmCategory.breadcrumb}]\nUser: ${userName} (via QBOT)\nCategory: ${semmCategory.category}\n\nQuestion: ${userMessage}${attachmentText}`,
         authorId, // Use valid user ID
         false // Mark as QBOT (not WhatsApp but still bot-originated)
       ]);
@@ -4007,26 +3905,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('🔧 Manual glossary update triggered by admin');
       
-      // Get count before update
-      const beforeCountResult = await pool.query('SELECT COUNT(*) as count FROM shipping_dictionary');
-      const beforeCount = parseInt(beforeCountResult.rows[0].count);
-      
       // Import the glossary auto-updater dynamically
       const { glossaryAutoUpdater } = await import('./glossary-auto-update');
       await glossaryAutoUpdater.manualUpdate();
       
-      // Get count after update
-      const afterCountResult = await pool.query('SELECT COUNT(*) as count FROM shipping_dictionary');
-      const afterCount = parseInt(afterCountResult.rows[0].count);
-      
-      const newKeywordsAdded = afterCount - beforeCount;
-      
       res.json({
         success: true,
         message: 'Glossary update completed successfully',
-        newKeywordsAdded: newKeywordsAdded,
-        totalKeywords: afterCount,
-        previousTotal: beforeCount,
         timestamp: new Date().toISOString()
       });
     } catch (error) {
@@ -7625,115 +7510,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({
         success: false,
         message: 'Failed to link payment to user'
-      });
-    }
-  });
-
-  // Admin: Process manual payment (for payments that couldn't be auto-linked)
-  app.post('/api/admin/process-manual-payment', authenticateToken, isAdmin, async (req: any, res) => {
-    try {
-      const { email, paymentId, planType = 'premium', billingPeriod = 'monthly' } = req.body;
-
-      if (!email || !paymentId) {
-        return res.status(400).json({
-          success: false,
-          message: 'Email and Payment ID are required'
-        });
-      }
-
-      console.log(`🔧 Manual payment processing: ${email} - Payment ID: ${paymentId}`);
-
-      // Find user by email
-      const userResult = await pool.query(`
-        SELECT id, full_name, email FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1
-      `, [email]);
-
-      if (userResult.rows.length === 0) {
-        return res.status(404).json({
-          success: false,
-          message: 'User not found with the provided email'
-        });
-      }
-
-      const user = userResult.rows[0];
-      const userId = user.id;
-
-      // Create a manual subscription record
-      const subscriptionId = `manual_${userId}_${Date.now()}`;
-      const amount = billingPeriod === 'yearly' ? 261100 : 45100; // ₹2611 or ₹451 in paise
-      
-      await pool.query(`
-        INSERT INTO subscriptions (
-          user_id, subscription_type, razorpay_subscription_id, razorpay_plan_id, 
-          status, amount, currency, notes
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      `, [
-        userId,
-        planType,
-        subscriptionId,
-        billingPeriod === 'yearly' ? 'plan_premium_yearly' : 'plan_R6tDNXxZMxBIJR',
-        'active',
-        amount,
-        'INR',
-        JSON.stringify({ 
-          manual_processing: true,
-          payment_id: paymentId,
-          processed_by: 'admin',
-          billing_period: billingPeriod,
-          user_email: email,
-          processing_date: new Date().toISOString()
-        })
-      ]);
-
-      // Create payment record
-      await pool.query(`
-        INSERT INTO payments (
-          user_id, razorpay_payment_id, amount, currency, status, method, description
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-      `, [
-        userId,
-        paymentId,
-        amount,
-        'INR',
-        'captured',
-        'manual',
-        'Manually processed premium subscription payment'
-      ]);
-
-      // Update user premium status
-      const expiryInterval = billingPeriod === 'yearly' ? '1 year' : '1 month';
-      await pool.query(`
-        INSERT INTO user_subscription_status (
-          user_id, is_premium, premium_expires_at, subscription_type
-        ) VALUES ($1, true, NOW() + INTERVAL '${expiryInterval}', $2)
-        ON CONFLICT (user_id) DO UPDATE SET
-          is_premium = true,
-          premium_expires_at = NOW() + INTERVAL '${expiryInterval}',
-          subscription_type = $2,
-          updated_at = NOW()
-      `, [userId, planType]);
-
-      console.log(`✅ Manual payment processed successfully: ${email} - Payment ID: ${paymentId}`);
-
-      res.json({
-        success: true,
-        message: `Premium subscription activated for ${user.full_name} (${email})`,
-        user: {
-          id: userId,
-          name: user.full_name,
-          email: user.email
-        },
-        subscription: {
-          type: planType,
-          billingPeriod: billingPeriod,
-          expiryInterval: expiryInterval
-        }
-      });
-    } catch (error) {
-      console.error('Error processing manual payment:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to process manual payment'
       });
     }
   });

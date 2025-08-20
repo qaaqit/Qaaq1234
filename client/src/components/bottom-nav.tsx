@@ -43,11 +43,11 @@ export default function BottomNav({ user, onLogout }: BottomNavProps) {
       onClick: () => setLocation("/rank-groups")
     },
     { 
-      path: "/qradar", 
+      path: "/discover", 
       icon: "fas fa-map-marked-alt", 
       label: ["QRadar"],
-      active: location === "/qradar" || location === "/users",
-      onClick: () => setLocation("/qradar")
+      active: location === "/discover" || location === "/users",
+      onClick: () => setLocation("/discover")
     }
   ];
 

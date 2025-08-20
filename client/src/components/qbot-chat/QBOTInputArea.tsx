@@ -62,7 +62,12 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
   });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Premium status will be checked by parent component when needed
+  // Fetch user subscription status
+  const { data: userStatus } = useQuery({
+    queryKey: ['/api/user/subscription-status'],
+    retry: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
   // Get random placeholder from chatbot invites
   const getRandomPlaceholder = () => {
@@ -158,22 +163,24 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
 
   // Handle crown click for premium mode toggle
   const togglePremiumMode = () => {
+    const isUserPremium = (userStatus as any)?.isPremium || (userStatus as any)?.isSuperUser || false;
     const isUserAdmin = localStorage.getItem('isAdmin') === 'true';
 
-    if (!isUserAdmin) {
-      // Show subscription dialog for non-admin users (premium check will happen when message is sent)
+    if (!isUserPremium && !isUserAdmin) {
+      // Show subscription dialog for non-premium users
       setShowSubscriptionDialog(true);
     } else {
-      // Toggle premium mode for admin users
+      // Toggle premium mode for premium/admin users
       setIsPremiumMode(!isPremiumMode);
     }
   };
 
-  // Handle privacy mode toggle (only for admin users for now)
+  // Handle privacy mode toggle (only for premium/admin users)
   const togglePrivacyMode = () => {
+    const isUserPremium = (userStatus as any)?.isPremium || (userStatus as any)?.isSuperUser || false;
     const isUserAdmin = localStorage.getItem('isAdmin') === 'true';
 
-    if (isUserAdmin) {
+    if (isUserPremium || isUserAdmin) {
       setIsPrivateMode(!isPrivateMode);
     }
   };
@@ -337,25 +344,10 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
         {/* Crown icon for premium mode */}
         <button
           onClick={togglePremiumMode}
-          className={`p-2 rounded-lg transition-all duration-200 flex-shrink-0 ${
-            localStorage.getItem('isAdmin') === 'true'
-              ? 'text-yellow-600 hover:bg-yellow-50' 
-              : 'text-gray-400 hover:bg-gray-100'
-          }`}
-          title={
-            localStorage.getItem('isAdmin') === 'true'
-              ? "Admin User - Unlimited Responses" 
-              : "Upgrade to Premium for Unlimited Responses"
-          }
+          className="p-2 rounded-lg transition-all duration-200 text-gray-400 hover:bg-gray-100 flex-shrink-0"
+          title={isPremiumMode ? "Premium Mode Active" : "Enable Premium Mode"}
         >
-          <Crown 
-            size={18} 
-            className={
-              localStorage.getItem('isAdmin') === 'true'
-                ? "fill-current text-yellow-600" 
-                : ""
-            } 
-          />
+          <Crown size={18} className={isPremiumMode ? "fill-current text-yellow-600" : ""} />
         </button>
       </div>
       {/* Chat input container */}
@@ -389,8 +381,8 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
             </ObjectUploader>
           </div>
 
-          {/* Privacy Shield (only for admin users) - positioned top right */}
-          {localStorage.getItem('isAdmin') === 'true' && (
+          {/* Privacy Shield (only for premium/admin users) - positioned top right */}
+          {((userStatus as any)?.isPremium || (userStatus as any)?.isSuperUser || localStorage.getItem('isAdmin') === 'true') && (
             <div className="absolute right-3 top-1">
               <button
                 onClick={togglePrivacyMode}

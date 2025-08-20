@@ -314,27 +314,14 @@ export class AIService {
 
   // Apply free user limits - truncate based on configurable token limits for non-premium users
   private async applyFreeUserLimits(content: string, user: any): Promise<string> {
-    try {
-      // Check premium status using Razorpay service for accurate verification
-      const userId = user?.id || user?.userId;
-      if (!userId) {
-        console.log('⚠️ No user ID available for premium check, treating as free user');
-        // Continue to free user logic below
-      } else {
-        // Import and use the Razorpay service directly
-        const { RazorpayService } = await import('./razorpay-service-production.js');
-        const razorpayService = RazorpayService.getInstance();
-        const premiumStatus = await razorpayService.checkUserPremiumStatus(userId.toString());
-        
-        if (premiumStatus.isPremium) {
-          console.log(`✅ Premium user verified - returning full response (${content.split(' ').length} words)`);
-          return content;
-        }
-        console.log(`🔍 Premium check result for user ${userId}: isPremium = ${premiumStatus.isPremium}`);
-      }
-    } catch (error) {
-      console.error('❌ Error checking premium status:', error);
-      console.log('Continuing with free user limits as fallback');
+    // Check if user is premium (assuming userType field exists)
+    const userType = user?.userType || 'Free';
+    const subscriptionStatus = user?.subscriptionStatus || 'inactive';
+    
+    // If user is premium or has active subscription, return full content
+    if (userType === 'Premium' || subscriptionStatus === 'active') {
+      console.log(`✅ Premium user - returning full response (${content.split(' ').length} words)`);
+      return content;
     }
     
     // Get configurable token limits

@@ -67,8 +67,6 @@ export default function DiscoveryScreen() {
   
   const scanAnimation = useRef(new Animated.Value(0)).current;
   const mapRef = useRef<MapView>(null);
-  const animationRef = useRef<Animated.CompositeAnimation | null>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Get user location
   useEffect(() => {
@@ -107,47 +105,22 @@ export default function DiscoveryScreen() {
     enabled: !!userLocation,
   });
 
-  // Cleanup function for animation
-  const stopScanAnimation = () => {
-    if (animationRef.current) {
-      animationRef.current.stop();
-      animationRef.current = null;
-    }
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
-    setShowScanAnimation(false);
-    scanAnimation.setValue(0);
-  };
-
   // Scan animation
   const startScanAnimation = () => {
-    // Stop any existing animation first
-    stopScanAnimation();
-    
     setShowScanAnimation(true);
-    animationRef.current = Animated.loop(
+    Animated.loop(
       Animated.timing(scanAnimation, {
         toValue: 1,
         duration: 2000,
         useNativeDriver: false,
       })
-    );
-    animationRef.current.start();
+    ).start();
     
-    // Stop animation after 10 seconds as requested
-    timeoutRef.current = setTimeout(() => {
-      stopScanAnimation();
-    }, 10000);
+    setTimeout(() => {
+      setShowScanAnimation(false);
+      scanAnimation.setValue(0);
+    }, 6000);
   };
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      stopScanAnimation();
-    };
-  }, []);
 
   const handleKoiHaiSearch = () => {
     setSearchQuery('');

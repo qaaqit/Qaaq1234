@@ -1,142 +1,88 @@
-import { pool } from './server/db.js';
+#!/usr/bin/env tsx
 
-async function processManualPayment(email: string, paymentId: string, planType = 'premium', billingPeriod = 'monthly') {
+// Manually process the payment for the user who made it
+import { RazorpayService } from './server/razorpay-service-production.js';
+
+async function processManualPayment() {
   try {
-    console.log(`🔧 Manual payment processing: ${email} - Payment ID: ${paymentId}`);
-
-    // Find user by email
-    const userResult = await pool.query(`
-      SELECT id, full_name, email FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1
-    `, [email]);
-
-    if (userResult.rows.length === 0) {
-      console.error('❌ User not found with the provided email');
-      return { success: false, message: 'User not found' };
-    }
-
-    const user = userResult.rows[0];
-    const userId = user.id;
-
-    console.log(`👤 Found user: ${user.full_name} (${user.email}) - ID: ${userId}`);
-
-    // Create a manual subscription record
-    const subscriptionId = `manual_${userId}_${Date.now()}`;
-    const amount = billingPeriod === 'yearly' ? 261100 : 45100; // ₹2611 or ₹451 in paise
+    console.log('🔧 Processing payment manually for phone +91 8973 297600...');
     
-    await pool.query(`
-      INSERT INTO subscriptions (
-        user_id, subscription_type, razorpay_subscription_id, razorpay_plan_id, 
-        status, amount, currency, notes
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-    `, [
-      userId,
-      planType,
-      subscriptionId,
-      billingPeriod === 'yearly' ? 'plan_premium_yearly' : 'plan_R6tDNXxZMxBIJR',
-      'active',
-      amount,
-      'INR',
-      JSON.stringify({ 
-        manual_processing: true,
-        payment_id: paymentId,
-        processed_by: 'admin_script',
-        billing_period: billingPeriod,
-        user_email: email,
-        processing_date: new Date().toISOString()
-      })
-    ]);
-
-    console.log('✅ Subscription record created');
-
-    // Create payment record
-    await pool.query(`
-      INSERT INTO payments (
-        user_id, razorpay_payment_id, amount, currency, status, method, description
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-    `, [
-      userId,
-      paymentId,
-      amount,
-      'INR',
-      'captured',
-      'manual',
-      'Manually processed premium subscription payment'
-    ]);
-
-    console.log('✅ Payment record created');
-
-    // Update user premium status - Check if record exists first
-    const existingStatus = await pool.query(`
-      SELECT id FROM user_subscription_status WHERE user_id = $1
-    `, [userId]);
-
-    const expiryInterval = billingPeriod === 'yearly' ? '1 year' : '1 month';
+    const razorpayService = RazorpayService.getInstance();
+    await razorpayService.ensureInitialized();
     
-    if (existingStatus.rows.length > 0) {
-      // Update existing record
-      await pool.query(`
-        UPDATE user_subscription_status SET
-          is_premium = true,
-          premium_expires_at = NOW() + INTERVAL '${expiryInterval}',
-          subscription_type = $1,
-          updated_at = NOW()
-        WHERE user_id = $2
-      `, [planType, userId]);
-    } else {
-      // Insert new record
-      await pool.query(`
-        INSERT INTO user_subscription_status (
-          user_id, is_premium, premium_expires_at, subscription_type
-        ) VALUES ($1, true, NOW() + INTERVAL '${expiryInterval}', $2)
-      `, [userId, planType]);
+    const pool = razorpayService['pool'];
+    
+    // First, find user by phone number
+    const phoneSearch = await pool.query(`
+      SELECT id, name, email, phone 
+      FROM users 
+      WHERE phone LIKE '%8973297600%' OR phone LIKE '%+91 8973 297600%' OR phone = '+918973297600'
+      LIMIT 5
+    `);
+    
+    console.log('📱 Users found by phone:', phoneSearch.rows);
+    
+    if (phoneSearch.rows.length === 0) {
+      console.log('❌ No user found with phone +91 8973 297600');
+      console.log('💡 This payment might be from a user with a different phone number or not yet registered');
+      
+      // Check if there's any payment record already
+      const paymentCheck = await pool.query(`
+        SELECT p.*, u.name, u.email, u.phone 
+        FROM payments p 
+        LEFT JOIN users u ON p.user_id = u.id 
+        WHERE p.razorpay_payment_id = 'pay_R6yeWtx4jUG6dS'
+      `);
+      
+      console.log('💳 Existing payment record:', paymentCheck.rows);
+      return;
     }
-
-    console.log('✅ User premium status updated');
-
-    // Verify the update
-    const statusResult = await pool.query(`
-      SELECT is_premium, premium_expires_at, subscription_type 
-      FROM user_subscription_status WHERE user_id = $1
-    `, [userId]);
-
-    console.log(`✅ Manual payment processed successfully: ${email} - Payment ID: ${paymentId}`);
-    console.log(`🎯 Premium Status:`, statusResult.rows[0]);
-
-    return {
-      success: true,
-      message: `Premium subscription activated for ${user.full_name} (${email})`,
-      user: {
-        id: userId,
-        name: user.full_name,
-        email: user.email
-      },
-      subscription: {
-        type: planType,
-        billingPeriod: billingPeriod,
-        expiryInterval: expiryInterval
-      },
-      status: statusResult.rows[0]
+    
+    const user = phoneSearch.rows[0];
+    console.log(`✅ Found user: ${user.name} (ID: ${user.id}, Email: ${user.email})`);
+    
+    // Simulate payment object with user's actual email
+    const paymentData = {
+      id: 'pay_R6yeWtx4jUG6dS',
+      amount: 45100, // ₹451 in paise
+      currency: 'INR',
+      status: 'captured',
+      method: 'upi',
+      email: user.email, // Use actual user email instead of void@razorpay.com
+      contact: '+91 8973 297600',
+      description: 'Premium Payment - premium monthly'
     };
+    
+    console.log('🔄 Processing payment with corrected email...');
+    await razorpayService.handlePaymentCaptured(paymentData);
+    
+    console.log('✅ Payment processed - checking premium status...');
+    const status = await razorpayService.checkUserPremiumStatus(user.id);
+    console.log('📊 Premium status:', status);
+    
+    if (status.isPremium) {
+      console.log('🎉 SUCCESS: User now has premium status!');
+    } else {
+      console.log('⚠️ Status still shows free - checking logs for errors');
+    }
+    
+    return {
+      user: user,
+      status: status,
+      success: status.isPremium
+    };
+    
   } catch (error) {
-    console.error('❌ Error processing manual payment:', error);
-    return { success: false, message: error.message };
+    console.error('❌ Manual processing failed:', error);
+    return null;
   }
 }
 
-// Process the specific payment mentioned by the user
-async function main() {
-  const email = 'workship.ai@gmail.com';
-  const paymentId = 'R71G8cKB3xWq4g';
-  
-  console.log('🚀 Starting manual payment processing...');
-  const result = await processManualPayment(email, paymentId, 'premium', 'monthly');
-  
-  if (result.success) {
-    console.log('🎉 SUCCESS:', result.message);
+processManualPayment().then((result) => {
+  if (result && result.success) {
+    console.log(`✅ Payment successfully linked to ${result.user.name}`);
   } else {
-    console.log('💥 FAILED:', result.message);
+    console.log('❌ Payment processing failed or user not found');
   }
-}
-
-// Run the script
-main().catch(console.error);
+  process.exit(result?.success ? 0 : 1);
+});

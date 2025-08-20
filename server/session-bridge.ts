@@ -25,31 +25,10 @@ declare global {
  * Core Session Bridge Middleware
  * This middleware runs before all authentication checks and ensures consistency
  */
-// Public routes that don't need auth checks
-const PUBLIC_ROUTES = [
-  '/api/glossary',
-  '/api/questions/attachments',
-  '/assets',
-  '/favicon.ico',
-  '/api/auth',
-  '/api/health'
-];
-
-// Skip auth bridge for public routes and static assets
-const shouldSkipAuth = (path: string): boolean => {
-  return PUBLIC_ROUTES.some(route => path.startsWith(route)) || 
-         path.includes('.') && !path.includes('/api/') ||
-         path === '/';
-};
-
 export const sessionBridge = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Skip auth checks for public routes to reduce unnecessary processing
-    if (shouldSkipAuth(req.path)) {
-      next();
-      return;
-    }
-
+    console.log('🌉 SESSION BRIDGE: Checking authentication state');
+    
     let user: User | null = null;
     let method: 'replit' | 'jwt' | 'whatsapp' = 'replit';
 
@@ -62,47 +41,63 @@ export const sessionBridge = async (req: Request, res: Response, next: NextFunct
                       (req.user as any).userId || 
                       (req.user as any).id || 
                       (req.user as any).dbUser?.id;
+      
+      console.log('🌉 SESSION BRIDGE: Checking session data:', {
+        hasClaims: !!(req.user as any).claims,
+        hasUserId: !!(req.user as any).userId,
+        hasId: !!(req.user as any).id,
+        hasDbUser: !!(req.user as any).dbUser,
+        extractedId: sessionUserId
+      });
     }
     
     if (sessionUserId) {
+      console.log('🌉 SESSION BRIDGE: Found session user ID:', sessionUserId);
+      
       user = await identityResolver.resolveUserByAnyMethod(sessionUserId, 'replit');
       if (user) {
         method = 'replit';
+        console.log('✅ SESSION BRIDGE: Resolved session user:', user.fullName);
+        
         // Ensure user has unified identity
         await identityResolver.ensureUserHasUnifiedIdentity(user, 'replit', sessionUserId);
+      } else {
+        console.log('❌ SESSION BRIDGE: Session user ID found but user not in database:', sessionUserId);
       }
     }
 
     // Check 2: If session exists but no user found, try to find user by any method
     if (req.user && !user && sessionUserId) {
+      console.log('🔍 SESSION BRIDGE: Session exists but user not found, trying comprehensive lookup');
+      
       // Try to find user by the session ID using any method
       user = await identityResolver.resolveUserByAnyMethod(sessionUserId);
       
       if (user) {
         method = 'replit';
+        console.log('✅ SESSION BRIDGE: Found user via comprehensive lookup:', user.fullName);
       } else {
-        // Clear invalid session quietly
+        console.log('⚠️ SESSION BRIDGE: Session exists but user not found anywhere - clearing session');
         req.logout(() => {});
         req.session?.destroy(() => {});
       }
     }
 
-    // Check 3: JWT token authentication with unified secret
+    // Check 3: JWT token authentication
     const authHeader = req.headers.authorization;
     const token = authHeader?.split(' ')[1];
     if (token && !user) {
       try {
         const jwt = await import('jsonwebtoken');
-        // Use consistent JWT secret across all auth methods
-        const JWT_SECRET = process.env.JWT_SECRET || 'qaaq-connect-secret-key';
-        const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'qaaq_jwt_secret_key_2024_secure') as { userId: string };
         
         user = await identityResolver.resolveUserByAnyMethod(decoded.userId, 'jwt');
         if (user) {
           method = 'jwt';
+          console.log('✅ SESSION BRIDGE: Resolved JWT user:', user.fullName);
         }
       } catch (error) {
-        // Silent JWT validation - no need to log every invalid token
+        console.log('❌ SESSION BRIDGE: Invalid JWT token');
       }
     }
 
@@ -114,14 +109,15 @@ export const sessionBridge = async (req: Request, res: Response, next: NextFunct
         isAuthenticated: true
       };
       
-      // CRITICAL: Override req.isAuthenticated to return bridge state  
-      const originalIsAuth = req.isAuthenticated;
+      // CRITICAL: Override req.isAuthenticated to return bridge state
       req.isAuthenticated = () => true;
       req.user = {
         ...req.user,
         bridgeUser: user,
         bridgeMethod: method
       };
+      
+      console.log(`✅ SESSION BRIDGE: Authentication bridged - ${user.fullName} (${method})`);
     } else {
       req.authBridge = {
         user: null as any,
@@ -130,8 +126,9 @@ export const sessionBridge = async (req: Request, res: Response, next: NextFunct
       };
       
       // CRITICAL: Override req.isAuthenticated to return false
-      const originalIsAuth = req.isAuthenticated;
       req.isAuthenticated = () => false;
+      
+      console.log('❌ SESSION BRIDGE: No authentication found');
     }
 
     next();

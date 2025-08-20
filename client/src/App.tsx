@@ -10,7 +10,6 @@ import Login from "@/pages/login";
 import Register from "@/pages/register";
 import Verify from "@/pages/verify";
 import Discover from "@/pages/discover";
-import QRadarPage from "@/pages/qradar";
 import Post from "@/pages/post";
 import Admin from "@/pages/admin";
 import BotRulesAdmin from "@/pages/admin/bot-rules";
@@ -71,48 +70,47 @@ function Router() {
         return;
       }
       
-      // DISABLED FOR TESTING STABILITY - no auth requests
       // Then check for Replit Auth session
-      // try {
-      //   console.log('🔍 Checking Replit Auth session...');
-      //   
-      //   const response = await fetch('/api/auth/user', {
-      //     credentials: 'include', // Important for session cookies
-      //     headers: {
-      //       'Content-Type': 'application/json',
-      //     },
-      //   });
-      //   
-      //   console.log('🔍 Auth check response status:', response.status);
-      //   
-      //   if (response.ok) {
-      //     const userData = await response.json();
-      //     console.log('✅ Auth check successful:', userData.fullName);
-      //     
-      //     if (userData) {
-      //       // Convert to our User format
-      //       const user: User = {
-      //         id: userData.id,
-      //         fullName: userData.fullName || userData.email || 'User',
-      //         email: userData.email,
-      //         userType: userData.userType || 'sailor',
-      //         isAdmin: userData.isAdmin || false,
-      //         nickname: userData.nickname,
-      //         isVerified: true, // Authenticated users are verified
-      //         loginCount: userData.loginCount || 0,
-      //         maritimeRank: userData.maritimeRank
-      //       };
-      //       
-      //       setUser(user);
-      //       setLoading(false);
-      //       return;
-      //     }
-      //   } else {
-      //     console.log('❌ Auth check failed with status:', response.status);
-      //   }
-      // } catch (error) {
-      //   console.log('❌ Auth check error:', error);
-      // }
+      try {
+        console.log('🔍 Checking Replit Auth session...');
+        
+        const response = await fetch('/api/auth/user', {
+          credentials: 'include', // Important for session cookies
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        console.log('🔍 Auth check response status:', response.status);
+        
+        if (response.ok) {
+          const userData = await response.json();
+          console.log('✅ Auth check successful:', userData.fullName);
+          
+          if (userData) {
+            // Convert to our User format
+            const user: User = {
+              id: userData.id,
+              fullName: userData.fullName || userData.email || 'User',
+              email: userData.email,
+              userType: userData.userType || 'sailor',
+              isAdmin: userData.isAdmin || false,
+              nickname: userData.nickname,
+              isVerified: true, // Authenticated users are verified
+              loginCount: userData.loginCount || 0,
+              maritimeRank: userData.maritimeRank
+            };
+            
+            setUser(user);
+            setLoading(false);
+            return;
+          }
+        } else {
+          console.log('❌ Auth check failed with status:', response.status);
+        }
+      } catch (error) {
+        console.log('❌ Auth check error:', error);
+      }
       
       setLoading(false);
     };
@@ -166,8 +164,7 @@ function Router() {
           <Route path="/register" component={() => <Register onSuccess={setUser} />} />
           <Route path="/verify" component={() => <Verify onSuccess={setUser} />} />
           <Route path="/oauth-callback" component={() => <OAuthCallback />} />
-          {/* <Route path="/discover" component={() => currentUser ? <Discover user={currentUser} /> : <Login onSuccess={setUser} />} /> */}
-          <Route path="/qradar" component={() => currentUser ? <QRadarPage user={currentUser} /> : <Login onSuccess={setUser} />} />
+          <Route path="/discover" component={() => currentUser ? <Discover user={currentUser} /> : <Login onSuccess={setUser} />} />
           <Route path="/qbot" component={() => {
             console.log('🤖 QBOT route - Current user:', currentUser ? currentUser.fullName : 'None');
             if (!currentUser && !loading) {

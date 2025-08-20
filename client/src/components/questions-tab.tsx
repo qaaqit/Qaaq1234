@@ -76,14 +76,6 @@ export function QuestionsTab() {
                   user?.id === '+919029010070' ||
                   user?.id === '5791e66f-9cc1-4be4-bd4b-7fc1bd2e258e';
 
-  // Debug logging for QuestionBank tab
-  console.log('📚 QuestionsTab mounted', { 
-    user: user?.fullName || 'None', 
-    userId: user?.id, 
-    isAdmin, 
-    searchQuery: debouncedSearch 
-  });
-
   // Query to fetch existing feedback for admin
   const { data: existingFeedback } = useQuery<{
     success: boolean;
@@ -145,7 +137,7 @@ export function QuestionsTab() {
 
   // No authentication required for questions tab
 
-  // Fetch questions with infinite scroll - with improved error handling
+  // Fetch questions with infinite scroll
   const {
     data,
     fetchNextPage,
@@ -162,27 +154,11 @@ export function QuestionsTab() {
         limit: '20',
         ...(debouncedSearch && { search: debouncedSearch })
       });
-
-      console.log(`📡 Fetching questions: page ${pageParam}, search: "${debouncedSearch}"`);
-      
-      try {
-        const response = await apiRequest(`/api/questions?${params}`);
-        if (!response.ok) {
-          // Log but don't throw on auth errors - allow graceful degradation
-          console.warn(`⚠️ Questions API returned ${response.status}`, response.statusText);
-          if (response.status === 401) {
-            return { questions: [], total: 0, hasMore: false } as QuestionsResponse;
-          }
-          throw new Error(`HTTP ${response.status}: Failed to fetch questions`);
-        }
-        const result = await response.json() as QuestionsResponse;
-        console.log(`✅ Questions fetched: ${result.questions?.length || 0} questions`);
-        return result;
-      } catch (err) {
-        console.error('❌ Questions fetch error:', err);
-        // Return empty result instead of throwing to prevent UI breaking
-        return { questions: [], total: 0, hasMore: false } as QuestionsResponse;
+      const response = await apiRequest(`/api/questions?${params}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch questions');
       }
+      return response.json() as Promise<QuestionsResponse>;
     },
     getNextPageParam: (lastPage, pages) => {
       return lastPage.hasMore ? pages.length + 1 : undefined;
@@ -191,11 +167,7 @@ export function QuestionsTab() {
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    refetchOnReconnect: false,
-    retry: (failureCount, error) => {
-      console.log(`🔄 Questions query retry attempt ${failureCount}`);
-      return failureCount < 2; // Only retry twice
-    }
+    refetchOnReconnect: false
   });
 
   // Set up intersection observer for infinite scroll

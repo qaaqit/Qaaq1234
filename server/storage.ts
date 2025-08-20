@@ -526,7 +526,10 @@ export class DatabaseStorage implements IStorage {
         setClause.push(`current_lastShip = $${paramCount++}`);
         values.push(profileData.currentLastShip);
       }
-
+      if (profileData.currentShipIMO !== undefined) {
+        setClause.push(`current_ship_imo = $${paramCount++}`);
+        values.push(profileData.currentShipIMO);
+      }
       if (profileData.city !== undefined) {
         setClause.push(`city = $${paramCount++}`);
         values.push(profileData.city);
@@ -697,8 +700,6 @@ export class DatabaseStorage implements IStorage {
       dateOfBirth: dbUser.date_of_birth,
       gender: dbUser.gender,
       whatsAppNumber: dbUser.whatsapp_number || '',
-      countryCode: dbUser.country_code || '',
-      currentLastShip: dbUser.current_lastShip || '',
       whatsAppProfilePictureUrl: dbUser.whatsapp_profile_picture_url,
       whatsAppDisplayName: dbUser.whatsapp_display_name,
       googleId: dbUser.google_id,
