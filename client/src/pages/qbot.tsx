@@ -360,67 +360,44 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                   {/* Chat Area with Engineering Grid Background */}
                   <QBOTChatArea>
                     <div className="flex flex-col h-full p-4 relative">
-                      {/* Premium Roadblock for Free Users - Redesigned */}
+                      {/* Premium Roadblock for Free Users - Compact 100x100 */}
                       {!isPremiumUser && showRoadblock && (
                         <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
-                          <div className="max-w-xs w-[64%] bg-white rounded-lg shadow-xl border border-orange-400 p-3 text-center relative max-h-[42vh] overflow-y-auto">
+                          <div className="w-[100px] h-[100px] bg-white rounded-lg shadow-xl border border-orange-400 p-1 text-center relative flex flex-col items-center justify-center">
                             {/* Minimize/Restore Chevron */}
                             <button
                               onClick={() => setShowRoadblock(false)}
-                              className="absolute top-2 right-2 w-8 h-8 bg-orange-100 hover:bg-orange-200 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110"
-                              title="Minimize roadblock to explore homepage"
+                              className="absolute top-1 right-1 w-4 h-4 bg-orange-100 hover:bg-orange-200 rounded-full flex items-center justify-center transition-all duration-200"
+                              title="Minimize roadblock"
                             >
-                              <ChevronDown className="w-4 h-4 text-orange-600" />
+                              <ChevronDown className="w-2 h-2 text-orange-600" />
                             </button>
 
-                            <div className="mb-3">
-                              <div className="w-10 h-10 mx-auto mb-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-md">
-                                <span className="text-lg">⭐</span>
+                            <div className="flex flex-col items-center justify-center h-full">
+                              <div className="w-6 h-6 mb-1 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                                <span className="text-xs">⭐</span>
                               </div>
-                              <h2 className="text-lg font-bold text-gray-800 mb-1">Premium Required</h2>
+                              <h2 className="text-xs font-bold text-gray-800 mb-1">Premium</h2>
+                              
+                              <div className="flex flex-col gap-0.5 w-full">
+                                <a
+                                  href="https://rzp.io/rzp/jwQW9TW"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium py-0.5 px-1 rounded text-[10px] hover:from-yellow-600 hover:to-orange-600 transition-all duration-200"
+                                >
+                                  ₹451/mo
+                                </a>
+                                <a
+                                  href="https://rzp.io/rzp/NAU59cv"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium py-0.5 px-1 rounded text-[10px] hover:from-yellow-600 hover:to-orange-600 transition-all duration-200"
+                                >
+                                  ₹2,611/yr
+                                </a>
+                              </div>
                             </div>
-
-                            <div className="mb-3 space-y-1 bg-gray-50 rounded-md p-2">
-                              <div className="flex items-center text-xs text-gray-700">
-                                <span className="text-green-500 mr-1 text-sm">✓</span>
-                                <span>Unlimited responses</span>
-                              </div>
-                              <div className="flex items-center text-xs text-gray-700">
-                                <span className="text-green-500 mr-1 text-sm">✓</span>
-                                <span>Multi-AI access</span>
-                              </div>
-                              <div className="flex items-center text-xs text-gray-700">
-                                <span className="text-green-500 mr-1 text-sm">✓</span>
-                                <span>Priority assistance</span>
-                              </div>
-                              <div className="flex items-center text-xs text-gray-700">
-                                <span className="text-green-500 mr-1 text-sm">✓</span>
-                                <span>File attachments</span>
-                              </div>
-                            </div>
-
-                            <div className="flex gap-1 max-w-sm mx-auto">
-                              <a
-                                href="https://rzp.io/rzp/jwQW9TW"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium py-0.5 px-1 rounded-md hover:from-yellow-600 hover:to-orange-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 text-xs text-center"
-                              >
-                                Monthly<br />₹451
-                              </a>
-                              <a
-                                href="https://rzp.io/rzp/NAU59cv"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium py-0.5 px-1 rounded-md hover:from-yellow-600 hover:to-orange-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 text-xs text-center"
-                              >
-                                Yearly<br />₹2,611
-                              </a>
-                            </div>
-
-                            <p className="text-xs text-gray-500 mt-2 leading-tight">
-                              Secure payment via Razorpay.
-                            </p>
                           </div>
                         </div>
                       )}
