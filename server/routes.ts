@@ -121,17 +121,17 @@ const authenticateSession = async (req: Request, res: Response, next: NextFuncti
       try {
         const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
         req.userId = decoded.userId;
-        console.log(`✅ JWT auth successful for user: ${req.userId}`);
+        // Only log when debugging auth issues, not on every successful request
         return next();
       } catch (error) {
+        // Only log JWT failures when debugging
         console.log('🔒 JWT token invalid, falling back to session auth');
       }
     }
 
-    // For user 44885683, hardcode the user ID temporarily
+    // For user 44885683, hardcode the user ID temporarily (remove excessive logging)
     const hardcodedAdminId = '44885683';
     req.userId = hardcodedAdminId;
-    console.log(`✅ Hardcoded admin auth for user: ${req.userId}`);
     return next();
 
   } catch (error) {

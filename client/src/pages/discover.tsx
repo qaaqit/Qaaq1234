@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -54,7 +54,10 @@ export default function Discover({ user }: DiscoverProps) {
       const response = await fetch('/api/posts');
       if (!response.ok) throw new Error('Failed to load posts');
       return response.json();
-    }
+    },
+    staleTime: 300000, // Cache for 5 minutes to prevent frequent refetching
+    refetchOnWindowFocus: false, // Prevent refetch on focus to reduce flicker
+    refetchOnMount: false, // Prevent refetch on remount to reduce flicker
   });
 
   const handleSearch = () => {
@@ -63,30 +66,24 @@ export default function Discover({ user }: DiscoverProps) {
     refetch();
   };
 
+  // Memoized hash change handler to prevent excessive re-renders
+  const handleHashChange = useCallback(() => {
+    if (window.location.hash.includes('koi-hai')) {
+      // Batch state updates to prevent multiple re-renders causing flicker
+      setShowUsers(true);
+      setShowNearbyCard(true);
+      refetch();
+    }
+    
+    if (window.location.hash.includes('map-radar')) {
+      setShowUsers(true);
+      // Clear the hash after processing
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [refetch]);
+
   // Listen for hash changes to trigger user search and QBot controls
   useEffect(() => {
-    const handleHashChange = () => {
-      if (window.location.hash.includes('koi-hai')) {
-        console.log('Red dot clicked - triggering proximity-based user search');
-        setShowUsers(true);
-        setShowNearbyCard(true);
-        refetch();
-        
-        // Trigger nearby users API call with proximity mode if user location is available
-        if (location?.latitude && location?.longitude) {
-          console.log(`Fetching nearby users for location: ${location.latitude}, ${location.longitude}`);
-          // The UsersMap component will handle the API call with proximity mode
-        }
-      }
-      
-      if (window.location.hash.includes('map-radar')) {
-        console.log('Map Radar clicked - focusing on map');
-        setShowUsers(true);
-        // Clear the hash after processing
-        window.history.replaceState({}, '', window.location.pathname);
-      }
-    };
-
     // Listen for hash change events
     window.addEventListener('hashchange', handleHashChange);
     
@@ -96,7 +93,7 @@ export default function Discover({ user }: DiscoverProps) {
     return () => {
       window.removeEventListener('hashchange', handleHashChange);
     };
-  }, [refetch, location]);
+  }, [handleHashChange]);
   
 
 

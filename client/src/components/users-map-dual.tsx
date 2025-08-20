@@ -179,11 +179,13 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       const data = await response.json();
       return data;
     },
-    staleTime: 60000, // Cache for 1 minute
-    refetchInterval: false, // Removed auto-refresh - only manual refresh when radar clicked
+    staleTime: 300000, // Cache for 5 minutes to reduce frequent updates
+    refetchInterval: false,
+    refetchOnWindowFocus: false, // Prevent refetch on focus to reduce flicker
+    refetchOnMount: false, // Prevent refetch on remount to reduce flicker
   });
 
-  // Fetch search results separately for search functionality
+  // Fetch search results separately for search functionality  
   const { data: usersResponse, isLoading: isLoadingSearch } = useQuery<{success: boolean, sailors: MapUser[]}>({
     queryKey: ['/api/users/search', searchQuery],
     queryFn: async () => {
@@ -199,20 +201,25 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       return data;
     },
     enabled: !!searchQuery.trim(),
-    staleTime: 30000,
+    staleTime: 120000, // Cache search results longer to prevent flicker
+    refetchOnWindowFocus: false,
   });
 
-  const searchUsers = usersResponse?.sailors || [];
-  const nearbyUsers = nearbyUsersResponse || [];
+  // Memoize user data to prevent unnecessary re-renders
+  const searchUsers = useMemo(() => usersResponse?.sailors || [], [usersResponse?.sailors]);
+  const nearbyUsers = useMemo(() => nearbyUsersResponse || [], [nearbyUsersResponse]);
 
-  // Combine users based on search state
-  const allUsers = searchQuery.trim() ? searchUsers : nearbyUsers;
+  // Memoize combined users to prevent flickering between states
+  const allUsers = useMemo(() => {
+    return searchQuery.trim() ? searchUsers : nearbyUsers;
+  }, [searchQuery, searchUsers, nearbyUsers]);
+  
   const isLoading = searchQuery.trim() ? isLoadingSearch : isLoadingNearby;
 
-  // Simple search handler
-  const handleSearchInput = (value: string) => {
+  // Debounced search handler to prevent excessive API calls and flicker
+  const handleSearchInput = useCallback((value: string) => {
     setSearchQuery(value);
-  };
+  }, []);
 
   // Radar scanner toggle handler - Simple click to refresh
   const handleRadarToggle = useCallback(() => {
@@ -565,7 +572,6 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
           onZoomChange={handleZoomChange}
           showScanElements={showScanElements}
           scanAngle={scanAngle}
-          radiusKm={radiusKm}
         />
 
         {/* Right Side Control Panel - Vertical Stack */}
