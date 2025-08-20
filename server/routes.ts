@@ -6722,8 +6722,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ===================== RANK GROUPS API =====================
 
+  // Simple session authentication middleware
+  const requireSessionAuth = async (req: any, res: any, next: any) => {
+    try {
+      let user = null;
+      
+      // Check session authentication (Google/Replit Auth)
+      if (req.user) {
+        const sessionUserId = req.user.claims?.sub || req.user.id || req.user.userId;
+        if (sessionUserId) {
+          user = await identityResolver.resolveUserByAnyMethod(sessionUserId, 'replit');
+        }
+      }
+      
+      if (!user) {
+        return res.status(401).json({ 
+          message: 'Authentication required',
+          bridgeState: false
+        });
+      }
+      
+      // Attach user to request
+      req.currentUser = user;
+      req.userId = user.id;
+      next();
+    } catch (error) {
+      console.error('Session auth error:', error);
+      res.status(500).json({ message: 'Authentication failed' });
+    }
+  };
+
   // Confirm maritime rank for user
-  app.post('/api/user/confirm-maritime-rank', requireBridgedAuth, async (req: any, res) => {
+  app.post('/api/user/confirm-maritime-rank', requireSessionAuth, async (req: any, res) => {
     try {
       const { maritimeRank } = req.body;
       const userId = req.currentUser?.id || req.userId;
