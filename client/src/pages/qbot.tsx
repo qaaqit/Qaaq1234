@@ -54,11 +54,11 @@ export default function QBOTPage({ user }: QBOTPageProps) {
   const isPremium = (subscriptionStatus as any)?.isPremium || (subscriptionStatus as any)?.isSuperUser;
   const isPremiumUser = subscriptionStatus && isPremium;
 
-  // Fetch WhatsApp chat history when component loads
+  // Fetch WhatsApp chat history when component loads - OPTIMIZED to prevent repeated calls
   useEffect(() => {
-    const fetchWhatsAppHistory = async () => {
-      if (!user?.id) return;
+    if (!user?.id || isLoadingHistory === false) return; // Skip if already loaded
 
+    const fetchWhatsAppHistory = async () => {
       try {
         console.log(`📱 Fetching WhatsApp history for user: ${user.id}`);
         const response = await fetch(`/api/whatsapp-history/${encodeURIComponent(user.id)}`);
@@ -106,7 +106,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
     };
 
     fetchWhatsAppHistory();
-  }, [user?.id, toast]);
+  }, [user?.id]); // Removed toast dependency to prevent re-fetching
 
   const handleSendQBotMessage = async (messageText: string, attachments?: string[], isPrivate?: boolean, aiModels?: string[]) => {
     // Check premium status only when user tries to send a message

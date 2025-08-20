@@ -149,9 +149,9 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     let interval: NodeJS.Timeout | null = null;
 
     if (isRadarActive) {
-      interval = setInterval(() => {
-        setRadarScanAngle((prev) => (prev + 6) % 360); // Rotate 6 degrees every interval
-      }, 50); // Update every 50ms for smooth animation
+      // DISABLED: Radar animation was causing constant re-renders and flickering
+      // Set to static position instead
+      setRadarScanAngle(0);
     }
 
     return () => {
@@ -441,20 +441,19 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     };
 
     updateLocation();
-    // Update location every 5 minutes
-    const locationInterval = setInterval(updateLocation, 5 * 60 * 1000);
-    return () => clearInterval(locationInterval);
+    // DISABLED: Location polling was causing excessive API calls and flickering
+    // Location will be updated once on mount
+    return () => {};
   }, []);
 
   // Sophisticated scan arm animation with elegant timing
   useEffect(() => {
     if (!showScanElements) return;
 
-    const scanInterval = setInterval(() => {
-      setScanAngle(prev => (prev + 1.2) % 360); // Slower, more elegant rotation
-    }, 75); // Smoother frame rate for premium feel
-
-    return () => clearInterval(scanInterval);
+    // DISABLED: Scan animation was causing unnecessary re-renders
+    // Static scan elements instead of animated ones
+    setScanAngle(45); // Set to static angle
+    return () => {};
   }, [showScanElements]);
 
   // Memoize the scan elements logic to prevent unnecessary re-renders
@@ -535,7 +534,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       <div className="absolute top-[80px] sm:top-[60px] left-0 right-0 bottom-0">
         <LeafletMap
           users={filteredUsers}
-          userLocation={userLocation ? { lat: userLocation.latitude, lng: userLocation.longitude } : null}
+          userLocation={userLocation ? { lat: userLocation.lat, lng: userLocation.lng } : null}
           selectedUser={selectedUser}
           onUserHover={(user, position) => {
             setHoveredUser(user);
