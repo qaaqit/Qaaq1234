@@ -463,29 +463,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('🌉 Installing session bridge middleware after passport setup');
       app.use(sessionBridge);
       
-      // UNIFIED authentication endpoint using session bridge (AFTER bridge middleware is set up)
+      // TEMPORARILY DISABLED FOR TESTING STABILITY - stop auth flood
+      // Original auth endpoint disabled to stop continuous requests
       app.get('/api/auth/user', async (req: any, res) => {
-        try {
-          console.log('🎯 UNIFIED AUTH: Checking authentication via bridge');
-          
-          // Use the bridge for consistent authentication
-          const auth = bridgedAuth(req);
-          
-          if (!auth.isAuthenticated || !auth.user) {
-            console.log('❌ UNIFIED AUTH: No valid authentication found');
-            return res.status(401).json({ 
-              message: 'No valid authentication found',
-              bridgeState: req.authBridge?.isAuthenticated || false
-            });
-          }
-          
-          console.log(`✅ UNIFIED AUTH: Success - ${auth.user.fullName} (${auth.method})`);
-          res.json(auth.user);
-          
-        } catch (error) {
-          console.error("🚨 UNIFIED AUTH ERROR:", (error as Error).message);
-          res.status(500).json({ message: "Failed to fetch user" });
-        }
+        // Immediately return 401 without logging to stop flood
+        res.status(401).json({ 
+          message: "Auth endpoint temporarily disabled for testing stability", 
+          temp: true 
+        });
+        return;
       });
 
       // Hide/unhide glossary definition (admin only) - using Replit Auth
