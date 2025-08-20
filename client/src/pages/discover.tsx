@@ -7,7 +7,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import DiscoveryCard from "@/components/discovery-card";
 import UsersMapDual from "@/components/users-map-dual";
-import GoogleMaps from "@/components/google-maps";
 import WhatsAppBotControl from "@/components/whatsapp-bot-control";
 import CPSSNavigator from "@/components/cpss-navigator";
 

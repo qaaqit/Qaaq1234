@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import MarineChatButton from './marine-chat-button';
 import SingleMessageChat from './single-message-chat';
 import MessageNotificationDot from './message-notification-dot';
-import GoogleMap from './google-map';
+import LeafletMap from './leaflet-map';
 import { ChevronDown, ChevronUp, Filter, MapPin, Radar, Search, Home, Map, Satellite, Crown } from 'lucide-react';
 
 interface MapUser {
@@ -531,13 +531,12 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
 
       </div>
 
-      {/* Dual Map System: Google Maps with stable height to prevent layout thrashing */}
+      {/* Leaflet Map System: More stable rendering to prevent flickering */}
       <div className="absolute top-[80px] sm:top-[60px] left-0 right-0 bottom-0">
-        <GoogleMap
+        <LeafletMap
           users={filteredUsers}
-          userLocation={userLocation}
+          userLocation={userLocation ? { lat: userLocation.latitude, lng: userLocation.longitude } : null}
           selectedUser={selectedUser}
-          mapType={mapType}
           onUserHover={(user, position) => {
             setHoveredUser(user);
             setHoverPosition(position || null);
@@ -577,6 +576,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
           onZoomChange={handleZoomChange}
           showScanElements={showScanElements}
           scanAngle={scanAngle}
+          radiusKm={radiusKm}
         />
 
         {/* Right Side Control Panel - Vertical Stack */}

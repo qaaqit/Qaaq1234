@@ -1,285 +1,491 @@
-import { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, useMapEvents, Circle, Polyline } from 'react-leaflet';
-import { LatLngBounds, divIcon } from 'leaflet';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { ZoomIn, ZoomOut, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Home } from 'lucide-react';
 
-interface MapUser {
+// Fix for default markers in Leaflet
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
+
+interface User {
   id: string;
   fullName: string;
-  userType: string;
-  rank: string | null;
-  shipName: string | null;
-  company?: string | null;
-  imoNumber: string | null;
-  port: string | null;
-  visitWindow: string | null;
-  city: string | null;
-  country: string | null;
-  latitude: number;
-  longitude: number;
-  deviceLatitude?: number | null;
-  deviceLongitude?: number | null;
-  locationUpdatedAt?: Date | string | null;
-  questionCount?: number;
-  answerCount?: number;
+  latitude?: number;
+  longitude?: number;
+  userType: 'sailor' | 'local';
+  rank?: string;
+  shipName?: string;
+  city?: string;
+  port?: string;
+  whatsAppDisplayName?: string;
+  whatsAppProfilePictureUrl?: string;
+  isOnline?: boolean;
 }
 
 interface LeafletMapProps {
-  users: MapUser[];
-  userLocation: { lat: number; lng: number } | null;
-  selectedUser?: MapUser | null;
-  onUserHover: (user: MapUser | null, position?: { x: number; y: number }) => void;
-  onUserClick: (userId: string) => void;
+  users: User[];
+  userLocation?: { latitude: number; longitude: number } | null;
+  selectedUser?: User | null;
+  mapType?: 'roadmap' | 'satellite' | 'hybrid';
+  onUserHover?: (user: User | null, position?: { x: number; y: number } | null) => void;
+  onUserClick?: (userId: string) => void;
   onZoomChange?: (zoom: number) => void;
   showScanElements?: boolean;
   scanAngle?: number;
-  radiusKm?: number;
 }
 
-const LeafletMap: React.FC<LeafletMapProps> = ({ users, userLocation, selectedUser, onUserHover, onUserClick, onZoomChange, showScanElements = false, scanAngle = 0, radiusKm = 50 }) => {
-  const [bounds, setBounds] = useState<LatLngBounds | null>(null);
-  const [currentZoom, setCurrentZoom] = useState(10);
+// Custom map component to handle events and control
+function MapController({ 
+  userLocation, 
+  users, 
+  onZoomChange, 
+  mapType = 'roadmap',
+  onUserClick,
+  onUserHover 
+}: {
+  userLocation?: { latitude: number; longitude: number } | null;
+  users: User[];
+  onZoomChange?: (zoom: number) => void;
+  mapType?: string;
+  onUserClick?: (userId: string) => void;
+  onUserHover?: (user: User | null, position?: { x: number; y: number } | null) => void;
+}) {
+  const map = useMap();
+  const [currentZoom, setCurrentZoom] = useState(map.getZoom());
 
-  const createCustomIcon = (user: MapUser, isOnlineWithLocation = false) => {
-    // Green for online users with location enabled, selected user gets bright green,
-    // otherwise navy blue for sailors or ocean teal for locals
-    let color;
-    if (isOnlineWithLocation) {
-      color = '#22c55e'; // Green for online with location
-    } else {
-      color = user.userType === 'sailor' ? '#1e3a8a' : '#0891b2';
+  // Handle map events
+  useMapEvents({
+    zoomend: () => {
+      const zoom = map.getZoom();
+      setCurrentZoom(zoom);
+      onZoomChange?.(zoom);
+    },
+    moveend: () => {
+      // Clear hover when map moves
+      onUserHover?.(null);
     }
-    
-    return divIcon({
-      html: `<div style="color: ${color}; font-size: 6px; cursor: pointer; pointer-events: auto;">⚓</div>`,
-      className: 'custom-anchor-marker',
-      iconSize: [8, 8], // Reduced from 40x40 to 8x8 (1/5th size)
-      iconAnchor: [4, 4], // Adjusted anchor point
-    });
-  };
+  });
 
-
-
-  // Calculate bounds to show all users
+  // Center map on user location
   useEffect(() => {
-    if (users.length > 0) {
-      const latitudes = users.map(u => u.latitude).filter(Boolean);
-      const longitudes = users.map(u => u.longitude).filter(Boolean);
-      
-      if (latitudes.length === 0 || longitudes.length === 0) return;
-      
-      const minLat = Math.min(...latitudes);
-      const maxLat = Math.max(...latitudes);
-      const minLng = Math.min(...longitudes);
-      const maxLng = Math.max(...longitudes);
-      
-      // Add padding to show all users comfortably
-      const latPadding = (maxLat - minLat) * 0.1 || 1;
-      const lngPadding = (maxLng - minLng) * 0.1 || 1;
-      
-      setBounds(new LatLngBounds(
-        [minLat - latPadding, minLng - lngPadding],
-        [maxLat + latPadding, maxLng + lngPadding]
-      ));
-    } else {
-      setBounds(null);
+    if (userLocation) {
+      map.setView([userLocation.latitude, userLocation.longitude], Math.max(currentZoom, 10));
     }
-  }, [users]);
+  }, [userLocation?.latitude, userLocation?.longitude]);
 
-  // Component to handle map events
-  const MapEventHandler = () => {
-    useMapEvents({
-      zoomend: (e) => {
-        const zoom = e.target.getZoom();
-        setCurrentZoom(zoom);
-        if (onZoomChange) {
-          onZoomChange(zoom);
-        }
-      },
+  return null;
+}
+
+// Custom user marker with profile image
+function UserMarker({ 
+  user, 
+  onUserClick, 
+  onUserHover 
+}: { 
+  user: User; 
+  onUserClick?: (userId: string) => void;
+  onUserHover?: (user: User | null, position?: { x: number; y: number } | null) => void;
+}) {
+  const markerRef = useRef<any>(null);
+
+  // Create custom marker icon based on user type
+  const createCustomIcon = (user: User) => {
+    const color = user.userType === 'sailor' ? '#2563eb' : '#dc2626'; // Blue for sailors, red for locals
+    const isOnline = user.isOnline !== false; // Default to online if not specified
+    
+    return L.divIcon({
+      className: 'custom-marker',
+      html: `
+        <div style="
+          width: 32px; 
+          height: 32px; 
+          background-color: ${color}; 
+          border: 3px solid white; 
+          border-radius: 50%; 
+          display: flex; 
+          align-items: center; 
+          justify-content: center;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+          cursor: pointer;
+          position: relative;
+        ">
+          ${user.whatsAppProfilePictureUrl 
+            ? `<img src="${user.whatsAppProfilePictureUrl}" style="
+                width: 100%; 
+                height: 100%; 
+                border-radius: 50%; 
+                object-fit: cover;
+              " alt="${user.fullName}" />`
+            : `<span style="color: white; font-size: 12px; font-weight: bold;">
+                ${user.fullName.charAt(0).toUpperCase()}
+              </span>`
+          }
+          ${isOnline ? `<div style="
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            width: 12px;
+            height: 12px;
+            background-color: #10b981;
+            border: 2px solid white;
+            border-radius: 50%;
+          "></div>` : ''}
+        </div>
+      `,
+      iconSize: [32, 32],
+      iconAnchor: [16, 32],
+      popupAnchor: [0, -32]
     });
-    return null;
   };
 
-  // Calculate screen-edge radius based on current zoom level
-  const getScreenRadius = () => {
-    // Dynamic calculation based on zoom level
-    // Higher zoom = smaller screen area = smaller radius
-    // Lower zoom = larger screen area = larger radius
-    
-    const baseRadius = 50; // km at zoom 10
-    const zoomFactor = Math.pow(2, 10 - currentZoom);
-    const calculatedRadius = baseRadius * zoomFactor;
-    
-    // Constrain radius to reasonable limits
-    return Math.min(Math.max(calculatedRadius, 0.1), 5000); // Between 0.1km and 5000km
+  const handleMarkerClick = () => {
+    onUserClick?.(user.id);
   };
 
-  const getScanLineEndPoint = () => {
-    if (!userLocation || !showScanElements) return null;
-    
-    const distance = getScreenRadius(); // Use dynamic screen radius
-    const bearing = scanAngle; // degrees
-    
-    const R = 6371; // Earth radius in km
-    const lat1 = (userLocation.lat * Math.PI) / 180;
-    const lng1 = (userLocation.lng * Math.PI) / 180;
-    const brng = (bearing * Math.PI) / 180;
-    
-    const lat2 = Math.asin(
-      Math.sin(lat1) * Math.cos(distance / R) +
-      Math.cos(lat1) * Math.sin(distance / R) * Math.cos(brng)
-    );
-    
-    const lng2 = lng1 + Math.atan2(
-      Math.sin(brng) * Math.sin(distance / R) * Math.cos(lat1),
-      Math.cos(distance / R) - Math.sin(lat1) * Math.sin(lat2)
-    );
-    
-    return {
-      lat: (lat2 * 180) / Math.PI,
-      lng: (lng2 * 180) / Math.PI,
-    };
+  const handleMarkerMouseOver = () => {
+    onUserHover?.(user, { x: 0, y: 0 });
   };
 
-  // Use selectedUser location if available, then user location, fallback to Mumbai
-  const defaultCenter: [number, number] = selectedUser 
-    ? [selectedUser.latitude, selectedUser.longitude]
-    : userLocation 
-    ? [userLocation.lat, userLocation.lng] 
-    : [19.076, 72.8777];
-  const scanEndPoint = getScanLineEndPoint();
-  const screenRadius = getScreenRadius();
+  const handleMarkerMouseOut = () => {
+    onUserHover?.(null);
+  };
+
+  if (!user.latitude || !user.longitude) return null;
 
   return (
-    <div className="w-full h-full relative">
+    <Marker
+      position={[user.latitude, user.longitude]}
+      icon={createCustomIcon(user)}
+      ref={markerRef}
+      eventHandlers={{
+        click: handleMarkerClick,
+        mouseover: handleMarkerMouseOver,
+        mouseout: handleMarkerMouseOut,
+      }}
+    >
+      <Popup>
+        <div className="p-2 min-w-[200px]">
+          <div className="flex items-center space-x-3 mb-2">
+            {user.whatsAppProfilePictureUrl ? (
+              <img 
+                src={user.whatsAppProfilePictureUrl} 
+                alt={user.fullName}
+                className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
+                {user.fullName.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div>
+              <h3 className="font-semibold text-sm">{user.whatsAppDisplayName || user.fullName}</h3>
+              <p className="text-xs text-gray-600 capitalize">{user.userType}</p>
+            </div>
+          </div>
+          
+          {user.rank && (
+            <div className="mb-1">
+              <span className="text-xs font-medium text-orange-700 bg-orange-100 px-2 py-1 rounded">
+                {user.rank}
+              </span>
+            </div>
+          )}
+          
+          {user.shipName && (
+            <p className="text-xs text-gray-700 mb-1">
+              <strong>Ship:</strong> {user.shipName}
+            </p>
+          )}
+          
+          {(user.city || user.port) && (
+            <p className="text-xs text-gray-700 mb-2">
+              📍 {user.city || user.port}
+            </p>
+          )}
+          
+          <button 
+            onClick={handleMarkerClick}
+            className="w-full bg-orange-500 hover:bg-orange-600 text-white text-xs py-1 px-2 rounded transition-colors"
+          >
+            Start Chat
+          </button>
+        </div>
+      </Popup>
+    </Marker>
+  );
+}
+
+export default function LeafletMap({
+  users,
+  userLocation,
+  selectedUser,
+  mapType = 'roadmap',
+  onUserHover,
+  onUserClick,
+  onZoomChange,
+  showScanElements,
+  scanAngle
+}: LeafletMapProps) {
+  const mapRef = useRef<any>(null);
+  const [center, setCenter] = useState<[number, number]>([19.0760, 72.8777]); // Default to Mumbai
+  const [zoom, setZoom] = useState(9);
+
+  // Update center when user location changes
+  useEffect(() => {
+    if (userLocation) {
+      setCenter([userLocation.latitude, userLocation.longitude]);
+      setZoom(Math.max(zoom, 12));
+    }
+  }, [userLocation]);
+
+  // Get tile layer URL based on map type
+  const getTileLayerUrl = () => {
+    switch (mapType) {
+      case 'satellite':
+        return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+      case 'hybrid':
+        return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+      default:
+        return 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+    }
+  };
+
+  const getTileLayerAttribution = () => {
+    switch (mapType) {
+      case 'satellite':
+      case 'hybrid':
+        return '&copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community';
+      default:
+        return '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+    }
+  };
+
+  // Map control functions
+  const zoomIn = useCallback(() => {
+    if (mapRef.current) {
+      mapRef.current.setZoom(mapRef.current.getZoom() + 1);
+    }
+  }, []);
+
+  const zoomOut = useCallback(() => {
+    if (mapRef.current) {
+      mapRef.current.setZoom(mapRef.current.getZoom() - 1);
+    }
+  }, []);
+
+  const panLeft = useCallback(() => {
+    if (mapRef.current) {
+      const center = mapRef.current.getCenter();
+      mapRef.current.panTo([center.lat, center.lng - 0.03]);
+    }
+  }, []);
+
+  const panRight = useCallback(() => {
+    if (mapRef.current) {
+      const center = mapRef.current.getCenter();
+      mapRef.current.panTo([center.lat, center.lng + 0.03]);
+    }
+  }, []);
+
+  const panUp = useCallback(() => {
+    if (mapRef.current) {
+      const center = mapRef.current.getCenter();
+      mapRef.current.panTo([center.lat + 0.03, center.lng]);
+    }
+  }, []);
+
+  const panDown = useCallback(() => {
+    if (mapRef.current) {
+      const center = mapRef.current.getCenter();
+      mapRef.current.panTo([center.lat - 0.03, center.lng]);
+    }
+  }, []);
+
+  const resetToUserLocation = useCallback(() => {
+    if (userLocation && mapRef.current) {
+      mapRef.current.setView([userLocation.latitude, userLocation.longitude], 12);
+    }
+  }, [userLocation]);
+
+  return (
+    <div className="w-full h-full relative bg-gray-100">
       <MapContainer
-        center={defaultCenter}
-        zoom={9}
-        bounds={bounds || undefined}
-        className="w-full h-full z-0"
-        zoomControl={true}
+        center={center}
+        zoom={zoom}
+        style={{ height: '100%', width: '100%' }}
+        ref={mapRef}
+        zoomControl={false}
         attributionControl={false}
       >
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          url={getTileLayerUrl()}
+          attribution={getTileLayerAttribution()}
         />
         
-        <MapEventHandler />
-
-        {/* Sophisticated Scan Circle */}
-        {showScanElements && userLocation && (
-          <Circle
-            center={[userLocation.lat, userLocation.lng]}
-            radius={screenRadius * 1000} // Convert km to meters
-            pathOptions={{
-              color: '#0891b2', // Elegant teal color
-              weight: 2,
-              opacity: 0.5,
-              fillOpacity: 0,
-              dashArray: '8, 4', // More sophisticated dash pattern
-              className: 'scan-circle-stable' // Stable circle without effects
-            }}
+        {/* Add hybrid labels if needed */}
+        {mapType === 'hybrid' && (
+          <TileLayer
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+            attribution=""
           />
         )}
 
-        {/* Sophisticated Scan Line */}
-        {showScanElements && userLocation && scanEndPoint && (
-          <Polyline
-            positions={[
-              [userLocation.lat, userLocation.lng],
-              [scanEndPoint.lat, scanEndPoint.lng]
-            ]}
-            pathOptions={{
-              color: '#0891b2', // Matching teal color
-              weight: 3,
-              opacity: 0.7,
-              className: 'scan-line-stable' // Stable line without effects
-            }}
-          />
-        )}
+        <MapController
+          userLocation={userLocation}
+          users={users}
+          onZoomChange={onZoomChange}
+          mapType={mapType}
+          onUserClick={onUserClick}
+          onUserHover={onUserHover}
+        />
 
-        {/* User markers with anchor pins - stable rendering */}
-        {users.map((user) => {
-          // Check if user has valid coordinates
-          if (!user.latitude || !user.longitude) return null;
-          
-          // Check if user is online with recent location update
-          const isRecentLocation = user.locationUpdatedAt && 
-            new Date(user.locationUpdatedAt).getTime() > Date.now() - 10 * 60 * 1000;
-          const isOnlineWithLocation = !!(user.deviceLatitude && user.deviceLongitude && isRecentLocation);
-          
-          let plotLat: number, plotLng: number;
-          if (isOnlineWithLocation && user.deviceLatitude && user.deviceLongitude) {
-            // Use precise location for online users with location enabled
-            plotLat = user.deviceLatitude;
-            plotLng = user.deviceLongitude;
-          } else {
-            // Use stable seed for consistent positioning based on user ID
-            const seed = user.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-            const random1 = ((seed * 9301 + 49297) % 233280) / 233280;
-            const random2 = (((seed + 1) * 9301 + 49297) % 233280) / 233280;
-            
-            const scatterRadius = 0.45; // 50km ≈ 0.45 degrees
-            plotLat = user.latitude + (random1 - 0.5) * scatterRadius;
-            plotLng = user.longitude + (random2 - 0.5) * scatterRadius;
-          }
-          
-          // Reduced logging to improve performance
-          
-          return (
-            <Marker
-              key={user.id}
-              position={[plotLat, plotLng]}
-              icon={createCustomIcon(user, isOnlineWithLocation)}
-              eventHandlers={{
-                mouseover: (e) => {
-                  console.log('🟢 LEAFLET HOVER: mouseover fired for', user.fullName);
-                  const mouseEvent = e.originalEvent as MouseEvent;
-                  onUserHover(user, { x: mouseEvent.clientX, y: mouseEvent.clientY });
-                },
-                mouseout: () => {
-                  console.log('🔴 LEAFLET HOVER: mouseout fired for', user.fullName);
-                  onUserHover(null);
-                },
-                click: (e) => {
-                  console.log('🔵 LEAFLET CLICK: click fired for', user.fullName);
-                  if (onUserClick) {
-                    onUserClick(user.id);
-                  }
-                  e.originalEvent?.stopPropagation();
-                }
-              }}
-            />
-          );
-        })}
-
-        {/* User's current location marker */}
+        {/* User Location Marker */}
         {userLocation && (
           <Marker
-            position={[userLocation.lat, userLocation.lng]}
-            icon={divIcon({
-              html: `<div style="
-                background: #FF4444; 
-                border: 0.3px solid white; 
-                border-radius: 50%; 
-                width: 1px; 
-                height: 1px;
-                cursor: default;
-              "></div>`,
+            position={[userLocation.latitude, userLocation.longitude]}
+            icon={L.divIcon({
               className: 'user-location-marker',
-              iconSize: [1, 1], // Reduced from 5x5 to 1x1 (1/5th size)
-              iconAnchor: [0.5, 0.5], // Adjusted anchor point
+              html: `
+                <div style="
+                  width: 20px; 
+                  height: 20px; 
+                  background-color: #3b82f6; 
+                  border: 3px solid white; 
+                  border-radius: 50%; 
+                  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+                  animation: pulse 2s infinite;
+                "></div>
+              `,
+              iconSize: [20, 20],
+              iconAnchor: [10, 10]
             })}
-          />
+          >
+            <Popup>
+              <div className="text-center p-1">
+                <p className="text-sm font-medium">Your Location</p>
+              </div>
+            </Popup>
+          </Marker>
         )}
+
+        {/* User Markers */}
+        {users.filter(user => user.latitude && user.longitude).map(user => (
+          <UserMarker
+            key={user.id}
+            user={user}
+            onUserClick={onUserClick}
+            onUserHover={onUserHover}
+          />
+        ))}
       </MapContainer>
 
-      {/* Regular user indicator */}
-      <div className="absolute top-4 right-4 z-[1000] bg-blue-600/90 backdrop-blur-sm px-3 py-2 rounded-lg shadow-lg text-white text-sm font-medium">
-        🗺️ Leaflet Maps (User)
+      {/* Map Controls */}
+      <div className="absolute bottom-4 left-4 z-[1000] flex flex-col space-y-2">
+        {/* Zoom Controls */}
+        <div className="flex flex-col bg-white rounded-lg shadow-lg overflow-hidden">
+          <button
+            onClick={zoomIn}
+            className="p-2 hover:bg-gray-100 border-b border-gray-200 transition-colors"
+            title="Zoom in"
+          >
+            <ZoomIn size={16} />
+          </button>
+          <button
+            onClick={zoomOut}
+            className="p-2 hover:bg-gray-100 transition-colors"
+            title="Zoom out"
+          >
+            <ZoomOut size={16} />
+          </button>
+        </div>
+
+        {/* Pan Controls */}
+        <div className="bg-white rounded-lg shadow-lg p-1">
+          <div className="grid grid-cols-3 gap-1">
+            <div></div>
+            <button
+              onClick={panUp}
+              className="p-1 hover:bg-gray-100 rounded transition-colors"
+              title="Pan up"
+            >
+              <ArrowUp size={14} />
+            </button>
+            <div></div>
+            <button
+              onClick={panLeft}
+              className="p-1 hover:bg-gray-100 rounded transition-colors"
+              title="Pan left"
+            >
+              <ArrowLeft size={14} />
+            </button>
+            <button
+              onClick={resetToUserLocation}
+              className="p-1 hover:bg-gray-100 rounded transition-colors"
+              title="Center on your location"
+            >
+              <Home size={14} />
+            </button>
+            <button
+              onClick={panRight}
+              className="p-1 hover:bg-gray-100 rounded transition-colors"
+              title="Pan right"
+            >
+              <ArrowRight size={14} />
+            </button>
+            <div></div>
+            <button
+              onClick={panDown}
+              className="p-1 hover:bg-gray-100 rounded transition-colors"
+              title="Pan down"
+            >
+              <ArrowDown size={14} />
+            </button>
+            <div></div>
+          </div>
+        </div>
       </div>
+
+      {/* CSS for animations */}
+      <style>{`
+        @keyframes pulse {
+          0% {
+            transform: scale(1);
+            opacity: 1;
+          }
+          50% {
+            transform: scale(1.2);
+            opacity: 0.8;
+          }
+          100% {
+            transform: scale(1);
+            opacity: 1;
+          }
+        }
+        
+        .custom-marker {
+          background: transparent !important;
+          border: none !important;
+        }
+        
+        .user-location-marker {
+          background: transparent !important;
+          border: none !important;
+        }
+        
+        .leaflet-popup-content-wrapper {
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .leaflet-popup-tip {
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+      `}</style>
     </div>
   );
-};
-
-export default LeafletMap;
+}
