@@ -37,12 +37,11 @@ export default function Discover({ user }: DiscoverProps) {
           </div>
         </div>
       </header>
-      
       {/* Main Content Area - Disabled Features Placeholder */}
       <div className="flex-1 flex items-center justify-center bg-gray-50">
         <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md mx-4">
           <div className="text-6xl mb-4">🚧</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Discover Features</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Q BAND RADAR</h2>
           <p className="text-gray-600 mb-4">
             All discover features have been temporarily disabled. They will be enabled one by one.
           </p>
@@ -58,7 +57,6 @@ export default function Discover({ user }: DiscoverProps) {
           </div>
         </div>
       </div>
-      
       {/* Bottom Navigation */}
       <BottomNav user={user} />
     </div>
