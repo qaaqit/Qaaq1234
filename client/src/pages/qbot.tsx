@@ -378,9 +378,6 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                                 <span className="text-2xl">⭐</span>
                               </div>
                               <h2 className="text-2xl font-bold text-gray-800 mb-3">QBOT Premium Required</h2>
-                              <p className="text-gray-600 leading-relaxed">
-                                QBOT is exclusively available for premium subscribers. Upgrade to access unlimited AI assistance for maritime professionals.
-                              </p>
                             </div>
 
                             <div className="mb-6 space-y-3 bg-gray-50 rounded-lg p-4">
