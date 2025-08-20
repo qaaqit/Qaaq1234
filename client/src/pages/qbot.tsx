@@ -363,48 +363,48 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                       {/* Premium Roadblock for Free Users - Redesigned */}
                       {!isPremiumUser && showRoadblock && (
                         <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
-                          <div className="max-w-sm w-[80%] bg-white rounded-xl shadow-2xl border border-orange-400 p-4 text-center relative max-h-[52vh] overflow-y-auto">
+                          <div className="max-w-xs w-[64%] bg-white rounded-lg shadow-xl border border-orange-400 p-3 text-center relative max-h-[42vh] overflow-y-auto">
                             {/* Minimize/Restore Chevron */}
                             <button
                               onClick={() => setShowRoadblock(false)}
-                              className="absolute top-3 right-3 w-10 h-10 bg-orange-100 hover:bg-orange-200 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110"
+                              className="absolute top-2 right-2 w-8 h-8 bg-orange-100 hover:bg-orange-200 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110"
                               title="Minimize roadblock to explore homepage"
                             >
-                              <ChevronDown className="w-6 h-6 text-orange-600" />
+                              <ChevronDown className="w-4 h-4 text-orange-600" />
                             </button>
 
-                            <div className="mb-4">
-                              <div className="w-12 h-12 mx-auto mb-3 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
-                                <span className="text-xl">⭐</span>
+                            <div className="mb-3">
+                              <div className="w-10 h-10 mx-auto mb-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-md">
+                                <span className="text-lg">⭐</span>
                               </div>
-                              <h2 className="text-xl font-bold text-gray-800 mb-2">QBOT Premium Required</h2>
+                              <h2 className="text-lg font-bold text-gray-800 mb-1">QBOT Premium Required</h2>
                             </div>
 
-                            <div className="mb-4 space-y-2 bg-gray-50 rounded-lg p-3">
+                            <div className="mb-3 space-y-1 bg-gray-50 rounded-md p-2">
                               <div className="flex items-center text-xs text-gray-700">
-                                <span className="text-green-500 mr-2">✓</span>
-                                <span>Unlimited QBOT responses</span>
+                                <span className="text-green-500 mr-1 text-sm">✓</span>
+                                <span>Unlimited responses</span>
                               </div>
                               <div className="flex items-center text-xs text-gray-700">
-                                <span className="text-green-500 mr-2">✓</span>
-                                <span>Multi-AI model access</span>
+                                <span className="text-green-500 mr-1 text-sm">✓</span>
+                                <span>Multi-AI access</span>
                               </div>
                               <div className="flex items-center text-xs text-gray-700">
-                                <span className="text-green-500 mr-2">✓</span>
-                                <span>Priority maritime assistance</span>
+                                <span className="text-green-500 mr-1 text-sm">✓</span>
+                                <span>Priority assistance</span>
                               </div>
                               <div className="flex items-center text-xs text-gray-700">
-                                <span className="text-green-500 mr-2">✓</span>
-                                <span>Advanced file attachments</span>
+                                <span className="text-green-500 mr-1 text-sm">✓</span>
+                                <span>File attachments</span>
                               </div>
                             </div>
 
-                            <div className="space-y-2">
+                            <div className="space-y-1">
                               <a
                                 href="https://rzp.io/rzp/jwQW9TW"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="block w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-semibold py-2 px-3 rounded-lg hover:from-yellow-600 hover:to-orange-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 text-sm"
+                                className="block w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium py-1.5 px-2 rounded-md hover:from-yellow-600 hover:to-orange-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 text-xs"
                               >
                                 Monthly - ₹451
                               </a>
@@ -412,20 +412,20 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                                 href="https://rzp.io/rzp/NAU59cv"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="block w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-semibold py-2 px-3 rounded-lg hover:from-yellow-600 hover:to-orange-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 text-sm"
+                                className="block w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium py-1.5 px-2 rounded-md hover:from-yellow-600 hover:to-orange-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 text-xs"
                               >
                                 Yearly - ₹2,611 <span className="text-yellow-200">(Save 50%)</span>
                               </a>
                               <button
                                 onClick={() => setLocation("/dm")}
-                                className="block w-full bg-gray-200 text-gray-700 font-medium py-2 px-3 rounded-lg hover:bg-gray-300 transition-colors border border-gray-300 text-sm"
+                                className="block w-full bg-gray-200 text-gray-700 font-medium py-1.5 px-2 rounded-md hover:bg-gray-300 transition-colors border border-gray-300 text-xs"
                               >
                                 Continue to QaaqConnect
                               </button>
                             </div>
 
-                            <p className="text-xs text-gray-500 mt-3 leading-relaxed">
-                              Secure payment via Razorpay. Premium activates automatically.
+                            <p className="text-xs text-gray-500 mt-2 leading-tight">
+                              Secure payment via Razorpay.
                             </p>
                           </div>
                         </div>
