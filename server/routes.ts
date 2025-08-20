@@ -446,17 +446,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Setup Google OAuth authentication
-  setupGoogleAuth(app);
-  
-  // Setup LinkedIn OAuth authentication
-  setupLinkedInAuth(app);
-  
-  // Setup Replit Auth FIRST to ensure proper middleware order
+  // Setup Replit Auth FIRST to ensure proper middleware order (this includes session middleware)
   if (process.env.REPLIT_DOMAINS && process.env.REPL_ID) {
     try {
       const { setupAuth, isAuthenticated } = await import('./replitAuth.js');
       await setupAuth(app);
+      
+      // NOW setup OAuth providers AFTER session middleware is available
+      setupGoogleAuth(app);
+      setupLinkedInAuth(app);
       
       // CRITICAL: Add session bridge middleware AFTER passport is set up
       // This ensures req.user is populated before the bridge runs
