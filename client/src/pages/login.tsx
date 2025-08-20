@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Anchor, Eye, EyeOff, Mail, Lock, ChevronUp, ChevronDown, Crown, Search } from "lucide-react";
+import { ChevronUp, ChevronDown, Crown, Search } from "lucide-react";
 import qaaqLogoPath from "@assets/ICON_1754950288816.png";
 import qaaqLogo from '@assets/qaaq-logo.png';
 import { User } from "@/lib/auth";
@@ -18,14 +18,7 @@ interface LoginPageProps {
 export default function LoginPage({ onSuccess }: LoginPageProps) {
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [formData, setFormData] = useState({
-    qaaqId: "",
-    password: ""
-  });
-  const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
   const [glossaryEntries, setGlossaryEntries] = useState<any[]>([]);
   const [glossaryLoading, setGlossaryLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -97,103 +90,7 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
     setDisplayCount(20);
   }, [searchTerm]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
 
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: formData.qaaqId.trim(),
-          password: formData.password,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        // Store token and user data (using consistent auth_token key)
-        localStorage.setItem('auth_token', data.token);
-        localStorage.setItem('qaaq_user', JSON.stringify(data.user));
-        
-        onSuccess(data.user);
-        
-        toast({
-          title: "Welcome back!",
-          description: `Logged in successfully as ${data.user.fullName}`,
-        });
-        
-        navigate('/qbot');
-      } else {
-        toast({
-          title: "Login Failed",
-          description: data.error || "Invalid credentials. Please check your QAAQ ID and password.",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      toast({
-        title: "Login Error",
-        description: "Unable to connect to server. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleForgotPassword = async () => {
-    if (!formData.qaaqId.trim()) {
-      toast({
-        title: "QAAQ ID Required",
-        description: "Please enter your QAAQ ID first to reset your password",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setForgotPasswordLoading(true);
-    try {
-      const response = await fetch('/api/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: formData.qaaqId.trim()
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        toast({
-          title: "Password Reset Email Sent",
-          description: "Check your email for a temporary password to log in",
-        });
-      } else {
-        toast({
-          title: "Reset Failed",
-          description: data.message || "Unable to send password reset email",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error('Forgot password error:', error);
-      toast({
-        title: "Reset Error",
-        description: "Unable to process password reset. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setForgotPasswordLoading(false);
-    }
-  };
 
   // Load glossary entries on component mount
   useEffect(() => {
@@ -386,85 +283,14 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
             <p className="text-gray-600">Sign in to QaaqConnect</p>
           </div>
 
-        {/* Login Form */}
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* QAAQ ID */}
-          <div>
-            <Label htmlFor="qaaqId" className="text-sm font-medium text-gray-700 mb-2 block">Whatsapp/ Email *</Label>
-            <div className="relative">
-              <Input
-                id="qaaqId"
-                type="text"
-                value={formData.qaaqId}
-                onChange={(e) => setFormData({ ...formData, qaaqId: e.target.value })}
-                className="w-full h-11 text-base pl-10"
-                disabled={loading}
-                required
-              />
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-            </div>
-            <p className="text-xs text-gray-500 mt-1">This could be country code + WhatsApp number</p>
-          </div>
-
-          {/* Password */}
-          <div>
-            <Label htmlFor="password" className="text-sm font-medium text-gray-700 mb-2 block">
-              Password *
-            </Label>
-            <div className="relative">
-              <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder="Enter your password"
-                className="w-full h-11 text-base pl-10 pr-10"
-                disabled={loading}
-                required
-              />
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-          </div>
-
-          {/* Submit Button */}
-          <Button 
-            type="submit" 
-            className="w-full h-12 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white font-semibold"
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <i className="fas fa-spinner fa-spin mr-2"></i>
-                Signing in...
-              </>
-            ) : (
-              <>
-                <Anchor className="w-4 h-4 mr-2" />
-                Sign In with QAAQ
-              </>
-            )}
-          </Button>
-
-          {/* Divider */}
-          <div className="flex items-center my-6">
-            <div className="flex-1 border-t border-gray-200"></div>
-            <span className="px-4 text-sm text-gray-500 bg-white">or</span>
-            <div className="flex-1 border-t border-gray-200"></div>
-          </div>
+        {/* OAuth Authentication Options */}
+        <div className="space-y-4">
 
           {/* Replit Auth Button */}
           <Button 
             type="button"
             onClick={() => window.location.href = '/api/login'}
             className="w-full h-12 bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 font-semibold"
-            disabled={loading}
             data-testid="button-replit-auth"
           >
             <div className="flex items-center justify-center">
@@ -480,7 +306,6 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
             type="button"
             onClick={() => window.location.href = '/api/auth/google'}
             className="w-full h-12 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 font-semibold shadow-sm"
-            disabled={loading}
             data-testid="button-google-auth"
           >
             <div className="flex items-center justify-center">
@@ -495,24 +320,16 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
           </Button>
 
 
-          {/* Forgot Password and Signup Links */}
-          <div className="flex justify-between items-center mt-4 text-sm">
-            <button
-              type="button"
-              onClick={handleForgotPassword}
-              disabled={forgotPasswordLoading}
-              className="text-orange-600 hover:text-orange-700 underline transition-colors disabled:opacity-50"
-            >
-              {forgotPasswordLoading ? "Sending..." : "Forgot password?"}
-            </button>
+          {/* Signup Link */}
+          <div className="text-center mt-6">
             <button
               onClick={() => navigate('/register')}
-              className="text-orange-600 hover:text-orange-800 font-semibold"
+              className="text-orange-600 hover:text-orange-800 font-semibold text-sm"
             >
-              New User Signup
+              New User? Sign up here
             </button>
           </div>
-        </form>
+        </div>
 
         {/* Footer */}
         <div className="mt-8 text-center">
