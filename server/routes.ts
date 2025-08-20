@@ -469,25 +469,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           let user = null;
           
-          // Check session authentication (Replit/Google Auth) only
+          console.log('🔍 Auth check - Session data:', {
+            hasUser: !!req.user,
+            hasSession: !!req.session,
+            hasPassport: !!req.session?.passport,
+            userKeys: req.user ? Object.keys(req.user) : [],
+            sessionKeys: req.session ? Object.keys(req.session) : []
+          });
+          
+          // Check passport session first (Google Auth)
+          if (req.session?.passport?.user) {
+            user = req.session.passport.user;
+            console.log('✅ Found user in passport session:', user.fullName);
+            return res.json(user);
+          }
+          
+          // Check Replit Auth session
           if (req.user) {
             const sessionUserId = (req.user as any).claims?.sub || (req.user as any).id || (req.user as any).userId;
             if (sessionUserId) {
               try {
                 user = await identityResolver.resolveUserByAnyMethod(sessionUserId, 'replit');
+                if (user) {
+                  console.log('✅ Found user via Replit auth:', user.fullName);
+                  return res.json(user);
+                }
               } catch (error) {
-                console.log('Error resolving user:', error);
+                console.log('Error resolving Replit user:', error);
               }
             }
           }
           
-          if (user) {
-            return res.json(user);
-          }
-          
+          console.log('❌ No authentication found');
           return res.status(401).json({ 
             message: 'No valid authentication found',
-            hasSession: !!req.user
+            hasSession: !!req.user || !!req.session?.passport
           });
           
         } catch (error) {

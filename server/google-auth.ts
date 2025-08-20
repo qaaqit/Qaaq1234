@@ -215,19 +215,26 @@ export function setupGoogleAuth(app: Express) {
       // Find or create user
       const user = await findOrCreateGoogleUser(googleUser);
       
-      // Set up passport session for the user
-      req.login(user, (err) => {
-        if (err) {
-          console.error('❌ GOOGLE AUTH: Failed to establish session:', err);
-          return res.redirect('/login?error=session_failed');
-        }
-        
-        console.log('✅ GOOGLE AUTH: Session established for user:', user.fullName);
-        console.log('✅ GOOGLE AUTH: Session ID:', req.sessionID);
-        
-        // Redirect to QBOT Chat as per user preference (home page after login)
-        res.redirect('/qbot');
-      });
+      // Manually set up session data for the user (since passport may not be available)
+      if (req.session) {
+        // Cast to any to avoid TypeScript issues with passport property
+        (req.session as any).passport = { user: user };
+        req.session.save((err) => {
+          if (err) {
+            console.error('❌ GOOGLE AUTH: Failed to save session:', err);
+            return res.redirect('/login?error=session_failed');
+          }
+          
+          console.log('✅ GOOGLE AUTH: Session established for user:', user.fullName);
+          console.log('✅ GOOGLE AUTH: Session ID:', req.sessionID);
+          
+          // Redirect to QBOT Chat as per user preference (home page after login)
+          res.redirect('/qbot');
+        });
+      } else {
+        console.error('❌ GOOGLE AUTH: No session available');
+        res.redirect('/login?error=no_session');
+      }
       
     } catch (error) {
       console.error('Error in Google OAuth callback:', error);
