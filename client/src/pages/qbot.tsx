@@ -34,7 +34,11 @@ export default function QBOTPage({ user }: QBOTPageProps) {
   const [qBotMessages, setQBotMessages] = useState<Message[]>([]);
   const [isQBotTyping, setIsQBotTyping] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
-  const [activeTab, setActiveTab] = useState("chat");
+  // Use localStorage to persist tab state across re-renders
+  const [activeTab, setActiveTab] = useState(() => {
+    const saved = localStorage.getItem('qbot-active-tab');
+    return saved || "chat";
+  });
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showRoadblock, setShowRoadblock] = useState(true);
 
@@ -46,6 +50,9 @@ export default function QBOTPage({ user }: QBOTPageProps) {
       timestamp: new Date().toISOString(),
       componentRenderCount: Math.random().toString(36).substr(2, 9) // Unique render ID
     });
+    
+    // Persist tab state to localStorage
+    localStorage.setItem('qbot-active-tab', newTab);
     setActiveTab(newTab);
     
     // Extra logging for questions tab
@@ -70,13 +77,13 @@ export default function QBOTPage({ user }: QBOTPageProps) {
   const isPremium = (subscriptionStatus as any)?.isPremium || (subscriptionStatus as any)?.isSuperUser;
   const isPremiumUser = subscriptionStatus && isPremium;
 
-  // Fetch WhatsApp chat history when component loads
+  // Fetch WhatsApp chat history when component loads - use user.id as stable reference
   useEffect(() => {
     const fetchWhatsAppHistory = async () => {
       if (!user?.id) return;
 
       try {
-        console.log(`📱 Fetching WhatsApp history for user: ${user.id}`);
+        console.log(`📱 Fetching WhatsApp history for user: ${user.id} [Component render ID: ${Math.random().toString(36).substr(2, 9)}]`);
         const response = await fetch(`/api/whatsapp-history/${encodeURIComponent(user.id)}`);
         
         if (response.ok) {
