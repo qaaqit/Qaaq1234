@@ -52,14 +52,13 @@ export default function QBOTChatHeader({ onClear, isAdmin = false }: QBOTChatHea
   });
   const [editText, setEditText] = useState('');
 
-  // DISABLED POLLING FOR TESTING STABILITY - no 30-second refetch intervals
-  // const { data: subscriptionStatus } = useQuery({
-  //   queryKey: ["/api/user/subscription-status"],
-  //   retry: 1,
-  //   staleTime: 30 * 1000, // Refresh every 30 seconds to catch new payments
-  //   refetchInterval: 30 * 1000
-  // });
-  const subscriptionStatus = null;
+  // Check user premium status for crown display
+  const { data: subscriptionStatus } = useQuery({
+    queryKey: ["/api/user/subscription-status"],
+    retry: 1,
+    staleTime: 30 * 1000, // Refresh every 30 seconds to catch new payments
+    refetchInterval: 30 * 1000
+  });
 
   const isPremium = (subscriptionStatus as any)?.isPremium || (subscriptionStatus as any)?.isSuperUser;
 

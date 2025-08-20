@@ -12,13 +12,13 @@ export function AdminSubscriptionPanel() {
   // Fetch subscription data
   const { data: subscriptions, isLoading: subscriptionsLoading } = useQuery({
     queryKey: ['/api/admin/subscriptions'],
-    refetchInterval: false, // DISABLED for stability testing
+    refetchInterval: 30000, // Refresh every 30 seconds
   });
 
   // Fetch payment analytics
   const { data: analytics, isLoading: analyticsLoading } = useQuery({
     queryKey: ['/api/admin/payment-analytics'],
-    refetchInterval: false, // DISABLED for stability testing
+    refetchInterval: 60000, // Refresh every minute
   });
 
   if (subscriptionsLoading || analyticsLoading) {

@@ -102,9 +102,10 @@ export class GlossaryAutoUpdateService {
           q.created_at,
           q.views,
           q.answer_count,
-          a.content as answer
+          a.content as answer,
+          a.is_best_answer
         FROM questions q
-        LEFT JOIN answers a ON q.id = a.question_id
+        LEFT JOIN answers a ON q.id = a.question_id AND a.is_best_answer = true
         WHERE 
           (
             LOWER(q.content) LIKE '%what is%' OR
@@ -118,7 +119,7 @@ export class GlossaryAutoUpdateService {
             NOW() - INTERVAL '24 hours'
           )
           AND q.is_hidden = false
-        ORDER BY q.created_at DESC, a.created_at DESC
+        ORDER BY q.created_at DESC
         LIMIT 100
       `);
 

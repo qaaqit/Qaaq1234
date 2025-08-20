@@ -110,11 +110,10 @@ export default function PremiumPage() {
 
   const queryClient = useQueryClient();
 
-  // DISABLED FOR TESTING STABILITY - no auth requests
-  // const { data: user } = useQuery<User>({
-  //   queryKey: ["/api/auth/user"],
-  // });
-  const user = null;
+  // Fetch current user
+  const { data: user } = useQuery<User>({
+    queryKey: ["/api/auth/user"],
+  });
 
   // Fetch subscription plans
   const { data: plansData, isLoading: plansLoading } = useQuery({
@@ -500,7 +499,7 @@ export default function PremiumPage() {
                   <CardDescription>
                     {formatPrice(plans.premium?.yearly?.amount || 261100)} per
                     year
-                    <span className="block text-sm mt-1 text-[#23252e]">
+                    <span className="block text-sm text-green-600 mt-1">
                       Save{" "}
                       {
                         calculateSavings(

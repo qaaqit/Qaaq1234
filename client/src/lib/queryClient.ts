@@ -49,9 +49,17 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    // COMPLETELY DISABLED FOR STABILITY TESTING - prevent ALL requests
-    console.log('🚫 React Query BLOCKED request to:', queryKey.join("/"));
-    throw new Error('React Query temporarily disabled for console stability');
+    const res = await fetch(queryKey.join("/") as string, {
+      headers: getAuthHeaders(),
+      credentials: "include",
+    });
+
+    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+      return null;
+    }
+
+    await throwIfResNotOk(res);
+    return await res.json();
   };
 
 export const queryClient = new QueryClient({
@@ -62,7 +70,6 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       staleTime: Infinity,
       retry: false,
-      enabled: false, // COMPLETELY DISABLED React Query for stability testing
     },
     mutations: {
       retry: false,

@@ -79,12 +79,10 @@ export default function ChatPage() {
             headers.Authorization = `Bearer ${token}`;
           }
           
-          // DISABLED FOR TESTING STABILITY - no auth requests
-          // const response = await fetch('/api/auth/user', {
-          //   credentials: 'include',
-          //   headers,
-          // });
-          const response = { ok: false };
+          const response = await fetch('/api/auth/user', {
+            credentials: 'include',
+            headers,
+          });
           
           if (response.ok) {
             const replitUser = await response.json();
