@@ -46,7 +46,6 @@ const profileUpdateSchema = z.object({
   password: z.string().min(1, "Password is required"),     // Password field
   rank: z.string().optional(),         // Will map to maritime_rank
   shipName: z.string().optional(),     // Will map to current_lastShip  
-  imoNumber: z.string().optional(),    // Will map to current_ship_imo
   city: z.string().optional(),         // Will map to current_city
   country: z.string().optional(),      // Will map to current_country
   countryCode: z.string().optional(),  // Country code for WhatsApp
@@ -77,7 +76,6 @@ export default function Profile() {
       password: profile.password || '',
       rank: profile.rank || '',
       shipName: profile.currentLastShip || '',
-      imoNumber: profile.imoNumber || '',
       city: profile.city || '',
       country: profile.country || '',
       countryCode: profile.countryCode || '',
@@ -88,7 +86,6 @@ export default function Profile() {
       password: '',
       rank: '',
       shipName: '',
-      imoNumber: '',
       city: '',
       country: '',
       countryCode: '',
@@ -127,6 +124,14 @@ export default function Profile() {
 
   const onSubmit = (data: ProfileUpdate) => {
     updateProfileMutation.mutate(data);
+  };
+
+  // Handle Enter key press to save profile when editing
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter' && isEditing && !updateProfileMutation.isPending) {
+      event.preventDefault();
+      form.handleSubmit(onSubmit)();
+    }
   };
 
   // Show loading state
@@ -180,7 +185,10 @@ export default function Profile() {
               </Button>
               <div>
                 <h1 className="text-2xl font-bold text-navy">CV / Profile</h1>
-                <p className="text-sm text-gray-600">QAAQ Maritime Professional Profile</p>
+                <p className="text-sm text-gray-600">
+                  QAAQ Maritime Professional Profile
+                  {isEditing && <span className="ml-2 text-orange-600">• Press Enter to save changes</span>}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -216,7 +224,7 @@ export default function Profile() {
       </div>
       <div className="max-w-4xl mx-auto px-4 py-8">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} onKeyDown={handleKeyDown} className="space-y-6">
             
             {/* Personal Information */}
             <Card>
@@ -399,19 +407,7 @@ export default function Profile() {
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="imoNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>IMO Number</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="9123456" disabled={!isEditing} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+
                 </div>
               </CardContent>
             </Card>

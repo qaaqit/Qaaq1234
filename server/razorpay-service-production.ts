@@ -353,73 +353,37 @@ export class RazorpayService {
         };
       }
 
-      // For premium subscriptions, use the fixed checkout URL
+      // For premium subscriptions, create dynamic subscription with user identification
       const premiumPlanConfig = planConfig as PremiumPlan;
       
-      // Use fixed checkout URL if available, otherwise create subscription
-      if (premiumPlanConfig.checkoutUrl) {
-        // Generate a unique subscription ID for tracking
-        const subscriptionId = `fixed_sub_${userId}_${Date.now()}`;
-        
-        // Store the subscription in our database with the fixed checkout URL
-        const result = await this.executeWithRetry(async () => {
-          return await pool.query(`
-            INSERT INTO subscriptions (
-              user_id, subscription_type, razorpay_subscription_id, razorpay_plan_id, 
-              status, amount, currency, short_url, notes
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
-            RETURNING *
-          `, [
-            userId,
-            planType,
-            subscriptionId, // Use our generated ID
-            planId,
-            'created', // Initial status
-            planConfig.amount,
-            'INR',
-            premiumPlanConfig.checkoutUrl, // Use fixed URL
-            JSON.stringify({ 
-              user_id: userId, // Key field for webhook identification
-              userId, 
-              planType, 
-              billingPeriod, 
-              source: 'fixed_checkout' 
-            })
-          ]);
-        }, `Create subscription for user ${userId}`);
-
-        console.log('✅ Subscription created with fixed checkout URL:', subscriptionId);
-
-        return {
-          subscription: result.rows[0],
-          checkoutUrl: premiumPlanConfig.checkoutUrl, // Use your provided URL
-          razorpaySubscriptionId: subscriptionId,
-          razorpayOrderId: null,
-          planType: planType,
-          amount: planConfig.amount,
-          status: 'created'
-        };
-      }
-
-      // Fallback: create dynamic subscription if no fixed URL
-      const subscriptionData = {
+      // Always create dynamic subscription for proper user identification
+      // Generate a unique tracking UUID for this subscription
+      const trackingUuid = `${userId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Get user email for identification
+      const userEmailResult = await pool.query('SELECT email FROM users WHERE id = $1', [userId]);
+      const userEmail = userEmailResult.rows[0]?.email || '';
+      
+      // Create subscription with user identification in notes
+      const premiumSubscriptionData = {
         plan_id: planId,
-        total_count: premiumPlanConfig.period === 'yearly' ? 1 : 12, // 1 year for yearly, 12 months for monthly
+        total_count: premiumPlanConfig.period === 'yearly' ? 1 : 12,
         quantity: 1,
         customer_notify: 1,
         notes: {
-          user_id: userId, // Key field for webhook identification
-          userId: userId, // Backup field
-          planType: planType,
-          billingPeriod: billingPeriod,
-          source: 'qaaq_connect_app'
+          user_id: userId, // Primary identification
+          tracking_uuid: trackingUuid, // Secondary identification
+          plan_type: planType,
+          billing_period: billingPeriod,
+          source: 'qaaq_connect_app',
+          user_email: userEmail // Add email for identification
         }
       };
 
-      const razorpaySubscription = await razorpayClient!.createSubscription(subscriptionData);
-
-      // Store the subscription in our database with enhanced reliability and retry logic
-      const result = await this.executeWithRetry(async () => {
+      const premiumRazorpaySubscription = await razorpayClient!.createSubscription(premiumSubscriptionData);
+      
+      // Store the subscription in our database with UUID tracking
+      const premiumResult = await this.executeWithRetry(async () => {
         return await pool.query(`
           INSERT INTO subscriptions (
             user_id, subscription_type, razorpay_subscription_id, razorpay_plan_id, 
@@ -429,23 +393,26 @@ export class RazorpayService {
         `, [
           userId,
           planType,
-          razorpaySubscription.id,
+          premiumRazorpaySubscription.id,
           planId,
-          razorpaySubscription.status,
+          premiumRazorpaySubscription.status,
           planConfig.amount,
           'INR',
-          razorpaySubscription.short_url,
-          JSON.stringify(razorpaySubscription.notes)
+          premiumRazorpaySubscription.short_url,
+          JSON.stringify(premiumRazorpaySubscription.notes)
         ]);
       }, `Create subscription for user ${userId}`);
 
-      console.log('✅ Subscription created:', razorpaySubscription.id);
+      console.log('✅ Subscription created with UUID tracking:', premiumRazorpaySubscription.id, 'UUID:', trackingUuid);
 
       return {
-        subscription: result.rows[0],
-        checkoutUrl: razorpaySubscription.short_url,
-        razorpaySubscriptionId: razorpaySubscription.id,
-        isOrderMode: false
+        subscription: premiumResult.rows[0],
+        checkoutUrl: premiumRazorpaySubscription.short_url,
+        razorpaySubscriptionId: premiumRazorpaySubscription.id,
+        razorpayOrderId: null,
+        planType: planType,
+        amount: planConfig.amount,
+        status: 'created'
       };
     } catch (error) {
       console.error('❌ Failed to create subscription:', error);
@@ -593,10 +560,7 @@ export class RazorpayService {
       const statusResult = await pool.query(`
         SELECT 
           is_premium,
-          COALESCE(is_super_user, false) as is_super_user,
           premium_expires_at,
-          COALESCE(super_user_expires_at, NULL) as super_user_expires_at,
-          COALESCE(questions_remaining, 0) as questions_remaining,
           subscription_type
         FROM user_subscription_status 
         WHERE user_id = $1
@@ -610,16 +574,12 @@ export class RazorpayService {
         const isPremiumValid = status.is_premium && 
           (!status.premium_expires_at || new Date(status.premium_expires_at) > now);
         
-        // Check if super user is still valid
-        const isSuperUserValid = status.is_super_user && 
-          (!status.super_user_expires_at || new Date(status.super_user_expires_at) > now);
-
         return {
           isPremium: isPremiumValid || false,
-          isSuperUser: isSuperUserValid || false,
+          isSuperUser: false, // Super user feature not implemented in current schema
           subscriptionType: status.subscription_type,
           premiumExpiresAt: status.premium_expires_at,
-          questionsRemaining: status.questions_remaining
+          questionsRemaining: 0 // Feature not implemented in current schema
         };
       }
 
@@ -926,6 +886,28 @@ export class RazorpayService {
           }
         } catch (error) {
           console.error('❌ Error looking up user by notes:', error);
+        }
+      }
+
+      // Method 1.5: Check for tracking_uuid in payment notes (secondary reliable method)
+      if (!userId && payment.notes && payment.notes.tracking_uuid) {
+        console.log(`🏷️ Found tracking_uuid in payment notes: ${payment.notes.tracking_uuid}`);
+        try {
+          const uuidResult = await pool.query(`
+            SELECT user_id FROM subscriptions WHERE tracking_uuid = $1 LIMIT 1
+          `, [payment.notes.tracking_uuid]);
+          if (uuidResult.rows.length > 0) {
+            const userResult = await pool.query(`
+              SELECT id, full_name, email, whatsapp_number as phone FROM users WHERE id = $1 LIMIT 1
+            `, [uuidResult.rows[0].user_id]);
+            if (userResult.rows.length > 0) {
+              userId = userResult.rows[0].id;
+              userInfo = userResult.rows[0];
+              identificationMethod = 'tracking_uuid';
+            }
+          }
+        } catch (error) {
+          console.error('❌ Error looking up user by tracking UUID:', error);
         }
       }
 

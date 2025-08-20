@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Crown } from "lucide-react";
+import { ChevronDown, ChevronUp, Crown } from "lucide-react";
 import UserDropdown from "@/components/user-dropdown";
 import QBOTChatContainer from "@/components/qbot-chat/QBOTChatContainer";
 import QBOTChatHeader from "@/components/qbot-chat/QBOTChatHeader";
@@ -36,18 +36,23 @@ export default function QBOTPage({ user }: QBOTPageProps) {
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [activeTab, setActiveTab] = useState("chat");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showRoadblock, setShowRoadblock] = useState(true);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
-  // Check user premium status
-  const { data: subscriptionStatus } = useQuery({
+  // Premium status check - only triggered when needed (not on page load)
+  const { data: subscriptionStatus, isLoading: isCheckingPremium, refetch: checkPremiumStatus } = useQuery({
     queryKey: ["/api/user/subscription-status"],
+    enabled: false, // Don't check on page load
     retry: 1,
-    staleTime: 30 * 1000, // Refresh every 30 seconds to catch new payments
-    refetchInterval: 30 * 1000
+    staleTime: 10 * 60 * 1000, // 10 minutes cache
+    refetchInterval: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   const isPremium = (subscriptionStatus as any)?.isPremium || (subscriptionStatus as any)?.isSuperUser;
+  const isPremiumUser = subscriptionStatus && isPremium;
 
   // Fetch WhatsApp chat history when component loads
   useEffect(() => {
@@ -104,6 +109,15 @@ export default function QBOTPage({ user }: QBOTPageProps) {
   }, [user?.id, toast]);
 
   const handleSendQBotMessage = async (messageText: string, attachments?: string[], isPrivate?: boolean, aiModels?: string[]) => {
+    // Check premium status only when user tries to send a message
+    if (!subscriptionStatus) {
+      try {
+        await checkPremiumStatus();
+      } catch (error) {
+        console.error('Failed to check premium status:', error);
+      }
+    }
+
     const newMessage: Message = {
       id: Date.now().toString(),
       text: messageText,
@@ -126,7 +140,8 @@ export default function QBOTPage({ user }: QBOTPageProps) {
           message: messageText, 
           attachments: attachments,
           isPrivate: isPrivate,
-          aiModels: aiModels || ['chatgpt']
+          aiModels: aiModels || ['chatgpt'],
+          isPremium: true
         })
       });
 
@@ -220,6 +235,8 @@ export default function QBOTPage({ user }: QBOTPageProps) {
       setIsQBotTyping(false);
     }
   };
+
+  // Remove loading screen - premium check now happens only when needed
 
   return (
     <div className="h-[90vh] bg-gradient-to-br from-orange-50 via-white to-yellow-50 flex flex-col">
@@ -342,7 +359,85 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                   
                   {/* Chat Area with Engineering Grid Background */}
                   <QBOTChatArea>
-                    <div className="flex flex-col h-full p-4">
+                    <div className="flex flex-col h-full p-4 relative">
+                      {/* Premium Roadblock for Free Users - Contained within chat area */}
+                      {!isPremiumUser && showRoadblock && (
+                        <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-40 flex items-center justify-center">
+                          <div className="w-48 bg-white rounded-lg shadow-xl border border-orange-400 p-2 text-center relative">
+                            {/* Minimize/Restore Chevron */}
+                            <button
+                              onClick={() => setShowRoadblock(false)}
+                              className="absolute top-1 right-1 w-5 h-5 bg-orange-100 hover:bg-orange-200 rounded-full flex items-center justify-center transition-all duration-200"
+                              title="Minimize"
+                            >
+                              <ChevronDown className="w-2.5 h-2.5 text-orange-600" />
+                            </button>
+
+                            {/* Compact Header */}
+                            <div className="mb-1.5">
+                              <div className="w-4 h-4 mx-auto mb-0.5 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                                <span className="text-xs">⭐</span>
+                              </div>
+                              <h2 className="text-xs font-bold text-gray-800">QBOT Premium</h2>
+                            </div>
+
+                            {/* Compact Features - 2x2 Grid */}
+                            <div className="mb-1.5 grid grid-cols-2 gap-0.5 bg-gray-50 rounded p-1 text-xs">
+                              <div className="flex items-center text-gray-700">
+                                <span className="text-green-500 mr-0.5">✓</span>
+                                <span className="text-xs">Unlimited</span>
+                              </div>
+                              <div className="flex items-center text-gray-700">
+                                <span className="text-green-500 mr-0.5">✓</span>
+                                <span className="text-xs">Multi-AI</span>
+                              </div>
+                              <div className="flex items-center text-gray-700">
+                                <span className="text-green-500 mr-0.5">✓</span>
+                                <span className="text-xs">Priority</span>
+                              </div>
+                              <div className="flex items-center text-gray-700">
+                                <span className="text-green-500 mr-0.5">✓</span>
+                                <span className="text-xs">Files</span>
+                              </div>
+                            </div>
+
+                            {/* Compact Buttons */}
+                            <div className="flex gap-0.5">
+                              <a
+                                href="https://rzp.io/rzp/jwQW9TW"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium py-1 px-0.5 rounded text-xs text-center leading-none"
+                              >
+                                Monthly<br />₹451
+                              </a>
+                              <a
+                                href="https://rzp.io/rzp/NAU59cv"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium py-1 px-0.5 rounded text-xs text-center leading-none"
+                              >
+                                Yearly<br />₹2,611
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Minimized Roadblock Indicator */}
+                      {!isPremiumUser && !showRoadblock && (
+                        <div className="absolute top-4 right-4 z-40">
+                          <button
+                            onClick={() => setShowRoadblock(true)}
+                            className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-4 py-2 rounded-full shadow-lg flex items-center space-x-2 hover:from-yellow-600 hover:to-orange-600 transition-all duration-200"
+                            title="View premium upgrade options"
+                          >
+                            <span className="text-sm font-medium">⭐ Upgrade</span>
+                            <ChevronUp className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
+
                       {/* Messages or Welcome State */}
                       {isLoadingHistory ? (
                         <div className="flex-1 flex items-center justify-center">

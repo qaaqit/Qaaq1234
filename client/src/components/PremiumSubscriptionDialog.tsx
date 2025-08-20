@@ -211,7 +211,7 @@ export function PremiumSubscriptionDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-2xl">
             <Crown className="h-6 w-6 text-orange-500" />
-            QAAQ CHIEF (Most Advanced Version)
+            premium
           </DialogTitle>
           <DialogDescription>Advanced reasoning model</DialogDescription>
         </DialogHeader>
@@ -556,7 +556,7 @@ export function PremiumSubscriptionDialog({
                           data-testid="button-pay-card-monthly"
                         >
                           <ExternalLink className="h-4 w-4" />
-                          Pay via Card - ₹551
+                          Pay via Card - ₹451
                         </a>
                         <a
                           href="https://rzp.io/rzp/QACUUpcD"
@@ -566,7 +566,7 @@ export function PremiumSubscriptionDialog({
                           data-testid="button-pay-upi-monthly"
                         >
                           <ExternalLink className="h-4 w-4" />
-                          Pay via UPI - ₹551
+                          Pay via UPI - ₹451
                         </a>
                       </div>
                     </div>

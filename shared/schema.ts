@@ -796,6 +796,7 @@ export const subscriptions = pgTable("subscriptions", {
   amount: integer("amount").notNull(), // Amount in paise (smallest currency unit)
   currency: text("currency").notNull().default("INR"),
   notes: jsonb("notes"), // Additional metadata
+  trackingUuid: text("tracking_uuid").unique(), // UUID for payment tracking and user identification
   createdAt: timestamp("created_at").default(sql`now()`),
   updatedAt: timestamp("updated_at").default(sql`now()`),
 });

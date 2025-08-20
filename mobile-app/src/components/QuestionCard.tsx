@@ -50,6 +50,34 @@ export default function QuestionCard({ question, onPress }: QuestionCardProps) {
     }
   };
 
+  const cleanQuestionContent = (content: string): string => {
+    let cleanContent = content;
+    
+    // Remove QBOT patterns
+    const qbotPattern = /^\[QBOT[^\]]*\]\s*/;
+    cleanContent = cleanContent.replace(qbotPattern, '');
+    
+    // Remove user patterns
+    const userPattern = /^User:\s*[^(]*\(via Q[^)]*\)\s*/;
+    cleanContent = cleanContent.replace(userPattern, '');
+    
+    // Remove category patterns like "Category: General - General Equipment. Question"
+    const categoryPattern = /^Category:\s*[^\.]*\.\s*(Question:?\s*)?/i;
+    cleanContent = cleanContent.replace(categoryPattern, '');
+    
+    // Remove additional category-like patterns and numbering
+    const numberPattern = /^\d+:\s*/;
+    cleanContent = cleanContent.replace(numberPattern, '');
+    
+    cleanContent = cleanContent.replace(/^\s+/, '');
+    
+    if (!cleanContent.trim()) {
+      return content;
+    }
+    
+    return cleanContent.trim();
+  };
+
   const displayName = question.authorWhatsappDisplayName || question.authorName;
 
   return (
@@ -102,7 +130,7 @@ export default function QuestionCard({ question, onPress }: QuestionCardProps) {
 
         {/* Content */}
         <Text style={styles.content} numberOfLines={3}>
-          {question.content}
+          {cleanQuestionContent(question.content)}
         </Text>
 
         {/* Images */}
