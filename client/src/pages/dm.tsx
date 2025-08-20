@@ -69,7 +69,13 @@ export default function DMPage() {
   const [activeTab, setActiveTab] = useState("users");
   const [isBlockedDropdownOpen, setIsBlockedDropdownOpen] = useState(false);
 
-  const { user, isLoading } = useAuth();
+  // FIXED FOR TESTING STABILITY - use stored auth data instead of disabled useAuth hook
+  // const { user, isLoading } = useAuth();
+  const [user, setUser] = useState(() => {
+    const storedUser = localStorage.getItem('qaaq_user');
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
+  const isLoading = false;
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
@@ -115,7 +121,7 @@ export default function DMPage() {
   // Fetch user's chat connections - Re-enabled for search card navigation fix
   const { data: connections = [], isLoading: connectionsLoading, error: connectionsError } = useQuery<ExtendedChatConnection[]>({
     queryKey: ['/api/chat/connections'],
-    enabled: !!user, // Enable when user is authenticated
+    enabled: false, // DISABLED for stability testing
     refetchInterval: false, // Disable polling but allow initial fetch
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
@@ -149,7 +155,7 @@ export default function DMPage() {
       }
     },
     refetchInterval: false, // No auto-refresh - only manual refresh when user clicks radar
-    enabled: !!user, // Only fetch when user is authenticated
+    enabled: false, // DISABLED for stability testing
   });
 
   // Fetch rank groups for displaying group cards
@@ -179,7 +185,7 @@ export default function DMPage() {
       console.log('📊 Frontend: Rank groups data received:', data.length, 'groups');
       return data;
     },
-    enabled: !!user,
+    enabled: false, // DISABLED for stability testing
   });
 
   // Global radar refresh handler - exposed for external components

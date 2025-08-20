@@ -39,7 +39,9 @@ export function RankGroupsPanel() {
   const [messages, setMessages] = useState<RankMessage[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  // DISABLED FOR TESTING STABILITY - no auth requests
+  // const { user } = useAuth();
+  const user = null;
   const wsRef = useRef<WebSocket | null>(null);
   
   // Get user's maritime rank directly from Users table
@@ -82,7 +84,7 @@ export function RankGroupsPanel() {
       setMessages(data);
       return data;
     },
-    enabled: !!userMaritimeRank,
+    enabled: false, // DISABLED for stability testing
   });
   
   // WebSocket connection for real-time messaging

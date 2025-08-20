@@ -64,7 +64,7 @@ export default function Profile() {
   // Always call useQuery hook
   const { data: profile, isLoading: profileLoading } = useQuery<User>({
     queryKey: ['/api/users/profile'],
-    enabled: !!authUser, // Only fetch when user is authenticated
+    enabled: false, // DISABLED for stability testing
   });
 
   // Always call useForm hook

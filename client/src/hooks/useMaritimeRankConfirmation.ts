@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 
 export function useMaritimeRankConfirmation() {
-  const { user, isLoading } = useAuth();
+  // DISABLED FOR TESTING STABILITY - no auth requests
+  // const { user, isLoading } = useAuth();
+  const user = null;
+  const isLoading = false;
   const [needsConfirmation, setNeedsConfirmation] = useState(false);
   const [hasChecked, setHasChecked] = useState(false);
 

@@ -1,204 +1,58 @@
-import { useState, useEffect } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useQuery } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
-import DiscoveryCard from "@/components/discovery-card";
-import UsersMapDual from "@/components/users-map-dual";
-import GoogleMaps from "@/components/google-maps";
-import WhatsAppBotControl from "@/components/whatsapp-bot-control";
-import CPSSNavigator from "@/components/cpss-navigator";
-
-import { useLocation } from "@/hooks/useLocation";
 import { useLocation as useWouterLocation } from "wouter";
 import { type User } from "@/lib/auth";
-import { apiRequest } from "@/lib/queryClient";
-import { MapPin, Navigation, Ship, Satellite, Crown } from "lucide-react";
 import UserDropdown from "@/components/user-dropdown";
 import BottomNav from "@/components/bottom-nav";
+import UsersMapDual from "@/components/users-map-dual";
 import qaaqLogo from "@/assets/qaaq-logo.png";
-
-interface Post {
-  id: string;
-  content: string;
-  location: string;
-  category: string;
-  authorName: string;
-  likesCount: number;
-  createdAt: string;
-}
 
 interface DiscoverProps {
   user: User;
 }
 
 export default function Discover({ user }: DiscoverProps) {
-  const { toast } = useToast();
   const [, setLocation] = useWouterLocation();
-
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [showUsers, setShowUsers] = useState(true); // Always show anchor pins from start
-  const [showNearbyCard, setShowNearbyCard] = useState(false);
-  const [showWhatsAppPanel, setShowWhatsAppPanel] = useState(false);
-  const [mapType, setMapType] = useState<'leaflet' | 'google'>('leaflet');
-  const [isPremiumMode, setIsPremiumMode] = useState(false);
-  
-  // Location functionality for enhanced user discovery
-  const { location, error: locationError, isLoading: locationLoading, requestDeviceLocation, updateShipLocation } = useLocation(user?.id, true);
-  
-  const { data: posts = [], isLoading, refetch } = useQuery<Post[]>({
-    queryKey: ['/api/posts'],
-    queryFn: async () => {
-      const response = await fetch('/api/posts');
-      if (!response.ok) throw new Error('Failed to load posts');
-      return response.json();
-    }
-  });
-
-  const handleSearch = () => {
-    setShowUsers(true);
-    setShowNearbyCard(true); // Show the nearby card list when button is pressed
-    refetch();
-  };
-
-  // Listen for hash changes to trigger user search and QBot controls
-  useEffect(() => {
-    const handleHashChange = () => {
-      if (window.location.hash.includes('koi-hai')) {
-        console.log('Red dot clicked - triggering proximity-based user search');
-        setShowUsers(true);
-        setShowNearbyCard(true);
-        refetch();
-        
-        // Trigger nearby users API call with proximity mode if user location is available
-        if (location?.latitude && location?.longitude) {
-          console.log(`Fetching nearby users for location: ${location.latitude}, ${location.longitude}`);
-          // The UsersMap component will handle the API call with proximity mode
-        }
-      }
-      
-      if (window.location.hash.includes('map-radar')) {
-        console.log('Map Radar clicked - focusing on map');
-        setShowUsers(true);
-        // Clear the hash after processing
-        window.history.replaceState({}, '', window.location.pathname);
-      }
-    };
-
-    // Listen for hash change events
-    window.addEventListener('hashchange', handleHashChange);
-    
-    // Check initial hash on component mount
-    handleHashChange();
-
-    return () => {
-      window.removeEventListener('hashchange', handleHashChange);
-    };
-  }, [refetch, location]);
-  
-
-
-  const handleLike = async (postId: string) => {
-    try {
-      const token = localStorage.getItem('auth_token');
-      await apiRequest('POST', `/api/posts/${postId}/like`, null);
-      refetch(); // Refresh the posts to update like counts
-      toast({
-        title: "🦆",
-        description: "Duck like added!",
-      });
-    } catch (error) {
-      toast({
-        title: "Failed to like post",
-        description: "Please try again",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const categories = [
-    "🚢 Maritime Meetups",
-    "🗺️ Local Tours", 
-    "🍽️ Port Dining",
-    "🛍️ Shore Shopping",
-    "⚓ Adventure",
-    "🎨 Culture",
-    "🌅 Evening"
-  ];
 
   return (
     <div className="h-[90vh] bg-gradient-to-br from-orange-50 via-white to-yellow-50 flex flex-col">
       {/* Header - Mobile Optimized */}
       <header className="bg-white text-black shadow-md relative overflow-hidden flex-shrink-0 z-[1002] border-b-2 border-orange-400">
         <div className="absolute inset-0 bg-gradient-to-r from-red-50 via-orange-50 to-yellow-50 opacity-50"></div>
-        
+
         <div className="relative z-10 px-2 py-2 sm:px-4 sm:py-3">
           <div className="flex items-center justify-between gap-2">
-            <button 
-              onClick={() => setLocation('/')}
+            <button
+              onClick={() => setLocation("/")}
               className="flex items-center space-x-2 sm:space-x-3 hover:bg-white/10 rounded-lg p-1 sm:p-2 transition-colors min-w-0 flex-shrink-0"
             >
               <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
-                <img src={qaaqLogo} alt="QAAQ Logo" className="w-full h-full object-cover" />
+                <img
+                  src={qaaqLogo}
+                  alt="QAAQ Logo"
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div className="min-w-0">
-                <h1 className="text-base sm:text-xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent whitespace-nowrap">QaaqConnect</h1>
-                <p className="text-xs sm:text-sm text-gray-600 italic font-medium whitespace-nowrap">1234 Koi Hai..</p>
+                <h1 className="text-base sm:text-xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent whitespace-nowrap">
+                  QaaqConnect
+                </h1>
+                <p className="text-xs sm:text-sm text-gray-600 italic font-medium whitespace-nowrap">
+                  1234 Koi Hai..
+                </p>
               </div>
             </button>
             <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
-              <UserDropdown user={user} onLogout={() => window.location.reload()} />
+              <UserDropdown
+                user={user}
+                onLogout={() => window.location.reload()}
+              />
             </div>
           </div>
         </div>
       </header>
-      
-
-      
-      {/* Main Content Area - Full Screen Map */}
-      <div className="flex-1 overflow-hidden relative">
-        {/* Premium Mode Notice */}
-        {isPremiumMode && !user.isAdmin && (
-          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 bg-yellow-50 border border-yellow-200 rounded-lg p-4 shadow-lg max-w-sm">
-            <div className="text-center">
-              <Crown className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
-              <h3 className="font-semibold text-yellow-800 mb-2">Premium Features</h3>
-              <p className="text-sm text-yellow-700 mb-3">
-                Unlock Google Maps with satellite view, enhanced navigation, and premium maritime features.
-              </p>
-              <Button className="bg-yellow-500 hover:bg-yellow-600 text-white text-sm">
-                Upgrade to Premium
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Dual Map System - Always use UsersMapDual */}
-        <UsersMapDual showNearbyCard={showNearbyCard} />
-        
-        {/* WhatsApp Bot Control Panel - positioned outside map */}
-        {showWhatsAppPanel && user.isAdmin && (
-          <div className="absolute top-16 right-4 z-50 max-w-sm">
-            <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 border">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="font-semibold text-gray-800">Discover Bot Control</h3>
-                <Button
-                  onClick={() => setShowWhatsAppPanel(false)}
-                  variant="ghost"
-                  size="sm"
-                  className="p-1 h-6 w-6"
-                >
-                  ×
-                </Button>
-              </div>
-              <WhatsAppBotControl />
-            </div>
-          </div>
-        )}
+      {/* Main Content Area - Discovery Map */}
+      <div className="flex-1 relative">
+        <UsersMapDual showNearbyCard={true} />
       </div>
-      
       {/* Bottom Navigation */}
       <BottomNav user={user} />
     </div>
