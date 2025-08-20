@@ -1,129 +1,15 @@
-import { useState, useEffect, useCallback } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useQuery } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
-import DiscoveryCard from "@/components/discovery-card";
-import UsersMapDual from "@/components/users-map-dual";
-import GoogleMaps from "@/components/google-maps";
-import WhatsAppBotControl from "@/components/whatsapp-bot-control";
-import CPSSNavigator from "@/components/cpss-navigator";
-
-import { useLocation } from "@/hooks/useLocation";
 import { useLocation as useWouterLocation } from "wouter";
 import { type User } from "@/lib/auth";
-import { apiRequest } from "@/lib/queryClient";
-import { MapPin, Navigation, Ship, Satellite, Crown } from "lucide-react";
 import UserDropdown from "@/components/user-dropdown";
 import BottomNav from "@/components/bottom-nav";
 import qaaqLogo from "@/assets/qaaq-logo.png";
-
-interface Post {
-  id: string;
-  content: string;
-  location: string;
-  category: string;
-  authorName: string;
-  likesCount: number;
-  createdAt: string;
-}
 
 interface DiscoverProps {
   user: User;
 }
 
 export default function Discover({ user }: DiscoverProps) {
-  const { toast } = useToast();
   const [, setLocation] = useWouterLocation();
-
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [showUsers, setShowUsers] = useState(true); // Always show anchor pins from start
-  const [showNearbyCard, setShowNearbyCard] = useState(false);
-  const [showWhatsAppPanel, setShowWhatsAppPanel] = useState(false);
-  const [mapType, setMapType] = useState<'leaflet' | 'google'>('leaflet');
-  const [isPremiumMode, setIsPremiumMode] = useState(false);
-  
-  // Location functionality for enhanced user discovery
-  const { location, error: locationError, isLoading: locationLoading, requestDeviceLocation, updateShipLocation } = useLocation(user?.id, true);
-  
-  const { data: posts = [], isLoading, refetch } = useQuery<Post[]>({
-    queryKey: ['/api/posts'],
-    queryFn: async () => {
-      const response = await fetch('/api/posts');
-      if (!response.ok) throw new Error('Failed to load posts');
-      return response.json();
-    },
-    staleTime: 300000, // Cache for 5 minutes to prevent frequent refetching
-    refetchOnWindowFocus: false, // Prevent refetch on focus to reduce flicker
-    refetchOnMount: false, // Prevent refetch on remount to reduce flicker
-  });
-
-  const handleSearch = () => {
-    setShowUsers(true);
-    setShowNearbyCard(true); // Show the nearby card list when button is pressed
-    refetch();
-  };
-
-  // Memoized hash change handler to prevent excessive re-renders
-  const handleHashChange = useCallback(() => {
-    if (window.location.hash.includes('koi-hai')) {
-      // Batch state updates to prevent multiple re-renders causing flicker
-      setShowUsers(true);
-      setShowNearbyCard(true);
-      refetch();
-    }
-    
-    if (window.location.hash.includes('map-radar')) {
-      setShowUsers(true);
-      // Clear the hash after processing
-      window.history.replaceState({}, '', window.location.pathname);
-    }
-  }, [refetch]);
-
-  // Listen for hash changes to trigger user search and QBot controls
-  useEffect(() => {
-    // Listen for hash change events
-    window.addEventListener('hashchange', handleHashChange);
-    
-    // Check initial hash on component mount
-    handleHashChange();
-
-    return () => {
-      window.removeEventListener('hashchange', handleHashChange);
-    };
-  }, [handleHashChange]);
-  
-
-
-  const handleLike = async (postId: string) => {
-    try {
-      const token = localStorage.getItem('auth_token');
-      await apiRequest('POST', `/api/posts/${postId}/like`, null);
-      refetch(); // Refresh the posts to update like counts
-      toast({
-        title: "🦆",
-        description: "Duck like added!",
-      });
-    } catch (error) {
-      toast({
-        title: "Failed to like post",
-        description: "Please try again",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const categories = [
-    "🚢 Maritime Meetups",
-    "🗺️ Local Tours", 
-    "🍽️ Port Dining",
-    "🛍️ Shore Shopping",
-    "⚓ Adventure",
-    "🎨 Culture",
-    "🌅 Evening"
-  ];
 
   return (
     <div className="h-[90vh] bg-gradient-to-br from-orange-50 via-white to-yellow-50 flex flex-col">
@@ -152,48 +38,25 @@ export default function Discover({ user }: DiscoverProps) {
         </div>
       </header>
       
-
-      
-      {/* Main Content Area - Full Screen Map */}
-      <div className="flex-1 overflow-hidden relative">
-        {/* Premium Mode Notice */}
-        {isPremiumMode && !user.isAdmin && (
-          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 bg-yellow-50 border border-yellow-200 rounded-lg p-4 shadow-lg max-w-sm">
-            <div className="text-center">
-              <Crown className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
-              <h3 className="font-semibold text-yellow-800 mb-2">Premium Features</h3>
-              <p className="text-sm text-yellow-700 mb-3">
-                Unlock Google Maps with satellite view, enhanced navigation, and premium maritime features.
-              </p>
-              <Button className="bg-yellow-500 hover:bg-yellow-600 text-white text-sm">
-                Upgrade to Premium
-              </Button>
-            </div>
+      {/* Main Content Area - Disabled Features Placeholder */}
+      <div className="flex-1 flex items-center justify-center bg-gray-50">
+        <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md mx-4">
+          <div className="text-6xl mb-4">🚧</div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Discover Features</h2>
+          <p className="text-gray-600 mb-4">
+            All discover features have been temporarily disabled. They will be enabled one by one.
+          </p>
+          <div className="text-sm text-gray-500">
+            <p>Disabled features:</p>
+            <ul className="mt-2 space-y-1">
+              <li>• User Map</li>
+              <li>• Location Discovery</li>
+              <li>• Post Feed</li>
+              <li>• Search & Filters</li>
+              <li>• WhatsApp Bot Control</li>
+            </ul>
           </div>
-        )}
-
-        {/* Dual Map System - Always use UsersMapDual */}
-        <UsersMapDual showNearbyCard={showNearbyCard} />
-        
-        {/* WhatsApp Bot Control Panel - positioned outside map */}
-        {showWhatsAppPanel && user.isAdmin && (
-          <div className="absolute top-16 right-4 z-50 max-w-sm">
-            <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 border">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="font-semibold text-gray-800">Discover Bot Control</h3>
-                <Button
-                  onClick={() => setShowWhatsAppPanel(false)}
-                  variant="ghost"
-                  size="sm"
-                  className="p-1 h-6 w-6"
-                >
-                  ×
-                </Button>
-              </div>
-              <WhatsAppBotControl />
-            </div>
-          </div>
-        )}
+        </div>
       </div>
       
       {/* Bottom Navigation */}
