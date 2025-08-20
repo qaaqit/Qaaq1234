@@ -360,10 +360,10 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                   {/* Chat Area with Engineering Grid Background */}
                   <QBOTChatArea>
                     <div className="flex flex-col h-full p-4 relative">
-                      {/* Premium Roadblock for Free Users - Redesigned */}
+                      {/* Premium Roadblock for Free Users - Contained within chat area */}
                       {!isPremiumUser && showRoadblock && (
-                        <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-40 flex items-center justify-center p-4">
-                          <div className="max-w-xs w-[64%] bg-white rounded-lg shadow-xl border border-orange-400 p-3 text-center relative max-h-[42vh] overflow-y-auto">
+                        <div className="absolute inset-x-0 top-0 bottom-0 bg-white/95 backdrop-blur-sm z-40 flex items-center justify-center p-2">
+                          <div className="max-w-xs w-full bg-white rounded-lg shadow-xl border border-orange-400 p-3 text-center relative max-h-[300px] overflow-y-auto">
                             {/* Minimize/Restore Chevron */}
                             <button
                               onClick={() => setShowRoadblock(false)}
