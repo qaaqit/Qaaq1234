@@ -400,25 +400,27 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                             </div>
 
                             <div className="space-y-1">
-                              <a
-                                href="https://rzp.io/rzp/jwQW9TW"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="block w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium py-1.5 px-2 rounded-md hover:from-yellow-600 hover:to-orange-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 text-xs"
-                              >
-                                Monthly - ₹451
-                              </a>
-                              <a
-                                href="https://rzp.io/rzp/NAU59cv"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="block w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium py-1.5 px-2 rounded-md hover:from-yellow-600 hover:to-orange-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 text-xs"
-                              >
-                                Yearly - ₹2,611 <span className="text-yellow-200">(Save 50%)</span>
-                              </a>
+                              <div className="flex gap-1 max-w-sm mx-auto">
+                                <a
+                                  href="https://rzp.io/rzp/jwQW9TW"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium py-1 px-1 rounded-md hover:from-yellow-600 hover:to-orange-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 text-xs text-center"
+                                >
+                                  Monthly<br />₹451
+                                </a>
+                                <a
+                                  href="https://rzp.io/rzp/NAU59cv"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium py-1 px-1 rounded-md hover:from-yellow-600 hover:to-orange-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 text-xs text-center"
+                                >
+                                  Yearly<br />₹2,611
+                                </a>
+                              </div>
                               <button
                                 onClick={() => setLocation("/dm")}
-                                className="block w-full bg-gray-200 text-gray-700 font-medium py-1.5 px-2 rounded-md hover:bg-gray-300 transition-colors border border-gray-300 text-xs"
+                                className="block w-full bg-gray-200 text-gray-700 font-medium py-1.5 px-2 rounded-md hover:bg-gray-300 transition-colors border border-gray-300 text-xs max-w-sm mx-auto"
                               >
                                 Continue to QaaqConnect
                               </button>
