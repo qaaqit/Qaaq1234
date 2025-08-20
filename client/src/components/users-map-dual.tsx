@@ -388,56 +388,10 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
   //   }
   // }, [filteredUsers.length, onUsersFound]);
 
-  // Get user's current location
+  // DISABLED: All location fetching to prevent API calls
   useEffect(() => {
-    const updateLocation = () => {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const newLocation = {
-              lat: position.coords.latitude,
-              lng: position.coords.longitude
-            };
-
-            // Only update if location changed significantly (>100m)
-            setUserLocation(prevLocation => {
-              if (!prevLocation || 
-                  Math.abs(prevLocation.lat - newLocation.lat) > 0.001 ||
-                  Math.abs(prevLocation.lng - newLocation.lng) > 0.001) {
-                return newLocation;
-              }
-              return prevLocation;
-            });
-
-            // Send location to server
-            fetch('/api/users/location/device', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-              },
-              body: JSON.stringify(newLocation)
-            })
-            .then(() => console.log('Device location updated on server'))
-            .catch(err => console.error('Failed to update device location:', err));
-          },
-          (error) => {
-            console.error('Geolocation error:', error);
-            // Fallback to Mumbai coordinates
-            setUserLocation({ lat: 19.076, lng: 72.8777 });
-          },
-          { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
-        );
-      } else {
-        // Fallback to Mumbai coordinates
-        setUserLocation({ lat: 19.076, lng: 72.8777 });
-      }
-    };
-
-    updateLocation();
-    // DISABLED: Auto location update to prevent constant polling
-    // const locationInterval = setInterval(updateLocation, 5 * 60 * 1000);
-    // return () => clearInterval(locationInterval);
+    // Set default location to Mumbai without fetching
+    setUserLocation({ lat: 19.076, lng: 72.8777 });
   }, []);
 
   // DISABLED: Scan animation to prevent constant updates
@@ -451,15 +405,15 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
   //   return () => clearInterval(scanInterval);
   // }, [showScanElements]);
 
-  // Auto-enable scan elements when users are detected
-  useEffect(() => {
-    if (filteredUsers.length > 0 && !showScanElements) {
-      setShowScanElements(true);
-      // Auto-disable after 20 seconds
-      const timeout = setTimeout(() => setShowScanElements(false), 20000);
-      return () => clearTimeout(timeout);
-    }
-  }, [filteredUsers.length, showScanElements]);
+  // DISABLED: Auto-enable scan elements to prevent unnecessary updates
+  // useEffect(() => {
+  //   if (filteredUsers.length > 0 && !showScanElements) {
+  //     setShowScanElements(true);
+  //     // Auto-disable after 20 seconds
+  //     const timeout = setTimeout(() => setShowScanElements(false), 20000);
+  //     return () => clearTimeout(timeout);
+  //   }
+  // }, [filteredUsers.length, showScanElements]);
 
   // Component updated log for debugging
   useEffect(() => {
