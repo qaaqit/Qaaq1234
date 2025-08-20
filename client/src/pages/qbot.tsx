@@ -37,6 +37,12 @@ export default function QBOTPage({ user }: QBOTPageProps) {
   const [activeTab, setActiveTab] = useState("chat");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showRoadblock, setShowRoadblock] = useState(true);
+
+  // Debug function for tab switching
+  const handleTabChange = (newTab: string) => {
+    console.log(`🔄 Tab switching from "${activeTab}" to "${newTab}"`, { user: user?.fullName || 'None', userId: user?.id });
+    setActiveTab(newTab);
+  };
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
@@ -326,7 +332,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
       </header>
       {/* Main Content Area - Chat + Carousel + Questions */}
       <div className="flex-1 flex flex-col">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 flex flex-col">
           {/* Tab Navigation - Red/Orange Signature Bar */}
           <div className="bg-gradient-to-r from-red-500 to-orange-500 shadow-lg">
             <div className="px-4 py-3">

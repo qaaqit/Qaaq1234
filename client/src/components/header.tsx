@@ -19,17 +19,30 @@ export default function Header({ user }: HeaderProps) {
   const [location, setLocation] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
 
+  // Debug function to help troubleshoot dropdown issues
+  const handleDropdownOpenChange = (open: boolean) => {
+    console.log(`🔽 Navy dropdown ${open ? 'opening' : 'closing'}`, { user: user?.fullName || 'None', userId: user?.id });
+    setIsOpen(open);
+  };
+
+  const handleMenuItemClick = (path: string, itemName: string) => {
+    console.log(`📋 Menu item clicked: ${itemName} -> ${path}`, { user: user?.fullName || 'None' });
+    setLocation(path);
+    setIsOpen(false); // Ensure dropdown closes
+  };
+
   return (
     <header className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 maritime-shadow z-50">
       <div className="flex items-center justify-between px-4 py-3">
         {/* Logo with Dropdown Menu */}
         <div className="flex items-center">
-          <DropdownMenu onOpenChange={setIsOpen}>
+          <DropdownMenu onOpenChange={handleDropdownOpenChange}>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 className="p-1 h-auto w-auto rounded-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200"
                 data-testid="button-main-menu"
+                onClick={() => console.log('🔽 Navy dropdown button clicked')}
               >
                 <div className="flex items-center space-x-2">
                   <ChevronDown className={`w-4 h-4 text-white transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
@@ -43,9 +56,9 @@ export default function Header({ user }: HeaderProps) {
                 </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-48 bg-white border border-gray-200 shadow-lg rounded-lg">
+            <DropdownMenuContent align="start" className="w-48 bg-white border border-gray-200 shadow-lg rounded-lg z-[60]">
               <DropdownMenuItem 
-                onClick={() => setLocation("/")}
+                onClick={() => handleMenuItemClick("/", "Home")}
                 className="cursor-pointer flex items-center space-x-3 px-4 py-3 hover:bg-orange-50 transition-colors"
                 data-testid="menu-item-home"
               >
@@ -53,7 +66,7 @@ export default function Header({ user }: HeaderProps) {
                 <span className="text-gray-700 font-medium">Home</span>
               </DropdownMenuItem>
               <DropdownMenuItem 
-                onClick={() => setLocation("/glossary")}
+                onClick={() => handleMenuItemClick("/glossary", "Shipping Dictionary")}
                 className="cursor-pointer flex items-center space-x-3 px-4 py-3 hover:bg-orange-50 transition-colors"
                 data-testid="menu-item-dictionary"
               >
@@ -61,7 +74,7 @@ export default function Header({ user }: HeaderProps) {
                 <span className="text-gray-700 font-medium">Shipping Dictionary</span>
               </DropdownMenuItem>
               <DropdownMenuItem 
-                onClick={() => setLocation("/question-bank")}
+                onClick={() => handleMenuItemClick("/question-bank", "QuestionBank")}
                 className="cursor-pointer flex items-center space-x-3 px-4 py-3 hover:bg-orange-50 transition-colors"
                 data-testid="menu-item-questions"
               >
@@ -69,7 +82,7 @@ export default function Header({ user }: HeaderProps) {
                 <span className="text-gray-700 font-medium">QuestionBank</span>
               </DropdownMenuItem>
               <DropdownMenuItem 
-                onClick={() => setLocation("/machine-tree")}
+                onClick={() => handleMenuItemClick("/machine-tree", "Machine Tree")}
                 className="cursor-pointer flex items-center space-x-3 px-4 py-3 hover:bg-orange-50 transition-colors"
                 data-testid="menu-item-machine-tree"
               >
@@ -77,7 +90,7 @@ export default function Header({ user }: HeaderProps) {
                 <span className="text-gray-700 font-medium">Machine Tree</span>
               </DropdownMenuItem>
               <DropdownMenuItem 
-                onClick={() => setLocation("/premium")}
+                onClick={() => handleMenuItemClick("/premium", "Premium Subscription")}
                 className="cursor-pointer flex items-center space-x-3 px-4 py-3 hover:bg-orange-50 transition-colors"
                 data-testid="menu-item-premium"
               >
@@ -85,7 +98,7 @@ export default function Header({ user }: HeaderProps) {
                 <span className="text-gray-700 font-medium">Premium Subscription</span>
               </DropdownMenuItem>
               <DropdownMenuItem 
-                onClick={() => setLocation("/repair-workshops")}
+                onClick={() => handleMenuItemClick("/repair-workshops", "Repair Workshops Directory")}
                 className="cursor-pointer flex items-center space-x-3 px-4 py-3 hover:bg-orange-50 transition-colors"
                 data-testid="menu-item-repair-workshops"
               >
