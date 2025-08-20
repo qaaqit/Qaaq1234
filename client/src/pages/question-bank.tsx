@@ -13,6 +13,7 @@ import {
   Eye, 
   CheckCircle, 
   ArrowUp,
+  ArrowLeft,
   ImageIcon,
   User,
   Clock,
@@ -22,6 +23,7 @@ import {
 } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import UserDropdown from '@/components/user-dropdown';
+import { useLocation } from 'wouter';
 
 interface Question {
   id: number;
@@ -73,6 +75,7 @@ export default function QuestionBank() {
   const [showScrollToTop, setShowScrollToTop] = useState(false);
   const [scrollPosition, setScrollPosition] = useState(0);
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
   const observer = useRef<IntersectionObserver | null>(null);
 
   // Check if user is admin
@@ -521,8 +524,17 @@ export default function QuestionBank() {
       <header className="bg-white shadow-md border-b-2 border-orange-400 sticky top-0 z-50">
         <div className="px-4 py-4">
           <div className="flex items-center justify-between">
-            {/* Title */}
+            {/* Back Arrow and Title */}
             <div className="flex items-center space-x-3">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setLocation('/')}
+                className="p-2 hover:bg-orange-50"
+                data-testid="button-back-home"
+              >
+                <ArrowLeft className="w-5 h-5 text-orange-600" />
+              </Button>
               <div className="w-10 h-10 rounded-full bg-gradient-to-r from-orange-500 to-red-500 flex items-center justify-center">
                 <MessageCircle className="w-6 h-6 text-white" />
               </div>
