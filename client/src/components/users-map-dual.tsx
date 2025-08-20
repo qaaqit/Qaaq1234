@@ -170,7 +170,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
 
 
 
-  // Fetch users from nearby API for map display
+  // Fetch users from nearby API for map display - DISABLED auto search, only manual via radar
   const { data: nearbyUsersResponse, isLoading: isLoadingNearby, refetch: refetchNearby } = useQuery<MapUser[]>({
     queryKey: ['/api/users/nearby'],
     queryFn: async () => {
@@ -179,6 +179,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
       const data = await response.json();
       return data;
     },
+    enabled: false, // DISABLED: No auto search on page load - only search when radar button clicked
     staleTime: 60000, // Cache for 1 minute
     refetchInterval: false, // Removed auto-refresh - only manual refresh when radar clicked
   });
@@ -565,7 +566,6 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
           onZoomChange={handleZoomChange}
           showScanElements={showScanElements}
           scanAngle={scanAngle}
-          radiusKm={radiusKm}
         />
 
         {/* Right Side Control Panel - Vertical Stack */}
