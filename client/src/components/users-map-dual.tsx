@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/useAuth';
@@ -457,20 +457,26 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     return () => clearInterval(scanInterval);
   }, [showScanElements]);
 
-  // Auto-enable scan elements when users are detected
+  // Memoize the scan elements logic to prevent unnecessary re-renders
   useEffect(() => {
+    // Only auto-enable scan elements if we have users and elements aren't already showing
     if (filteredUsers.length > 0 && !showScanElements) {
-      setShowScanElements(true);
-      // Auto-disable after 20 seconds
-      const timeout = setTimeout(() => setShowScanElements(false), 20000);
+      const timeout = setTimeout(() => {
+        setShowScanElements(true);
+        // Auto-disable after 15 seconds to reduce visual noise
+        const disableTimeout = setTimeout(() => setShowScanElements(false), 15000);
+        return () => clearTimeout(disableTimeout);
+      }, 100); // Small delay to batch with other updates
       return () => clearTimeout(timeout);
     }
-  }, [filteredUsers.length, showScanElements]);
+  }, [filteredUsers.length > 0]); // Only depend on whether we have users, not the exact count
 
-  // Component updated log for debugging
+  // Reduce console logging to prevent performance impact - only log meaningful changes
   useEffect(() => {
-    console.log('Component updated - hoveredUser:', hoveredUser ? hoveredUser.fullName : 'none');
-  }, [hoveredUser]);
+    if (hoveredUser) {
+      console.log('Component updated - hoveredUser:', hoveredUser.fullName);
+    }
+  }, [hoveredUser?.id]); // Only log when user actually changes, not on every hover
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -488,7 +494,16 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  console.log('🗺️ UsersMapDual rendering with', filteredUsers.length, 'filtered users (online within', radiusKm, 'km). Admin mode:', !!(user as any)?.isAdmin);
+  // Remove frequent render logging to prevent performance impact during normal use
+  // Only log when there are significant changes in user count (reduce noise)
+  const prevUserCount = useRef(filteredUsers.length);
+  useEffect(() => {
+    const currentCount = filteredUsers.length;
+    if (Math.abs(currentCount - prevUserCount.current) >= 5 || (currentCount === 0 && prevUserCount.current > 0) || (currentCount > 0 && prevUserCount.current === 0)) {
+      console.log('🗺️ UsersMapDual: Significant user count change -', currentCount, 'users (within', radiusKm, 'km)');
+      prevUserCount.current = currentCount;
+    }
+  }, [filteredUsers.length]);
 
   return (
     <div className="w-full h-full overflow-hidden bg-gray-100 relative">
@@ -516,18 +531,8 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
 
       </div>
 
-      {/* Dual Map System: Google Maps for Admin, Leaflet for Users */}
-      <div className={`absolute top-[80px] sm:top-[60px] left-0 right-0 ${
-        nearestUsers.length > 0 
-          ? searchPanelState === 'minimized'
-            ? 'bottom-[60px]'
-            : searchPanelState === 'half'
-            ? 'bottom-1/2'
-            : searchQuery.trim() 
-            ? 'bottom-[65%]' 
-            : 'bottom-[160px] sm:bottom-[180px]'
-          : 'bottom-0'
-      }`}>
+      {/* Dual Map System: Google Maps with stable height to prevent layout thrashing */}
+      <div className="absolute top-[80px] sm:top-[60px] left-0 right-0 bottom-0">
         <GoogleMap
           users={filteredUsers}
           userLocation={userLocation}
