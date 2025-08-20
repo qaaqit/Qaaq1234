@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, memo } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import type { User } from "@/lib/auth";
@@ -30,7 +30,10 @@ interface QBOTPageProps {
   user: User;
 }
 
-export default function QBOTPage({ user }: QBOTPageProps) {
+function QBOTPage({ user }: QBOTPageProps) {
+  // Memoize user to prevent unnecessary re-renders when user object reference changes
+  const stableUser = useMemo(() => user, [user?.id, user?.fullName, user?.email, user?.isAdmin]);
+  
   const [qBotMessages, setQBotMessages] = useState<Message[]>([]);
   const [isQBotTyping, setIsQBotTyping] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
@@ -45,8 +48,8 @@ export default function QBOTPage({ user }: QBOTPageProps) {
   // Debug function for tab switching with persistence tracking
   const handleTabChange = (newTab: string) => {
     console.log(`🔄 Tab switching from "${activeTab}" to "${newTab}"`, { 
-      user: user?.fullName || 'None', 
-      userId: user?.id,
+      user: stableUser?.fullName || 'None', 
+      userId: stableUser?.id,
       timestamp: new Date().toISOString(),
       componentRenderCount: Math.random().toString(36).substr(2, 9) // Unique render ID
     });
@@ -77,14 +80,14 @@ export default function QBOTPage({ user }: QBOTPageProps) {
   const isPremium = (subscriptionStatus as any)?.isPremium || (subscriptionStatus as any)?.isSuperUser;
   const isPremiumUser = subscriptionStatus && isPremium;
 
-  // Fetch WhatsApp chat history when component loads - use user.id as stable reference
+  // Fetch WhatsApp chat history when component loads - use stable user reference
   useEffect(() => {
     const fetchWhatsAppHistory = async () => {
-      if (!user?.id) return;
+      if (!stableUser?.id) return;
 
       try {
-        console.log(`📱 Fetching WhatsApp history for user: ${user.id} [Component render ID: ${Math.random().toString(36).substr(2, 9)}]`);
-        const response = await fetch(`/api/whatsapp-history/${encodeURIComponent(user.id)}`);
+        console.log(`📱 Fetching WhatsApp history for user: ${stableUser.id} [Component render ID: ${Math.random().toString(36).substr(2, 9)}]`);
+        const response = await fetch(`/api/whatsapp-history/${encodeURIComponent(stableUser.id)}`);
         
         if (response.ok) {
           const data = await response.json();
@@ -117,7 +120,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
             
             console.log(`✅ Loaded ${data.chatHistory.length} WhatsApp Q&A pairs`);
           } else {
-            console.log(`📱 No WhatsApp history found for user: ${user.id}`);
+            console.log(`📱 No WhatsApp history found for user: ${stableUser.id}`);
           }
         }
       } catch (error) {
@@ -129,7 +132,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
     };
 
     fetchWhatsAppHistory();
-  }, [user?.id]); // Removed 'toast' dependency to prevent unnecessary re-renders
+  }, [stableUser?.id]); // Use stable user reference to prevent excessive re-renders
 
   const handleSendQBotMessage = async (messageText: string, attachments?: string[], isPrivate?: boolean, aiModels?: string[]) => {
     // Check premium status only when user tries to send a message
@@ -342,7 +345,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
               </div>
             </div>
             <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
-              <UserDropdown user={user} onLogout={() => window.location.reload()} />
+              <UserDropdown user={stableUser} onLogout={() => window.location.reload()} />
             </div>
           </div>
         </div>
@@ -377,7 +380,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                   {/* Minimalist Header */}
                   <QBOTChatHeader 
                     onClear={handleClearQBotChat}
-                    isAdmin={user?.isAdmin}
+                    isAdmin={stableUser?.isAdmin}
                   />
                   
                   {/* Chat Area with Engineering Grid Background */}
@@ -531,3 +534,13 @@ export default function QBOTPage({ user }: QBOTPageProps) {
     </div>
   );
 }
+
+// Memoize the component to prevent unnecessary re-renders
+export default memo(QBOTPage, (prevProps, nextProps) => {
+  return (
+    prevProps.user?.id === nextProps.user?.id &&
+    prevProps.user?.fullName === nextProps.user?.fullName &&
+    prevProps.user?.email === nextProps.user?.email &&
+    prevProps.user?.isAdmin === nextProps.user?.isAdmin
+  );
+});
