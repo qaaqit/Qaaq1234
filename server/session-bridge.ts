@@ -27,7 +27,8 @@ declare global {
  */
 export const sessionBridge = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    console.log('🌉 SESSION BRIDGE: Checking authentication state');
+    // DISABLED: All session bridge logging to prevent constant polling
+    // console.log('🌉 SESSION BRIDGE: Checking authentication state');
     
     let user: User | null = null;
     let method: 'replit' | 'jwt' | 'whatsapp' = 'replit';
@@ -97,7 +98,7 @@ export const sessionBridge = async (req: Request, res: Response, next: NextFunct
           console.log('✅ SESSION BRIDGE: Resolved JWT user:', user.fullName);
         }
       } catch (error) {
-        console.log('❌ SESSION BRIDGE: Invalid JWT token');
+        // console.log('❌ SESSION BRIDGE: Invalid JWT token');
       }
     }
 
@@ -117,7 +118,7 @@ export const sessionBridge = async (req: Request, res: Response, next: NextFunct
         bridgeMethod: method
       };
       
-      console.log(`✅ SESSION BRIDGE: Authentication bridged - ${user.fullName} (${method})`);
+      // console.log(`✅ SESSION BRIDGE: Authentication bridged - ${user.fullName} (${method})`);
     } else {
       req.authBridge = {
         user: null as any,
@@ -128,12 +129,12 @@ export const sessionBridge = async (req: Request, res: Response, next: NextFunct
       // CRITICAL: Override req.isAuthenticated to return false
       req.isAuthenticated = () => false;
       
-      console.log('❌ SESSION BRIDGE: No authentication found');
+      // console.log('❌ SESSION BRIDGE: No authentication found');
     }
 
     next();
   } catch (error) {
-    console.error('🚨 SESSION BRIDGE ERROR:', error);
+    // console.error('🚨 SESSION BRIDGE ERROR:', error);
     next();
   }
 };
