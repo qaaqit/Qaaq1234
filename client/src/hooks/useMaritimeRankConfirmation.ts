@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { queryClient } from '@/lib/queryClient';
 
 export function useMaritimeRankConfirmation() {
   const { user, isLoading } = useAuth();
@@ -7,7 +8,7 @@ export function useMaritimeRankConfirmation() {
   const [hasChecked, setHasChecked] = useState(false);
 
   useEffect(() => {
-    if (!isLoading && user && !hasChecked) {
+    if (!isLoading && user) {
       // Check if user needs to confirm their maritime rank
       const needsRankConfirmation = !user.maritimeRank || 
                                    user.maritimeRank === '' || 
@@ -22,8 +23,12 @@ export function useMaritimeRankConfirmation() {
         currentRank: user.maritimeRank,
         needsConfirmation: needsRankConfirmation
       });
+    } else if (!user && !isLoading) {
+      // Reset state when user logs out
+      setNeedsConfirmation(false);
+      setHasChecked(false);
     }
-  }, [user, isLoading, hasChecked]);
+  }, [user, isLoading]);
 
   const handleRankConfirmed = (newRank: string) => {
     setNeedsConfirmation(false);
@@ -44,6 +49,9 @@ export function useMaritimeRankConfirmation() {
         }
       }
     }
+    
+    // For session-based auth (Replit Auth), invalidate the user cache to refetch updated data
+    queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
   };
 
   return {
