@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Crown } from "lucide-react";
+import { ChevronDown, ChevronUp, Crown } from "lucide-react";
 import UserDropdown from "@/components/user-dropdown";
 import QBOTChatContainer from "@/components/qbot-chat/QBOTChatContainer";
 import QBOTChatHeader from "@/components/qbot-chat/QBOTChatHeader";
@@ -51,75 +51,10 @@ export default function QBOTPage({ user }: QBOTPageProps) {
 
   const isPremium = (subscriptionStatus as any)?.isPremium || (subscriptionStatus as any)?.isSuperUser;
 
-  // Premium subscription component for free users
-  const PremiumSubscriptionPrompt = () => (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-6 text-center">
-        <div className="mb-6">
-          <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
-            <span className="text-2xl">⭐</span>
-          </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">QBOT Premium Required</h2>
-          <p className="text-gray-600">
-            QBOT is now exclusively available for premium subscribers. Upgrade to access unlimited AI assistance for maritime professionals.
-          </p>
-        </div>
+  // State for roadblock visibility
+  const [showRoadblock, setShowRoadblock] = useState(true);
 
-        <div className="mb-6 space-y-3">
-          <div className="flex items-center text-sm text-gray-700">
-            <span className="text-green-500 mr-2">✓</span>
-            Unlimited QBOT responses
-          </div>
-          <div className="flex items-center text-sm text-gray-700">
-            <span className="text-green-500 mr-2">✓</span>
-            Multi-AI model access (GPT-4, Gemini, Deepseek)
-          </div>
-          <div className="flex items-center text-sm text-gray-700">
-            <span className="text-green-500 mr-2">✓</span>
-            Priority maritime assistance
-          </div>
-          <div className="flex items-center text-sm text-gray-700">
-            <span className="text-green-500 mr-2">✓</span>
-            Advanced file attachments
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <a
-            href="https://rzp.io/rzp/jwQW9TW"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-semibold py-3 px-4 rounded-lg hover:from-yellow-600 hover:to-orange-600 transition-all duration-200"
-          >
-            Monthly Plan - ₹451
-          </a>
-          <a
-            href="https://rzp.io/rzp/NAU59cv"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block w-full bg-gradient-to-r from-green-500 to-blue-500 text-white font-semibold py-3 px-4 rounded-lg hover:from-green-600 hover:to-blue-600 transition-all duration-200"
-          >
-            Yearly Plan - ₹2,611 (Save 50%)
-          </a>
-          <button
-            onClick={() => setLocation("/dm")}
-            className="block w-full bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
-          >
-            Continue to QaaqConnect
-          </button>
-        </div>
-
-        <p className="text-xs text-gray-500 mt-4">
-          Payment processed securely via Razorpay. Premium access activates automatically upon successful payment.
-        </p>
-      </div>
-    </div>
-  );
-
-  // Show premium prompt for free users
-  if (subscriptionStatus && !isPremium) {
-    return <PremiumSubscriptionPrompt />;
-  }
+  const isPremiumUser = subscriptionStatus && isPremium;
 
   // Show loading while checking premium status
   if (isCheckingPremium) {
@@ -427,7 +362,95 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                   
                   {/* Chat Area with Engineering Grid Background */}
                   <QBOTChatArea>
-                    <div className="flex flex-col h-full p-4">
+                    <div className="flex flex-col h-full p-4 relative">
+                      {/* Premium Roadblock for Free Users */}
+                      {!isPremiumUser && showRoadblock && (
+                        <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                          <div className="max-w-md w-full bg-white rounded-lg shadow-xl border-2 border-orange-300 p-6 text-center relative">
+                            {/* Minimize/Restore Chevron */}
+                            <button
+                              onClick={() => setShowRoadblock(false)}
+                              className="absolute top-3 right-3 w-10 h-10 bg-orange-100 hover:bg-orange-200 rounded-full flex items-center justify-center transition-colors"
+                              title="Minimize roadblock to explore homepage"
+                            >
+                              <ChevronDown className="w-6 h-6 text-orange-600" />
+                            </button>
+
+                            <div className="mb-6">
+                              <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                                <span className="text-2xl">⭐</span>
+                              </div>
+                              <h2 className="text-2xl font-bold text-gray-800 mb-2">QBOT Premium Required</h2>
+                              <p className="text-gray-600">
+                                QBOT is now exclusively available for premium subscribers. Upgrade to access unlimited AI assistance for maritime professionals.
+                              </p>
+                            </div>
+
+                            <div className="mb-6 space-y-3">
+                              <div className="flex items-center text-sm text-gray-700">
+                                <span className="text-green-500 mr-2">✓</span>
+                                Unlimited QBOT responses
+                              </div>
+                              <div className="flex items-center text-sm text-gray-700">
+                                <span className="text-green-500 mr-2">✓</span>
+                                Multi-AI model access (GPT-4, Gemini, Deepseek)
+                              </div>
+                              <div className="flex items-center text-sm text-gray-700">
+                                <span className="text-green-500 mr-2">✓</span>
+                                Priority maritime assistance
+                              </div>
+                              <div className="flex items-center text-sm text-gray-700">
+                                <span className="text-green-500 mr-2">✓</span>
+                                Advanced file attachments
+                              </div>
+                            </div>
+
+                            <div className="space-y-3">
+                              <a
+                                href="https://rzp.io/rzp/jwQW9TW"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-semibold py-3 px-4 rounded-lg hover:from-yellow-600 hover:to-orange-600 transition-all duration-200"
+                              >
+                                Monthly Plan - ₹451
+                              </a>
+                              <a
+                                href="https://rzp.io/rzp/NAU59cv"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block w-full bg-gradient-to-r from-green-500 to-blue-500 text-white font-semibold py-3 px-4 rounded-lg hover:from-green-600 hover:to-blue-600 transition-all duration-200"
+                              >
+                                Yearly Plan - ₹2,611 (Save 50%)
+                              </a>
+                              <button
+                                onClick={() => setLocation("/dm")}
+                                className="block w-full bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+                              >
+                                Continue to QaaqConnect
+                              </button>
+                            </div>
+
+                            <p className="text-xs text-gray-500 mt-4">
+                              Payment processed securely via Razorpay. Premium access activates automatically upon successful payment.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Minimized Roadblock Indicator */}
+                      {!isPremiumUser && !showRoadblock && (
+                        <div className="absolute top-4 right-4 z-40">
+                          <button
+                            onClick={() => setShowRoadblock(true)}
+                            className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-4 py-2 rounded-full shadow-lg flex items-center space-x-2 hover:from-yellow-600 hover:to-orange-600 transition-all duration-200"
+                            title="View premium upgrade options"
+                          >
+                            <span className="text-sm font-medium">⭐ Upgrade</span>
+                            <ChevronUp className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
+
                       {/* Messages or Welcome State */}
                       {isLoadingHistory ? (
                         <div className="flex-1 flex items-center justify-center">
@@ -463,7 +486,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                   <div>
                     <QBOTInputArea 
                       onSendMessage={handleSendQBotMessage}
-                      disabled={isQBotTyping}
+                      disabled={isQBotTyping || !isPremiumUser}
                     />
                   </div>
                 </div>
