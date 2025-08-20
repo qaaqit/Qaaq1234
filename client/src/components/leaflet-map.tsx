@@ -39,6 +39,7 @@ interface MapUser {
   profilePictureUrl?: string | null;
   whatsAppProfilePictureUrl?: string | null;
   whatsAppDisplayName?: string | null;
+  isOnline?: boolean;
 }
 
 interface LeafletMapProps {
@@ -335,8 +336,17 @@ export default function LeafletMap({
   }, []);
 
   const resetToUserLocation = useCallback(() => {
-    if (userLocation && userLocation.lat && userLocation.lng && mapRef.current) {
-      mapRef.current.setView([userLocation.lat, userLocation.lng], 12);
+    if (userLocation && 
+        typeof userLocation.lat === 'number' && 
+        typeof userLocation.lng === 'number' && 
+        !isNaN(userLocation.lat) && 
+        !isNaN(userLocation.lng) && 
+        mapRef.current) {
+      try {
+        mapRef.current.setView([userLocation.lat, userLocation.lng], 12);
+      } catch (error) {
+        console.error('Error resetting map view:', error);
+      }
     }
   }, [userLocation]);
 

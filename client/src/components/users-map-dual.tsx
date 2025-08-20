@@ -130,43 +130,24 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
   const [showMapTypeDropdown, setShowMapTypeDropdown] = useState(false);
   const [mapType, setMapType] = useState('roadmap');
   const [mapZoom, setMapZoom] = useState(10); // Default zoom level
-  const [scanAngle, setScanAngle] = useState(0); // For rotating scan arm
-  const [showScanElements, setShowScanElements] = useState(false); // Toggle scan arm and circle
+  const [scanAngle] = useState(0); // Static scan arm - no animation
+  const [showScanElements] = useState(false); // Always disabled to prevent flickering
   const [searchQuery, setSearchQuery] = useState(''); // User search input
   const [shipSearchResult, setShipSearchResult] = useState<any>(null); // Ship search result
   const [searchType, setSearchType] = useState<'users' | 'ships'>('users'); // Search type
-  const [isRadarActive, setIsRadarActive] = useState(false); // Radar scanner state
-  const [radarScanAngle, setRadarScanAngle] = useState(0); // Radar animation angle
-  const [radarTimeoutId, setRadarTimeoutId] = useState<NodeJS.Timeout | null>(null); // Track timeout
+  // RADAR STATE DISABLED - all radar animations removed to prevent flickering
+  const [isRadarActive] = useState(false); // Always false
+  const [radarScanAngle] = useState(0); // Static angle
 
   // Stable zoom change handler to prevent map re-initialization
   const handleZoomChange = useCallback((zoom: number) => {
     setMapZoom(zoom);
   }, []);
 
-  // Radar scanner animation effect
-  useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
+  // RADAR ANIMATION COMPLETELY DISABLED to prevent flickering
+  // No animation effects to prevent constant re-renders
 
-    if (isRadarActive) {
-      // DISABLED: Radar animation was causing constant re-renders and flickering
-      // Set to static position instead
-      setRadarScanAngle(0);
-    }
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isRadarActive]);
-
-  // Cleanup effect to prevent stuck states
-  useEffect(() => {
-    return () => {
-      if (radarTimeoutId) {
-        clearTimeout(radarTimeoutId);
-      }
-    };
-  }, [radarTimeoutId]);
+  // CLEANUP DISABLED - no radar timeouts to clean up
 
 
 
@@ -221,45 +202,12 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     setSearchQuery(value);
   }, []);
 
-  // Radar scanner toggle handler - Simple click to refresh
+  // RADAR HANDLER DISABLED - no radar functionality to prevent flickering
   const handleRadarToggle = useCallback(() => {
-    console.log('🔍 Radar button clicked! Current state:', { isRadarActive, nearbyUsers: nearbyUsersResponse?.length });
-
-    // Clear any existing timeout
-    if (radarTimeoutId) {
-      clearTimeout(radarTimeoutId);
-      setRadarTimeoutId(null);
-    }
-
-    if (isRadarActive) {
-      // Manual deactivation
-      setIsRadarActive(false);
-      setRadarScanAngle(0);
-      console.log('🔴 Radar scanner manually cleared');
-    } else {
-      // Activate radar and refresh data
-      console.log('🟢 Activating radar scanner...');
-      setIsRadarActive(true);
-
-      // Trigger refresh
-      console.log('📡 Triggering refetch...');
-      refetchNearby();
-
-      // Dispatch global radar refresh event for other components (like DM page)
-      window.dispatchEvent(new Event('radar-refresh'));
-      console.log('🟢 Radar scanner activated - refreshing results and notifying other components');
-
-      // Auto-deactivate after 2 seconds
-      const timeoutId = setTimeout(() => {
-        setIsRadarActive(false);
-        setRadarScanAngle(0);
-        setRadarTimeoutId(null);
-        console.log('🔴 Radar scanner auto-deactivated');
-      }, 2000);
-
-      setRadarTimeoutId(timeoutId);
-    }
-  }, [isRadarActive, refetchNearby, nearbyUsersResponse, radarTimeoutId]);
+    console.log('🔍 Radar disabled to prevent flickering');
+    // No radar functionality - just refresh data once
+    refetchNearby();
+  }, [refetchNearby]);
 
   // Calculate radius based on map zoom level
   const radiusKm = useMemo(() => {
@@ -446,29 +394,11 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     return () => {};
   }, []);
 
-  // Sophisticated scan arm animation with elegant timing
-  useEffect(() => {
-    if (!showScanElements) return;
+  // SCAN ANIMATION COMPLETELY DISABLED to prevent flickering
+  // Static display only
 
-    // DISABLED: Scan animation was causing unnecessary re-renders
-    // Static scan elements instead of animated ones
-    setScanAngle(45); // Set to static angle
-    return () => {};
-  }, [showScanElements]);
-
-  // Memoize the scan elements logic to prevent unnecessary re-renders
-  useEffect(() => {
-    // Only auto-enable scan elements if we have users and elements aren't already showing
-    if (filteredUsers.length > 0 && !showScanElements) {
-      const timeout = setTimeout(() => {
-        setShowScanElements(true);
-        // Auto-disable after 15 seconds to reduce visual noise
-        const disableTimeout = setTimeout(() => setShowScanElements(false), 15000);
-        return () => clearTimeout(disableTimeout);
-      }, 100); // Small delay to batch with other updates
-      return () => clearTimeout(timeout);
-    }
-  }, [filteredUsers.length > 0]); // Only depend on whether we have users, not the exact count
+  // SCAN ELEMENTS AUTO-ENABLING DISABLED to prevent flickering
+  // Manual control only if needed
 
   // Reduce console logging to prevent performance impact - only log meaningful changes
   useEffect(() => {
@@ -724,7 +654,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
 
           {/* Radar Control */}
           <button
-            onClick={() => setShowScanElements(!showScanElements)}
+            onClick={() => {}} // Disabled - no scan elements to prevent flickering
             className={`flex items-center justify-center w-12 h-12 rounded-lg shadow-lg border border-gray-200 transition-colors ${
               showScanElements 
                 ? 'bg-green-100 text-green-700 hover:bg-green-200' 
