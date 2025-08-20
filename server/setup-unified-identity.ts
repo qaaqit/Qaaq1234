@@ -1,4 +1,5 @@
 import { pool } from './db';
+import { uuidManager } from './uuid-manager';
 
 /**
  * Database Migration Script for Unified Identity System
