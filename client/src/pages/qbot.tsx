@@ -362,8 +362,8 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                     <div className="flex flex-col h-full p-4 relative">
                       {/* Premium Roadblock for Free Users - Contained within chat area */}
                       {!isPremiumUser && showRoadblock && (
-                        <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-40 flex items-center justify-center p-4">
-                          <div className="w-64 bg-white rounded-lg shadow-xl border border-orange-400 p-3 text-center relative">
+                        <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-40 flex items-center justify-center p-2">
+                          <div className="w-56 max-w-[90vw] bg-white rounded-lg shadow-xl border border-orange-400 p-2.5 text-center relative max-h-[70vh] overflow-y-auto">
                             {/* Minimize/Restore Chevron */}
                             <button
                               onClick={() => setShowRoadblock(false)}
@@ -373,38 +373,38 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                               <ChevronDown className="w-3 h-3 text-orange-600" />
                             </button>
 
-                            <div className="mb-3">
-                              <div className="w-8 h-8 mx-auto mb-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
-                                <span className="text-sm">⭐</span>
+                            <div className="mb-2">
+                              <div className="w-6 h-6 mx-auto mb-1 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                                <span className="text-xs">⭐</span>
                               </div>
-                              <h2 className="text-sm font-bold text-gray-800 mb-1">QBOT Premium Required</h2>
+                              <h2 className="text-xs font-bold text-gray-800">QBOT Premium Required</h2>
                             </div>
 
-                            <div className="mb-3 space-y-1 bg-gray-50 rounded-md p-2">
+                            <div className="mb-2 space-y-0.5 bg-gray-50 rounded-md p-1.5">
                               <div className="flex items-center text-xs text-gray-700">
-                                <span className="text-green-500 mr-1 text-sm">✓</span>
+                                <span className="text-green-500 mr-1">✓</span>
                                 <span>Unlimited responses</span>
                               </div>
                               <div className="flex items-center text-xs text-gray-700">
-                                <span className="text-green-500 mr-1 text-sm">✓</span>
+                                <span className="text-green-500 mr-1">✓</span>
                                 <span>Multi-AI access</span>
                               </div>
                               <div className="flex items-center text-xs text-gray-700">
-                                <span className="text-green-500 mr-1 text-sm">✓</span>
+                                <span className="text-green-500 mr-1">✓</span>
                                 <span>Priority assistance</span>
                               </div>
                               <div className="flex items-center text-xs text-gray-700">
-                                <span className="text-green-500 mr-1 text-sm">✓</span>
+                                <span className="text-green-500 mr-1">✓</span>
                                 <span>File attachments</span>
                               </div>
                             </div>
 
-                            <div className="flex gap-1">
+                            <div className="flex gap-1 mb-1">
                               <a
                                 href="https://rzp.io/rzp/jwQW9TW"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium py-1 px-2 rounded-md hover:from-yellow-600 hover:to-orange-600 transition-all duration-200 text-xs text-center"
+                                className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium py-1 px-1 rounded text-xs text-center leading-tight"
                               >
                                 Monthly<br />₹451
                               </a>
@@ -412,15 +412,11 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                                 href="https://rzp.io/rzp/NAU59cv"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium py-1 px-2 rounded-md hover:from-yellow-600 hover:to-orange-600 transition-all duration-200 text-xs text-center"
+                                className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium py-1 px-1 rounded text-xs text-center leading-tight"
                               >
                                 Yearly<br />₹2,611
                               </a>
                             </div>
-
-                            <p className="text-xs text-gray-500 mt-2 leading-tight">
-                              Secure payment via Razorpay.
-                            </p>
                           </div>
                         </div>
                       )}
