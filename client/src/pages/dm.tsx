@@ -69,7 +69,13 @@ export default function DMPage() {
   const [activeTab, setActiveTab] = useState("users");
   const [isBlockedDropdownOpen, setIsBlockedDropdownOpen] = useState(false);
 
-  const { user, isLoading } = useAuth();
+  // FIXED FOR TESTING STABILITY - use stored auth data instead of disabled useAuth hook
+  // const { user, isLoading } = useAuth();
+  const [user, setUser] = useState(() => {
+    const storedUser = localStorage.getItem('qaaq_user');
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
+  const isLoading = false;
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
