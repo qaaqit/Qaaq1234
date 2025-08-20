@@ -2,6 +2,7 @@ import { useLocation as useWouterLocation } from "wouter";
 import { type User } from "@/lib/auth";
 import UserDropdown from "@/components/user-dropdown";
 import BottomNav from "@/components/bottom-nav";
+import UsersMapDual from "@/components/users-map-dual";
 import qaaqLogo from "@/assets/qaaq-logo.png";
 
 interface DiscoverProps {
@@ -48,25 +49,9 @@ export default function Discover({ user }: DiscoverProps) {
           </div>
         </div>
       </header>
-      {/* Main Content Area - Disabled Features Placeholder */}
-      <div className="flex-1 flex items-center justify-center bg-gray-50">
-        <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md mx-4">
-          <div className="text-6xl mb-4">🚧</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">
-            Q BAND RADAR
-          </h2>
-          <p className="text-gray-600 mb-4">Awesome features being loaded.</p>
-          <div className="text-sm text-gray-500">
-            <p>Disabled features:</p>
-            <ul className="mt-2 space-y-1">
-              <li>• User Map</li>
-              <li>• Location Discovery</li>
-              <li>• Post Feed</li>
-              <li>• Search & Filters</li>
-              <li>• WhatsApp Bot Control</li>
-            </ul>
-          </div>
-        </div>
+      {/* Main Content Area - Discovery Map */}
+      <div className="flex-1 relative">
+        <UsersMapDual showNearbyCard={true} />
       </div>
       {/* Bottom Navigation */}
       <BottomNav user={user} />
