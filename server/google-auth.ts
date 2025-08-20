@@ -215,18 +215,38 @@ export function setupGoogleAuth(app: Express) {
       // Find or create user
       const user = await findOrCreateGoogleUser(googleUser);
       
-      // Manually set up session data for the user (since passport may not be available)
+      // Manually set up session data for the user
       if (req.session) {
+        console.log('🔧 GOOGLE AUTH: Setting up session for user:', user.fullName);
+        console.log('🔧 GOOGLE AUTH: Session before:', {
+          sessionId: req.sessionID,
+          sessionKeys: Object.keys(req.session),
+          hasPassport: !!(req.session as any).passport
+        });
+        
         // Cast to any to avoid TypeScript issues with passport property
         (req.session as any).passport = { user: user };
+        (req.session as any).userId = user.id;
+        
+        console.log('🔧 GOOGLE AUTH: Session after setting passport:', {
+          sessionId: req.sessionID,
+          sessionKeys: Object.keys(req.session),
+          hasPassport: !!(req.session as any).passport,
+          userInPassport: !!(req.session as any).passport?.user
+        });
+        
         req.session.save((err) => {
           if (err) {
             console.error('❌ GOOGLE AUTH: Failed to save session:', err);
             return res.redirect('/login?error=session_failed');
           }
           
-          console.log('✅ GOOGLE AUTH: Session established for user:', user.fullName);
-          console.log('✅ GOOGLE AUTH: Session ID:', req.sessionID);
+          console.log('✅ GOOGLE AUTH: Session saved successfully for user:', user.fullName);
+          console.log('✅ GOOGLE AUTH: Final session state:', {
+            sessionId: req.sessionID,
+            hasPassport: !!(req.session as any).passport,
+            userFullName: (req.session as any).passport?.user?.fullName
+          });
           
           // Redirect to QBOT Chat as per user preference (home page after login)
           res.redirect('/qbot');
