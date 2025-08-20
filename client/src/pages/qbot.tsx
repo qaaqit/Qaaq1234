@@ -362,22 +362,22 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                     <div className="flex flex-col h-full p-4 relative">
                       {/* Premium Roadblock for Free Users - Contained within chat area */}
                       {!isPremiumUser && showRoadblock && (
-                        <div className="absolute inset-x-0 top-0 bottom-0 bg-white/95 backdrop-blur-sm z-40 flex items-center justify-center p-2">
-                          <div className="max-w-xs w-full bg-white rounded-lg shadow-xl border border-orange-400 p-3 text-center relative max-h-[300px] overflow-y-auto">
+                        <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-40 flex items-center justify-center p-4">
+                          <div className="w-64 bg-white rounded-lg shadow-xl border border-orange-400 p-3 text-center relative">
                             {/* Minimize/Restore Chevron */}
                             <button
                               onClick={() => setShowRoadblock(false)}
-                              className="absolute top-2 right-2 w-8 h-8 bg-orange-100 hover:bg-orange-200 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110"
-                              title="Minimize roadblock to explore homepage"
+                              className="absolute top-2 right-2 w-6 h-6 bg-orange-100 hover:bg-orange-200 rounded-full flex items-center justify-center transition-all duration-200"
+                              title="Minimize roadblock"
                             >
-                              <ChevronDown className="w-4 h-4 text-orange-600" />
+                              <ChevronDown className="w-3 h-3 text-orange-600" />
                             </button>
 
                             <div className="mb-3">
-                              <div className="w-10 h-10 mx-auto mb-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-md">
-                                <span className="text-lg">⭐</span>
+                              <div className="w-8 h-8 mx-auto mb-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                                <span className="text-sm">⭐</span>
                               </div>
-                              <h2 className="text-lg font-bold text-gray-800 mb-1">Premium Required</h2>
+                              <h2 className="text-sm font-bold text-gray-800 mb-1">QBOT Premium Required</h2>
                             </div>
 
                             <div className="mb-3 space-y-1 bg-gray-50 rounded-md p-2">
@@ -399,12 +399,12 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                               </div>
                             </div>
 
-                            <div className="flex gap-1 max-w-sm mx-auto">
+                            <div className="flex gap-1">
                               <a
                                 href="https://rzp.io/rzp/jwQW9TW"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium py-0.5 px-1 rounded-md hover:from-yellow-600 hover:to-orange-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 text-xs text-center"
+                                className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium py-1 px-2 rounded-md hover:from-yellow-600 hover:to-orange-600 transition-all duration-200 text-xs text-center"
                               >
                                 Monthly<br />₹451
                               </a>
@@ -412,7 +412,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                                 href="https://rzp.io/rzp/NAU59cv"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium py-0.5 px-1 rounded-md hover:from-yellow-600 hover:to-orange-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 text-xs text-center"
+                                className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium py-1 px-2 rounded-md hover:from-yellow-600 hover:to-orange-600 transition-all duration-200 text-xs text-center"
                               >
                                 Yearly<br />₹2,611
                               </a>
