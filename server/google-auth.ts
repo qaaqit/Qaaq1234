@@ -215,17 +215,19 @@ export function setupGoogleAuth(app: Express) {
       // Find or create user
       const user = await findOrCreateGoogleUser(googleUser);
       
-      // Generate JWT token
-      const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
-      
-      // Redirect to frontend with token - redirect to QBOT Chat as per user preference
-      res.redirect(`/oauth-callback?token=${token}&user=${encodeURIComponent(JSON.stringify({
-        id: user.id,
-        fullName: user.fullName,
-        email: user.email,
-        userType: user.userType,
-        isAdmin: user.isAdmin
-      }))}`);
+      // Set up passport session for the user
+      req.login(user, (err) => {
+        if (err) {
+          console.error('❌ GOOGLE AUTH: Failed to establish session:', err);
+          return res.redirect('/login?error=session_failed');
+        }
+        
+        console.log('✅ GOOGLE AUTH: Session established for user:', user.fullName);
+        console.log('✅ GOOGLE AUTH: Session ID:', req.sessionID);
+        
+        // Redirect to QBOT Chat as per user preference (home page after login)
+        res.redirect('/qbot');
+      });
       
     } catch (error) {
       console.error('Error in Google OAuth callback:', error);
