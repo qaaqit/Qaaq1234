@@ -363,7 +363,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                       {/* Premium Roadblock for Free Users - Redesigned */}
                       {!isPremiumUser && showRoadblock && (
                         <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                          <div className="max-w-md w-full bg-white rounded-xl shadow-2xl border-2 border-orange-300 p-6 text-center relative max-h-[65vh] overflow-y-auto">
+                          <div className="max-w-md w-full bg-white rounded-xl shadow-2xl border border-orange-400 p-6 text-center relative max-h-[65vh] overflow-y-auto">
                             {/* Minimize/Restore Chevron */}
                             <button
                               onClick={() => setShowRoadblock(false)}
@@ -412,7 +412,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                                 href="https://rzp.io/rzp/NAU59cv"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="block w-full bg-gradient-to-r from-green-500 to-blue-500 text-white font-bold py-3 px-4 rounded-lg hover:from-green-600 hover:to-blue-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                                className="block w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-bold py-3 px-4 rounded-lg hover:from-yellow-600 hover:to-orange-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
                               >
                                 Yearly Plan - ₹2,611 <span className="text-yellow-200">(Save 50%)</span>
                               </a>
