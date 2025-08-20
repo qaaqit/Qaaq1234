@@ -320,15 +320,6 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
           </Button>
 
 
-          {/* Signup Link */}
-          <div className="text-center mt-6">
-            <button
-              onClick={() => navigate('/register')}
-              className="text-orange-600 hover:text-orange-800 font-semibold text-sm"
-            >
-              New User? Sign up here
-            </button>
-          </div>
         </div>
 
         {/* Footer */}
