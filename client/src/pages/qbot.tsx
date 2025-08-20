@@ -40,9 +40,10 @@ export default function QBOTPage({ user }: QBOTPageProps) {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
-  // Check user premium status - required for QBOT access
-  const { data: subscriptionStatus, isLoading: isCheckingPremium } = useQuery({
+  // Premium status check - only triggered when needed (not on page load)
+  const { data: subscriptionStatus, isLoading: isCheckingPremium, refetch: checkPremiumStatus } = useQuery({
     queryKey: ["/api/user/subscription-status"],
+    enabled: false, // Don't check on page load
     retry: 1,
     staleTime: 10 * 60 * 1000, // 10 minutes cache
     refetchInterval: false,
@@ -108,6 +109,15 @@ export default function QBOTPage({ user }: QBOTPageProps) {
   }, [user?.id, toast]);
 
   const handleSendQBotMessage = async (messageText: string, attachments?: string[], isPrivate?: boolean, aiModels?: string[]) => {
+    // Check premium status only when user tries to send a message
+    if (!subscriptionStatus) {
+      try {
+        await checkPremiumStatus();
+      } catch (error) {
+        console.error('Failed to check premium status:', error);
+      }
+    }
+
     const newMessage: Message = {
       id: Date.now().toString(),
       text: messageText,
@@ -226,17 +236,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
     }
   };
 
-  // Show loading while checking premium status
-  if (isCheckingPremium) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Verifying premium access...</p>
-        </div>
-      </div>
-    );
-  }
+  // Remove loading screen - premium check now happens only when needed
 
   return (
     <div className="h-[90vh] bg-gradient-to-br from-orange-50 via-white to-yellow-50 flex flex-col">
@@ -473,7 +473,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                   <div>
                     <QBOTInputArea 
                       onSendMessage={handleSendQBotMessage}
-                      disabled={isQBotTyping || !isPremiumUser}
+                      disabled={isQBotTyping}
                     />
                   </div>
                 </div>
