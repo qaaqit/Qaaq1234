@@ -10,6 +10,7 @@ import Login from "@/pages/login";
 import Register from "@/pages/register";
 import Verify from "@/pages/verify";
 import Discover from "@/pages/discover";
+import QRadarPage from "@/pages/qradar";
 import Post from "@/pages/post";
 import Admin from "@/pages/admin";
 import BotRulesAdmin from "@/pages/admin/bot-rules";
@@ -164,7 +165,8 @@ function Router() {
           <Route path="/register" component={() => <Register onSuccess={setUser} />} />
           <Route path="/verify" component={() => <Verify onSuccess={setUser} />} />
           <Route path="/oauth-callback" component={() => <OAuthCallback />} />
-          <Route path="/discover" component={() => currentUser ? <Discover user={currentUser} /> : <Login onSuccess={setUser} />} />
+          {/* <Route path="/discover" component={() => currentUser ? <Discover user={currentUser} /> : <Login onSuccess={setUser} />} /> */}
+          <Route path="/qradar" component={() => currentUser ? <QRadarPage user={currentUser} /> : <Login onSuccess={setUser} />} />
           <Route path="/qbot" component={() => {
             console.log('🤖 QBOT route - Current user:', currentUser ? currentUser.fullName : 'None');
             if (!currentUser && !loading) {
