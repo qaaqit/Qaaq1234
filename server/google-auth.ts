@@ -195,25 +195,41 @@ export function setupGoogleAuth(app: Express) {
   // Handle Google OAuth callback
   app.get('/api/auth/google/callback', async (req: Request, res: Response) => {
     try {
-      const { code, error } = req.query;
+      console.log('🔄 GOOGLE AUTH CALLBACK: Starting callback processing');
+      console.log('🔄 GOOGLE AUTH CALLBACK: Full query params:', req.query);
+      console.log('🔄 GOOGLE AUTH CALLBACK: Session exists:', !!req.session);
+      console.log('🔄 GOOGLE AUTH CALLBACK: Session ID:', req.sessionID);
+      
+      const { code, error, state } = req.query;
 
       if (error) {
-        console.error('Google OAuth error:', error);
+        console.error('❌ GOOGLE AUTH CALLBACK: OAuth error received:', error);
         return res.redirect('/login?error=google_auth_failed');
       }
 
       if (!code || typeof code !== 'string') {
+        console.error('❌ GOOGLE AUTH CALLBACK: No authorization code received');
+        console.error('❌ GOOGLE AUTH CALLBACK: Code value:', code);
+        console.error('❌ GOOGLE AUTH CALLBACK: Code type:', typeof code);
         return res.redirect('/login?error=no_auth_code');
       }
+      
+      console.log('✅ GOOGLE AUTH CALLBACK: Authorization code received, length:', code.length);
 
       // Exchange code for tokens
+      console.log('🔄 GOOGLE AUTH CALLBACK: Exchanging code for tokens...');
       const tokenResponse = await exchangeCodeForToken(code);
+      console.log('✅ GOOGLE AUTH CALLBACK: Token exchange successful');
       
       // Get user info
+      console.log('🔄 GOOGLE AUTH CALLBACK: Fetching user info from Google...');
       const googleUser = await getGoogleUserInfo(tokenResponse.access_token);
+      console.log('✅ GOOGLE AUTH CALLBACK: User info received:', googleUser.email);
       
       // Find or create user
+      console.log('🔄 GOOGLE AUTH CALLBACK: Finding or creating user...');
       const user = await findOrCreateGoogleUser(googleUser);
+      console.log('✅ GOOGLE AUTH CALLBACK: User processed:', user.fullName);
       
       // Manually set up session data for the user
       if (req.session) {
@@ -257,7 +273,8 @@ export function setupGoogleAuth(app: Express) {
       }
       
     } catch (error) {
-      console.error('Error in Google OAuth callback:', error);
+      console.error('❌ GOOGLE AUTH CALLBACK: Fatal error occurred:', error);
+      console.error('❌ GOOGLE AUTH CALLBACK: Error stack:', (error as Error).stack);
       res.redirect('/login?error=auth_failed');
     }
   });
