@@ -4,19 +4,12 @@ export function useAuth() {
   const { data: user, isLoading } = useQuery({
     queryKey: ["/api/auth/user"],
     queryFn: async () => {
-      // Get JWT token from localStorage for QAAQ authentication
-      const token = localStorage.getItem('auth_token');
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-      
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-      
+      // SIMPLIFIED: Only session-based auth (Google/Replit)
       const response = await fetch('/api/auth/user', {
         credentials: 'include', // Include session cookies for Replit Auth
-        headers,
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
       
       if (!response.ok) {

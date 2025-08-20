@@ -464,27 +464,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // DISABLED: Session bridge to prevent constant polling
       // app.use(sessionBridge);
       
-      // UNIFIED authentication endpoint using session bridge (AFTER bridge middleware is set up)
+      // SIMPLIFIED authentication endpoint - only session auth (Google/Replit)
       app.get('/api/auth/user', async (req: any, res) => {
         try {
-          // console.log('🎯 UNIFIED AUTH: Checking authentication via bridge');
+          let user = null;
           
-          // Use the bridge for consistent authentication
-          const auth = bridgedAuth(req);
-          
-          if (!auth.isAuthenticated || !auth.user) {
-            // console.log('❌ UNIFIED AUTH: No valid authentication found');
-            return res.status(401).json({ 
-              message: 'No valid authentication found',
-              bridgeState: req.authBridge?.isAuthenticated || false
-            });
+          // Check session authentication (Replit/Google Auth) only
+          if (req.user) {
+            const sessionUserId = (req.user as any).claims?.sub || (req.user as any).id || (req.user as any).userId;
+            if (sessionUserId) {
+              try {
+                user = await identityResolver.resolveUserByAnyMethod(sessionUserId, 'replit');
+              } catch (error) {
+                console.log('Error resolving user:', error);
+              }
+            }
           }
           
-          // console.log(`✅ UNIFIED AUTH: Success - ${auth.user.fullName} (${auth.method})`);
-          res.json(auth.user);
+          if (user) {
+            return res.json(user);
+          }
+          
+          return res.status(401).json({ 
+            message: 'No valid authentication found',
+            hasSession: !!req.user
+          });
           
         } catch (error) {
-          // console.error("🚨 UNIFIED AUTH ERROR:", (error as Error).message);
+          console.error("Auth endpoint error:", (error as Error).message);
           res.status(500).json({ message: "Failed to fetch user" });
         }
       });
@@ -953,8 +960,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         [token]
       );
 
-      // Generate JWT token
-      const jwtToken = jwt.sign({ userId: newUser.id }, JWT_SECRET, { expiresIn: '30d' });
+      // DISABLED: JWT token generation
+      // const jwtToken = jwt.sign({ userId: newUser.id }, JWT_SECRET, { expiresIn: '30d' });
 
       console.log(`✅ User verified and registered: ${newUser.fullName} (${newUser.email}) - User ID: ${userData.userId}`);
 
@@ -1032,8 +1039,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       await storage.incrementLoginCount(user.id);
       
-      // Generate JWT token for authenticated user
-      const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '30d' });
+      // DISABLED: JWT token generation
+      // const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '30d' });
       
       console.log(`✅ User login successful: ${user.fullName} (Q:${user.questionCount || 0}, A:${user.answerCount || 0})`);
       
