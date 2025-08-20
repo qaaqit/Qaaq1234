@@ -12,6 +12,35 @@ export const forceTokenRefresh = () => {
   window.location.href = '/login';
 };
 
+// Comprehensive authentication reset
+export const clearAndRefreshAuthState = () => {
+  console.log('🔄 Clearing and refreshing authentication state...');
+  
+  // Clear all localStorage auth data
+  localStorage.removeItem('auth_token');
+  localStorage.removeItem('token');
+  localStorage.removeItem('qaaq_user');
+  localStorage.removeItem('user');
+  localStorage.removeItem('userProfile');
+  localStorage.removeItem('sessionId');
+  
+  // Clear sessionStorage as well
+  sessionStorage.removeItem('auth_token');
+  sessionStorage.removeItem('token');
+  sessionStorage.removeItem('qaaq_user');
+  sessionStorage.removeItem('user');
+  
+  // Clear any cached query data
+  if (typeof window !== 'undefined' && (window as any).queryClient) {
+    (window as any).queryClient.clear();
+  }
+  
+  console.log('✅ Authentication state cleared successfully');
+  
+  // Refresh the page to reset the application state
+  window.location.reload();
+};
+
 export const isTokenValid = (token: string): boolean => {
   if (!token) return false;
   
