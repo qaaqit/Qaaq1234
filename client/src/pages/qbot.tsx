@@ -36,6 +36,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [activeTab, setActiveTab] = useState("chat");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showRoadblock, setShowRoadblock] = useState(true);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
@@ -50,23 +51,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
   });
 
   const isPremium = (subscriptionStatus as any)?.isPremium || (subscriptionStatus as any)?.isSuperUser;
-
-  // State for roadblock visibility
-  const [showRoadblock, setShowRoadblock] = useState(true);
-
   const isPremiumUser = subscriptionStatus && isPremium;
-
-  // Show loading while checking premium status
-  if (isCheckingPremium) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Verifying premium access...</p>
-        </div>
-      </div>
-    );
-  }
 
   // Fetch WhatsApp chat history when component loads
   useEffect(() => {
@@ -240,6 +225,18 @@ export default function QBOTPage({ user }: QBOTPageProps) {
       setIsQBotTyping(false);
     }
   };
+
+  // Show loading while checking premium status
+  if (isCheckingPremium) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Verifying premium access...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-[90vh] bg-gradient-to-br from-orange-50 via-white to-yellow-50 flex flex-col">
