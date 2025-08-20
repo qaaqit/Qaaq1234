@@ -362,49 +362,52 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                     <div className="flex flex-col h-full p-4 relative">
                       {/* Premium Roadblock for Free Users - Contained within chat area */}
                       {!isPremiumUser && showRoadblock && (
-                        <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-40 flex items-center justify-center p-2">
-                          <div className="w-56 max-w-[90vw] bg-white rounded-lg shadow-xl border border-orange-400 p-2.5 text-center relative max-h-[70vh] overflow-y-auto">
+                        <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-40 flex items-center justify-center">
+                          <div className="w-48 bg-white rounded-lg shadow-xl border border-orange-400 p-2 text-center relative">
                             {/* Minimize/Restore Chevron */}
                             <button
                               onClick={() => setShowRoadblock(false)}
-                              className="absolute top-2 right-2 w-6 h-6 bg-orange-100 hover:bg-orange-200 rounded-full flex items-center justify-center transition-all duration-200"
-                              title="Minimize roadblock"
+                              className="absolute top-1 right-1 w-5 h-5 bg-orange-100 hover:bg-orange-200 rounded-full flex items-center justify-center transition-all duration-200"
+                              title="Minimize"
                             >
-                              <ChevronDown className="w-3 h-3 text-orange-600" />
+                              <ChevronDown className="w-2.5 h-2.5 text-orange-600" />
                             </button>
 
-                            <div className="mb-2">
-                              <div className="w-6 h-6 mx-auto mb-1 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                            {/* Compact Header */}
+                            <div className="mb-1.5">
+                              <div className="w-4 h-4 mx-auto mb-0.5 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
                                 <span className="text-xs">⭐</span>
                               </div>
-                              <h2 className="text-xs font-bold text-gray-800">QBOT Premium Required</h2>
+                              <h2 className="text-xs font-bold text-gray-800">QBOT Premium</h2>
                             </div>
 
-                            <div className="mb-2 space-y-0.5 bg-gray-50 rounded-md p-1.5">
-                              <div className="flex items-center text-xs text-gray-700">
-                                <span className="text-green-500 mr-1">✓</span>
-                                <span>Unlimited responses</span>
+                            {/* Compact Features - 2x2 Grid */}
+                            <div className="mb-1.5 grid grid-cols-2 gap-0.5 bg-gray-50 rounded p-1 text-xs">
+                              <div className="flex items-center text-gray-700">
+                                <span className="text-green-500 mr-0.5">✓</span>
+                                <span className="text-xs">Unlimited</span>
                               </div>
-                              <div className="flex items-center text-xs text-gray-700">
-                                <span className="text-green-500 mr-1">✓</span>
-                                <span>Multi-AI access</span>
+                              <div className="flex items-center text-gray-700">
+                                <span className="text-green-500 mr-0.5">✓</span>
+                                <span className="text-xs">Multi-AI</span>
                               </div>
-                              <div className="flex items-center text-xs text-gray-700">
-                                <span className="text-green-500 mr-1">✓</span>
-                                <span>Priority assistance</span>
+                              <div className="flex items-center text-gray-700">
+                                <span className="text-green-500 mr-0.5">✓</span>
+                                <span className="text-xs">Priority</span>
                               </div>
-                              <div className="flex items-center text-xs text-gray-700">
-                                <span className="text-green-500 mr-1">✓</span>
-                                <span>File attachments</span>
+                              <div className="flex items-center text-gray-700">
+                                <span className="text-green-500 mr-0.5">✓</span>
+                                <span className="text-xs">Files</span>
                               </div>
                             </div>
 
-                            <div className="flex gap-1 mb-1">
+                            {/* Compact Buttons */}
+                            <div className="flex gap-0.5">
                               <a
                                 href="https://rzp.io/rzp/jwQW9TW"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium py-1 px-1 rounded text-xs text-center leading-tight"
+                                className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium py-1 px-0.5 rounded text-xs text-center leading-none"
                               >
                                 Monthly<br />₹451
                               </a>
@@ -412,7 +415,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                                 href="https://rzp.io/rzp/NAU59cv"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium py-1 px-1 rounded text-xs text-center leading-tight"
+                                className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium py-1 px-0.5 rounded text-xs text-center leading-none"
                               >
                                 Yearly<br />₹2,611
                               </a>
