@@ -179,17 +179,17 @@ export function useLocation(userId?: string, autoUpdate: boolean = true) {
     navigator.geolocation.clearWatch(watchId);
   };
 
-  // Auto-request location on mount if enabled
+  // Auto-request location on mount if enabled - DISABLED periodic updates
   useEffect(() => {
     if (autoUpdate && userId) {
       requestDeviceLocation(userId);
       
-      // Set up periodic location updates every 5 minutes
-      const interval = setInterval(() => {
-        requestDeviceLocation(userId);
-      }, 5 * 60 * 1000); // 5 minutes
-      
-      return () => clearInterval(interval);
+      // DISABLED: Periodic location updates to prevent constant polling
+      // const interval = setInterval(() => {
+      //   requestDeviceLocation(userId);
+      // }, 5 * 60 * 1000); // 5 minutes
+      // 
+      // return () => clearInterval(interval);
     }
   }, [userId, autoUpdate]);
 

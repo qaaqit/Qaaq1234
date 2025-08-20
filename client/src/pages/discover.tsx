@@ -45,8 +45,8 @@ export default function Discover({ user }: DiscoverProps) {
   const [mapType, setMapType] = useState<'leaflet' | 'google'>('leaflet');
   const [isPremiumMode, setIsPremiumMode] = useState(false);
   
-  // Location functionality for enhanced user discovery
-  const { location, error: locationError, isLoading: locationLoading, requestDeviceLocation, updateShipLocation } = useLocation(user?.id, true);
+  // Location functionality for enhanced user discovery - DISABLED auto updates
+  const { location, error: locationError, isLoading: locationLoading, requestDeviceLocation, updateShipLocation } = useLocation(user?.id, false);
   
   const { data: posts = [], isLoading, refetch } = useQuery<Post[]>({
     queryKey: ['/api/posts'],

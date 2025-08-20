@@ -435,21 +435,21 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     };
 
     updateLocation();
-    // Update location every 5 minutes
-    const locationInterval = setInterval(updateLocation, 5 * 60 * 1000);
-    return () => clearInterval(locationInterval);
+    // DISABLED: Auto location update to prevent constant polling
+    // const locationInterval = setInterval(updateLocation, 5 * 60 * 1000);
+    // return () => clearInterval(locationInterval);
   }, []);
 
-  // Sophisticated scan arm animation with elegant timing
-  useEffect(() => {
-    if (!showScanElements) return;
-
-    const scanInterval = setInterval(() => {
-      setScanAngle(prev => (prev + 1.2) % 360); // Slower, more elegant rotation
-    }, 75); // Smoother frame rate for premium feel
-
-    return () => clearInterval(scanInterval);
-  }, [showScanElements]);
+  // DISABLED: Scan animation to prevent constant updates
+  // useEffect(() => {
+  //   if (!showScanElements) return;
+  //
+  //   const scanInterval = setInterval(() => {
+  //     setScanAngle(prev => (prev + 1.2) % 360); // Slower, more elegant rotation
+  //   }, 75); // Smoother frame rate for premium feel
+  //
+  //   return () => clearInterval(scanInterval);
+  // }, [showScanElements]);
 
   // Auto-enable scan elements when users are detected
   useEffect(() => {
