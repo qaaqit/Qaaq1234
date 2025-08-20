@@ -19,7 +19,6 @@ export function useLocation(userId?: string, autoUpdate: boolean = true) {
   const [error, setError] = useState<LocationError | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [permissionStatus, setPermissionStatus] = useState<'granted' | 'denied' | 'prompt' | 'unknown'>('unknown');
-  const [lastUpdateTime, setLastUpdateTime] = useState(0);
 
   const requestDeviceLocation = async (userId?: string) => {
     if (!navigator.geolocation) {
@@ -53,22 +52,17 @@ export function useLocation(userId?: string, autoUpdate: boolean = true) {
         setLocation(locationData);
         setIsLoading(false);
 
-        // If userId is provided and valid, update location on server (with throttling to prevent spam)
+        // If userId is provided and valid, update location on server
         if (userId && userId.trim() && locationData.latitude && locationData.longitude) {
-          const now = Date.now();
-          // Only update server if more than 30 seconds have passed since last update
-          if (now - lastUpdateTime > 30000) {
-            try {
-              await apiRequest('/api/users/location/device', 'POST', {
-                userId: userId.trim(),
-                latitude: locationData.latitude,
-                longitude: locationData.longitude
-              });
-              setLastUpdateTime(now);
-              console.log('Device location updated on server');
-            } catch (error) {
-              console.error('Failed to update device location on server:', error);
-            }
+          try {
+            await apiRequest('/api/users/location/device', 'POST', {
+              userId: userId.trim(),
+              latitude: locationData.latitude,
+              longitude: locationData.longitude
+            });
+            console.log('Device location updated on server');
+          } catch (error) {
+            console.error('Failed to update device location on server:', error);
           }
         }
       },

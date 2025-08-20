@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/useAuth';
@@ -130,24 +130,43 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
   const [showMapTypeDropdown, setShowMapTypeDropdown] = useState(false);
   const [mapType, setMapType] = useState('roadmap');
   const [mapZoom, setMapZoom] = useState(10); // Default zoom level
-  const [scanAngle] = useState(0); // Static scan arm - no animation
-  const [showScanElements] = useState(false); // Always disabled to prevent flickering
+  const [scanAngle, setScanAngle] = useState(0); // For rotating scan arm
+  const [showScanElements, setShowScanElements] = useState(false); // Toggle scan arm and circle
   const [searchQuery, setSearchQuery] = useState(''); // User search input
   const [shipSearchResult, setShipSearchResult] = useState<any>(null); // Ship search result
   const [searchType, setSearchType] = useState<'users' | 'ships'>('users'); // Search type
-  // RADAR STATE DISABLED - all radar animations removed to prevent flickering
-  const [isRadarActive] = useState(false); // Always false
-  const [radarScanAngle] = useState(0); // Static angle
+  const [isRadarActive, setIsRadarActive] = useState(false); // Radar scanner state
+  const [radarScanAngle, setRadarScanAngle] = useState(0); // Radar animation angle
+  const [radarTimeoutId, setRadarTimeoutId] = useState<NodeJS.Timeout | null>(null); // Track timeout
 
   // Stable zoom change handler to prevent map re-initialization
   const handleZoomChange = useCallback((zoom: number) => {
     setMapZoom(zoom);
   }, []);
 
-  // RADAR ANIMATION COMPLETELY DISABLED to prevent flickering
-  // No animation effects to prevent constant re-renders
+  // Radar scanner animation effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
 
-  // CLEANUP DISABLED - no radar timeouts to clean up
+    if (isRadarActive) {
+      interval = setInterval(() => {
+        setRadarScanAngle((prev) => (prev + 6) % 360); // Rotate 6 degrees every interval
+      }, 50); // Update every 50ms for smooth animation
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isRadarActive]);
+
+  // Cleanup effect to prevent stuck states
+  useEffect(() => {
+    return () => {
+      if (radarTimeoutId) {
+        clearTimeout(radarTimeoutId);
+      }
+    };
+  }, [radarTimeoutId]);
 
 
 
@@ -202,12 +221,45 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     setSearchQuery(value);
   }, []);
 
-  // RADAR HANDLER DISABLED - no radar functionality to prevent flickering
+  // Radar scanner toggle handler - Simple click to refresh
   const handleRadarToggle = useCallback(() => {
-    console.log('🔍 Radar disabled to prevent flickering');
-    // No radar functionality - just refresh data once
-    refetchNearby();
-  }, [refetchNearby]);
+    console.log('🔍 Radar button clicked! Current state:', { isRadarActive, nearbyUsers: nearbyUsersResponse?.length });
+
+    // Clear any existing timeout
+    if (radarTimeoutId) {
+      clearTimeout(radarTimeoutId);
+      setRadarTimeoutId(null);
+    }
+
+    if (isRadarActive) {
+      // Manual deactivation
+      setIsRadarActive(false);
+      setRadarScanAngle(0);
+      console.log('🔴 Radar scanner manually cleared');
+    } else {
+      // Activate radar and refresh data
+      console.log('🟢 Activating radar scanner...');
+      setIsRadarActive(true);
+
+      // Trigger refresh
+      console.log('📡 Triggering refetch...');
+      refetchNearby();
+
+      // Dispatch global radar refresh event for other components (like DM page)
+      window.dispatchEvent(new Event('radar-refresh'));
+      console.log('🟢 Radar scanner activated - refreshing results and notifying other components');
+
+      // Auto-deactivate after 2 seconds
+      const timeoutId = setTimeout(() => {
+        setIsRadarActive(false);
+        setRadarScanAngle(0);
+        setRadarTimeoutId(null);
+        console.log('🔴 Radar scanner auto-deactivated');
+      }, 2000);
+
+      setRadarTimeoutId(timeoutId);
+    }
+  }, [isRadarActive, refetchNearby, nearbyUsersResponse, radarTimeoutId]);
 
   // Calculate radius based on map zoom level
   const radiusKm = useMemo(() => {
@@ -389,23 +441,36 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     };
 
     updateLocation();
-    // DISABLED: Location polling was causing excessive API calls and flickering
-    // Location will be updated once on mount
-    return () => {};
+    // Update location every 5 minutes
+    const locationInterval = setInterval(updateLocation, 5 * 60 * 1000);
+    return () => clearInterval(locationInterval);
   }, []);
 
-  // SCAN ANIMATION COMPLETELY DISABLED to prevent flickering
-  // Static display only
-
-  // SCAN ELEMENTS AUTO-ENABLING DISABLED to prevent flickering
-  // Manual control only if needed
-
-  // Reduce console logging to prevent performance impact - only log meaningful changes
+  // Sophisticated scan arm animation with elegant timing
   useEffect(() => {
-    if (hoveredUser) {
-      console.log('Component updated - hoveredUser:', hoveredUser.fullName);
+    if (!showScanElements) return;
+
+    const scanInterval = setInterval(() => {
+      setScanAngle(prev => (prev + 1.2) % 360); // Slower, more elegant rotation
+    }, 75); // Smoother frame rate for premium feel
+
+    return () => clearInterval(scanInterval);
+  }, [showScanElements]);
+
+  // Auto-enable scan elements when users are detected
+  useEffect(() => {
+    if (filteredUsers.length > 0 && !showScanElements) {
+      setShowScanElements(true);
+      // Auto-disable after 20 seconds
+      const timeout = setTimeout(() => setShowScanElements(false), 20000);
+      return () => clearTimeout(timeout);
     }
-  }, [hoveredUser?.id]); // Only log when user actually changes, not on every hover
+  }, [filteredUsers.length, showScanElements]);
+
+  // Component updated log for debugging
+  useEffect(() => {
+    console.log('Component updated - hoveredUser:', hoveredUser ? hoveredUser.fullName : 'none');
+  }, [hoveredUser]);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -423,16 +488,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Remove frequent render logging to prevent performance impact during normal use
-  // Only log when there are significant changes in user count (reduce noise)
-  const prevUserCount = useRef(filteredUsers.length);
-  useEffect(() => {
-    const currentCount = filteredUsers.length;
-    if (Math.abs(currentCount - prevUserCount.current) >= 5 || (currentCount === 0 && prevUserCount.current > 0) || (currentCount > 0 && prevUserCount.current === 0)) {
-      console.log('🗺️ UsersMapDual: Significant user count change -', currentCount, 'users (within', radiusKm, 'km)');
-      prevUserCount.current = currentCount;
-    }
-  }, [filteredUsers.length]);
+  console.log('🗺️ UsersMapDual rendering with', filteredUsers.length, 'filtered users (online within', radiusKm, 'km). Admin mode:', !!(user as any)?.isAdmin);
 
   return (
     <div className="w-full h-full overflow-hidden bg-gray-100 relative">
@@ -460,8 +516,18 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
 
       </div>
 
-      {/* Google Maps System: Restored as requested */}
-      <div className="absolute top-[80px] sm:top-[60px] left-0 right-0 bottom-0">
+      {/* Dual Map System: Google Maps for Admin, Leaflet for Users */}
+      <div className={`absolute top-[80px] sm:top-[60px] left-0 right-0 ${
+        nearestUsers.length > 0 
+          ? searchPanelState === 'minimized'
+            ? 'bottom-[60px]'
+            : searchPanelState === 'half'
+            ? 'bottom-1/2'
+            : searchQuery.trim() 
+            ? 'bottom-[65%]' 
+            : 'bottom-[160px] sm:bottom-[180px]'
+          : 'bottom-0'
+      }`}>
         <GoogleMap
           users={filteredUsers}
           userLocation={userLocation}
@@ -654,7 +720,7 @@ export default function UsersMapDual({ showNearbyCard = false, onUsersFound }: U
 
           {/* Radar Control */}
           <button
-            onClick={() => {}} // Disabled - no scan elements to prevent flickering
+            onClick={() => setShowScanElements(!showScanElements)}
             className={`flex items-center justify-center w-12 h-12 rounded-lg shadow-lg border border-gray-200 transition-colors ${
               showScanElements 
                 ? 'bg-green-100 text-green-700 hover:bg-green-200' 

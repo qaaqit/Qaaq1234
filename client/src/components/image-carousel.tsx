@@ -27,10 +27,8 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
   const [currentStartIndex, setCurrentStartIndex] = useState(0);
   const [viewMode, setViewMode] = useState<'carousel' | 'grid'>('grid'); // Default to showing all images
 
-  // Fetch question attachments - OPTIMIZED to prevent repeated calls during flickering
+  // Fetch question attachments
   useEffect(() => {
-    if (attachments.length > 0 && !loading) return; // Skip if already loaded
-
     const fetchAttachments = async () => {
       try {
         const response = await fetch('/api/questions/attachments?limit=18', {
@@ -62,7 +60,7 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
     };
 
     fetchAttachments();
-  }, []); // No dependencies to prevent re-fetching
+  }, []);
 
   const handleImageError = (attachmentId: string) => {
     setImageError(prev => new Set([...Array.from(prev), attachmentId]));
