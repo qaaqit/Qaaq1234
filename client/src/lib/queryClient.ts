@@ -70,7 +70,6 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       staleTime: Infinity,
       retry: false,
-      // enabled: false, // Re-enabled React Query - issue is server-side unified auth
     },
     mutations: {
       retry: false,

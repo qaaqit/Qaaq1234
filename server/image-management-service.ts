@@ -1,7 +1,7 @@
 import { pool } from "./db";
 import path from 'path';
 import fs from 'fs/promises';
-import { uuidManager } from './uuid-manager';
+import { randomUUID } from 'crypto';
 
 /**
  * Stable Image Management System for QaaqConnect
@@ -46,7 +46,7 @@ export class ImageManagementService {
       // Generate unique filename with source prefix
       const timestamp = Date.now();
       const extension = path.extname(originalFileName) || '.jpg';
-      const uniqueId = uuidManager.generateUUID();
+      const uniqueId = randomUUID();
       
       let fileName: string;
       if (source === 'whatsapp') {

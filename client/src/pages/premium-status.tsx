@@ -31,16 +31,15 @@ interface UserStatus {
 export default function PremiumStatusPage() {
   const [, setLocation] = useLocation();
 
-  // DISABLED FOR TESTING STABILITY - no auth requests
-  // const { data: user } = useQuery<User>({
-  //   queryKey: ["/api/auth/user"],
-  // });
-  const user = null;
+  // Fetch current user
+  const { data: user } = useQuery<User>({
+    queryKey: ["/api/auth/user"],
+  });
 
   // Fetch user subscription status
   const { data: userStatusData, isLoading } = useQuery({
     queryKey: ["/api/user/subscription-status"],
-    enabled: false, // DISABLED for stability testing
+    enabled: !!user,
   });
 
   const userStatus = userStatusData as UserStatus;

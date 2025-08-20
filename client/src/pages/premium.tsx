@@ -110,11 +110,10 @@ export default function PremiumPage() {
 
   const queryClient = useQueryClient();
 
-  // DISABLED FOR TESTING STABILITY - no auth requests
-  // const { data: user } = useQuery<User>({
-  //   queryKey: ["/api/auth/user"],
-  // });
-  const user = null;
+  // Fetch current user
+  const { data: user } = useQuery<User>({
+    queryKey: ["/api/auth/user"],
+  });
 
   // Fetch subscription plans
   const { data: plansData, isLoading: plansLoading } = useQuery({

@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { uuidManager } from './uuid-manager';
+import { randomUUID } from "crypto";
 
 const REPLIT_SIDECAR_ENDPOINT = "http://127.0.0.1:1106";
 
@@ -62,7 +62,7 @@ export class ObjectStorageService {
       );
     }
 
-    const objectId = uuidManager.generateUUID();
+    const objectId = randomUUID();
     const fullPath = `${privateObjectDir}/uploads/${objectId}`;
 
     const { bucketName, objectName } = parseObjectPath(fullPath);
