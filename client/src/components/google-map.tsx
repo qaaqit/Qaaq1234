@@ -671,7 +671,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ users, userLocation, selectedUser
       <div ref={mapRef} className="w-full h-full" />
       
       {/* Zoom Controls */}
-      <div className="absolute bottom-4 right-4 flex flex-col space-y-2 z-[1000]">
+      <div className="absolute top-16 right-4 flex flex-col space-y-2 z-[1000]">
         <Button
           onClick={zoomIn}
           className="w-10 h-10 p-0 bg-white hover:bg-gray-50 border border-gray-300 shadow-lg rounded-lg"
