@@ -185,8 +185,25 @@ export default function StaticMap({
               alt="Maritime users map"
               className="w-full h-full object-cover"
               style={{ maxHeight: '100%' }}
-              onError={() => {
-                console.error('Failed to load static map image');
+              onError={(e) => {
+                console.error('Failed to load static map image, URL was:', mapImageUrl);
+                // Create a simple fallback image
+                const img = e.target as HTMLImageElement;
+                const fallbackSvg = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
+                  `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600">
+                     <rect width="100%" height="100%" fill="#f0f0f0"/>
+                     <text x="50%" y="40%" text-anchor="middle" dy=".3em" font-family="Arial" font-size="16" fill="#666">
+                       Map Loading Error
+                     </text>
+                     <text x="50%" y="60%" text-anchor="middle" dy=".3em" font-family="Arial" font-size="12" fill="#999">
+                       ${validUsers.length} users found
+                     </text>
+                   </svg>`
+                )}`;
+                img.src = fallbackSvg;
+              }}
+              onLoad={() => {
+                console.log('Static map loaded successfully with', validUsers.length, 'user markers');
               }}
             />
           ) : (
