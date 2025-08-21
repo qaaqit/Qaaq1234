@@ -6,8 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import DiscoveryCard from "@/components/discovery-card";
-import UsersMapDual from "@/components/users-map-dual";
-import GoogleMaps from "@/components/google-maps";
+import StaticMap from "@/components/static-map";
 import WhatsAppBotControl from "@/components/whatsapp-bot-control";
 import CPSSNavigator from "@/components/cpss-navigator";
 
@@ -175,8 +174,15 @@ export default function Discover({ user }: DiscoverProps) {
           </div>
         )}
 
-        {/* Dual Map System - Always use UsersMapDual */}
-        <UsersMapDual showNearbyCard={showNearbyCard} />
+        {/* Static Map System - Stable experience with minimal API calls */}
+        <StaticMap 
+          mapType={mapType === 'leaflet' ? 'roadmap' : 'satellite'}
+          showUsersList={showNearbyCard}
+          onUserSelect={(user) => {
+            console.log('User selected:', user.fullName);
+            // Could navigate to user profile or chat
+          }}
+        />
         
         {/* WhatsApp Bot Control Panel - positioned outside map */}
         {showWhatsAppPanel && user.isAdmin && (
