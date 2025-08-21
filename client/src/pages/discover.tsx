@@ -47,19 +47,11 @@ export default function Discover({ user }: DiscoverProps) {
   // Location functionality for enhanced user discovery - DISABLED auto updates
   const { location, error: locationError, isLoading: locationLoading, requestDeviceLocation, updateShipLocation } = useLocation(user?.id, false);
   
-  const { data: posts = [], isLoading, refetch } = useQuery<Post[]>({
-    queryKey: ['/api/posts'],
-    queryFn: async () => {
-      const response = await fetch('/api/posts');
-      if (!response.ok) throw new Error('Failed to load posts');
-      return response.json();
-    }
-  });
+  // Removed posts query since it's not used in discover and was causing 500 errors
 
   const handleSearch = () => {
     setShowUsers(true);
     setShowNearbyCard(true); // Show the nearby card list when button is pressed
-    refetch();
   };
 
   // Listen for hash changes to trigger user search and QBot controls
@@ -69,12 +61,10 @@ export default function Discover({ user }: DiscoverProps) {
         console.log('Red dot clicked - triggering proximity-based user search');
         setShowUsers(true);
         setShowNearbyCard(true);
-        refetch();
-        
         // Trigger nearby users API call with proximity mode if user location is available
         if (location?.latitude && location?.longitude) {
           console.log(`Fetching nearby users for location: ${location.latitude}, ${location.longitude}`);
-          // The UsersMap component will handle the API call with proximity mode
+          // The StaticMap component will handle the API call
         }
       }
       
@@ -95,27 +85,11 @@ export default function Discover({ user }: DiscoverProps) {
     return () => {
       window.removeEventListener('hashchange', handleHashChange);
     };
-  }, [refetch, location]);
+  }, [location]);
   
 
 
-  const handleLike = async (postId: string) => {
-    try {
-      const token = localStorage.getItem('auth_token');
-      await apiRequest('POST', `/api/posts/${postId}/like`, null);
-      refetch(); // Refresh the posts to update like counts
-      toast({
-        title: "🦆",
-        description: "Duck like added!",
-      });
-    } catch (error) {
-      toast({
-        title: "Failed to like post",
-        description: "Please try again",
-        variant: "destructive",
-      });
-    }
-  };
+  // Removed handleLike since posts are not used in discover page
 
   const categories = [
     "🚢 Maritime Meetups",

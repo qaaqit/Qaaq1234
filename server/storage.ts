@@ -1093,7 +1093,14 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getPosts(filters?: any): Promise<any[]> {
-    throw new Error('getPosts method not yet implemented');
+    try {
+      // Posts functionality not available in QAAQ admin database
+      console.log('Posts table not available - returning empty array');
+      return [];
+    } catch (error) {
+      console.error('Error in getPosts:', error);
+      return [];
+    }
   }
   
   async searchPosts(query: string): Promise<any[]> {

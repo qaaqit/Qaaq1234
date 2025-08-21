@@ -86,7 +86,10 @@ export default function StaticMap({
   // Generate static map URL with user markers
   const generateStaticMapUrl = useMemo(() => {
     const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-    if (!apiKey) return '';
+    if (!apiKey) {
+      console.error('VITE_GOOGLE_MAPS_API_KEY not found in environment');
+      return '';
+    }
 
     const baseUrl = 'https://maps.googleapis.com/maps/api/staticmap';
     const params = new URLSearchParams({
@@ -98,21 +101,22 @@ export default function StaticMap({
       scale: '2' // High DPI for better quality
     });
 
-    // Add markers for users
-    if (validUsers.length > 0) {
-      const markers = validUsers.map(user => {
-        const color = user.userType === 'sailor' ? 'blue' : 'green';
-        const label = user.userType === 'sailor' ? 'S' : 'L';
-        return `color:${color}|label:${label}|${user.latitude},${user.longitude}`;
-      }).join('&markers=');
-      
-      params.append('markers', markers);
-    }
-
-    // Add center marker for current location
+    // Add center marker for current location first
     params.append('markers', `color:red|label:You|${center.lat},${center.lng}`);
 
-    return `${baseUrl}?${params.toString()}`;
+    // Add markers for users (limit to prevent URL length issues)
+    if (validUsers.length > 0) {
+      const limitedUsers = validUsers.slice(0, 20); // Limit to 20 users to avoid URL length issues
+      limitedUsers.forEach(user => {
+        const color = user.userType === 'sailor' ? 'blue' : 'green';
+        const label = user.userType === 'sailor' ? 'S' : 'L';
+        params.append('markers', `color:${color}|label:${label}|${user.latitude},${user.longitude}`);
+      });
+    }
+
+    const finalUrl = `${baseUrl}?${params.toString()}`;
+    console.log('Generated static map URL:', finalUrl);
+    return finalUrl;
   }, [center.lat, center.lng, zoom, width, height, mapType, validUsers]);
 
   // Update map image URL when generated URL changes
