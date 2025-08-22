@@ -268,6 +268,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Check user status for workship.ai
+  app.get('/api/debug/check-user-45016180', async (req, res) => {
+    try {
+      console.log('🔍 Checking user status for 45016180...');
+      
+      const result = await pool.query(`
+        SELECT id, email, full_name, maritime_rank, rank, has_confirmed_maritime_rank, 
+               subscription_status, subscription_plan, is_admin
+        FROM users 
+        WHERE id = '45016180' OR email = 'workship.ai@gmail.com'
+        LIMIT 1
+      `);
+
+      if (result.rows.length === 0) {
+        return res.json({ 
+          success: false, 
+          message: 'User not found',
+          userId: '45016180' 
+        });
+      }
+
+      const user = result.rows[0];
+      console.log('✅ User status:', user);
+      
+      res.json({ 
+        success: true, 
+        user: user
+      });
+    } catch (error) {
+      console.error('Error checking user status:', error);
+      res.status(500).json({ message: 'Failed to check user status' });
+    }
+  });
+
   // 🔍 TEMPORARY DEBUG ENDPOINT - Check total questions count including archived/hidden
   app.get('/api/debug/questions-count', async (req, res) => {
     try {
