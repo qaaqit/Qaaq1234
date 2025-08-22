@@ -598,6 +598,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
 
+
       // Hide/unhide glossary definition (admin only) - using Replit Auth
       app.post('/api/glossary/hide/:id', isAuthenticated, async (req: any, res) => {
         try {
