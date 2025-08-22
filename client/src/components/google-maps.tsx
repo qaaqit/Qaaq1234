@@ -70,15 +70,27 @@ export default function GoogleMaps({ showUsers = false, searchQuery = '', center
   // Check if user is premium (admin users for now)
   const isPremiumUser = user?.email === 'mushy.piyush@gmail.com' || user?.id === '+919029010070' || (user as any)?.whatsappNumber === '+919029010070';
 
-  // Always show all users from QAAQ database - fetch immediately on load
+  // Optimized geospatial search for nearby users
   const { data: users = [], isLoading: usersLoading } = useQuery<GoogleMapsUser[]>({
-    queryKey: ['/api/users/map'],
+    queryKey: ['/api/discover/nearby', userLocation?.lat, userLocation?.lng, mapRadius],
     staleTime: 60000, // 1 minute
-    enabled: isPremiumUser, // Always fetch users to show pins from start
+    enabled: isPremiumUser && !!userLocation, // Only fetch when user location is available
     queryFn: async () => {
-      const response = await fetch('/api/users/map');
-      if (!response.ok) throw new Error('Failed to fetch users');
-      return response.json();
+      if (!userLocation) {
+        console.warn('No user location available for geospatial search');
+        return [];
+      }
+      
+      console.log(`🔍 Geospatial search within ${mapRadius}km of (${userLocation.lat}, ${userLocation.lng})`);
+      
+      const response = await fetch(
+        `/api/discover/nearby?lat=${userLocation.lat}&lng=${userLocation.lng}&radius=${mapRadius}&limit=100`
+      );
+      if (!response.ok) throw new Error('Failed to fetch nearby users');
+      const data = await response.json();
+      
+      console.log(`✅ Found ${data.totalResults} users within ${mapRadius}km`);
+      return data.users || [];
     }
   });
 
