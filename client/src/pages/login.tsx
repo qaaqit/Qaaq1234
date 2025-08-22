@@ -327,6 +327,11 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
           <p className="text-xs text-gray-500">
             Connecting maritime professionals worldwide
           </p>
+          <p className="text-xs text-gray-400 mt-2">
+            <a href="https://qaaq.app/privacy-policy" className="hover:text-gray-600 transition-colors">
+              Learn more
+            </a>
+          </p>
         </div>
           </div>
         </div>
