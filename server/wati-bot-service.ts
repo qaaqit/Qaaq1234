@@ -251,11 +251,120 @@ export class WatiBotService {
         SELECT * FROM users WHERE whatsapp_number = $1 OR id = $1
       `, [phone]);
       
-      return result.rows[0] || null;
+      let user = result.rows[0] || null;
+      
+      // If user exists but has poor name quality, try to enhance with WATI Contact API
+      if (user && this.shouldEnhanceUserName(user)) {
+        const watiContact = await this.fetchWATIContactInfo(phone);
+        if (watiContact && watiContact.name && watiContact.name !== phone) {
+          // Update user name from WATI contact data
+          await this.updateUserNameFromWATI(user.id, watiContact.name, phone);
+          user.full_name = watiContact.name;
+          user.whatsapp_display_name = watiContact.name;
+        }
+      }
+      
+      return user;
     } catch (error) {
       console.error('❌ Error getting user info:', error);
       return null;
     }
+  }
+
+  /**
+   * Check if user name needs enhancement from WATI data
+   */
+  private shouldEnhanceUserName(user: any): boolean {
+    const fullName = user.full_name || '';
+    const displayName = user.whatsapp_display_name || '';
+    
+    return (
+      fullName.includes('@') || // Email as name
+      fullName.includes('whatsapp.temp') || // Temporary name
+      /^\+?[0-9]+$/.test(fullName) || // Phone number as name
+      fullName === displayName && displayName.includes('@') || // Both are email
+      fullName.length < 3 // Very short names
+    );
+  }
+
+  /**
+   * Fetch contact information from WATI API
+   */
+  private async fetchWATIContactInfo(phone: string): Promise<any> {
+    if (!this.apiKey) {
+      return null;
+    }
+
+    try {
+      const cleanPhone = phone.replace(/\+/g, '');
+      const response = await fetch(`${this.baseURL}api/v1/contacts/${cleanPhone}`, {
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const contactData = await response.json();
+        return {
+          name: contactData.name || contactData.displayName,
+          businessName: contactData.businessName,
+          profilePicture: contactData.profilePictureUrl
+        };
+      }
+    } catch (error) {
+      console.error('❌ Error fetching WATI contact info:', error);
+    }
+    
+    return null;
+  }
+
+  /**
+   * Update user name from WATI contact data
+   */
+  private async updateUserNameFromWATI(userId: string, contactName: string, phone: string): Promise<void> {
+    try {
+      // Clean and standardize the contact name
+      const cleanName = this.standardizeName(contactName);
+      
+      await pool.query(`
+        UPDATE users 
+        SET 
+          full_name = $1,
+          whatsapp_display_name = $2,
+          updated_at = NOW()
+        WHERE id = $3
+      `, [cleanName, contactName, userId]);
+      
+      console.log(`✅ Enhanced user name from WATI: ${phone} → ${cleanName}`);
+    } catch (error) {
+      console.error('❌ Error updating user name from WATI:', error);
+    }
+  }
+
+  /**
+   * Standardize and clean contact names
+   */
+  private standardizeName(name: string): string {
+    if (!name || name.length < 2) return name;
+    
+    // Remove emojis and special characters commonly used in WhatsApp names
+    let cleanName = name.replace(/[⚓🚢⛵🌊👨‍💼🔧⚙️🛠️]/g, '').trim();
+    
+    // Remove common maritime prefixes/suffixes that aren't part of actual names
+    cleanName = cleanName.replace(/\b(Captain|Chief|Officer|Engineer|Capt|Ch|Eng)\s*$/gi, '').trim();
+    
+    // Proper case conversion
+    cleanName = cleanName.split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+    
+    // If result is too short or still looks like a phone/email, return original
+    if (cleanName.length < 3 || /^\+?[0-9]+$/.test(cleanName) || cleanName.includes('@')) {
+      return name;
+    }
+    
+    return cleanName;
   }
 
   private async storeQuestionAnswer(userPhone: string, question: string, answer: string, user: any): Promise<string> {
