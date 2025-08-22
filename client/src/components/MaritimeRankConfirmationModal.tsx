@@ -84,7 +84,7 @@ export function MaritimeRankConfirmationModal({
 
   return (
     <Dialog open={isOpen}>
-      <DialogContent className="max-w-md mx-auto">
+      <DialogContent className="max-w-md mx-auto max-h-[90vh] overflow-y-auto">
         <Card className="border-2 border-orange-400 shadow-lg">
           <CardHeader className="bg-gradient-to-r from-orange-100 to-red-100 text-center">
             <div className="flex items-center justify-center mb-2">
