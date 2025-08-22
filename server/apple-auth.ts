@@ -53,6 +53,48 @@ export function setupAppleAuth(app: any, options?: AppleAuthSetupOptions) {
     }
   });
 
+  // Route for handling Apple server-to-server notifications
+  app.post('/api/auth/apple/notifications', async (req: any, res: any) => {
+    try {
+      const { events } = req.body;
+      console.log('🍎 Apple server-to-server notification received:', events);
+      
+      if (events && Array.isArray(events)) {
+        for (const event of events) {
+          const { type, sub, event_time } = event;
+          console.log(`🍎 Processing Apple event: ${type} for user ${sub} at ${event_time}`);
+          
+          // Handle different event types
+          switch (type) {
+            case 'email-disabled':
+              console.log('🍎 User disabled email forwarding:', sub);
+              // Update user's email preference in database if needed
+              break;
+            case 'email-enabled':
+              console.log('🍎 User enabled email forwarding:', sub);
+              break;
+            case 'consent-withdrawn':
+              console.log('🍎 User withdrew consent:', sub);
+              // Handle account deletion/deactivation
+              break;
+            case 'account-delete':
+              console.log('🍎 User deleted Apple account:', sub);
+              // Handle permanent account deletion
+              break;
+            default:
+              console.log('🍎 Unknown Apple event type:', type);
+          }
+        }
+      }
+      
+      // Apple expects a 200 response to acknowledge receipt
+      res.status(200).send('OK');
+    } catch (error) {
+      console.error('🚨 Apple notification handling error:', error);
+      res.status(500).send('Error processing notification');
+    }
+  });
+
   // Route for handling Apple OAuth callback
   app.get('/api/auth/apple/callback', async (req: any, res: any) => {
     const { code, state, error } = req.query;
