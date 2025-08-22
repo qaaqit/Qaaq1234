@@ -31,6 +31,7 @@ import { setupStableImageRoutes } from "./stable-image-upload";
 import { razorpayService, SUBSCRIPTION_PLANS } from "./razorpay-service-production";
 import { setupGoogleAuth } from "./google-auth";
 import { setupLinkedInAuth } from "./linkedin-auth";
+import { setupAppleAuth } from "./apple-auth";
 import { PasswordManager } from "./password-manager";
 import { AIService } from "./ai-service";
 import { FeedbackService } from "./feedback-service";
@@ -543,6 +544,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // NOW setup OAuth providers AFTER session middleware is available
       setupGoogleAuth(app);
       setupLinkedInAuth(app);
+      setupAppleAuth(app);
       
       // CRITICAL: Add session bridge middleware AFTER passport is set up
       // This ensures req.user is populated before the bridge runs
