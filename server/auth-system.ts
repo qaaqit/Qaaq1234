@@ -732,7 +732,7 @@ export class RobustAuthSystem {
       fullName: user.full_name || user.fullName,
       email: user.email,
       userType: user.current_ship_name ? 'sailor' : 'local',
-      isAdmin: user.is_platform_admin || (user.email === "mushy.piyush@gmail.com"),
+      isAdmin: user.is_platform_admin || (user.email === "mushy.piyush@gmail.com") || (user.email === "workship.ai@gmail.com"),
       rank: user.maritime_rank || user.rank,
       shipName: user.current_ship_name || user.ship_name,
       city: user.current_city || user.city,
