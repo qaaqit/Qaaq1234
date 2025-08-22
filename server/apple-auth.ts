@@ -21,10 +21,15 @@ interface AppleUserInfo {
 }
 
 // Apple OAuth configuration
-const APPLE_CLIENT_ID = process.env.APPLE_CLIENT_ID;
-const APPLE_CLIENT_SECRET = process.env.APPLE_CLIENT_SECRET;
-const APPLE_TEAM_ID = process.env.APPLE_TEAM_ID;
-const APPLE_KEY_ID = process.env.APPLE_KEY_ID;
+const APPLE_CLIENT_ID = process.env.APPLE_CLIENT_ID || 'app.qaaq.home';
+const APPLE_TEAM_ID = process.env.APPLE_TEAM_ID || '4KVSG4QAMH';
+const APPLE_KEY_ID = process.env.APPLE_KEY_ID || '8WRMUD2PW8';
+const APPLE_PRIVATE_KEY = process.env.APPLE_PRIVATE_KEY || `-----BEGIN PRIVATE KEY-----
+MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQg4xX3uvVv/GXm9Z1Y
+ZqcikYiLZVALlmAtl81XGPPLBTCgCgYIKoZIzj0DAQehRANCAARsbFNefHYjo9Mw
+7mbA9lbyjeMFUgiHci0Cyq9vQdSsZ8zTeD34f3gDRW5/xYHE7RNSsVPHxZF2ctU9
+6MXNBAQn
+-----END PRIVATE KEY-----`;
 
 // Use custom domain for Apple OAuth callback
 const getRedirectUri = () => {
@@ -160,11 +165,35 @@ export function getAppleAuthUrl(): string {
     `state=${state}`;
 }
 
+// Generate Apple client secret JWT
+function generateAppleClientSecret(): string {
+  const jwt = require('jsonwebtoken');
+  
+  const now = Math.floor(Date.now() / 1000);
+  const payload = {
+    iss: APPLE_TEAM_ID,
+    iat: now,
+    exp: now + 3600, // 1 hour
+    aud: 'https://appleid.apple.com',
+    sub: APPLE_CLIENT_ID,
+  };
+
+  return jwt.sign(payload, APPLE_PRIVATE_KEY, {
+    algorithm: 'ES256',
+    header: {
+      kid: APPLE_KEY_ID,
+      alg: 'ES256',
+    },
+  });
+}
+
 // Exchange authorization code for access token
 async function exchangeCodeForToken(code: string): Promise<AppleTokenResponse> {
-  if (!APPLE_CLIENT_ID || !APPLE_CLIENT_SECRET) {
-    throw new Error('Apple OAuth environment variables not configured');
+  if (!APPLE_CLIENT_ID || !APPLE_PRIVATE_KEY || !APPLE_TEAM_ID || !APPLE_KEY_ID) {
+    throw new Error('Apple OAuth configuration incomplete');
   }
+
+  const clientSecret = generateAppleClientSecret();
 
   const response = await fetch('https://appleid.apple.com/auth/token', {
     method: 'POST',
@@ -173,7 +202,7 @@ async function exchangeCodeForToken(code: string): Promise<AppleTokenResponse> {
     },
     body: new URLSearchParams({
       client_id: APPLE_CLIENT_ID,
-      client_secret: APPLE_CLIENT_SECRET,
+      client_secret: clientSecret,
       code,
       grant_type: 'authorization_code',
       redirect_uri: getRedirectUri(),
