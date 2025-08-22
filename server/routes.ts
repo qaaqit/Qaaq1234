@@ -2609,7 +2609,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // For specific admin user IDs, allow direct access
       const adminIds = [
         "5791e66f-9cc1-4be4-bd4b-7fc1bd2e258e",
-        "44885683" // Add other admin IDs as needed
+        "44885683", // Add other admin IDs as needed
+        "45016180"  // workship.ai@gmail.com
       ];
       
       if (adminIds.includes(userId)) {
