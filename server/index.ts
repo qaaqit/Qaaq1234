@@ -3,9 +3,11 @@ import { createServer } from "http";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { pool } from "./db"; // Import database pool for image serving
-import QoiGPTBot from "./whatsapp-bot";
-import { initializeRankGroups } from "./rank-groups-service";
-import { setupGlossaryDatabase } from "./setup-glossary-db";
+// STEP 2: Temporarily disable WhatsApp bot
+// import QoiGPTBot from "./whatsapp-bot";
+// STEP 1: Temporarily disable heavy services
+// import { initializeRankGroups } from "./rank-groups-service";
+// import { setupGlossaryDatabase } from "./setup-glossary-db";
 
 const app = express();
 app.use(express.json());
@@ -181,28 +183,12 @@ let whatsappBot: QoiGPTBot | null = null;
     log(`serving on port ${port}`);
     console.log(`📱 WhatsApp Bot API available at /api/whatsapp-start`);
     
-    // Initialize 15 individual rank groups on server startup
-    try {
-      const result = await initializeRankGroups();
-      if (result.success) {
-        console.log('🎯 Rank groups initialization completed during startup');
-      } else {
-        console.error('❌ Rank groups initialization failed:', result.error);
-      }
-    } catch (error) {
-      console.error('❌ Error during rank groups initialization:', error);
-    }
-
-    // Initialize glossary database and auto-update service
-    try {
-      await setupGlossaryDatabase();
-      console.log('📚 Glossary database setup completed');
-      
-      // Auto-updater disabled - manual updates only via Admin panel
-      console.log('🚫 Glossary auto-update service DISABLED - Manual updates only');
-    } catch (error) {
-      console.error('❌ Error setting up glossary system:', error);
-    }
+    // STEP 1: Disable heavy initialization services temporarily
+    console.log('⏸️  Heavy services disabled for stable startup');
+    
+    // TODO: Re-enable after basic functionality works
+    // - initializeRankGroups()
+    // - setupGlossaryDatabase()
   });
 
   // Handle graceful shutdown
