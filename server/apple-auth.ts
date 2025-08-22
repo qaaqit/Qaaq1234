@@ -54,7 +54,7 @@ export function setupAppleAuth(app: any, options?: AppleAuthSetupOptions) {
   });
 
   // Route for handling Apple server-to-server notifications
-  app.post('/api/auth/apple/notifications', async (req: any, res: any) => {
+  app.post('/path/to/endpoint', async (req: any, res: any) => {
     try {
       const { events } = req.body;
       console.log('🍎 Apple server-to-server notification received:', events);
