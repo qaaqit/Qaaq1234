@@ -66,20 +66,15 @@ const getRankAbbreviation = (rank: string): string => {
 };
 
 export default function SuburbUsersDisplay({ suburb, port, country }: SuburbUsersDisplayProps) {
-  // Fetch users for this specific suburb/area using optimized search
+  // Fetch users for this specific suburb/area
   const { data: users = [], isLoading } = useQuery<SuburbUser[]>({
-    queryKey: ['/api/users/search', suburb, port, country],
+    queryKey: ['/api/users/map', suburb, port, country],
     queryFn: async () => {
-      // Use search API to find users by location keywords instead of fetching all users
-      const searchQuery = `${port} ${country}`.trim();
-      const response = await fetch(`/api/users/search?q=${encodeURIComponent(searchQuery)}&limit=100`);
-      if (!response.ok) throw new Error('Failed to search users');
-      const data = await response.json();
+      const response = await fetch('/api/users/map');
+      if (!response.ok) throw new Error('Failed to fetch users');
+      const allUsers = await response.json();
       
-      // Handle different response formats from search API
-      const allUsers = data?.sailors || data?.users || data || [];
-      
-      // Additional filtering for more precise location matching
+      // Filter users for this specific location
       return allUsers.filter((user: SuburbUser) => 
         user.port?.toLowerCase().includes(port.toLowerCase()) ||
         user.city?.toLowerCase().includes(port.toLowerCase()) ||
