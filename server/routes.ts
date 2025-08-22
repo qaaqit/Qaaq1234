@@ -214,6 +214,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Quick premium grant endpoint for user 45016180
+  app.get('/api/debug/grant-premium-45016180', async (req, res) => {
+    try {
+      console.log('👑 Granting premium access to user 45016180...');
+      
+      // Insert or update premium status
+      await pool.query(`
+        INSERT INTO user_subscription_status (user_id, is_premium, premium_expires_at, subscription_type, created_at, updated_at) 
+        VALUES ('45016180', true, '2025-12-31 23:59:59', 'premium', NOW(), NOW()) 
+        ON CONFLICT (user_id) 
+        DO UPDATE SET 
+          is_premium = true, 
+          premium_expires_at = '2025-12-31 23:59:59', 
+          subscription_type = 'premium', 
+          updated_at = NOW()
+      `);
+
+      console.log('✅ Premium access granted to user 45016180');
+      res.json({ 
+        success: true, 
+        userId: '45016180',
+        message: 'Premium access granted to user 45016180',
+        premiumExpiry: '2025-12-31 23:59:59'
+      });
+    } catch (error) {
+      console.error('Error granting premium access:', error);
+      res.status(500).json({ message: 'Failed to grant premium access' });
+    }
+  });
+
   // 🔍 TEMPORARY DEBUG ENDPOINT - Check total questions count including archived/hidden
   app.get('/api/debug/questions-count', async (req, res) => {
     try {
@@ -2631,6 +2661,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Server error" });
     }
   };
+
+  // Admin endpoint to grant premium status to a user
+  app.post('/api/admin/grant-premium/:userId', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const { premiumExpiry = '2025-12-31 23:59:59' } = req.body;
+      
+      console.log(`🔑 Granting premium access to user: ${userId}`);
+      
+      // Insert or update premium status
+      await pool.query(`
+        INSERT INTO user_subscription_status (user_id, is_premium, premium_expires_at, subscription_type, created_at, updated_at) 
+        VALUES ($1, true, $2, 'premium', NOW(), NOW()) 
+        ON CONFLICT (user_id) 
+        DO UPDATE SET 
+          is_premium = true, 
+          premium_expires_at = $2, 
+          subscription_type = 'premium', 
+          updated_at = NOW()
+      `, [userId, premiumExpiry]);
+
+      console.log(`✅ Premium access granted to user: ${userId}`);
+      res.json({ 
+        success: true, 
+        message: 'Premium access granted successfully',
+        userId,
+        premiumExpiry
+      });
+    } catch (error) {
+      console.error('Error granting premium access:', error);
+      res.status(500).json({ message: 'Failed to grant premium access' });
+    }
+  });
 
   // Admin Routes
   app.get('/api/admin/stats', authenticateToken, isAdmin, async (req: any, res) => {
