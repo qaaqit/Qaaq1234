@@ -87,26 +87,47 @@ app.use((req, res, next) => {
   next();
 });
 
-// STEP 2: Disable WhatsApp bot variable
-// let whatsappBot: QoiGPTBot | null = null;
+let whatsappBot: QoiGPTBot | null = null;
 
 (async () => {
   const server = await registerRoutes(app);
 
-  // STEP 2: Disable WhatsApp bot endpoints temporarily
+  // Add WhatsApp bot endpoints
   app.get("/api/whatsapp-status", (req, res) => {
     res.json({
-      connected: false,
-      status: 'Disabled for stable startup'
+      connected: whatsappBot?.isConnected() || false,
+      status: whatsappBot?.isConnected() ? 'Connected' : 'Disconnected'
     });
   });
 
   app.post("/api/whatsapp-start", async (req, res) => {
-    res.json({ message: 'WhatsApp bot temporarily disabled for stable startup' });
+    try {
+      if (!whatsappBot) {
+        whatsappBot = new QoiGPTBot();
+        await whatsappBot.start();
+        res.json({ message: 'WhatsApp bot starting... Check console for QR code.' });
+      } else {
+        res.json({ message: 'WhatsApp bot is already running.' });
+      }
+    } catch (error) {
+      console.error('Failed to start WhatsApp bot:', error);
+      res.status(500).json({ error: 'Failed to start WhatsApp bot' });
+    }
   });
 
   app.post("/api/whatsapp-stop", async (req, res) => {
-    res.json({ message: 'WhatsApp bot temporarily disabled for stable startup' });
+    try {
+      if (whatsappBot) {
+        await whatsappBot.stop();
+        whatsappBot = null;
+        res.json({ message: 'WhatsApp bot stopped.' });
+      } else {
+        res.json({ message: 'WhatsApp bot is not running.' });
+      }
+    } catch (error) {
+      console.error('Failed to stop WhatsApp bot:', error);
+      res.status(500).json({ error: 'Failed to stop WhatsApp bot' });
+    }
   });
 
   // Deployment health monitoring
@@ -187,8 +208,9 @@ app.use((req, res, next) => {
   // Handle graceful shutdown
   process.on('SIGINT', async () => {
     console.log('\n🛑 Shutting down QaaqConnect server...');
-    // WhatsApp bot disabled for stable startup
-    console.log('🤖 WhatsApp bot is disabled');
+    if (whatsappBot) {
+      await whatsappBot.stop();
+    }
     try {
       await pool.end();
       console.log('📊 Database connections closed');
