@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { 
   User, 
@@ -30,6 +30,27 @@ export default function UserDropdown({ user, className = "", onLogout }: UserDro
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
+  const [profileImageError, setProfileImageError] = useState(false);
+
+  // Get the best available profile picture with fallback chain
+  const getProfilePictureUrl = () => {
+    if (profileImageError) return null;
+    
+    // Use the main profile picture URL if available
+    return user.profilePictureUrl || null;
+  };
+
+  const profileImageUrl = getProfilePictureUrl();
+
+  // Handle profile image loading errors
+  const handleImageError = () => {
+    setProfileImageError(true);
+  };
+
+  // Reset error state when user changes
+  useEffect(() => {
+    setProfileImageError(false);
+  }, [user.id]);
 
   // Close dropdown when clicking outside and calculate position
   useEffect(() => {
@@ -135,18 +156,20 @@ export default function UserDropdown({ user, className = "", onLogout }: UserDro
       >
         <div className="flex items-center space-x-2">
           <Avatar className="w-10 h-10 border-2 border-white shadow-lg">
-            {user.profilePictureUrl ? (
-              <img 
-                src={user.profilePictureUrl} 
+            {profileImageUrl && (
+              <AvatarImage
+                src={profileImageUrl}
                 alt={`${user.fullName}'s profile`}
-                className="w-full h-full rounded-full object-cover"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                }}
+                className="object-cover"
+                onError={handleImageError}
+                onLoad={() => setProfileImageError(false)}
+                crossOrigin="anonymous"
+                decoding="async"
+                loading="eager"
+                data-testid="user-avatar-image"
               />
-            ) : null}
-            <AvatarFallback className="bg-white/20 text-white font-semibold">
+            )}
+            <AvatarFallback className="bg-white/20 text-white font-semibold" data-testid="user-avatar-fallback">
               {user.fullName ? user.fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : user.id.slice(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
@@ -168,8 +191,20 @@ export default function UserDropdown({ user, className = "", onLogout }: UserDro
           {/* User Info Header */}
           <div className="bg-gradient-to-r from-orange-100 to-yellow-100 p-4 border-b-2 border-orange-300">
             <div className="flex items-center space-x-3">
-              <Avatar className="w-12 h-12">
-                <AvatarFallback className="bg-yellow-400 text-red-600 font-semibold text-lg">
+              <Avatar className="w-12 h-12 ring-2 ring-orange-400 ring-offset-2">
+                {profileImageUrl && (
+                  <AvatarImage
+                    src={profileImageUrl}
+                    alt={`${user.fullName}'s profile`}
+                    className="object-cover"
+                    onError={handleImageError}
+                    crossOrigin="anonymous"
+                    decoding="async"
+                    loading="eager"
+                    data-testid="dropdown-avatar-image"
+                  />
+                )}
+                <AvatarFallback className="bg-yellow-400 text-red-600 font-semibold text-lg" data-testid="dropdown-avatar-fallback">
                   {user.fullName ? user.fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : user.id.slice(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
