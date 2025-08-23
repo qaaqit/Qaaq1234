@@ -6855,9 +6855,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ===================== RANK GROUPS API =====================
 
-  // Session authentication middleware (DISABLED - Maritime rank feature removed)
+  // Legacy authentication middleware (Patalbase)
   const requireSessionAuth = async (req: any, res: any, next: any) => {
-    return res.status(404).json({ message: 'Feature disabled' });
+    return res.status(404).json({ message: 'Legacy feature' });
   };
 
   // Confirm maritime rank for user

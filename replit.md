@@ -1,11 +1,18 @@
-# QaaqConnect Mariana - Maritime Community Platform
+# QaaqConnect Patalbase - Next-Generation Maritime Platform
 
 ## Overview
-QaaqConnect is a comprehensive maritime networking platform designed to enhance shore leaves, simplify shopping for sailors, and facilitate social connections. It enables sailors to discover nearby peers and locals, access a curated marketplace for maritime essentials, and engage in location-based discussions. The platform aims to foster an authentic maritime community experience by integrating proximity-based user discovery, real-time location mapping, direct communication tools, and a structured content navigation system.
+QaaqConnect Patalbase represents the evolution beyond MARIANA, delivering a refined maritime networking experience with enhanced discovery capabilities. The platform enables maritime professionals to explore global port networks, access premium AI-powered assistance through QBOT, and connect with authenticated industry peers. Built with streamlined architecture and focused on core maritime connectivity features.
 
-Business Vision: To be the leading platform for maritime professionals, fostering genuine connections and simplifying life at sea and ashore.
-Market Potential: Tapping into the global maritime industry, connecting a vast network of sailors, ship companies, and related businesses.
-Project Ambitions: To create a vibrant, self-sustaining community where maritime professionals can thrive personally and professionally.
+**Patalbase Milestone Achievements:**
+- ✅ GROK AI integration for enhanced maritime assistance
+- ✅ Interactive world map with top 10 major ports visualization  
+- ✅ Streamlined authentication flow without rank roadblocks
+- ✅ Premium subscription system with automatic payment processing
+- ✅ Maritime rank confirmation system evolved beyond requirement
+
+Business Vision: Leading maritime platform connecting global port networks and industry professionals.
+Market Focus: Authenticated maritime professionals, shipping companies, and port authorities worldwide.
+Platform Identity: Patalbase - the sophisticated evolution of maritime networking technology.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -13,8 +20,9 @@ Username field label: "USER NAME (This may be ur country code +91 & whatsapp num
 Primary focus: "Koi Hai?" (Who's there?) discovery - helping sailors find who's nearby in ports
 Home page after login: QBOT Chat (not Map Radar) - users land on QBOT Chat immediately after authentication
 MARIANA BASE RULE: The app will NEVER carry out bulk assignment of users to rank groups - this functionality is permanently disabled for security
-🔒 PROFILE FIELD REMOVAL: current_ship_imo field permanently removed from profile form and backend - not needed per user request (August 2025)
-Color Scheme: Orange, cream, and white colors only - NO red, blue, purple, green or dark colors. All SEMM pages use consistent orange accent colors matching parent app branding.
+🔒 PATALBASE EVOLUTION: Maritime rank roadblock system completely removed for streamlined user experience (August 2025)
+🗺️ MAJOR PORTS INTEGRATION: Top 10 global ports now marked on interactive discover map with detailed information
+Color Scheme: Orange, cream, and white maritime professional palette - consistent across all platform interfaces.
 Search Interface: Crown icon must be present in search bar, filter/map/radar icons on right side of search bar
 Header Design: White header with QAAQ logo, admin shield, and QBOT button
 Map display: Full screen with light grey theme initially, becomes colorful when user searches
@@ -38,6 +46,14 @@ Shipping Dictionary Access: Users can access maritime dictionary definitions wit
 Login Roadblock Design: Single minimizable login roadblock with chevron control in top-right corner, no separate roadblocks for individual features
 🔒 SEMM LAYOUT REDESIGN: Breadcrumb positioned next to back arrow as small text in one line, code cards positioned in top-left corner with back arrow above
 Enhanced Reorder System: Admin reorder modals now feature editable code cards allowing direct code modification alongside position changes for comprehensive hierarchy management. Simplified reorder buttons use only RotateCcw icon without text or colored backgrounds for cleaner interface.
+
+## Recent Changes - Patalbase Evolution
+**August 23, 2025 - Patalbase Milestone:**
+- Maritime rank confirmation system fully removed for streamlined experience
+- Interactive discover map enhanced with top 10 global major ports
+- GROK AI integration activated with XAI_API_KEY environment 
+- Subscription roadblock UI refined with orange branding consistency
+- Platform sealed as Patalbase - next evolution beyond MARIANA
 
 ## System Architecture
 
