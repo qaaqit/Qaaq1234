@@ -6855,39 +6855,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ===================== RANK GROUPS API =====================
 
-  // Simple session authentication middleware
+  // Session authentication middleware (DISABLED - Maritime rank feature removed)
   const requireSessionAuth = async (req: any, res: any, next: any) => {
-    try {
-      console.log('🔐 Maritime rank auth - starting authentication check');
-      
-      // Check if user is authenticated via session (same logic as /api/auth/user)
-      if (req.isAuthenticated && req.isAuthenticated() && req.user) {
-        const sessionUserId = req.user.claims?.sub || req.user.id || req.user.userId;
-        console.log('🔐 Maritime rank auth - found authenticated session user:', sessionUserId);
-        
-        if (sessionUserId) {
-          const user = await identityResolver.resolveUserByAnyMethod(sessionUserId, 'replit');
-          console.log('🔐 Maritime rank auth - resolved user:', user?.fullName);
-          
-          if (user) {
-            // Attach user to request
-            req.currentUser = user;
-            req.userId = user.id;
-            console.log('✅ Maritime rank auth - user authenticated:', user.id);
-            return next();
-          }
-        }
-      }
-      
-      console.log('❌ Maritime rank auth - authentication failed');
-      return res.status(401).json({ 
-        message: 'Authentication required - please login',
-        requiresLogin: true
-      });
-    } catch (error) {
-      console.error('❌ Maritime rank auth error:', error);
-      res.status(500).json({ message: 'Authentication failed' });
-    }
+    return res.status(404).json({ message: 'Feature disabled' });
   };
 
   // Confirm maritime rank for user

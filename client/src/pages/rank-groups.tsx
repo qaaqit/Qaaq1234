@@ -1,13 +1,8 @@
 import { RankGroupsPanel } from "@/components/rank-groups-panel";
 import { useAuth } from "@/hooks/useAuth";
-import { useMaritimeRankConfirmation } from "@/hooks/useMaritimeRankConfirmation";
-import { MaritimeRankToast } from "@/components/MaritimeRankToast";
 
 export default function RankGroupsPage() {
   const { user } = useAuth();
-  
-  // Check maritime rank confirmation requirements for optional toast
-  const { needsConfirmation: needsRankConfirmation, handleRankConfirmed } = useMaritimeRankConfirmation();
 
   // Return early if user is not authenticated
   if (!user) {
@@ -24,20 +19,9 @@ export default function RankGroupsPage() {
     );
   }
 
-  // No longer blocking access - toast will show optionally
-
   return (
     <div className="h-screen relative">
       <RankGroupsPanel />
-      
-      {/* Optional Maritime Rank Toast - non-blocking */}
-      {needsRankConfirmation && (
-        <MaritimeRankToast
-          userId={user.id}
-          currentRank={user.maritimeRank}
-          onConfirm={handleRankConfirmed}
-        />
-      )}
     </div>
   );
 }
