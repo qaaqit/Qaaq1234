@@ -31,8 +31,15 @@ ZqcikYiLZVALlmAtl81XGPPLBTCgCgYIKoZIzj0DAQehRANCAARsbFNefHYjo9Mw
 6MXNBAQn
 -----END PRIVATE KEY-----`;
 
-// Use custom domain for Apple OAuth callback
+// Use environment-appropriate domain for Apple OAuth callback
 const getRedirectUri = () => {
+  // For development and testing, use the current environment
+  if (process.env.NODE_ENV === 'development' && process.env.REPLIT_DOMAINS) {
+    const domains = process.env.REPLIT_DOMAINS.split(',');
+    return `https://${domains[0]}/api/auth/apple/callback`;
+  }
+  
+  // Production or fallback
   return 'https://qaaq.app/api/auth/apple/callback';
 };
 
@@ -129,11 +136,31 @@ export function setupAppleAuth(app: any, options?: AppleAuthSetupOptions) {
       const user = await findOrCreateAppleUser(userInfo);
       console.log('✅ Apple OAuth: User processed:', user.fullName);
 
-      // Set up session
-      req.session.passport = { user };
-      
-      console.log('✅ Apple OAuth: Login successful, redirecting to /qbot');
-      res.redirect('/qbot');
+      // Set up session using passport's login mechanism for compatibility
+      const sessionUser = {
+        id: user.id,
+        userId: user.id,
+        claims: {
+          sub: user.id.toString(),
+          email: user.email || user.googleEmail,
+          username: user.fullName,
+          first_name: user.firstName,
+          last_name: user.lastName
+        },
+        dbUser: user,
+        access_token: `apple_${user.id}_${Date.now()}`,
+        expires_at: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
+      };
+
+      req.logIn(sessionUser, (loginErr: any) => {
+        if (loginErr) {
+          console.error('❌ Apple OAuth: Login error:', loginErr);
+          return res.redirect('/login?error=apple_login_failed');
+        }
+        
+        console.log('✅ Apple OAuth: Login successful, redirecting to /qbot');
+        res.redirect('/qbot');
+      });
     } catch (error) {
       console.error('🚨 Apple OAuth callback error:', error);
       res.redirect('/login?error=apple_auth_failed');
