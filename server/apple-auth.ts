@@ -100,9 +100,9 @@ export function setupAppleAuth(app: any, options?: AppleAuthSetupOptions) {
     }
   });
 
-  // Route for handling Apple OAuth callback
-  app.get('/api/auth/apple/callback', async (req: any, res: any) => {
-    const { code, state, error } = req.query;
+  // Route for handling Apple OAuth callback (POST because of form_post response_mode)
+  app.post('/api/auth/apple/callback', async (req: any, res: any) => {
+    const { code, state, error } = req.body;
 
     console.log('🍎 Apple OAuth callback received:', { code: !!code, state, error });
 
