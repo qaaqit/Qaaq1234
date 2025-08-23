@@ -6860,15 +6860,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       let user = null;
       
+      console.log('🔐 Maritime rank auth - checking session:', {
+        hasUser: !!req.user,
+        hasSession: !!req.session,
+        hasPassport: !!req.session?.passport,
+        userKeys: req.user ? Object.keys(req.user) : [],
+        sessionKeys: req.session ? Object.keys(req.session) : []
+      });
+      
       // Check session authentication (Google/Replit Auth)
       if (req.user) {
         const sessionUserId = req.user.claims?.sub || req.user.id || req.user.userId;
+        console.log('🔐 Maritime rank auth - found session user ID:', sessionUserId);
         if (sessionUserId) {
           user = await identityResolver.resolveUserByAnyMethod(sessionUserId, 'replit');
+          console.log('🔐 Maritime rank auth - resolved user:', user?.fullName);
         }
       }
       
       if (!user) {
+        console.log('❌ Maritime rank auth - no user found');
         return res.status(401).json({ 
           message: 'Authentication required',
           bridgeState: false
@@ -6878,6 +6889,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Attach user to request
       req.currentUser = user;
       req.userId = user.id;
+      console.log('✅ Maritime rank auth - user authenticated:', user.id);
       next();
     } catch (error) {
       console.error('Session auth error:', error);
