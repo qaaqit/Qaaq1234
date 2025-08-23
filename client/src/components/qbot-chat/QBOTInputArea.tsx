@@ -58,7 +58,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
   const [aiModels, setAiModels] = useState({
     chatgpt: true,  // Default enabled
     gemini: false,
-    perplexity: false
+    deepseek: false
   });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -179,7 +179,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
   };
 
   // Toggle AI models
-  const toggleAiModel = (model: 'chatgpt' | 'gemini' | 'perplexity') => {
+  const toggleAiModel = (model: 'chatgpt' | 'gemini' | 'deepseek') => {
     setAiModels(prev => ({
       ...prev,
       [model]: !prev[model]
@@ -318,15 +318,15 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
           <Zap size={16} />
         </button>
 
-        {/* Perplexity Toggle */}
+        {/* Deepseek Toggle */}
         <button
-          onClick={() => toggleAiModel('perplexity')}
+          onClick={() => toggleAiModel('deepseek')}
           className={`p-2 rounded-lg transition-all duration-200 flex-shrink-0 ${
-            aiModels.perplexity 
+            aiModels.deepseek 
               ? 'bg-purple-100 text-purple-600 hover:bg-purple-200' 
               : 'text-gray-400 hover:bg-gray-100'
           }`}
-          title={`Perplexity AI ${aiModels.perplexity ? 'Enabled' : 'Disabled'}`}
+          title={`Deepseek ${aiModels.deepseek ? 'Enabled' : 'Disabled'}`}
         >
           <Brain size={16} />
         </button>

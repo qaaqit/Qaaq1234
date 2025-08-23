@@ -2565,8 +2565,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
               modelResponse = await aiService.generateOpenAIResponse(message, category, user, activeRules);
             } else if (model === 'gemini') {
               modelResponse = await aiService.generateGeminiResponse(message, category, user, activeRules);
-            } else if (model === 'perplexity') {
-              modelResponse = await aiService.generatePerplexityResponse(message, category, user, activeRules);
+            } else if (model === 'deepseek') {
+              // For now, use OpenAI as placeholder for Deepseek
+              modelResponse = await aiService.generateOpenAIResponse(message, category, user, activeRules);
+              // Override the model name for display purposes
+              modelResponse = {
+                ...modelResponse,
+                model: 'deepseek'
+              };
             }
             
             if (modelResponse) {
@@ -2587,7 +2593,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const separateAnswers = responses.map((resp, index) => {
             const modelName = resp.model === 'openai' ? 'ChatGPT' : 
                             resp.model === 'gemini' ? 'Gemini' :
-                            resp.model === 'perplexity' ? 'Perplexity AI' : 
+                            resp.model === 'deepseek' ? 'Deepseek' : 
                             resp.model.toUpperCase();
             return `🤖 **${modelName} Response:**\n\n${resp.content}`;
           }).join('\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n');
