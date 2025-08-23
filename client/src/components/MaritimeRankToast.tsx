@@ -48,12 +48,15 @@ export function MaritimeRankToast({ userId, currentRank, onConfirm }: MaritimeRa
       return;
     }
 
+    console.log('🚀 Starting maritime rank confirmation:', { userId, selectedRank });
     setIsSubmitting(true);
     try {
-      await apiRequest('/api/user/confirm-maritime-rank', 'POST', {
+      console.log('📡 Making API call to confirm maritime rank...');
+      const response = await apiRequest('/api/user/confirm-maritime-rank', 'POST', {
         userId,
         maritimeRank: selectedRank
       });
+      console.log('✅ Maritime rank API call successful:', response);
       
       toast({
         title: "Maritime Rank Confirmed",
@@ -63,7 +66,12 @@ export function MaritimeRankToast({ userId, currentRank, onConfirm }: MaritimeRa
       onConfirm(selectedRank);
       setIsDismissed(true);
     } catch (error: any) {
-      console.error('Error confirming maritime rank:', error);
+      console.error('❌ Error confirming maritime rank:', error);
+      console.error('❌ Error details:', {
+        message: error.message,
+        status: error.status,
+        stack: error.stack
+      });
       toast({
         title: "Error",
         description: error.message || "Failed to confirm maritime rank. Please try again.",
