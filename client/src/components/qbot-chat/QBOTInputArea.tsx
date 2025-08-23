@@ -58,7 +58,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
   const [aiModels, setAiModels] = useState({
     chatgpt: true,  // Default enabled
     gemini: false,
-    deepseek: false
+    grok: false
   });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -179,7 +179,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
   };
 
   // Toggle AI models
-  const toggleAiModel = (model: 'chatgpt' | 'gemini' | 'deepseek') => {
+  const toggleAiModel = (model: 'chatgpt' | 'gemini' | 'grok') => {
     setAiModels(prev => ({
       ...prev,
       [model]: !prev[model]
@@ -318,15 +318,15 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
           <Zap size={16} />
         </button>
 
-        {/* Deepseek Toggle */}
+        {/* GROK Toggle */}
         <button
-          onClick={() => toggleAiModel('deepseek')}
+          onClick={() => toggleAiModel('grok')}
           className={`p-2 rounded-lg transition-all duration-200 flex-shrink-0 ${
-            aiModels.deepseek 
+            aiModels.grok 
               ? 'bg-purple-100 text-purple-600 hover:bg-purple-200' 
               : 'text-gray-400 hover:bg-gray-100'
           }`}
-          title={`Deepseek ${aiModels.deepseek ? 'Enabled' : 'Disabled'}`}
+          title={`GROK ${aiModels.grok ? 'Enabled' : 'Disabled'}`}
         >
           <Brain size={16} />
         </button>

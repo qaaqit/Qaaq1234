@@ -1,17 +1,22 @@
 export interface AIResponse {
   content: string;
-  model: 'openai' | 'gemini';
+  model: 'openai' | 'gemini' | 'grok';
   tokens?: number;
   responseTime?: number;
 }
 
 export class AIService {
   private openai: any;
+  private grok: any;
 
   constructor() {
     // Initialize OpenAI
     if (process.env.OPENAI_API_KEY) {
       this.initOpenAI();
+    }
+    // Initialize GROK (xAI)
+    if (process.env.XAI_API_KEY) {
+      this.initGROK();
     }
   }
 
@@ -19,6 +24,14 @@ export class AIService {
     const { OpenAI } = await import('openai');
     this.openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
+    });
+  }
+
+  private async initGROK() {
+    const { OpenAI } = await import('openai');
+    this.grok = new OpenAI({
+      baseURL: "https://api.x.ai/v1",
+      apiKey: process.env.XAI_API_KEY,
     });
   }
 
@@ -212,6 +225,81 @@ export class AIService {
     }
   }
 
+  async generateGROKResponse(message: string, category: string, user: any, activeRules?: string): Promise<AIResponse> {
+    const startTime = Date.now();
+    
+    try {
+      if (!this.grok) {
+        await this.initGROK();
+      }
+
+      const userRank = user?.maritimeRank || 'Maritime Professional';
+      const userShip = user?.shipName ? `aboard ${user.shipName}` : 'shore-based';
+      
+      let systemPrompt = `You are QBOT, an advanced maritime AI assistant and the primary chat interface for QaaqConnect. 
+      You specialize in ${category} and serve the global maritime community with expert knowledge on:
+      - Maritime engineering, maintenance, and troubleshooting
+      - Navigation, regulations, and safety procedures  
+      - Ship operations, cargo handling, and port procedures
+      - Career guidance for maritime professionals
+      - Technical specifications for maritime equipment
+      
+      User context: ${userRank} ${userShip}
+      
+      CRITICAL RESPONSE FORMAT:
+      - ALWAYS respond in bullet point format with exactly 3-5 bullet points
+      - Keep total response between 30-50 words maximum
+      - Each bullet point should be 6-12 words maximum
+      - Use concise, technical language
+      - Prioritize safety and maritime regulations (SOLAS, MARPOL, STCW)
+      - Example format:
+        • [Action/Solution in 6-12 words]
+        • [Technical detail in 6-12 words]  
+        • [Safety consideration in 6-12 words]
+        • [Regulation reference if applicable]`;
+      
+      if (activeRules) {
+        systemPrompt += `\n\nActive bot documentation guidelines:\n${activeRules.substring(0, 800)}`;
+      }
+
+      console.log('🤖 GROK: Making API request...');
+      
+      const response = await this.grok.chat.completions.create({
+        model: "grok-2-1212",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: message }
+        ],
+        max_tokens: 150,
+        temperature: 0.7,
+      });
+
+      let content = response.choices[0]?.message?.content;
+      
+      if (!content) {
+        console.warn('⚠️ GROK: No content in response, using fallback');
+        content = 'Unable to generate response at this time.';
+      }
+      
+      console.log('🤖 GROK: Response generated successfully:', content.substring(0, 100) + '...');
+      const responseTime = Date.now() - startTime;
+
+      // Apply free user limits if user is not premium
+      const finalContent = await this.applyFreeUserLimits(content, user);
+
+      return {
+        content: finalContent,
+        model: 'grok',
+        tokens: response.usage?.total_tokens,
+        responseTime
+      };
+
+    } catch (error) {
+      console.error('GROK API error:', error);
+      throw new Error(`GROK generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
   async generateDualResponse(message: string, category: string, user: any, activeRules?: string, preferredModel?: 'openai' | 'gemini'): Promise<AIResponse> {
     // Date-based model selection: Gemini on odd dates, OpenAI on even dates
     const currentDate = new Date().getDate();
@@ -366,6 +454,7 @@ export class AIService {
     const models = [];
     if (process.env.OPENAI_API_KEY) models.push('openai');
     if (process.env.GEMINI_API_KEY) models.push('gemini');
+    if (process.env.XAI_API_KEY) models.push('grok');
     return models;
   }
 }
