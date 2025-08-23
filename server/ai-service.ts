@@ -1,6 +1,6 @@
 export interface AIResponse {
   content: string;
-  model: 'openai' | 'gemini';
+  model: 'openai' | 'gemini' | 'perplexity';
   tokens?: number;
   responseTime?: number;
 }
@@ -361,11 +361,107 @@ export class AIService {
     return `${truncatedContent} (For detailed unlimited answers & whatsapp chat support, please upgrade to premium)`;
   }
 
+  async generatePerplexityResponse(message: string, category: string, user: any, activeRules?: string): Promise<AIResponse> {
+    const startTime = Date.now();
+    
+    try {
+      if (!process.env.PERPLEXITY_API_KEY) {
+        throw new Error('Perplexity API key not configured');
+      }
+
+      const userRank = user?.maritimeRank || 'Maritime Professional';
+      const userShip = user?.shipName ? `aboard ${user.shipName}` : 'shore-based';
+      
+      let systemPrompt = `You are QBOT, an advanced maritime AI assistant and the primary chat interface for QaaqConnect. 
+      You specialize in ${category} and serve the global maritime community with expert knowledge on:
+      - Maritime engineering, maintenance, and troubleshooting
+      - Navigation, regulations, and safety procedures  
+      - Ship operations, cargo handling, and port procedures
+      - Career guidance for maritime professionals
+      - Technical specifications for maritime equipment
+      
+      User context: ${userRank} ${userShip}
+      
+      CRITICAL RESPONSE FORMAT:
+      - ALWAYS respond in bullet point format with exactly 3-5 bullet points
+      - Keep total response between 30-50 words maximum
+      - Each bullet point should be 6-12 words maximum
+      - Use concise, technical language
+      - Prioritize safety and maritime regulations (SOLAS, MARPOL, STCW)
+      - Example format:
+        • [Action/Solution in 6-12 words]
+        • [Technical detail in 6-12 words]  
+        • [Safety consideration in 6-12 words]
+        • [Regulation reference if applicable]`;
+      
+      if (activeRules) {
+        systemPrompt += `\n\nActive bot documentation guidelines:\n${activeRules.substring(0, 800)}`;
+      }
+
+      console.log('🤖 Perplexity: Making API request...');
+      
+      const response = await fetch('https://api.perplexity.ai/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'llama-3.1-sonar-small-128k-online',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: message }
+          ],
+          max_tokens: 150,
+          temperature: 0.2,
+          top_p: 0.9,
+          stream: false,
+          presence_penalty: 0,
+          frequency_penalty: 1
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Perplexity API error:', response.status, errorText);
+        throw new Error(`Perplexity API error: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('🤖 Perplexity: Response received successfully');
+      
+      let content = data.choices?.[0]?.message?.content;
+      
+      if (!content) {
+        console.warn('⚠️ Perplexity: No content in response, using fallback');
+        content = 'Unable to generate response at this time.';
+      }
+      
+      console.log('🤖 Perplexity: Response generated successfully:', content.substring(0, 100) + '...');
+      const responseTime = Date.now() - startTime;
+
+      // Apply free user limits if user is not premium
+      const finalContent = await this.applyFreeUserLimits(content, user);
+
+      return {
+        content: finalContent,
+        model: 'perplexity',
+        tokens: data.usage?.total_tokens,
+        responseTime
+      };
+
+    } catch (error) {
+      console.error('Perplexity API error:', error);
+      throw new Error(`Perplexity generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
   // Get available models
   getAvailableModels(): string[] {
     const models = [];
     if (process.env.OPENAI_API_KEY) models.push('openai');
     if (process.env.GEMINI_API_KEY) models.push('gemini');
+    if (process.env.PERPLEXITY_API_KEY) models.push('perplexity');
     return models;
   }
 }
