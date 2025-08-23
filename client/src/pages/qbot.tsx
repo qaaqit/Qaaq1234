@@ -426,7 +426,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
               
               {/* Premium Roadblock over Carousel - Above Bottom Navigation */}
               {!isPremiumUser && showRoadblock && (
-                <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-50 flex items-end justify-center pb-4">
+                <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-50 flex items-start justify-center pt-4">
                   <div className="w-48 bg-white rounded-lg shadow-xl border border-orange-400 p-2 text-center relative">
                     {/* Minimize/Restore Chevron */}
                     <button
