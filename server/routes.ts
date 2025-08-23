@@ -2587,7 +2587,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const separateAnswers = responses.map((resp, index) => {
             const modelName = resp.model === 'openai' ? 'ChatGPT' : 
                             resp.model === 'gemini' ? 'Gemini' :
-                            resp.model === 'perplexity' ? 'Perplexity' : 
+                            resp.model === 'perplexity' ? 'Perplexity AI' : 
                             resp.model.toUpperCase();
             return `🤖 **${modelName} Response:**\n\n${resp.content}`;
           }).join('\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n');
