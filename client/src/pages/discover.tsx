@@ -35,12 +35,22 @@ export default function Discover() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 relative">
       <div 
         ref={mapRef} 
         className="w-full h-screen"
         style={{ minHeight: '100vh' }}
       />
+      
+      {/* Center screen message overlay */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-6 border border-orange-200">
+          <p className="text-xl font-semibold text-gray-800 text-center">
+            Awesome features being loaded.<br />
+            ETA very soon.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
