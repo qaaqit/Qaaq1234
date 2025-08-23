@@ -431,7 +431,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                     {/* Minimize/Restore Chevron */}
                     <button
                       onClick={() => setShowRoadblock(false)}
-                      className="absolute top-1 right-1 w-2 h-2 bg-orange-100 hover:bg-orange-200 rounded-full flex items-center justify-center transition-all duration-200"
+                      className="absolute top-1 right-1 w-1 h-1 bg-orange-100 hover:bg-orange-200 rounded-full flex items-center justify-center transition-all duration-200"
                       title="Minimize"
                     >
                       <ChevronDown className="w-1 h-1 text-orange-600" />
@@ -500,7 +500,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                     {/* Minimize/Restore Chevron */}
                     <button
                       onClick={() => setShowRoadblock(false)}
-                      className="absolute top-1 right-1 w-2 h-2 bg-orange-100 hover:bg-orange-200 rounded-full flex items-center justify-center transition-all duration-200"
+                      className="absolute top-1 right-1 w-1 h-1 bg-orange-100 hover:bg-orange-200 rounded-full flex items-center justify-center transition-all duration-200"
                       title="Minimize"
                     >
                       <ChevronDown className="w-1 h-1 text-orange-600" />
