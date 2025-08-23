@@ -31,15 +31,26 @@ ZqcikYiLZVALlmAtl81XGPPLBTCgCgYIKoZIzj0DAQehRANCAARsbFNefHYjo9Mw
 6MXNBAQn
 -----END PRIVATE KEY-----`;
 
-// Use environment-appropriate domain for Apple OAuth callback
+// Apple OAuth redirect URI - must match Apple Developer Console exactly
 const getRedirectUri = () => {
-  // For development and testing, use the current environment
-  if (process.env.NODE_ENV === 'development' && process.env.REPLIT_DOMAINS) {
-    const domains = process.env.REPLIT_DOMAINS.split(',');
-    return `https://${domains[0]}/api/auth/apple/callback`;
+  // Check if we have a specific Apple redirect URI configured
+  if (process.env.APPLE_REDIRECT_URI) {
+    return process.env.APPLE_REDIRECT_URI;
   }
   
-  // Production or fallback
+  // For development, Apple OAuth may not work unless the exact development domain
+  // is registered in Apple Developer Console
+  if (process.env.NODE_ENV === 'development') {
+    console.warn('⚠️ Apple OAuth in development requires the exact Replit domain to be registered in Apple Developer Console');
+    console.warn('⚠️ Current domain must be added to Apple Developer Console as a valid redirect URI');
+    
+    if (process.env.REPLIT_DOMAINS) {
+      const domains = process.env.REPLIT_DOMAINS.split(',');
+      return `https://${domains[0]}/api/auth/apple/callback`;
+    }
+  }
+  
+  // Production fallback
   return 'https://qaaq.app/api/auth/apple/callback';
 };
 
