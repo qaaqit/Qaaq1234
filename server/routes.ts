@@ -6858,41 +6858,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Simple session authentication middleware
   const requireSessionAuth = async (req: any, res: any, next: any) => {
     try {
-      let user = null;
+      console.log('🔐 Maritime rank auth - starting authentication check');
       
-      console.log('🔐 Maritime rank auth - checking session:', {
-        hasUser: !!req.user,
-        hasSession: !!req.session,
-        hasPassport: !!req.session?.passport,
-        userKeys: req.user ? Object.keys(req.user) : [],
-        sessionKeys: req.session ? Object.keys(req.session) : []
-      });
-      
-      // Check session authentication (Google/Replit Auth)
-      if (req.user) {
+      // Check if user is authenticated via session (same logic as /api/auth/user)
+      if (req.isAuthenticated && req.isAuthenticated() && req.user) {
         const sessionUserId = req.user.claims?.sub || req.user.id || req.user.userId;
-        console.log('🔐 Maritime rank auth - found session user ID:', sessionUserId);
+        console.log('🔐 Maritime rank auth - found authenticated session user:', sessionUserId);
+        
         if (sessionUserId) {
-          user = await identityResolver.resolveUserByAnyMethod(sessionUserId, 'replit');
+          const user = await identityResolver.resolveUserByAnyMethod(sessionUserId, 'replit');
           console.log('🔐 Maritime rank auth - resolved user:', user?.fullName);
+          
+          if (user) {
+            // Attach user to request
+            req.currentUser = user;
+            req.userId = user.id;
+            console.log('✅ Maritime rank auth - user authenticated:', user.id);
+            return next();
+          }
         }
       }
       
-      if (!user) {
-        console.log('❌ Maritime rank auth - no user found');
-        return res.status(401).json({ 
-          message: 'Authentication required',
-          bridgeState: false
-        });
-      }
-      
-      // Attach user to request
-      req.currentUser = user;
-      req.userId = user.id;
-      console.log('✅ Maritime rank auth - user authenticated:', user.id);
-      next();
+      console.log('❌ Maritime rank auth - authentication failed');
+      return res.status(401).json({ 
+        message: 'Authentication required - please login',
+        requiresLogin: true
+      });
     } catch (error) {
-      console.error('Session auth error:', error);
+      console.error('❌ Maritime rank auth error:', error);
       res.status(500).json({ message: 'Authentication failed' });
     }
   };
