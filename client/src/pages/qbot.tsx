@@ -439,9 +439,6 @@ export default function QBOTPage({ user }: QBOTPageProps) {
 
                     {/* Compact Header */}
                     <div className="mb-1.5">
-                      <div className="w-4 h-4 mx-auto mb-0.5 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
-                        <span className="text-xs">⭐</span>
-                      </div>
                       <h2 className="text-xs font-bold text-gray-800">QBOT Premium</h2>
                     </div>
 
@@ -511,9 +508,6 @@ export default function QBOTPage({ user }: QBOTPageProps) {
 
                     {/* Compact Header */}
                     <div className="mb-1.5">
-                      <div className="w-4 h-4 mx-auto mb-0.5 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
-                        <span className="text-xs">⭐</span>
-                      </div>
                       <h2 className="text-xs font-bold text-gray-800">QBOT Premium</h2>
                     </div>
 
