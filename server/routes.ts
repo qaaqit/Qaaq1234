@@ -5227,6 +5227,66 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
 
   // ==== SEMM POSTCARDS API ENDPOINTS ====
 
+  // Get link preview metadata
+  app.post("/api/semm/postcards/link-preview", async (req, res) => {
+    try {
+      const { url } = req.body;
+      
+      if (!url) {
+        return res.status(400).json({ error: 'URL is required' });
+      }
+
+      // Validate URL format
+      try {
+        new URL(url);
+      } catch {
+        return res.status(400).json({ error: 'Invalid URL format' });
+      }
+
+      // Fetch the webpage
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; LinkPreviewBot/1.0)'
+        },
+        timeout: 10000 // 10 second timeout
+      });
+
+      if (!response.ok) {
+        return res.status(400).json({ error: 'Failed to fetch URL' });
+      }
+
+      const html = await response.text();
+      const urlObj = new URL(url);
+      
+      // Extract meta tags using simple regex (for basic implementation)
+      const getMetaContent = (property: string) => {
+        const ogMatch = html.match(new RegExp(`<meta\\s+property=["']og:${property}["']\\s+content=["']([^"']+)["']`, 'i'));
+        const twitterMatch = html.match(new RegExp(`<meta\\s+name=["']twitter:${property}["']\\s+content=["']([^"']+)["']`, 'i'));
+        const nameMatch = html.match(new RegExp(`<meta\\s+name=["']${property}["']\\s+content=["']([^"']+)["']`, 'i'));
+        
+        return ogMatch?.[1] || twitterMatch?.[1] || nameMatch?.[1] || null;
+      };
+
+      // Extract title from <title> tag if no og:title
+      const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+      const defaultTitle = titleMatch?.[1]?.trim() || '';
+
+      const preview = {
+        title: getMetaContent('title') || defaultTitle,
+        description: getMetaContent('description'),
+        image: getMetaContent('image'),
+        siteName: getMetaContent('site_name') || urlObj.hostname,
+        domain: urlObj.hostname,
+        url: url
+      };
+
+      res.json({ success: true, preview });
+    } catch (error) {
+      console.error('Error generating link preview:', error);
+      res.status(500).json({ error: 'Failed to generate link preview' });
+    }
+  });
+
   // Get upload URL for SEMM postcard
   app.post("/api/semm/postcards/upload", sessionBridge, async (req, res) => {
     try {
@@ -5247,20 +5307,44 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         return res.status(401).json({ error: 'User not authenticated' });
       }
 
-      const { semmCode, semmType, title, description, mediaType, mediaUrl, mediaDuration, mediaSize } = req.body;
+      const { 
+        semmCode, semmType, title, description, contentType,
+        mediaType, mediaUrl, mediaDuration, mediaSize,
+        linkUrl, linkPreview 
+      } = req.body;
 
-      if (!semmCode || !semmType || !mediaType || !mediaUrl) {
-        return res.status(400).json({ error: 'Missing required fields' });
+      if (!semmCode || !semmType || !contentType) {
+        return res.status(400).json({ error: 'Missing required fields: semmCode, semmType, contentType' });
       }
 
-      // Validate media duration for videos (max 90 seconds)
-      if (mediaType === 'video' && mediaDuration && mediaDuration > 90) {
-        return res.status(400).json({ error: 'Video duration cannot exceed 90 seconds' });
-      }
+      // Validate based on content type
+      if (contentType === 'media') {
+        if (!mediaType || !mediaUrl) {
+          return res.status(400).json({ error: 'Media type and URL are required for media content' });
+        }
 
-      // Validate file size (max 500MB)
-      if (mediaSize && mediaSize > 524288000) {
-        return res.status(400).json({ error: 'File size cannot exceed 500MB' });
+        // Validate media duration for videos (max 90 seconds)
+        if (mediaType === 'video' && mediaDuration && mediaDuration > 90) {
+          return res.status(400).json({ error: 'Video duration cannot exceed 90 seconds' });
+        }
+
+        // Validate file size (max 500MB)
+        if (mediaSize && mediaSize > 524288000) {
+          return res.status(400).json({ error: 'File size cannot exceed 500MB' });
+        }
+      } else if (contentType === 'link') {
+        if (!linkUrl) {
+          return res.status(400).json({ error: 'Link URL is required for link content' });
+        }
+
+        // Validate URL format
+        try {
+          new URL(linkUrl);
+        } catch {
+          return res.status(400).json({ error: 'Invalid URL format' });
+        }
+      } else {
+        return res.status(400).json({ error: 'Invalid content type. Must be "media" or "link"' });
       }
 
       const postcard = await storage.createSemmPostcard({
@@ -5269,10 +5353,13 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         semmType,
         title,
         description,
+        contentType,
         mediaType,
         mediaUrl,
         mediaDuration,
-        mediaSize
+        mediaSize,
+        linkUrl,
+        linkPreview
       });
 
       res.json({ success: true, postcard });

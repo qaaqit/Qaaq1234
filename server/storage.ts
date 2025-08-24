@@ -691,27 +691,51 @@ export class DatabaseStorage implements IStorage {
   // SEMM Postcards Implementation (using raw SQL for now since schema sync is pending)
   async createSemmPostcard(data: any): Promise<any> {
     try {
-      const { userId, semmCode, semmType, title, description, mediaType, mediaUrl, mediaDuration, mediaSize } = data;
+      const { 
+        userId, semmCode, semmType, title, description, 
+        contentType, mediaType, mediaUrl, mediaDuration, mediaSize,
+        linkUrl, linkPreview 
+      } = data;
       
-      const result = await pool.query(`
-        INSERT INTO semm_postcards (user_id, semm_code, semm_type, title, description, media_type, media_url, media_duration, media_size)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-        RETURNING *
-      `, [userId, semmCode, semmType, title, description, mediaType, mediaUrl, mediaDuration, mediaSize]);
+      let query, values;
       
+      if (contentType === 'link') {
+        // Create postcard with link
+        query = `
+          INSERT INTO semm_postcards (user_id, semm_code, semm_type, title, description, content_type, link_url, link_preview)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          RETURNING *
+        `;
+        values = [userId, semmCode, semmType, title, description, contentType, linkUrl, JSON.stringify(linkPreview || {})];
+      } else {
+        // Create postcard with media (existing functionality)
+        query = `
+          INSERT INTO semm_postcards (user_id, semm_code, semm_type, title, description, content_type, media_type, media_url, media_duration, media_size)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+          RETURNING *
+        `;
+        values = [userId, semmCode, semmType, title, description, contentType, mediaType, mediaUrl, mediaDuration, mediaSize];
+      }
+      
+      const result = await pool.query(query, values);
       return result.rows[0];
+      
     } catch (error) {
       console.error('Error creating SEMM postcard:', error);
+      
       // Return a mock response if table doesn't exist
       return {
         id: `mock-${Date.now()}`,
-        userId,
+        userId: data.userId,
         semmCode: data.semmCode,
         semmType: data.semmType,
         title: data.title,
         description: data.description,
+        contentType: data.contentType,
         mediaType: data.mediaType,
         mediaUrl: data.mediaUrl,
+        linkUrl: data.linkUrl,
+        linkPreview: data.linkPreview,
         likesCount: 0,
         sharesCount: 0,
         createdAt: new Date().toISOString()

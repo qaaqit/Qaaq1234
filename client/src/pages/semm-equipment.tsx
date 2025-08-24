@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
-import { ArrowLeft, Share2, Home, ChevronRight, Edit3, RotateCcw, ChevronUp, ChevronDown, Upload, Heart, Share, Play, FileText, Image, Video, Eye } from 'lucide-react';
+import { ArrowLeft, Share2, Home, ChevronRight, Edit3, RotateCcw, ChevronUp, ChevronDown, Upload, Heart, Share, Play, FileText, Image, Video, Eye, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useState, useEffect } from 'react';
@@ -101,6 +101,10 @@ export default function SemmEquipmentPage() {
   const [uploadTitle, setUploadTitle] = useState('');
   const [uploadDescription, setUploadDescription] = useState('');
   const [uploadedFile, setUploadedFile] = useState<any>(null);
+  const [contentType, setContentType] = useState<'media' | 'link'>('media');
+  const [linkUrl, setLinkUrl] = useState('');
+  const [linkPreview, setLinkPreview] = useState<any>(null);
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const isAdmin = user?.isAdmin || user?.role === 'admin';
 
   // Admin state
@@ -133,9 +137,12 @@ export default function SemmEquipmentPage() {
       setUploadTitle('');
       setUploadDescription('');
       setUploadedFile(null);
+      setLinkUrl('');
+      setLinkPreview(null);
+      setContentType('media');
       toast({
         title: "Success",
-        description: "Postcard uploaded successfully!",
+        description: "Content shared successfully!",
       });
     },
     onError: (error: any) => {
@@ -235,26 +242,102 @@ export default function SemmEquipmentPage() {
     }
   };
 
-  const handleSubmitPostcard = () => {
-    if (!uploadedFile || !uploadTitle.trim()) {
-      toast({
-        title: "Error",
-        description: "Please provide a title and upload a file",
-        variant: "destructive",
-      });
+  // Auto-preview link when URL changes with debouncing
+  useEffect(() => {
+    if (contentType !== 'link' || !linkUrl.trim()) {
+      setLinkPreview(null);
       return;
     }
 
-    uploadPostcardMutation.mutate({
-      semmCode: code,
-      semmType: 'equipment',
-      title: uploadTitle,
-      description: uploadDescription,
-      mediaType: uploadedFile.type,
-      mediaUrl: uploadedFile.url,
-      mediaDuration: uploadedFile.duration,
-      mediaSize: uploadedFile.size,
-    });
+    const timeoutId = setTimeout(() => {
+      handleLinkPreview(linkUrl);
+    }, 1000);
+
+    return () => clearTimeout(timeoutId);
+  }, [linkUrl, contentType]);
+
+  const handleLinkPreview = async (url: string) => {
+    if (!url.trim()) {
+      setLinkPreview(null);
+      return;
+    }
+
+    try {
+      // Basic URL validation
+      new URL(url);
+    } catch {
+      console.log('Invalid URL format');
+      setLinkPreview(null);
+      return;
+    }
+
+    setIsLoadingPreview(true);
+    try {
+      const response = await fetch('/api/semm/postcards/link-preview', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to fetch preview');
+      }
+
+      const data = await response.json();
+      setLinkPreview(data.preview);
+    } catch (error: any) {
+      console.error('Error fetching link preview:', error);
+      setLinkPreview(null);
+    } finally {
+      setIsLoadingPreview(false);
+    }
+  };
+
+  const handleSubmitPostcard = () => {
+    if (contentType === 'media') {
+      if (!uploadedFile || !uploadTitle.trim()) {
+        toast({
+          title: "Error",
+          description: "Please provide a title and upload a file",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      uploadPostcardMutation.mutate({
+        semmCode: code,
+        semmType: 'equipment',
+        title: uploadTitle,
+        description: uploadDescription,
+        contentType: 'media',
+        mediaType: uploadedFile.type,
+        mediaUrl: uploadedFile.url,
+        mediaDuration: uploadedFile.duration,
+        mediaSize: uploadedFile.size,
+      });
+    } else if (contentType === 'link') {
+      if (!linkUrl.trim() || !uploadTitle.trim()) {
+        toast({
+          title: "Error",
+          description: "Please provide a title and link URL",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      uploadPostcardMutation.mutate({
+        semmCode: code,
+        semmType: 'equipment',
+        title: uploadTitle,
+        description: uploadDescription,
+        contentType: 'link',
+        linkUrl: linkUrl,
+        linkPreview: linkPreview,
+      });
+    }
   };
 
   const handleLikePostcard = (postcardId: string, isLiked: boolean) => {
@@ -606,6 +689,40 @@ export default function SemmEquipmentPage() {
                     <DialogTitle>Share Equipment Content</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
+                    {/* Content Type Selection */}
+                    <div>
+                      <label className="text-sm font-medium">Content Type</label>
+                      <div className="flex gap-2 mt-2">
+                        <Button
+                          type="button"
+                          variant={contentType === 'media' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => {
+                            setContentType('media');
+                            setLinkUrl('');
+                            setLinkPreview(null);
+                          }}
+                          data-testid="button-content-type-media"
+                        >
+                          <Upload className="w-4 h-4 mr-2" />
+                          File Upload
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={contentType === 'link' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => {
+                            setContentType('link');
+                            setUploadedFile(null);
+                          }}
+                          data-testid="button-content-type-link"
+                        >
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          Link
+                        </Button>
+                      </div>
+                    </div>
+
                     <div>
                       <label className="text-sm font-medium">Title</label>
                       <Input
@@ -624,37 +741,111 @@ export default function SemmEquipmentPage() {
                         data-testid="textarea-postcard-description"
                       />
                     </div>
-                    <div>
-                      <ObjectUploader
-                        maxNumberOfFiles={1}
-                        maxFileSize={524288000} // 500MB
-                        onGetUploadParameters={handleGetUploadParameters}
-                        onComplete={handleUploadComplete}
-                        data-testid="object-uploader-postcard"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Upload className="w-4 h-4" />
-                          <span>Upload Video/Photo/PDF</span>
-                          <span className="text-xs text-gray-500">(Max 500MB, Videos ≤90s)</span>
-                        </div>
-                      </ObjectUploader>
-                    </div>
-                    {uploadedFile && (
-                      <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                        <p className="text-sm font-medium text-green-800">File ready: {uploadedFile.name}</p>
-                        <p className="text-xs text-green-600">
-                          {uploadedFile.type} • {(uploadedFile.size / 1024 / 1024).toFixed(1)}MB
-                          {uploadedFile.duration > 0 && ` • ${uploadedFile.duration.toFixed(1)}s`}
-                        </p>
+
+                    {/* Media Upload Section */}
+                    {contentType === 'media' && (
+                      <div>
+                        <ObjectUploader
+                          maxNumberOfFiles={1}
+                          maxFileSize={524288000} // 500MB
+                          onGetUploadParameters={handleGetUploadParameters}
+                          onComplete={handleUploadComplete}
+                          data-testid="object-uploader-postcard"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Upload className="w-4 h-4" />
+                            <span>Upload Video/Photo/PDF</span>
+                            <span className="text-xs text-gray-500">(Max 500MB, Videos ≤90s)</span>
+                          </div>
+                        </ObjectUploader>
+                        {uploadedFile && (
+                          <div className="p-3 bg-green-50 border border-green-200 rounded-lg mt-3">
+                            <p className="text-sm font-medium text-green-800">File ready: {uploadedFile.name}</p>
+                            <p className="text-xs text-green-600">
+                              {uploadedFile.type} • {(uploadedFile.size / 1024 / 1024).toFixed(1)}MB
+                              {uploadedFile.duration > 0 && ` • ${uploadedFile.duration.toFixed(1)}s`}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     )}
+
+                    {/* Link Input Section */}
+                    {contentType === 'link' && (
+                      <div>
+                        <label className="text-sm font-medium">Link URL</label>
+                        <div className="flex gap-2 mt-1">
+                          <Input
+                            value={linkUrl}
+                            onChange={(e) => setLinkUrl(e.target.value)}
+                            placeholder="https://example.com"
+                            data-testid="input-link-url"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleLinkPreview(linkUrl)}
+                            disabled={isLoadingPreview || !linkUrl.trim()}
+                            data-testid="button-preview-link"
+                          >
+                            {isLoadingPreview ? 'Loading...' : 'Preview'}
+                          </Button>
+                        </div>
+                        
+                        {/* Link Preview */}
+                        {linkPreview && (
+                          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg mt-3">
+                            <div className="flex gap-3">
+                              {linkPreview.image && (
+                                <img 
+                                  src={linkPreview.image} 
+                                  alt="Link preview" 
+                                  className="w-16 h-16 object-cover rounded"
+                                />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <h4 className="text-sm font-medium text-blue-900 line-clamp-2">
+                                  {linkPreview.title || 'No title'}
+                                </h4>
+                                {linkPreview.description && (
+                                  <p className="text-xs text-blue-700 line-clamp-2 mt-1">
+                                    {linkPreview.description}
+                                  </p>
+                                )}
+                                <p className="text-xs text-blue-600 mt-1">
+                                  {linkPreview.siteName || linkPreview.domain}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     <div className="flex gap-2">
-                      <Button variant="outline" onClick={() => setIsUploadDialogOpen(false)}>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => {
+                          setIsUploadDialogOpen(false);
+                          setUploadTitle('');
+                          setUploadDescription('');
+                          setUploadedFile(null);
+                          setLinkUrl('');
+                          setLinkPreview(null);
+                          setContentType('media');
+                        }}
+                      >
                         Cancel
                       </Button>
                       <Button 
                         onClick={handleSubmitPostcard}
-                        disabled={uploadPostcardMutation.isPending || !uploadedFile || !uploadTitle.trim()}
+                        disabled={
+                          uploadPostcardMutation.isPending || 
+                          !uploadTitle.trim() ||
+                          (contentType === 'media' && !uploadedFile) ||
+                          (contentType === 'link' && !linkUrl.trim())
+                        }
                         data-testid="button-submit-postcard"
                       >
                         {uploadPostcardMutation.isPending ? 'Publishing...' : 'Publish'}
@@ -683,45 +874,91 @@ export default function SemmEquipmentPage() {
                   className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden aspect-[9/16] group hover:shadow-xl transition-shadow"
                   data-testid={`postcard-${postcard.id}`}
                 >
-                  {/* Media Content */}
+                  {/* Content Area - Media or Link */}
                   <div className="relative h-2/3 bg-gray-100">
-                    {postcard.media_type === 'video' ? (
-                      <div className="relative w-full h-full">
-                        <video 
-                          className="w-full h-full object-cover rounded-t-xl"
-                          controls
-                          poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 600'%3E%3Crect width='400' height='600' fill='%23f3f4f6'/%3E%3C/svg%3E"
-                        >
-                          <source src={postcard.media_url} type="video/mp4" />
-                        </video>
-                        <div className="absolute top-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs flex items-center">
-                          <Video className="w-3 h-3 mr-1" />
-                          {postcard.media_duration && `${Math.round(postcard.media_duration)}s`}
-                        </div>
-                      </div>
-                    ) : postcard.media_type === 'image' ? (
-                      <div className="relative w-full h-full">
-                        <img 
-                          src={postcard.media_url} 
-                          alt={postcard.title}
-                          className="w-full h-full object-cover rounded-t-xl"
-                        />
-                        <div className="absolute top-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs flex items-center">
-                          <Image className="w-3 h-3 mr-1" />
-                          Photo
-                        </div>
+                    {postcard.content_type === 'link' ? (
+                      // Link Preview Display
+                      <div 
+                        className="w-full h-full cursor-pointer rounded-t-xl overflow-hidden"
+                        onClick={() => window.open(postcard.link_url, '_blank')}
+                      >
+                        {postcard.link_preview?.image ? (
+                          <div className="relative w-full h-full">
+                            <img 
+                              src={postcard.link_preview.image} 
+                              alt={postcard.link_preview.title || postcard.title}
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <ExternalLink className="w-8 h-8 text-white" />
+                            </div>
+                            <div className="absolute top-2 left-2 bg-blue-600 bg-opacity-90 text-white px-2 py-1 rounded text-xs flex items-center">
+                              <ExternalLink className="w-3 h-3 mr-1" />
+                              Link
+                            </div>
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-2">
+                              <p className="text-white text-xs font-medium line-clamp-1">
+                                {postcard.link_preview.siteName || postcard.link_preview.domain}
+                              </p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-blue-50 rounded-t-xl">
+                            <div className="text-center p-4">
+                              <ExternalLink className="w-12 h-12 text-blue-500 mx-auto mb-2" />
+                              <p className="text-xs text-blue-600 font-medium line-clamp-2">
+                                {postcard.link_preview?.siteName || postcard.link_preview?.domain || 'External Link'}
+                              </p>
+                            </div>
+                            <div className="absolute top-2 left-2 bg-blue-600 bg-opacity-90 text-white px-2 py-1 rounded text-xs flex items-center">
+                              <ExternalLink className="w-3 h-3 mr-1" />
+                              Link
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-200 rounded-t-xl">
-                        <div className="text-center">
-                          <FileText className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                          <p className="text-xs text-gray-500">PDF Document</p>
-                        </div>
-                        <div className="absolute top-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs flex items-center">
-                          <FileText className="w-3 h-3 mr-1" />
-                          PDF
-                        </div>
-                      </div>
+                      // Media Content (existing logic)
+                      <>
+                        {postcard.media_type === 'video' ? (
+                          <div className="relative w-full h-full">
+                            <video 
+                              className="w-full h-full object-cover rounded-t-xl"
+                              controls
+                              poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 600'%3E%3Crect width='400' height='600' fill='%23f3f4f6'/%3E%3C/svg%3E"
+                            >
+                              <source src={postcard.media_url} type="video/mp4" />
+                            </video>
+                            <div className="absolute top-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs flex items-center">
+                              <Video className="w-3 h-3 mr-1" />
+                              {postcard.media_duration && `${Math.round(postcard.media_duration)}s`}
+                            </div>
+                          </div>
+                        ) : postcard.media_type === 'image' ? (
+                          <div className="relative w-full h-full">
+                            <img 
+                              src={postcard.media_url} 
+                              alt={postcard.title}
+                              className="w-full h-full object-cover rounded-t-xl"
+                            />
+                            <div className="absolute top-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs flex items-center">
+                              <Image className="w-3 h-3 mr-1" />
+                              Photo
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gray-200 rounded-t-xl">
+                            <div className="text-center">
+                              <FileText className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                              <p className="text-xs text-gray-500">PDF Document</p>
+                            </div>
+                            <div className="absolute top-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs flex items-center">
+                              <FileText className="w-3 h-3 mr-1" />
+                              PDF
+                            </div>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
 
@@ -730,10 +967,24 @@ export default function SemmEquipmentPage() {
                     <h3 className="font-semibold text-sm text-gray-900 line-clamp-2 mb-1">
                       {postcard.title}
                     </h3>
-                    {postcard.description && (
-                      <p className="text-xs text-gray-600 line-clamp-2 mb-2">
-                        {postcard.description}
-                      </p>
+                    
+                    {/* Show link preview title and description for links, or user description for media */}
+                    {postcard.content_type === 'link' ? (
+                      <div className="text-xs text-gray-600 line-clamp-2 mb-2">
+                        {postcard.link_preview?.description ? (
+                          <span>{postcard.link_preview.description}</span>
+                        ) : postcard.description ? (
+                          <span>{postcard.description}</span>
+                        ) : (
+                          <span className="italic">Click to open link</span>
+                        )}
+                      </div>
+                    ) : (
+                      postcard.description && (
+                        <p className="text-xs text-gray-600 line-clamp-2 mb-2">
+                          {postcard.description}
+                        </p>
+                      )
                     )}
                     
                     {/* Author and Actions */}
