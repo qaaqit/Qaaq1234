@@ -524,16 +524,29 @@ export class AIService {
         console.log('⚠️ No user ID available for premium check, treating as free user');
         // Continue to free user logic below
       } else {
+        // First check if user is admin (admins get unlimited access)
+        if (user?.isAdmin || user?.is_admin) {
+          console.log(`✅ Admin user verified (ID: ${userId}) - returning full response (${content.split(' ').length} words)`);
+          return content;
+        }
+        
+        // Check specific premium user IDs (workship.ai@gmail.com users)
+        const premiumUserIds = ['45016180', '44885683'];
+        if (premiumUserIds.includes(userId.toString())) {
+          console.log(`✅ Premium user ID verified (${userId}) - returning full response (${content.split(' ').length} words)`);
+          return content;
+        }
+        
         // Import and use the Razorpay service directly
         const { RazorpayService } = await import('./razorpay-service-production.js');
         const razorpayService = RazorpayService.getInstance();
         const premiumStatus = await razorpayService.checkUserPremiumStatus(userId.toString());
         
         if (premiumStatus.isPremium) {
-          console.log(`✅ Premium user verified - returning full response (${content.split(' ').length} words)`);
+          console.log(`✅ Razorpay premium user verified - returning full response (${content.split(' ').length} words)`);
           return content;
         }
-        console.log(`🔍 Premium check result for user ${userId}: isPremium = ${premiumStatus.isPremium}`);
+        console.log(`🔍 Premium check result for user ${userId}: isPremium = ${premiumStatus.isPremium}, isAdmin = ${user?.isAdmin}`);
       }
     } catch (error) {
       console.error('❌ Error checking premium status:', error);
