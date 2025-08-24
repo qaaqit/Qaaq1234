@@ -98,11 +98,9 @@ export default function SemmEquipmentPage() {
   
   // Postcards state
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
-  const [uploadTitle, setUploadTitle] = useState('');
-  const [uploadDescription, setUploadDescription] = useState('');
+  const [contentText, setContentText] = useState('');
   const [uploadedFile, setUploadedFile] = useState<any>(null);
   const [contentType, setContentType] = useState<'upload' | 'url'>('upload');
-  const [contentUrl, setContentUrl] = useState('');
   const isAdmin = user?.isAdmin || user?.role === 'admin';
 
   // Admin state
@@ -132,10 +130,8 @@ export default function SemmEquipmentPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/semm/postcards', code, 'equipment'] });
       setIsUploadDialogOpen(false);
-      setUploadTitle('');
-      setUploadDescription('');
+      setContentText('');
       setUploadedFile(null);
-      setContentUrl('');
       setContentType('upload');
       toast({
         title: "Success",
@@ -249,6 +245,12 @@ export default function SemmEquipmentPage() {
     }
   };
 
+  const extractUrlFromText = (text: string) => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const matches = text.match(urlRegex);
+    return matches ? matches[0] : null;
+  };
+
   const detectUrlMediaType = (url: string) => {
     if (url.includes('youtube.com') || url.includes('youtu.be')) return 'video';
     if (url.includes('instagram.com')) return 'video';
@@ -257,15 +259,34 @@ export default function SemmEquipmentPage() {
     return 'link';
   };
 
+  const getEmbedUrl = (url: string) => {
+    // Convert YouTube URLs to embed format
+    if (url.includes('youtube.com/watch?v=')) {
+      const videoId = url.split('v=')[1].split('&')[0];
+      return `https://www.youtube.com/embed/${videoId}`;
+    }
+    if (url.includes('youtu.be/')) {
+      const videoId = url.split('youtu.be/')[1].split('?')[0];
+      return `https://www.youtube.com/embed/${videoId}`;
+    }
+    // For Instagram, TikTok etc., we'll show the original URL for now
+    // These platforms have more complex embedding requirements
+    return url;
+  };
+
   const handleSubmitPostcard = () => {
-    if (!uploadTitle.trim()) {
+    if (!contentText.trim()) {
       toast({
         title: "Error",
-        description: "Please provide a title",
+        description: "Please add some content or paste a link",
         variant: "destructive",
       });
       return;
     }
+
+    // Check if there's a URL in the text
+    const extractedUrl = extractUrlFromText(contentText);
+    const isUrlPost = extractedUrl && contentType === 'url';
 
     if (contentType === 'upload') {
       if (!uploadedFile) {
@@ -280,31 +301,34 @@ export default function SemmEquipmentPage() {
       uploadPostcardMutation.mutate({
         semmCode: code,
         semmType: 'equipment',
-        title: uploadTitle,
-        description: uploadDescription,
+        title: contentText.split('\n')[0] || 'Untitled', // Use first line as title
+        description: contentText,
         mediaType: uploadedFile.type,
         mediaUrl: uploadedFile.url,
         mediaDuration: uploadedFile.duration,
         mediaSize: uploadedFile.size,
       });
-    } else {
-      if (!contentUrl.trim()) {
-        toast({
-          title: "Error",
-          description: "Please provide a valid URL",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const mediaType = detectUrlMediaType(contentUrl);
+    } else if (isUrlPost) {
+      const mediaType = detectUrlMediaType(extractedUrl);
       uploadPostcardMutation.mutate({
         semmCode: code,
         semmType: 'equipment',
-        title: uploadTitle,
-        description: uploadDescription,
+        title: contentText.replace(extractedUrl, '').trim() || 'Shared Link', // Remove URL from title
+        description: contentText,
         mediaType: mediaType,
-        mediaUrl: contentUrl,
+        mediaUrl: extractedUrl,
+        mediaDuration: 0,
+        mediaSize: 0,
+      });
+    } else {
+      // Text-only post
+      uploadPostcardMutation.mutate({
+        semmCode: code,
+        semmType: 'equipment',
+        title: contentText.split('\n')[0] || 'Post',
+        description: contentText,
+        mediaType: 'text',
+        mediaUrl: '',
         mediaDuration: 0,
         mediaSize: 0,
       });
@@ -660,23 +684,19 @@ export default function SemmEquipmentPage() {
                     <DialogTitle>Share Equipment Content</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
+                    {/* Combined Content Input */}
                     <div>
-                      <label className="text-sm font-medium">Title</label>
-                      <Input
-                        value={uploadTitle}
-                        onChange={(e) => setUploadTitle(e.target.value)}
-                        placeholder="Add a title for your content..."
-                        data-testid="input-postcard-title"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium">Description (Optional)</label>
+                      <label className="text-sm font-medium">Share your content</label>
                       <Textarea
-                        value={uploadDescription}
-                        onChange={(e) => setUploadDescription(e.target.value)}
-                        placeholder="Add a description..."
-                        data-testid="textarea-postcard-description"
+                        value={contentText}
+                        onChange={(e) => setContentText(e.target.value)}
+                        placeholder="Write something or paste a YouTube/Instagram/TikTok link to embed it..."
+                        className="min-h-[100px] mt-1"
+                        data-testid="textarea-content"
                       />
+                      <p className="text-xs text-gray-500 mt-1">
+                        💡 Tip: Paste YouTube Shorts, Instagram Reels, or TikTok links and they'll be embedded for viewers to watch directly!
+                      </p>
                     </div>
                     
                     {/* Content Type Toggle */}
@@ -707,13 +727,13 @@ export default function SemmEquipmentPage() {
                           data-testid="toggle-url"
                         >
                           <ExternalLink className="w-4 h-4 mr-2 inline" />
-                          Share Link
+                          Share Link/Text
                         </button>
                       </div>
                     </div>
 
-                    {/* Upload Section */}
-                    {contentType === 'upload' ? (
+                    {/* Upload Section - only show when upload mode */}
+                    {contentType === 'upload' && (
                       <div>
                         <ObjectUploader
                           maxNumberOfFiles={1}
@@ -728,20 +748,6 @@ export default function SemmEquipmentPage() {
                             <span className="text-xs text-gray-500">(Max 500MB, Videos ≤90s)</span>
                           </div>
                         </ObjectUploader>
-                      </div>
-                    ) : (
-                      <div>
-                        <label className="text-sm font-medium">Content URL</label>
-                        <Input
-                          value={contentUrl}
-                          onChange={(e) => setContentUrl(e.target.value)}
-                          placeholder="Paste YouTube Shorts, Instagram Reels, TikTok, or other video/image links..."
-                          data-testid="input-content-url"
-                          className="mt-1"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                          Supported: YouTube, Instagram, TikTok, Twitter/X, and direct image/video URLs
-                        </p>
                       </div>
                     )}
                     {uploadedFile && (
@@ -759,7 +765,7 @@ export default function SemmEquipmentPage() {
                       </Button>
                       <Button 
                         onClick={handleSubmitPostcard}
-                        disabled={uploadPostcardMutation.isPending || !uploadTitle.trim() || (contentType === 'upload' ? !uploadedFile : !contentUrl.trim())}
+                        disabled={uploadPostcardMutation.isPending || !contentText.trim() || (contentType === 'upload' && !uploadedFile)}
                         data-testid="button-submit-postcard"
                       >
                         {uploadPostcardMutation.isPending ? 'Publishing...' : 'Publish'}
@@ -816,7 +822,59 @@ export default function SemmEquipmentPage() {
                           Photo
                         </div>
                       </div>
-                    ) : postcard.media_type === 'link' ? (
+                    ) : postcard.media_type === 'video' && (postcard.media_url.includes('youtube.com') || postcard.media_url.includes('youtu.be')) ? (
+                      <div className="relative w-full h-full">
+                        <iframe
+                          src={getEmbedUrl(postcard.media_url)}
+                          className="w-full h-full rounded-t-xl"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          title={postcard.title}
+                        />
+                        <div className="absolute top-2 left-2 bg-red-600 text-white px-2 py-1 rounded text-xs flex items-center">
+                          <Video className="w-3 h-3 mr-1" />
+                          YouTube
+                        </div>
+                      </div>
+                    ) : postcard.media_type === 'video' && postcard.media_url.includes('instagram.com') ? (
+                      <div className="relative w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center p-4">
+                        <div className="text-center">
+                          <Video className="w-12 h-12 text-white mx-auto mb-2" />
+                          <p className="text-white text-sm font-medium">Instagram Reel</p>
+                          <a 
+                            href={postcard.media_url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-white text-xs underline hover:no-underline"
+                          >
+                            View on Instagram
+                          </a>
+                        </div>
+                        <div className="absolute top-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs flex items-center">
+                          <Video className="w-3 h-3 mr-1" />
+                          Reel
+                        </div>
+                      </div>
+                    ) : postcard.media_type === 'video' && postcard.media_url.includes('tiktok.com') ? (
+                      <div className="relative w-full h-full bg-gradient-to-br from-black to-gray-800 flex items-center justify-center p-4">
+                        <div className="text-center">
+                          <Video className="w-12 h-12 text-white mx-auto mb-2" />
+                          <p className="text-white text-sm font-medium">TikTok Video</p>
+                          <a 
+                            href={postcard.media_url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-white text-xs underline hover:no-underline"
+                          >
+                            View on TikTok
+                          </a>
+                        </div>
+                        <div className="absolute top-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs flex items-center">
+                          <Video className="w-3 h-3 mr-1" />
+                          TikTok
+                        </div>
+                      </div>
+                    ) : postcard.media_type === 'link' || (postcard.media_type === 'video' && !postcard.media_url.startsWith('http')) ? (
                       <div className="relative w-full h-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center p-4">
                         <div className="text-center">
                           <ExternalLink className="w-12 h-12 text-white mx-auto mb-2" />
@@ -828,6 +886,17 @@ export default function SemmEquipmentPage() {
                         <div className="absolute top-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs flex items-center">
                           <ExternalLink className="w-3 h-3 mr-1" />
                           Link
+                        </div>
+                      </div>
+                    ) : postcard.media_type === 'text' ? (
+                      <div className="relative w-full h-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center p-4">
+                        <div className="text-center">
+                          <FileText className="w-12 h-12 text-white mx-auto mb-2" />
+                          <p className="text-white text-sm font-medium">Text Post</p>
+                        </div>
+                        <div className="absolute top-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs flex items-center">
+                          <FileText className="w-3 h-3 mr-1" />
+                          Text
                         </div>
                       </div>
                     ) : (
@@ -843,8 +912,11 @@ export default function SemmEquipmentPage() {
                       </div>
                     )}
 
-                    {/* Clickable overlay for external links */}
-                    {postcard.media_type === 'link' && (
+                    {/* Clickable overlay for external links (non-YouTube) */}
+                    {(postcard.media_type === 'link' || 
+                      (postcard.media_type === 'video' && 
+                       !postcard.media_url.includes('youtube.com') && 
+                       !postcard.media_url.includes('youtu.be'))) && (
                       <a 
                         href={postcard.media_url} 
                         target="_blank" 
