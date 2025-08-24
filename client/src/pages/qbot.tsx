@@ -46,8 +46,13 @@ export default function QBOTPage({ user }: QBOTPageProps) {
   const isCheckingPremium = false;
   const checkPremiumStatus = () => {}; // No-op function
   
-  const isPremium = false; // Static since JWT auth disabled
-  const isPremiumUser = false;
+  // Check premium status for known testing accounts since JWT is disabled
+  // This enables premium features for verified premium users (matches QBOTChatHeader logic)
+  const testingEmails = ['workship.ai@gmail.com', 'mushy.piyush@gmail.com'];
+  const userEmail = user?.email || localStorage.getItem('user_email') || '';
+  const isAdmin = localStorage.getItem('isAdmin') === 'true';
+  const isPremium = testingEmails.includes(userEmail) || isAdmin;
+  const isPremiumUser = testingEmails.includes(userEmail) || isAdmin;
 
   // Fetch WhatsApp chat history when component loads
   useEffect(() => {
@@ -136,7 +141,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
           attachments: attachments,
           isPrivate: isPrivate,
           aiModels: aiModels || ['chatgpt'],
-          isPremium: true
+          isPremium: isPremiumUser
         })
       });
 
