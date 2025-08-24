@@ -765,6 +765,7 @@ export const questionAttachmentsRelations = relations(questionAttachments, ({ on
   }),
 }));
 
+
 // Insert schemas for questions
 export const insertQuestionSchema = createInsertSchema(questions)
   .omit({ id: true, createdAt: true, updatedAt: true });
@@ -772,11 +773,69 @@ export const insertQuestionSchema = createInsertSchema(questions)
 export const insertQuestionAttachmentSchema = createInsertSchema(questionAttachments)
   .omit({ id: true, createdAt: true, processedAt: true });
 
+
+// User answers table for community answers on questions
+export const userAnswers = pgTable("user_answers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  questionId: integer("question_id").notNull().references(() => questions.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  likesCount: integer("likes_count").default(0),
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`),
+});
+
+// Answer likes table for voting on user answers
+export const answerLikes = pgTable("answer_likes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  answerId: varchar("answer_id").notNull().references(() => userAnswers.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").default(sql`now()`),
+});
+
+// Relations for user answers
+export const userAnswersRelations = relations(userAnswers, ({ one, many }) => ({
+  question: one(questions, {
+    fields: [userAnswers.questionId],
+    references: [questions.id],
+  }),
+  user: one(users, {
+    fields: [userAnswers.userId],
+    references: [users.id],
+  }),
+  likes: many(answerLikes),
+}));
+
+export const answerLikesRelations = relations(answerLikes, ({ one }) => ({
+  user: one(users, {
+    fields: [answerLikes.userId],
+    references: [users.id],
+  }),
+  answer: one(userAnswers, {
+    fields: [answerLikes.answerId],
+    references: [userAnswers.id],
+  }),
+}));
+
+// Insert schemas for user answers
+export const insertUserAnswerSchema = createInsertSchema(userAnswers)
+  .omit({ id: true, likesCount: true, createdAt: true, updatedAt: true });
+
+export const insertAnswerLikeSchema = createInsertSchema(answerLikes)
+  .omit({ id: true, createdAt: true });
+
 // Types for questions
 export type InsertQuestion = z.infer<typeof insertQuestionSchema>;
 export type Question = typeof questions.$inferSelect;
 export type InsertQuestionAttachment = z.infer<typeof insertQuestionAttachmentSchema>;
 export type QuestionAttachment = typeof questionAttachments.$inferSelect;
+
+// Types for user answers
+export type InsertUserAnswer = z.infer<typeof insertUserAnswerSchema>;
+export type UserAnswer = typeof userAnswers.$inferSelect;
+export type InsertAnswerLike = z.infer<typeof insertAnswerLikeSchema>;
+export type AnswerLike = typeof answerLikes.$inferSelect;
+
 
 // Payment subscriptions table for Razorpay integration
 export const subscriptions = pgTable("subscriptions", {

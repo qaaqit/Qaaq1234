@@ -1,4 +1,4 @@
-import { users, userIdentities, posts, likes, verificationCodes, chatConnections, chatMessages, whatsappMessages, type User, type InsertUser, type UserIdentity, type InsertUserIdentity, type Post, type InsertPost, type VerificationCode, type Like, type ChatConnection, type ChatMessage, type InsertChatConnection, type InsertChatMessage, type WhatsappMessage, type InsertWhatsappMessage } from "@shared/schema";
+import { users, userIdentities, posts, likes, verificationCodes, chatConnections, chatMessages, whatsappMessages, userAnswers, answerLikes, type User, type InsertUser, type UserIdentity, type InsertUserIdentity, type Post, type InsertPost, type VerificationCode, type Like, type ChatConnection, type ChatMessage, type InsertChatConnection, type InsertChatMessage, type WhatsappMessage, type InsertWhatsappMessage, type UserAnswer, type InsertUserAnswer, type AnswerLike, type InsertAnswerLike } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, desc, and, ilike, or, sql, isNotNull, not } from "drizzle-orm";
 
@@ -47,6 +47,17 @@ export interface IStorage {
   getUserLike(userId: string, postId: string): Promise<any>;
   likePost(userId: string, postId: string): Promise<any>;
   unlikePost(userId: string, postId: string): Promise<any>;
+  
+  // User answers
+  createUserAnswer(answer: InsertUserAnswer): Promise<UserAnswer>;
+  getUserAnswersForQuestion(questionId: number): Promise<UserAnswer[]>;
+  deleteUserAnswer(answerId: string, userId: string): Promise<void>;
+  updateAnswerLikesCount(answerId: string): Promise<void>;
+  
+  // Answer likes
+  likeAnswer(userId: string, answerId: string): Promise<void>;
+  unlikeAnswer(userId: string, answerId: string): Promise<void>;
+  getUserAnswerLike(userId: string, answerId: string): Promise<AnswerLike | undefined>;
   
   // Verification codes
   createVerificationCode(userId: string, code: string, expiresAt: Date): Promise<VerificationCode>;
@@ -1117,6 +1128,139 @@ export class DatabaseStorage implements IStorage {
   
   async unlikePost(userId: string, postId: string): Promise<any> {
     throw new Error('unlikePost method not yet implemented');
+  }
+
+  // User answers implementation
+  async createUserAnswer(answer: InsertUserAnswer): Promise<UserAnswer> {
+    try {
+      const [newAnswer] = await db
+        .insert(userAnswers)
+        .values(answer)
+        .returning();
+      return newAnswer;
+    } catch (error) {
+      console.error('Error creating user answer:', error);
+      throw error;
+    }
+  }
+
+  async getUserAnswersForQuestion(questionId: number): Promise<UserAnswer[]> {
+    try {
+      const answers = await db
+        .select({
+          id: userAnswers.id,
+          questionId: userAnswers.questionId,
+          userId: userAnswers.userId,
+          content: userAnswers.content,
+          likesCount: userAnswers.likesCount,
+          createdAt: userAnswers.createdAt,
+          updatedAt: userAnswers.updatedAt,
+          // Join user data
+          authorName: users.fullName,
+          authorRank: users.rank,
+        })
+        .from(userAnswers)
+        .leftJoin(users, eq(userAnswers.userId, users.id))
+        .where(eq(userAnswers.questionId, questionId))
+        .orderBy(desc(userAnswers.likesCount), desc(userAnswers.createdAt));
+      
+      return answers.map(answer => ({
+        id: answer.id,
+        questionId: answer.questionId,
+        userId: answer.userId,
+        content: answer.content,
+        likesCount: answer.likesCount || 0,
+        createdAt: answer.createdAt,
+        updatedAt: answer.updatedAt,
+        authorName: answer.authorName || 'Anonymous',
+        authorRank: answer.authorRank,
+      })) as UserAnswer[];
+    } catch (error) {
+      console.error('Error getting user answers:', error);
+      return [];
+    }
+  }
+
+  async deleteUserAnswer(answerId: string, userId: string): Promise<void> {
+    try {
+      await db
+        .delete(userAnswers)
+        .where(
+          and(
+            eq(userAnswers.id, answerId),
+            eq(userAnswers.userId, userId)
+          )
+        );
+    } catch (error) {
+      console.error('Error deleting user answer:', error);
+      throw error;
+    }
+  }
+
+  async updateAnswerLikesCount(answerId: string): Promise<void> {
+    try {
+      const [{ count }] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(answerLikes)
+        .where(eq(answerLikes.answerId, answerId));
+      
+      await db
+        .update(userAnswers)
+        .set({ likesCount: count })
+        .where(eq(userAnswers.id, answerId));
+    } catch (error) {
+      console.error('Error updating answer likes count:', error);
+      throw error;
+    }
+  }
+
+  // Answer likes implementation
+  async likeAnswer(userId: string, answerId: string): Promise<void> {
+    try {
+      await db.insert(answerLikes).values({
+        userId,
+        answerId,
+      });
+      await this.updateAnswerLikesCount(answerId);
+    } catch (error) {
+      console.error('Error liking answer:', error);
+      throw error;
+    }
+  }
+
+  async unlikeAnswer(userId: string, answerId: string): Promise<void> {
+    try {
+      await db
+        .delete(answerLikes)
+        .where(
+          and(
+            eq(answerLikes.userId, userId),
+            eq(answerLikes.answerId, answerId)
+          )
+        );
+      await this.updateAnswerLikesCount(answerId);
+    } catch (error) {
+      console.error('Error unliking answer:', error);
+      throw error;
+    }
+  }
+
+  async getUserAnswerLike(userId: string, answerId: string): Promise<AnswerLike | undefined> {
+    try {
+      const [like] = await db
+        .select()
+        .from(answerLikes)
+        .where(
+          and(
+            eq(answerLikes.userId, userId),
+            eq(answerLikes.answerId, answerId)
+          )
+        );
+      return like || undefined;
+    } catch (error) {
+      console.error('Error getting user answer like:', error);
+      return undefined;
+    }
   }
 }
 

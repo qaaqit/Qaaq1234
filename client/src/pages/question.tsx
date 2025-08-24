@@ -1,13 +1,15 @@
 import { useParams, Link } from 'wouter';
-import { useQuery } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, CheckCircle, MessageCircle, Eye, Clock, Hash, User, Share2, TrendingUp } from 'lucide-react';
+import { ArrowLeft, CheckCircle, MessageCircle, Eye, Clock, Hash, User, Share2, TrendingUp, Heart, Send } from 'lucide-react';
+import { apiRequest } from '@/lib/queryClient';
 
 interface Question {
   id: number;
@@ -37,10 +39,24 @@ interface Answer {
   is_best_answer: boolean;
 }
 
+interface UserAnswer {
+  id: string;
+  questionId: number;
+  userId: string;
+  content: string;
+  likesCount: number;
+  createdAt: string;
+  updatedAt: string;
+  authorName: string;
+  authorRank?: string;
+}
+
 export default function QuestionPage() {
   const params = useParams();
   const questionId = params.id;
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [newAnswerContent, setNewAnswerContent] = useState('');
 
   const { data: question, status } = useQuery<Question>({
     queryKey: [`/api/questions/${questionId}`],
@@ -50,6 +66,53 @@ export default function QuestionPage() {
   const { data: answers = [] } = useQuery<Answer[]>({
     queryKey: [`/api/questions/${questionId}/answers`],
     enabled: !!questionId,
+  });
+
+  const { data: userAnswers = [] } = useQuery<UserAnswer[]>({
+    queryKey: [`/api/questions/${questionId}/user-answers`],
+    enabled: !!questionId,
+  });
+
+  // Mutation for submitting new answer
+  const submitAnswerMutation = useMutation({
+    mutationFn: async (content: string) => {
+      return apiRequest(`/api/questions/${questionId}/user-answers`, {
+        method: 'POST',
+        body: JSON.stringify({ content }),
+        headers: { 'Content-Type': 'application/json' },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/questions/${questionId}/user-answers`] });
+      setNewAnswerContent('');
+      toast({ title: "Success", description: "Your answer has been submitted!" });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Error", 
+        description: error.message || "Failed to submit answer",
+        variant: "destructive"
+      });
+    },
+  });
+
+  // Mutation for liking answers
+  const toggleLikeMutation = useMutation({
+    mutationFn: async (answerId: string) => {
+      return apiRequest(`/api/user-answers/${answerId}/like`, {
+        method: 'POST',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/questions/${questionId}/user-answers`] });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Error", 
+        description: error.message || "Failed to update like",
+        variant: "destructive"
+      });
+    },
   });
 
   // Debug logging for API responses  
@@ -74,6 +137,23 @@ export default function QuestionPage() {
       })));
     }
   }, [answers]);
+
+  const handleSubmitAnswer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newAnswerContent.trim()) {
+      toast({ 
+        title: "Error", 
+        description: "Please enter an answer",
+        variant: "destructive"
+      });
+      return;
+    }
+    submitAnswerMutation.mutate(newAnswerContent);
+  };
+
+  const handleLikeAnswer = (answerId: string) => {
+    toggleLikeMutation.mutate(answerId);
+  };
 
   const getInitials = (name: string) => {
     return name
@@ -281,22 +361,22 @@ export default function QuestionPage() {
         </CardContent>
       </Card>
 
-      {/* Answers Section */}
+      {/* Bot Answers Section */}
       <Card className="border-2 border-gray-200">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <MessageCircle size={20} />
-            <span>Answers ({answers.length})</span>
+            <span>AI Bot Answers ({answers.length})</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           {answers.length === 0 ? (
             <p className="text-gray-500 text-center py-8">
-              No answers yet. Be the first to answer!
+              No bot answers available.
             </p>
           ) : (
             <div className="space-y-4">
-{answers.map((answer: Answer) => (
+              {answers.map((answer: Answer) => (
                 <div key={answer.id} className="border-b border-gray-200 pb-4 last:border-0">
                   {(answer.author_name === 'QG' || answer.author_name === 'QAAQ GPT') ? (
                     <div className="flex items-start justify-between mb-2">
@@ -343,6 +423,91 @@ export default function QuestionPage() {
               ))}
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Community Answers Section */}
+      <Card className="border-2 border-blue-200">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <User size={20} />
+            <span>Community Answers ({userAnswers.length})</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {userAnswers.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">
+              No community answers yet. Be the first to help improve the bot's answer!
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {userAnswers.map((answer: UserAnswer) => (
+                <div key={answer.id} className="border-b border-gray-200 pb-4 last:border-0">
+                  <div className="flex items-start space-x-3">
+                    <Avatar className="w-10 h-10">
+                      <AvatarFallback className="bg-blue-100 text-blue-700">
+                        {getInitials(answer.authorName || 'Anonymous')}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <h4 className="font-medium text-gray-900">{answer.authorName}</h4>
+                          <p className="text-sm text-gray-600">
+                            {formatRank(answer.authorRank)} • {formatDate(answer.createdAt)}
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleLikeAnswer(answer.id)}
+                          disabled={toggleLikeMutation.isPending}
+                          className="flex items-center space-x-1 text-red-500 hover:text-red-600"
+                          data-testid={`button-like-answer-${answer.id}`}
+                        >
+                          <Heart size={16} className={answer.likesCount > 0 ? "fill-current" : ""} />
+                          <span data-testid={`text-likes-count-${answer.id}`}>{answer.likesCount}</span>
+                        </Button>
+                      </div>
+                      <p className="text-gray-700 whitespace-pre-wrap" data-testid={`text-answer-content-${answer.id}`}>{answer.content}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Submit Answer Form */}
+      <Card className="border-2 border-green-200">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Send size={20} />
+            <span>Share Your Knowledge</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmitAnswer} className="space-y-4">
+            <Textarea
+              placeholder="Help improve the bot's answer by sharing your expertise..."
+              value={newAnswerContent}
+              onChange={(e) => setNewAnswerContent(e.target.value)}
+              rows={4}
+              className="resize-none"
+              data-testid="textarea-new-answer"
+            />
+            <div className="flex justify-end">
+              <Button
+                type="submit"
+                disabled={submitAnswerMutation.isPending || !newAnswerContent.trim()}
+                className="bg-green-600 hover:bg-green-700"
+                data-testid="button-submit-answer"
+              >
+                {submitAnswerMutation.isPending ? 'Submitting...' : 'Submit Answer'}
+              </Button>
+            </div>
+          </form>
         </CardContent>
       </Card>
     </div>

@@ -7273,6 +7273,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user answers for a specific question
+  app.get('/api/questions/:id/user-answers', noAuth, async (req, res) => {
+    try {
+      const questionId = parseInt(req.params.id);
+      if (isNaN(questionId)) {
+        return res.status(400).json({ error: 'Invalid question ID' });
+      }
+      
+      console.log(`🔍 API: Fetching user answers for question ${questionId}`);
+      
+      const userAnswers = await storage.getUserAnswersForQuestion(questionId);
+      
+      console.log(`✅ API: Retrieved ${userAnswers.length} user answers for question ${questionId}`);
+      res.json(userAnswers);
+    } catch (error) {
+      console.error('Error fetching user answers:', error);
+      res.json([]); // Return empty array if no answers found
+    }
+  });
+
+  // Submit a new user answer to a question
+  app.post('/api/questions/:id/user-answers', authenticateToken, async (req, res) => {
+    try {
+      const questionId = parseInt(req.params.id);
+      if (isNaN(questionId)) {
+        return res.status(400).json({ error: 'Invalid question ID' });
+      }
+
+      const { content } = req.body;
+      if (!content || content.trim() === '') {
+        return res.status(400).json({ error: 'Answer content is required' });
+      }
+
+      const userId = req.userId!;
+      
+      console.log(`📝 API: User ${userId} submitting answer to question ${questionId}`);
+
+      const answerData = {
+        questionId,
+        userId,
+        content: content.trim(),
+      };
+
+      const newAnswer = await storage.createUserAnswer(answerData);
+      
+      console.log(`✅ API: Created new user answer ${newAnswer.id}`);
+      res.json(newAnswer);
+    } catch (error) {
+      console.error('Error creating user answer:', error);
+      res.status(500).json({ error: 'Failed to create answer' });
+    }
+  });
+
+  // Like or unlike a user answer
+  app.post('/api/user-answers/:answerId/like', authenticateToken, async (req, res) => {
+    try {
+      const { answerId } = req.params;
+      const userId = req.userId!;
+
+      console.log(`👍 API: User ${userId} toggling like on answer ${answerId}`);
+
+      const existingLike = await storage.getUserAnswerLike(userId, answerId);
+      
+      if (existingLike) {
+        await storage.unlikeAnswer(userId, answerId);
+        console.log(`👎 API: User ${userId} unliked answer ${answerId}`);
+        res.json({ liked: false, message: "Answer unliked" });
+      } else {
+        await storage.likeAnswer(userId, answerId);
+        console.log(`👍 API: User ${userId} liked answer ${answerId}`);
+        res.json({ liked: true, message: "Answer liked" });
+      }
+    } catch (error) {
+      console.error('Error toggling answer like:', error);
+      res.status(500).json({ error: "Failed to like/unlike answer" });
+    }
+  });
+
+  // Check if user liked a specific answer
+  app.get('/api/user-answers/:answerId/liked', authenticateToken, async (req, res) => {
+    try {
+      const { answerId } = req.params;
+      const userId = req.userId!;
+
+      const like = await storage.getUserAnswerLike(userId, answerId);
+      res.json({ liked: !!like });
+    } catch (error) {
+      console.error('Error checking answer like status:', error);
+      res.status(500).json({ error: "Failed to check like status" });
+    }
+  });
+
   // Domain redirect handlers for question sharing - redirect old share URLs to questions
   app.get('/share/question/:id', (req, res) => {
     const { id } = req.params;
