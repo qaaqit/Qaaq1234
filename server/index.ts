@@ -6,10 +6,155 @@ import { pool } from "./db"; // Import database pool for image serving
 import QoiGPTBot from "./whatsapp-bot";
 import { initializeRankGroups } from "./rank-groups-service";
 import { setupGlossaryDatabase } from "./setup-glossary-db";
+import { getQuestionById } from "./questions-service";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Generate dynamic HTML with meta tags for question pages
+const generateQuestionHTML = (question: any, baseUrl: string) => {
+  const title = `Maritime Question #${question.id} | QAAQ Maritime Engineering`;
+  const description = `${question.content.substring(0, 150)}... - Asked by ${question.author_name} on QAAQ, the professional maritime engineering platform`;
+  const imageUrl = `${baseUrl}/qaaq-logo.png`;
+  const questionUrl = `${baseUrl}/questions/${question.id}`;
+  
+  return `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>${title}</title>
+    
+    <!-- Primary Meta Tags -->
+    <meta name="title" content="${title}" />
+    <meta name="description" content="${description}" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="${questionUrl}" />
+    <meta property="og:title" content="${title}" />
+    <meta property="og:description" content="${description}" />
+    <meta property="og:image" content="${imageUrl}" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="QAAQ Maritime Engineering" />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="${questionUrl}" />
+    <meta property="twitter:title" content="${title}" />
+    <meta property="twitter:description" content="${description}" />
+    <meta property="twitter:image" content="${imageUrl}" />
+    
+    <!-- LinkedIn -->
+    <meta property="linkedin:title" content="${title}" />
+    <meta property="linkedin:description" content="${description}" />
+    <meta property="linkedin:image" content="${imageUrl}" />
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Question",
+      "name": "${title}",
+      "text": "${question.content.replace(/"/g, '\\"')}",
+      "author": {
+        "@type": "Person",
+        "name": "${question.author_name}"
+      },
+      "dateCreated": "${question.created_at}",
+      "url": "${questionUrl}",
+      "mainEntity": {
+        "@type": "QAPage",
+        "url": "${questionUrl}"
+      }
+    }
+    </script>
+    
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Redirect to React app for interaction
+      window.location.href = '/questions/${question.id}';
+    </script>
+  </body>
+</html>`;
+};
+
+// Server-side route for question link previews
+app.get('/questions/:id', async (req, res, next) => {
+  try {
+    const questionId = parseInt(req.params.id);
+    const userAgent = req.headers['user-agent'] || '';
+    
+    // Check if request is from a social media crawler/bot
+    const isCrawler = /facebookexternalhit|twitterbot|linkedinbot|whatsapp|telegrambot|slackbot/i.test(userAgent);
+    
+    console.log(`📄 Question ${questionId} requested by: ${isCrawler ? 'Social Media Crawler' : 'User Browser'}`);
+    
+    if (isCrawler) {
+      // Fetch question data for meta tag generation
+      const question = await getQuestionById(questionId);
+      
+      if (!question) {
+        return res.status(404).send('Question not found');
+      }
+      
+      const baseUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://qaaq.app' 
+        : `http://localhost:${process.env.PORT || 5000}`;
+      
+      const html = generateQuestionHTML(question, baseUrl);
+      
+      res.setHeader('Content-Type', 'text/html');
+      return res.send(html);
+    }
+    
+    // For regular browsers, let React handle the routing
+    next();
+  } catch (error) {
+    console.error('Error generating question preview:', error);
+    next(); // Fall back to React app
+  }
+});
+
+// Server-side route for share/question/:id (alternative URL format)
+app.get('/share/question/:id', async (req, res, next) => {
+  try {
+    const questionId = parseInt(req.params.id);
+    const userAgent = req.headers['user-agent'] || '';
+    
+    const isCrawler = /facebookexternalhit|twitterbot|linkedinbot|whatsapp|telegrambot|slackbot/i.test(userAgent);
+    
+    if (isCrawler) {
+      const question = await getQuestionById(questionId);
+      
+      if (!question) {
+        return res.status(404).send('Question not found');
+      }
+      
+      const baseUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://qaaq.app' 
+        : `http://localhost:${process.env.PORT || 5000}`;
+      
+      const html = generateQuestionHTML(question, baseUrl);
+      
+      res.setHeader('Content-Type', 'text/html');
+      return res.send(html);
+    }
+    
+    next();
+  } catch (error) {
+    console.error('Error generating question share preview:', error);
+    next();
+  }
+});
 
 // Serve authentic maritime images from multiple sources
 app.get('/uploads/:filename', async (req, res) => {
