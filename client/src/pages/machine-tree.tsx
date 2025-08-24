@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
-import { ChevronRight, ChevronDown, Package, Settings, Building, Ship, Heart, Share2, RotateCcw, Edit3, Plus, GripVertical, ExternalLink } from 'lucide-react';
+import { ChevronRight, ChevronDown, Package, Settings, Building, Ship, Heart, Share2, RotateCcw, Edit3, Plus, GripVertical, ExternalLink, ArrowLeft } from 'lucide-react';
 import { SemmReorderModal } from '@/components/semm-reorder-modal';
 import { apiRequest } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/useAuth';
@@ -173,7 +173,8 @@ export default function MachineTreePage() {
     });
   };
 
-  const handleReorderSubmit = async (orderedCodes: string[]) => {
+  const handleReorderSubmit = async (orderedItems: { code: string; title: string; }[]) => {
+    const orderedCodes = orderedItems.map(item => item.code);
     try {
       if (reorderModal.type === 'systems') {
         await apiRequest('/api/dev/semm/reorder-systems', 'POST', { orderedCodes });
@@ -257,6 +258,14 @@ export default function MachineTreePage() {
       <div className="bg-white shadow-lg border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center space-x-3">
+            <button 
+              onClick={() => setLocation('/')}
+              className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 transition-colors"
+              data-testid="back-to-home"
+              title="Back to Home"
+            >
+              <ArrowLeft className="h-6 w-6 text-gray-600 hover:text-orange-600" />
+            </button>
             <Settings className="h-8 w-8 text-orange-600" />
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Machine Tree (SEMM)</h1>
