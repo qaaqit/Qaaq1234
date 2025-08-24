@@ -62,6 +62,8 @@ interface RankGroup {
 }
 
 export default function DMPage() {
+  const [searchInput, setSearchInput] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedConnection, setSelectedConnection] = useState<ExtendedChatConnection | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("users");
@@ -128,13 +130,23 @@ export default function DMPage() {
   //   // console.log('🔍 DM Auto-connect check - DISABLED for qh13 refresh fix');
   // }, []); // Completely disabled
 
-  // Fetch users - only nearby/top professionals
+  // Fetch users - use search API when searching, nearby API otherwise
   const { data: nearbyUsers = [], isLoading: usersLoading, refetch: refetchNearbyUsers } = useQuery<UserWithDistance[]>({
-    queryKey: ['/api/users/nearby'],
+    queryKey: searchQuery.trim() ? ['/api/users/search', searchQuery] : ['/api/users/nearby'],
     queryFn: async () => {
-      const response = await fetch('/api/users/nearby');
-      if (!response.ok) throw new Error('Failed to fetch nearby users');
-      return response.json();
+      if (searchQuery.trim()) {
+        // Use search API for comprehensive search including WhatsApp numbers and user IDs
+        const response = await fetch(`/api/users/search?q=${encodeURIComponent(searchQuery)}&limit=100`);
+        if (!response.ok) throw new Error('Failed to search users');
+        const data = await response.json();
+        // Handle different response formats from search API
+        return data.sailors || data.users || data || [];
+      } else {
+        // Use nearby API for default top Q users
+        const response = await fetch('/api/users/nearby');
+        if (!response.ok) throw new Error('Failed to fetch nearby users');
+        return response.json();
+      }
     },
     refetchInterval: false, // No auto-refresh - only manual refresh when user clicks radar
     enabled: !!user, // Only fetch when user is authenticated
@@ -173,8 +185,10 @@ export default function DMPage() {
   // Global radar refresh handler - exposed for external components
   useEffect(() => {
     const handleRadarRefresh = () => {
-      refetchNearbyUsers();
-      console.log('🟢 Manual radar refresh triggered - refreshing nearby users');
+      if (!searchQuery.trim()) {
+        refetchNearbyUsers();
+        console.log('🟢 Manual radar refresh triggered - refreshing nearby users');
+      }
     };
 
     // Listen for radar refresh events
@@ -183,7 +197,7 @@ export default function DMPage() {
     return () => {
       window.removeEventListener('radar-refresh', handleRadarRefresh);
     };
-  }, [refetchNearbyUsers]);
+  }, [refetchNearbyUsers, searchQuery]);
 
   // Create chat connection mutation
   const createConnectionMutation = useMutation({
@@ -508,24 +522,59 @@ export default function DMPage() {
           <div className="max-w-4xl mx-auto">
             {/* Users Section - Simplified without tabs */}
             <div className="space-y-6">
-              {/* Info Message */}
-              <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
-                <p className="text-gray-600 text-sm">
-                  Discover Top Q Professionals and your active conversations below
-                </p>
+              {/* Minimalistic Search Users Bar */}
+              <div className="flex items-center space-x-2">
+                <div className="flex-1 relative">
+                  <Input
+                    type="text"
+                    placeholder="by name / rank / ship / company"
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    className="pr-12 border-ocean-teal/30 focus:border-ocean-teal"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        setSearchQuery(searchInput.trim());
+                      }
+                    }}
+                  />
+                </div>
+                {searchQuery.trim() ? (
+                  <Button 
+                    size="sm"
+                    variant="outline"
+                    className="px-3 border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
+                    onClick={() => {
+                      setSearchQuery("");
+                      setSearchInput("");
+                    }}
+                  >
+                    Clear
+                  </Button>
+                ) : (
+                  <Button 
+                    size="sm"
+                    variant="outline"
+                    className="px-3 border-ocean-teal/30 hover:bg-ocean-teal hover:text-white"
+                    onClick={() => {
+                      setSearchQuery(searchInput.trim());
+                    }}
+                  >
+                    <Search size={16} />
+                  </Button>
+                )}
               </div>
 
-              {/* Search Results - Removed */}
-              {false && (
+              {/* Search Results - Show only when searching */}
+              {searchQuery.trim() && (
                 <Card className="border-2 border-ocean-teal/20">
                   <CardHeader>
                     <CardTitle className="flex items-center space-x-2 text-navy">
                       <Navigation size={20} />
-                      <span>Search Results (0)</span>
+                      <span>Search Results ({filteredUsers.length})</span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {true ? (
+                    {filteredUsers.length === 0 ? (
                       <div className="text-center py-8">
                         <div className="mx-auto w-16 h-16 bg-gradient-to-r from-navy to-blue-800 rounded-full flex items-center justify-center mb-4">
                           <User size={32} className="text-white" />
@@ -537,7 +586,7 @@ export default function DMPage() {
                       </div>
                     ) : (
                       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 max-h-80 overflow-y-auto">
-                        {[].map((userProfile, index) => {
+                        {filteredUsers.map((userProfile, index) => {
                           const existingConnection = connections.find(conn => 
                             (conn.senderId === user?.id && conn.receiverId === userProfile.id) ||
                             (conn.receiverId === user?.id && conn.senderId === userProfile.id)

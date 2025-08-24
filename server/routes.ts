@@ -1840,7 +1840,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           country,
           port,
           city,
-
+          current_ship_name,
           current_ship_imo,
           last_company,
           last_ship
@@ -1862,7 +1862,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         subscriptionStatus: user.user_type === 'Premium' ? 'premium' : 'free',
         country: user.country || user.city || '',
         port: user.port || user.city || '',
-        shipName: user.last_ship || '',
+        shipName: user.current_ship_name || '',
         imoNumber: user.current_ship_imo || '',
         company: user.last_company || '',
         lastShip: user.last_ship || '',
@@ -2065,14 +2065,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`   Pattern 3: %+91${searchTerm}% (should match +91prefix)`);
       }
 
-      // Simple search - only basic columns that definitely exist
-      const searchResults = await pool.query(`
+      // First: Exact matches (case-insensitive) - Including whatsapp_number
+      const exactMatches = await pool.query(`
         SELECT DISTINCT
           id,
           full_name,
           email,
+          whatsapp_number,
           maritime_rank,
           last_company,
+          last_ship,
+          current_ship_name,
           port,
           country,
           city,
@@ -2081,11 +2084,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
           user_type
         FROM users 
         WHERE 
-          LOWER(full_name) ILIKE $1 OR
-          LOWER(last_company) ILIKE $1 OR
-          LOWER(email) ILIKE $1
+          LOWER(id::text) = $1 OR LOWER(id::text) = $2 OR LOWER(id::text) = $3 OR
+          LOWER(whatsapp_number) = $1 OR LOWER(whatsapp_number) = $2 OR LOWER(whatsapp_number) = $3 OR
+          LOWER(full_name) = $1 OR
+          LOWER(maritime_rank) = $1 OR  
+          LOWER(last_company) = $1 OR
+          LOWER(last_ship) = $1 OR
+          LOWER(current_ship_name) = $1 OR
+          LOWER(email) = $1
         ORDER BY COALESCE(question_count, 0) DESC
-        LIMIT 20
+        LIMIT 10
+      `, [searchTerm, `+${searchTerm}`, `+91${searchTerm}`]);
+
+      // Second: Simplified fuzzy matches - test basic functionality first
+      const fuzzyMatches = await pool.query(`
+        SELECT DISTINCT
+          id,
+          full_name,
+          email,
+          whatsapp_number,
+          maritime_rank,
+          last_company,
+          last_ship,
+          current_ship_name,
+          port,
+          country,
+          city,
+          COALESCE(question_count, 0) as question_count,
+          COALESCE(answer_count, 0) as answer_count,
+          user_type,
+          100 as match_score
+        FROM users 
+        WHERE 
+          LOWER(whatsapp_number) ILIKE $1
+        ORDER BY COALESCE(question_count, 0) DESC
+        LIMIT 15
       `, [`%${searchTerm}%`]);
 
       // Debug fuzzy search for specific terms
@@ -2109,27 +2142,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Map results to simple format
-      const allResults = searchResults.rows.map(user => ({
+      // Combine results: exact matches first, then fuzzy matches
+      const exactResults = exactMatches.rows.map(user => ({
         id: user.id,
         fullName: user.full_name || user.email || 'Maritime Professional',
         email: user.email,
         maritimeRank: user.maritime_rank || 'Professional',
         company: user.last_company || '',
-        lastShip: '',  // Remove ship data
+        lastShip: user.last_ship || user.current_ship_name || '',
         port: user.port || user.city || '',
         country: user.country || '',
         questionCount: parseInt(user.question_count) || 0,
         answerCount: parseInt(user.answer_count) || 0,
         userType: user.user_type || 'Free',
         profilePictureUrl: '',
-        matchType: 'fuzzy'
+        matchType: 'exact'
       }));
 
-      console.log(`✅ Found ${allResults.length} search results`);
+      const fuzzyResults = fuzzyMatches.rows.map(user => ({
+        id: user.id,
+        fullName: user.full_name || user.email || 'Maritime Professional',
+        email: user.email,
+        maritimeRank: user.maritime_rank || 'Professional',
+        company: user.last_company || '',
+        lastShip: user.last_ship || user.current_ship_name || '',
+        port: user.port || user.city || '',
+        country: user.country || '',
+        questionCount: parseInt(user.question_count) || 0,
+        answerCount: parseInt(user.answer_count) || 0,
+        userType: user.user_type || 'Free',
+        profilePictureUrl: '',
+        matchType: 'fuzzy',
+        matchScore: parseInt(user.match_score) || 50
+      }));
+
+      const allResults = [...exactResults, ...fuzzyResults];
+      const limitedResults = allResults.slice(0, 20); // Limit to 20 total results
+
+      console.log(`✅ Found ${exactResults.length} exact matches, ${fuzzyResults.length} fuzzy matches`);
+      if (limitedResults.length > 0) {
+        console.log(`Sample result: ${limitedResults[0].fullName} - ${limitedResults[0].maritimeRank}`);
+      }
       
       // Special debugging for the problem user
-      if (searchTerm === "9920027697" && allResults.length === 0) {
+      if (searchTerm === "9920027697" && limitedResults.length === 0) {
         console.log(`❌ User ${searchTerm} not found. Checking database for potential issues...`);
         // Try a broader search to see if this user exists at all
         try {
@@ -2150,10 +2206,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({
         success: true,
-        sailors: allResults,
-        total: allResults.length,
+        sailors: limitedResults,
+        total: limitedResults.length,
+        exactMatches: exactResults.length,
+        fuzzyMatches: fuzzyResults.length,
         searchTerm: query,
-        message: `Found ${allResults.length} results for "${query}"`
+        breakdown: {
+          exact: exactResults,
+          fuzzy: fuzzyResults
+        },
+        message: `Found ${exactResults.length} exact matches and ${fuzzyResults.length} similar matches for "${query}"`
       });
       
     } catch (error) {
