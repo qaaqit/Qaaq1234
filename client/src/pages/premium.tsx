@@ -120,9 +120,19 @@ export default function PremiumPage() {
     queryKey: ["/api/subscription-plans"],
   });
 
-  // Subscription status check disabled since JWT auth is disabled
-  // This eliminates unnecessary API polling
-  const userStatusData = null;
+  // Check premium status using current user data 
+  // If user has email, check their status via the public endpoint
+  const { data: userStatusData, isLoading: statusLoading } = useQuery<UserStatus>({
+    queryKey: ["/api/check-user-status", user?.email],
+    queryFn: async () => {
+      if (!user?.email) return null;
+      const response = await fetch(`/api/check-user-status/${user.email}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!user?.email, // Only fetch if user has email
+    retry: 1,
+  });
   
   const userStatus: UserStatus = userStatusData || {};
   const isPremium = userStatus?.isPremium || userStatus?.isSuperUser || false;
