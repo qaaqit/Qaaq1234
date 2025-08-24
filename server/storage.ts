@@ -1425,7 +1425,41 @@ export class DatabaseStorage implements IStorage {
       return undefined;
     }
   }
+
+  // Ensure SEMM postcards table exists
+  async ensureSemmPostcardsTable(): Promise<void> {
+    try {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS semm_postcards (
+          id varchar PRIMARY KEY DEFAULT gen_random_uuid(),
+          user_id varchar NOT NULL,
+          semm_code text NOT NULL,
+          semm_type text NOT NULL,
+          title text,
+          description text,
+          media_type text NOT NULL,
+          media_url text NOT NULL,
+          media_duration integer,
+          media_size integer,
+          likes_count integer DEFAULT 0,
+          shares_count integer DEFAULT 0,
+          is_active boolean DEFAULT true,
+          created_at timestamp DEFAULT now(),
+          updated_at timestamp DEFAULT now()
+        );
+        
+        CREATE INDEX IF NOT EXISTS idx_semm_postcards_code_type ON semm_postcards(semm_code, semm_type);
+        CREATE INDEX IF NOT EXISTS idx_semm_postcards_user_id ON semm_postcards(user_id);
+      `);
+      console.log('✅ SEMM postcards table ensured');
+    } catch (error) {
+      console.error('Error ensuring SEMM postcards table:', error);
+    }
+  }
 }
 
 // Export singleton instance
 export const storage = new DatabaseStorage();
+
+// Initialize table on import
+storage.ensureSemmPostcardsTable();
