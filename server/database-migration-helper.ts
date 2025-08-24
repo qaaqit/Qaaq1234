@@ -53,11 +53,79 @@ export class DatabaseMigrationHelper {
         ON question_interactions(question_id);
       `);
       
+      // Create SEMM postcards table
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS semm_postcards (
+          id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+          semm_code VARCHAR NOT NULL,
+          semm_type VARCHAR NOT NULL,
+          title VARCHAR NOT NULL,
+          description TEXT,
+          media_type VARCHAR NOT NULL,
+          media_url VARCHAR NOT NULL,
+          media_duration INTEGER DEFAULT 0,
+          media_size BIGINT DEFAULT 0,
+          author_id VARCHAR NOT NULL,
+          author_name VARCHAR,
+          author_nickname VARCHAR,
+          likes_count INTEGER DEFAULT 0,
+          shares_count INTEGER DEFAULT 0,
+          created_at TIMESTAMP DEFAULT NOW(),
+          updated_at TIMESTAMP DEFAULT NOW()
+        );
+        
+        CREATE INDEX IF NOT EXISTS idx_semm_postcards_semm_code 
+        ON semm_postcards(semm_code);
+        
+        CREATE INDEX IF NOT EXISTS idx_semm_postcards_semm_type 
+        ON semm_postcards(semm_type);
+        
+        CREATE INDEX IF NOT EXISTS idx_semm_postcards_author_id 
+        ON semm_postcards(author_id);
+        
+        CREATE INDEX IF NOT EXISTS idx_semm_postcards_created_at 
+        ON semm_postcards(created_at);
+      `);
+      
+      // Create SEMM postcard likes table
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS semm_postcard_likes (
+          id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+          postcard_id VARCHAR NOT NULL,
+          user_id VARCHAR NOT NULL,
+          created_at TIMESTAMP DEFAULT NOW(),
+          UNIQUE(postcard_id, user_id)
+        );
+        
+        CREATE INDEX IF NOT EXISTS idx_semm_postcard_likes_postcard_id 
+        ON semm_postcard_likes(postcard_id);
+        
+        CREATE INDEX IF NOT EXISTS idx_semm_postcard_likes_user_id 
+        ON semm_postcard_likes(user_id);
+      `);
+      
+      // Create SEMM postcard shares table
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS semm_postcard_shares (
+          id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+          postcard_id VARCHAR NOT NULL,
+          user_id VARCHAR NOT NULL,
+          share_type VARCHAR DEFAULT 'link',
+          created_at TIMESTAMP DEFAULT NOW()
+        );
+        
+        CREATE INDEX IF NOT EXISTS idx_semm_postcard_shares_postcard_id 
+        ON semm_postcard_shares(postcard_id);
+        
+        CREATE INDEX IF NOT EXISTS idx_semm_postcard_shares_user_id 
+        ON semm_postcard_shares(user_id);
+      `);
+      
       // Ensure critical columns exist in existing tables
       await this.ensureUserTableColumns();
       await this.ensureChatMessageColumns();
       
-      console.log('✅ All required database tables and columns verified');
+      console.log('✅ All required database tables and columns verified (including SEMM postcards)');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('❌ Database migration failed:', errorMessage);
