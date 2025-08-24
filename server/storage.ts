@@ -1435,8 +1435,11 @@ export class DatabaseStorage implements IStorage {
   // Ensure SEMM postcards table exists
   async ensureSemmPostcardsTable(): Promise<void> {
     try {
+      // Drop existing table and recreate to fix any structural issues
       await pool.query(`
-        CREATE TABLE IF NOT EXISTS semm_postcards (
+        DROP TABLE IF EXISTS semm_postcards;
+        
+        CREATE TABLE semm_postcards (
           id varchar PRIMARY KEY DEFAULT gen_random_uuid(),
           user_id varchar NOT NULL,
           semm_code text NOT NULL,
@@ -1454,12 +1457,13 @@ export class DatabaseStorage implements IStorage {
           updated_at timestamp DEFAULT now()
         );
         
-        CREATE INDEX IF NOT EXISTS idx_semm_postcards_code_type ON semm_postcards(semm_code, semm_type);
-        CREATE INDEX IF NOT EXISTS idx_semm_postcards_user_id ON semm_postcards(user_id);
+        CREATE INDEX idx_semm_postcards_code_type ON semm_postcards(semm_code, semm_type);
+        CREATE INDEX idx_semm_postcards_user_id ON semm_postcards(user_id);
       `);
-      console.log('✅ SEMM postcards table ensured');
+      console.log('✅ SEMM postcards table recreated successfully');
     } catch (error) {
-      console.error('Error ensuring SEMM postcards table:', error);
+      console.error('Error recreating SEMM postcards table:', error);
+      throw error;
     }
   }
 }
