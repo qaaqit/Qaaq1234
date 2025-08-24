@@ -2397,13 +2397,34 @@ Guidelines for improvement:
 - Make the question more actionable and specific
 - Preserve the original intent while enhancing clarity
 - Use proper maritime terminology
-- Keep it concise but comprehensive
+- IMPORTANT: Keep the improved prompt to exactly 15-20 words maximum
 
 Original prompt: "${originalPrompt}"
 
-Please provide only the improved prompt without any explanations or additional text:`;
+Please provide only the improved prompt (15-20 words maximum) without any explanations or additional text:`;
 
-      const improvedResponse = await aiService.generateOpenAIResponse(improvementPrompt, 'prompt_improvement', null);
+      // Use OpenAI directly without token limits for prompt improvement
+      const { Configuration, OpenAIApi } = await import('openai');
+      const { OpenAI } = await import('openai');
+      
+      const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [{
+          role: "user",
+          content: improvementPrompt
+        }],
+        max_tokens: 50, // Limit tokens to ensure 15-20 words response
+        temperature: 0.7,
+      });
+
+      const improvedResponse = {
+        content: completion.choices[0]?.message?.content || null,
+        tokens: completion.usage?.total_tokens
+      };
       
       if (improvedResponse && improvedResponse.content) {
         const improvedPrompt = improvedResponse.content.trim();
