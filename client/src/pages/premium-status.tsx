@@ -36,11 +36,10 @@ export default function PremiumStatusPage() {
     queryKey: ["/api/auth/user"],
   });
 
-  // Fetch user subscription status
-  const { data: userStatusData, isLoading } = useQuery({
-    queryKey: ["/api/user/subscription-status"],
-    enabled: !!user,
-  });
+  // Subscription status check disabled since JWT auth is disabled
+  // This eliminates unnecessary API polling
+  const userStatusData = null;
+  const isLoading = false;
 
   const userStatus = userStatusData as UserStatus;
   const isPremium = userStatus?.isPremium || false;

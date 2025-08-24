@@ -52,15 +52,9 @@ export default function QBOTChatHeader({ onClear, isAdmin = false }: QBOTChatHea
   });
   const [editText, setEditText] = useState('');
 
-  // Check user premium status for crown display
-  const { data: subscriptionStatus } = useQuery({
-    queryKey: ["/api/user/subscription-status"],
-    retry: 1,
-    staleTime: 30 * 1000, // Refresh every 30 seconds to catch new payments
-    refetchInterval: 30 * 1000
-  });
-
-  const isPremium = (subscriptionStatus as any)?.isPremium || (subscriptionStatus as any)?.isSuperUser;
+  // Since JWT is disabled, we'll use a static premium check or disable crown display
+  // Removed subscription polling to eliminate unnecessary API calls
+  const isPremium = false; // Static value since JWT auth is disabled
 
   const handleEditInvites = () => {
     setEditText(chatbotInvites.join('\n'));

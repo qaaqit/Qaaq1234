@@ -81,11 +81,9 @@ export function PremiumSubscriptionDialog({
     enabled: open,
   });
 
-  // Fetch user subscription status
-  const { data: userStatusData } = useQuery({
-    queryKey: ["/api/user/subscription-status"],
-    enabled: open,
-  });
+  // Subscription status check disabled since JWT auth is disabled  
+  // This eliminates unnecessary API polling
+  const userStatusData = null;
 
   // Create subscription/topup mutation
   const createSubscriptionMutation = useMutation({
