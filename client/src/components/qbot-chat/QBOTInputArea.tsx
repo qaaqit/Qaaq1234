@@ -2,6 +2,7 @@ import { useState, useRef, KeyboardEvent, useEffect } from 'react';
 import { Paperclip, Send, Crown, Shield, ShieldCheck, Bot, Zap, Brain } from 'lucide-react';
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { PremiumSubscriptionDialog } from "@/components/PremiumSubscriptionDialog";
+import { useLocation } from "wouter";
 
 import { useQuery } from "@tanstack/react-query";
 
@@ -44,11 +45,14 @@ interface QBOTInputAreaProps {
 }
 
 interface User {
+  id?: string;
+  email?: string;
   isAdmin?: boolean;
   isPremium?: boolean;
 }
 
 export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTInputAreaProps) {
+  const [, setLocation] = useLocation();
   const [message, setMessage] = useState('');
   const [attachments, setAttachments] = useState<string[]>([]);
   const [currentPlaceholder, setCurrentPlaceholder] = useState('');
@@ -58,9 +62,16 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
   const [aiModels, setAiModels] = useState({
     chatgpt: true,  // Default enabled
     gemini: false,
-    grok: true      // Enable Grok by default
+    grok: false     // Disabled by default for free users
   });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Check premium status (matches qbot.tsx logic)
+  const { data: user } = useQuery<User>({ queryKey: ["/api/auth/user"] });
+  const testingEmails = ['workship.ai@gmail.com', 'mushy.piyush@gmail.com'];
+  const userEmail = user?.email || localStorage.getItem('user_email') || '';
+  const isAdmin = localStorage.getItem('isAdmin') === 'true';
+  const isPremium = testingEmails.includes(userEmail) || isAdmin;
 
   // Premium status will be checked by parent component when needed
 
@@ -178,8 +189,25 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
     }
   };
 
-  // Toggle AI models
+  // Toggle AI models with premium restriction
   const toggleAiModel = (model: 'chatgpt' | 'gemini' | 'grok') => {
+    // Allow ChatGPT for all users
+    if (model === 'chatgpt') {
+      setAiModels(prev => ({
+        ...prev,
+        [model]: !prev[model]
+      }));
+      return;
+    }
+    
+    // Restrict Gemini and DeepSeek to premium users only
+    if ((model === 'gemini' || model === 'grok') && !isPremium) {
+      // Redirect free users to premium page
+      setLocation('/premium');
+      return;
+    }
+    
+    // Toggle for premium users
     setAiModels(prev => ({
       ...prev,
       [model]: !prev[model]
