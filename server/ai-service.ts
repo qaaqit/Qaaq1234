@@ -1,6 +1,6 @@
 export interface AIResponse {
   content: string;
-  model: 'openai' | 'gemini' | 'deepseek';
+  model: 'openai' | 'gemini' | 'deepseek' | 'mistral';
   tokens?: number;
   responseTime?: number;
 }
@@ -8,6 +8,7 @@ export interface AIResponse {
 export class AIService {
   private openai: any;
   private deepseek: any;
+  private mistral: any;
 
   constructor() {
     // Initialize OpenAI
@@ -17,6 +18,10 @@ export class AIService {
     // Initialize Deepseek
     if (process.env.DEEPSEEK_API_KEY) {
       this.initDeepseek();
+    }
+    // Initialize Mistral
+    if (process.env.MISTRAL_API_KEY) {
+      this.initMistral();
     }
   }
 
@@ -32,6 +37,14 @@ export class AIService {
     this.deepseek = new OpenAI({
       baseURL: "https://api.deepseek.com",
       apiKey: process.env.DEEPSEEK_API_KEY,
+    });
+  }
+
+  private async initMistral() {
+    const { OpenAI } = await import('openai');
+    this.mistral = new OpenAI({
+      baseURL: "https://api.mistral.ai/v1",
+      apiKey: process.env.MISTRAL_API_KEY,
     });
   }
 
@@ -307,15 +320,92 @@ export class AIService {
     }
   }
 
+  async generateMistralResponse(message: string, category: string, user: any, activeRules?: string): Promise<AIResponse> {
+    const startTime = Date.now();
+    
+    try {
+      if (!this.mistral) {
+        await this.initMistral();
+      }
 
-  async generateDualResponse(message: string, category: string, user: any, activeRules?: string, preferredModel?: 'openai' | 'gemini' | 'deepseek'): Promise<AIResponse> {
-    // Simple 3-model system: OpenAI, Gemini, Deepseek
+      const userRank = user?.maritimeRank || 'Maritime Professional';
+      const userShip = user?.shipName ? `aboard ${user.shipName}` : 'shore-based';
+      
+      let systemPrompt = `You are QBOT, an advanced maritime AI assistant and the primary chat interface for QaaqConnect. 
+      You specialize in ${category} and serve the global maritime community with expert knowledge on:
+      - Maritime engineering, maintenance, and troubleshooting
+      - Navigation, regulations, and safety procedures  
+      - Ship operations, cargo handling, and port procedures
+      - Career guidance for maritime professionals
+      - Technical specifications for maritime equipment
+      
+      User context: ${userRank} ${userShip}
+      
+      CRITICAL RESPONSE FORMAT:
+      - ALWAYS respond in bullet point format with exactly 3-5 bullet points
+      - Keep total response between 30-50 words maximum
+      - Each bullet point should be 6-12 words maximum
+      - Use concise, technical language
+      - Prioritize safety and maritime regulations (SOLAS, MARPOL, STCW)
+      - Example format:
+        • [Action/Solution in 6-12 words]
+        • [Technical detail in 6-12 words]  
+        • [Safety consideration in 6-12 words]
+        • [Regulation reference if applicable]`;
+      
+      if (activeRules) {
+        systemPrompt += `\n\nActive bot documentation guidelines:\n${activeRules.substring(0, 800)}`;
+      }
+
+      console.log('🤖 Mistral: Making API request...');
+      
+      const response = await this.mistral.chat.completions.create({
+        model: "mistral-large-latest",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: message }
+        ],
+        max_tokens: 150,
+        temperature: 0.7,
+      });
+
+      let content = response.choices[0]?.message?.content;
+      
+      if (!content) {
+        console.warn('⚠️ Mistral: No content in response, using fallback');
+        content = 'Unable to generate response at this time.';
+      }
+      
+      console.log('🤖 Mistral: Response generated successfully:', content.substring(0, 100) + '...');
+      const responseTime = Date.now() - startTime;
+
+      // Apply free user limits if user is not premium
+      const finalContent = await this.applyFreeUserLimits(content, user);
+
+      return {
+        content: finalContent,
+        model: 'mistral',
+        tokens: response.usage?.total_tokens,
+        responseTime
+      };
+
+    } catch (error) {
+      console.error('Mistral API error:', error);
+      throw new Error(`Mistral generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+
+  async generateDualResponse(message: string, category: string, user: any, activeRules?: string, preferredModel?: 'openai' | 'gemini' | 'deepseek' | 'mistral'): Promise<AIResponse> {
+    // 4-model system: OpenAI, Gemini, Deepseek, Mistral
     const useModel = preferredModel || 'openai'; // Default to OpenAI
     
     console.log(`🤖 Using ${useModel.toUpperCase()} model`);
     
     try {
-      if (useModel === 'deepseek' && process.env.DEEPSEEK_API_KEY) {
+      if (useModel === 'mistral' && process.env.MISTRAL_API_KEY) {
+        return await this.generateMistralResponse(message, category, user, activeRules);
+      } else if (useModel === 'deepseek' && process.env.DEEPSEEK_API_KEY) {
         return await this.generateDeepseekResponse(message, category, user, activeRules);
       } else if (useModel === 'gemini' && process.env.GEMINI_API_KEY) {
         return await this.generateGeminiResponse(message, category, user, activeRules);
@@ -327,6 +417,9 @@ export class AIService {
       if (process.env.OPENAI_API_KEY) {
         console.log('Falling back to OpenAI (primary model not available)');
         return await this.generateOpenAIResponse(message, category, user, activeRules);
+      } else if (process.env.MISTRAL_API_KEY) {
+        console.log('Falling back to Mistral (primary model not available)');
+        return await this.generateMistralResponse(message, category, user, activeRules);
       } else if (process.env.GEMINI_API_KEY) {
         console.log('Falling back to Gemini (primary model not available)');
         return await this.generateGeminiResponse(message, category, user, activeRules);
@@ -341,13 +434,17 @@ export class AIService {
       console.error(`AI generation error with ${useModel}:`, error);
       
       // Try fallback models in order of preference
-      const fallbackModels = useModel === 'deepseek' ? ['openai', 'gemini'] :
-                           useModel === 'gemini' ? ['openai', 'deepseek'] : 
-                           ['gemini', 'deepseek'];
+      const fallbackModels = useModel === 'mistral' ? ['openai', 'gemini', 'deepseek'] :
+                           useModel === 'deepseek' ? ['openai', 'mistral', 'gemini'] :
+                           useModel === 'gemini' ? ['openai', 'mistral', 'deepseek'] : 
+                           ['mistral', 'gemini', 'deepseek'];
       
       for (const fallbackModel of fallbackModels) {
         try {
-          if (fallbackModel === 'deepseek' && process.env.DEEPSEEK_API_KEY) {
+          if (fallbackModel === 'mistral' && process.env.MISTRAL_API_KEY) {
+            console.log(`Trying fallback to Mistral after ${useModel} failed`);
+            return await this.generateMistralResponse(message, category, user, activeRules);
+          } else if (fallbackModel === 'deepseek' && process.env.DEEPSEEK_API_KEY) {
             console.log(`Trying fallback to Deepseek after ${useModel} failed`);
             return await this.generateDeepseekResponse(message, category, user, activeRules);
           } else if (fallbackModel === 'gemini' && process.env.GEMINI_API_KEY) {
@@ -472,6 +569,8 @@ export class AIService {
     const models = [];
     if (process.env.OPENAI_API_KEY) models.push('openai');
     if (process.env.GEMINI_API_KEY) models.push('gemini');
+    if (process.env.DEEPSEEK_API_KEY) models.push('deepseek');
+    if (process.env.MISTRAL_API_KEY) models.push('mistral');
     if (process.env.XAI_API_KEY) models.push('grok');
     return models;
   }

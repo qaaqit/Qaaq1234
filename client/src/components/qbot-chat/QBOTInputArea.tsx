@@ -1,5 +1,5 @@
 import { useState, useRef, KeyboardEvent, useEffect } from 'react';
-import { Paperclip, Send, Crown, Shield, ShieldCheck, Bot, Zap, Brain } from 'lucide-react';
+import { Paperclip, Send, Crown, Shield, ShieldCheck, Bot, Zap, Brain, Sparkles } from 'lucide-react';
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { PremiumSubscriptionDialog } from "@/components/PremiumSubscriptionDialog";
 import { useLocation } from "wouter";
@@ -62,7 +62,8 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
   const [aiModels, setAiModels] = useState({
     chatgpt: true,  // Default enabled
     gemini: false,
-    grok: false     // Disabled by default for free users
+    grok: false,    // Disabled by default for free users
+    mistral: false  // Disabled by default for free users
   });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -190,7 +191,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
   };
 
   // Toggle AI models with premium restriction
-  const toggleAiModel = (model: 'chatgpt' | 'gemini' | 'grok') => {
+  const toggleAiModel = (model: 'chatgpt' | 'gemini' | 'grok' | 'mistral') => {
     // Allow ChatGPT for all users
     if (model === 'chatgpt') {
       setAiModels(prev => ({
@@ -200,8 +201,8 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
       return;
     }
     
-    // Restrict Gemini and DeepSeek to premium users only
-    if ((model === 'gemini' || model === 'grok') && !isPremium) {
+    // Restrict Gemini, DeepSeek, and Mistral to premium users only
+    if ((model === 'gemini' || model === 'grok' || model === 'mistral') && !isPremium) {
       // Redirect free users to premium page
       setLocation('/premium');
       return;
@@ -357,6 +358,19 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
           title={`DeepSeek ${aiModels.grok ? 'Enabled' : 'Disabled'}`}
         >
           <Brain size={16} />
+        </button>
+
+        {/* Mistral Toggle */}
+        <button
+          onClick={() => toggleAiModel('mistral')}
+          className={`p-2 rounded-lg transition-all duration-200 flex-shrink-0 ${
+            aiModels.mistral 
+              ? 'bg-orange-100 text-orange-600 hover:bg-orange-200' 
+              : 'text-gray-400 hover:bg-gray-100'
+          }`}
+          title={`Mistral ${aiModels.mistral ? 'Enabled' : 'Disabled'}`}
+        >
+          <Sparkles size={16} />
         </button>
 
         {/* Divider */}

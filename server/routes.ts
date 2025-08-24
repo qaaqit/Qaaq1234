@@ -2658,6 +2658,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               modelResponse = await aiService.generateGeminiResponse(message, category, user, activeRules);
             } else if (model === 'deepseek') {
               modelResponse = await aiService.generateDeepseekResponse(message, category, user, activeRules);
+            } else if (model === 'mistral') {
+              modelResponse = await aiService.generateMistralResponse(message, category, user, activeRules);
             }
             
             if (modelResponse) {
@@ -2679,6 +2681,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const modelName = resp.model === 'openai' ? 'ChatGPT' : 
                             resp.model === 'gemini' ? 'Gemini' :
                             resp.model === 'deepseek' ? 'Deepseek' :
+                            resp.model === 'mistral' ? 'Mistral' :
                             resp.model.toUpperCase();
             return `🤖 **${modelName} Response:**\n\n${resp.content}`;
           }).join('\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n');
