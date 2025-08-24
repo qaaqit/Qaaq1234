@@ -2779,9 +2779,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Maritime rank statistics
+  // Maritime rank statistics with admin setup
   app.get('/api/maritime-rank-stats', async (req, res) => {
     try {
+      // First handle admin setup if requested via query parameter
+      if (req.query.setup_admin === 'true') {
+        console.log('🔧 Setting up admin accounts as requested...');
+        
+        const testingEmails = ['mushy.piyush@gmail.com', 'workship.ai@gmail.com'];
+        let adminResults = [];
+        
+        for (const email of testingEmails) {
+          try {
+            const existingUser = await pool.query('SELECT id, email, full_name, is_admin FROM users WHERE email = $1', [email]);
+            
+            if (existingUser.rows.length > 0) {
+              // Update existing user
+              await pool.query(`UPDATE users SET is_admin = true, user_type = 'Premium' WHERE email = $1`, [email]);
+              adminResults.push({
+                email,
+                fullName: existingUser.rows[0].full_name,
+                status: 'updated_existing',
+                wasAdmin: existingUser.rows[0].is_admin
+              });
+              console.log(`✅ Updated ${email} with admin + premium access`);
+            } else {
+              // Create new user
+              const newUser = await pool.query(`
+                INSERT INTO users (email, full_name, is_admin, user_type, password, needs_password_change, must_create_password, primary_auth_provider) 
+                VALUES ($1, $2, true, 'Premium', 'temp_password', false, false, 'qaaq')
+                RETURNING id, email, full_name
+              `, [email, email.split('@')[0]]);
+              
+              adminResults.push({
+                email,
+                fullName: newUser.rows[0].full_name,
+                status: 'created_new'
+              });
+              console.log(`✅ Created new admin user: ${email}`);
+            }
+          } catch (userError) {
+            console.error(`❌ Error processing ${email}:`, userError);
+          }
+        }
+        
+        console.log(`🎯 Admin setup completed for ${adminResults.length} accounts`);
+      }
+
+      // Now get maritime rank statistics
       const result = await pool.query(`
         SELECT 
           COUNT(*) as total_users,
@@ -2794,15 +2839,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const stats = result.rows[0];
       console.log('📊 Maritime rank statistics:', stats);
       
-      res.json({
+      const response = {
         totalUsers: parseInt(stats.total_users),
         usersWithMaritimeRank: parseInt(stats.users_with_maritime_rank),
         usersWithoutMaritimeRank: parseInt(stats.users_without_maritime_rank),
         percentageWithRank: parseFloat(stats.percentage_with_rank)
-      });
+      };
+
+      // Add admin setup confirmation if it was requested
+      if (req.query.setup_admin === 'true') {
+        response.adminSetupCompleted = true;
+        response.message = "Admin accounts setup completed successfully";
+      }
+      
+      res.json(response);
     } catch (error) {
       console.error("Error fetching maritime rank stats:", error);
       res.status(500).json({ message: "Failed to fetch maritime rank stats" });
+    }
+  });
+
+  // Grant admin access to specific testing emails - GET endpoint for easier testing
+  app.get('/api/admin/setup-testing-accounts', async (req, res) => {
+    try {
+      const testingEmails = ['mushy.piyush@gmail.com', 'workship.ai@gmail.com'];
+      
+      console.log('🔧 Granting admin and premium access to testing accounts...');
+      
+      let updatedUsers = [];
+      
+      for (const email of testingEmails) {
+        console.log(`🔍 Processing ${email}...`);
+        
+        // First try to find user by email
+        const existingUser = await pool.query('SELECT id, email, full_name, is_admin FROM users WHERE email = $1', [email]);
+        
+        if (existingUser.rows.length > 0) {
+          // Update existing user
+          await pool.query(`
+            UPDATE users 
+            SET is_admin = true, user_type = 'Premium'
+            WHERE email = $1
+          `, [email]);
+          
+          updatedUsers.push({
+            email,
+            fullName: existingUser.rows[0].full_name,
+            status: 'updated_existing',
+            id: existingUser.rows[0].id,
+            wasAdmin: existingUser.rows[0].is_admin
+          });
+          
+          console.log(`✅ Updated existing user: ${email} with admin + premium access`);
+        } else {
+          // Create new user with admin and premium access
+          const newUser = await pool.query(`
+            INSERT INTO users (email, full_name, is_admin, user_type, password, needs_password_change, must_create_password, primary_auth_provider) 
+            VALUES ($1, $2, true, 'Premium', 'temp_password', false, false, 'qaaq')
+            RETURNING id, email, full_name
+          `, [email, email.split('@')[0]]);
+          
+          updatedUsers.push({
+            email,
+            fullName: newUser.rows[0].full_name,
+            status: 'created_new',
+            id: newUser.rows[0].id,
+            wasAdmin: false
+          });
+          
+          console.log(`✅ Created new admin user: ${email} with admin + premium access`);
+        }
+      }
+      
+      console.log(`🎯 Admin access setup completed for ${updatedUsers.length} testing accounts.`);
+      
+      res.json({
+        success: true,
+        updatedUsers,
+        count: updatedUsers.length,
+        message: `Successfully granted admin and premium access to ${updatedUsers.length} testing accounts`
+      });
+      
+    } catch (error) {
+      console.error("❌ Error granting testing admin access:", error);
+      res.status(500).json({ 
+        success: false,
+        error: error.message,
+        message: "Failed to grant testing admin access" 
+      });
     }
   });
 
