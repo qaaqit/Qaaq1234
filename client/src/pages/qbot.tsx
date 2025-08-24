@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useQuery } from "@tanstack/react-query";
 import type { User } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ interface QBOTPageProps {
 }
 
 export default function QBOTPage({ user }: QBOTPageProps) {
+  const { language } = useLanguage();
   const [qBotMessages, setQBotMessages] = useState<Message[]>([]);
   const [isQBotTyping, setIsQBotTyping] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
@@ -141,7 +143,8 @@ export default function QBOTPage({ user }: QBOTPageProps) {
           attachments: attachments,
           isPrivate: isPrivate,
           aiModels: aiModels || ['chatgpt'],
-          isPremium: isPremiumUser
+          isPremium: isPremiumUser,
+          language: language
         })
       });
 

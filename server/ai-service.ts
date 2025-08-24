@@ -48,7 +48,7 @@ export class AIService {
     });
   }
 
-  async generateOpenAIResponse(message: string, category: string, user: any, activeRules?: string): Promise<AIResponse> {
+  async generateOpenAIResponse(message: string, category: string, user: any, activeRules?: string, language = 'en'): Promise<AIResponse> {
     const startTime = Date.now();
     
     try {
@@ -68,6 +68,8 @@ export class AIService {
       - Technical specifications for maritime equipment
       
       User context: ${userRank} ${userShip}
+      
+      LANGUAGE: ${language === 'tr' ? 'Respond in Turkish language only' : 'Respond in English language only'}
       
       CRITICAL RESPONSE FORMAT:
       - ALWAYS respond in bullet point format with exactly 3-5 bullet points
@@ -130,7 +132,7 @@ export class AIService {
     }
   }
 
-  async generateGeminiResponse(message: string, category: string, user: any, activeRules?: string): Promise<AIResponse> {
+  async generateGeminiResponse(message: string, category: string, user: any, activeRules?: string, language = 'en'): Promise<AIResponse> {
     const startTime = Date.now();
     
     try {
@@ -150,6 +152,8 @@ export class AIService {
       - Technical specifications for maritime equipment
       
       User context: ${userRank} ${userShip}
+      
+      LANGUAGE: ${language === 'tr' ? 'Respond in Turkish language only' : 'Respond in English language only'}
       
       CRITICAL RESPONSE FORMAT:
       - ALWAYS respond in bullet point format with exactly 3-5 bullet points
@@ -245,7 +249,7 @@ export class AIService {
     }
   }
 
-  async generateDeepseekResponse(message: string, category: string, user: any, activeRules?: string): Promise<AIResponse> {
+  async generateDeepseekResponse(message: string, category: string, user: any, activeRules?: string, language = 'en'): Promise<AIResponse> {
     const startTime = Date.now();
     
     try {
@@ -265,6 +269,8 @@ export class AIService {
       - Technical specifications for maritime equipment
       
       User context: ${userRank} ${userShip}
+      
+      LANGUAGE: ${language === 'tr' ? 'Respond in Turkish language only' : 'Respond in English language only'}
       
       CRITICAL RESPONSE FORMAT:
       - ALWAYS respond in bullet point format with exactly 3-5 bullet points
@@ -320,7 +326,7 @@ export class AIService {
     }
   }
 
-  async generateMistralResponse(message: string, category: string, user: any, activeRules?: string): Promise<AIResponse> {
+  async generateMistralResponse(message: string, category: string, user: any, activeRules?: string, language = 'en'): Promise<AIResponse> {
     const startTime = Date.now();
     
     try {
@@ -340,6 +346,8 @@ export class AIService {
       - Technical specifications for maritime equipment
       
       User context: ${userRank} ${userShip}
+      
+      LANGUAGE: ${language === 'tr' ? 'Respond in Turkish language only' : 'Respond in English language only'}
       
       CRITICAL RESPONSE FORMAT:
       - ALWAYS respond in bullet point format with exactly 3-5 bullet points
@@ -396,7 +404,7 @@ export class AIService {
   }
 
 
-  async generateDualResponse(message: string, category: string, user: any, activeRules?: string, preferredModel?: 'openai' | 'gemini' | 'deepseek' | 'mistral'): Promise<AIResponse> {
+  async generateDualResponse(message: string, category: string, user: any, activeRules?: string, preferredModel?: 'openai' | 'gemini' | 'deepseek' | 'mistral', language = 'en'): Promise<AIResponse> {
     // 4-model system: OpenAI, Gemini, Deepseek, Mistral
     const useModel = preferredModel || 'openai'; // Default to OpenAI
     
@@ -404,28 +412,28 @@ export class AIService {
     
     try {
       if (useModel === 'mistral' && process.env.MISTRAL_API_KEY) {
-        return await this.generateMistralResponse(message, category, user, activeRules);
+        return await this.generateMistralResponse(message, category, user, activeRules, language);
       } else if (useModel === 'deepseek' && process.env.DEEPSEEK_API_KEY) {
-        return await this.generateDeepseekResponse(message, category, user, activeRules);
+        return await this.generateDeepseekResponse(message, category, user, activeRules, language);
       } else if (useModel === 'gemini' && process.env.GEMINI_API_KEY) {
-        return await this.generateGeminiResponse(message, category, user, activeRules);
+        return await this.generateGeminiResponse(message, category, user, activeRules, language);
       } else if (useModel === 'openai' && process.env.OPENAI_API_KEY) {
-        return await this.generateOpenAIResponse(message, category, user, activeRules);
+        return await this.generateOpenAIResponse(message, category, user, activeRules, language);
       }
       
       // Fallback to available model in priority order
       if (process.env.OPENAI_API_KEY) {
         console.log('Falling back to OpenAI (primary model not available)');
-        return await this.generateOpenAIResponse(message, category, user, activeRules);
+        return await this.generateOpenAIResponse(message, category, user, activeRules, language);
       } else if (process.env.MISTRAL_API_KEY) {
         console.log('Falling back to Mistral (primary model not available)');
-        return await this.generateMistralResponse(message, category, user, activeRules);
+        return await this.generateMistralResponse(message, category, user, activeRules, language);
       } else if (process.env.GEMINI_API_KEY) {
         console.log('Falling back to Gemini (primary model not available)');
-        return await this.generateGeminiResponse(message, category, user, activeRules);
+        return await this.generateGeminiResponse(message, category, user, activeRules, language);
       } else if (process.env.DEEPSEEK_API_KEY) {
         console.log('Falling back to Deepseek (primary model not available)');
-        return await this.generateDeepseekResponse(message, category, user, activeRules);
+        return await this.generateDeepseekResponse(message, category, user, activeRules, language);
       }
       
       throw new Error('No AI models available');
@@ -443,16 +451,16 @@ export class AIService {
         try {
           if (fallbackModel === 'mistral' && process.env.MISTRAL_API_KEY) {
             console.log(`Trying fallback to Mistral after ${useModel} failed`);
-            return await this.generateMistralResponse(message, category, user, activeRules);
+            return await this.generateMistralResponse(message, category, user, activeRules, language);
           } else if (fallbackModel === 'deepseek' && process.env.DEEPSEEK_API_KEY) {
             console.log(`Trying fallback to Deepseek after ${useModel} failed`);
-            return await this.generateDeepseekResponse(message, category, user, activeRules);
+            return await this.generateDeepseekResponse(message, category, user, activeRules, language);
           } else if (fallbackModel === 'gemini' && process.env.GEMINI_API_KEY) {
             console.log(`Trying fallback to Gemini after ${useModel} failed`);
-            return await this.generateGeminiResponse(message, category, user, activeRules);
+            return await this.generateGeminiResponse(message, category, user, activeRules, language);
           } else if (fallbackModel === 'openai' && process.env.OPENAI_API_KEY) {
             console.log(`Trying fallback to OpenAI after ${useModel} failed`);
-            return await this.generateOpenAIResponse(message, category, user, activeRules);
+            return await this.generateOpenAIResponse(message, category, user, activeRules, language);
           }
         } catch (fallbackError) {
           console.error(`Fallback ${fallbackModel} generation also failed:`, fallbackError);
