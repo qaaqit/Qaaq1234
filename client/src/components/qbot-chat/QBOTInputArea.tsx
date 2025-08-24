@@ -58,7 +58,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
   const [aiModels, setAiModels] = useState({
     chatgpt: true,  // Default enabled
     gemini: false,
-    grok: false
+    grok: true      // Enable Grok by default
   });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
