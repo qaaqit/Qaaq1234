@@ -1,6 +1,6 @@
 export interface AIResponse {
   content: string;
-  model: 'openai' | 'gemini' | 'grok';
+  model: 'openai' | 'gemini' | 'grok' | 'perplexity';
   tokens?: number;
   responseTime?: number;
 }
@@ -8,6 +8,7 @@ export interface AIResponse {
 export class AIService {
   private openai: any;
   private grok: any;
+  private perplexity: any;
 
   constructor() {
     // Initialize OpenAI
@@ -17,6 +18,10 @@ export class AIService {
     // Initialize GROK (xAI)
     if (process.env.XAI_API_KEY) {
       this.initGROK();
+    }
+    // Initialize Perplexity
+    if (process.env.PERPLEXITY_API_KEY) {
+      this.initPerplexity();
     }
   }
 
@@ -33,6 +38,11 @@ export class AIService {
       baseURL: "https://api.x.ai/v1",
       apiKey: process.env.XAI_API_KEY,
     });
+  }
+
+  private async initPerplexity() {
+    // Perplexity uses direct fetch API instead of OpenAI client
+    this.perplexity = true; // Just a flag to indicate it's initialized
   }
 
   async generateOpenAIResponse(message: string, category: string, user: any, activeRules?: string): Promise<AIResponse> {
@@ -300,27 +310,133 @@ export class AIService {
     }
   }
 
-  async generateDualResponse(message: string, category: string, user: any, activeRules?: string, preferredModel?: 'openai' | 'gemini' | 'grok'): Promise<AIResponse> {
-    // Date-based model selection: GROK every 3rd day, Gemini on remaining odd dates, OpenAI on even dates
-    const currentDate = new Date().getDate();
-    const isThirdDay = currentDate % 3 === 0;
-    const isOddDate = currentDate % 2 === 1;
+  async generatePerplexityResponse(message: string, category: string, user: any, activeRules?: string): Promise<AIResponse> {
+    const startTime = Date.now();
     
-    let dateBasedModel: 'openai' | 'gemini' | 'grok';
-    if (isThirdDay && process.env.XAI_API_KEY) {
-      dateBasedModel = 'grok';
-    } else if (isOddDate) {
-      dateBasedModel = 'gemini';
-    } else {
-      dateBasedModel = 'openai';
+    try {
+      if (!this.perplexity) {
+        await this.initPerplexity();
+      }
+
+      const userRank = user?.maritimeRank || 'Maritime Professional';
+      const userShip = user?.shipName ? `aboard ${user.shipName}` : 'shore-based';
+      
+      let systemPrompt = `You are QBOT, an advanced maritime AI assistant and the primary chat interface for QaaqConnect. 
+      You specialize in ${category} and serve the global maritime community with expert knowledge on:
+      - Maritime engineering, maintenance, and troubleshooting
+      - Navigation, regulations, and safety procedures  
+      - Ship operations, cargo handling, and port procedures
+      - Career guidance for maritime professionals
+      - Technical specifications for maritime equipment
+      
+      User context: ${userRank} ${userShip}
+      
+      CRITICAL RESPONSE FORMAT:
+      - ALWAYS respond in bullet point format with exactly 3-5 bullet points
+      - Keep total response between 30-50 words maximum
+      - Each bullet point should be 6-12 words maximum
+      - Use concise, technical language
+      - Prioritize safety and maritime regulations (SOLAS, MARPOL, STCW)
+      - Example format:
+        • [Action/Solution in 6-12 words]
+        • [Technical detail in 6-12 words]  
+        • [Safety consideration in 6-12 words]
+        • [Regulation reference if applicable]`;
+      
+      if (activeRules) {
+        systemPrompt += `\n\nActive bot documentation guidelines:\n${activeRules.substring(0, 800)}`;
+      }
+
+      console.log('🤖 Perplexity: Making API request...');
+      
+      // Use direct fetch API for Perplexity
+      const response = await fetch('https://api.perplexity.ai/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: "llama-3.1-sonar-small-128k-online",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: message }
+          ],
+          max_tokens: 150,
+          temperature: 0.2,
+          top_p: 0.9,
+          return_images: false,
+          return_related_questions: false,
+          search_recency_filter: "month",
+          stream: false,
+          presence_penalty: 0,
+          frequency_penalty: 1
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Perplexity API error:', response.status, errorText);
+        throw new Error(`Perplexity API error: ${response.status} - ${errorText}`);
+      }
+
+      const responseData = await response.json();
+      let content = responseData.choices[0]?.message?.content;
+      
+      if (!content) {
+        console.warn('⚠️ Perplexity: No content in response, using fallback');
+        content = 'Unable to generate response at this time.';
+      }
+      
+      console.log('🤖 Perplexity: Response generated successfully:', content.substring(0, 100) + '...');
+      const responseTime = Date.now() - startTime;
+
+      // Apply free user limits if user is not premium
+      const finalContent = await this.applyFreeUserLimits(content, user);
+
+      return {
+        content: finalContent,
+        model: 'perplexity',
+        tokens: responseData.usage?.total_tokens,
+        responseTime
+      };
+
+    } catch (error) {
+      console.error('Perplexity API error:', error);
+      throw new Error(`Perplexity generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  async generateDualResponse(message: string, category: string, user: any, activeRules?: string, preferredModel?: 'openai' | 'gemini' | 'grok' | 'perplexity'): Promise<AIResponse> {
+    // Date-based model selection: 4-model rotation system
+    const currentDate = new Date().getDate();
+    const modelIndex = currentDate % 4;
+    
+    let dateBasedModel: 'openai' | 'gemini' | 'grok' | 'perplexity';
+    switch (modelIndex) {
+      case 0:
+        dateBasedModel = process.env.PERPLEXITY_API_KEY ? 'perplexity' : 'openai';
+        break;
+      case 1:
+        dateBasedModel = process.env.OPENAI_API_KEY ? 'openai' : 'gemini';
+        break;
+      case 2:
+        dateBasedModel = process.env.GEMINI_API_KEY ? 'gemini' : 'grok';
+        break;
+      case 3:
+      default:
+        dateBasedModel = process.env.XAI_API_KEY ? 'grok' : 'openai';
+        break;
     }
     
     const useModel = preferredModel || dateBasedModel;
     
-    console.log(`📅 Date: ${currentDate}th (${isThirdDay ? 'GROK day' : isOddDate ? 'odd' : 'even'}) - Using ${useModel} model`);
+    console.log(`📅 Date: ${currentDate}th (Model ${modelIndex}: ${useModel.toUpperCase()}) - Using ${useModel} model`);
     
     try {
-      if (useModel === 'grok' && process.env.XAI_API_KEY) {
+      if (useModel === 'perplexity' && process.env.PERPLEXITY_API_KEY) {
+        return await this.generatePerplexityResponse(message, category, user, activeRules);
+      } else if (useModel === 'grok' && process.env.XAI_API_KEY) {
         return await this.generateGROKResponse(message, category, user, activeRules);
       } else if (useModel === 'gemini' && process.env.GEMINI_API_KEY) {
         return await this.generateGeminiResponse(message, category, user, activeRules);
@@ -328,13 +444,16 @@ export class AIService {
         return await this.generateOpenAIResponse(message, category, user, activeRules);
       }
       
-      // Fallback to available model
-      if (process.env.XAI_API_KEY) {
-        console.log('Falling back to GROK (primary model not available)');
-        return await this.generateGROKResponse(message, category, user, activeRules);
+      // Fallback to available model in priority order
+      if (process.env.PERPLEXITY_API_KEY) {
+        console.log('Falling back to Perplexity (primary model not available)');
+        return await this.generatePerplexityResponse(message, category, user, activeRules);
       } else if (process.env.OPENAI_API_KEY) {
         console.log('Falling back to OpenAI (primary model not available)');
         return await this.generateOpenAIResponse(message, category, user, activeRules);
+      } else if (process.env.XAI_API_KEY) {
+        console.log('Falling back to GROK (primary model not available)');
+        return await this.generateGROKResponse(message, category, user, activeRules);
       } else if (process.env.GEMINI_API_KEY) {
         console.log('Falling back to Gemini (primary model not available)');
         return await this.generateGeminiResponse(message, category, user, activeRules);
@@ -346,13 +465,17 @@ export class AIService {
       console.error(`AI generation error with ${useModel}:`, error);
       
       // Try fallback models in order of preference
-      const fallbackModels = useModel === 'grok' ? ['openai', 'gemini'] : 
-                           useModel === 'openai' ? ['grok', 'gemini'] : 
-                           ['grok', 'openai'];
+      const fallbackModels = useModel === 'perplexity' ? ['openai', 'grok', 'gemini'] :
+                           useModel === 'grok' ? ['perplexity', 'openai', 'gemini'] : 
+                           useModel === 'openai' ? ['perplexity', 'grok', 'gemini'] : 
+                           ['perplexity', 'grok', 'openai'];
       
       for (const fallbackModel of fallbackModels) {
         try {
-          if (fallbackModel === 'grok' && process.env.XAI_API_KEY) {
+          if (fallbackModel === 'perplexity' && process.env.PERPLEXITY_API_KEY) {
+            console.log(`Trying fallback to Perplexity after ${useModel} failed`);
+            return await this.generatePerplexityResponse(message, category, user, activeRules);
+          } else if (fallbackModel === 'grok' && process.env.XAI_API_KEY) {
             console.log(`Trying fallback to GROK after ${useModel} failed`);
             return await this.generateGROKResponse(message, category, user, activeRules);
           } else if (fallbackModel === 'gemini' && process.env.GEMINI_API_KEY) {

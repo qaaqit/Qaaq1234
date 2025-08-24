@@ -2658,6 +2658,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               modelResponse = await aiService.generateGeminiResponse(message, category, user, activeRules);
             } else if (model === 'grok') {
               modelResponse = await aiService.generateGROKResponse(message, category, user, activeRules);
+            } else if (model === 'perplexity') {
+              modelResponse = await aiService.generatePerplexityResponse(message, category, user, activeRules);
             }
             
             if (modelResponse) {
@@ -2678,7 +2680,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const separateAnswers = responses.map((resp, index) => {
             const modelName = resp.model === 'openai' ? 'ChatGPT' : 
                             resp.model === 'gemini' ? 'Gemini' :
-                            resp.model === 'grok' ? 'GROK' : 
+                            resp.model === 'grok' ? 'GROK' :
+                            resp.model === 'perplexity' ? 'Perplexity' :
                             resp.model.toUpperCase();
             return `🤖 **${modelName} Response:**\n\n${resp.content}`;
           }).join('\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n');
