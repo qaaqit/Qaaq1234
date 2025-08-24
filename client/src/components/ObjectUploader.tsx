@@ -96,8 +96,11 @@ export function ObjectUploader({
             continue;
           }
 
+          console.log(`📤 Starting upload for ${file.name}...`);
+          
           // Get upload parameters
           const uploadParams = await onGetUploadParameters();
+          console.log(`🔗 Got upload URL for ${file.name}`);
           
           // Upload file with better error handling
           const uploadResponse = await fetch(uploadParams.url, {
@@ -112,6 +115,8 @@ export function ObjectUploader({
             throw new Error(`Upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`);
           }
 
+          console.log(`✅ Upload successful for ${file.name}`);
+
           // Create file data object
           const fileData = {
             uploadURL: uploadParams.url.split('?')[0], // Remove query parameters
@@ -122,15 +127,19 @@ export function ObjectUploader({
           };
           
           uploadedFiles.push(fileData);
+          console.log(`📋 Added ${file.name} to upload results`);
           
         } catch (error) {
-          console.error(`Error uploading ${file.name}:`, error);
+          console.error(`❌ Error uploading ${file.name}:`, error);
           throw error; // Re-throw to show user the error
         }
       }
 
       if (uploadedFiles.length > 0) {
+        console.log(`🎉 Calling onComplete with ${uploadedFiles.length} files`);
         onComplete?.({ successful: uploadedFiles });
+      } else {
+        console.warn('⚠️ No files were uploaded successfully');
       }
 
     } catch (error) {

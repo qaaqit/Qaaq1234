@@ -186,23 +186,44 @@ export default function SemmEquipmentPage() {
     }
   };
 
-  const handleUploadComplete = (result: any) => {
+  const handleUploadComplete = async (result: any) => {
+    console.log('🎬 Upload completed, processing result:', result);
     const uploadedFile = result.successful[0];
     if (uploadedFile) {
       const file = uploadedFile.data as File;
       const mediaType = file.type.startsWith('video/') ? 'video' : 
                        file.type.startsWith('image/') ? 'image' : 'document';
       
-      // For videos, we need to get duration
+      // For videos, get duration properly
       let mediaDuration = 0;
       if (mediaType === 'video') {
-        const video = document.createElement('video');
-        video.src = URL.createObjectURL(file);
-        video.onloadedmetadata = () => {
-          mediaDuration = video.duration;
-          URL.revokeObjectURL(video.src);
-        };
+        try {
+          mediaDuration = await new Promise<number>((resolve) => {
+            const video = document.createElement('video');
+            video.src = URL.createObjectURL(file);
+            video.onloadedmetadata = () => {
+              const duration = video.duration;
+              URL.revokeObjectURL(video.src);
+              resolve(duration);
+            };
+            video.onerror = () => {
+              URL.revokeObjectURL(video.src);
+              resolve(0);
+            };
+          });
+        } catch (error) {
+          console.error('Error getting video duration:', error);
+          mediaDuration = 0;
+        }
       }
+
+      console.log('📁 File processed:', {
+        name: file.name,
+        type: mediaType,
+        size: file.size,
+        duration: mediaDuration,
+        url: uploadedFile.uploadURL
+      });
 
       setUploadedFile({
         url: uploadedFile.uploadURL,
