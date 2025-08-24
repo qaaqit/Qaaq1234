@@ -300,24 +300,39 @@ export class AIService {
     }
   }
 
-  async generateDualResponse(message: string, category: string, user: any, activeRules?: string, preferredModel?: 'openai' | 'gemini'): Promise<AIResponse> {
-    // Date-based model selection: Gemini on odd dates, OpenAI on even dates
+  async generateDualResponse(message: string, category: string, user: any, activeRules?: string, preferredModel?: 'openai' | 'gemini' | 'grok'): Promise<AIResponse> {
+    // Date-based model selection: GROK every 3rd day, Gemini on remaining odd dates, OpenAI on even dates
     const currentDate = new Date().getDate();
+    const isThirdDay = currentDate % 3 === 0;
     const isOddDate = currentDate % 2 === 1;
-    const dateBasedModel = isOddDate ? 'gemini' : 'openai';
+    
+    let dateBasedModel: 'openai' | 'gemini' | 'grok';
+    if (isThirdDay && process.env.XAI_API_KEY) {
+      dateBasedModel = 'grok';
+    } else if (isOddDate) {
+      dateBasedModel = 'gemini';
+    } else {
+      dateBasedModel = 'openai';
+    }
+    
     const useModel = preferredModel || dateBasedModel;
     
-    console.log(`📅 Date: ${currentDate}th (${isOddDate ? 'odd' : 'even'}) - Using ${useModel} model`);
+    console.log(`📅 Date: ${currentDate}th (${isThirdDay ? 'GROK day' : isOddDate ? 'odd' : 'even'}) - Using ${useModel} model`);
     
     try {
-      if (useModel === 'gemini' && process.env.GEMINI_API_KEY) {
+      if (useModel === 'grok' && process.env.XAI_API_KEY) {
+        return await this.generateGROKResponse(message, category, user, activeRules);
+      } else if (useModel === 'gemini' && process.env.GEMINI_API_KEY) {
         return await this.generateGeminiResponse(message, category, user, activeRules);
       } else if (useModel === 'openai' && process.env.OPENAI_API_KEY) {
         return await this.generateOpenAIResponse(message, category, user, activeRules);
       }
       
       // Fallback to available model
-      if (process.env.OPENAI_API_KEY) {
+      if (process.env.XAI_API_KEY) {
+        console.log('Falling back to GROK (primary model not available)');
+        return await this.generateGROKResponse(message, category, user, activeRules);
+      } else if (process.env.OPENAI_API_KEY) {
         console.log('Falling back to OpenAI (primary model not available)');
         return await this.generateOpenAIResponse(message, category, user, activeRules);
       } else if (process.env.GEMINI_API_KEY) {
@@ -330,19 +345,27 @@ export class AIService {
     } catch (error) {
       console.error(`AI generation error with ${useModel}:`, error);
       
-      // Try fallback model
-      const fallbackModel = useModel === 'openai' ? 'gemini' : 'openai';
+      // Try fallback models in order of preference
+      const fallbackModels = useModel === 'grok' ? ['openai', 'gemini'] : 
+                           useModel === 'openai' ? ['grok', 'gemini'] : 
+                           ['grok', 'openai'];
       
-      try {
-        if (fallbackModel === 'gemini' && process.env.GEMINI_API_KEY) {
-          console.log(`Trying fallback to Gemini after ${useModel} failed`);
-          return await this.generateGeminiResponse(message, category, user, activeRules);
-        } else if (fallbackModel === 'openai' && process.env.OPENAI_API_KEY) {
-          console.log(`Trying fallback to OpenAI after ${useModel} failed`);
-          return await this.generateOpenAIResponse(message, category, user, activeRules);
+      for (const fallbackModel of fallbackModels) {
+        try {
+          if (fallbackModel === 'grok' && process.env.XAI_API_KEY) {
+            console.log(`Trying fallback to GROK after ${useModel} failed`);
+            return await this.generateGROKResponse(message, category, user, activeRules);
+          } else if (fallbackModel === 'gemini' && process.env.GEMINI_API_KEY) {
+            console.log(`Trying fallback to Gemini after ${useModel} failed`);
+            return await this.generateGeminiResponse(message, category, user, activeRules);
+          } else if (fallbackModel === 'openai' && process.env.OPENAI_API_KEY) {
+            console.log(`Trying fallback to OpenAI after ${useModel} failed`);
+            return await this.generateOpenAIResponse(message, category, user, activeRules);
+          }
+        } catch (fallbackError) {
+          console.error(`Fallback ${fallbackModel} generation also failed:`, fallbackError);
+          // Continue to next fallback model
         }
-      } catch (fallbackError) {
-        console.error(`Fallback AI generation also failed:`, fallbackError);
       }
       
       // Final fallback to predefined responses
