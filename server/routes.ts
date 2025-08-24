@@ -2074,7 +2074,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           whatsapp_number,
           maritime_rank,
           last_company,
-
+          last_ship,
           port,
           country,
           city,
@@ -2102,7 +2102,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           whatsapp_number,
           maritime_rank,
           last_company,
-
+          last_ship,
           port,
           country,
           city,
