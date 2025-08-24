@@ -103,12 +103,10 @@ export function ObjectUploader({
           console.log(`🔗 Got upload URL for ${file.name}`);
           
           // Upload file with better error handling
+          // Note: Don't set Content-Type header for signed URLs as it may not be included in the signature
           const uploadResponse = await fetch(uploadParams.url, {
             method: uploadParams.method,
             body: file,
-            headers: {
-              'Content-Type': file.type || 'application/octet-stream',
-            },
           });
 
           if (!uploadResponse.ok) {
@@ -131,6 +129,13 @@ export function ObjectUploader({
           
         } catch (error) {
           console.error(`❌ Error uploading ${file.name}:`, error);
+          // Log detailed error information
+          if (error instanceof Error) {
+            console.error('Error message:', error.message);
+            console.error('Error stack:', error.stack);
+          } else {
+            console.error('Unknown error type:', typeof error, error);
+          }
           throw error; // Re-throw to show user the error
         }
       }
