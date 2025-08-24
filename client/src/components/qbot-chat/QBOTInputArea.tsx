@@ -318,7 +318,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
           <Zap size={16} />
         </button>
 
-        {/* GROK Toggle */}
+        {/* DeepSeek Toggle */}
         <button
           onClick={() => toggleAiModel('grok')}
           className={`p-2 rounded-lg transition-all duration-200 flex-shrink-0 ${
@@ -326,7 +326,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
               ? 'bg-purple-100 text-purple-600 hover:bg-purple-200' 
               : 'text-gray-400 hover:bg-gray-100'
           }`}
-          title={`GROK ${aiModels.grok ? 'Enabled' : 'Disabled'}`}
+          title={`DeepSeek ${aiModels.grok ? 'Enabled' : 'Disabled'}`}
         >
           <Brain size={16} />
         </button>
