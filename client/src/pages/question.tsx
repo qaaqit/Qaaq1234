@@ -76,11 +76,7 @@ export default function QuestionPage() {
   // Mutation for submitting new answer
   const submitAnswerMutation = useMutation({
     mutationFn: async (content: string) => {
-      return apiRequest(`/api/questions/${questionId}/user-answers`, {
-        method: 'POST',
-        body: JSON.stringify({ content }),
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return apiRequest(`/api/questions/${questionId}/user-answers`, 'POST', { content });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/questions/${questionId}/user-answers`] });
@@ -99,9 +95,7 @@ export default function QuestionPage() {
   // Mutation for liking answers
   const toggleLikeMutation = useMutation({
     mutationFn: async (answerId: string) => {
-      return apiRequest(`/api/user-answers/${answerId}/like`, {
-        method: 'POST',
-      });
+      return apiRequest(`/api/user-answers/${answerId}/like`, 'POST');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/questions/${questionId}/user-answers`] });
