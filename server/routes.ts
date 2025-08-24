@@ -2690,6 +2690,86 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
     return acknowledgments.includes(msgLower) && message.length < 15;
   }
 
+  function validateMaritimeQuestion(message: string, language = 'en'): boolean {
+    const msgLower = message.toLowerCase();
+    
+    // Maritime keywords in English
+    const maritimeKeywordsEn = [
+      'ship', 'vessel', 'boat', 'maritime', 'marine', 'nautical', 'naval', 'port', 'harbor', 'harbour',
+      'engine', 'propeller', 'anchor', 'cargo', 'deck', 'bridge', 'hull', 'mast', 'sail', 'crew',
+      'captain', 'officer', 'sailor', 'seaman', 'navigation', 'compass', 'radar', 'gps', 'chart',
+      'ocean', 'sea', 'water', 'tide', 'wave', 'storm', 'weather', 'wind', 'current', 'depth',
+      'dock', 'pier', 'wharf', 'berth', 'terminal', 'container', 'freight', 'shipping', 'transport',
+      'solas', 'marpol', 'stcw', 'imo', 'classification', 'survey', 'inspection', 'certificate',
+      'boiler', 'pump', 'valve', 'pipe', 'tank', 'ballast', 'fuel', 'oil', 'diesel', 'steam',
+      'maintenance', 'repair', 'overhaul', 'spare', 'part', 'equipment', 'machinery', 'system',
+      'safety', 'emergency', 'fire', 'lifeboat', 'raft', 'jacket', 'drill', 'muster', 'abandon',
+      'load', 'discharge', 'crane', 'winch', 'hatch', 'hold', 'compartment', 'bulkhead', 'frame'
+    ];
+    
+    // Maritime keywords in Turkish
+    const maritimeKeywordsTr = [
+      'gemi', 'tekne', 'denizcilik', 'maritime', 'deniz', 'liman', 'kaptanlık', 'tayfa',
+      'makine', 'pervane', 'çapa', 'yük', 'güverte', 'köprü', 'gövde', 'direk', 'yelken',
+      'kaptan', 'subay', 'denizci', 'seyir', 'pusula', 'radar', 'harita', 'okyanus',
+      'dalga', 'fırtına', 'hava', 'rüzgar', 'akıntı', 'derinlik', 'iskele', 'rıhtım',
+      'terminal', 'konteyner', 'nakliye', 'taşımacılık', 'kazan', 'pompa', 'valf', 'boru',
+      'tank', 'balast', 'yakıt', 'petrol', 'dizel', 'buhar', 'bakım', 'onarım', 'revizyon',
+      'yedek', 'parça', 'ekipman', 'makina', 'sistem', 'güvenlik', 'acil', 'yangın',
+      'filikası', 'can', 'yelegi', 'tatbikat', 'toplanma', 'terk', 'yükleme', 'boşaltma',
+      'vinç', 'ağırlık', 'ambar', 'bölme', 'perde', 'çerçeve', 'mühendis', 'tekniker'
+    ];
+    
+    // Combine keywords based on language or use both for multilingual support
+    const allKeywords = [...maritimeKeywordsEn, ...maritimeKeywordsTr];
+    
+    // Check if message contains any maritime keywords
+    const containsMaritimeKeywords = allKeywords.some(keyword => 
+      msgLower.includes(keyword)
+    );
+    
+    // Special patterns for maritime questions
+    const maritimePatterns = [
+      /ship\s+(engine|machinery|system)/i,
+      /marine\s+(engineering|equipment)/i,
+      /vessel\s+(operation|maintenance)/i,
+      /port\s+(operation|management)/i,
+      /cargo\s+(handling|operation)/i,
+      /navigation\s+(system|equipment)/i,
+      /safety\s+(procedure|equipment)/i,
+      /gemi\s+(makine|sistem)/i,
+      /deniz\s+(taşımacılık|mühendislik)/i,
+      /liman\s+(işletme|yönetim)/i
+    ];
+    
+    const matchesMaritimePattern = maritimePatterns.some(pattern => 
+      pattern.test(message)
+    );
+    
+    // Non-maritime topics to explicitly reject
+    const nonMaritimeTopics = [
+      'food', 'recipe', 'cooking', 'restaurant', 'movie', 'film', 'music', 'song',
+      'sports', 'football', 'basketball', 'politics', 'election', 'government',
+      'programming', 'coding', 'software', 'computer', 'internet', 'social media',
+      'fashion', 'clothes', 'shopping', 'retail', 'real estate', 'property',
+      'finance', 'banking', 'investment', 'stock', 'crypto', 'bitcoin',
+      'health', 'medical', 'doctor', 'hospital', 'medicine', 'fitness', 'gym',
+      'education', 'school', 'university', 'student', 'homework', 'exam',
+      'travel', 'tourism', 'hotel', 'vacation', 'holiday', 'flight', 'airline',
+      'yemek', 'tarif', 'restoran', 'film', 'müzik', 'spor', 'futbol', 'politik',
+      'yazılım', 'bilgisayar', 'internet', 'moda', 'alışveriş', 'emlak',
+      'finans', 'banka', 'yatırım', 'sağlık', 'doktor', 'hastane', 'eğitim',
+      'okul', 'üniversite', 'seyahat', 'turizm', 'otel', 'tatil', 'uçak'
+    ];
+    
+    const isNonMaritimeTopic = nonMaritimeTopics.some(topic => 
+      msgLower.includes(topic)
+    );
+    
+    // Return true if contains maritime content and is not explicitly non-maritime
+    return (containsMaritimeKeywords || matchesMaritimePattern) && !isNonMaritimeTopic;
+  }
+
   function isLocationQuery(message: string): boolean {
     return message.toLowerCase().includes('location') || 
            message.toLowerCase().includes('where') ||
@@ -4234,6 +4314,22 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
             limitReached: true
           });
         }
+      }
+
+      // Maritime question validation - reject non-maritime questions
+      const isMaritimeQuestion = validateMaritimeQuestion(message, language);
+      if (!isMaritimeQuestion) {
+        const maritimeOnlyResponse = language === 'tr' ? 
+          "QBOT sadece denizcilik, gemi mühendisliği, deniz taşımacılığı ve maritime endüstri ile ilgili sorulara yanıt verir. Lütfen denizcilik alanında bir soru sorun." :
+          "QBOT only responds to maritime, ship engineering, marine transportation and maritime industry related questions. Please ask a maritime-related question.";
+        
+        return res.json({
+          response: maritimeOnlyResponse,
+          aiModel: 'maritime-filter',
+          responseTime: 0,
+          timestamp: new Date().toISOString(),
+          maritimeOnly: true
+        });
       }
 
       // Generate AI response using multi-model selection or dual AI service
