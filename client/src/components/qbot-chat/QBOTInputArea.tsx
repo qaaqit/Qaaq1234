@@ -3,8 +3,8 @@ import { Paperclip, Send, Crown, Shield, ShieldCheck, Bot, Zap, Brain, Sparkles,
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { PremiumSubscriptionDialog } from "@/components/PremiumSubscriptionDialog";
 import { useLocation } from "wouter";
-
 import { useQuery } from "@tanstack/react-query";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const DEFAULT_CHATBOT_INVITES = [
   "Engine trouble? Ask away!",
@@ -52,6 +52,7 @@ interface User {
 }
 
 export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTInputAreaProps) {
+  const { t } = useLanguage();
   const [, setLocation] = useLocation();
   const [message, setMessage] = useState('');
   const [attachments, setAttachments] = useState<string[]>([]);
@@ -443,7 +444,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
             onInput={handleInput}
             onKeyPress={handleKeyPress}
             onPaste={handlePaste}
-            placeholder={currentPlaceholder}
+            placeholder={currentPlaceholder || t('chat.placeholder')}
             disabled={disabled}
             className="w-full resize-none rounded-lg border border-gray-300 pl-12 pr-10 pt-3 pb-3 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed placeholder:text-gray-400 text-gray-700 min-h-[48px] max-h-[120px] overflow-y-auto mt-[-5px] mb-[-5px]"
             style={{ resize: 'none' }}
@@ -470,7 +471,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
                 onClick={handlePromptImprovement}
                 disabled={isImprovingPrompt}
                 className="p-1 rounded transition-all duration-200 text-orange-500 hover:text-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                title="💡 Improve this prompt for better AI responses"
+                title={t('chat.improve_prompt')}
               >
                 <Lightbulb size={16} className={isImprovingPrompt ? 'animate-pulse' : ''} />
               </button>
@@ -483,7 +484,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
               <button
                 onClick={togglePrivacyMode}
                 className="p-1 rounded transition-all duration-200 text-gray-400 hover:bg-gray-100"
-                title={isPrivateMode ? "Private Mode: Chat not stored in database" : "Enable Private Mode"}
+                title={isPrivateMode ? t('chat.private_mode') : t('chat.enable_private')}
               >
                 {isPrivateMode ? (
                   <ShieldCheck size={12} className="fill-current text-green-600" />

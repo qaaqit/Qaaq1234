@@ -4,6 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 
 interface QBOTChatHeaderProps {
@@ -45,6 +47,7 @@ const DEFAULT_CHATBOT_INVITES = [
 ];
 
 export default function QBOTChatHeader({ onClear, isAdmin = false }: QBOTChatHeaderProps) {
+  const { t } = useLanguage();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [chatbotInvites, setChatbotInvites] = useState(() => {
     const saved = localStorage.getItem('chatbotInvites');
@@ -106,11 +109,14 @@ export default function QBOTChatHeader({ onClear, isAdmin = false }: QBOTChatHea
       
       {/* Right: Action Icons Only */}
       <div className="flex items-center space-x-1">
+        {/* Language Switcher */}
+        <LanguageSwitcher size="icon" />
+        
         <button
           onClick={onClear}
           className="p-2 rounded-lg hover:bg-gray-100 transition-colors group"
-          aria-label="Archive chat history"
-          title="Archive chat history"
+          aria-label={t('common.delete')}
+          title={t('common.delete')}
         >
           <Trash2 size={16} className="text-gray-600 group-hover:text-red-500" />
         </button>
