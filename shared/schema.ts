@@ -330,41 +330,6 @@ export const semmModels = pgTable("semm_models", {
   updatedAt: timestamp("updated_at").default(sql`now()`)
 });
 
-// SEMM Postcards - User-generated content for SEMM pages
-export const semmPostcards = pgTable("semm_postcards", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull(), // References users.id
-  semmCode: text("semm_code").notNull(), // SEMM equipment/make/model code (e.g., 'aa', 'aaa', 'aaaa')
-  semmType: text("semm_type").notNull(), // 'equipment', 'make', 'model'
-  title: text("title"),
-  description: text("description"),
-  mediaType: text("media_type").notNull(), // 'video', 'photo', 'pdf'
-  mediaUrl: text("media_url").notNull(), // Object storage URL
-  mediaDuration: integer("media_duration"), // Video duration in seconds (max 90)
-  mediaSize: integer("media_size"), // File size in bytes (max 500MB)
-  likesCount: integer("likes_count").default(0),
-  sharesCount: integer("shares_count").default(0),
-  isActive: boolean("is_active").default(true),
-  createdAt: timestamp("created_at").default(sql`now()`),
-  updatedAt: timestamp("updated_at").default(sql`now()`)
-});
-
-// SEMM Postcard Likes
-export const semmPostcardLikes = pgTable("semm_postcard_likes", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull(), // References users.id
-  postcardId: varchar("postcard_id").notNull(), // References semmPostcards.id
-  createdAt: timestamp("created_at").default(sql`now()`)
-});
-
-// SEMM Postcard Shares
-export const semmPostcardShares = pgTable("semm_postcard_shares", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull(), // References users.id
-  postcardId: varchar("postcard_id").notNull(), // References semmPostcards.id
-  shareType: text("share_type").notNull(), // 'link', 'social', 'download'
-  createdAt: timestamp("created_at").default(sql`now()`)
-});
 
 
 
@@ -477,37 +442,6 @@ export const semmModelsRelations = relations(semmModels, ({ one }) => ({
   }),
 }));
 
-// SEMM Postcards Relations
-export const semmPostcardsRelations = relations(semmPostcards, ({ one, many }) => ({
-  user: one(users, {
-    fields: [semmPostcards.userId],
-    references: [users.id],
-  }),
-  likes: many(semmPostcardLikes),
-  shares: many(semmPostcardShares),
-}));
-
-export const semmPostcardLikesRelations = relations(semmPostcardLikes, ({ one }) => ({
-  user: one(users, {
-    fields: [semmPostcardLikes.userId],
-    references: [users.id],
-  }),
-  postcard: one(semmPostcards, {
-    fields: [semmPostcardLikes.postcardId],
-    references: [semmPostcards.id],
-  }),
-}));
-
-export const semmPostcardSharesRelations = relations(semmPostcardShares, ({ one }) => ({
-  user: one(users, {
-    fields: [semmPostcardShares.userId],
-    references: [users.id],
-  }),
-  postcard: one(semmPostcards, {
-    fields: [semmPostcardShares.postcardId],
-    references: [semmPostcards.id],
-  }),
-}));
 
 
 
@@ -611,24 +545,6 @@ export const insertSemmModelSchema = createInsertSchema(semmModels).omit({
   updatedAt: true,
 });
 
-// SEMM Postcards Insert Schemas
-export const insertSemmPostcardSchema = createInsertSchema(semmPostcards).omit({
-  id: true,
-  likesCount: true,
-  sharesCount: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const insertSemmPostcardLikeSchema = createInsertSchema(semmPostcardLikes).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertSemmPostcardShareSchema = createInsertSchema(semmPostcardShares).omit({
-  id: true,
-  createdAt: true,
-});
 
 export const insertChatConnectionSchema = createInsertSchema(chatConnections).pick({
   receiverId: true,
