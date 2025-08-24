@@ -457,7 +457,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
               maxFileSize={52428800} // 50MB
               onGetUploadParameters={handleGetUploadParameters}
               onComplete={handleUploadComplete}
-              buttonClassName="p-1 rounded text-gray-400 hover:bg-gray-100 transition-all duration-200"
+              buttonClassName="p-1 rounded text-gray-400 hover:text-gray-600 transition-all duration-200"
             >
               <Paperclip size={20} />
             </ObjectUploader>
