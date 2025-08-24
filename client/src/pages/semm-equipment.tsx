@@ -175,7 +175,17 @@ export default function SemmEquipmentPage() {
   // Upload functionality
   const handleGetUploadParameters = async () => {
     try {
+      console.log('🔄 Requesting upload URL...');
       const response: any = await apiRequest('/api/semm/postcards/upload', 'POST');
+      console.log('🔍 Server response:', response);
+      console.log('🔍 Response type:', typeof response);
+      console.log('🔍 Response keys:', Object.keys(response || {}));
+      
+      if (!response || !response.uploadURL) {
+        console.error('❌ Invalid server response:', response);
+        throw new Error('Server did not return upload URL');
+      }
+      
       return {
         method: 'PUT' as const,
         url: response.uploadURL,
