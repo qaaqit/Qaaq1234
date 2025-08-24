@@ -2065,16 +2065,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`   Pattern 3: %+91${searchTerm}% (should match +91prefix)`);
       }
 
-      // First: Exact matches (case-insensitive) - Including whatsapp_number
-      const exactMatches = await pool.query(`
+      // Simple search - only basic columns that definitely exist
+      const searchResults = await pool.query(`
         SELECT DISTINCT
           id,
           full_name,
           email,
-          whatsapp_number,
           maritime_rank,
           last_company,
-          last_ship,
           port,
           country,
           city,
@@ -2083,37 +2081,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           user_type
         FROM users 
         WHERE 
-          LOWER(full_name) = $1 OR
-          LOWER(last_company) = $1 OR
-          LOWER(email) = $1
-        ORDER BY COALESCE(question_count, 0) DESC
-        LIMIT 10
-      `, [searchTerm, `+${searchTerm}`, `+91${searchTerm}`]);
-
-      // Second: Simplified fuzzy matches - test basic functionality first
-      const fuzzyMatches = await pool.query(`
-        SELECT DISTINCT
-          id,
-          full_name,
-          email,
-          whatsapp_number,
-          maritime_rank,
-          last_company,
-          last_ship,
-          port,
-          country,
-          city,
-          COALESCE(question_count, 0) as question_count,
-          COALESCE(answer_count, 0) as answer_count,
-          user_type,
-          100 as match_score
-        FROM users 
-        WHERE 
           LOWER(full_name) ILIKE $1 OR
           LOWER(last_company) ILIKE $1 OR
           LOWER(email) ILIKE $1
         ORDER BY COALESCE(question_count, 0) DESC
-        LIMIT 15
+        LIMIT 20
       `, [`%${searchTerm}%`]);
 
       // Debug fuzzy search for specific terms
@@ -2137,50 +2109,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Combine results: exact matches first, then fuzzy matches
-      const exactResults = exactMatches.rows.map(user => ({
+      // Map results to simple format
+      const allResults = searchResults.rows.map(user => ({
         id: user.id,
         fullName: user.full_name || user.email || 'Maritime Professional',
         email: user.email,
         maritimeRank: user.maritime_rank || 'Professional',
         company: user.last_company || '',
-        lastShip: user.last_ship || '',
+        lastShip: '',  // Remove ship data
         port: user.port || user.city || '',
         country: user.country || '',
         questionCount: parseInt(user.question_count) || 0,
         answerCount: parseInt(user.answer_count) || 0,
         userType: user.user_type || 'Free',
         profilePictureUrl: '',
-        matchType: 'exact'
+        matchType: 'fuzzy'
       }));
 
-      const fuzzyResults = fuzzyMatches.rows.map(user => ({
-        id: user.id,
-        fullName: user.full_name || user.email || 'Maritime Professional',
-        email: user.email,
-        maritimeRank: user.maritime_rank || 'Professional',
-        company: user.last_company || '',
-        lastShip: user.last_ship || '',
-        port: user.port || user.city || '',
-        country: user.country || '',
-        questionCount: parseInt(user.question_count) || 0,
-        answerCount: parseInt(user.answer_count) || 0,
-        userType: user.user_type || 'Free',
-        profilePictureUrl: '',
-        matchType: 'fuzzy',
-        matchScore: parseInt(user.match_score) || 50
-      }));
-
-      const allResults = [...exactResults, ...fuzzyResults];
-      const limitedResults = allResults.slice(0, 20); // Limit to 20 total results
-
-      console.log(`✅ Found ${exactResults.length} exact matches, ${fuzzyResults.length} fuzzy matches`);
-      if (limitedResults.length > 0) {
-        console.log(`Sample result: ${limitedResults[0].fullName} - ${limitedResults[0].maritimeRank}`);
-      }
+      console.log(`✅ Found ${allResults.length} search results`);
       
       // Special debugging for the problem user
-      if (searchTerm === "9920027697" && limitedResults.length === 0) {
+      if (searchTerm === "9920027697" && allResults.length === 0) {
         console.log(`❌ User ${searchTerm} not found. Checking database for potential issues...`);
         // Try a broader search to see if this user exists at all
         try {
@@ -2201,16 +2150,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({
         success: true,
-        sailors: limitedResults,
-        total: limitedResults.length,
-        exactMatches: exactResults.length,
-        fuzzyMatches: fuzzyResults.length,
+        sailors: allResults,
+        total: allResults.length,
         searchTerm: query,
-        breakdown: {
-          exact: exactResults,
-          fuzzy: fuzzyResults
-        },
-        message: `Found ${exactResults.length} exact matches and ${fuzzyResults.length} similar matches for "${query}"`
+        message: `Found ${allResults.length} results for "${query}"`
       });
       
     } catch (error) {
