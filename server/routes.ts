@@ -519,6 +519,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
   } catch (err) {
     console.log('⚠️ User answers table indexes creation failed:', err.message);
   }
+
+  // Temporary endpoint to manually create user answers tables
+  app.post('/api/create-user-answers-tables', noAuth, async (req, res) => {
+    try {
+      console.log('🔧 Manually creating user answers tables...');
+      
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS user_answers (
+          id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+          question_id INTEGER NOT NULL,
+          user_id VARCHAR NOT NULL,
+          content TEXT NOT NULL,
+          likes_count INTEGER DEFAULT 0,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+      console.log('✅ User answers table created manually');
+
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS answer_likes (
+          id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+          user_id VARCHAR NOT NULL,
+          answer_id VARCHAR NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(user_id, answer_id)
+        )
+      `);
+      console.log('✅ Answer likes table created manually');
+
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_user_answers_question_id ON user_answers(question_id);
+        CREATE INDEX IF NOT EXISTS idx_user_answers_user_id ON user_answers(user_id);
+        CREATE INDEX IF NOT EXISTS idx_answer_likes_answer_id ON answer_likes(answer_id);
+        CREATE INDEX IF NOT EXISTS idx_answer_likes_user_id ON answer_likes(user_id);
+      `);
+      console.log('✅ User answers indexes created manually');
+      
+      res.json({ success: true, message: 'User answers tables created successfully' });
+    } catch (error) {
+      console.error('❌ Error creating user answers tables:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
   
   // Setup merge routes for robust authentication
   setupMergeRoutes(app);
