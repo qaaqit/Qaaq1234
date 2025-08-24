@@ -469,7 +469,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
               <button
                 onClick={handlePromptImprovement}
                 disabled={isImprovingPrompt}
-                className="p-1.5 rounded-full bg-white border border-gray-200 shadow-sm transition-all duration-200 text-orange-500 hover:bg-orange-50 hover:border-orange-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="p-1 rounded-full bg-white border border-gray-200 shadow-sm transition-all duration-200 text-orange-500 hover:bg-orange-50 hover:border-orange-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 title="💡 Improve this prompt for better AI responses"
               >
                 <Lightbulb size={14} className={isImprovingPrompt ? 'animate-pulse' : ''} />
