@@ -1,4 +1,4 @@
-import { useParams, Link } from 'wouter';
+import { useParams, Link, useLocation } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -57,6 +57,20 @@ export default function QuestionPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [newAnswerContent, setNewAnswerContent] = useState('');
+  const [, setLocation] = useLocation();
+
+  // Check if user is authenticated
+  const isAuthenticated = () => {
+    return !!localStorage.getItem('auth_token');
+  };
+
+  // Redirect to login with return URL
+  const redirectToLogin = () => {
+    const currentPath = window.location.pathname;
+    // Store return URL in localStorage for OAuth callback
+    localStorage.setItem('login_return_url', currentPath);
+    setLocation('/login');
+  };
 
   const { data: question, status } = useQuery<Question>({
     queryKey: [`/api/questions/${questionId}`],
@@ -134,6 +148,18 @@ export default function QuestionPage() {
 
   const handleSubmitAnswer = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check authentication first
+    if (!isAuthenticated()) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to submit your answer",
+        variant: "destructive"
+      });
+      redirectToLogin();
+      return;
+    }
+    
     if (!newAnswerContent.trim()) {
       toast({ 
         title: "Error", 
@@ -146,6 +172,17 @@ export default function QuestionPage() {
   };
 
   const handleLikeAnswer = (answerId: string) => {
+    // Check authentication first
+    if (!isAuthenticated()) {
+      toast({
+        title: "Login Required", 
+        description: "Please log in to like answers",
+        variant: "destructive"
+      });
+      redirectToLogin();
+      return;
+    }
+    
     toggleLikeMutation.mutate(answerId);
   };
 

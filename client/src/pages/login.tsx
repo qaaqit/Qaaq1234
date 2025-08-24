@@ -289,7 +289,11 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
           {/* Replit Auth Button */}
           <Button 
             type="button"
-            onClick={() => window.location.href = '/api/login'}
+            onClick={() => {
+              const returnUrl = localStorage.getItem('login_return_url');
+              const loginUrl = returnUrl ? `/api/login?returnUrl=${encodeURIComponent(returnUrl)}` : '/api/login';
+              window.location.href = loginUrl;
+            }}
             className="w-full h-12 bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 font-semibold"
             data-testid="button-replit-auth"
           >
@@ -304,7 +308,11 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
           {/* Google Auth Button */}
           <Button 
             type="button"
-            onClick={() => window.location.href = '/api/auth/google'}
+            onClick={() => {
+              const returnUrl = localStorage.getItem('login_return_url');
+              const googleAuthUrl = returnUrl ? `/api/auth/google?returnUrl=${encodeURIComponent(returnUrl)}` : '/api/auth/google';
+              window.location.href = googleAuthUrl;
+            }}
             className="w-full h-12 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 font-semibold shadow-sm"
             data-testid="button-google-auth"
           >

@@ -179,6 +179,13 @@ export function setupGoogleAuth(app: Express) {
   // Initiate Google OAuth
   app.get('/api/auth/google', (req: Request, res: Response) => {
     try {
+      // Store return URL in session if provided
+      const returnUrl = req.query.returnUrl as string;
+      if (returnUrl && req.session) {
+        (req.session as any).returnUrl = returnUrl;
+        console.log('🔄 GOOGLE AUTH: Stored return URL in session:', returnUrl);
+      }
+      
       const authUrl = getGoogleAuthUrl();
       res.redirect(authUrl);
     } catch (error) {
@@ -259,8 +266,13 @@ export function setupGoogleAuth(app: Express) {
             userFullName: (req.session as any).passport?.user?.fullName
           });
           
-          // Redirect to QBOT Chat as per user preference (home page after login)
-          res.redirect('/qbot');
+          // Check for return URL stored in session or default to QBOT Chat
+          const returnUrl = (req.session as any).returnUrl || '/qbot';
+          if ((req.session as any).returnUrl) {
+            delete (req.session as any).returnUrl; // Clean up after use
+          }
+          console.log('🔄 GOOGLE AUTH: Redirecting to:', returnUrl);
+          res.redirect(returnUrl);
         });
       } else {
         console.error('❌ GOOGLE AUTH: No session available');

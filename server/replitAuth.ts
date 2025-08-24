@@ -200,6 +200,14 @@ export async function setupAuth(app: Express) {
 
   app.get("/api/login", (req, res, next) => {
     console.log('🔐 Replit Auth: Login initiated for hostname:', req.hostname);
+    
+    // Store return URL in session if provided
+    const returnUrl = req.query.returnUrl as string;
+    if (returnUrl && req.session) {
+      (req.session as any).returnUrl = returnUrl;
+      console.log('🔄 Replit Auth: Stored return URL in session:', returnUrl);
+    }
+    
     passport.authenticate(`replitauth:${req.hostname}`, {
       prompt: "login consent",
       scope: ["openid", "email", "profile", "offline_access"],
@@ -227,8 +235,13 @@ export async function setupAuth(app: Express) {
           return res.redirect('/login?error=login_failed');
         }
         
-        console.log('✅ Replit Auth: Login successful, redirecting to /qbot');
-        res.redirect('/qbot');
+        // Check for return URL stored in session or default to QBOT Chat
+        const returnUrl = (req.session as any)?.returnUrl || '/qbot';
+        if ((req.session as any)?.returnUrl) {
+          delete (req.session as any).returnUrl; // Clean up after use
+        }
+        console.log('✅ Replit Auth: Login successful, redirecting to:', returnUrl);
+        res.redirect(returnUrl);
       });
     })(req, res, next);
   });

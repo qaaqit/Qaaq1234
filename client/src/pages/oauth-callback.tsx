@@ -25,10 +25,18 @@ export default function OAuthCallback() {
         const user = JSON.parse(decodeURIComponent(userString));
         localStorage.setItem('qaaq_user', JSON.stringify(user));
         
-        console.log('🔐 Google OAuth successful, redirecting to QBOT Chat');
+        console.log('🔐 Google OAuth successful, redirecting...');
         
-        // Redirect to QBOT Chat as per user preference
-        setLocation('/qbot');
+        // Check for return URL in localStorage (set during login redirect)
+        const returnUrl = localStorage.getItem('login_return_url');
+        if (returnUrl) {
+          localStorage.removeItem('login_return_url');
+          console.log('🔄 Redirecting back to:', returnUrl);
+          setLocation(returnUrl);
+        } else {
+          // Default redirect to QBOT Chat as per user preference
+          setLocation('/qbot');
+        }
         
       } catch (error) {
         console.error('Error processing OAuth callback:', error);
