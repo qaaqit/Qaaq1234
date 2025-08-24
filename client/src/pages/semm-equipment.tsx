@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
-import { ArrowLeft, Share2, Home, ChevronRight, Edit3, RotateCcw, ChevronUp, ChevronDown, Upload, Heart, Share, Play, FileText, Image, Video, Eye } from 'lucide-react';
+import { ArrowLeft, Share2, Home, ChevronRight, Edit3, RotateCcw, ChevronUp, ChevronDown, Upload, Heart, Share, Play, FileText, Image, Video, Eye, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useState, useEffect } from 'react';
@@ -101,6 +101,8 @@ export default function SemmEquipmentPage() {
   const [uploadTitle, setUploadTitle] = useState('');
   const [uploadDescription, setUploadDescription] = useState('');
   const [uploadedFile, setUploadedFile] = useState<any>(null);
+  const [contentType, setContentType] = useState<'upload' | 'url'>('upload');
+  const [contentUrl, setContentUrl] = useState('');
   const isAdmin = user?.isAdmin || user?.role === 'admin';
 
   // Admin state
@@ -133,9 +135,11 @@ export default function SemmEquipmentPage() {
       setUploadTitle('');
       setUploadDescription('');
       setUploadedFile(null);
+      setContentUrl('');
+      setContentType('upload');
       toast({
         title: "Success",
-        description: "Postcard uploaded successfully!",
+        description: "Content shared successfully!",
       });
     },
     onError: (error: any) => {
@@ -245,26 +249,66 @@ export default function SemmEquipmentPage() {
     }
   };
 
+  const detectUrlMediaType = (url: string) => {
+    if (url.includes('youtube.com') || url.includes('youtu.be')) return 'video';
+    if (url.includes('instagram.com')) return 'video';
+    if (url.includes('tiktok.com')) return 'video';
+    if (url.includes('twitter.com') || url.includes('x.com')) return 'video';
+    return 'link';
+  };
+
   const handleSubmitPostcard = () => {
-    if (!uploadedFile || !uploadTitle.trim()) {
+    if (!uploadTitle.trim()) {
       toast({
         title: "Error",
-        description: "Please provide a title and upload a file",
+        description: "Please provide a title",
         variant: "destructive",
       });
       return;
     }
 
-    uploadPostcardMutation.mutate({
-      semmCode: code,
-      semmType: 'equipment',
-      title: uploadTitle,
-      description: uploadDescription,
-      mediaType: uploadedFile.type,
-      mediaUrl: uploadedFile.url,
-      mediaDuration: uploadedFile.duration,
-      mediaSize: uploadedFile.size,
-    });
+    if (contentType === 'upload') {
+      if (!uploadedFile) {
+        toast({
+          title: "Error",
+          description: "Please upload a file",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      uploadPostcardMutation.mutate({
+        semmCode: code,
+        semmType: 'equipment',
+        title: uploadTitle,
+        description: uploadDescription,
+        mediaType: uploadedFile.type,
+        mediaUrl: uploadedFile.url,
+        mediaDuration: uploadedFile.duration,
+        mediaSize: uploadedFile.size,
+      });
+    } else {
+      if (!contentUrl.trim()) {
+        toast({
+          title: "Error",
+          description: "Please provide a valid URL",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const mediaType = detectUrlMediaType(contentUrl);
+      uploadPostcardMutation.mutate({
+        semmCode: code,
+        semmType: 'equipment',
+        title: uploadTitle,
+        description: uploadDescription,
+        mediaType: mediaType,
+        mediaUrl: contentUrl,
+        mediaDuration: 0,
+        mediaSize: 0,
+      });
+    }
   };
 
   const handleLikePostcard = (postcardId: string, isLiked: boolean) => {
@@ -634,21 +678,72 @@ export default function SemmEquipmentPage() {
                         data-testid="textarea-postcard-description"
                       />
                     </div>
+                    
+                    {/* Content Type Toggle */}
                     <div>
-                      <ObjectUploader
-                        maxNumberOfFiles={1}
-                        maxFileSize={524288000} // 500MB
-                        onGetUploadParameters={handleGetUploadParameters}
-                        onComplete={handleUploadComplete}
-                        data-testid="object-uploader-postcard"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Upload className="w-4 h-4" />
-                          <span>Upload Video/Photo/PDF</span>
-                          <span className="text-xs text-gray-500">(Max 500MB, Videos ≤90s)</span>
-                        </div>
-                      </ObjectUploader>
+                      <label className="text-sm font-medium mb-2 block">Content Type</label>
+                      <div className="flex rounded-lg border border-gray-300 p-1 bg-gray-50">
+                        <button
+                          type="button"
+                          onClick={() => setContentType('upload')}
+                          className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                            contentType === 'upload'
+                              ? 'bg-orange-500 text-white shadow-sm'
+                              : 'text-gray-600 hover:text-gray-900'
+                          }`}
+                          data-testid="toggle-upload"
+                        >
+                          <Upload className="w-4 h-4 mr-2 inline" />
+                          Upload File
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setContentType('url')}
+                          className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                            contentType === 'url'
+                              ? 'bg-orange-500 text-white shadow-sm'
+                              : 'text-gray-600 hover:text-gray-900'
+                          }`}
+                          data-testid="toggle-url"
+                        >
+                          <ExternalLink className="w-4 h-4 mr-2 inline" />
+                          Share Link
+                        </button>
+                      </div>
                     </div>
+
+                    {/* Upload Section */}
+                    {contentType === 'upload' ? (
+                      <div>
+                        <ObjectUploader
+                          maxNumberOfFiles={1}
+                          maxFileSize={524288000} // 500MB
+                          onGetUploadParameters={handleGetUploadParameters}
+                          onComplete={handleUploadComplete}
+                          data-testid="object-uploader-postcard"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Upload className="w-4 h-4" />
+                            <span>Upload Video/Photo/PDF</span>
+                            <span className="text-xs text-gray-500">(Max 500MB, Videos ≤90s)</span>
+                          </div>
+                        </ObjectUploader>
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="text-sm font-medium">Content URL</label>
+                        <Input
+                          value={contentUrl}
+                          onChange={(e) => setContentUrl(e.target.value)}
+                          placeholder="Paste YouTube Shorts, Instagram Reels, TikTok, or other video/image links..."
+                          data-testid="input-content-url"
+                          className="mt-1"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Supported: YouTube, Instagram, TikTok, Twitter/X, and direct image/video URLs
+                        </p>
+                      </div>
+                    )}
                     {uploadedFile && (
                       <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
                         <p className="text-sm font-medium text-green-800">File ready: {uploadedFile.name}</p>
@@ -664,7 +759,7 @@ export default function SemmEquipmentPage() {
                       </Button>
                       <Button 
                         onClick={handleSubmitPostcard}
-                        disabled={uploadPostcardMutation.isPending || !uploadedFile || !uploadTitle.trim()}
+                        disabled={uploadPostcardMutation.isPending || !uploadTitle.trim() || (contentType === 'upload' ? !uploadedFile : !contentUrl.trim())}
                         data-testid="button-submit-postcard"
                       >
                         {uploadPostcardMutation.isPending ? 'Publishing...' : 'Publish'}
@@ -721,6 +816,20 @@ export default function SemmEquipmentPage() {
                           Photo
                         </div>
                       </div>
+                    ) : postcard.media_type === 'link' ? (
+                      <div className="relative w-full h-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center p-4">
+                        <div className="text-center">
+                          <ExternalLink className="w-12 h-12 text-white mx-auto mb-2" />
+                          <p className="text-white text-sm font-medium">External Link</p>
+                          <p className="text-white text-xs opacity-90 mt-1 truncate">
+                            {postcard.media_url.replace(/^https?:\/\//, '').split('/')[0]}
+                          </p>
+                        </div>
+                        <div className="absolute top-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs flex items-center">
+                          <ExternalLink className="w-3 h-3 mr-1" />
+                          Link
+                        </div>
+                      </div>
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gray-200 rounded-t-xl">
                         <div className="text-center">
@@ -732,6 +841,18 @@ export default function SemmEquipmentPage() {
                           PDF
                         </div>
                       </div>
+                    )}
+
+                    {/* Clickable overlay for external links */}
+                    {postcard.media_type === 'link' && (
+                      <a 
+                        href={postcard.media_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="absolute inset-0 z-10"
+                        title="Open link in new tab"
+                        data-testid={`link-${postcard.id}`}
+                      />
                     )}
                   </div>
 
