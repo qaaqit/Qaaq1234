@@ -6557,6 +6557,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // REMOVED: Duplicate authenticated /api/questions route - using public route instead
 
+  // Debug endpoint for user ID analysis
+  app.get('/api/debug/user/:email', async (req, res) => {
+    try {
+      const { email } = req.params;
+      console.log(`🔍 DEBUG: Analyzing user ID mismatch for ${email}`);
+      
+      const debugData = {
+        email: email,
+        searchTerm: `%${email}%`,
+        userRecords: [],
+        questionsWithEmail: [],
+        questionsWithSimilarContent: [],
+        potentialMatches: [],
+        allQuestionAuthors: []
+      };
+      
+      // Check all user records with this email (broader search)
+      const userQuery = `
+        SELECT id, email, full_name, auth_provider, google_id, user_id, created_at 
+        FROM users 
+        WHERE email ILIKE $1 OR full_name ILIKE $1 OR id ILIKE $1
+        ORDER BY created_at DESC
+        LIMIT 20
+      `;
+      const userResult = await pool.query(userQuery, [`%${email}%`]);
+      debugData.userRecords = userResult.rows;
+      
+      // Check questions that mention this email or name
+      const emailMentionQuery = `
+        SELECT id, content, author_id, created_at, is_from_whatsapp
+        FROM questions 
+        WHERE content ILIKE $1
+        ORDER BY created_at DESC
+        LIMIT 15
+      `;
+      const emailMentionResult = await pool.query(emailMentionQuery, [`%${email}%`]);
+      debugData.questionsWithEmail = emailMentionResult.rows;
+      
+      // Check questions with similar content patterns (QBOT, WhatsApp, etc.)
+      const similarContentQuery = `
+        SELECT id, content, author_id, created_at, is_from_whatsapp
+        FROM questions 
+        WHERE (content ILIKE '%marine%' OR content ILIKE '%ship%' OR content ILIKE '%vessel%')
+          AND (content ILIKE '%user%' OR content ILIKE '%question%')
+        ORDER BY created_at DESC
+        LIMIT 10
+      `;
+      const similarContentResult = await pool.query(similarContentQuery);
+      debugData.questionsWithSimilarContent = similarContentResult.rows;
+      
+      // Get a sample of recent question authors to understand ID patterns
+      const authorsQuery = `
+        SELECT DISTINCT author_id, COUNT(*) as question_count, is_from_whatsapp
+        FROM questions 
+        WHERE created_at > NOW() - INTERVAL '30 days'
+        GROUP BY author_id, is_from_whatsapp
+        ORDER BY question_count DESC
+        LIMIT 20
+      `;
+      const authorsResult = await pool.query(authorsQuery);
+      debugData.allQuestionAuthors = authorsResult.rows;
+      
+      // For each user record, check their questions
+      for (const user of userResult.rows) {
+        const questionsQuery = `
+          SELECT id, content, author_id, created_at, is_from_whatsapp
+          FROM questions 
+          WHERE author_id = $1
+          ORDER BY created_at DESC
+          LIMIT 5
+        `;
+        const questionsResult = await pool.query(questionsQuery, [user.id]);
+        debugData.potentialMatches.push({
+          userId: user.id,
+          userEmail: user.email,
+          authProvider: user.auth_provider,
+          questionCount: questionsResult.rows.length,
+          questions: questionsResult.rows
+        });
+      }
+      
+      console.log(`✅ DEBUG: Found ${debugData.userRecords.length} user records, ${debugData.questionsWithEmail.length} questions mentioning email, ${debugData.allQuestionAuthors.length} recent authors`);
+      res.json(debugData);
+    } catch (error) {
+      console.error('❌ DEBUG: Error analyzing user:', error);
+      res.status(500).json({ error: 'Failed to analyze user', details: error.message });
+    }
+  });
+
   // Get user's own questions (for My Questions page in profile dropdown)
   app.get('/api/users/:userId/questions', authenticateToken, async (req, res) => {
     try {
@@ -6564,6 +6653,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const requestingUserId = req.userId;
       
       console.log(`📋 Fetching questions for user ${userId} (requested by ${requestingUserId})`);
+      
+      // Enhanced debug logging for this specific user
+      if (userId && (userId.includes('ashutosh') || requestingUserId?.includes('ashutosh'))) {
+        console.log(`🔍 ASHUTOSH DEBUG: UserID=${userId}, RequestingUserID=${requestingUserId}`);
+        
+        // Check if there are questions with different author_id formats
+        const debugQuery = `
+          SELECT DISTINCT author_id, COUNT(*) as count
+          FROM questions 
+          WHERE (author_id ILIKE '%ashutosh%' OR content ILIKE '%ashutosh%')
+          GROUP BY author_id
+          ORDER BY count DESC
+        `;
+        const debugResult = await pool.query(debugQuery);
+        console.log(`🔍 ASHUTOSH DEBUG: Found question author IDs:`, debugResult.rows);
+      }
       
       // Use direct SQL to get user's questions from parent QAAQ database
       const result = await pool.query(`
