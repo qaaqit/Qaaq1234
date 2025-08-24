@@ -2806,6 +2806,161 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Maritime rank extraction from chat history
+  app.post('/api/admin/extract-maritime-ranks', authenticateToken, isAdmin, async (req: any, res) => {
+    try {
+      console.log('🔍 Starting maritime rank extraction from chat history...');
+      
+      // Maritime rank patterns to search for
+      const rankPatterns = [
+        // Captain patterns
+        { pattern: /\b(captain|capt|master)\b/gi, rank: 'captain', confidence: 'high' },
+        
+        // Chief Officer patterns
+        { pattern: /\b(chief officer|chief mate|c\/?o|1st officer|first officer|1\/o|io)\b/gi, rank: 'chief_officer', confidence: 'high' },
+        
+        // 2nd Officer patterns
+        { pattern: /\b(2nd officer|second officer|2\/o|2o|second mate)\b/gi, rank: 'second_officer', confidence: 'high' },
+        
+        // 3rd Officer patterns
+        { pattern: /\b(3rd officer|third officer|3\/o|3o|third mate)\b/gi, rank: 'third_officer', confidence: 'high' },
+        
+        // Chief Engineer patterns
+        { pattern: /\b(chief engineer|c\/?e|chief eng|c\.eng)\b/gi, rank: 'chief_engineer', confidence: 'high' },
+        
+        // 2nd Engineer patterns
+        { pattern: /\b(2nd engineer|second engineer|2\/e|2e|2nd eng|second eng)\b/gi, rank: 'second_engineer', confidence: 'high' },
+        
+        // 3rd Engineer patterns
+        { pattern: /\b(3rd engineer|third engineer|3\/e|3e|3rd eng|third eng)\b/gi, rank: 'third_engineer', confidence: 'high' },
+        
+        // 4th Engineer patterns
+        { pattern: /\b(4th engineer|fourth engineer|4\/e|4e|4th eng|fourth eng)\b/gi, rank: 'fourth_engineer', confidence: 'high' },
+        
+        // Cadet patterns
+        { pattern: /\b(cadet|trainee|deck cadet|engine cadet|maritime cadet)\b/gi, rank: 'cadet', confidence: 'medium' },
+        
+        // ETO patterns
+        { pattern: /\b(eto|electro.?technical officer|electrical officer|electrician|electronics officer)\b/gi, rank: 'eto', confidence: 'high' },
+        
+        // Crew patterns (lower confidence to avoid false positives)
+        { pattern: /\b(able seaman|ordinary seaman|bosun|boatswain|ab|os|crew|seaman|wiper|oiler|fitter)\b/gi, rank: 'crew', confidence: 'medium' },
+        
+        // Shore-based patterns
+        { pattern: /\b(marine superintendent|technical superintendent|fleet manager|port engineer|dpa|csa|technical manager)\b/gi, rank: 'marine_superintendent', confidence: 'high' }
+      ];
+
+      // Get users without maritime_rank
+      const usersWithoutRank = await pool.query(`
+        SELECT id, full_name, email 
+        FROM users 
+        WHERE maritime_rank IS NULL 
+        LIMIT 100
+      `);
+
+      console.log(`🔍 Found ${usersWithoutRank.rows.length} users without maritime rank to analyze`);
+
+      let extractedRanks = [];
+      let updatedCount = 0;
+
+      for (const user of usersWithoutRank.rows) {
+        try {
+          // Search in multiple chat sources
+          const chatSources = [
+            // QBOT conversations from questions table
+            `SELECT content FROM questions WHERE author_id = '${user.id}' AND content IS NOT NULL`,
+            
+            // WhatsApp messages from questions table
+            `SELECT content FROM questions WHERE author_id = '${user.id}' AND is_from_whatsapp = true AND content IS NOT NULL`,
+            
+            // Rank chat messages (if they participated)
+            `SELECT message FROM rank_chat_messages WHERE sender_id = '${user.id}' AND message IS NOT NULL`,
+            
+            // User profile/notes if available
+            `SELECT COALESCE(full_name, '') || ' ' || COALESCE(city, '') || ' ' || COALESCE(country, '') as profile_text FROM users WHERE id = '${user.id}'`
+          ];
+
+          let allMessages = [];
+
+          for (const query of chatSources) {
+            try {
+              const result = await pool.query(query);
+              const messages = result.rows.map(row => 
+                Object.values(row)[0] || ''
+              ).filter(msg => msg && msg.length > 0);
+              allMessages = [...allMessages, ...messages];
+            } catch (queryError) {
+              // Continue with other sources if one fails
+              console.log(`Query failed for user ${user.id}, continuing...`);
+            }
+          }
+
+          if (allMessages.length === 0) continue;
+
+          // Combine all messages for analysis
+          const combinedText = allMessages.join(' ').toLowerCase();
+          
+          // Find rank patterns
+          let bestMatch = null;
+          let highestConfidence = 0;
+
+          for (const rankPattern of rankPatterns) {
+            const matches = combinedText.match(rankPattern.pattern);
+            if (matches) {
+              const confidence = rankPattern.confidence === 'high' ? 3 : 
+                               rankPattern.confidence === 'medium' ? 2 : 1;
+              
+              if (confidence > highestConfidence) {
+                highestConfidence = confidence;
+                bestMatch = {
+                  userId: user.id,
+                  fullName: user.full_name,
+                  extractedRank: rankPattern.rank,
+                  confidence: rankPattern.confidence,
+                  matchedText: matches[0],
+                  source: 'chat_analysis'
+                };
+              }
+            }
+          }
+
+          if (bestMatch && highestConfidence >= 2) { // Only high/medium confidence matches
+            // Update user's maritime rank
+            await pool.query(`
+              UPDATE users 
+              SET maritime_rank = $1, rank = $1
+              WHERE id = $2
+            `, [bestMatch.extractedRank, user.id]);
+
+            extractedRanks.push(bestMatch);
+            updatedCount++;
+            
+            console.log(`✅ Updated ${user.full_name} with rank: ${bestMatch.extractedRank} (${bestMatch.confidence} confidence)`);
+          }
+        } catch (userError) {
+          console.log(`Error processing user ${user.id}:`, userError.message);
+        }
+      }
+
+      console.log(`🎯 Maritime rank extraction completed. Updated ${updatedCount} users.`);
+      
+      res.json({
+        success: true,
+        extractedRanks,
+        updatedCount,
+        analyzedUsers: usersWithoutRank.rows.length,
+        message: `Successfully extracted and updated ${updatedCount} maritime ranks from chat history`
+      });
+
+    } catch (error) {
+      console.error("Error extracting maritime ranks:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to extract maritime ranks from chat history" 
+      });
+    }
+  });
+
   app.get('/api/admin/users', authenticateToken, isAdmin, async (req: any, res) => {
     try {
       const result = await pool.query(`
