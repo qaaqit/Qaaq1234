@@ -54,8 +54,7 @@ export function RankGroupsPanel() {
       <div className="p-6">
         <div className="text-center text-gray-500 py-12">
           <Anchor className="h-16 w-16 mx-auto mb-4 opacity-50" />
-          <p className="text-lg font-medium">No Maritime Rank Found</p>
-          <p className="text-sm">Please update your profile with your maritime rank to access rank groups.</p>
+          <p className="text-lg font-medium">Maritime Rank based communities are being formed. Please keep your profile updated to be a member</p>
         </div>
       </div>
     );
