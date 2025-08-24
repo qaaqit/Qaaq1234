@@ -1,10 +1,15 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
-import { ArrowLeft, Share2, Home, ChevronRight, Edit3, RotateCcw, ChevronUp, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Share2, Home, ChevronRight, Edit3, RotateCcw, ChevronUp, ChevronDown, Upload, Heart, Share, Play, FileText, Image, Video, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { ObjectUploader } from '@/components/ObjectUploader';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 
 // Bottom edge roll out flip card animation
 const FlipCard = ({ char, index, large = false }: { char: string; index: number; large?: boolean }) => {
@@ -89,6 +94,13 @@ export default function SemmEquipmentPage() {
 
   // Get user authentication info
   const { user, isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  
+  // Postcards state
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [uploadTitle, setUploadTitle] = useState('');
+  const [uploadDescription, setUploadDescription] = useState('');
+  const [uploadedFile, setUploadedFile] = useState<any>(null);
   const isAdmin = user?.isAdmin || user?.role === 'admin';
 
   // Admin state
@@ -102,6 +114,145 @@ export default function SemmEquipmentPage() {
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 3,
   });
+
+  // Fetch postcards for this equipment
+  const { data: postcardsData, isLoading: postcardsLoading } = useQuery({
+    queryKey: ['/api/semm/postcards', code, 'equipment'],
+    enabled: !!code,
+    staleTime: 60000, // 1 minute
+  });
+
+  // Upload postcard mutation
+  const uploadPostcardMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return apiRequest('/api/semm/postcards', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/semm/postcards', code, 'equipment'] });
+      setIsUploadDialogOpen(false);
+      setUploadTitle('');
+      setUploadDescription('');
+      setUploadedFile(null);
+      toast({
+        title: "Success",
+        description: "Postcard uploaded successfully!",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to upload postcard",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Like postcard mutation
+  const likePostcardMutation = useMutation({
+    mutationFn: async ({ postcardId, isLiked }: { postcardId: string; isLiked: boolean }) => {
+      const method = isLiked ? 'DELETE' : 'POST';
+      return apiRequest(`/api/semm/postcards/${postcardId}/like`, { method });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/semm/postcards', code, 'equipment'] });
+    },
+  });
+
+  // Share postcard mutation
+  const sharePostcardMutation = useMutation({
+    mutationFn: async (postcardId: string) => {
+      return apiRequest(`/api/semm/postcards/${postcardId}/share`, {
+        method: 'POST',
+        body: JSON.stringify({ shareType: 'link' }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/semm/postcards', code, 'equipment'] });
+      toast({
+        title: "Shared",
+        description: "Postcard shared successfully!",
+      });
+    },
+  });
+
+  // Upload functionality
+  const handleGetUploadParameters = async () => {
+    try {
+      const response = await apiRequest('/api/semm/postcards/upload', {
+        method: 'POST',
+      });
+      return {
+        method: 'PUT' as const,
+        url: response.uploadURL,
+      };
+    } catch (error) {
+      console.error('Error getting upload URL:', error);
+      throw error;
+    }
+  };
+
+  const handleUploadComplete = (result: any) => {
+    const uploadedFile = result.successful[0];
+    if (uploadedFile) {
+      const file = uploadedFile.data as File;
+      const mediaType = file.type.startsWith('video/') ? 'video' : 
+                       file.type.startsWith('image/') ? 'image' : 'document';
+      
+      // For videos, we need to get duration
+      let mediaDuration = 0;
+      if (mediaType === 'video') {
+        const video = document.createElement('video');
+        video.src = URL.createObjectURL(file);
+        video.onloadedmetadata = () => {
+          mediaDuration = video.duration;
+          URL.revokeObjectURL(video.src);
+        };
+      }
+
+      setUploadedFile({
+        url: uploadedFile.uploadURL,
+        type: mediaType,
+        size: file.size,
+        duration: mediaDuration,
+        name: file.name,
+      });
+    }
+  };
+
+  const handleSubmitPostcard = () => {
+    if (!uploadedFile || !uploadTitle.trim()) {
+      toast({
+        title: "Error",
+        description: "Please provide a title and upload a file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    uploadPostcardMutation.mutate({
+      semmCode: code,
+      semmType: 'equipment',
+      title: uploadTitle,
+      description: uploadDescription,
+      mediaType: uploadedFile.type,
+      mediaUrl: uploadedFile.url,
+      mediaDuration: uploadedFile.duration,
+      mediaSize: uploadedFile.size,
+    });
+  };
+
+  const handleLikePostcard = (postcardId: string, isLiked: boolean) => {
+    likePostcardMutation.mutate({ postcardId, isLiked });
+  };
+
+  const handleSharePostcard = (postcardId: string) => {
+    sharePostcardMutation.mutate(postcardId);
+  };
+
+  const postcards = postcardsData?.postcards || [];
 
   if (isLoading) {
     return (
@@ -424,6 +575,212 @@ export default function SemmEquipmentPage() {
             <p className="text-lg text-gray-600">No makes found for this equipment.</p>
           </div>
         )}
+
+        {/* SEMM Postcards Section */}
+        <div className="mt-12">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">Equipment Postcards</h2>
+            {isAuthenticated && (
+              <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-orange-500 hover:bg-orange-600 text-white" data-testid="button-upload-postcard">
+                    <Upload className="w-4 h-4 mr-2" />
+                    Share Content
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Share Equipment Content</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium">Title</label>
+                      <Input
+                        value={uploadTitle}
+                        onChange={(e) => setUploadTitle(e.target.value)}
+                        placeholder="Add a title for your content..."
+                        data-testid="input-postcard-title"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Description (Optional)</label>
+                      <Textarea
+                        value={uploadDescription}
+                        onChange={(e) => setUploadDescription(e.target.value)}
+                        placeholder="Add a description..."
+                        data-testid="textarea-postcard-description"
+                      />
+                    </div>
+                    <div>
+                      <ObjectUploader
+                        maxNumberOfFiles={1}
+                        maxFileSize={524288000} // 500MB
+                        onGetUploadParameters={handleGetUploadParameters}
+                        onComplete={handleUploadComplete}
+                        data-testid="object-uploader-postcard"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Upload className="w-4 h-4" />
+                          <span>Upload Video/Photo/PDF</span>
+                          <span className="text-xs text-gray-500">(Max 500MB, Videos ≤90s)</span>
+                        </div>
+                      </ObjectUploader>
+                    </div>
+                    {uploadedFile && (
+                      <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <p className="text-sm font-medium text-green-800">File ready: {uploadedFile.name}</p>
+                        <p className="text-xs text-green-600">
+                          {uploadedFile.type} • {(uploadedFile.size / 1024 / 1024).toFixed(1)}MB
+                          {uploadedFile.duration > 0 && ` • ${uploadedFile.duration.toFixed(1)}s`}
+                        </p>
+                      </div>
+                    )}
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={() => setIsUploadDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button 
+                        onClick={handleSubmitPostcard}
+                        disabled={uploadPostcardMutation.isPending || !uploadedFile || !uploadTitle.trim()}
+                        data-testid="button-submit-postcard"
+                      >
+                        {uploadPostcardMutation.isPending ? 'Publishing...' : 'Publish'}
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
+
+          {/* Postcards Grid - 9:16 aspect ratio */}
+          {postcardsLoading ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="bg-white rounded-xl shadow-lg aspect-[9/16] animate-pulse">
+                  <div className="bg-gray-300 rounded-xl w-full h-full"></div>
+                </div>
+              ))}
+            </div>
+          ) : postcards.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              {postcards.map((postcard: any) => (
+                <div 
+                  key={postcard.id}
+                  className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden aspect-[9/16] group hover:shadow-xl transition-shadow"
+                  data-testid={`postcard-${postcard.id}`}
+                >
+                  {/* Media Content */}
+                  <div className="relative h-2/3 bg-gray-100">
+                    {postcard.media_type === 'video' ? (
+                      <div className="relative w-full h-full">
+                        <video 
+                          className="w-full h-full object-cover rounded-t-xl"
+                          controls
+                          poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 600'%3E%3Crect width='400' height='600' fill='%23f3f4f6'/%3E%3C/svg%3E"
+                        >
+                          <source src={postcard.media_url} type="video/mp4" />
+                        </video>
+                        <div className="absolute top-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs flex items-center">
+                          <Video className="w-3 h-3 mr-1" />
+                          {postcard.media_duration && `${Math.round(postcard.media_duration)}s`}
+                        </div>
+                      </div>
+                    ) : postcard.media_type === 'image' ? (
+                      <div className="relative w-full h-full">
+                        <img 
+                          src={postcard.media_url} 
+                          alt={postcard.title}
+                          className="w-full h-full object-cover rounded-t-xl"
+                        />
+                        <div className="absolute top-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs flex items-center">
+                          <Image className="w-3 h-3 mr-1" />
+                          Photo
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gray-200 rounded-t-xl">
+                        <div className="text-center">
+                          <FileText className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                          <p className="text-xs text-gray-500">PDF Document</p>
+                        </div>
+                        <div className="absolute top-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs flex items-center">
+                          <FileText className="w-3 h-3 mr-1" />
+                          PDF
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-3 h-1/3 flex flex-col">
+                    <h3 className="font-semibold text-sm text-gray-900 line-clamp-2 mb-1">
+                      {postcard.title}
+                    </h3>
+                    {postcard.description && (
+                      <p className="text-xs text-gray-600 line-clamp-2 mb-2">
+                        {postcard.description}
+                      </p>
+                    )}
+                    
+                    {/* Author and Actions */}
+                    <div className="mt-auto flex items-center justify-between text-xs text-gray-500">
+                      <span className="truncate">
+                        {postcard.author_name || postcard.author_nickname || 'Anonymous'}
+                      </span>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => handleLikePostcard(postcard.id, postcard.isLiked)}
+                          className={`flex items-center space-x-1 transition-colors ${
+                            postcard.isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-500'
+                          }`}
+                          data-testid={`button-like-${postcard.id}`}
+                        >
+                          <Heart className={`w-3 h-3 ${postcard.isLiked ? 'fill-current' : ''}`} />
+                          <span>{postcard.likes_count || 0}</span>
+                        </button>
+                        <button
+                          onClick={() => handleSharePostcard(postcard.id)}
+                          className="flex items-center space-x-1 text-gray-400 hover:text-blue-500 transition-colors"
+                          data-testid={`button-share-${postcard.id}`}
+                        >
+                          <Share className="w-3 h-3" />
+                          <span>{postcard.shares_count || 0}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8 text-center">
+              <div className="flex flex-col items-center space-y-4">
+                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
+                  <Upload className="w-8 h-8 text-orange-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No content shared yet</h3>
+                  <p className="text-gray-600 mb-4">
+                    Be the first to share photos, videos, or documents about this equipment.
+                  </p>
+                  {isAuthenticated ? (
+                    <Button 
+                      onClick={() => setIsUploadDialogOpen(true)}
+                      className="bg-orange-500 hover:bg-orange-600 text-white"
+                      data-testid="button-first-upload"
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Share First Content
+                    </Button>
+                  ) : (
+                    <p className="text-sm text-gray-500">Sign in to share content</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
 
       </div>
     </div>

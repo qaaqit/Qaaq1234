@@ -10,9 +10,10 @@ interface ObjectUploaderProps {
     method: "PUT";
     url: string;
   }>;
-  onComplete?: (result: { successful: Array<{ uploadURL: string; name: string }> }) => void;
+  onComplete?: (result: { successful: Array<{ uploadURL: string; name: string; type: string; size: number }> }) => void;
   buttonClassName?: string;
   children: ReactNode;
+  acceptedFileTypes?: string[];
 }
 
 /**
@@ -27,12 +28,13 @@ interface ObjectUploaderProps {
  * @param props - Component props
  */
 export function ObjectUploader({
-  maxNumberOfFiles = 5,
-  maxFileSize = 52428800, // 50MB default
+  maxNumberOfFiles = 1,
+  maxFileSize = 524288000, // 500MB default for SEMM postcards
   onGetUploadParameters,
   onComplete,
   buttonClassName,
   children,
+  acceptedFileTypes = [".jpg",".jpeg",".png",".pdf",".mp4",".mov",".avi"],
 }: ObjectUploaderProps) {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -80,7 +82,9 @@ export function ObjectUploader({
           if (uploadResponse.ok) {
             uploadedFiles.push({
               uploadURL: url.split('?')[0], // Remove query parameters
-              name: file.name
+              name: file.name,
+              type: file.type,
+              size: file.size
             });
           }
         } catch (error) {
@@ -117,7 +121,7 @@ export function ObjectUploader({
         type="file"
         multiple
         onChange={handleFileChange}
-        accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.txt,.mp4,.mov,.avi"
+        accept={acceptedFileTypes.join(',')}
         style={{ display: 'none' }}
       />
     </div>
