@@ -1840,7 +1840,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           country,
           port,
           city,
-          current_ship_name,
+
           current_ship_imo,
           last_company,
           last_ship
@@ -2074,7 +2074,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           whatsapp_number,
           maritime_rank,
           last_company,
-          current_ship_name,
+
           port,
           country,
           city,
@@ -2088,7 +2088,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           LOWER(full_name) = $1 OR
           LOWER(maritime_rank) = $1 OR  
           LOWER(last_company) = $1 OR
-          LOWER(current_ship_name) = $1 OR
           LOWER(email) = $1
         ORDER BY COALESCE(question_count, 0) DESC
         LIMIT 10
@@ -2103,7 +2102,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           whatsapp_number,
           maritime_rank,
           last_company,
-          current_ship_name,
+
           port,
           country,
           city,
@@ -2146,7 +2145,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: user.email,
         maritimeRank: user.maritime_rank || 'Professional',
         company: user.last_company || '',
-        lastShip: user.current_ship_name || '',
+        lastShip: user.last_ship || '',
         port: user.port || user.city || '',
         country: user.country || '',
         questionCount: parseInt(user.question_count) || 0,
@@ -2162,7 +2161,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: user.email,
         maritimeRank: user.maritime_rank || 'Professional',
         company: user.last_company || '',
-        lastShip: user.current_ship_name || '',
+        lastShip: user.last_ship || '',
         port: user.port || user.city || '',
         country: user.country || '',
         questionCount: parseInt(user.question_count) || 0,
