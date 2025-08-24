@@ -2819,6 +2819,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all premium subscribers details
+  app.get('/api/premium-subscribers', async (req, res) => {
+    try {
+      console.log('📊 Fetching all premium subscribers...');
+      
+      const premiumUsers = await pool.query(`
+        SELECT 
+          id,
+          email,
+          full_name,
+          user_type,
+          is_admin,
+          premium_expires_at,
+          created_at,
+          last_activity_at,
+          city,
+          maritime_rank,
+          subscription_status,
+          subscription_plan
+        FROM users 
+        WHERE user_type = 'Premium' 
+        ORDER BY created_at DESC
+      `);
+      
+      console.log(`✅ Found ${premiumUsers.rows.length} premium subscribers`);
+      
+      res.json({
+        success: true,
+        count: premiumUsers.rows.length,
+        subscribers: premiumUsers.rows
+      });
+      
+    } catch (error) {
+      console.error("Error fetching premium subscribers:", error);
+      res.status(500).json({ message: "Failed to fetch premium subscribers" });
+    }
+  });
+
   // Check specific user premium status by email
   app.get('/api/check-user-status/:email', async (req, res) => {
     try {
@@ -2863,6 +2901,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Maritime rank statistics with admin setup
   app.get('/api/maritime-rank-stats', async (req, res) => {
     try {
+      // Debug logging removed
+      
+      // Handle premium users request
+      if (req.query.premium_users === 'true') {
+        console.log('📊 Fetching all premium subscribers...');
+        
+        const premiumUsers = await pool.query(`
+          SELECT 
+            id,
+            email,
+            full_name,
+            user_type,
+            is_admin,
+            premium_expires_at,
+            created_at,
+            last_activity_at,
+            city,
+            maritime_rank,
+            subscription_status,
+            subscription_plan
+          FROM users 
+          WHERE user_type = 'Premium' 
+          ORDER BY created_at DESC
+        `);
+        
+        console.log(`✅ Found ${premiumUsers.rows.length} premium subscribers`);
+        
+        return res.json({
+          success: true,
+          count: premiumUsers.rows.length,
+          subscribers: premiumUsers.rows
+        });
+      }
+      
       // First handle admin setup if requested via query parameter
       if (req.query.setup_admin === 'true') {
         console.log('🔧 Setting up admin accounts as requested...');
