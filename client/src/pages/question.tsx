@@ -378,14 +378,14 @@ export default function QuestionPage() {
             <div className="space-y-4">
               {answers.map((answer: Answer) => (
                 <div key={answer.id} className="border-b border-gray-200 pb-4 last:border-0">
-                  {(answer.author_name === 'QG' || answer.author_name === 'QAAQ GPT') ? (
+                  {(answer.author_name === 'QG' || answer.author_name === 'QAAQ GPT' || answer.author_name === 'QBOT' || answer.author_id === 'bot_qaaq_001') ? (
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
                         <p className="text-gray-700 whitespace-pre-wrap">
-                          <span className="font-medium text-gray-900">Ans: </span>{answer.content}
+                          <span className="font-medium text-gray-900">QBOT: </span>{answer.content}
                         </p>
                         <p className="text-sm text-gray-600 mt-1">
-                          {formatRank(answer.author_rank)} • {formatDate(answer.created_at)}
+                          AI Bot Response • {formatDate(answer.created_at)}
                         </p>
                       </div>
                       {answer.is_best_answer && (
