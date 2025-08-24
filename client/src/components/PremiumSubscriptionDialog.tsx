@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Crown, Check, Loader2, ExternalLink, Sparkles } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 import { apiRequest } from "@/lib/queryClient";
 
@@ -65,6 +66,7 @@ export function PremiumSubscriptionDialog({
   onOpenChange,
   defaultPlanType = "premium",
 }: PremiumSubscriptionDialogProps) {
+  const { t } = useLanguage();
   const [selectedPlan, setSelectedPlan] = useState<"premium" | "super_user">(
     defaultPlanType,
   );
@@ -208,9 +210,9 @@ export function PremiumSubscriptionDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-2xl">
             <Crown className="h-6 w-6 text-orange-500" />
-            premium
+            {t('premium.dialog.title')}
           </DialogTitle>
-          <DialogDescription>Advanced reasoning model</DialogDescription>
+          <DialogDescription>{t('premium.advanced_reasoning')}</DialogDescription>
         </DialogHeader>
 
         {/* Current Status */}
@@ -220,12 +222,12 @@ export function PremiumSubscriptionDialog({
               <Sparkles className="h-5 w-5 text-green-600" />
               <span className="font-semibold text-green-800">
                 {userStatus.isSuperUser
-                  ? "Super User Active"
-                  : "Premium Active"}
+                  ? t('premium.super_user_active')
+                  : t('premium.active')}
               </span>
               {userStatus.premiumExpiresAt && (
                 <span className="text-sm text-green-600">
-                  • Expires{" "}
+                  • {t('premium.expires')}{" "}
                   {new Date(userStatus.premiumExpiresAt).toLocaleDateString()}
                 </span>
               )}
@@ -240,11 +242,11 @@ export function PremiumSubscriptionDialog({
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="premium" className="flex items-center gap-2">
               <Crown className="h-4 w-4" />
-              Premium
+              {t('premium.dialog.title')}
             </TabsTrigger>
             <TabsTrigger value="super_user" className="flex items-center gap-2">
               <Sparkles className="h-4 w-4" />
-              Coming Soon plans
+              {t('premium.coming_soon')}
             </TabsTrigger>
           </TabsList>
 
@@ -257,14 +259,13 @@ export function PremiumSubscriptionDialog({
               >
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
-                    Premium Monthly
+                    {t('premium.monthly')}
                     {selectedPeriod === "monthly" && (
-                      <Badge variant="default">Selected</Badge>
+                      <Badge variant="default">{t('premium.selected')}</Badge>
                     )}
                   </CardTitle>
                   <CardDescription>
-                    {formatPrice(plans.premium?.monthly?.amount || 29900)} per
-                    month
+                    {formatPrice(plans.premium?.monthly?.amount || 29900)} {t('premium.per_month')}
                   </CardDescription>
                 </CardHeader>
               </Card>

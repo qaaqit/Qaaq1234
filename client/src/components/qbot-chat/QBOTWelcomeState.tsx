@@ -1,6 +1,9 @@
 import { MessageCircle } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function QBOTWelcomeState() {
+  const { t } = useLanguage();
+  
   return (
     <div className="h-full flex items-center justify-center p-8 animate-in fade-in duration-500">
       <div className="text-center max-w-md">
@@ -11,12 +14,12 @@ export default function QBOTWelcomeState() {
 
         {/* Welcome Text */}
         <h3 className="text-2xl font-semibold text-gray-600 mb-4">
-          Welcome onboard!
+          {t('chat.welcome.title')}
         </h3>
 
         {/* Description */}
         <p className="text-gray-500 leading-relaxed">
-          Non Sailors! ur Goddess has no Dominion here.
+          {t('chat.welcome.description')}
         </p>
       </div>
     </div>
