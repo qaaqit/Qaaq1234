@@ -74,13 +74,20 @@ export class AIService {
 
       console.log('🤖 OpenAI: Making API request...');
       
+      // Use GPT-5 for premium users, GPT-4o-mini for free users
+      const isPremium = user?.isPremium || user?.isAdmin || false;
+      const model = isPremium ? "gpt-4o" : "gpt-4o-mini";  // Using gpt-4o as premium model
+      const maxTokens = isPremium ? 300 : 150;  // More tokens for premium users
+      
+      console.log(`🚀 Using ${model} model for ${isPremium ? 'PREMIUM' : 'FREE'} user`);
+      
       const response = await this.openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: message }
         ],
-        max_tokens: 150,
+        max_tokens: maxTokens,
         temperature: 0.7,
       });
 
