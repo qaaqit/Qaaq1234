@@ -1,11 +1,12 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
-import { ArrowLeft, Share2, Home, ChevronRight, Edit3, RotateCcw, ChevronUp, ChevronDown, Upload, Heart, Share, Play, FileText, Image, Video, Eye, ExternalLink, Paperclip, Send } from 'lucide-react';
+import { ArrowLeft, Share2, Home, ChevronRight, Edit3, RotateCcw, ChevronUp, ChevronDown, Upload, Heart, Share, Play, FileText, Image, Video, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { ObjectUploader } from '@/components/ObjectUploader';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
@@ -96,9 +97,10 @@ export default function SemmEquipmentPage() {
   const { toast } = useToast();
   
   // Postcards state
-  const [contentText, setContentText] = useState('');
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [uploadTitle, setUploadTitle] = useState('');
+  const [uploadDescription, setUploadDescription] = useState('');
   const [uploadedFile, setUploadedFile] = useState<any>(null);
-  const [contentType, setContentType] = useState<'upload' | 'url'>('upload');
   const isAdmin = user?.isAdmin || user?.role === 'admin';
 
   // Admin state
@@ -127,12 +129,13 @@ export default function SemmEquipmentPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/semm/postcards', code, 'equipment'] });
-      setContentText('');
+      setIsUploadDialogOpen(false);
+      setUploadTitle('');
+      setUploadDescription('');
       setUploadedFile(null);
-      setContentType('upload');
       toast({
         title: "Success",
-        description: "Content shared successfully!",
+        description: "Postcard uploaded successfully!",
       });
     },
     onError: (error: any) => {
@@ -172,17 +175,7 @@ export default function SemmEquipmentPage() {
   // Upload functionality
   const handleGetUploadParameters = async () => {
     try {
-      console.log('🔄 Requesting upload URL...');
       const response: any = await apiRequest('/api/semm/postcards/upload', 'POST');
-      console.log('🔍 Server response:', response);
-      console.log('🔍 Response type:', typeof response);
-      console.log('🔍 Response keys:', Object.keys(response || {}));
-      
-      if (!response || !response.uploadURL) {
-        console.error('❌ Invalid server response:', response);
-        throw new Error('Server did not return upload URL');
-      }
-      
       return {
         method: 'PUT' as const,
         url: response.uploadURL,
@@ -242,94 +235,26 @@ export default function SemmEquipmentPage() {
     }
   };
 
-  const extractUrlFromText = (text: string) => {
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    const matches = text.match(urlRegex);
-    return matches ? matches[0] : null;
-  };
-
-  const detectUrlMediaType = (url: string) => {
-    if (url.includes('youtube.com') || url.includes('youtu.be')) return 'video';
-    if (url.includes('instagram.com')) return 'video';
-    if (url.includes('tiktok.com')) return 'video';
-    if (url.includes('twitter.com') || url.includes('x.com')) return 'video';
-    return 'link';
-  };
-
-  const getEmbedUrl = (url: string) => {
-    // Convert YouTube URLs to embed format
-    if (url.includes('youtube.com/watch?v=')) {
-      const videoId = url.split('v=')[1].split('&')[0];
-      return `https://www.youtube.com/embed/${videoId}`;
-    }
-    if (url.includes('youtu.be/')) {
-      const videoId = url.split('youtu.be/')[1].split('?')[0];
-      return `https://www.youtube.com/embed/${videoId}`;
-    }
-    // For Instagram, TikTok etc., we'll show the original URL for now
-    // These platforms have more complex embedding requirements
-    return url;
-  };
-
   const handleSubmitPostcard = () => {
-    if (!contentText.trim()) {
+    if (!uploadedFile || !uploadTitle.trim()) {
       toast({
         title: "Error",
-        description: "Please add some content or paste a link",
+        description: "Please provide a title and upload a file",
         variant: "destructive",
       });
       return;
     }
 
-    // Check if there's a URL in the text
-    const extractedUrl = extractUrlFromText(contentText);
-    const isUrlPost = extractedUrl && contentType === 'url';
-
-    if (contentType === 'upload') {
-      if (!uploadedFile) {
-        toast({
-          title: "Error",
-          description: "Please upload a file",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      uploadPostcardMutation.mutate({
-        semmCode: code,
-        semmType: 'equipment',
-        title: contentText.split('\n')[0] || 'Untitled', // Use first line as title
-        description: contentText,
-        mediaType: uploadedFile.type,
-        mediaUrl: uploadedFile.url,
-        mediaDuration: uploadedFile.duration,
-        mediaSize: uploadedFile.size,
-      });
-    } else if (isUrlPost) {
-      const mediaType = detectUrlMediaType(extractedUrl);
-      uploadPostcardMutation.mutate({
-        semmCode: code,
-        semmType: 'equipment',
-        title: contentText.replace(extractedUrl, '').trim() || 'Shared Link', // Remove URL from title
-        description: contentText,
-        mediaType: mediaType,
-        mediaUrl: extractedUrl,
-        mediaDuration: 0,
-        mediaSize: 0,
-      });
-    } else {
-      // Text-only post
-      uploadPostcardMutation.mutate({
-        semmCode: code,
-        semmType: 'equipment',
-        title: contentText.split('\n')[0] || 'Post',
-        description: contentText,
-        mediaType: 'text',
-        mediaUrl: '',
-        mediaDuration: 0,
-        mediaSize: 0,
-      });
-    }
+    uploadPostcardMutation.mutate({
+      semmCode: code,
+      semmType: 'equipment',
+      title: uploadTitle,
+      description: uploadDescription,
+      mediaType: uploadedFile.type,
+      mediaUrl: uploadedFile.url,
+      mediaDuration: uploadedFile.duration,
+      mediaSize: uploadedFile.size,
+    });
   };
 
   const handleLikePostcard = (postcardId: string, isLiked: boolean) => {
@@ -668,63 +593,78 @@ export default function SemmEquipmentPage() {
         <div className="mt-12">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-gray-900">Equipment Postcards</h2>
-          </div>
-
-          {/* Inline Share Content Box */}
-          {isAuthenticated && (
-            <div className="mb-6 bg-white rounded-xl shadow-lg border border-gray-200 p-4">
-              <div className="flex items-start space-x-3">
-                <div className="flex-1">
-                  <Textarea
-                    value={contentText}
-                    onChange={(e) => setContentText(e.target.value)}
-                    placeholder="Share your thoughts or paste a YouTube/Instagram/TikTok link to embed it..."
-                    className="min-h-[80px] resize-none border-0 shadow-none focus:ring-0 p-0"
-                    data-testid="textarea-content"
-                  />
-                  {uploadedFile && (
-                    <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-sm">
-                      <span className="text-green-800 font-medium">📎 {uploadedFile.name}</span>
-                      <span className="text-green-600 text-xs ml-2">
-                        {uploadedFile.type} • {(uploadedFile.size / 1024 / 1024).toFixed(1)}MB
-                        {uploadedFile.duration > 0 && ` • ${uploadedFile.duration.toFixed(1)}s`}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-center space-x-2">
-                  {/* File Upload Button */}
-                  <ObjectUploader
-                    maxNumberOfFiles={1}
-                    maxFileSize={524288000} // 500MB
-                    onGetUploadParameters={handleGetUploadParameters}
-                    onComplete={handleUploadComplete}
-                    buttonClassName="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
-                    data-testid="clip-upload"
-                  >
-                    <Paperclip className="w-5 h-5" />
-                  </ObjectUploader>
-                  
-                  {/* Submit Button */}
-                  <Button
-                    onClick={handleSubmitPostcard}
-                    disabled={uploadPostcardMutation.isPending || !contentText.trim()}
-                    className="p-2 bg-orange-500 hover:bg-orange-600 text-white rounded-full"
-                    data-testid="button-submit-postcard"
-                  >
-                    {uploadPostcardMutation.isPending ? (
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <Send className="w-5 h-5" />
-                    )}
+            {isAuthenticated && (
+              <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-orange-500 hover:bg-orange-600 text-white" data-testid="button-upload-postcard">
+                    <Upload className="w-4 h-4 mr-2" />
+                    Share Content
                   </Button>
-                </div>
-              </div>
-              <p className="text-xs text-gray-500 mt-2">
-                💡 Paste YouTube Shorts, Instagram Reels, or TikTok links and they'll be embedded for viewers to watch directly!
-              </p>
-            </div>
-          )}
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Share Equipment Content</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium">Title</label>
+                      <Input
+                        value={uploadTitle}
+                        onChange={(e) => setUploadTitle(e.target.value)}
+                        placeholder="Add a title for your content..."
+                        data-testid="input-postcard-title"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Description (Optional)</label>
+                      <Textarea
+                        value={uploadDescription}
+                        onChange={(e) => setUploadDescription(e.target.value)}
+                        placeholder="Add a description..."
+                        data-testid="textarea-postcard-description"
+                      />
+                    </div>
+                    <div>
+                      <ObjectUploader
+                        maxNumberOfFiles={1}
+                        maxFileSize={524288000} // 500MB
+                        onGetUploadParameters={handleGetUploadParameters}
+                        onComplete={handleUploadComplete}
+                        data-testid="object-uploader-postcard"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Upload className="w-4 h-4" />
+                          <span>Upload Video/Photo/PDF</span>
+                          <span className="text-xs text-gray-500">(Max 500MB, Videos ≤90s)</span>
+                        </div>
+                      </ObjectUploader>
+                    </div>
+                    {uploadedFile && (
+                      <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <p className="text-sm font-medium text-green-800">File ready: {uploadedFile.name}</p>
+                        <p className="text-xs text-green-600">
+                          {uploadedFile.type} • {(uploadedFile.size / 1024 / 1024).toFixed(1)}MB
+                          {uploadedFile.duration > 0 && ` • ${uploadedFile.duration.toFixed(1)}s`}
+                        </p>
+                      </div>
+                    )}
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={() => setIsUploadDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button 
+                        onClick={handleSubmitPostcard}
+                        disabled={uploadPostcardMutation.isPending || !uploadedFile || !uploadTitle.trim()}
+                        data-testid="button-submit-postcard"
+                      >
+                        {uploadPostcardMutation.isPending ? 'Publishing...' : 'Publish'}
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
 
           {/* Postcards Grid - 9:16 aspect ratio */}
           {postcardsLoading ? (
@@ -771,83 +711,6 @@ export default function SemmEquipmentPage() {
                           Photo
                         </div>
                       </div>
-                    ) : postcard.media_type === 'video' && (postcard.media_url.includes('youtube.com') || postcard.media_url.includes('youtu.be')) ? (
-                      <div className="relative w-full h-full">
-                        <iframe
-                          src={getEmbedUrl(postcard.media_url)}
-                          className="w-full h-full rounded-t-xl"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                          title={postcard.title}
-                        />
-                        <div className="absolute top-2 left-2 bg-red-600 text-white px-2 py-1 rounded text-xs flex items-center">
-                          <Video className="w-3 h-3 mr-1" />
-                          YouTube
-                        </div>
-                      </div>
-                    ) : postcard.media_type === 'video' && postcard.media_url.includes('instagram.com') ? (
-                      <div className="relative w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center p-4">
-                        <div className="text-center">
-                          <Video className="w-12 h-12 text-white mx-auto mb-2" />
-                          <p className="text-white text-sm font-medium">Instagram Reel</p>
-                          <a 
-                            href={postcard.media_url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-white text-xs underline hover:no-underline"
-                          >
-                            View on Instagram
-                          </a>
-                        </div>
-                        <div className="absolute top-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs flex items-center">
-                          <Video className="w-3 h-3 mr-1" />
-                          Reel
-                        </div>
-                      </div>
-                    ) : postcard.media_type === 'video' && postcard.media_url.includes('tiktok.com') ? (
-                      <div className="relative w-full h-full bg-gradient-to-br from-black to-gray-800 flex items-center justify-center p-4">
-                        <div className="text-center">
-                          <Video className="w-12 h-12 text-white mx-auto mb-2" />
-                          <p className="text-white text-sm font-medium">TikTok Video</p>
-                          <a 
-                            href={postcard.media_url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-white text-xs underline hover:no-underline"
-                          >
-                            View on TikTok
-                          </a>
-                        </div>
-                        <div className="absolute top-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs flex items-center">
-                          <Video className="w-3 h-3 mr-1" />
-                          TikTok
-                        </div>
-                      </div>
-                    ) : postcard.media_type === 'link' || (postcard.media_type === 'video' && !postcard.media_url.startsWith('http')) ? (
-                      <div className="relative w-full h-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center p-4">
-                        <div className="text-center">
-                          <ExternalLink className="w-12 h-12 text-white mx-auto mb-2" />
-                          <p className="text-white text-sm font-medium">External Link</p>
-                          <p className="text-white text-xs opacity-90 mt-1 truncate">
-                            {postcard.media_url.replace(/^https?:\/\//, '').split('/')[0]}
-                          </p>
-                        </div>
-                        <div className="absolute top-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs flex items-center">
-                          <ExternalLink className="w-3 h-3 mr-1" />
-                          Link
-                        </div>
-                      </div>
-                    ) : postcard.media_type === 'text' ? (
-                      <div className="relative w-full h-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center p-4">
-                        <div className="text-center">
-                          <FileText className="w-12 h-12 text-white mx-auto mb-2" />
-                          <p className="text-white text-sm font-medium">Text Post</p>
-                        </div>
-                        <div className="absolute top-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs flex items-center">
-                          <FileText className="w-3 h-3 mr-1" />
-                          Text
-                        </div>
-                      </div>
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gray-200 rounded-t-xl">
                         <div className="text-center">
@@ -859,21 +722,6 @@ export default function SemmEquipmentPage() {
                           PDF
                         </div>
                       </div>
-                    )}
-
-                    {/* Clickable overlay for external links (non-YouTube) */}
-                    {(postcard.media_type === 'link' || 
-                      (postcard.media_type === 'video' && 
-                       !postcard.media_url.includes('youtube.com') && 
-                       !postcard.media_url.includes('youtu.be'))) && (
-                      <a 
-                        href={postcard.media_url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="absolute inset-0 z-10"
-                        title="Open link in new tab"
-                        data-testid={`link-${postcard.id}`}
-                      />
                     )}
                   </div>
 
@@ -929,9 +777,18 @@ export default function SemmEquipmentPage() {
                   <p className="text-gray-600 mb-4">
                     Be the first to share photos, videos, or documents about this equipment.
                   </p>
-                  <p className="text-sm text-gray-500">
-                    {isAuthenticated ? "Use the text box above to share your first content" : "Sign in to share content"}
-                  </p>
+                  {isAuthenticated ? (
+                    <Button 
+                      onClick={() => setIsUploadDialogOpen(true)}
+                      className="bg-orange-500 hover:bg-orange-600 text-white"
+                      data-testid="button-first-upload"
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Share First Content
+                    </Button>
+                  ) : (
+                    <p className="text-sm text-gray-500">Sign in to share content</p>
+                  )}
                 </div>
               </div>
             </div>

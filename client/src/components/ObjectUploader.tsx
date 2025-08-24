@@ -101,17 +101,14 @@ export function ObjectUploader({
           // Get upload parameters
           const uploadParams = await onGetUploadParameters();
           console.log(`🔗 Got upload URL for ${file.name}`);
-          console.log(`🔍 Upload params:`, uploadParams);
-          
-          if (!uploadParams.url) {
-            throw new Error('Upload URL is missing from server response');
-          }
           
           // Upload file with better error handling
-          // Note: Don't set Content-Type header for signed URLs as it may not be included in the signature
           const uploadResponse = await fetch(uploadParams.url, {
             method: uploadParams.method,
             body: file,
+            headers: {
+              'Content-Type': file.type || 'application/octet-stream',
+            },
           });
 
           if (!uploadResponse.ok) {
@@ -122,7 +119,7 @@ export function ObjectUploader({
 
           // Create file data object
           const fileData = {
-            uploadURL: uploadParams.url ? uploadParams.url.split('?')[0] : '', // Remove query parameters, handle undefined
+            uploadURL: uploadParams.url.split('?')[0], // Remove query parameters
             name: file.name,
             type: file.type,
             size: file.size,
@@ -134,13 +131,6 @@ export function ObjectUploader({
           
         } catch (error) {
           console.error(`❌ Error uploading ${file.name}:`, error);
-          // Log detailed error information
-          if (error instanceof Error) {
-            console.error('Error message:', error.message);
-            console.error('Error stack:', error.stack);
-          } else {
-            console.error('Unknown error type:', typeof error, error);
-          }
           throw error; // Re-throw to show user the error
         }
       }

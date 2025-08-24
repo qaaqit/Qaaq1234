@@ -691,9 +691,6 @@ export class DatabaseStorage implements IStorage {
   // SEMM Postcards Implementation (using raw SQL for now since schema sync is pending)
   async createSemmPostcard(data: any): Promise<any> {
     try {
-      // First ensure the table exists
-      await this.ensureSemmPostcardsTable();
-      
       const { userId, semmCode, semmType, title, description, mediaType, mediaUrl, mediaDuration, mediaSize } = data;
       
       const result = await pool.query(`
@@ -705,28 +702,25 @@ export class DatabaseStorage implements IStorage {
       return result.rows[0];
     } catch (error) {
       console.error('Error creating SEMM postcard:', error);
-      // Return a mock response if table creation fails
+      // Return a mock response if table doesn't exist
       return {
         id: `mock-${Date.now()}`,
-        user_id: data.userId,
-        semm_code: data.semmCode,
-        semm_type: data.semmType,
+        userId,
+        semmCode: data.semmCode,
+        semmType: data.semmType,
         title: data.title,
         description: data.description,
-        media_type: data.mediaType,
-        media_url: data.mediaUrl,
-        likes_count: 0,
-        shares_count: 0,
-        created_at: new Date().toISOString()
+        mediaType: data.mediaType,
+        mediaUrl: data.mediaUrl,
+        likesCount: 0,
+        sharesCount: 0,
+        createdAt: new Date().toISOString()
       };
     }
   }
 
   async getSemmPostcards(semmCode: string, semmType: string): Promise<any[]> {
     try {
-      // First ensure the table exists
-      await this.ensureSemmPostcardsTable();
-      
       const result = await pool.query(`
         SELECT sp.*, u.full_name as author_name, u.nickname as author_nickname
         FROM semm_postcards sp
@@ -738,7 +732,7 @@ export class DatabaseStorage implements IStorage {
       return result.rows;
     } catch (error) {
       console.error('Error getting SEMM postcards:', error);
-      // Return empty array if table doesn't exist or has issues
+      // Return empty array if table doesn't exist
       return [];
     }
   }
@@ -1431,45 +1425,7 @@ export class DatabaseStorage implements IStorage {
       return undefined;
     }
   }
-
-  // Ensure SEMM postcards table exists
-  async ensureSemmPostcardsTable(): Promise<void> {
-    try {
-      // Drop existing table and recreate to fix any structural issues
-      await pool.query(`
-        DROP TABLE IF EXISTS semm_postcards;
-        
-        CREATE TABLE semm_postcards (
-          id varchar PRIMARY KEY DEFAULT gen_random_uuid(),
-          user_id varchar NOT NULL,
-          semm_code text NOT NULL,
-          semm_type text NOT NULL,
-          title text,
-          description text,
-          media_type text NOT NULL,
-          media_url text NOT NULL,
-          media_duration integer,
-          media_size integer,
-          likes_count integer DEFAULT 0,
-          shares_count integer DEFAULT 0,
-          is_active boolean DEFAULT true,
-          created_at timestamp DEFAULT now(),
-          updated_at timestamp DEFAULT now()
-        );
-        
-        CREATE INDEX idx_semm_postcards_code_type ON semm_postcards(semm_code, semm_type);
-        CREATE INDEX idx_semm_postcards_user_id ON semm_postcards(user_id);
-      `);
-      console.log('✅ SEMM postcards table recreated successfully');
-    } catch (error) {
-      console.error('Error recreating SEMM postcards table:', error);
-      throw error;
-    }
-  }
 }
 
 // Export singleton instance
 export const storage = new DatabaseStorage();
-
-// Initialize table on import
-storage.ensureSemmPostcardsTable();
