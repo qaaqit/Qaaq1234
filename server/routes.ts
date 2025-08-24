@@ -2779,6 +2779,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Maritime rank statistics
+  app.get('/api/maritime-rank-stats', async (req, res) => {
+    try {
+      const result = await pool.query(`
+        SELECT 
+          COUNT(*) as total_users,
+          COUNT(maritime_rank) as users_with_maritime_rank,
+          COUNT(*) - COUNT(maritime_rank) as users_without_maritime_rank,
+          ROUND((COUNT(maritime_rank) * 100.0 / COUNT(*)), 2) as percentage_with_rank
+        FROM users
+      `);
+
+      const stats = result.rows[0];
+      console.log('📊 Maritime rank statistics:', stats);
+      
+      res.json({
+        totalUsers: parseInt(stats.total_users),
+        usersWithMaritimeRank: parseInt(stats.users_with_maritime_rank),
+        usersWithoutMaritimeRank: parseInt(stats.users_without_maritime_rank),
+        percentageWithRank: parseFloat(stats.percentage_with_rank)
+      });
+    } catch (error) {
+      console.error("Error fetching maritime rank stats:", error);
+      res.status(500).json({ message: "Failed to fetch maritime rank stats" });
+    }
+  });
+
   app.get('/api/admin/users', authenticateToken, isAdmin, async (req: any, res) => {
     try {
       const result = await pool.query(`
