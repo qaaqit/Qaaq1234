@@ -463,23 +463,23 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
             </ObjectUploader>
           </div>
 
-          {/* Prompt Improvement Icon - positioned right side */}
+          {/* Prompt Improvement Icon - positioned bottom right */}
           {message.trim() && (
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 z-10">
+            <div className="absolute right-3 bottom-3">
               <button
                 onClick={handlePromptImprovement}
                 disabled={isImprovingPrompt}
-                className="p-1.5 rounded-full bg-white border border-gray-200 shadow-sm transition-all duration-200 text-orange-500 hover:bg-orange-50 hover:border-orange-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                title="💡 Improve this prompt for better AI responses"
+                className="p-1 rounded transition-all duration-200 text-gray-400 hover:bg-gray-100 hover:text-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Improve this prompt for better AI responses"
               >
-                <Lightbulb size={14} className={isImprovingPrompt ? 'animate-pulse' : ''} />
+                <Lightbulb size={16} className={isImprovingPrompt ? 'animate-pulse text-orange-500' : ''} />
               </button>
             </div>
           )}
 
-          {/* Privacy Shield (only for admin users) - positioned top right corner */}
+          {/* Privacy Shield (only for admin users) - positioned top right */}
           {localStorage.getItem('isAdmin') === 'true' && (
-            <div className="absolute right-1 top-1 z-20">
+            <div className="absolute right-3 top-1">
               <button
                 onClick={togglePrivacyMode}
                 className="p-1 rounded transition-all duration-200 text-gray-400 hover:bg-gray-100"
