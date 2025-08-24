@@ -101,6 +101,11 @@ export function ObjectUploader({
           // Get upload parameters
           const uploadParams = await onGetUploadParameters();
           console.log(`🔗 Got upload URL for ${file.name}`);
+          console.log(`🔍 Upload params:`, uploadParams);
+          
+          if (!uploadParams.url) {
+            throw new Error('Upload URL is missing from server response');
+          }
           
           // Upload file with better error handling
           // Note: Don't set Content-Type header for signed URLs as it may not be included in the signature
@@ -117,7 +122,7 @@ export function ObjectUploader({
 
           // Create file data object
           const fileData = {
-            uploadURL: uploadParams.url.split('?')[0], // Remove query parameters
+            uploadURL: uploadParams.url ? uploadParams.url.split('?')[0] : '', // Remove query parameters, handle undefined
             name: file.name,
             type: file.type,
             size: file.size,
