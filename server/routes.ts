@@ -2374,6 +2374,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Prompt Improvement API endpoint
+  app.post("/api/improve-prompt", async (req, res) => {
+    try {
+      const { originalPrompt } = req.body;
+
+      if (!originalPrompt || !originalPrompt.trim()) {
+        return res.status(400).json({ success: false, error: "Original prompt is required" });
+      }
+
+      // Import AI service for prompt improvement
+      const { aiService } = await import('./ai-service');
+
+      const improvementPrompt = `You are a maritime AI assistant specializing in helping users optimize their technical questions for better AI responses.
+
+Your task: Improve the following maritime question to make it clearer, more specific, and likely to get better technical answers from maritime AI assistants.
+
+Guidelines for improvement:
+- Add relevant technical context if missing
+- Specify equipment types, systems, or components more precisely
+- Include operational conditions if relevant
+- Make the question more actionable and specific
+- Preserve the original intent while enhancing clarity
+- Use proper maritime terminology
+- Keep it concise but comprehensive
+
+Original prompt: "${originalPrompt}"
+
+Please provide only the improved prompt without any explanations or additional text:`;
+
+      const improvedResponse = await aiService.generateOpenAIResponse(improvementPrompt, 'prompt_improvement', null);
+      
+      if (improvedResponse && improvedResponse.content) {
+        const improvedPrompt = improvedResponse.content.trim();
+        
+        return res.json({
+          success: true,
+          originalPrompt: originalPrompt,
+          improvedPrompt: improvedPrompt
+        });
+      } else {
+        return res.status(500).json({ success: false, error: "Failed to improve prompt" });
+      }
+
+    } catch (error) {
+      console.error('Error improving prompt:', error);
+      return res.status(500).json({ success: false, error: "Internal server error" });
+    }
+  });
+
   // QBOT Chat API endpoint - Implementing 13 Commandments
   app.post("/api/qbot/message", optionalAuth, async (req: any, res) => {
     try {

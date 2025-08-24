@@ -1,5 +1,5 @@
 import { useState, useRef, KeyboardEvent, useEffect } from 'react';
-import { Paperclip, Send, Crown, Shield, ShieldCheck, Bot, Zap, Brain, Sparkles } from 'lucide-react';
+import { Paperclip, Send, Crown, Shield, ShieldCheck, Bot, Zap, Brain, Sparkles, Lightbulb } from 'lucide-react';
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { PremiumSubscriptionDialog } from "@/components/PremiumSubscriptionDialog";
 import { useLocation } from "wouter";
@@ -59,6 +59,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
   const [isPremiumMode, setIsPremiumMode] = useState(false);
   const [isPrivateMode, setIsPrivateMode] = useState(false);
   const [showSubscriptionDialog, setShowSubscriptionDialog] = useState(false);
+  const [isImprovingPrompt, setIsImprovingPrompt] = useState(false);
   const [aiModels, setAiModels] = useState({
     chatgpt: true,  // Default enabled
     gemini: false,
@@ -131,6 +132,37 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
       }
+    }
+  };
+
+  const handlePromptImprovement = async () => {
+    if (!message.trim() || isImprovingPrompt) return;
+    
+    setIsImprovingPrompt(true);
+    try {
+      const response = await fetch('/api/improve-prompt', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ originalPrompt: message.trim() })
+      });
+      
+      const data = await response.json();
+      if (data.success && data.improvedPrompt) {
+        setMessage(data.improvedPrompt);
+        // Auto-resize textarea after setting new content
+        setTimeout(() => {
+          if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 120) + 'px';
+          }
+        }, 10);
+      }
+    } catch (error) {
+      console.error('Error improving prompt:', error);
+    } finally {
+      setIsImprovingPrompt(false);
     }
   };
 
@@ -413,7 +445,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
             onPaste={handlePaste}
             placeholder={currentPlaceholder}
             disabled={disabled}
-            className="w-full resize-none rounded-lg border border-gray-300 pl-12 pr-4 pt-3 pb-3 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed placeholder:text-gray-400 text-gray-700 min-h-[48px] max-h-[120px] overflow-y-auto mt-[-5px] mb-[-5px]"
+            className="w-full resize-none rounded-lg border border-gray-300 pl-12 pr-10 pt-3 pb-3 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed placeholder:text-gray-400 text-gray-700 min-h-[48px] max-h-[120px] overflow-y-auto mt-[-5px] mb-[-5px]"
             style={{ resize: 'none' }}
             rows={1}
           />
@@ -430,6 +462,20 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
               <Paperclip size={20} />
             </ObjectUploader>
           </div>
+
+          {/* Prompt Improvement Icon - positioned bottom right */}
+          {message.trim() && (
+            <div className="absolute right-3 bottom-3">
+              <button
+                onClick={handlePromptImprovement}
+                disabled={isImprovingPrompt}
+                className="p-1 rounded transition-all duration-200 text-gray-400 hover:bg-gray-100 hover:text-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Improve this prompt for better AI responses"
+              >
+                <Lightbulb size={16} className={isImprovingPrompt ? 'animate-pulse text-orange-500' : ''} />
+              </button>
+            </div>
+          )}
 
           {/* Privacy Shield (only for admin users) - positioned top right */}
           {localStorage.getItem('isAdmin') === 'true' && (
