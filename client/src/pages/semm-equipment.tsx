@@ -125,10 +125,7 @@ export default function SemmEquipmentPage() {
   // Upload postcard mutation
   const uploadPostcardMutation = useMutation({
     mutationFn: async (data: any) => {
-      return apiRequest('/api/semm/postcards', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
+      return apiRequest('/api/semm/postcards', 'POST', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/semm/postcards', code, 'equipment'] });
@@ -154,7 +151,7 @@ export default function SemmEquipmentPage() {
   const likePostcardMutation = useMutation({
     mutationFn: async ({ postcardId, isLiked }: { postcardId: string; isLiked: boolean }) => {
       const method = isLiked ? 'DELETE' : 'POST';
-      return apiRequest(`/api/semm/postcards/${postcardId}/like`, { method });
+      return apiRequest(`/api/semm/postcards/${postcardId}/like`, method);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/semm/postcards', code, 'equipment'] });
@@ -164,10 +161,7 @@ export default function SemmEquipmentPage() {
   // Share postcard mutation
   const sharePostcardMutation = useMutation({
     mutationFn: async (postcardId: string) => {
-      return apiRequest(`/api/semm/postcards/${postcardId}/share`, {
-        method: 'POST',
-        body: JSON.stringify({ shareType: 'link' }),
-      });
+      return apiRequest(`/api/semm/postcards/${postcardId}/share`, 'POST', { shareType: 'link' });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/semm/postcards', code, 'equipment'] });
@@ -181,9 +175,7 @@ export default function SemmEquipmentPage() {
   // Upload functionality
   const handleGetUploadParameters = async () => {
     try {
-      const response = await apiRequest('/api/semm/postcards/upload', {
-        method: 'POST',
-      });
+      const response: any = await apiRequest('/api/semm/postcards/upload', 'POST');
       return {
         method: 'PUT' as const,
         url: response.uploadURL,
@@ -252,7 +244,7 @@ export default function SemmEquipmentPage() {
     sharePostcardMutation.mutate(postcardId);
   };
 
-  const postcards = postcardsData?.postcards || [];
+  const postcards = (postcardsData as any)?.postcards || [];
 
   if (isLoading) {
     return (
