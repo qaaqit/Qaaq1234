@@ -40,19 +40,14 @@ export default function QBOTPage({ user }: QBOTPageProps) {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
-  // Premium status check - only triggered when needed (not on page load)
-  const { data: subscriptionStatus, isLoading: isCheckingPremium, refetch: checkPremiumStatus } = useQuery({
-    queryKey: ["/api/user/subscription-status"],
-    enabled: false, // Don't check on page load
-    retry: 1,
-    staleTime: 10 * 60 * 1000, // 10 minutes cache
-    refetchInterval: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-  });
-
-  const isPremium = (subscriptionStatus as any)?.isPremium || (subscriptionStatus as any)?.isSuperUser;
-  const isPremiumUser = subscriptionStatus && isPremium;
+  // Premium status disabled since JWT auth is disabled
+  // This eliminates subscription status polling
+  const subscriptionStatus = null;
+  const isCheckingPremium = false;
+  const checkPremiumStatus = () => {}; // No-op function
+  
+  const isPremium = false; // Static since JWT auth disabled
+  const isPremiumUser = false;
 
   // Fetch WhatsApp chat history when component loads
   useEffect(() => {

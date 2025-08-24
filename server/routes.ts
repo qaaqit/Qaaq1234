@@ -2779,6 +2779,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Set user email for premium check (used when JWT is disabled)
+  app.post('/api/set-user-email', async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ message: 'Email is required' });
+      }
+      
+      // Check if user exists and get their status
+      const userResult = await pool.query(`
+        SELECT id, email, full_name, is_admin, user_type 
+        FROM users 
+        WHERE email = $1
+      `, [email]);
+      
+      if (userResult.rows.length === 0) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      
+      const user = userResult.rows[0];
+      const isPremium = user.user_type === 'Premium';
+      
+      console.log(`🔐 Setting user email: ${email}, Premium: ${isPremium}, Admin: ${user.is_admin}`);
+      
+      res.json({
+        success: true,
+        email: user.email,
+        fullName: user.full_name,
+        isPremium,
+        isAdmin: user.is_admin,
+        userType: user.user_type
+      });
+      
+    } catch (error) {
+      console.error("Error setting user email:", error);
+      res.status(500).json({ message: "Failed to set user email" });
+    }
+  });
+
+  // Check specific user premium status by email
+  app.get('/api/check-user-status/:email', async (req, res) => {
+    try {
+      const email = req.params.email;
+      console.log(`🔍 Checking status for: ${email}`);
+      
+      const userResult = await pool.query(`
+        SELECT id, email, full_name, is_admin, user_type, premium_expires_at 
+        FROM users 
+        WHERE email = $1
+      `, [email]);
+      
+      if (userResult.rows.length === 0) {
+        return res.json({
+          found: false,
+          message: 'User not found'
+        });
+      }
+      
+      const user = userResult.rows[0];
+      const isPremium = user.user_type === 'Premium';
+      const isAdmin = user.is_admin;
+      
+      console.log(`📊 User ${email}: Premium=${isPremium}, Admin=${isAdmin}, Type=${user.user_type}`);
+      
+      res.json({
+        found: true,
+        email: user.email,
+        fullName: user.full_name,
+        isPremium,
+        isAdmin,
+        userType: user.user_type,
+        premiumExpiresAt: user.premium_expires_at
+      });
+      
+    } catch (error) {
+      console.error("Error checking user status:", error);
+      res.status(500).json({ message: "Failed to check user status" });
+    }
+  });
+
   // Maritime rank statistics with admin setup
   app.get('/api/maritime-rank-stats', async (req, res) => {
     try {

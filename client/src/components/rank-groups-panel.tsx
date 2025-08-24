@@ -69,7 +69,7 @@ export function RankGroupsPanel() {
       if (!response.ok) throw new Error('Failed to fetch rank members');
       return response.json();
     },
-    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchInterval: false, // Disabled polling for performance
   });
 
   // Load initial messages on component mount

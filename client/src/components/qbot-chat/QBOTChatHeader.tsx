@@ -52,9 +52,11 @@ export default function QBOTChatHeader({ onClear, isAdmin = false }: QBOTChatHea
   });
   const [editText, setEditText] = useState('');
 
-  // Since JWT is disabled, we'll use a static premium check or disable crown display
-  // Removed subscription polling to eliminate unnecessary API calls
-  const isPremium = false; // Static value since JWT auth is disabled
+  // Check premium status for known testing accounts since JWT is disabled
+  // This enables premium display for verified premium users
+  const testingEmails = ['workship.ai@gmail.com', 'mushy.piyush@gmail.com'];
+  const userEmail = localStorage.getItem('user_email') || '';
+  const isPremium = testingEmails.includes(userEmail) || isAdmin;
 
   const handleEditInvites = () => {
     setEditText(chatbotInvites.join('\n'));

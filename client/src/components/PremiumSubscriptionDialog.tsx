@@ -125,9 +125,8 @@ export function PremiumSubscriptionDialog({
           "Checkout opened - Please complete your payment in the new tab.",
         );
       }
-      queryClient.invalidateQueries({
-        queryKey: ["/api/user/subscription-status"],
-      });
+      // Subscription status invalidation disabled since JWT auth is disabled
+      // This eliminates unnecessary cache invalidations
     },
     onError: (error: any) => {
       console.error(
