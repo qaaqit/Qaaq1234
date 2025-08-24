@@ -157,6 +157,7 @@ export function ObjectUploader({
     <div>
       <Button 
         onClick={handleFileSelect} 
+        variant="ghost"
         className={buttonClassName}
         disabled={isUploading}
       >
