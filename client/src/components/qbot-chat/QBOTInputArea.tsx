@@ -457,9 +457,9 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
               maxFileSize={52428800} // 50MB
               onGetUploadParameters={handleGetUploadParameters}
               onComplete={handleUploadComplete}
-              buttonClassName="p-1 rounded text-gray-400 hover:text-gray-600 transition-all duration-200"
+              buttonClassName="p-1 rounded transition-all duration-200 text-gray-400 hover:text-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Paperclip size={20} />
+              <Paperclip size={16} />
             </ObjectUploader>
           </div>
 
@@ -469,10 +469,10 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
               <button
                 onClick={handlePromptImprovement}
                 disabled={isImprovingPrompt}
-                className="p-1 rounded-full bg-white border border-gray-200 shadow-sm transition-all duration-200 text-orange-500 hover:bg-orange-50 hover:border-orange-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="p-1 rounded transition-all duration-200 text-orange-500 hover:text-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 title="💡 Improve this prompt for better AI responses"
               >
-                <Lightbulb size={14} className={isImprovingPrompt ? 'animate-pulse' : ''} />
+                <Lightbulb size={16} className={isImprovingPrompt ? 'animate-pulse' : ''} />
               </button>
             </div>
           )}
