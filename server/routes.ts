@@ -1862,7 +1862,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         subscriptionStatus: user.user_type === 'Premium' ? 'premium' : 'free',
         country: user.country || user.city || '',
         port: user.port || user.city || '',
-        shipName: user.current_ship_name || '',
+        shipName: user.last_ship || '',
         imoNumber: user.current_ship_imo || '',
         company: user.last_company || '',
         lastShip: user.last_ship || '',
