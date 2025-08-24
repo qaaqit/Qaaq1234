@@ -199,7 +199,7 @@ export default function Discover() {
               <div className="flex-1 relative">
                 <Input
                   type="text"
-                  placeholder="Search sailors by name / rank / company / email / whatsapp..."
+                  placeholder="Search sailors by name / company / email..."
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                   className="pr-12 border-ocean-teal/30 focus:border-ocean-teal"
@@ -269,7 +269,7 @@ export default function Discover() {
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">No Sailors Found</h3>
                     <p className="text-gray-600">
-                      Try adjusting your search terms or search by WhatsApp number, name, rank, or company
+                      Try adjusting your search terms or search by sailor name, company, or email
                     </p>
                   </div>
                 ) : (

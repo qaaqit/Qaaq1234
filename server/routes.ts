@@ -2083,10 +2083,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           user_type
         FROM users 
         WHERE 
-          LOWER(id::text) = $1 OR LOWER(id::text) = $2 OR LOWER(id::text) = $3 OR
-          LOWER(whatsapp_number) = $1 OR LOWER(whatsapp_number) = $2 OR LOWER(whatsapp_number) = $3 OR
           LOWER(full_name) = $1 OR
-          LOWER(maritime_rank) = $1 OR  
           LOWER(last_company) = $1 OR
           LOWER(email) = $1
         ORDER BY COALESCE(question_count, 0) DESC
@@ -2112,7 +2109,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           100 as match_score
         FROM users 
         WHERE 
-          LOWER(whatsapp_number) ILIKE $1
+          LOWER(full_name) ILIKE $1 OR
+          LOWER(last_company) ILIKE $1 OR
+          LOWER(email) ILIKE $1
         ORDER BY COALESCE(question_count, 0) DESC
         LIMIT 15
       `, [`%${searchTerm}%`]);
