@@ -71,8 +71,16 @@ export class FeedbackService {
   /**
    * Generate a compact feedback message for WhatsApp (character limit friendly)
    */
-  static generateCompactFeedbackMessage(): string {
-    const compact = [
+  static generateCompactFeedbackMessage(language = 'en'): string {
+    const compact = language === 'tr' ? [
+      "Harika soru! 🌊 Cevabın kalitesini değerlendirin: ⭐⭐⭐⭐⭐ (1-5 yıldız)",
+      "Mükemmel denizcilik sorusu! ⚙️ Bu cevap ne kadar yararlıydı? Gönderin: 👍 veya 👎",
+      "Akıllı teknik soru! 💡 Bu yanıtı değerlendirin: A/B/C (A=Mükemmel, B=İyi, C=Zayıf)",
+      "Parlak sorgu! 🚢 Hızlı geri bildirim - 1-5 puan verin veya 'İyi/Mükemmel/Zayıf'",
+      "Etkileyici soru! ⭐ Bu cevap faydalı mıydı? Yanıtlayın: 'Evet/Kısmen/Hayır'",
+      "İyi teknik düşünce! 🔧 Çözümün kalitesini değerlendirin: 1-10",
+      "Keskin denizcilik sorusu! ⚓ Cevap yardımcı mı? Gönderin: 'Mükemmel/İyi/Geliştirilmeli'"
+    ] : [
       "Great question! 🌊 Rate the answer quality? Reply: ⭐⭐⭐⭐⭐ (1-5 stars)",
       "Excellent maritime question! ⚙️ How helpful was this answer? Send: 👍 or 👎",
       "Smart technical doubt! 💡 Rate this response: A/B/C (A=Perfect, B=Good, C=Poor)",
