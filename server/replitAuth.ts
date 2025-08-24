@@ -89,10 +89,44 @@ function updateUserSession(
 async function upsertUser(
   claims: any,
 ) {
-  console.log('🔍 CONSOLIDATION: Processing Replit user with claims:', claims);
+  console.log('🔍 REPLIT AUTH: Processing user with claims:', claims);
+  console.log('🔍 REPLIT AUTH: Email:', claims["email"], 'Sub:', claims["sub"]);
   
   try {
-    // Use identity consolidation service instead of direct upsert
+    // First, check if user already exists by email (Google Auth, etc.)
+    const existingUser = await storage.getUserByEmail(claims["email"]);
+    
+    if (existingUser) {
+      console.log(`🔗 REPLIT AUTH: Found existing user by email:`, existingUser.fullName, `(ID: ${existingUser.id})`);
+      
+      // Link Replit identity to existing user and return the existing user
+      try {
+        await storage.linkIdentityToUser(existingUser.id, {
+          provider: 'replit',
+          providerId: claims["sub"],
+          isVerified: true,
+          metadata: {
+            consolidatedAt: new Date().toISOString(),
+            replitClaims: claims
+          }
+        });
+        console.log(`✅ REPLIT AUTH: Linked Replit identity to existing user ${existingUser.id}`);
+      } catch (linkError) {
+        console.log(`ℹ️ REPLIT AUTH: Identity already linked or table missing:`, linkError.message);
+      }
+      
+      // Update user with any new Replit data
+      const updatedData = {
+        authProvider: 'replit', // Update primary auth provider
+        googleProfilePictureUrl: claims["profile_image_url"] || existingUser.profilePictureUrl
+      };
+      
+      const updatedUser = await storage.updateUser(existingUser.id, updatedData);
+      console.log(`✅ REPLIT AUTH: Using existing user (consolidated):`, updatedUser?.fullName || existingUser.fullName);
+      return updatedUser || existingUser;
+    }
+    
+    // If no existing user, use identity consolidation service
     const result = await identityConsolidation.consolidateOnLogin(
       claims["sub"], 
       'replit', 
@@ -106,10 +140,10 @@ async function upsertUser(
       }
     );
     
-    console.log('✅ CONSOLIDATION: Replit user processed:', result.fullName);
+    console.log('✅ REPLIT AUTH: New user created via consolidation:', result.fullName);
     return result;
   } catch (error) {
-    console.error('🚨 CONSOLIDATION ERROR:', error);
+    console.error('🚨 REPLIT AUTH ERROR:', error);
     // Fallback to legacy method
     const result = await storage.upsertUser({
       id: claims["sub"],
@@ -118,7 +152,7 @@ async function upsertUser(
       lastName: claims["last_name"],
       profileImageUrl: claims["profile_image_url"],
     });
-    console.log('✅ Fallback: Replit user upserted:', result.fullName);
+    console.log('✅ REPLIT AUTH: Fallback user upserted:', result.fullName);
     return result;
   }
 }

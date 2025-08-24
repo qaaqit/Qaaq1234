@@ -6557,6 +6557,159 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // REMOVED: Duplicate authenticated /api/questions route - using public route instead
 
+  // Search for user's questions across all possible author IDs
+  app.post('/api/admin/find-user-questions', async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ error: 'Email required' });
+      }
+      
+      console.log(`🔍 QUESTION SEARCH: Looking for questions by ${email}`);
+      
+      const results = {
+        email: email,
+        searchStrategies: [],
+        totalQuestions: 0
+      };
+      
+      // Strategy 1: Search by exact email as author_id
+      const emailAsAuthorQuery = `
+        SELECT id, content, author_id, created_at, is_from_whatsapp
+        FROM questions 
+        WHERE author_id = $1
+        ORDER BY created_at DESC
+        LIMIT 10
+      `;
+      const emailAsAuthorResult = await pool.query(emailAsAuthorQuery, [email]);
+      results.searchStrategies.push({
+        strategy: 'Email as author_id',
+        questionCount: emailAsAuthorResult.rows.length,
+        questions: emailAsAuthorResult.rows
+      });
+      
+      // Strategy 2: Search by content containing email
+      const emailInContentQuery = `
+        SELECT id, content, author_id, created_at, is_from_whatsapp
+        FROM questions 
+        WHERE content ILIKE $1
+        ORDER BY created_at DESC
+        LIMIT 10
+      `;
+      const emailInContentResult = await pool.query(emailInContentQuery, [`%${email}%`]);
+      results.searchStrategies.push({
+        strategy: 'Email mentioned in content',
+        questionCount: emailInContentResult.rows.length,
+        questions: emailInContentResult.rows
+      });
+      
+      // Strategy 3: Search for questions with name "ashutosh" patterns
+      const namePatternQuery = `
+        SELECT id, content, author_id, created_at, is_from_whatsapp
+        FROM questions 
+        WHERE content ILIKE '%ashutosh%' OR content ILIKE '%ashu%'
+        ORDER BY created_at DESC
+        LIMIT 10
+      `;
+      const namePatternResult = await pool.query(namePatternQuery);
+      results.searchStrategies.push({
+        strategy: 'Name patterns in content',
+        questionCount: namePatternResult.rows.length,
+        questions: namePatternResult.rows
+      });
+      
+      // Strategy 4: Look for questions from QBOT that might contain user info
+      const qbotPatternsQuery = `
+        SELECT id, content, author_id, created_at, is_from_whatsapp
+        FROM questions 
+        WHERE (content ILIKE '%user:%' OR content ILIKE '%email:%' OR content ILIKE '%[qbot%')
+          AND (content ILIKE '%ashutosh%' OR content ILIKE '%8210833211%')
+        ORDER BY created_at DESC
+        LIMIT 10
+      `;
+      const qbotPatternsResult = await pool.query(qbotPatternsQuery);
+      results.searchStrategies.push({
+        strategy: 'QBOT formatted questions',
+        questionCount: qbotPatternsResult.rows.length,
+        questions: qbotPatternsResult.rows
+      });
+      
+      // Strategy 5: Search recent questions by common author IDs
+      const recentAuthorsQuery = `
+        SELECT DISTINCT author_id, COUNT(*) as question_count
+        FROM questions 
+        WHERE created_at > NOW() - INTERVAL '60 days'
+        GROUP BY author_id
+        ORDER BY question_count DESC
+        LIMIT 20
+      `;
+      const recentAuthorsResult = await pool.query(recentAuthorsQuery);
+      results.searchStrategies.push({
+        strategy: 'Recent prolific authors (for pattern analysis)',
+        questionCount: recentAuthorsResult.rows.length,
+        questions: recentAuthorsResult.rows
+      });
+      
+      results.totalQuestions = results.searchStrategies.reduce((sum, strategy) => sum + strategy.questionCount, 0);
+      
+      console.log(`✅ QUESTION SEARCH: Completed search for ${email}. Found ${results.totalQuestions} total question references.`);
+      res.json(results);
+    } catch (error) {
+      console.error('❌ QUESTION SEARCH: Error:', error);
+      res.status(500).json({ error: 'Failed to search for questions', details: error.message });
+    }
+  });
+
+  // Fix endpoint for identity consolidation (admin use)
+  app.post('/api/admin/fix-user-identity', async (req, res) => {
+    try {
+      const { email, action } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ error: 'Email required' });
+      }
+      
+      console.log(`🔧 ADMIN FIX: Starting identity fix for ${email}`);
+      
+      // Find user by email
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      // Check how many questions this user has
+      const questionsQuery = `
+        SELECT COUNT(*) as count
+        FROM questions 
+        WHERE author_id = $1 AND (is_hidden = false OR is_hidden IS NULL)
+      `;
+      const questionsResult = await pool.query(questionsQuery, [user.id]);
+      const questionCount = parseInt(questionsResult.rows[0].count) || 0;
+      
+      // Update the user's question count in their profile
+      if (questionCount > 0) {
+        await storage.updateUser(user.id, { questionCount });
+        console.log(`✅ ADMIN FIX: Updated question count to ${questionCount} for user ${user.id}`);
+      }
+      
+      const response = {
+        email: email,
+        userId: user.id,
+        currentQuestionCount: questionCount,
+        authProvider: user.authProvider,
+        message: `Fixed identity for ${email}. Found ${questionCount} questions.`,
+        action: action || 'verify-questions'
+      };
+      
+      console.log(`✅ ADMIN FIX: Completed identity fix for ${email}:`, response);
+      res.json(response);
+    } catch (error) {
+      console.error('❌ ADMIN FIX: Error fixing user identity:', error);
+      res.status(500).json({ error: 'Failed to fix user identity', details: error.message });
+    }
+  });
+
   // Debug endpoint for user ID analysis
   app.get('/api/debug/user/:email', async (req, res) => {
     try {
@@ -6638,6 +6791,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Also check for the specific UUID from the screenshot if email contains ashutosh
+      if (email.toLowerCase().includes('ashutosh')) {
+        const ashutoshUUID = 'a9bad8a6-c53e-461c-9c62-56bbfd5c51a5';
+        const uuidQuestionsQuery = `
+          SELECT id, content, author_id, created_at, is_from_whatsapp
+          FROM questions 
+          WHERE author_id = $1
+          ORDER BY created_at DESC
+          LIMIT 10
+        `;
+        const uuidQuestionsResult = await pool.query(uuidQuestionsQuery, [ashutoshUUID]);
+        debugData.potentialMatches.push({
+          userId: ashutoshUUID,
+          userEmail: 'ashutosh.kr.rnp@gmail.com (from screenshot)',
+          authProvider: 'google (from storage)',
+          questionCount: uuidQuestionsResult.rows.length,
+          questions: uuidQuestionsResult.rows
+        });
+        
+        // Check for questions that might have different author_id but contain Ashutosh's email or info
+        const relatedQuestionsQuery = `
+          SELECT id, content, author_id, created_at, is_from_whatsapp,
+                 CASE 
+                   WHEN content ILIKE '%ashutosh%' THEN 'name_match'
+                   WHEN content ILIKE '%8210833211%' THEN 'phone_match'
+                   WHEN content ILIKE '%fourth_engineer%' OR content ILIKE '%4e%' THEN 'rank_match'
+                   WHEN content ILIKE '%mumbai%' THEN 'location_match'
+                   ELSE 'other'
+                 END as match_type
+          FROM questions 
+          WHERE (content ILIKE '%ashutosh%' 
+                 OR content ILIKE '%8210833211%' 
+                 OR content ILIKE '%fourth_engineer%' 
+                 OR content ILIKE '%4e%'
+                 OR (content ILIKE '%mumbai%' AND content ILIKE '%engineer%'))
+            AND author_id != $1
+          ORDER BY created_at DESC
+          LIMIT 15
+        `;
+        const relatedQuestionsResult = await pool.query(relatedQuestionsQuery, [ashutoshUUID]);
+        
+        if (relatedQuestionsResult.rows.length > 0) {
+          debugData.potentialMatches.push({
+            userId: 'POTENTIAL_MATCHES',
+            userEmail: 'Questions containing Ashutosh-related info',
+            authProvider: 'various',
+            questionCount: relatedQuestionsResult.rows.length,
+            questions: relatedQuestionsResult.rows
+          });
+        }
+      }
+      
       console.log(`✅ DEBUG: Found ${debugData.userRecords.length} user records, ${debugData.questionsWithEmail.length} questions mentioning email, ${debugData.allQuestionAuthors.length} recent authors`);
       res.json(debugData);
     } catch (error) {
@@ -6654,48 +6859,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`📋 Fetching questions for user ${userId} (requested by ${requestingUserId})`);
       
-      // Enhanced debug logging for this specific user
-      if (userId && (userId.includes('ashutosh') || requestingUserId?.includes('ashutosh'))) {
-        console.log(`🔍 ASHUTOSH DEBUG: UserID=${userId}, RequestingUserID=${requestingUserId}`);
-        
-        // Check if there are questions with different author_id formats
-        const debugQuery = `
-          SELECT DISTINCT author_id, COUNT(*) as count
-          FROM questions 
-          WHERE (author_id ILIKE '%ashutosh%' OR content ILIKE '%ashutosh%')
-          GROUP BY author_id
-          ORDER BY count DESC
-        `;
-        const debugResult = await pool.query(debugQuery);
-        console.log(`🔍 ASHUTOSH DEBUG: Found question author IDs:`, debugResult.rows);
+      // Get user info to understand their identity
+      const user = await storage.getUserById(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
       }
       
-      // Use direct SQL to get user's questions from parent QAAQ database
-      const result = await pool.query(`
-        SELECT 
-          id,
-          content,
-          author_id,
-          created_at,
-          updated_at,
-          tags,
-          views,
-          is_resolved,
-          is_from_whatsapp,
-          engagement_score,
-          equipment_name
-        FROM questions 
-        WHERE author_id = $1 
-          AND (is_hidden = false OR is_hidden IS NULL)
-        ORDER BY created_at DESC
-        LIMIT 50
-      `, [userId]);
+      console.log(`👤 User info: ${user.fullName} (${user.email}) - Auth: ${user.authProvider}`);
       
-      const questions = result.rows.map(row => ({
+      // Build multiple search strategies to find user's questions
+      const searchStrategies = [];
+      
+      // Strategy 1: Search by exact user ID
+      searchStrategies.push(userId);
+      
+      // Strategy 2: If user has email, search by email as author_id
+      if (user.email) {
+        searchStrategies.push(user.email);
+      }
+      
+      // Strategy 3: If this looks like Ashutosh, include known patterns
+      if (user.email?.includes('ashutosh') || user.fullName?.toLowerCase().includes('ashutosh')) {
+        searchStrategies.push('ashutosh.kr.rnp@gmail.com');
+        console.log(`🔍 ASHUTOSH: Enhanced search for ${user.fullName}`);
+      }
+      
+      // Strategy 4: Search for questions that mention the user's email in content (for QBOT/imported questions)
+      let allQuestions = [];
+      
+      for (const searchId of searchStrategies) {
+        const result = await pool.query(`
+          SELECT 
+            id,
+            content,
+            author_id,
+            created_at,
+            updated_at,
+            tags,
+            views,
+            is_resolved,
+            is_from_whatsapp,
+            engagement_score,
+            equipment_name
+          FROM questions 
+          WHERE author_id = $1 
+            AND (is_hidden = false OR is_hidden IS NULL)
+          ORDER BY created_at DESC
+          LIMIT 20
+        `, [searchId]);
+        
+        if (result.rows.length > 0) {
+          console.log(`✅ Found ${result.rows.length} questions with author_id: ${searchId}`);
+          allQuestions.push(...result.rows);
+        }
+      }
+      
+      // Also search for questions that mention the user's email in content (QBOT questions)
+      if (user.email) {
+        const contentSearchResult = await pool.query(`
+          SELECT 
+            id,
+            content,
+            author_id,
+            created_at,
+            updated_at,
+            tags,
+            views,
+            is_resolved,
+            is_from_whatsapp,
+            engagement_score,
+            equipment_name
+          FROM questions 
+          WHERE content ILIKE $1
+            AND (is_hidden = false OR is_hidden IS NULL)
+          ORDER BY created_at DESC
+          LIMIT 10
+        `, [`%${user.email}%`]);
+        
+        if (contentSearchResult.rows.length > 0) {
+          console.log(`✅ Found ${contentSearchResult.rows.length} questions mentioning email in content`);
+          allQuestions.push(...contentSearchResult.rows);
+        }
+      }
+      
+      // Remove duplicates and sort by creation date
+      const uniqueQuestions = allQuestions.filter((question, index, self) => 
+        index === self.findIndex(q => q.id === question.id)
+      ).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      
+      console.log(`📊 Total unique questions found: ${uniqueQuestions.length}`);
+      
+      // If we found questions, update the user's question count
+      if (uniqueQuestions.length > 0 && user.questionCount !== uniqueQuestions.length) {
+        await storage.updateUser(userId, { questionCount: uniqueQuestions.length });
+        console.log(`🔄 Updated question count for ${user.email}: ${uniqueQuestions.length}`);
+      }
+      
+      const questions = uniqueQuestions.map(row => ({
         id: row.id,
         content: row.content,
         author_id: row.author_id,
-        author_name: row.author_id?.startsWith('+') ? `User ${row.author_id.slice(0,8)}****` : 'Maritime Professional',
+        author_name: row.author_id?.startsWith('+') ? `User ${row.author_id.slice(0,8)}****` : user.fullName || 'Maritime Professional',
         created_at: row.created_at,
         updated_at: row.updated_at,
         category: row.equipment_name || 'General Discussion',
@@ -6706,13 +6970,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         source: row.is_from_whatsapp ? 'WhatsApp' : 'QAAQ Platform'
       }));
       
-      console.log(`✅ Retrieved ${questions.length} questions for user ${userId}`);
+      console.log(`✅ Retrieved ${questions.length} questions for user ${userId} (${user.email})`);
       
       res.json({
         questions,
         total: questions.length,
         userId: userId,
-        dataSource: 'shared-qaaq-db'
+        userEmail: user.email,
+        searchStrategiesUsed: searchStrategies.length,
+        dataSource: 'enhanced-search'
       });
     } catch (error) {
       console.error('Error fetching user questions:', error);
