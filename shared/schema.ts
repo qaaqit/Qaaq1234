@@ -338,22 +338,10 @@ export const semmPostcards = pgTable("semm_postcards", {
   semmType: text("semm_type").notNull(), // 'equipment', 'make', 'model'
   title: text("title"),
   description: text("description"),
-  contentType: text("content_type").notNull(), // 'media' or 'link'
-  // Media fields (for contentType = 'media')
-  mediaType: text("media_type"), // 'video', 'photo', 'pdf' - optional since links don't have media
-  mediaUrl: text("media_url"), // Object storage URL - optional since links don't have media
+  mediaType: text("media_type").notNull(), // 'video', 'photo', 'pdf'
+  mediaUrl: text("media_url").notNull(), // Object storage URL
   mediaDuration: integer("media_duration"), // Video duration in seconds (max 90)
   mediaSize: integer("media_size"), // File size in bytes (max 500MB)
-  // Link fields (for contentType = 'link')
-  linkUrl: text("link_url"), // The actual link URL
-  linkPreview: jsonb("link_preview").$type<{
-    title?: string;
-    description?: string;
-    image?: string;
-    siteName?: string;
-    domain?: string;
-    [key: string]: any;
-  }>().default({}), // Link preview metadata (og tags, etc.)
   likesCount: integer("likes_count").default(0),
   sharesCount: integer("shares_count").default(0),
   isActive: boolean("is_active").default(true),
