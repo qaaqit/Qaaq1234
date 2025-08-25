@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
-import { ArrowLeft, Share2, Home, ChevronRight, Edit3, RotateCcw, ChevronUp, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Share2, Home, ChevronRight, Edit3, RotateCcw, ChevronUp, ChevronDown, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useState, useEffect } from 'react';
@@ -96,6 +96,13 @@ export default function SemmEquipmentPage() {
   const [currentMakeIndex, setCurrentMakeIndex] = useState(0);
   const [reorderEnabled, setReorderEnabled] = useState(false);
   const [reorderItems, setReorderItems] = useState<Array<{ code: string; title: string }>>([]);
+  
+  // Add make state
+  const [showAddMakeForm, setShowAddMakeForm] = useState(false);
+  const [addMakeForm, setAddMakeForm] = useState({
+    makeName: '',
+    description: ''
+  });
 
   // Fetch SEMM data to find the specific equipment
   const { data: semmData, isLoading, error } = useQuery({
@@ -164,6 +171,43 @@ export default function SemmEquipmentPage() {
   const handleEditMake = (makeCode: string) => {
     console.log('Edit make:', makeCode);
     // TODO: Implement edit make modal
+  };
+
+  const handleAddNewMake = () => {
+    setShowAddMakeForm(true);
+    setAddMakeForm({ makeName: '', description: '' });
+  };
+
+  const handleAddMakeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!addMakeForm.makeName.trim()) return;
+    
+    try {
+      await apiRequest('/api/dev/semm/add-make', 'POST', {
+        systemCode: parentSystem.code,
+        equipmentCode: foundEquipment.code,
+        makeName: addMakeForm.makeName.trim(),
+        description: addMakeForm.description.trim()
+      });
+      
+      console.log('✅ Successfully added new make');
+      
+      // Reset form and hide it
+      setShowAddMakeForm(false);
+      setAddMakeForm({ makeName: '', description: '' });
+      
+      // Refresh the data
+      queryClient.invalidateQueries({ queryKey: ['/api/dev/semm-cards'] });
+      
+    } catch (error) {
+      console.error('❌ Error adding new make:', error);
+    }
+  };
+
+  const handleCancelAddMake = () => {
+    setShowAddMakeForm(false);
+    setAddMakeForm({ makeName: '', description: '' });
   };
 
   const handleReorderMakes = () => {
@@ -303,16 +347,30 @@ export default function SemmEquipmentPage() {
           <div className="mt-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">Makes for {foundEquipment.title}</h2>
-              {isAdmin && !reorderEnabled && (
-                <button
-                  onClick={handleReorderMakes}
-                  className="p-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-lg"
-                  title="Reorder Makes"
-                  data-testid="reorder-makes-btn"
-                >
-                  <RotateCcw className="w-5 h-5" />
-                </button>
-              )}
+              <div className="flex items-center space-x-2">
+                {isAdmin && !reorderEnabled && (
+                  <>
+                    <button
+                      onClick={handleReorderMakes}
+                      className="p-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-lg"
+                      title="Reorder Makes"
+                      data-testid="reorder-makes-btn"
+                    >
+                      <RotateCcw className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={handleAddNewMake}
+                      disabled={showAddMakeForm}
+                      className="flex items-center space-x-2 px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Add New Make"
+                      data-testid="add-new-make-btn"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Add Make</span>
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Reorder Controls - Fixed buttons when in reorder mode */}
@@ -338,6 +396,61 @@ export default function SemmEquipmentPage() {
                     </Button>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Add Make Form - Show when adding new make */}
+            {showAddMakeForm && (
+              <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <h3 className="text-lg font-medium text-green-800 mb-4">Add New Make to {foundEquipment.title}</h3>
+                <form onSubmit={handleAddMakeSubmit} className="space-y-4">
+                  <div>
+                    <label htmlFor="makeName" className="block text-sm font-medium text-gray-700 mb-2">
+                      Make Name *
+                    </label>
+                    <input
+                      type="text"
+                      id="makeName"
+                      value={addMakeForm.makeName}
+                      onChange={(e) => setAddMakeForm(prev => ({ ...prev, makeName: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      placeholder="e.g., Caterpillar, ABB, Siemens"
+                      required
+                      data-testid="input-make-name"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="makeDescription" className="block text-sm font-medium text-gray-700 mb-2">
+                      Description (Optional)
+                    </label>
+                    <textarea
+                      id="makeDescription"
+                      value={addMakeForm.description}
+                      onChange={(e) => setAddMakeForm(prev => ({ ...prev, description: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      placeholder="Brief description of this make..."
+                      rows={3}
+                      data-testid="input-make-description"
+                    />
+                  </div>
+                  <div className="flex space-x-3">
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                      data-testid="btn-save-make"
+                    >
+                      Add Make
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCancelAddMake}
+                      className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                      data-testid="btn-cancel-make"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
               </div>
             )}
 

@@ -5541,6 +5541,112 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
     }
   });
 
+  // Add new Make to Equipment
+  app.post('/api/dev/semm/add-make', sessionBridge, async (req, res) => {
+    try {
+      const { systemCode, equipmentCode, makeName, description } = req.body;
+      
+      if (!systemCode || !equipmentCode || !makeName) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'systemCode, equipmentCode, and makeName are required' 
+        });
+      }
+      
+      console.log(`🆕 Adding new make '${makeName}' to equipment ${equipmentCode} in system ${systemCode}`);
+      
+      // Get existing makes count for this equipment to determine the new code
+      const existingMakesResult = await pool.query(`
+        SELECT COUNT(*) as count, MAX(make_order) as max_order
+        FROM semm_structure 
+        WHERE sid = $1 AND eid = $2 AND mid IS NOT NULL
+      `, [systemCode, equipmentCode]);
+      
+      const existingCount = parseInt(existingMakesResult.rows[0].count) || 0;
+      const maxOrder = existingMakesResult.rows[0].max_order || 0;
+      
+      // Generate new make code (equipmentCode + next letter: aa + a = aaa, aa + b = aab, etc.)
+      const newMakeCode = `${equipmentCode}${String.fromCharCode(97 + existingCount)}`;
+      const newMakeOrder = maxOrder + 1;
+      
+      console.log(`🔧 Generated new make code: ${newMakeCode} (order: ${newMakeOrder})`);
+      
+      // Insert the new make
+      await pool.query(`
+        INSERT INTO semm_structure (sid, eid, mid, make, description, make_order)
+        VALUES ($1, $2, $3, $4, $5, $6)
+      `, [systemCode, equipmentCode, newMakeCode, makeName, description || `${makeName} make classification`, newMakeOrder]);
+      
+      console.log('✅ Successfully added new make');
+      res.json({ 
+        success: true, 
+        message: 'Make added successfully',
+        data: {
+          makeCode: newMakeCode,
+          makeName: makeName,
+          order: newMakeOrder
+        }
+      });
+      
+    } catch (error) {
+      console.error('❌ Error adding new make:', error);
+      res.status(500).json({ success: false, error: 'Failed to add new make' });
+    }
+  });
+
+  // Add new Model to Make
+  app.post('/api/dev/semm/add-model', sessionBridge, async (req, res) => {
+    try {
+      const { systemCode, equipmentCode, makeCode, modelName, description } = req.body;
+      
+      if (!systemCode || !equipmentCode || !makeCode || !modelName) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'systemCode, equipmentCode, makeCode, and modelName are required' 
+        });
+      }
+      
+      console.log(`🆕 Adding new model '${modelName}' to make ${makeCode}`);
+      
+      // Get existing models count for this make to determine the new code
+      const existingModelsResult = await pool.query(`
+        SELECT COUNT(*) as count, MAX(model_order) as max_order
+        FROM semm_structure 
+        WHERE sid = $1 AND eid = $2 AND mid = $3 AND moid IS NOT NULL
+      `, [systemCode, equipmentCode, makeCode]);
+      
+      const existingCount = parseInt(existingModelsResult.rows[0].count) || 0;
+      const maxOrder = existingModelsResult.rows[0].max_order || 0;
+      
+      // Generate new model code (makeCode + next letter: aaa + a = aaaa, aaa + b = aaab, etc.)
+      const newModelCode = `${makeCode}${String.fromCharCode(97 + existingCount)}`;
+      const newModelOrder = maxOrder + 1;
+      
+      console.log(`🔧 Generated new model code: ${newModelCode} (order: ${newModelOrder})`);
+      
+      // Insert the new model
+      await pool.query(`
+        INSERT INTO semm_structure (sid, eid, mid, moid, model, description, model_order)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `, [systemCode, equipmentCode, makeCode, newModelCode, modelName, description || `${modelName} model specification`, newModelOrder]);
+      
+      console.log('✅ Successfully added new model');
+      res.json({ 
+        success: true, 
+        message: 'Model added successfully',
+        data: {
+          modelCode: newModelCode,
+          modelName: modelName,
+          order: newModelOrder
+        }
+      });
+      
+    } catch (error) {
+      console.error('❌ Error adding new model:', error);
+      res.status(500).json({ success: false, error: 'Failed to add new model' });
+    }
+  });
+
 
   // Add machine share route
   app.get('/share/machine/:id', async (req, res) => {

@@ -1,6 +1,6 @@
 import { useParams, useLocation } from 'wouter';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Share2, ChevronRight, Edit3, RotateCcw, ChevronUp, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Share2, ChevronRight, Edit3, RotateCcw, ChevronUp, ChevronDown, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { apiRequest } from '@/lib/queryClient';
 import { useState, useEffect } from 'react';
@@ -105,6 +105,44 @@ export default function SemmMakePage() {
     // TODO: Implement edit make modal
   };
 
+  const handleAddNewModel = () => {
+    setShowAddModelForm(true);
+    setAddModelForm({ modelName: '', description: '' });
+  };
+
+  const handleAddModelSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!addModelForm.modelName.trim()) return;
+    
+    try {
+      await apiRequest('/api/dev/semm/add-model', 'POST', {
+        systemCode: parentSystem.code,
+        equipmentCode: parentEquipment.code,
+        makeCode: foundMake.code,
+        modelName: addModelForm.modelName.trim(),
+        description: addModelForm.description.trim()
+      });
+      
+      console.log('✅ Successfully added new model');
+      
+      // Reset form and hide it
+      setShowAddModelForm(false);
+      setAddModelForm({ modelName: '', description: '' });
+      
+      // Refresh the data
+      queryClient.invalidateQueries({ queryKey: ['/api/dev/semm-cards'] });
+      
+    } catch (error) {
+      console.error('❌ Error adding new model:', error);
+    }
+  };
+
+  const handleCancelAddModel = () => {
+    setShowAddModelForm(false);
+    setAddModelForm({ modelName: '', description: '' });
+  };
+
   const handleEditModel = (modelCode: string) => {
     console.log('Edit model:', modelCode);
     // TODO: Implement edit model modal
@@ -113,6 +151,13 @@ export default function SemmMakePage() {
   // Reorder functionality
   const [reorderMode, setReorderMode] = useState(false);
   const [tempModels, setTempModels] = useState<any[]>([]);
+  
+  // Add model state
+  const [showAddModelForm, setShowAddModelForm] = useState(false);
+  const [addModelForm, setAddModelForm] = useState({
+    modelName: '',
+    description: ''
+  });
 
   const handleReorderModels = () => {
     if (!foundMake?.models) return;
@@ -175,7 +220,7 @@ export default function SemmMakePage() {
     );
   }
 
-  if (error || !semmData?.data) {
+  if (error || !semmData) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
         <div className="text-xl text-red-600">Failed to load make data</div>
@@ -301,36 +346,106 @@ export default function SemmMakePage() {
           <div className="mt-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">Models for {foundMake.title}</h2>
-              {isAdmin && !reorderMode && (
-                <button
-                  onClick={handleReorderModels}
-                  className="p-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-lg"
-                  title="Reorder Models"
-                  data-testid="reorder-models-btn"
-                >
-                  <RotateCcw className="w-5 h-5" />
-                </button>
-              )}
-              {reorderMode && (
-                <div className="flex space-x-2">
-                  <Button
-                    variant="outline"
-                    onClick={cancelReorder}
-                    data-testid="cancel-reorder"
-                    className="border-orange-300 text-orange-600 hover:bg-orange-100"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handleReorderSubmit}
-                    data-testid="save-reorder"
-                    className="bg-orange-500 hover:bg-orange-600 text-white"
-                  >
-                    Save Order
-                  </Button>
-                </div>
-              )}
+              <div className="flex items-center space-x-2">
+                {isAdmin && !reorderMode && (
+                  <>
+                    <button
+                      onClick={handleReorderModels}
+                      className="p-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-lg"
+                      title="Reorder Models"
+                      data-testid="reorder-models-btn"
+                    >
+                      <RotateCcw className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={handleAddNewModel}
+                      disabled={showAddModelForm}
+                      className="flex items-center space-x-2 px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Add New Model"
+                      data-testid="add-new-model-btn"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Add Model</span>
+                    </button>
+                  </>
+                )}
+                {reorderMode && (
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="outline"
+                      onClick={cancelReorder}
+                      data-testid="cancel-reorder"
+                      className="border-orange-300 text-orange-600 hover:bg-orange-100"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleReorderSubmit}
+                      data-testid="save-reorder"
+                      className="bg-orange-500 hover:bg-orange-600 text-white"
+                    >
+                      Save Order
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
+            
+            {/* Add Model Form - Show when adding new model */}
+            {showAddModelForm && (
+              <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <h3 className="text-lg font-medium text-green-800 mb-4">Add New Model to {foundMake.title}</h3>
+                <form onSubmit={handleAddModelSubmit} className="space-y-4">
+                  <div>
+                    <label htmlFor="modelName" className="block text-sm font-medium text-gray-700 mb-2">
+                      Model Name *
+                    </label>
+                    <input
+                      type="text"
+                      id="modelName"
+                      value={addModelForm.modelName}
+                      onChange={(e) => setAddModelForm(prev => ({ ...prev, modelName: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      placeholder="e.g., L16/24, ME-C, RT-flex96C"
+                      required
+                      data-testid="input-model-name"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="modelDescription" className="block text-sm font-medium text-gray-700 mb-2">
+                      Description (Optional)
+                    </label>
+                    <textarea
+                      id="modelDescription"
+                      value={addModelForm.description}
+                      onChange={(e) => setAddModelForm(prev => ({ ...prev, description: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      placeholder="Brief description of this model..."
+                      rows={3}
+                      data-testid="input-model-description"
+                    />
+                  </div>
+                  <div className="flex space-x-3">
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                      data-testid="btn-save-model"
+                    >
+                      Add Model
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCancelAddModel}
+                      className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                      data-testid="btn-cancel-model"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+            
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {(reorderMode ? tempModels : foundMake.models).map((model: any, index: number) => (
                 <div 
