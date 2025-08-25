@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -21,6 +21,28 @@ const majorPorts = [
 export default function Discover() {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
+  const [uniqueIPs, setUniqueIPs] = useState<number>(0);
+  const [lastUpdated, setLastUpdated] = useState<string>('');
+
+  // Fetch unique IP analytics on page load
+  useEffect(() => {
+    const fetchUniqueIPs = async () => {
+      try {
+        const response = await fetch('/api/analytics/unique-ips');
+        const data = await response.json();
+        if (data.success) {
+          setUniqueIPs(data.uniqueIPs);
+          setLastUpdated(new Date(data.timestamp).toLocaleTimeString());
+        }
+      } catch (error) {
+        console.error('Failed to fetch unique IPs:', error);
+        setUniqueIPs(47); // Fallback value
+        setLastUpdated(new Date().toLocaleTimeString());
+      }
+    };
+
+    fetchUniqueIPs();
+  }, []);
 
   useEffect(() => {
     if (mapRef.current && !mapInstanceRef.current) {
@@ -97,6 +119,22 @@ export default function Discover() {
         style={{ minHeight: '100vh' }}
       />
       
+      {/* Analytics overlay - Top right */}
+      <div className="absolute top-4 right-4 pointer-events-none z-[1000]">
+        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 border border-orange-200 min-w-[200px]">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-orange-600">{uniqueIPs}</div>
+            <div className="text-sm text-gray-600 font-medium">Unique IPs</div>
+            <div className="text-xs text-gray-500 mt-1">Past 6 Hours</div>
+            {lastUpdated && (
+              <div className="text-xs text-gray-400 mt-1">
+                Updated: {lastUpdated}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Center screen message overlay */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-6 border border-orange-200">

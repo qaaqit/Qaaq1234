@@ -692,6 +692,16 @@ export const userSearchHistoryRelations = relations(userSearchHistory, ({ one })
   }),
 }));
 
+// IP Analytics table for unique visitor tracking
+export const ipAnalytics = pgTable("ip_analytics", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  ipAddress: text("ip_address").notNull(),
+  userAgent: text("user_agent"),
+  path: text("path"), // Which page was visited
+  userId: text("user_id"), // If authenticated
+  visitedAt: timestamp("visited_at").default(sql`now()`),
+});
+
 // Insert schemas for search analytics
 export const insertSearchKeywordSchema = createInsertSchema(searchKeywords)
   .omit({ id: true, createdAt: true });
@@ -699,10 +709,15 @@ export const insertSearchKeywordSchema = createInsertSchema(searchKeywords)
 export const insertUserSearchHistorySchema = createInsertSchema(userSearchHistory)
   .omit({ id: true, searchedAt: true });
 
+export const insertIpAnalyticsSchema = createInsertSchema(ipAnalytics)
+  .omit({ id: true, visitedAt: true });
+
 // Types for search analytics
 export type InsertSearchKeyword = z.infer<typeof insertSearchKeywordSchema>;
 export type SearchKeyword = typeof searchKeywords.$inferSelect;
 export type InsertUserSearchHistory = z.infer<typeof insertUserSearchHistorySchema>;
+export type InsertIpAnalytics = z.infer<typeof insertIpAnalyticsSchema>;
+export type IpAnalytics = typeof ipAnalytics.$inferSelect;
 export type UserSearchHistory = typeof userSearchHistory.$inferSelect;
 
 // Questions table (existing QAAQ questions database)
