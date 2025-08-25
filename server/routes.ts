@@ -5626,11 +5626,18 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       
       console.log(`🔧 Generated new equipment code: ${newEquipmentCode} (order: ${newEquipmentOrder})`);
       
+      // Get the system name first
+      const systemResult = await pool.query(`
+        SELECT DISTINCT system FROM semm_structure WHERE sid = $1 LIMIT 1
+      `, [systemCode]);
+      
+      const systemName = systemResult.rows[0]?.system || `System ${systemCode}`;
+      
       // Insert the new equipment
       await pool.query(`
-        INSERT INTO semm_structure (sid, eid, equipment, description, equipment_order)
-        VALUES ($1, $2, $3, $4, $5)
-      `, [systemCode, newEquipmentCode, equipmentName, description || `${equipmentName} equipment classification`, newEquipmentOrder]);
+        INSERT INTO semm_structure (sid, eid, system, equipment, description, equipment_order)
+        VALUES ($1, $2, $3, $4, $5, $6)
+      `, [systemCode, newEquipmentCode, systemName, equipmentName, description || `${equipmentName} equipment classification`, newEquipmentOrder]);
       
       console.log('✅ Successfully added new equipment');
       res.json({ 
