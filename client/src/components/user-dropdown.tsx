@@ -75,24 +75,23 @@ export default function UserDropdown({ user, className = "", onLogout }: UserDro
     };
   }, [isOpen]);
 
-  const handleLogout = () => {
-    // Clear QAAQ tokens
-    logout();
-    
-    // Call parent logout handler if provided
-    if (onLogout) {
-      onLogout();
-    }
-    
-    // For Replit Auth users, redirect to Replit logout endpoint
-    // For QAAQ users, just go to home page
-    const token = localStorage.getItem('auth_token');
-    if (!token && user.id) {
-      // This is a Replit Auth user, use Replit logout
-      window.location.href = '/api/logout';
-    } else {
-      // This is a QAAQ user, just refresh to home
-      window.location.href = '/';
+  const handleLogout = async () => {
+    try {
+      // Use the unified logout from AuthContext
+      await logout();
+      
+      // Call parent logout handler if provided
+      if (onLogout) {
+        onLogout();
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force logout even if API fails
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('qaaq_user');
+      window.location.href = '/login';
     }
   };
 
