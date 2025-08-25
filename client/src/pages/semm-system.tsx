@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
-import { ArrowLeft, Share2, Home, ChevronRight, ChevronDown, ChevronUp, GripVertical, Plus, Edit3, Ship, RotateCcw, Save, X } from 'lucide-react';
+import { ArrowLeft, Share2, Home, ChevronRight, ChevronDown, ChevronUp, GripVertical, Plus, Edit3, Ship, RotateCcw, Save, X, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -153,6 +153,30 @@ export default function SemmSystemPage() {
 
   const handleEditEquipment = (equipmentCode: string) => {
     console.log('Edit equipment:', equipmentCode);
+  };
+
+  const handleDeleteEquipment = async (equipmentCode: string, equipmentName: string) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${equipmentName}" (${equipmentCode})?\n\nThis action cannot be undone.`
+    );
+    
+    if (!confirmed) return;
+    
+    try {
+      console.log(`🗑️ Deleting equipment: ${equipmentCode}`);
+      
+      await apiRequest(`/api/dev/semm/delete-equipment/${equipmentCode}`, 'DELETE');
+      
+      console.log('✅ Successfully deleted equipment');
+      
+      // Refresh the data immediately
+      await queryClient.invalidateQueries({ queryKey: ['/api/dev/semm-cards'] });
+      await queryClient.refetchQueries({ queryKey: ['/api/dev/semm-cards'] });
+      
+    } catch (error) {
+      console.error('❌ Error deleting equipment:', error);
+      alert('Failed to delete equipment. Please try again.');
+    }
   };
 
   const handleAddNewEquipment = () => {
@@ -539,21 +563,35 @@ export default function SemmSystemPage() {
                       )}
                     </div>
 
-                    {/* Admin edit button */}
+                    {/* Admin edit and delete buttons */}
                     {isAdmin && (
                       <div className="mt-4 pt-2 border-t border-gray-100">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditEquipment(equipment.code);
-                          }}
-                          className="flex items-center space-x-2 px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors w-full justify-center"
-                          title="Edit Equipment"
-                          data-testid={`edit-equipment-${equipment.code}`}
-                        >
-                          <Edit3 className="w-4 h-4" />
-                          <span>Edit Equipment</span>
-                        </button>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditEquipment(equipment.code);
+                            }}
+                            className="flex items-center space-x-1 px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors flex-1 justify-center"
+                            title="Edit Equipment"
+                            data-testid={`edit-equipment-${equipment.code}`}
+                          >
+                            <Edit3 className="w-4 h-4" />
+                            <span>Edit</span>
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteEquipment(equipment.code, equipment.title);
+                            }}
+                            className="flex items-center space-x-1 px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors flex-1 justify-center"
+                            title="Delete Equipment"
+                            data-testid={`delete-equipment-${equipment.code}`}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            <span>Delete</span>
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>

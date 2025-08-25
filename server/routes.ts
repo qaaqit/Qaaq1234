@@ -5667,6 +5667,39 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
     }
   });
 
+  // Delete equipment from system
+  app.delete('/api/dev/semm/delete-equipment/:equipmentCode', sessionBridge, async (req, res) => {
+    try {
+      const { equipmentCode } = req.params;
+      console.log(`🗑️ Delete equipment request for code: ${equipmentCode}`);
+      
+      if (!equipmentCode) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Equipment code is required' 
+        });
+      }
+
+      // Delete the equipment from database
+      const result = await pool.query(`
+        DELETE FROM semm_structure 
+        WHERE eid = $1
+      `, [equipmentCode]);
+      
+      console.log(`✅ Successfully deleted equipment ${equipmentCode}, affected rows: ${result.rowCount}`);
+      
+      res.json({ 
+        success: true, 
+        message: 'Equipment deleted successfully',
+        deletedCount: result.rowCount
+      });
+      
+    } catch (error) {
+      console.error('❌ Error deleting equipment:', error);
+      res.status(500).json({ success: false, error: 'Failed to delete equipment' });
+    }
+  });
+
   // Add new equipment to system
   app.post('/api/dev/semm/add-equipment', sessionBridge, async (req, res) => {
     try {
