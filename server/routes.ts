@@ -5611,6 +5611,62 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
     }
   });
 
+  // Fix system names in database - one-time cleanup
+  app.post('/api/dev/semm/fix-system-names', sessionBridge, async (req, res) => {
+    try {
+      console.log('🔧 Fixing system names in database...');
+      
+      const systemNameMapping = {
+        'a': 'a. Propulsion',
+        'b': 'b. Power Generation', 
+        'c': 'c. Boiler',
+        'd': 'd. Compressed Air',
+        'e': 'e. Pumps & Auxiliary',
+        'f': 'f. Fresh Water & Cooling',
+        'g': 'g. Oil Purification',
+        'h': 'h. Cargo Systems',
+        'i': 'i. Safety & Fire Fighting',
+        'j': 'j. Crane & Deck Equipment',
+        'k': 'k. Navigation Systems',
+        'l': 'l. Automation & Control',
+        'm': 'm. HVAC Systems',
+        'n': 'n. Pollution Control',
+        'o': 'o. Hull & Structure',
+        'p': 'p. Accommodation',
+        'q': 'q. Workshop Equipment',
+        'r': 'r. Communication Systems',
+        's': 's. Spare Parts & Consumables',
+        'z': 'z. Miscellaneous'
+      };
+      
+      let fixedCount = 0;
+      
+      for (const [systemCode, correctSystemName] of Object.entries(systemNameMapping)) {
+        const result = await pool.query(`
+          UPDATE semm_structure 
+          SET system = $1 
+          WHERE sid = $2 AND system != $1
+        `, [correctSystemName, systemCode]);
+        
+        if (result.rowCount > 0) {
+          console.log(`✅ Fixed ${result.rowCount} records for system ${systemCode}: ${correctSystemName}`);
+          fixedCount += result.rowCount;
+        }
+      }
+      
+      console.log(`🎯 Fixed ${fixedCount} total system name records`);
+      res.json({ 
+        success: true, 
+        message: `Fixed ${fixedCount} system name records`,
+        fixedCount: fixedCount
+      });
+      
+    } catch (error) {
+      console.error('❌ Error fixing system names:', error);
+      res.status(500).json({ success: false, error: 'Failed to fix system names' });
+    }
+  });
+
   // Add new equipment to system
   app.post('/api/dev/semm/add-equipment', sessionBridge, async (req, res) => {
     try {
@@ -5643,12 +5699,33 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       
       console.log(`🔧 Generated new equipment code: ${newEquipmentCode} (order: ${newEquipmentOrder})`);
       
-      // Get the system name first
-      const systemResult = await pool.query(`
-        SELECT DISTINCT system FROM semm_structure WHERE sid = $1 LIMIT 1
-      `, [systemCode]);
+      // Get the system name first, but use correct mapping for known systems
+      const systemNameMapping = {
+        'a': 'a. Propulsion',
+        'b': 'b. Power Generation', 
+        'c': 'c. Boiler',
+        'd': 'd. Compressed Air',
+        'e': 'e. Pumps & Auxiliary',
+        'f': 'f. Fresh Water & Cooling',
+        'g': 'g. Oil Purification',
+        'h': 'h. Cargo Systems',
+        'i': 'i. Safety & Fire Fighting',
+        'j': 'j. Crane & Deck Equipment',
+        'k': 'k. Navigation Systems',
+        'l': 'l. Automation & Control',
+        'm': 'm. HVAC Systems',
+        'n': 'n. Pollution Control',
+        'o': 'o. Hull & Structure',
+        'p': 'p. Accommodation',
+        'q': 'q. Workshop Equipment',
+        'r': 'r. Communication Systems',
+        's': 's. Spare Parts & Consumables',
+        'z': 'z. Miscellaneous'
+      };
       
-      const systemName = systemResult.rows[0]?.system || `System ${systemCode}`;
+      const systemName = systemNameMapping[systemCode] || `System ${systemCode}`;
+      
+      console.log(`🔧 Using correct system name: ${systemName} for code: ${systemCode}`);
       
       // Insert the new equipment with explicit NULL values for make/model fields
       await pool.query(`
