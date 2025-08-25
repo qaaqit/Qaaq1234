@@ -4,7 +4,7 @@ import { ArrowLeft, Share2, ChevronRight, Edit3, RotateCcw, ChevronUp, ChevronDo
 import { Button } from '@/components/ui/button';
 import { apiRequest } from '@/lib/queryClient';
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Bottom edge roll out flip card animation
 const FlipCard = ({ char, index, large = false }: { char: string; index: number; large?: boolean }) => {
@@ -90,11 +90,11 @@ export default function SemmMakePage() {
 
   // Get user authentication info
   const { user, isAuthenticated } = useAuth();
-  const isAdmin = user?.isAdmin || user?.role === 'admin';
+  const isAdmin = user?.isAdmin || false;
   
   // Debug admin detection
   console.log('🔐 SEMM Make - User object:', user);
-  console.log('🔐 SEMM Make - isAdmin check:', { isAdmin: user?.isAdmin, role: user?.role, finalIsAdmin: isAdmin });
+  console.log('🔐 SEMM Make - isAdmin check:', { isAdmin: user?.isAdmin, finalIsAdmin: isAdmin });
 
   // Fetch SEMM data to find the specific make
   const { data: semmData, isLoading, error } = useQuery({

@@ -4,7 +4,7 @@ import { ArrowLeft, Share2, Home, ChevronRight, ChevronDown, ChevronUp, GripVert
 import { useState, useEffect } from 'react';
 
 import { apiRequest, queryClient } from '@/lib/queryClient';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Bottom edge roll out flip card animation
 const FlipCard = ({ char, index, large = false }: { char: string; index: number; large?: boolean }) => {
@@ -98,11 +98,11 @@ export default function SemmSystemPage() {
   });
   
   const { user } = useAuth();
-  const isAdmin = user?.isAdmin || user?.role === 'admin' || false;
+  const isAdmin = user?.isAdmin || false;
   
   // Debug admin detection
   console.log('🔐 SEMM System - User object:', user);
-  console.log('🔐 SEMM System - isAdmin check:', { isAdmin: user?.isAdmin, role: user?.role, finalIsAdmin: isAdmin });
+  console.log('🔐 SEMM System - isAdmin check:', { isAdmin: user?.isAdmin, finalIsAdmin: isAdmin });
 
   // Fetch SEMM data to find the specific system
   const { data: semmData, isLoading, error } = useQuery({

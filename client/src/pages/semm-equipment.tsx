@@ -4,7 +4,7 @@ import { ArrowLeft, Share2, Home, ChevronRight, Edit3, RotateCcw, ChevronUp, Che
 import { Button } from '@/components/ui/button';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Bottom edge roll out flip card animation
 const FlipCard = ({ char, index, large = false }: { char: string; index: number; large?: boolean }) => {
@@ -90,11 +90,11 @@ export default function SemmEquipmentPage() {
   // Get user authentication info
   const { user, isAuthenticated } = useAuth();
   
-  const isAdmin = user?.isAdmin || user?.role === 'admin';
+  const isAdmin = user?.isAdmin || false;
   
   // Debug admin detection
   console.log('🔐 SEMM Equipment - User object:', user);
-  console.log('🔐 SEMM Equipment - isAdmin check:', { isAdmin: user?.isAdmin, role: user?.role, finalIsAdmin: isAdmin });
+  console.log('🔐 SEMM Equipment - isAdmin check:', { isAdmin: user?.isAdmin, finalIsAdmin: isAdmin });
 
   // Admin state
   const [currentMakeIndex, setCurrentMakeIndex] = useState(0);
