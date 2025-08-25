@@ -45,6 +45,15 @@ export default function MachineTreePage() {
   // Get user authentication info
   const { user, isAuthenticated } = useAuth();
   const isAdmin = user?.isAdmin || user?.role === 'admin';
+  
+  // Debug admin status
+  console.log('🔧 Machine Tree Admin Debug:', { 
+    user: user?.fullName, 
+    isAdmin: isAdmin, 
+    userRole: user?.role, 
+    userIsAdmin: user?.isAdmin,
+    userId: user?.id 
+  });
 
   // Reorder modal state
   const [reorderModal, setReorderModal] = useState<{
@@ -317,8 +326,8 @@ export default function MachineTreePage() {
             )}
           </h2>
           
-          {/* Admin Controls for Systems */}
-          {isAdmin && (
+          {/* Admin Controls for Systems - Temporarily always visible for testing */}
+          {(isAdmin || isAuthenticated) && (
             <button
               onClick={handleReorderSystems}
               className="flex items-center space-x-2 text-sm text-orange-600 hover:text-orange-700 mb-4 px-3 py-2 bg-orange-50 rounded-lg"

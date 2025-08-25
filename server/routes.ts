@@ -5070,7 +5070,10 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       };
 
       // Apply code corrections for systems that have wrong codes but correct titles
-      const correctedSystems = Array.from(systemsMap.values()).map(system => {
+      const correctedSystems = [];
+      const seenCodes = new Set();
+      
+      Array.from(systemsMap.values()).forEach(system => {
         let correctedSystem = { ...system };
         
         // Fix Compressed Air system - should be 'd' instead of 'f' 
@@ -5082,7 +5085,11 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
           correctedSystem.code = 'f';
         }
         
-        return correctedSystem;
+        // Only add if we haven't seen this code before (avoid duplicates)
+        if (!seenCodes.has(correctedSystem.code)) {
+          seenCodes.add(correctedSystem.code);
+          correctedSystems.push(correctedSystem);
+        }
       });
 
       // Sort systems by the corrected order
