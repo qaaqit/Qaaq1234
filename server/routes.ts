@@ -648,6 +648,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // DISABLED: Session bridge to prevent constant polling
       // app.use(sessionBridge);
       
+      // Unified logout endpoint - handles all auth methods
+      app.post('/api/auth/logout', async (req: any, res) => {
+        try {
+          console.log('🚪 Unified logout initiated');
+          
+          // Clear any session data (for Google/Replit users)
+          if (req.session) {
+            req.session.destroy((err: any) => {
+              if (err) {
+                console.error('Error destroying session:', err);
+              }
+            });
+          }
+          
+          // Clear passport data
+          if (req.logout) {
+            req.logout(() => {});
+          }
+          
+          console.log('✅ Unified logout completed');
+          res.json({ success: true, message: 'Logged out successfully' });
+        } catch (error) {
+          console.error('Logout error:', error);
+          res.status(500).json({ success: false, message: 'Logout failed' });
+        }
+      });
+
       // SIMPLIFIED authentication endpoint - only session auth (Google/Replit)
       app.get('/api/auth/user', async (req: any, res) => {
         try {

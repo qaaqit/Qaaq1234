@@ -139,13 +139,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
    */
   const logout = async (): Promise<void> => {
     try {
-      // Clear JWT token
+      console.log('🚪 Starting logout process...');
+      
+      // Clear all possible token variations
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-
-      // Clear session (for Replit/Google auth)
-      await fetch('/api/logout', { method: 'GET' });
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('qaaq_user');
       
+      // Clear session (for Replit/Google auth) - use the unified endpoint
+      await fetch('/api/auth/logout', { 
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('✅ Logout completed successfully');
       setUser(null);
       setLocation('/login');
     } catch (error) {
@@ -153,6 +163,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Force logout even if API fails
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('qaaq_user');
       setUser(null);
       setLocation('/login');
     }
