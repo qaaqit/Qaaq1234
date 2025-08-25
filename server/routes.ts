@@ -5193,7 +5193,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         }
       });
 
-      // Ensure Boiler system is present - add it if missing from parent database
+      // Ensure Boiler system is present - add default equipment only if NO boiler data exists in database
       if (!seenCodes.has('c')) {
         correctedSystems.push({
           code: 'c',
@@ -5633,10 +5633,10 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       
       const systemName = systemResult.rows[0]?.system || `System ${systemCode}`;
       
-      // Insert the new equipment
+      // Insert the new equipment with explicit NULL values for make/model fields
       await pool.query(`
-        INSERT INTO semm_structure (sid, eid, system, equipment, description, equipment_order)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO semm_structure (sid, eid, system, equipment, description, equipment_order, mid, make, moid, model)
+        VALUES ($1, $2, $3, $4, $5, $6, NULL, NULL, NULL, NULL)
       `, [systemCode, newEquipmentCode, systemName, equipmentName, description || `${equipmentName} equipment classification`, newEquipmentOrder]);
       
       console.log('✅ Successfully added new equipment');
