@@ -57,7 +57,10 @@ declare global {
   }
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || 'qaaq_jwt_secret_key_2024_secure';
+import { getJWTSecret } from './secret-validation';
+
+// Lazy load JWT_SECRET only when needed
+const getJWT = () => getJWTSecret();
 
 // Initialize password manager for email OTP functionality
 const passwordManager = new PasswordManager();
@@ -1338,7 +1341,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateUserVerification(user.id, true);
       
       // Generate token
-      const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '30d' });
+      const token = jwt.sign({ userId: user.id }, getJWT(), { expiresIn: '30d' });
       
       res.json({
         user: {

@@ -2,8 +2,10 @@ import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
 import { storage } from './storage';
 import { User } from '@shared/schema';
+import { getJWTSecret } from './secret-validation';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+// Lazy load JWT_SECRET only when needed
+const getJWT = () => getJWTSecret();
 
 // Enhanced request interface with unified auth data
 declare global {
@@ -38,7 +40,7 @@ export const unifiedAuth = async (req: Request, res: Response, next: NextFunctio
       console.log('🔑 Unified Auth: Checking JWT token');
       
       try {
-        const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+        const decoded = jwt.verify(token, getJWT()) as { userId: string };
         const user = await storage.findUserByAnyIdentity(decoded.userId);
         
         if (user) {
@@ -200,7 +202,7 @@ export const adminAuth = async (req: Request, res: Response, next: NextFunction)
  * Generate JWT token for user
  */
 export const generateToken = (userId: string): string => {
-  return jwt.sign({ userId }, JWT_SECRET, { expiresIn: '30d' });
+  return jwt.sign({ userId }, getJWT(), { expiresIn: '30d' });
 };
 
 /**

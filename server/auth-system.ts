@@ -1,8 +1,10 @@
 import { pool } from './db';
 import jwt from 'jsonwebtoken';
 import { passwordManager } from './password-manager';
+import { getJWTSecret } from './secret-validation';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'qaaq-connect-secret-key';
+// Lazy load JWT_SECRET only when needed
+const getJWT = () => getJWTSecret();
 
 export interface DuplicateUser {
   id: string;
@@ -382,7 +384,7 @@ export class RobustAuthSystem {
    * Generate JWT token
    */
   private generateToken(userId: string): string {
-    return jwt.sign({ userId }, JWT_SECRET, { expiresIn: '30d' });
+    return jwt.sign({ userId }, getJWT(), { expiresIn: '30d' });
   }
   
   /**

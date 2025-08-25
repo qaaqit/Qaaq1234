@@ -7,6 +7,10 @@ import QoiGPTBot from "./whatsapp-bot";
 import { initializeRankGroups } from "./rank-groups-service";
 import { setupGlossaryDatabase } from "./setup-glossary-db";
 import { getQuestionById } from "./questions-service";
+import { secretValidator } from "./secret-validation";
+
+// 🔐 SECURITY: Validate all required secrets at startup
+secretValidator.validateStartupSecrets();
 
 const app = express();
 app.use(express.json());

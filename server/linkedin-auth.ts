@@ -3,8 +3,10 @@ import jwt from 'jsonwebtoken';
 import { storage } from "./storage";
 import { pool } from './db';
 import { identityConsolidation } from './identity-consolidation';
+import { getJWTSecret } from './secret-validation';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'qaaq_jwt_secret_key_2024_secure';
+// Lazy load JWT_SECRET only when needed
+const getJWT = () => getJWTSecret();
 
 // LinkedIn OAuth configuration
 const LINKEDIN_CLIENT_ID = process.env.LINKEDIN_CLIENT_ID;
@@ -278,7 +280,7 @@ export function setupLinkedInAuth(app: Express) {
       const user = await findOrCreateLinkedInUser(linkedInUser, email, profilePictureUrl);
       
       // Generate JWT token
-      const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
+      const token = jwt.sign({ userId: user.id }, getJWT(), { expiresIn: '7d' });
       
       // Redirect to frontend with token - redirect to QBOT Chat as per user preference
       res.redirect(`/oauth-callback?token=${token}&user=${encodeURIComponent(JSON.stringify({

@@ -391,7 +391,8 @@ export function setupMergeRoutes(app: express.Application) {
       }
       
       // Generate token for selected account using jwt
-      const token = jwt.sign({ userId: selectedAccount.id }, process.env.JWT_SECRET || 'qaaq-connect-secret-key', { expiresIn: '30d' });
+      const { getJWTSecret } = await import('./secret-validation');
+      const token = jwt.sign({ userId: selectedAccount.id }, getJWTSecret(), { expiresIn: '30d' });
       
       // Clean up session
       mergeSessionManager.deleteSession(sessionId);

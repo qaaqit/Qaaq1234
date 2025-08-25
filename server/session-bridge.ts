@@ -90,7 +90,8 @@ export const sessionBridge = async (req: Request, res: Response, next: NextFunct
     if (token && !user) {
       try {
         const jwt = await import('jsonwebtoken');
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'qaaq_jwt_secret_key_2024_secure') as { userId: string };
+        const { getJWTSecret } = await import('./secret-validation');
+        const decoded = jwt.verify(token, getJWTSecret()) as { userId: string };
         
         user = await identityResolver.resolveUserByAnyMethod(decoded.userId, 'jwt');
         if (user) {

@@ -3,8 +3,10 @@ import jwt from 'jsonwebtoken';
 import { storage } from "./storage";
 import { pool } from './db';
 import { identityConsolidation } from './identity-consolidation';
+import { getJWTSecret } from './secret-validation';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'qaaq_jwt_secret_key_2024_secure';
+// Lazy load JWT_SECRET only when needed
+const getJWT = () => getJWTSecret();
 
 // Google OAuth configuration
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
