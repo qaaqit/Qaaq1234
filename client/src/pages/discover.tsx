@@ -58,7 +58,7 @@ export default function Discover() {
       const portIcon = L.divIcon({
         className: 'port-marker',
         html: `
-          <div style="
+          <div class="port-marker-blink" style="
             background-color: #f97316;
             border: 3px solid white;
             border-radius: 50%;
