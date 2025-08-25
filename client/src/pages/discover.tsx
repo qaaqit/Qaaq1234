@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// Top 10 Major Ports with their coordinates
+// Top 12 Major Ports with their coordinates
 const majorPorts = [
   { name: "Shanghai", country: "China", lat: 31.2304, lng: 121.4737, description: "World's busiest port and major global trade hub" },
   { name: "Singapore", country: "Singapore", lat: 1.2966, lng: 103.7764, description: "Leading port in Asia and the world for container traffic" },
@@ -13,7 +13,9 @@ const majorPorts = [
   { name: "New York/New Jersey", country: "USA", lat: 40.6892, lng: -74.0445, description: "Crucial port complex for the United States' East Coast" },
   { name: "Antwerp", country: "Belgium", lat: 51.2194, lng: 4.4025, description: "Second-largest port in Europe, handling significant throughput" },
   { name: "Jebel Ali", country: "UAE", lat: 25.0118, lng: 55.1406, description: "Key transshipment hub for the Middle East and surrounding regions" },
-  { name: "Los Angeles", country: "USA", lat: 33.7361, lng: -118.2644, description: "Largest port complex in the Americas" }
+  { name: "Los Angeles", country: "USA", lat: 33.7361, lng: -118.2644, description: "Largest port complex in the Americas" },
+  { name: "Mumbai", country: "India", lat: 19.0760, lng: 72.8777, description: "Major port on India's west coast and gateway to the subcontinent" },
+  { name: "Istanbul", country: "Turkey", lat: 41.0082, lng: 28.9784, description: "Strategic port connecting Europe and Asia across the Bosphorus" }
 ];
 
 export default function Discover() {
