@@ -16,7 +16,8 @@ import {
   ChevronDown
 } from "lucide-react";
 import { useLocation } from "wouter";
-import { logout, type User as AuthUser } from "@/lib/auth";
+import { useAuth } from "@/contexts/AuthContext";
+import { type User as AuthUser } from "@/lib/auth";
 
 interface UserDropdownProps {
   user: AuthUser;
@@ -27,6 +28,7 @@ interface UserDropdownProps {
 export default function UserDropdown({ user, className = "", onLogout }: UserDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [, setLocation] = useLocation();
+  const { logout } = useAuth();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
