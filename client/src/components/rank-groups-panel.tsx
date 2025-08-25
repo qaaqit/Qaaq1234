@@ -21,13 +21,6 @@ export function RankGroupsPanel() {
   // Fetch all rank groups with member counts
   const { data: rankGroups = [], isLoading } = useQuery<RankGroup[]>({
     queryKey: ['/api/rank-groups'],
-    queryFn: async () => {
-      const response = await fetch('/api/rank-groups');
-      if (!response.ok) throw new Error('Failed to fetch rank groups');
-      const data = await response.json();
-      console.log('🔍 Frontend: Rank groups data received:', data.length, 'groups');
-      return data;
-    },
   });
 
   // Filter out "Other Marine Professionals" as requested
