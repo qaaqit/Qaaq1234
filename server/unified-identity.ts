@@ -116,16 +116,12 @@ export class UnifiedIdentityService {
   async verifyJWTUser(token: string): Promise<UnifiedUser | null> {
     try {
       const decoded = jwt.verify(token, getJWTSecret()) as any;
-      console.log('🔐 JWT Decoded:', decoded);
       
       if (!decoded.userId) {
-        console.log('❌ No userId in JWT token');
         return null;
       }
 
-      console.log('🔍 Looking up user:', decoded.userId);
       const user = await this.resolveUser(decoded.userId);
-      console.log('✅ Resolved user:', user ? user.fullName : 'Not found');
       
       return user;
     } catch (error) {
