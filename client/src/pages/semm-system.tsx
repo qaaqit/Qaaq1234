@@ -178,8 +178,9 @@ export default function SemmSystemPage() {
       setShowAddEquipmentForm(false);
       setAddEquipmentForm({ equipmentName: '', description: '' });
       
-      // Refresh the data
-      queryClient.invalidateQueries({ queryKey: ['/api/dev/semm-cards'] });
+      // Refresh the data immediately and force refetch
+      await queryClient.invalidateQueries({ queryKey: ['/api/dev/semm-cards'] });
+      await queryClient.refetchQueries({ queryKey: ['/api/dev/semm-cards'] });
       
     } catch (error) {
       console.error('❌ Error adding new equipment:', error);
