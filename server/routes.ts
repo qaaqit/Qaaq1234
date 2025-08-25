@@ -5091,6 +5091,10 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       console.log('🔧 Successfully fetched', semmData.length, 'SEMM records from parent database');
       console.log('🔧 Sample SEMM record:', semmData[0]);
       
+      // Debug: Check for Boiler records specifically
+      const boilerRecords = semmData.filter(r => r.system_code === 'c');
+      console.log('🔧 Found', boilerRecords.length, 'Boiler system records:', boilerRecords);
+      
       // Group data by system code with code correction mapping
       const systemsMap = new Map();
       let hasBoilerData = false; // Track if we found real boiler data
