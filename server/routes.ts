@@ -1365,7 +1365,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // JWT Token Verification Route - performance optimized
+  // JWT Token Verification Route - DIRECT FIX
   app.post('/api/auth/verify-token', async (req, res) => {
     try {
       const authHeader = req.headers.authorization;
@@ -1374,13 +1374,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const token = authHeader.split(' ')[1];
-      const user = await unifiedIdentity.verifyJWTUser(token);
-
-      if (!user) {
-        return res.status(401).json({ success: false, message: 'Invalid token' });
+      
+      // Direct JWT verification using existing working code
+      const decoded = jwt.verify(token, getJWT()) as any;
+      
+      if (!decoded.userId) {
+        return res.status(401).json({ success: false, message: 'Invalid token structure' });
       }
 
-      res.json({ success: true, user });
+      // Get user directly from storage (existing working method)
+      const user = await storage.getUserById(decoded.userId);
+      
+      if (!user) {
+        return res.status(401).json({ success: false, message: 'User not found' });
+      }
+
+      // Return user in unified format
+      const unifiedUser = {
+        id: user.id,
+        fullName: user.fullName,
+        email: user.email,
+        authMethod: 'jwt' as const,
+        isAdmin: user.isAdmin,
+        isPremium: user.isPremium || false,
+        whatsAppNumber: user.whatsAppNumber,
+        userId: user.userId,
+        rank: user.rank,
+        city: user.city,
+        country: user.country
+      };
+
+      res.json({ success: true, user: unifiedUser });
     } catch (error) {
       console.error('Token verification error:', error);
       res.status(401).json({ success: false, message: 'Token verification failed' });

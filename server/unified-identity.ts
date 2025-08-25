@@ -1,6 +1,8 @@
 import { pool } from './db';
 import { storage } from './storage';
 import type { User } from '@shared/schema';
+import jwt from 'jsonwebtoken';
+import { getJWTSecret } from './secret-validation.js';
 
 export interface UnifiedUser {
   id: string;
@@ -113,14 +115,21 @@ export class UnifiedIdentityService {
    */
   async verifyJWTUser(token: string): Promise<UnifiedUser | null> {
     try {
-      const jwt = require('jsonwebtoken');
-      const { getJWTSecret } = require('./secret-validation');
-      
       const decoded = jwt.verify(token, getJWTSecret()) as any;
-      if (!decoded.userId) return null;
+      console.log('🔐 JWT Decoded:', decoded);
+      
+      if (!decoded.userId) {
+        console.log('❌ No userId in JWT token');
+        return null;
+      }
 
-      return await this.resolveUser(decoded.userId);
+      console.log('🔍 Looking up user:', decoded.userId);
+      const user = await this.resolveUser(decoded.userId);
+      console.log('✅ Resolved user:', user ? user.fullName : 'Not found');
+      
+      return user;
     } catch (error) {
+      console.error('❌ JWT verification error:', error);
       return null;
     }
   }
