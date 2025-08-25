@@ -72,15 +72,16 @@ export function RankGroupsPanel() {
             <Anchor className="h-8 w-8 text-orange-600" />
             <h1 className="text-3xl font-bold text-gray-900">Maritime Rank Groups</h1>
           </div>
-          <div className="flex items-center space-x-4 text-sm text-gray-600">
-            <div className="flex items-center space-x-2">
-              <Users className="h-4 w-4" />
-              <span>Total Users: <span className="font-semibold text-orange-600">{totalUsers}</span></span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <MessageCircle className="h-4 w-4" />
-              <span>Active Groups: <span className="font-semibold text-orange-600">{filteredRankGroups.length}</span></span>
-            </div>
+          <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+            {filteredRankGroups.map((group) => (
+              <div key={group.id} className="flex items-center space-x-2">
+                <Users className="h-4 w-4" />
+                <span>
+                  <span className="font-semibold text-orange-600">{group.name}:</span>{' '}
+                  <span className="font-semibold text-gray-900">{group.memberCount}</span>
+                </span>
+              </div>
+            ))}
           </div>
         </div>
 
