@@ -46,14 +46,6 @@ export default function MachineTreePage() {
   const { user, isAuthenticated } = useAuth();
   const isAdmin = user?.isAdmin || user?.role === 'admin';
   
-  // Debug admin status
-  console.log('🔧 Machine Tree Admin Debug:', { 
-    user: user?.fullName, 
-    isAdmin: isAdmin, 
-    userRole: user?.role, 
-    userIsAdmin: user?.isAdmin,
-    userId: user?.id 
-  });
 
   // Reorder modal state
   const [reorderModal, setReorderModal] = useState<{
@@ -182,11 +174,22 @@ export default function MachineTreePage() {
     });
   };
 
-  const handleReorderSubmit = async (orderedItems: { code: string; title: string; }[]) => {
+  // Close reorder modal
+  const closeReorderModal = () => {
+    setReorderModal({
+      isOpen: false,
+      type: 'systems',
+      items: []
+    });
+  };
+
+  // Handle reorder submit
+  const handleReorderSubmit = async (orderedItems: Array<{ code: string; title: string }>) => {
     const orderedCodes = orderedItems.map(item => item.code);
     try {
       if (reorderModal.type === 'systems') {
         await apiRequest('/api/dev/semm/reorder-systems', 'POST', { orderedCodes });
+        console.log('✅ Systems reordered successfully');
       } else if (reorderModal.type === 'equipment') {
         const systems = Array.isArray(semmData) ? semmData : (semmData as any)?.data || [];
         const system = systems.find((s: any) => 
@@ -200,15 +203,13 @@ export default function MachineTreePage() {
             systemCode: system.code,
             orderedCodes 
           });
+          console.log('✅ Equipment reordered successfully');
         }
       }
     } catch (error) {
-      console.error('Reorder failed:', error);
+      console.error('❌ Failed to reorder:', error);
+      throw error;
     }
-  };
-
-  const closeReorderModal = () => {
-    setReorderModal(prev => ({ ...prev, isOpen: false }));
   };
 
   const handleAddNewEquipment = (systemId: string) => {
@@ -326,8 +327,8 @@ export default function MachineTreePage() {
             )}
           </h2>
           
-          {/* Admin Controls for Systems - Temporarily always visible for testing */}
-          {(isAdmin || isAuthenticated) && (
+          {/* Admin Controls for Systems */}
+          {isAdmin && (
             <button
               onClick={handleReorderSystems}
               className="flex items-center space-x-2 text-sm text-orange-600 hover:text-orange-700 mb-4 px-3 py-2 bg-orange-50 rounded-lg"
