@@ -5108,9 +5108,15 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
             correctedCode = 'z';
           }
           
+          // For Boiler system, ensure proper system name even if missing from database
+          let systemTitle = record.system;
+          if (record.system_code === 'c' && (!systemTitle || systemTitle.trim() === '')) {
+            systemTitle = 'c. Boiler';
+          }
+          
           systemsMap.set(record.system_code, {
             code: correctedCode,
-            title: record.system,
+            title: systemTitle,
             equipment: []
           });
         }
