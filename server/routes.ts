@@ -5093,7 +5093,14 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       
       // Group data by system code with code correction mapping
       const systemsMap = new Map();
+      let hasBoilerData = false; // Track if we found real boiler data
+      
       semmData.forEach(record => {
+        // Check if we have real boiler data
+        if (record.system_code === 'c') {
+          hasBoilerData = true;
+        }
+        
         if (!systemsMap.has(record.system_code)) {
           // Fix data integrity issue: system "s" should have code "z" since title is "z. Miscellaneous"
           let correctedCode = record.system_code;
@@ -5194,7 +5201,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       });
 
       // Ensure Boiler system is present - add default equipment only if NO boiler data exists in database
-      if (!seenCodes.has('c')) {
+      if (!seenCodes.has('c') && !hasBoilerData) {
         correctedSystems.push({
           code: 'c',
           title: 'c. Boiler',
