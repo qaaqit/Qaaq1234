@@ -144,7 +144,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       localStorage.removeItem('user');
 
       // Clear session (for Replit/Google auth)
-      await fetch('/api/logout', { method: 'POST' });
+      await fetch('/api/logout', { method: 'GET' });
       
       setUser(null);
       setLocation('/login');

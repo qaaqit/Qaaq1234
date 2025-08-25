@@ -665,7 +665,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (req.session?.passport?.user) {
             user = req.session.passport.user;
             console.log('✅ Found user in passport session:', user.fullName);
-            return res.json(user);
+            return res.json({ user });
           }
           
           // Check Replit Auth session
@@ -676,7 +676,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 user = await identityResolver.resolveUserByAnyMethod(sessionUserId, 'replit');
                 if (user) {
                   console.log('✅ Found user via Replit auth:', user.fullName);
-                  return res.json(user);
+                  return res.json({ user });
                 }
               } catch (error) {
                 console.log('Error resolving Replit user:', error);
