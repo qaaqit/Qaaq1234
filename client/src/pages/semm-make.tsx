@@ -91,6 +91,10 @@ export default function SemmMakePage() {
   // Get user authentication info
   const { user, isAuthenticated } = useAuth();
   const isAdmin = user?.isAdmin || user?.role === 'admin';
+  
+  // Debug admin detection
+  console.log('🔐 SEMM Make - User object:', user);
+  console.log('🔐 SEMM Make - isAdmin check:', { isAdmin: user?.isAdmin, role: user?.role, finalIsAdmin: isAdmin });
 
   // Fetch SEMM data to find the specific make
   const { data: semmData, isLoading, error } = useQuery({
@@ -347,7 +351,7 @@ export default function SemmMakePage() {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">Models for {foundMake.title}</h2>
               <div className="flex items-center space-x-2">
-                {!reorderMode && (
+                {isAdmin && !reorderMode && (
                   <>
                     <button
                       onClick={handleReorderModels}

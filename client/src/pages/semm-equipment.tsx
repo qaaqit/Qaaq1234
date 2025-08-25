@@ -91,6 +91,10 @@ export default function SemmEquipmentPage() {
   const { user, isAuthenticated } = useAuth();
   
   const isAdmin = user?.isAdmin || user?.role === 'admin';
+  
+  // Debug admin detection
+  console.log('🔐 SEMM Equipment - User object:', user);
+  console.log('🔐 SEMM Equipment - isAdmin check:', { isAdmin: user?.isAdmin, role: user?.role, finalIsAdmin: isAdmin });
 
   // Admin state
   const [currentMakeIndex, setCurrentMakeIndex] = useState(0);
@@ -348,7 +352,7 @@ export default function SemmEquipmentPage() {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">Makes for {foundEquipment.title}</h2>
               <div className="flex items-center space-x-2">
-                {!reorderEnabled && (
+                {isAdmin && !reorderEnabled && (
                   <>
                     <button
                       onClick={handleReorderMakes}

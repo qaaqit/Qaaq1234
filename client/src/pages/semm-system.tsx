@@ -98,7 +98,11 @@ export default function SemmSystemPage() {
   });
   
   const { user } = useAuth();
-  const isAdmin = user?.isAdmin || false;
+  const isAdmin = user?.isAdmin || user?.role === 'admin' || false;
+  
+  // Debug admin detection
+  console.log('🔐 SEMM System - User object:', user);
+  console.log('🔐 SEMM System - isAdmin check:', { isAdmin: user?.isAdmin, role: user?.role, finalIsAdmin: isAdmin });
 
   // Fetch SEMM data to find the specific system
   const { data: semmData, isLoading, error } = useQuery({
@@ -344,7 +348,7 @@ export default function SemmSystemPage() {
                 </h2>
                 
                 {/* Admin Controls for Equipment - Right Edge */}
-                {!reorderEnabled ? (
+                {isAdmin && !reorderEnabled ? (
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={handleReorderEquipment}
@@ -364,7 +368,7 @@ export default function SemmSystemPage() {
                       <Plus className="w-5 h-5" />
                     </button>
                   </div>
-                ) : reorderEnabled ? (
+                ) : isAdmin && reorderEnabled ? (
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={handleSaveReorder}
