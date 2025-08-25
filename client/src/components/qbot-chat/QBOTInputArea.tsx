@@ -1,5 +1,5 @@
 import { useState, useRef, KeyboardEvent, useEffect } from 'react';
-import { Paperclip, Send, Crown, Shield, ShieldCheck, Bot, Zap, Brain, Sparkles, Lightbulb } from 'lucide-react';
+import { Paperclip, Send, Crown, Shield, ShieldCheck, Bot, Zap, Brain, Sparkles, Lightbulb, Trash2 } from 'lucide-react';
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { PremiumSubscriptionDialog } from "@/components/PremiumSubscriptionDialog";
 import { useLocation } from "wouter";
@@ -42,6 +42,7 @@ const DEFAULT_CHATBOT_INVITES = [
 interface QBOTInputAreaProps {
   onSendMessage: (message: string, attachments?: string[], isPrivate?: boolean, aiModels?: string[]) => void;
   disabled?: boolean;
+  onClear?: () => void;
 }
 
 interface User {
@@ -51,7 +52,7 @@ interface User {
   isPremium?: boolean;
 }
 
-export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTInputAreaProps) {
+export default function QBOTInputArea({ onSendMessage, disabled = false, onClear }: QBOTInputAreaProps) {
   const { t } = useLanguage();
   const [, setLocation] = useLocation();
   const [message, setMessage] = useState('');
@@ -496,6 +497,19 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
           )}
         </div>
 
+        {/* Archive button (moved from header) */}
+        {onClear && (
+          <button
+            onClick={onClear}
+            className="p-3 rounded-lg hover:bg-red-100 transition-colors group flex-shrink-0 min-h-[55px] border border-gray-300"
+            aria-label="Clear Chat"
+            title="Archive and Clear Chat"
+            data-testid="button-archive-chat"
+          >
+            <Trash2 size={20} className="text-gray-600 group-hover:text-red-500" />
+          </button>
+        )}
+
         {/* Right side send button with orange background */}
         <button
           onClick={handleSend}
@@ -507,6 +521,7 @@ export default function QBOTInputArea({ onSendMessage, disabled = false }: QBOTI
               : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }
           `}
+          data-testid="button-send-message"
         >
           <Send size={20} />
         </button>

@@ -107,19 +107,10 @@ export default function QBOTChatHeader({ onClear, isAdmin = false }: QBOTChatHea
         )}
       </div>
       
-      {/* Right: Action Icons Only */}
+      {/* Right: Language Switcher Only */}
       <div className="flex items-center space-x-1">
         {/* Language Switcher */}
         <LanguageSwitcher size="icon" />
-        
-        <button
-          onClick={onClear}
-          className="p-2 rounded-lg hover:bg-gray-100 transition-colors group"
-          aria-label={t('common.delete')}
-          title={t('common.delete')}
-        >
-          <Trash2 size={16} className="text-gray-600 group-hover:text-red-500" />
-        </button>
 
         {/* Chatbot Invites Dialog - Only for Admin */}
         {isAdmin && (

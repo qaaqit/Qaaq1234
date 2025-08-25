@@ -414,6 +414,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                     <QBOTInputArea 
                       onSendMessage={handleSendQBotMessage}
                       disabled={isQBotTyping}
+                      onClear={handleClearQBotChat}
                     />
                   </div>
                 </div>
