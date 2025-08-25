@@ -28,7 +28,6 @@ export function RankGroupsPanel() {
       console.log('🔍 Frontend: Rank groups data received:', data.length, 'groups');
       return data;
     },
-    refetchInterval: 5 * 60 * 1000, // Refresh every 5 minutes to avoid excessive polling
   });
 
   // Filter out "Other Marine Professionals" as requested
