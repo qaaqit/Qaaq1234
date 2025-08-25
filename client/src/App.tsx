@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 
 import Home from "@/pages/home";
@@ -46,94 +47,33 @@ import NotFound from "@/pages/not-found";
 import BottomNav from "@/components/bottom-nav";
 import { PasswordCreationModal } from "@/components/PasswordCreationModal";
 import { usePasswordCheck } from "@/hooks/usePasswordCheck";
+import { useAuth } from "@/contexts/AuthContext";
 import { getStoredToken, getStoredUser, type User } from "@/lib/auth";
 
 function Router() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, isLoading, logout } = useAuth();
+  
+  // Convert unified user to legacy User format for compatibility
+  const currentUser: User | null = user ? {
+    id: user.id,
+    fullName: user.fullName,
+    email: user.email,
+    userType: 'sailor', // Default value
+    isAdmin: user.isAdmin,
+    nickname: user.fullName, // Use fullName as nickname
+    isVerified: true, // Authenticated users are verified
+    loginCount: 0, // Legacy field
+    maritimeRank: user.rank
+  } : null;
   
   // Check password requirements for logged-in users
   const { showPasswordModal, isRenewal, closeModal } = usePasswordCheck(user?.id);
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      // First check for QAAQ JWT token
-      const token = getStoredToken();
-      const storedUser = getStoredUser();
-      
-      if (token && storedUser) {
-        setUser(storedUser);
-        setLoading(false);
-        return;
-      }
-      
-      // Then check for Replit Auth session
-      try {
-        console.log('🔍 Checking Replit Auth session...');
-        
-        const response = await fetch('/api/auth/user', {
-          credentials: 'include', // Important for session cookies
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        
-        console.log('🔍 Auth check response status:', response.status);
-        
-        if (response.ok) {
-          const userData = await response.json();
-          console.log('✅ Auth check successful:', userData.fullName);
-          
-          if (userData) {
-            // Convert to our User format
-            const user: User = {
-              id: userData.id,
-              fullName: userData.fullName || userData.email || 'User',
-              email: userData.email,
-              userType: userData.userType || 'sailor',
-              isAdmin: userData.isAdmin || false,
-              nickname: userData.nickname,
-              isVerified: true, // Authenticated users are verified
-              loginCount: userData.loginCount || 0,
-              maritimeRank: userData.maritimeRank
-            };
-            
-            setUser(user);
-            setLoading(false);
-            return;
-          }
-        } else {
-          console.log('❌ Auth check failed with status:', response.status);
-        }
-      } catch (error) {
-        console.log('❌ Auth check error:', error);
-      }
-      
-      setLoading(false);
-    };
-    
-    checkAuth();
-  }, []);
-
-  const handleLogout = () => {
-    // Clear QAAQ tokens
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('qaaq_user');
-    
-    // Also handle Replit Auth logout
-    setUser(null);
-    
-    // If it's a Replit user, redirect to Replit logout
-    if (user && user.id && !getStoredToken()) {
-      window.location.href = '/api/logout';
-      return;
-    }
-    
-    // For QAAQ users, just refresh the page
-    window.location.href = '/';
+  const handleLogout = async () => {
+    await logout();
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
@@ -146,30 +86,27 @@ function Router() {
     );
   }
 
-  // Allow access without user requirements
-  const currentUser = user;
-
   return (
     <div className="min-h-screen bg-slate-50">
       <div className={currentUser ? "pb-16" : ""}>
         <Switch>
           <Route path="/" component={() => {
             console.log('🏠 Root route - Current user:', currentUser ? currentUser.fullName : 'None');
-            return currentUser ? <QBOTPage user={currentUser} /> : <Login onSuccess={setUser} />;
+            return currentUser ? <QBOTPage user={currentUser} /> : <Login />;
           }} />
-          <Route path="/login" component={() => <Login onSuccess={setUser} />} />
-          <Route path="/register" component={() => <Register onSuccess={setUser} />} />
-          <Route path="/verify" component={() => <Verify onSuccess={setUser} />} />
+          <Route path="/login" component={() => <Login />} />
+          <Route path="/register" component={() => <Register />} />
+          <Route path="/verify" component={() => <Verify />} />
           <Route path="/oauth-callback" component={() => <OAuthCallback />} />
-          <Route path="/discover" component={() => currentUser ? <Discover user={currentUser} /> : <Login onSuccess={setUser} />} />
+          <Route path="/discover" component={() => currentUser ? <Discover user={currentUser} /> : <Login />} />
           <Route path="/qbot" component={() => {
             console.log('🤖 QBOT route - Current user:', currentUser ? currentUser.fullName : 'None');
-            if (!currentUser && !loading) {
+            if (!currentUser && !isLoading) {
               console.log('❌ QBOT route - No user found, redirecting to login');
             }
-            return currentUser ? <QBOTPage user={currentUser} /> : <Login onSuccess={setUser} />;
+            return currentUser ? <QBOTPage user={currentUser} /> : <Login />;
           }} />
-          <Route path="/post" component={() => currentUser ? <Post user={currentUser} /> : <Login onSuccess={setUser} />} />
+          <Route path="/post" component={() => currentUser ? <Post user={currentUser} /> : <Login />} />
 
           <Route path="/chat/:connectionId" component={() => <Chat1v1Page />} />
           <Route path="/dm" component={() => <DMPage />} />
@@ -204,10 +141,10 @@ function Router() {
             return <SemmEquipmentPage />;
           }} />
           <Route path="/privacy-policy" component={() => <PrivacyPolicyPage />} />
-          <Route path="/premium" component={() => currentUser ? <PremiumPage /> : <Login onSuccess={setUser} />} />
-          <Route path="/premium-status" component={() => currentUser ? <PremiumStatusPage /> : <Login onSuccess={setUser} />} />
+          <Route path="/premium" component={() => currentUser ? <PremiumPage /> : <Login />} />
+          <Route path="/premium-status" component={() => currentUser ? <PremiumStatusPage /> : <Login />} />
           <Route path="/premium-setup" component={() => <PremiumSetupPage />} />
-          <Route path="/home-old" component={() => <Login onSuccess={setUser} />} />
+          <Route path="/home-old" component={() => <Login />} />
 
           <Route component={NotFound} />
         </Switch>
@@ -216,11 +153,11 @@ function Router() {
       {currentUser && <BottomNav user={currentUser} onLogout={handleLogout} />}
       
       {/* Mandatory Password Creation Modal */}
-      {showPasswordModal && user && (
+      {showPasswordModal && currentUser && (
         <PasswordCreationModal
           isOpen={showPasswordModal}
           onClose={closeModal}
-          userId={user.id}
+          userId={currentUser.id}
           isRenewal={isRenewal}
         />
       )}
@@ -232,12 +169,14 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <LanguageProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
-      </LanguageProvider>
+      <AuthProvider>
+        <LanguageProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Router />
+          </TooltipProvider>
+        </LanguageProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

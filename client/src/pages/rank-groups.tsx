@@ -1,5 +1,5 @@
 import { RankGroupsPanel } from "@/components/rank-groups-panel";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function RankGroupsPage() {
   const { user } = useAuth();

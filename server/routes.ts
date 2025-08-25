@@ -42,6 +42,8 @@ import { GlossaryAutoUpdateService } from "./glossary-auto-update";
 import { sessionBridge, bridgedAuth, requireBridgedAuth } from "./session-bridge";
 import { identityResolver } from "./identity-resolver";
 import { identityConsolidation } from "./identity-consolidation";
+import { unifiedIdentity } from "./unified-identity";
+import { unifiedAuthMiddleware, requireUnifiedAuth, optionalAuth } from "./unified-auth-middleware";
 
 // Import database management services
 import { databaseKeeper } from "./database-keeper";
@@ -1363,6 +1365,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // JWT Token Verification Route - performance optimized
+  app.post('/api/auth/verify-token', async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ success: false, message: 'No token provided' });
+      }
+
+      const token = authHeader.split(' ')[1];
+      const user = await unifiedIdentity.verifyJWTUser(token);
+
+      if (!user) {
+        return res.status(401).json({ success: false, message: 'Invalid token' });
+      }
+
+      res.json({ success: true, user });
+    } catch (error) {
+      console.error('Token verification error:', error);
+      res.status(401).json({ success: false, message: 'Token verification failed' });
+    }
+  });
+
   // Standard login endpoint
   app.post('/api/auth/login', async (req, res) => {
     try {
@@ -1377,42 +1401,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`🔐 Login attempt for userId: ${userId}`);
       
-      // Use universal authentication
-      const user = await storage.getUserByIdAndPassword(userId, password);
+      const result = await robustAuth.authenticateUser(userId, password);
       
-      if (!user) {
-        return res.status(401).json({ 
-          success: false, 
-          message: 'Invalid credentials' 
+      if (result.success && result.user && result.token) {
+        console.log(`✅ Login successful for: ${result.user.fullName}`);
+        
+        // Update login tracking optimized (no excessive writes)
+        await unifiedIdentity.updateLastLoginOptimized(result.user.id);
+        
+        return res.json({
+          success: true,
+          user: result.user,
+          token: result.token,
+          message: result.message
         });
       }
       
-      // Create JWT token
-      const token = jwt.sign(
-        { userId: user.id, email: user.email },
-        getJWT(),
-        { expiresIn: '24h' }
-      );
+      if (result.requiresMerge) {
+        return res.status(409).json({
+          success: false,
+          requiresMerge: true,
+          duplicateAccounts: result.duplicateAccounts,
+          mergeSessionId: result.mergeSessionId,
+          message: 'Multiple accounts found. Please choose which account to use.'
+        });
+      }
       
-      // Increment login count
-      await storage.incrementLoginCount(user.id);
-      
-      console.log(`✅ Login successful for: ${user.fullName}`);
-      
-      res.json({
-        success: true,
-        user: {
-          id: user.id,
-          userId: user.userId,
-          fullName: user.fullName,
-          email: user.email,
-          userType: user.userType,
-          isAdmin: user.isAdmin,
-          isVerified: user.isVerified,
-          loginCount: user.loginCount || 0
-        },
-        token,
-        message: 'Login successful'
+      console.log(`❌ Login failed for: ${userId} - ${result.message}`);
+      return res.status(401).json({
+        success: false,
+        message: result.message || 'Invalid credentials'
       });
     } catch (error) {
       console.error('Login error:', error);

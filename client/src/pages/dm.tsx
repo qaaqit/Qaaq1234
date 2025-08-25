@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { MessageCircle, Anchor, Navigation, Search, MapPin, Clock, User, Ship, Award, ChevronDown, Ban, Users } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import QChatWindow from "@/components/qchat-window";
