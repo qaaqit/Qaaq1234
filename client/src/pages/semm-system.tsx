@@ -344,7 +344,7 @@ export default function SemmSystemPage() {
                 </h2>
                 
                 {/* Admin Controls for Equipment - Right Edge */}
-                {isAdmin && !reorderEnabled ? (
+                {!reorderEnabled ? (
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={handleReorderEquipment}
@@ -364,7 +364,7 @@ export default function SemmSystemPage() {
                       <Plus className="w-5 h-5" />
                     </button>
                   </div>
-                ) : isAdmin && reorderEnabled ? (
+                ) : reorderEnabled ? (
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={handleSaveReorder}

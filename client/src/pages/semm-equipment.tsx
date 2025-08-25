@@ -348,7 +348,7 @@ export default function SemmEquipmentPage() {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">Makes for {foundEquipment.title}</h2>
               <div className="flex items-center space-x-2">
-                {isAdmin && !reorderEnabled && (
+                {!reorderEnabled && (
                   <>
                     <button
                       onClick={handleReorderMakes}
