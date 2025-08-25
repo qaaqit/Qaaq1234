@@ -119,8 +119,8 @@ export default function Discover() {
         style={{ minHeight: '100vh' }}
       />
       
-      {/* Analytics overlay - Top right */}
-      <div className="absolute top-4 right-4 pointer-events-none z-[1000]">
+      {/* Analytics overlay - Bottom right above nav bar */}
+      <div className="absolute bottom-20 right-4 pointer-events-none z-[1000]">
         <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 border border-orange-200 min-w-[200px]">
           <div className="text-center">
             <div className="text-2xl font-bold text-orange-600">{uniqueIPs}</div>
