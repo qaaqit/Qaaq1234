@@ -81,7 +81,7 @@ const authenticateToken = async (req: Request, res: Response, next: NextFunction
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+    const decoded = jwt.verify(token, getJWT()) as { userId: string };
     req.userId = decoded.userId;
     next();
   } catch (error) {
@@ -97,7 +97,7 @@ const optionalAuth = async (req: Request, res: Response, next: NextFunction) => 
 
   if (token) {
     try {
-      const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+      const decoded = jwt.verify(token, getJWT()) as { userId: string };
       req.userId = decoded.userId;
     } catch (error) {
       // Token invalid but continue without authentication for questions API
@@ -123,7 +123,7 @@ const authenticateSession = async (req: Request, res: Response, next: NextFuncti
 
     if (token) {
       try {
-        const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+        const decoded = jwt.verify(token, getJWT()) as { userId: string };
         req.userId = decoded.userId;
         console.log(`✅ JWT auth successful for user: ${req.userId}`);
         return next();
@@ -1238,10 +1238,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       await storage.incrementLoginCount(user.id);
       
-      // DISABLED: JWT token generation
-      // const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '30d' });
+      // Generate JWT token with secure secret
+      const token = jwt.sign({ userId: user.id }, getJWT(), { expiresIn: '30d' });
       
       console.log(`✅ User login successful: ${user.fullName} (Q:${user.questionCount || 0}, A:${user.answerCount || 0})`);
+      console.log(`🔑 JWT token generated for user: ${user.id}`);
       
       res.json({
         user: {
@@ -1389,7 +1390,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create JWT token
       const token = jwt.sign(
         { userId: user.id, email: user.email },
-        JWT_SECRET,
+        getJWT(),
         { expiresIn: '24h' }
       );
       
@@ -5706,7 +5707,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         const token = authHeader && authHeader.split(' ')[1];
         if (token) {
           try {
-            const decoded = jwt.verify(token, JWT_SECRET) as any;
+            const decoded = jwt.verify(token, getJWT()) as any;
             userId = decoded.userId;
           } catch (error) {
             // Token invalid, but continue to check for session
@@ -5742,7 +5743,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         const token = authHeader && authHeader.split(' ')[1];
         if (token) {
           try {
-            const decoded = jwt.verify(token, JWT_SECRET) as any;
+            const decoded = jwt.verify(token, getJWT()) as any;
             userId = decoded.userId;
           } catch (error) {
             // Token invalid, but continue to check for session
@@ -5790,7 +5791,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         const token = authHeader && authHeader.split(' ')[1];
         if (token) {
           try {
-            const decoded = jwt.verify(token, JWT_SECRET) as any;
+            const decoded = jwt.verify(token, getJWT()) as any;
             userId = decoded.userId;
           } catch (error) {
             // Token invalid, but continue to check for session
@@ -5848,7 +5849,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         const token = authHeader && authHeader.split(' ')[1];
         if (token) {
           try {
-            const decoded = jwt.verify(token, JWT_SECRET) as any;
+            const decoded = jwt.verify(token, getJWT()) as any;
             userId = decoded.userId;
           } catch (error) {
             // Token invalid, but continue to check for session
@@ -5923,7 +5924,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         console.log('🔑 Chat connection auth: Checking JWT token:', token ? 'present' : 'missing');
         if (token) {
           try {
-            const decoded = jwt.verify(token, JWT_SECRET) as any;
+            const decoded = jwt.verify(token, getJWT()) as any;
             userId = decoded.userId;
             console.log('🔑 Chat connection auth: JWT verified for user:', userId);
           } catch (error) {
@@ -5988,7 +5989,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         console.log('🔑 Chat messages auth: Checking JWT token:', token ? 'present' : 'missing');
         if (token) {
           try {
-            const decoded = jwt.verify(token, JWT_SECRET) as any;
+            const decoded = jwt.verify(token, getJWT()) as any;
             userId = decoded.userId;
             console.log('🔑 Chat messages auth: JWT verified for user:', userId);
           } catch (error) {
@@ -6036,7 +6037,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         const token = authHeader && authHeader.split(' ')[1];
         if (token) {
           try {
-            const decoded = jwt.verify(token, JWT_SECRET) as any;
+            const decoded = jwt.verify(token, getJWT()) as any;
             userId = decoded.userId;
           } catch (error) {
             // Token invalid, but continue to check for session
@@ -8151,7 +8152,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         
         if (token) {
           try {
-            const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+            const decoded = jwt.verify(token, getJWT()) as { userId: string };
             userId = decoded.userId;
             console.log('🔑 Using JWT auth for user:', userId);
           } catch (error) {
