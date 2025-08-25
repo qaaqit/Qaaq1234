@@ -6,10 +6,161 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronUp, ChevronDown, Crown, Search } from "lucide-react";
+import { ChevronUp, ChevronDown, Crown, Search, Eye, EyeOff } from "lucide-react";
 import qaaqLogoPath from "@assets/ICON_1754950288816.png";
 import qaaqLogo from '@assets/qaaq-logo.png';
 import { User } from "@/lib/auth";
+
+// JWT Login Form Component
+function JWTLoginForm({ onSuccess }: { onSuccess: (user: User) => void }) {
+  const [, navigate] = useLocation();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({
+    userId: "",
+    password: "",
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.userId || !formData.password) {
+      toast({
+        title: "Missing Information",
+        description: "Please enter both User ID and Password",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: formData.userId,
+          password: formData.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.token) {
+        // Store token in localStorage
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        
+        if (onSuccess) onSuccess(data.user);
+        navigate("/qbot");
+        
+        toast({
+          title: "Welcome back!",
+          description: `Hello ${data.user.fullName}`,
+        });
+      } else {
+        toast({
+          title: "Login failed",
+          description: data.message || "Invalid credentials",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      toast({
+        title: "Connection error",
+        description: "Please check your connection and try again",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {/* User ID Field */}
+      <div className="space-y-2">
+        <Label htmlFor="userId" className="text-sm font-medium text-gray-700">
+          USER NAME (This may be ur country code +91 & whatsapp number )
+        </Label>
+        <Input
+          id="userId"
+          type="text"
+          value={formData.userId}
+          onChange={(e) => setFormData(prev => ({ ...prev, userId: e.target.value }))}
+          placeholder="Enter your User ID"
+          className="h-12 border-gray-300 focus:border-orange-500 focus:ring-orange-500"
+          data-testid="input-user-id"
+        />
+      </div>
+
+      {/* Password Field */}
+      <div className="space-y-2">
+        <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+          PASSWORD
+        </Label>
+        <div className="relative">
+          <Input
+            id="password"
+            type={showPassword ? "text" : "password"}
+            value={formData.password}
+            onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+            placeholder="Enter your password"
+            className="h-12 border-gray-300 focus:border-orange-500 focus:ring-orange-500 pr-12"
+            data-testid="input-password"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0"
+            onClick={() => setShowPassword(!showPassword)}
+            data-testid="toggle-password-visibility"
+          >
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </Button>
+        </div>
+      </div>
+
+      {/* Login Button */}
+      <Button
+        type="submit"
+        disabled={loading}
+        className="w-full h-12 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white font-semibold"
+        data-testid="button-jwt-login"
+      >
+        {loading ? (
+          <div className="flex items-center justify-center">
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+            Signing in...
+          </div>
+        ) : (
+          "Sign In"
+        )}
+      </Button>
+
+      {/* New User Signup Link */}
+      <div className="text-center">
+        <p className="text-sm text-gray-600">
+          New to QaaqConnect?{" "}
+          <Button
+            type="button"
+            variant="link"
+            className="p-0 h-auto text-orange-600 hover:text-orange-700 font-semibold"
+            onClick={() => navigate("/register")}
+            data-testid="link-signup"
+          >
+            Create an account
+          </Button>
+        </p>
+      </div>
+    </form>
+  );
+}
 
 interface LoginPageProps {
   onSuccess: (user: User) => void;
@@ -282,6 +433,16 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
             <p className="text-gray-600">Sign in to QaaqConnect</p>
           </div>
+
+        {/* JWT Login Form */}
+        <JWTLoginForm onSuccess={onSuccess} />
+
+        {/* Divider */}
+        <div className="my-6 flex items-center">
+          <div className="flex-1 border-t border-gray-300"></div>
+          <div className="px-4 text-sm text-gray-500">or continue with</div>
+          <div className="flex-1 border-t border-gray-300"></div>
+        </div>
 
         {/* OAuth Authentication Options */}
         <div className="space-y-4">
