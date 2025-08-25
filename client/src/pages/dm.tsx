@@ -511,7 +511,7 @@ export default function DMPage() {
                 </div>
               </button>
               <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
-                {user && <UserDropdown user={user} onLogout={() => window.location.reload()} />}
+                {user && <UserDropdown user={user} />}
               </div>
             </div>
           </div>
