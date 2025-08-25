@@ -29,8 +29,8 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
       <div
         className="absolute inset-0 bg-slate-700 flex items-center justify-center"
         style={{
-          transformOrigin: 'bottom center',
-          transform: isFlipped ? 'rotateX(-180deg)' : 'rotateX(0deg)',
+          transformOrigin: 'left center',
+          transform: isFlipped ? 'rotateY(-180deg)' : 'rotateY(0deg)',
           transition: 'transform 0.8s cubic-bezier(0.23, 1, 0.32, 1)',
           backfaceVisibility: 'hidden',
           textShadow: '0 1px 2px rgba(0, 0, 0, 0.5), 0 -1px 1px rgba(255, 255, 255, 0.1)',
@@ -44,8 +44,8 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
       <div
         className="absolute inset-0 bg-slate-700 flex items-center justify-center"
         style={{
-          transformOrigin: 'bottom center',
-          transform: isFlipped ? 'rotateX(0deg)' : 'rotateX(180deg)',
+          transformOrigin: 'left center',
+          transform: isFlipped ? 'rotateY(0deg)' : 'rotateY(180deg)',
           transition: 'transform 0.8s cubic-bezier(0.23, 1, 0.32, 1)',
           backfaceVisibility: 'hidden',
           background: 'linear-gradient(145deg, #475569, #334155)'
