@@ -5092,6 +5092,43 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         }
       });
 
+      // Ensure Boiler system is present - add it if missing from parent database
+      if (!seenCodes.has('c')) {
+        correctedSystems.push({
+          code: 'c',
+          title: 'c. Boiler',
+          equipment: [
+            {
+              code: 'ca',
+              title: 'Auxiliary Boiler',
+              makes: [
+                {
+                  code: 'caa',
+                  title: 'Aalborg Industries',
+                  models: [
+                    { code: 'caaa', title: 'AQ-14' }
+                  ]
+                }
+              ]
+            },
+            {
+              code: 'cb',
+              title: 'Burner',
+              makes: [
+                {
+                  code: 'cba',
+                  title: 'Hamworthy',
+                  models: [
+                    { code: 'cbaa', title: 'Parat RCB' }
+                  ]
+                }
+              ]
+            }
+          ]
+        });
+        console.log('✅ Added missing Boiler system (code c) to SEMM structure');
+      }
+
       // Sort systems by the corrected order
       const sortedSystems = correctedSystems.sort((a, b) => {
         const orderA = systemOrderMapping[a.code] || 999;
