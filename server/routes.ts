@@ -5594,6 +5594,61 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
     }
   });
 
+  // Add new equipment to system
+  app.post('/api/dev/semm/add-equipment', sessionBridge, async (req, res) => {
+    try {
+      console.log('🔧 Add equipment request:', req.body);
+      
+      const { systemCode, equipmentName, description } = req.body;
+      
+      if (!systemCode || !equipmentName) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'System code and equipment name are required' 
+        });
+      }
+
+      console.log(`🆕 Adding new equipment '${equipmentName}' to system ${systemCode}`);
+      
+      // Get existing equipment count for this system to determine the new code
+      const existingEquipmentResult = await pool.query(`
+        SELECT COUNT(DISTINCT eid) as count, MAX(equipment_order) as max_order
+        FROM semm_structure 
+        WHERE sid = $1 AND eid IS NOT NULL
+      `, [systemCode]);
+      
+      const existingCount = parseInt(existingEquipmentResult.rows[0].count) || 0;
+      const maxOrder = existingEquipmentResult.rows[0].max_order || 0;
+      
+      // Generate new equipment code (systemCode + next letter: a + a = aa, a + b = ab, etc.)
+      const newEquipmentCode = `${systemCode}${String.fromCharCode(97 + existingCount)}`;
+      const newEquipmentOrder = maxOrder + 1;
+      
+      console.log(`🔧 Generated new equipment code: ${newEquipmentCode} (order: ${newEquipmentOrder})`);
+      
+      // Insert the new equipment
+      await pool.query(`
+        INSERT INTO semm_structure (sid, eid, equipment, description, equipment_order)
+        VALUES ($1, $2, $3, $4, $5)
+      `, [systemCode, newEquipmentCode, equipmentName, description || `${equipmentName} equipment classification`, newEquipmentOrder]);
+      
+      console.log('✅ Successfully added new equipment');
+      res.json({ 
+        success: true, 
+        message: 'Equipment added successfully',
+        data: {
+          equipmentCode: newEquipmentCode,
+          equipmentName: equipmentName,
+          order: newEquipmentOrder
+        }
+      });
+      
+    } catch (error) {
+      console.error('❌ Error adding equipment:', error);
+      res.status(500).json({ success: false, error: 'Failed to add equipment' });
+    }
+  });
+
   // Add new Model to Make
   app.post('/api/dev/semm/add-model', sessionBridge, async (req, res) => {
     try {

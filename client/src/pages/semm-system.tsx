@@ -90,6 +90,13 @@ export default function SemmSystemPage() {
   const [reorderEnabled, setReorderEnabled] = useState(false);
   const [reorderItems, setReorderItems] = useState<Array<{ code: string; title: string }>>([]);
   
+  // Add equipment state
+  const [showAddEquipmentForm, setShowAddEquipmentForm] = useState(false);
+  const [addEquipmentForm, setAddEquipmentForm] = useState({
+    equipmentName: '',
+    description: ''
+  });
+  
   const { user } = useAuth();
   const isAdmin = user?.isAdmin || false;
 
@@ -145,7 +152,39 @@ export default function SemmSystemPage() {
   };
 
   const handleAddNewEquipment = () => {
-    console.log('Add new equipment');
+    setShowAddEquipmentForm(true);
+    setAddEquipmentForm({ equipmentName: '', description: '' });
+  };
+
+  const handleAddEquipmentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!addEquipmentForm.equipmentName.trim()) return;
+    
+    try {
+      await apiRequest('/api/dev/semm/add-equipment', 'POST', {
+        systemCode: foundSystem.code,
+        equipmentName: addEquipmentForm.equipmentName.trim(),
+        description: addEquipmentForm.description.trim()
+      });
+      
+      console.log('✅ Successfully added new equipment');
+      
+      // Reset form and hide it
+      setShowAddEquipmentForm(false);
+      setAddEquipmentForm({ equipmentName: '', description: '' });
+      
+      // Refresh the data
+      queryClient.invalidateQueries({ queryKey: ['/api/dev/semm-cards'] });
+      
+    } catch (error) {
+      console.error('❌ Error adding new equipment:', error);
+    }
+  };
+
+  const handleCancelAddEquipment = () => {
+    setShowAddEquipmentForm(false);
+    setAddEquipmentForm({ equipmentName: '', description: '' });
   };
 
   const handleReorderEquipment = () => {
@@ -306,14 +345,26 @@ export default function SemmSystemPage() {
                 
                 {/* Admin Controls for Equipment - Right Edge */}
                 {!reorderEnabled ? (
-                  <button
-                    onClick={handleReorderEquipment}
-                    className="p-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-lg"
-                    title="Reorder Equipment"
-                    data-testid="reorder-equipment"
-                  >
-                    <RotateCcw className="h-5 w-5" />
-                  </button>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={handleReorderEquipment}
+                      className="p-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-lg"
+                      title="Reorder Equipment"
+                      data-testid="reorder-equipment"
+                    >
+                      <RotateCcw className="h-5 w-5" />
+                    </button>
+                    <button
+                      onClick={handleAddNewEquipment}
+                      disabled={showAddEquipmentForm}
+                      className="flex items-center space-x-2 px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Add New Equipment"
+                      data-testid="add-new-equipment-btn"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Add Equipment</span>
+                    </button>
+                  </div>
                 ) : (
                   <div className="flex items-center space-x-2">
                     <button
@@ -336,6 +387,62 @@ export default function SemmSystemPage() {
                 )}
               </div>
             </div>
+
+            {/* Add Equipment Form - Show when adding new equipment */}
+            {showAddEquipmentForm && (
+              <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <h3 className="text-lg font-medium text-green-800 mb-4">Add New Equipment to {foundSystem.title}</h3>
+                <form onSubmit={handleAddEquipmentSubmit} className="space-y-4">
+                  <div>
+                    <label htmlFor="equipmentName" className="block text-sm font-medium text-gray-700 mb-2">
+                      Equipment Name *
+                    </label>
+                    <input
+                      type="text"
+                      id="equipmentName"
+                      value={addEquipmentForm.equipmentName}
+                      onChange={(e) => setAddEquipmentForm(prev => ({ ...prev, equipmentName: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      placeholder="e.g., Gearbox, Governor, Fuel Injector"
+                      required
+                      data-testid="input-equipment-name"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="equipmentDescription" className="block text-sm font-medium text-gray-700 mb-2">
+                      Description (Optional)
+                    </label>
+                    <textarea
+                      id="equipmentDescription"
+                      value={addEquipmentForm.description}
+                      onChange={(e) => setAddEquipmentForm(prev => ({ ...prev, description: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      placeholder="Brief description of this equipment..."
+                      rows={3}
+                      data-testid="input-equipment-description"
+                    />
+                  </div>
+                  <div className="flex space-x-3">
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                      data-testid="btn-save-equipment"
+                    >
+                      Add Equipment
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCancelAddEquipment}
+                      className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                      data-testid="btn-cancel-equipment"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+            
             {reorderEnabled ? (
               // Reorder Mode - Show ordered list with up/down controls
               <div className="space-y-3">
