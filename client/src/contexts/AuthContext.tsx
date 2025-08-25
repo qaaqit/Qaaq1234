@@ -66,6 +66,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             const data = await response.json();
             if (data.success && data.user) {
               setUser({ ...data.user, authMethod: 'jwt' });
+              setIsLoading(false);
               return;
             }
           }
@@ -77,22 +78,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       // Check session-based authentication (Replit/Google)
-      const sessionResponse = await fetch('/api/auth/user');
-      if (sessionResponse.ok) {
-        const sessionData = await sessionResponse.json();
-        if (sessionData.user) {
-          const authMethod = sessionData.user.googleId ? 'oauth' : 'session';
-          setUser({ ...sessionData.user, authMethod });
-          return;
+      try {
+        const sessionResponse = await fetch('/api/auth/user');
+        if (sessionResponse.ok) {
+          const sessionData = await sessionResponse.json();
+          if (sessionData.user) {
+            const authMethod = sessionData.user.googleId ? 'oauth' : 'session';
+            setUser({ ...sessionData.user, authMethod });
+            setIsLoading(false);
+            return;
+          }
         }
+      } catch (error) {
+        // Session check failed, continue to no auth
       }
 
       // No authentication found
       setUser(null);
+      setIsLoading(false);
     } catch (error) {
       console.error('Auth check failed:', error);
       setUser(null);
-    } finally {
       setIsLoading(false);
     }
   };

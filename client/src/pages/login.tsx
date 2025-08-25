@@ -11,10 +11,13 @@ import qaaqLogoPath from "@assets/ICON_1754950288816.png";
 import qaaqLogo from '@assets/qaaq-logo.png';
 import { User } from "@/lib/auth";
 
+import { useAuth } from "@/contexts/AuthContext";
+
 // JWT Login Form Component
-function JWTLoginForm({ onSuccess }: { onSuccess: (user: User) => void }) {
+function JWTLoginForm() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { login } = useAuth();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -36,35 +39,23 @@ function JWTLoginForm({ onSuccess }: { onSuccess: (user: User) => void }) {
 
     setLoading(true);
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: formData.userId,
-          password: formData.password,
-        }),
+      const success = await login({
+        userId: formData.userId,
+        password: formData.password,
       });
 
-      const data = await response.json();
-
-      if (data.success && data.token) {
-        // Store token in localStorage
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        
-        if (onSuccess) onSuccess(data.user);
+      if (success) {
+        // Navigate to QBOT after successful login
         navigate("/qbot");
         
         toast({
           title: "Welcome back!",
-          description: `Hello ${data.user.fullName}`,
+          description: "Login successful",
         });
       } else {
         toast({
           title: "Login failed",
-          description: data.message || "Invalid credentials",
+          description: "Invalid credentials",
           variant: "destructive",
         });
       }
@@ -162,11 +153,7 @@ function JWTLoginForm({ onSuccess }: { onSuccess: (user: User) => void }) {
   );
 }
 
-interface LoginPageProps {
-  onSuccess: (user: User) => void;
-}
-
-export default function LoginPage({ onSuccess }: LoginPageProps) {
+export default function LoginPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [isMinimized, setIsMinimized] = useState(false);
@@ -435,7 +422,7 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
           </div>
 
         {/* JWT Login Form */}
-        <JWTLoginForm onSuccess={onSuccess} />
+        <JWTLoginForm />
 
         {/* Divider */}
         <div className="my-6 flex items-center">
