@@ -2,7 +2,7 @@ import { useParams, useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Share2, ChevronRight, Edit3 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Bottom edge roll out flip card animation
 const FlipCard = ({ char, index, large = false }: { char: string; index: number; large?: boolean }) => {
@@ -87,7 +87,11 @@ export default function SemmModelPage() {
 
   // Get user authentication info
   const { user, isAuthenticated } = useAuth();
-  const isAdmin = user?.isAdmin || user?.role === 'admin';
+  const isAdmin = user?.isAdmin || false;
+  
+  // Debug admin detection
+  console.log('🔐 SEMM Model - User object:', user);
+  console.log('🔐 SEMM Model - isAdmin check:', { isAdmin: user?.isAdmin, finalIsAdmin: isAdmin });
 
   // Fetch SEMM data to find the specific model
   const { data: semmData, isLoading, error } = useQuery({
