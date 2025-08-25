@@ -5045,8 +5045,55 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         }
       });
       
-      // Build SEMM cards from parent database structure
-      const semmCards = Array.from(systemsMap.values()).map((system) => {
+      // Custom order mapping to fix display order issues
+      const systemOrderMapping = {
+        'a': 1, // Propulsion
+        'b': 2, // Power Generation  
+        'c': 3, // Boiler
+        'd': 4, // Compressed Air Systems (corrected from Fresh Water)
+        'e': 5, // Pumps & Auxiliary
+        'f': 6, // Fresh Water & Cooling (swapped from Compressed Air)
+        'g': 7, // Oil Purification
+        'h': 8, // Cargo Systems
+        'i': 9, // Safety & Fire Fighting
+        'j': 10, // Crane & Deck Equipment
+        'k': 11, // Navigation Systems
+        'l': 12, // Automation & Control
+        'm': 13, // HVAC Systems
+        'n': 14, // Pollution Control
+        'o': 15, // Hull & Structure
+        'p': 16, // Accommodation
+        'q': 17, // Workshop Equipment
+        'r': 18, // Communication Systems
+        's': 19, // Spare Parts & Consumables
+        'z': 20  // Miscellaneous
+      };
+
+      // Apply code corrections for systems that have wrong codes but correct titles
+      const correctedSystems = Array.from(systemsMap.values()).map(system => {
+        let correctedSystem = { ...system };
+        
+        // Fix Compressed Air system - should be 'd' instead of 'f' 
+        if (system.title && system.title.toLowerCase().includes('compressed air')) {
+          correctedSystem.code = 'd';
+        }
+        // Fix Fresh Water system - should be 'f' instead of 'd'
+        else if (system.title && system.title.toLowerCase().includes('fresh water')) {
+          correctedSystem.code = 'f';
+        }
+        
+        return correctedSystem;
+      });
+
+      // Sort systems by the corrected order
+      const sortedSystems = correctedSystems.sort((a, b) => {
+        const orderA = systemOrderMapping[a.code] || 999;
+        const orderB = systemOrderMapping[b.code] || 999;
+        return orderA - orderB;
+      });
+
+      // Build SEMM cards from sorted parent database structure
+      const semmCards = sortedSystems.map((system) => {
         return {
           id: system.code,
           type: 'system',
