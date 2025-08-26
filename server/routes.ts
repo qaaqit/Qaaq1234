@@ -5700,6 +5700,148 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
     }
   });
 
+  // Transfer equipment between systems with renaming
+  app.post('/api/dev/semm/transfer-equipment', sessionBridge, async (req, res) => {
+    try {
+      const { equipmentCode, targetSystemCode, newEquipmentCode } = req.body;
+      console.log(`🔄 Transfer equipment request: ${equipmentCode} -> ${targetSystemCode} as ${newEquipmentCode}`);
+      
+      if (!equipmentCode || !targetSystemCode || !newEquipmentCode) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Equipment code, target system code, and new equipment code are required' 
+        });
+      }
+
+      // Get current equipment details
+      const currentEquipment = await pool.query(
+        'SELECT * FROM semm_structure WHERE eid = $1 LIMIT 1',
+        [equipmentCode]
+      );
+      
+      if (currentEquipment.rows.length === 0) {
+        return res.status(404).json({ 
+          success: false, 
+          error: `Equipment ${equipmentCode} not found` 
+        });
+      }
+
+      // Get target system details to get the system title
+      const targetSystem = await pool.query(
+        'SELECT * FROM semm_structure WHERE sid = $1 LIMIT 1',
+        [targetSystemCode]
+      );
+      
+      if (targetSystem.rows.length === 0) {
+        return res.status(404).json({ 
+          success: false, 
+          error: `Target system ${targetSystemCode} not found` 
+        });
+      }
+
+      // Update equipment to new system and code
+      const result = await pool.query(`
+        UPDATE semm_structure 
+        SET sid = $1, system = $2, eid = $3 
+        WHERE eid = $4
+      `, [targetSystemCode, targetSystem.rows[0].system, newEquipmentCode, equipmentCode]);
+      
+      console.log(`✅ Successfully transferred equipment ${equipmentCode} to ${targetSystemCode} as ${newEquipmentCode}, affected rows: ${result.rowCount}`);
+      
+      res.json({ 
+        success: true, 
+        message: `Equipment ${equipmentCode} transferred to system ${targetSystemCode} as ${newEquipmentCode}`,
+        updatedRows: result.rowCount
+      });
+      
+    } catch (error) {
+      console.error('❌ Error transferring equipment:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to transfer equipment' 
+      });
+    }
+  });
+
+  // Bulk transfer for system swap (batch operation)
+  app.post('/api/dev/semm/swap-systems', sessionBridge, async (req, res) => {
+    try {
+      const { transfers } = req.body;
+      console.log(`🔄 Bulk system swap request with ${transfers.length} transfers`);
+      
+      if (!transfers || !Array.isArray(transfers)) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Transfers array is required' 
+        });
+      }
+
+      let totalUpdated = 0;
+      const results = [];
+
+      for (const transfer of transfers) {
+        const { equipmentCode, targetSystemCode, newEquipmentCode } = transfer;
+        
+        try {
+          // Get target system details
+          const targetSystem = await pool.query(
+            'SELECT * FROM semm_structure WHERE sid = $1 LIMIT 1',
+            [targetSystemCode]
+          );
+          
+          if (targetSystem.rows.length === 0) {
+            results.push({ 
+              equipmentCode, 
+              success: false, 
+              error: `Target system ${targetSystemCode} not found` 
+            });
+            continue;
+          }
+
+          // Update equipment to new system and code
+          const result = await pool.query(`
+            UPDATE semm_structure 
+            SET sid = $1, system = $2, eid = $3 
+            WHERE eid = $4
+          `, [targetSystemCode, targetSystem.rows[0].system, newEquipmentCode, equipmentCode]);
+          
+          totalUpdated += result.rowCount;
+          results.push({ 
+            equipmentCode, 
+            newEquipmentCode, 
+            targetSystemCode, 
+            success: true, 
+            updatedRows: result.rowCount 
+          });
+          
+        } catch (error) {
+          console.error(`❌ Error transferring ${equipmentCode}:`, error);
+          results.push({ 
+            equipmentCode, 
+            success: false, 
+            error: error.message 
+          });
+        }
+      }
+      
+      console.log(`✅ System swap completed: ${totalUpdated} total equipment transferred`);
+      
+      res.json({ 
+        success: true, 
+        message: `System swap completed: ${totalUpdated} equipment transferred`,
+        totalUpdated,
+        results
+      });
+      
+    } catch (error) {
+      console.error('❌ Error in bulk system swap:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to perform system swap' 
+      });
+    }
+  });
+
   // Add new equipment to system
   app.post('/api/dev/semm/add-equipment', sessionBridge, async (req, res) => {
     try {
