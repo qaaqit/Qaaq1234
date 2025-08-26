@@ -5842,6 +5842,69 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
     }
   });
 
+  // Manual equipment insertion with specific codes
+  app.post('/api/dev/semm/insert-manual-equipment', sessionBridge, async (req, res) => {
+    try {
+      const { systemCode, equipmentCode, equipmentName, description } = req.body;
+      console.log('🔧 Manual equipment insertion:', req.body);
+      
+      if (!systemCode || !equipmentCode || !equipmentName) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'System code, equipment code, and equipment name are required' 
+        });
+      }
+
+      // System name mapping
+      const systemNameMapping = {
+        'a': 'a. Propulsion',
+        'b': 'b. Power Generation', 
+        'c': 'c. Boiler',
+        'd': 'd. Compressed Air',
+        'e': 'e. Pumps & Auxiliary',
+        'f': 'f. Fresh Water & Cooling',
+        'g': 'g. Oil Purification',
+        'h': 'h. Cargo Systems',
+        'i': 'i. Safety & Fire Fighting',
+        'j': 'j. Crane & Deck Equipment',
+        'k': 'k. Navigation Systems',
+        'l': 'l. Automation & Control',
+        'm': 'm. HVAC Systems',
+        'n': 'n. Pollution Control',
+        'o': 'o. Hull & Structure',
+        'p': 'p. Accommodation',
+        'q': 'q. Workshop Equipment',
+        'r': 'r. Communication Systems',
+        's': 's. Spare Parts & Consumables',
+        'z': 'z. Miscellaneous'
+      };
+      
+      const systemName = systemNameMapping[systemCode] || `System ${systemCode}`;
+      
+      console.log(`🔧 Manually inserting: ${equipmentCode} - ${equipmentName} into ${systemName}`);
+      
+      // Insert the new equipment with specific code
+      await pool.query(`
+        INSERT INTO semm_structure (sid, system, eid, equipment, equipment_order, created_at) 
+        VALUES ($1, $2, $3, $4, 1, NOW())
+      `, [systemCode, systemName, equipmentCode, equipmentName]);
+      
+      console.log(`✅ Successfully inserted equipment ${equipmentCode} - ${equipmentName}`);
+      
+      res.json({ 
+        success: true, 
+        message: `Equipment ${equipmentCode} - ${equipmentName} added successfully to ${systemName}` 
+      });
+      
+    } catch (error) {
+      console.error('❌ Error manually inserting equipment:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to insert equipment manually' 
+      });
+    }
+  });
+
   // Add new equipment to system
   app.post('/api/dev/semm/add-equipment', sessionBridge, async (req, res) => {
     try {
