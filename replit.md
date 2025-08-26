@@ -46,6 +46,7 @@ Shipping Dictionary Access: Users can access maritime dictionary definitions wit
 Login Roadblock Design: Single minimizable login roadblock with chevron control in top-right corner, no separate roadblocks for individual features
 🔒 SEMM LAYOUT REDESIGN: Breadcrumb positioned next to back arrow as small text in one line, code cards positioned in top-left corner with back arrow above
 Enhanced Reorder System: Admin reorder modals now feature editable code cards allowing direct code modification alongside position changes for comprehensive hierarchy management. Simplified reorder buttons use only RotateCcw icon without text or colored backgrounds for cleaner interface.
+🔒 SEMM HARDBOUND FAMILY LOGIC: S>E>M>M hierarchical structure where System=Great Grandfather, Equipment=Grandfather, Make=Father, Model=Son. CRITICAL RULE: All transfers must move complete family units - Equipment moves with ALL its Makes+Models, Make moves with ALL its Models. No Model exists without parent Make, no Make without parent Equipment. They are inseparable hardbound families that must always move together during any SEMM operations.
 
 ## Recent Changes - Patalbase Evolution
 **August 23, 2025 - Patalbase Milestone:**
