@@ -115,6 +115,27 @@ export default function DMPage() {
   // Fetch user's chat connections - Re-enabled for search card navigation fix
   const { data: connections = [], isLoading: connectionsLoading, error: connectionsError } = useQuery<ExtendedChatConnection[]>({
     queryKey: ['/api/chat/connections'],
+    queryFn: async () => {
+      const token = localStorage.getItem('token');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+      
+      const response = await fetch('/api/chat/connections', {
+        headers,
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch connections');
+      }
+      
+      return response.json();
+    },
     enabled: !!user, // Enable when user is authenticated
     refetchInterval: false, // Disable polling but allow initial fetch
     refetchOnWindowFocus: false,
@@ -159,7 +180,7 @@ export default function DMPage() {
       console.log('🔍 Frontend: Fetching rank groups for user:', user?.id);
       
       // Get JWT token from localStorage
-      const token = localStorage.getItem('auth_token');
+      const token = localStorage.getItem('token');
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
@@ -202,13 +223,20 @@ export default function DMPage() {
   // Create chat connection mutation
   const createConnectionMutation = useMutation({
     mutationFn: async (receiverId: string) => {
-      // Use fetch directly with credentials for Replit Auth
+      // Include authentication headers
       console.log('📤 Making connection request to:', '/api/chat/connect', 'with receiverId:', receiverId);
+      const token = localStorage.getItem('token');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+      
       const response = await fetch('/api/chat/connect', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         credentials: 'include', // Include session cookies for Replit Auth
         body: JSON.stringify({ receiverId }),
       });
