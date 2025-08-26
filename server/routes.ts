@@ -2827,7 +2827,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
               modelResponse = await aiService.generateOpenAIResponse(message, category, user, activeRules, language);
             } else if (model === 'gemini') {
               modelResponse = await aiService.generateGeminiResponse(message, category, user, activeRules, language);
-            } else if (model === 'deepseek') {
+            } else if (model === 'deepseek' || model === 'grok') {
               modelResponse = await aiService.generateDeepseekResponse(message, category, user, activeRules, language);
             } else if (model === 'mistral') {
               modelResponse = await aiService.generateMistralResponse(message, category, user, activeRules, language);
@@ -2855,7 +2855,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
                             resp.model === 'mistral' ? 'Mistral' :
                             resp.model.toUpperCase();
             return `🤖 **${modelName} Response:**\n\n${resp.content}`;
-          }).join('\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n');
+          }).join('\n\n' + '━'.repeat(40) + '\n\n');
           
           const totalResponseTime = responses.reduce((sum, resp) => sum + (resp.responseTime || 0), 0);
           const totalTokens = responses.reduce((sum, resp) => sum + (resp.tokens || 0), 0);
@@ -4318,6 +4318,8 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
           // CRITICAL FIX: Use frontend-provided premium status instead of database
           if (isPremium !== undefined) {
             user.isPremium = isPremium;
+            user.id = userId; // Ensure user ID is set for AI service
+            user.userId = userId; // Backup field for AI service
             console.log(`🔧 Using frontend premium status for user ${userId}: ${isPremium ? 'PREMIUM' : 'FREE'}`);
           }
         } catch (error) {
