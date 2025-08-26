@@ -4261,7 +4261,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   // QBOT chat endpoint - responds to user messages with AI
   app.post('/api/qbot/chat', optionalAuth, async (req, res) => {
     try {
-      const { message, attachments, isPrivate, aiModels, language = 'en' } = req.body;
+      const { message, attachments, isPrivate, aiModels, language = 'en', isPremium } = req.body;
       const userId = req.userId;
       
       // Log AI models selection for debugging
@@ -4314,6 +4314,12 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         try {
           const userResult = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
           user = userResult.rows[0];
+          
+          // CRITICAL FIX: Use frontend-provided premium status instead of database
+          if (isPremium !== undefined) {
+            user.isPremium = isPremium;
+            console.log(`🔧 Using frontend premium status for user ${userId}: ${isPremium ? 'PREMIUM' : 'FREE'}`);
+          }
         } catch (error) {
           console.log('User not found or not authenticated, proceeding without user context');
         }
