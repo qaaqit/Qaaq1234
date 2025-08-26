@@ -5905,6 +5905,43 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
     }
   });
 
+  // Update equipment name
+  app.post('/api/dev/semm/update-equipment-name', sessionBridge, async (req, res) => {
+    try {
+      const { equipmentCode, newName } = req.body;
+      console.log(`🔧 Updating equipment name: ${equipmentCode} -> ${newName}`);
+      
+      if (!equipmentCode || !newName) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Equipment code and new name are required' 
+        });
+      }
+
+      // Update equipment name in database
+      const result = await pool.query(`
+        UPDATE semm_structure 
+        SET equipment = $1 
+        WHERE eid = $2
+      `, [newName, equipmentCode]);
+      
+      console.log(`✅ Successfully updated equipment ${equipmentCode} to ${newName}, affected rows: ${result.rowCount}`);
+      
+      res.json({ 
+        success: true, 
+        message: `Equipment ${equipmentCode} name updated to ${newName}`,
+        updatedRows: result.rowCount
+      });
+      
+    } catch (error) {
+      console.error('❌ Error updating equipment name:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to update equipment name' 
+      });
+    }
+  });
+
   // Add new equipment to system
   app.post('/api/dev/semm/add-equipment', sessionBridge, async (req, res) => {
     try {
