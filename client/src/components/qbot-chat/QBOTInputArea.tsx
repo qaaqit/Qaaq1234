@@ -73,9 +73,32 @@ export default function QBOTInputArea({ onSendMessage, disabled = false, onClear
   // Check premium status (matches qbot.tsx logic)
   const { data: user } = useQuery<User>({ queryKey: ["/api/auth/user"] });
   const testingEmails = ['workship.ai@gmail.com', 'mushy.piyush@gmail.com'];
-  const userEmail = user?.email || localStorage.getItem('user_email') || '';
-  const isAdmin = localStorage.getItem('isAdmin') === 'true';
+  
+  // Get user email from multiple sources
+  let userEmail = user?.email || '';
+  
+  // If not from API, try localStorage user object
+  if (!userEmail) {
+    try {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        userEmail = parsedUser.email || parsedUser.fullName || '';
+      }
+    } catch (error) {
+      console.log('Error parsing stored user:', error);
+    }
+  }
+  
+  const isAdmin = localStorage.getItem('isAdmin') === 'true' || user?.isAdmin || false;
   const isPremium = testingEmails.includes(userEmail) || isAdmin;
+  
+  console.log('🔍 Premium check in QBOTInputArea:', {
+    userEmail,
+    isAdmin, 
+    isPremium,
+    testingEmails
+  });
 
   // Premium status will be checked by parent component when needed
 
