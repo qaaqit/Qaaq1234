@@ -310,6 +310,14 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                     <i className="fas fa-crown text-orange-600 w-4"></i>
                     <span className="text-gray-700 font-medium">Premium Subscription</span>
                   </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => setLocation("/readme")}
+                    className="cursor-pointer flex items-center space-x-3 px-4 py-3 hover:bg-orange-50 transition-colors"
+                    data-testid="menu-item-readme"
+                  >
+                    <i className="fas fa-info-circle text-orange-600 w-4"></i>
+                    <span className="text-gray-700 font-medium">ReadMe</span>
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
               <div className="min-w-0 flex items-center space-x-2">
