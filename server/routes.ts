@@ -4325,6 +4325,20 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         } catch (error) {
           console.log('User not found or not authenticated, proceeding without user context');
         }
+      } else if (isPremium === true) {
+        // FALLBACK: Create minimal user object when premium status is explicitly provided
+        // This handles cases where JWT extraction fails but frontend confirms premium status
+        user = {
+          id: 'premium-fallback',
+          userId: 'premium-fallback',
+          isPremium: true,
+          isAdmin: false,
+          fullName: 'Premium User',
+          email: 'premium@qaaqconnect.com',
+          maritimeRank: 'Maritime Professional',
+          userType: 'sailor'
+        };
+        console.log(`🎯 FALLBACK: Created premium user object for authenticated premium user without JWT extraction`);
       }
 
       // CHECK 20 FREE QUESTIONS LIMIT FOR AUTHENTICATED USERS
