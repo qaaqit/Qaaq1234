@@ -164,6 +164,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Blueprint sharing endpoint
+  app.get('/blueprint/:token', async (req, res) => {
+    try {
+      const { token } = req.params;
+      const result = await pool.query('SELECT * FROM blueprints WHERE access_token = $1', [token]);
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Blueprint not found' });
+      }
+
+      const blueprint = result.rows[0];
+      res.setHeader('Content-Type', 'application/octet-stream');
+      res.setHeader('Content-Disposition', `attachment; filename="${blueprint.title}.md"`);
+      res.send(blueprint.content);
+    } catch (error) {
+      console.error('Blueprint download error:', error);
+      res.status(500).json({ error: 'Download failed' });
+    }
+  });
+
   // Debug endpoint to grant admin access to current user
   app.post('/api/debug/grant-admin', async (req, res) => {
     try {
@@ -10611,25 +10631,5 @@ function generateUserQuestions(name: string, rank: string, questionCount: number
   return questions.sort((a, b) => new Date(b.askedDate).getTime() - new Date(a.askedDate).getTime());
 }
 
-// Download route for mobile app blueprint
-app.get('/download/mobile-blueprint', (req: Request, res: Response) => {
-  const fs = require('fs');
-  const path = require('path');
-  
-  try {
-    const filePath = path.join(__dirname, '../client/public/QaaqConnect_Mobile_App_Blueprint.md');
-    
-    if (fs.existsSync(filePath)) {
-      res.setHeader('Content-Type', 'application/octet-stream');
-      res.setHeader('Content-Disposition', 'attachment; filename="QaaqConnect_Mobile_App_Blueprint.md"');
-      res.sendFile(filePath);
-    } else {
-      res.status(404).json({ error: 'Blueprint file not found' });
-    }
-  } catch (error) {
-    console.error('Download error:', error);
-    res.status(500).json({ error: 'Download failed' });
-  }
-});
 
 
