@@ -10611,4 +10611,25 @@ function generateUserQuestions(name: string, rank: string, questionCount: number
   return questions.sort((a, b) => new Date(b.askedDate).getTime() - new Date(a.askedDate).getTime());
 }
 
+// Download route for mobile app blueprint
+app.get('/download/mobile-blueprint', (req: Request, res: Response) => {
+  const fs = require('fs');
+  const path = require('path');
+  
+  try {
+    const filePath = path.join(__dirname, '../client/public/QaaqConnect_Mobile_App_Blueprint.md');
+    
+    if (fs.existsSync(filePath)) {
+      res.setHeader('Content-Type', 'application/octet-stream');
+      res.setHeader('Content-Disposition', 'attachment; filename="QaaqConnect_Mobile_App_Blueprint.md"');
+      res.sendFile(filePath);
+    } else {
+      res.status(404).json({ error: 'Blueprint file not found' });
+    }
+  } catch (error) {
+    console.error('Download error:', error);
+    res.status(500).json({ error: 'Download failed' });
+  }
+});
+
 
