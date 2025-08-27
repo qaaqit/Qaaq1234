@@ -164,6 +164,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Blueprint sharing and saving endpoints
+  app.get('/blueprint/:token', async (req, res) => {
+    try {
+      const { token } = req.params;
+      const result = await pool.query('SELECT * FROM blueprints WHERE access_token = $1', [token]);
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Blueprint not found' });
+      }
+
+      const blueprint = result.rows[0];
+      res.setHeader('Content-Type', 'application/octet-stream');
+      res.setHeader('Content-Disposition', `attachment; filename="${blueprint.title}.md"`);
+      res.send(blueprint.content);
+    } catch (error) {
+      console.error('Blueprint download error:', error);
+      res.status(500).json({ error: 'Download failed' });
+    }
+  });
+
+  app.post('/api/save-blueprint', async (req, res) => {
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      
+      const blueprintPath = path.join(__dirname, '../QaaqConnect_Mobile_App_Blueprint.md');
+      const content = fs.readFileSync(blueprintPath, 'utf8');
+      
+      await pool.query(
+        'UPDATE blueprints SET content = $1 WHERE access_token = $2',
+        [content, 'e1e3c6f1efef259d7e1283dbdb81ee31']
+      );
+
+      res.json({ 
+        success: true, 
+        message: 'Blueprint saved successfully',
+        downloadUrl: 'https://qaaqconnect-patalpacific.replit.app/blueprint/e1e3c6f1efef259d7e1283dbdb81ee31'
+      });
+    } catch (error) {
+      console.error('Save blueprint error:', error);
+      res.status(500).json({ error: 'Failed to save blueprint' });
+    }
+  });
+
   // Debug endpoint to grant admin access to current user
   app.post('/api/debug/grant-admin', async (req, res) => {
     try {
