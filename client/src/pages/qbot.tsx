@@ -133,10 +133,12 @@ export default function QBOTPage({ user }: QBOTPageProps) {
 
     try {
       // Call QBOT API for AI-powered response
+      const authToken = localStorage.getItem('auth_token');
       const response = await fetch('/api/qbot/chat', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
         },
         body: JSON.stringify({ 
           message: messageText, 
