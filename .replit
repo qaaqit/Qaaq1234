@@ -4,7 +4,7 @@ hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["zip", "chromium", "glib", "nss", "nspr", "atk", "cups", "dbus", "libdrm", "libxkbcommon", "pango", "cairo", "alsa-lib", "gtk3", "mesa"]
+packages = ["zip"]
 
 [deployment]
 deploymentTarget = "gce"
