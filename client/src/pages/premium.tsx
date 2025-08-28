@@ -246,7 +246,7 @@ export default function PremiumPage() {
         {/* Savings Badge */}
         {selectedPlan === "yearly" && (
           <div className="text-center mb-6">
-            <Badge className="bg-green-100 text-green-700 border-green-200 px-3 py-1">
+            <Badge className="bg-[#fff9ec] text-green-700 border-green-200 px-3 py-1">
               Save {monthlySavings}% with annual plan
             </Badge>
           </div>
