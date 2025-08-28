@@ -64,6 +64,12 @@ async function initializeDatabaseServices() {
     const { connectionPoolManager } = await import('./connection-pool-manager');
     connectionPoolManager.startMonitoring();
 
+    // Import and start database backup service
+    const { databaseBackupService } = await import('./database-backup-service');
+    // Start automatic backup every 6 hours
+    databaseBackupService.startAutoBackup(6);
+    console.log('🔄 Database backup service started (6-hour intervals)');
+
     console.log('✅ Database services initialized successfully');
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';

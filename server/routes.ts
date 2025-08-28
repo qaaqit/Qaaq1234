@@ -49,6 +49,7 @@ import { unifiedAuthMiddleware, requireUnifiedAuth, optionalAuth } from "./unifi
 import { databaseKeeper } from "./database-keeper";
 import { connectionPoolManager } from "./connection-pool-manager";
 import { syncManager } from "./sync-manager";
+import { databaseBackupService } from "./database-backup-service";
 
 // Import new authentication stability improvements (PatalAtlantic)
 import { authCache } from "./auth-cache";
@@ -10341,6 +10342,107 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('Sync queue error:', errorMessage);
+      res.status(500).json({ error: errorMessage });
+    }
+  });
+
+  // Database Backup Service Endpoints
+  // Start backup service (Admin only)
+  app.post('/api/admin/backup/start', authenticateToken, isAdmin, async (req, res) => {
+    try {
+      const { intervalHours = 6 } = req.body;
+      
+      // Start the backup service with specified interval
+      databaseBackupService.startAutoBackup(intervalHours);
+      
+      res.json({
+        success: true,
+        message: `Backup service started with ${intervalHours} hour interval`,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Failed to start backup service:', errorMessage);
+      res.status(500).json({ error: errorMessage });
+    }
+  });
+
+  // Stop backup service (Admin only)
+  app.post('/api/admin/backup/stop', authenticateToken, isAdmin, async (req, res) => {
+    try {
+      databaseBackupService.stopAutoBackup();
+      
+      res.json({
+        success: true,
+        message: 'Backup service stopped',
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Failed to stop backup service:', errorMessage);
+      res.status(500).json({ error: errorMessage });
+    }
+  });
+
+  // Get backup status (Admin only)
+  app.get('/api/admin/backup/status', authenticateToken, isAdmin, async (req, res) => {
+    try {
+      const status = databaseBackupService.getStatus();
+      
+      res.json({
+        success: true,
+        ...status,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Failed to get backup status:', errorMessage);
+      res.status(500).json({ error: errorMessage });
+    }
+  });
+
+  // Trigger manual backup (Admin only)
+  app.post('/api/admin/backup/manual', authenticateToken, isAdmin, async (req, res) => {
+    try {
+      const { incremental = false } = req.body;
+      
+      // Run backup in background to avoid timeout
+      if (incremental) {
+        databaseBackupService.performIncrementalBackup().catch(error => {
+          console.error('Incremental backup failed:', error);
+        });
+      } else {
+        databaseBackupService.performBackup().catch(error => {
+          console.error('Full backup failed:', error);
+        });
+      }
+      
+      res.json({
+        success: true,
+        message: `${incremental ? 'Incremental' : 'Full'} backup initiated`,
+        note: 'Check status endpoint for progress',
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Failed to initiate backup:', errorMessage);
+      res.status(500).json({ error: errorMessage });
+    }
+  });
+
+  // Test backup connections (Admin only)
+  app.get('/api/admin/backup/test-connections', authenticateToken, isAdmin, async (req, res) => {
+    try {
+      const connectionStatus = await databaseBackupService.testConnections();
+      
+      res.json({
+        success: true,
+        ...connectionStatus,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Failed to test connections:', errorMessage);
       res.status(500).json({ error: errorMessage });
     }
   });
