@@ -4,6 +4,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { pool } from "./db"; // Import database pool for image serving
 import QoiGPTBot from "./whatsapp-bot";
+import { DirectWhatsAppBot } from "./whatsapp-direct"; // QBOTwa Direct Bot
 import { initializeRankGroups } from "./rank-groups-service";
 import { setupGlossaryDatabase } from "./setup-glossary-db";
 import { getQuestionById } from "./questions-service";
@@ -237,6 +238,7 @@ app.use((req, res, next) => {
 });
 
 let whatsappBot: QoiGPTBot | null = null;
+let qbotwaDirectBot: DirectWhatsAppBot | null = null; // QBOTwa Direct Bot (+905363694997)
 
 (async () => {
   const server = await registerRoutes(app);
@@ -276,6 +278,54 @@ let whatsappBot: QoiGPTBot | null = null;
     } catch (error) {
       console.error('Failed to stop WhatsApp bot:', error);
       res.status(500).json({ error: 'Failed to stop WhatsApp bot' });
+    }
+  });
+
+  // QBOTwa Direct Bot (+905363694997) endpoints
+  app.get("/api/qbotwa-status", (req, res) => {
+    res.json({
+      connected: qbotwaDirectBot?.isConnected() || false,
+      status: qbotwaDirectBot?.isConnected() ? 'Connected' : 'Disconnected',
+      botNumber: '+905363694997',
+      sessionExists: require('fs').existsSync('./whatsapp-session')
+    });
+  });
+
+  app.post("/api/qbotwa-start", async (req, res) => {
+    try {
+      if (!qbotwaDirectBot) {
+        console.log('🚢 Starting QBOTwa Direct Bot (+905363694997)...');
+        qbotwaDirectBot = new DirectWhatsAppBot();
+        await qbotwaDirectBot.initialize();
+        res.json({ 
+          message: 'QBOTwa Direct Bot starting... Check console for QR code.',
+          botNumber: '+905363694997',
+          instructions: 'Scan QR code with WhatsApp +905363694997' 
+        });
+      } else {
+        res.json({ 
+          message: 'QBOTwa Direct Bot is already running.',
+          botNumber: '+905363694997' 
+        });
+      }
+    } catch (error) {
+      console.error('Failed to start QBOTwa Direct Bot:', error);
+      res.status(500).json({ error: 'Failed to start QBOTwa Direct Bot' });
+    }
+  });
+
+  app.post("/api/qbotwa-stop", async (req, res) => {
+    try {
+      if (qbotwaDirectBot) {
+        await qbotwaDirectBot.destroy();
+        qbotwaDirectBot = null;
+        res.json({ message: 'QBOTwa Direct Bot stopped.' });
+      } else {
+        res.json({ message: 'QBOTwa Direct Bot is not running.' });
+      }
+    } catch (error) {
+      console.error('Failed to stop QBOTwa Direct Bot:', error);
+      res.status(500).json({ error: 'Failed to stop QBOTwa Direct Bot' });
     }
   });
 
