@@ -4,7 +4,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { pool } from "./db"; // Import database pool for image serving
 import QoiGPTBot from "./whatsapp-bot";
-import { DirectWhatsAppBot } from "./whatsapp-direct"; // QBOTwa Direct Bot
+import { DirectWhatsAppBot } from "./whatsapp-direct-simple"; // QBOTwa Direct Bot (Simplified)
 import { initializeRankGroups } from "./rank-groups-service";
 import { setupGlossaryDatabase } from "./setup-glossary-db";
 import { getQuestionById } from "./questions-service";
