@@ -146,21 +146,21 @@ export default function PremiumPage() {
 
   if (plansLoading || statusLoading) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
-        <div className="animate-pulse text-lg">Loading...</div>
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white flex items-center justify-center">
+        <div className="animate-pulse text-lg text-orange-600">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-yellow-50">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-800">
+      <div className="px-6 py-4 bg-white border-b border-orange-200 shadow-sm">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => setLocation("/")}
-          className="text-gray-400 hover:text-white hover:bg-gray-800 px-2"
+          className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
           data-testid="button-back"
         >
           <ArrowLeft className="h-5 w-5" />
@@ -171,12 +171,12 @@ export default function PremiumPage() {
       <div className="max-w-md mx-auto px-6 py-8">
         {/* Title Section */}
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-semibold mb-8">
+          <h1 className="text-2xl font-semibold text-gray-900 mb-8">
             Select your protection plan
           </h1>
           
           {/* Character Illustration Placeholder */}
-          <div className="w-48 h-48 mx-auto mb-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+          <div className="w-48 h-48 mx-auto mb-8 bg-gradient-to-br from-orange-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
             <Crown className="h-20 w-20 text-white" />
           </div>
         </div>
@@ -189,23 +189,23 @@ export default function PremiumPage() {
               htmlFor="yearly"
               className={`block cursor-pointer rounded-lg border-2 transition-all ${
                 selectedPlan === "yearly" 
-                  ? "border-blue-500 bg-gray-800" 
-                  : "border-gray-700 bg-gray-850 hover:border-gray-600"
+                  ? "border-orange-500 bg-orange-50 shadow-md" 
+                  : "border-gray-200 bg-white hover:border-orange-300 hover:shadow-sm"
               }`}
               data-testid="plan-yearly"
             >
               <div className="flex items-center p-4">
-                <RadioGroupItem value="yearly" id="yearly" className="text-blue-500" />
+                <RadioGroupItem value="yearly" id="yearly" className="text-orange-500 border-orange-400" />
                 <div className="ml-4 flex-1">
                   <div className="flex items-start justify-between">
                     <div>
-                      <div className="font-medium text-white">1-year plan</div>
-                      <div className="text-sm text-gray-400 mt-0.5">
+                      <div className="font-medium text-gray-900">1-year plan</div>
+                      <div className="text-sm text-gray-600 mt-0.5">
                         ₹{(yearlyAmount / 100).toLocaleString("en-IN")}/year
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-lg font-medium text-white">
+                      <div className="text-lg font-medium text-orange-600">
                         ₹{yearlyMonthlyRate}/mo
                       </div>
                     </div>
@@ -219,20 +219,20 @@ export default function PremiumPage() {
               htmlFor="monthly"
               className={`block cursor-pointer rounded-lg border-2 transition-all ${
                 selectedPlan === "monthly" 
-                  ? "border-blue-500 bg-gray-800" 
-                  : "border-gray-700 bg-gray-850 hover:border-gray-600"
+                  ? "border-orange-500 bg-orange-50 shadow-md" 
+                  : "border-gray-200 bg-white hover:border-orange-300 hover:shadow-sm"
               }`}
               data-testid="plan-monthly"
             >
               <div className="flex items-center p-4">
-                <RadioGroupItem value="monthly" id="monthly" className="text-blue-500" />
+                <RadioGroupItem value="monthly" id="monthly" className="text-orange-500 border-orange-400" />
                 <div className="ml-4 flex-1">
                   <div className="flex items-start justify-between">
                     <div>
-                      <div className="font-medium text-white">1-month plan</div>
+                      <div className="font-medium text-gray-900">1-month plan</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-lg font-medium text-white">
+                      <div className="text-lg font-medium text-gray-700">
                         ₹{(monthlyAmount / 100).toLocaleString("en-IN")}/mo
                       </div>
                     </div>
@@ -246,21 +246,21 @@ export default function PremiumPage() {
         {/* Savings Badge */}
         {selectedPlan === "yearly" && (
           <div className="text-center mb-6">
-            <Badge className="bg-green-600 text-white px-3 py-1">
+            <Badge className="bg-green-100 text-green-700 border-green-200 px-3 py-1">
               Save {monthlySavings}% with annual plan
             </Badge>
           </div>
         )}
 
         {/* Features List */}
-        <Card className="bg-gray-800 border-gray-700 mb-6">
-          <CardHeader>
-            <CardTitle className="text-lg text-white">Premium Features</CardTitle>
+        <Card className="bg-white border-orange-200 shadow-sm mb-6">
+          <CardHeader className="bg-gradient-to-r from-orange-50 to-yellow-50">
+            <CardTitle className="text-lg text-gray-900">Premium Features</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-4">
             <ul className="space-y-2">
               {features.map((feature, index) => (
-                <li key={index} className="flex items-center gap-2 text-gray-300 text-sm">
+                <li key={index} className="flex items-center gap-2 text-gray-700 text-sm">
                   <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
                   <span>{feature}</span>
                 </li>
@@ -271,32 +271,32 @@ export default function PremiumPage() {
 
         {/* Payment Method Selection */}
         <div className="mb-6">
-          <p className="text-sm text-gray-400 mb-3">Select payment method:</p>
+          <p className="text-sm text-gray-600 mb-3">Select payment method:</p>
           <RadioGroup value={paymentMethod} onValueChange={(value: "card" | "upi") => setPaymentMethod(value)}>
             <div className="grid grid-cols-2 gap-3">
               <Label 
                 htmlFor="card"
-                className={`flex items-center justify-center p-3 rounded-lg border cursor-pointer transition-all ${
+                className={`flex items-center justify-center p-3 rounded-lg border-2 cursor-pointer transition-all ${
                   paymentMethod === "card" 
-                    ? "border-blue-500 bg-gray-800" 
-                    : "border-gray-700 hover:border-gray-600"
+                    ? "border-orange-500 bg-orange-50" 
+                    : "border-gray-200 bg-white hover:border-orange-300"
                 }`}
                 data-testid="payment-card"
               >
                 <RadioGroupItem value="card" id="card" className="sr-only" />
-                <span className="text-sm">Card</span>
+                <span className="text-sm font-medium">Card</span>
               </Label>
               <Label 
                 htmlFor="upi"
-                className={`flex items-center justify-center p-3 rounded-lg border cursor-pointer transition-all ${
+                className={`flex items-center justify-center p-3 rounded-lg border-2 cursor-pointer transition-all ${
                   paymentMethod === "upi" 
-                    ? "border-blue-500 bg-gray-800" 
-                    : "border-gray-700 hover:border-gray-600"
+                    ? "border-orange-500 bg-orange-50" 
+                    : "border-gray-200 bg-white hover:border-orange-300"
                 }`}
                 data-testid="payment-upi"
               >
                 <RadioGroupItem value="upi" id="upi" className="sr-only" />
-                <span className="text-sm">UPI</span>
+                <span className="text-sm font-medium">UPI</span>
               </Label>
             </div>
           </RadioGroup>
@@ -305,7 +305,7 @@ export default function PremiumPage() {
         {/* Payment Button */}
         <Button 
           onClick={handlePayment}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 text-base font-medium"
+          className="w-full bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white py-6 text-base font-medium shadow-lg"
           data-testid="button-subscribe"
         >
           <ExternalLink className="mr-2 h-4 w-4" />
