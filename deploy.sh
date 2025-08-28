@@ -23,9 +23,9 @@ npm install
 echo "🗄️  Checking database connection..."
 npm run check
 
-# Push database schema
-echo "📊 Pushing database schema..."
-npm run db:push
+# Skip database schema push - using parent QAAQ database
+echo "📊 Using existing parent QAAQ database tables..."
+echo "✅ No schema changes needed (daughter app)"
 
 # Build the application
 echo "🔨 Building application..."
