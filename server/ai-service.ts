@@ -495,7 +495,7 @@ export class AIService {
       const pool = (global as any).pool;
       if (!pool) {
         console.log('⚠️ Database pool not available, using default token limits');
-        return { min: 10, max: 20 };
+        return { min: 97, max: 97 };
       }
 
       const result = await pool.query(`
@@ -504,14 +504,14 @@ export class AIService {
         WHERE config_key IN ('free_user_min_tokens', 'free_user_max_tokens')
       `);
 
-      let minTokens = 10;
-      let maxTokens = 20;
+      let minTokens = 97;
+      let maxTokens = 97;
 
       result.rows.forEach((row: any) => {
         if (row.config_key === 'free_user_min_tokens') {
-          minTokens = parseInt(row.config_value) || 10;
+          minTokens = parseInt(row.config_value) || 97;
         } else if (row.config_key === 'free_user_max_tokens') {
-          maxTokens = parseInt(row.config_value) || 20;
+          maxTokens = parseInt(row.config_value) || 97;
         }
       });
 
@@ -519,7 +519,7 @@ export class AIService {
       return { min: minTokens, max: maxTokens };
     } catch (error) {
       console.error('Error fetching token limits from config:', error);
-      return { min: 10, max: 20 }; // Fallback to defaults
+      return { min: 97, max: 97 }; // Fallback to defaults
     }
   }
 
