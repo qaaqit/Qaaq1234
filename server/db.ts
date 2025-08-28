@@ -64,12 +64,6 @@ async function initializeDatabaseServices() {
     const { connectionPoolManager } = await import('./connection-pool-manager');
     connectionPoolManager.startMonitoring();
 
-    // Import and start exact replica backup service
-    const { exactReplicaBackup } = await import('./exact-replica-backup');
-    // Start automatic backup every 6 hours
-    exactReplicaBackup.startAutoBackup(6);
-    console.log('🔄 Exact replica backup service started (6-hour intervals)');
-
     console.log('✅ Database services initialized successfully');
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
