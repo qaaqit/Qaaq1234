@@ -50,6 +50,13 @@ import { databaseKeeper } from "./database-keeper";
 import { connectionPoolManager } from "./connection-pool-manager";
 import { syncManager } from "./sync-manager";
 
+// Import new authentication stability improvements (PatalAtlantic)
+import { authCache } from "./auth-cache";
+import { authRateLimiter } from "./auth-rate-limiter";
+import { smartAuthPriority } from "./auth-priority";
+import { authPool } from "./auth-pool";
+import { authMonitor } from "./auth-monitor";
+
 // Extend Express Request type
 declare global {
   namespace Express {
@@ -155,12 +162,46 @@ const generateVerificationCode = (): string => {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
+  // Initialize PatalAtlantic authentication improvements
+  console.log('🌊 Initializing PatalAtlantic authentication stability improvements...');
+  
+  // Start authentication health monitoring
+  authMonitor.start();
+  console.log('✅ Authentication health monitoring started');
+  
+  // Apply rate limiting to auth endpoints
+  authRateLimiter.applyToRoutes(app);
+  console.log('✅ Authentication rate limiting applied');
+  
+  // Initialize dedicated auth pool if enabled
+  authPool.initialize();
+  console.log('✅ Authentication connection pool initialized');
+  
   // Health check endpoints for deployment monitoring
   app.get('/health', (req, res) => {
     res.status(200).json({ 
       status: 'ok',
       timestamp: new Date().toISOString(),
       deployment: process.env.REPLIT_DEPLOYMENT || 'development'
+    });
+  });
+  
+  // PatalAtlantic Authentication Health Endpoint
+  app.get('/api/auth/health', (req, res) => {
+    const health = authMonitor.getHealthResponse();
+    const statusCode = health.status === 'healthy' ? 200 : 
+                       health.status === 'degraded' ? 206 : 503;
+    
+    res.status(statusCode).json(health);
+  });
+  
+  // Authentication Statistics Endpoint (for debugging)
+  app.get('/api/auth/stats', (req, res) => {
+    res.json({
+      monitor: authMonitor.getMetrics(),
+      cache: authCache.getStats(),
+      rateLimiter: authRateLimiter.getStats(),
+      priority: smartAuthPriority.getStats()
     });
   });
 
@@ -747,51 +788,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
 
-      // SIMPLIFIED authentication endpoint - only session auth (Google/Replit)
+      // ENHANCED authentication endpoint with PatalAtlantic improvements
       app.get('/api/auth/user', async (req: any, res) => {
+        const startTime = Date.now();
+        
         try {
-          let user = null;
+          // Use smart authentication priority system
+          const authResult = await smartAuthPriority.checkAuthentication(req, res);
+          const responseTime = Date.now() - startTime;
           
-          console.log('🔍 Auth check - Session data:', {
-            hasUser: !!req.user,
-            hasSession: !!req.session,
-            hasPassport: !!req.session?.passport,
-            userKeys: req.user ? Object.keys(req.user) : [],
-            sessionKeys: req.session ? Object.keys(req.session) : []
-          });
+          // Record metrics for monitoring
+          authMonitor.recordAuth(
+            authResult.user !== null,
+            responseTime,
+            authResult.fromCache,
+            authResult.user ? undefined : 'no_auth_found'
+          );
           
-          // Check passport session first (Google Auth)
-          if (req.session?.passport?.user) {
-            user = req.session.passport.user;
-            console.log('✅ Found user in passport session:', user.fullName);
-            return res.json({ user });
-          }
-          
-          // Check Replit Auth session
-          if (req.user) {
-            const sessionUserId = (req.user as any).claims?.sub || (req.user as any).id || (req.user as any).userId;
-            if (sessionUserId) {
-              try {
-                user = await identityResolver.resolveUserByAnyMethod(sessionUserId, 'replit');
-                if (user) {
-                  console.log('✅ Found user via Replit auth:', user.fullName);
-                  return res.json({ user });
-                }
-              } catch (error) {
-                console.log('Error resolving Replit user:', error);
-              }
+          if (authResult.user) {
+            console.log(`✅ Authentication successful (${authResult.method}, ${responseTime}ms)`);
+            
+            // Add cache control headers if polling prevention is enabled
+            if (process.env.AUTH_POLLING_PREVENTION === 'true') {
+              res.setHeader('Cache-Control', 'private, max-age=300');
+              res.setHeader('X-Auth-Check-Interval', '300000');
             }
+            
+            return res.json({ user: authResult.user });
           }
           
-          console.log('❌ No authentication found');
+          console.log(`❌ No authentication found (${responseTime}ms)`);
           return res.status(401).json({ 
             message: 'No valid authentication found',
-            hasSession: !!req.user || !!req.session?.passport
+            retry: false // Prevent client retries
           });
           
         } catch (error) {
+          const responseTime = Date.now() - startTime;
           console.error("Auth endpoint error:", (error as Error).message);
-          res.status(500).json({ message: "Failed to fetch user" });
+          
+          // Record error in monitoring
+          authMonitor.recordAuth(false, responseTime, false, 'auth_error');
+          
+          res.status(500).json({ 
+            message: "Failed to fetch user",
+            retry: false // Prevent client retries on server errors
+          });
         }
       });
 
