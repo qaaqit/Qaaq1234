@@ -48,7 +48,7 @@ export default function WorkshopPage() {
       if (!response.ok) throw new Error('Failed to fetch workshops');
       return response.json();
     },
-    enabled: selectedPort && selectedSystem ? true : false
+    enabled: selectedPort ? true : false
   });
 
   const handleBack = () => {

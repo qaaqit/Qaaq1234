@@ -49,8 +49,13 @@ export default function Discover() {
   });
 
   const handleSearch = () => {
-    if (selectedPort && selectedSystem) {
-      setLocation(`/workshop?port=${encodeURIComponent(selectedPort)}&system=${encodeURIComponent(selectedSystem)}`);
+    if (selectedPort) {
+      const params = new URLSearchParams();
+      params.append('port', selectedPort);
+      if (selectedSystem) {
+        params.append('system', selectedSystem);
+      }
+      setLocation(`/workshop?${params.toString()}`);
     }
   };
 
@@ -174,7 +179,7 @@ export default function Discover() {
             {/* Search Button */}
             <Button 
               onClick={handleSearch}
-              disabled={!selectedPort || !selectedSystem}
+              disabled={!selectedPort}
               className="w-full bg-orange-600 hover:bg-orange-700 text-white"
             >
               Find Workshops

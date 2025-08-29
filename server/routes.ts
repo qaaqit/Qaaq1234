@@ -10529,7 +10529,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         }
       ];
 
-      // Filter workshops by system if specified
+      // Filter workshops by system if specified, otherwise return all for the port
       const filteredWorkshops = system ? workshops.filter(w => 
         w.specializations.some(spec => spec.toLowerCase().includes(system.toLowerCase()))
       ) : workshops;
