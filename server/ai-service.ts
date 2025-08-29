@@ -59,9 +59,6 @@ export class AIService {
       const userRank = user?.maritimeRank || 'Maritime Professional';
       const userShip = user?.shipName ? `aboard ${user.shipName}` : 'shore-based';
       
-      // Check if user is premium for different response formats
-      const isPremiumUser = await this.checkPremiumStatus(user);
-      
       let systemPrompt = `You are QBOT, an advanced maritime AI assistant and the primary chat interface for QaaqConnect. 
       You specialize in ${category} and serve the global maritime community with expert knowledge on:
       - Maritime engineering, maintenance, and troubleshooting
@@ -74,27 +71,18 @@ export class AIService {
       
       LANGUAGE: ${language === 'tr' ? 'Respond in Turkish language only' : 'Respond in English language only'}
       
-      ${isPremiumUser ? 
-        `PREMIUM RESPONSE FORMAT:
-        - Provide comprehensive, detailed responses with full explanations
-        - Include technical specifications, step-by-step procedures, and troubleshooting details
-        - Reference relevant maritime regulations (SOLAS, MARPOL, STCW) with specific section numbers
-        - Provide multiple solutions or approaches when applicable
-        - Include safety considerations and best practices
-        - Use bullet points for clarity but provide detailed information
-        - Length: 200-500 words for thorough coverage of the topic` :
-        `FREE USER RESPONSE FORMAT:
-        - ALWAYS respond in bullet point format with exactly 3-5 bullet points
-        - Keep total response between 30-50 words maximum
-        - Each bullet point should be 6-12 words maximum
-        - Use concise, technical language
-        - Prioritize safety and maritime regulations (SOLAS, MARPOL, STCW)
-        - Example format:
-          • [Action/Solution in 6-12 words]
-          • [Technical detail in 6-12 words]  
-          • [Safety consideration in 6-12 words]
-          • [Regulation reference if applicable]`
-      }`;
+      RESPONSE FORMAT:
+      - ALWAYS respond in bullet point format with exactly 3-5 bullet points
+      - Keep total response between 50-70 words
+      - Each bullet point should be 10-16 words maximum
+      - Use technical language with practical details
+      - Include safety considerations and maritime regulations when relevant
+      - Provide complete, actionable information within the word limit
+      - Example format:
+        • [Specific action/solution with technical detail]
+        • [Safety consideration or regulation reference]  
+        • [Additional guidance or best practice]
+        • [Follow-up recommendation if applicable]`;
       
       if (activeRules) {
         systemPrompt += `\n\nActive bot documentation guidelines:\n${activeRules.substring(0, 800)}`;
@@ -102,11 +90,11 @@ export class AIService {
 
       console.log('🤖 OpenAI: Making API request...');
       
-      // Use GPT-4o for premium users, GPT-4o-mini for free users
-      const model = isPremiumUser ? "gpt-4o" : "gpt-4o-mini";
-      const maxTokens = isPremiumUser ? 1500 : 150;  // Much more tokens for premium users
+      // Use GPT-4o for all users with consistent token limits
+      const model = "gpt-4o";
+      const maxTokens = 200;  // Consistent token limit for 50-70 word responses
       
-      console.log(`🚀 Using ${model} model for ${isPremiumUser ? 'PREMIUM' : 'FREE'} user`);
+      console.log(`🚀 Using ${model} model with ${maxTokens} max tokens`);
       
       const response = await this.openai.chat.completions.create({
         model,
@@ -128,8 +116,8 @@ export class AIService {
       console.log('🤖 OpenAI: Response generated successfully:', content.substring(0, 100) + '...');
       const responseTime = Date.now() - startTime;
 
-      // Apply free user limits if user is not premium
-      const finalContent = isPremiumUser ? content : await this.applyFreeUserLimits(content, user);
+      // Return content as-is since prompt already limits to 50-70 words
+      const finalContent = content;
 
       return {
         content: finalContent,
@@ -155,9 +143,6 @@ export class AIService {
       const userRank = user?.maritimeRank || 'Maritime Professional';
       const userShip = user?.shipName ? `aboard ${user.shipName}` : 'shore-based';
       
-      // Check if user is premium for different response formats
-      const isPremiumUser = await this.checkPremiumStatus(user);
-      
       let systemPrompt = `You are QBOT, an advanced maritime AI assistant and the primary chat interface for QaaqConnect. 
       You specialize in ${category} and serve the global maritime community with expert knowledge on:
       - Maritime engineering, maintenance, and troubleshooting
@@ -170,34 +155,25 @@ export class AIService {
       
       LANGUAGE: ${language === 'tr' ? 'Respond in Turkish language only' : 'Respond in English language only'}
       
-      ${isPremiumUser ? 
-        `PREMIUM RESPONSE FORMAT:
-        - Provide comprehensive, detailed responses with full explanations
-        - Include technical specifications, step-by-step procedures, and troubleshooting details
-        - Reference relevant maritime regulations (SOLAS, MARPOL, STCW) with specific section numbers
-        - Provide multiple solutions or approaches when applicable
-        - Include safety considerations and best practices
-        - Use bullet points for clarity but provide detailed information
-        - Length: 200-500 words for thorough coverage of the topic` :
-        `FREE USER RESPONSE FORMAT:
-        - ALWAYS respond in bullet point format with exactly 3-5 bullet points
-        - Keep total response between 30-50 words maximum
-        - Each bullet point should be 6-12 words maximum
-        - Use concise, technical language
-        - Prioritize safety and maritime regulations (SOLAS, MARPOL, STCW)
-        - Example format:
-          • [Action/Solution in 6-12 words]
-          • [Technical detail in 6-12 words]  
-          • [Safety consideration in 6-12 words]
-          • [Regulation reference if applicable]`
-      }`;
+      RESPONSE FORMAT:
+      - ALWAYS respond in bullet point format with exactly 3-5 bullet points
+      - Keep total response between 50-70 words
+      - Each bullet point should be 10-16 words maximum
+      - Use technical language with practical details
+      - Include safety considerations and maritime regulations when relevant
+      - Provide complete, actionable information within the word limit
+      - Example format:
+        • [Specific action/solution with technical detail]
+        • [Safety consideration or regulation reference]  
+        • [Additional guidance or best practice]
+        • [Follow-up recommendation if applicable]`;
       
       if (activeRules) {
         systemPrompt += `\n\nActive bot documentation guidelines:\n${activeRules.substring(0, 800)}`;
       }
 
-      // Direct API call to Gemini with premium-aware token limits
-      const maxOutputTokens = isPremiumUser ? 1500 : 150;
+      // Direct API call to Gemini with consistent token limits
+      const maxOutputTokens = 200;
       const requestBody = {
         contents: [{
           parts: [{
@@ -260,8 +236,8 @@ export class AIService {
       }
       const responseTime = Date.now() - startTime;
 
-      // Apply free user limits if user is not premium
-      const finalContent = isPremiumUser ? content : await this.applyFreeUserLimits(content, user);
+      // Return content as-is since prompt already limits to 50-70 words
+      const finalContent = content;
 
       return {
         content: finalContent,
@@ -286,9 +262,6 @@ export class AIService {
       const userRank = user?.maritimeRank || 'Maritime Professional';
       const userShip = user?.shipName ? `aboard ${user.shipName}` : 'shore-based';
       
-      // Check if user is premium for different response formats
-      const isPremiumUser = await this.checkPremiumStatus(user);
-      
       let systemPrompt = `You are QBOT, an advanced maritime AI assistant and the primary chat interface for QaaqConnect. 
       You specialize in ${category} and serve the global maritime community with expert knowledge on:
       - Maritime engineering, maintenance, and troubleshooting
@@ -301,27 +274,18 @@ export class AIService {
       
       LANGUAGE: ${language === 'tr' ? 'Respond in Turkish language only' : 'Respond in English language only'}
       
-      ${isPremiumUser ? 
-        `PREMIUM RESPONSE FORMAT:
-        - Provide comprehensive, detailed responses with full explanations
-        - Include technical specifications, step-by-step procedures, and troubleshooting details
-        - Reference relevant maritime regulations (SOLAS, MARPOL, STCW) with specific section numbers
-        - Provide multiple solutions or approaches when applicable
-        - Include safety considerations and best practices
-        - Use bullet points for clarity but provide detailed information
-        - Length: 200-500 words for thorough coverage of the topic` :
-        `FREE USER RESPONSE FORMAT:
-        - ALWAYS respond in bullet point format with exactly 3-5 bullet points
-        - Keep total response between 30-50 words maximum
-        - Each bullet point should be 6-12 words maximum
-        - Use concise, technical language
-        - Prioritize safety and maritime regulations (SOLAS, MARPOL, STCW)
-        - Example format:
-          • [Action/Solution in 6-12 words]
-          • [Technical detail in 6-12 words]  
-          • [Safety consideration in 6-12 words]
-          • [Regulation reference if applicable]`
-      }`;
+      RESPONSE FORMAT:
+      - ALWAYS respond in bullet point format with exactly 3-5 bullet points
+      - Keep total response between 50-70 words
+      - Each bullet point should be 10-16 words maximum
+      - Use technical language with practical details
+      - Include safety considerations and maritime regulations when relevant
+      - Provide complete, actionable information within the word limit
+      - Example format:
+        • [Specific action/solution with technical detail]
+        • [Safety consideration or regulation reference]  
+        • [Additional guidance or best practice]
+        • [Follow-up recommendation if applicable]`;
       
       if (activeRules) {
         systemPrompt += `\n\nActive bot documentation guidelines:\n${activeRules.substring(0, 800)}`;
@@ -329,7 +293,7 @@ export class AIService {
 
       console.log('🤖 Deepseek: Making API request...');
       
-      const maxTokens = isPremiumUser ? 1500 : 150;
+      const maxTokens = 200;
       const response = await this.deepseek.chat.completions.create({
         model: "deepseek-chat",
         messages: [
@@ -350,8 +314,8 @@ export class AIService {
       console.log('🤖 Deepseek: Response generated successfully:', content.substring(0, 100) + '...');
       const responseTime = Date.now() - startTime;
 
-      // Apply free user limits if user is not premium
-      const finalContent = isPremiumUser ? content : await this.applyFreeUserLimits(content, user);
+      // Return content as-is since prompt already limits to 50-70 words
+      const finalContent = content;
 
       return {
         content: finalContent,
@@ -377,9 +341,6 @@ export class AIService {
       const userRank = user?.maritimeRank || 'Maritime Professional';
       const userShip = user?.shipName ? `aboard ${user.shipName}` : 'shore-based';
       
-      // Check if user is premium for different response formats
-      const isPremiumUser = await this.checkPremiumStatus(user);
-      
       let systemPrompt = `You are QBOT, an advanced maritime AI assistant and the primary chat interface for QaaqConnect. 
       You specialize in ${category} and serve the global maritime community with expert knowledge on:
       - Maritime engineering, maintenance, and troubleshooting
@@ -392,27 +353,18 @@ export class AIService {
       
       LANGUAGE: ${language === 'tr' ? 'Respond in Turkish language only' : 'Respond in English language only'}
       
-      ${isPremiumUser ? 
-        `PREMIUM RESPONSE FORMAT:
-        - Provide comprehensive, detailed responses with full explanations
-        - Include technical specifications, step-by-step procedures, and troubleshooting details
-        - Reference relevant maritime regulations (SOLAS, MARPOL, STCW) with specific section numbers
-        - Provide multiple solutions or approaches when applicable
-        - Include safety considerations and best practices
-        - Use bullet points for clarity but provide detailed information
-        - Length: 200-500 words for thorough coverage of the topic` :
-        `FREE USER RESPONSE FORMAT:
-        - ALWAYS respond in bullet point format with exactly 3-5 bullet points
-        - Keep total response between 30-50 words maximum
-        - Each bullet point should be 6-12 words maximum
-        - Use concise, technical language
-        - Prioritize safety and maritime regulations (SOLAS, MARPOL, STCW)
-        - Example format:
-          • [Action/Solution in 6-12 words]
-          • [Technical detail in 6-12 words]  
-          • [Safety consideration in 6-12 words]
-          • [Regulation reference if applicable]`
-      }`;
+      RESPONSE FORMAT:
+      - ALWAYS respond in bullet point format with exactly 3-5 bullet points
+      - Keep total response between 50-70 words
+      - Each bullet point should be 10-16 words maximum
+      - Use technical language with practical details
+      - Include safety considerations and maritime regulations when relevant
+      - Provide complete, actionable information within the word limit
+      - Example format:
+        • [Specific action/solution with technical detail]
+        • [Safety consideration or regulation reference]  
+        • [Additional guidance or best practice]
+        • [Follow-up recommendation if applicable]`;
       
       if (activeRules) {
         systemPrompt += `\n\nActive bot documentation guidelines:\n${activeRules.substring(0, 800)}`;
@@ -420,7 +372,7 @@ export class AIService {
 
       console.log('🤖 Mistral: Making API request...');
       
-      const maxTokens = isPremiumUser ? 1500 : 150;
+      const maxTokens = 200;
       const response = await this.mistral.chat.completions.create({
         model: "mistral-large-latest",
         messages: [
@@ -441,8 +393,8 @@ export class AIService {
       console.log('🤖 Mistral: Response generated successfully:', content.substring(0, 100) + '...');
       const responseTime = Date.now() - startTime;
 
-      // Apply free user limits if user is not premium
-      const finalContent = isPremiumUser ? content : await this.applyFreeUserLimits(content, user);
+      // Return content as-is since prompt already limits to 50-70 words
+      const finalContent = content;
 
       return {
         content: finalContent,
@@ -629,66 +581,10 @@ export class AIService {
     }
   }
 
-  // Apply free user limits - truncate based on configurable token limits for non-premium users
+  // Legacy function - no longer needed since all users get consistent 50-70 word responses
   private async applyFreeUserLimits(content: string, user: any): Promise<string> {
-    try {
-      // Check premium status using Razorpay service for accurate verification
-      const userId = user?.id || user?.userId;
-      if (!userId) {
-        console.log('⚠️ No user ID available for premium check, treating as free user');
-        // Continue to free user logic below
-      } else {
-        // First check if user is admin (admins get unlimited access)
-        if (user?.isAdmin || user?.is_admin) {
-          console.log(`✅ Admin user verified (ID: ${userId}) - returning full response (${content.split(' ').length} words)`);
-          return content;
-        }
-        
-        // Check specific premium user IDs (workship.ai@gmail.com users)
-        const premiumUserIds = ['45016180', '44885683'];
-        if (premiumUserIds.includes(userId.toString())) {
-          console.log(`✅ Premium user ID verified (${userId}) - returning full response (${content.split(' ').length} words)`);
-          return content;
-        }
-        
-        // Import and use the Razorpay service directly
-        const { RazorpayService } = await import('./razorpay-service-production.js');
-        const razorpayService = RazorpayService.getInstance();
-        const premiumStatus = await razorpayService.checkUserPremiumStatus(userId.toString());
-        
-        if (premiumStatus.isPremium) {
-          console.log(`✅ Razorpay premium user verified - returning full response (${content.split(' ').length} words)`);
-          return content;
-        }
-        console.log(`🔍 Premium check result for user ${userId}: isPremium = ${premiumStatus.isPremium}, isAdmin = ${user?.isAdmin}`);
-      }
-    } catch (error) {
-      console.error('❌ Error checking premium status:', error);
-      console.log('Continuing with free user limits as fallback');
-    }
-    
-    // Get configurable token limits
-    const tokenLimits = await this.getTokenLimits();
-    
-    // For free users, limit to configured word count with upgrade prompt
-    const words = content.split(' ');
-    const wordCount = words.length;
-    
-    // Use average of min and max for target word count
-    const targetWordCount = Math.round((tokenLimits.min + tokenLimits.max) / 2);
-    
-    console.log(`🆓 Free user - limiting response from ${wordCount} words to ~${targetWordCount} words (${tokenLimits.min}-${tokenLimits.max} range)`);
-    
-    // Take configured number of words and add upgrade prompt
-    const limitedWords = words.slice(0, targetWordCount);
-    const limitedContent = limitedWords.join(' ');
-    
-    // Ensure it ends with ... and add upgrade prompt
-    const truncatedContent = limitedContent.endsWith('.') 
-      ? limitedContent.slice(0, -1) + '...'
-      : limitedContent + '...';
-    
-    return `${truncatedContent} (For detailed unlimited answers & whatsapp chat support, please upgrade to premium)`;
+    // Simply return content as-is since prompts now handle word limits consistently
+    return content;
   }
 
   // Get available models
