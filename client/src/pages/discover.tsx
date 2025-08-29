@@ -25,8 +25,6 @@ const majorPorts = [
 export default function Discover() {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
-  const [uniqueIPs, setUniqueIPs] = useState<number>(0);
-  const [lastUpdated, setLastUpdated] = useState<string>('');
   const [selectedPort, setSelectedPort] = useState<string>('');
   const [selectedSystem, setSelectedSystem] = useState<string>('');
   const [, setLocation] = useLocation();
@@ -47,25 +45,6 @@ export default function Discover() {
     }
   };
 
-  // Fetch unique IP analytics on page load
-  useEffect(() => {
-    const fetchUniqueIPs = async () => {
-      try {
-        const response = await fetch('/api/analytics/unique-ips');
-        const data = await response.json();
-        if (data.success) {
-          setUniqueIPs(data.uniqueIPs);
-          setLastUpdated(new Date(data.timestamp).toLocaleTimeString());
-        }
-      } catch (error) {
-        console.error('Failed to fetch unique IPs:', error);
-        setUniqueIPs(47); // Fallback value
-        setLastUpdated(new Date().toLocaleTimeString());
-      }
-    };
-
-    fetchUniqueIPs();
-  }, []);
 
   useEffect(() => {
     if (mapRef.current && !mapInstanceRef.current) {
@@ -142,21 +121,6 @@ export default function Discover() {
         style={{ minHeight: '100vh' }}
       />
       
-      {/* Analytics overlay - Bottom right above nav bar */}
-      <div className="absolute bottom-20 right-4 pointer-events-none z-[1000]">
-        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 border border-orange-200 min-w-[200px]">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-orange-600">{uniqueIPs}</div>
-            <div className="text-sm text-gray-600 font-medium">Unique IPs</div>
-            <div className="text-xs text-gray-500 mt-1">Past 6 Hours</div>
-            {lastUpdated && (
-              <div className="text-xs text-gray-400 mt-1">
-                Updated: {lastUpdated}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
 
       {/* Search boxes overlay */}
       <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-[1000] pointer-events-auto">
