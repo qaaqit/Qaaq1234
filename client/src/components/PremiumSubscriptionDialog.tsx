@@ -536,9 +536,7 @@ export function PremiumSubscriptionDialog({
               <div className="text-center">
                 {selectedPeriod === "monthly" ? (
                   <>
-                    <h4 className="font-semibold text-lg mb-3">
-                      Pay ₹551 - Monthly Premium
-                    </h4>
+                    <h4 className="font-semibold text-lg mb-3">Pay ₹451 - Monthly Premium</h4>
 
                     {/* Payment Options */}
                     <div className="space-y-3">
