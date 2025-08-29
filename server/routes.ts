@@ -508,6 +508,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // 🗑️ DELETE QUESTIONS BY AUTHOR ID - Remove bot conversation questions
+  app.post('/api/debug/delete-questions-by-author', async (req, res) => {
+    try {
+      const { author_id } = req.body;
+      
+      if (!author_id) {
+        return res.status(400).json({ error: 'author_id is required' });
+      }
+      
+      // First, get the questions to be deleted for logging
+      const questionsToDelete = await pool.query(`
+        SELECT id, content, author_id, created_at 
+        FROM questions 
+        WHERE author_id = $1
+        ORDER BY created_at DESC
+      `, [author_id]);
+      
+      console.log(`📋 Found ${questionsToDelete.rows.length} questions to delete for author: ${author_id}`);
+      questionsToDelete.rows.forEach(row => {
+        console.log(`🗑️ Question ${row.id}: ${row.content.substring(0, 100)}...`);
+      });
+      
+      // Delete related WhatsApp messages first (foreign key constraint)
+      const whatsappMessagesDeleted = await pool.query(`
+        DELETE FROM whatsapp_messages 
+        WHERE question_id IN (
+          SELECT id FROM questions WHERE author_id = $1
+        )
+      `, [author_id]);
+      
+      console.log(`🗑️ Deleted ${whatsappMessagesDeleted.rowCount} related WhatsApp messages`);
+      
+      // Delete related notifications (foreign key constraint)
+      const notificationsDeleted = await pool.query(`
+        DELETE FROM notifications 
+        WHERE answer_id IN (
+          SELECT a.id FROM answers a 
+          JOIN questions q ON a.question_id = q.id 
+          WHERE q.author_id = $1
+        )
+      `, [author_id]);
+      
+      console.log(`🗑️ Deleted ${notificationsDeleted.rowCount} related notifications`);
+      
+      // Delete related answers (foreign key constraint)
+      const answersDeleted = await pool.query(`
+        DELETE FROM answers 
+        WHERE question_id IN (
+          SELECT id FROM questions WHERE author_id = $1
+        )
+      `, [author_id]);
+      
+      console.log(`🗑️ Deleted ${answersDeleted.rowCount} related answers`);
+      
+      // Then delete the questions
+      const questionsDeleted = await pool.query(`
+        DELETE FROM questions 
+        WHERE author_id = $1
+        RETURNING id, content
+      `, [author_id]);
+      
+      console.log(`✅ DELETED ${questionsDeleted.rows.length} questions from author: ${author_id}`);
+      
+      res.json({
+        success: true,
+        deleted_questions_count: questionsDeleted.rows.length,
+        deleted_answers_count: answersDeleted.rowCount,
+        deleted_notifications_count: notificationsDeleted.rowCount,
+        deleted_whatsapp_messages_count: whatsappMessagesDeleted.rowCount,
+        deleted_questions: questionsDeleted.rows,
+        author_id: author_id
+      });
+    } catch (error) {
+      console.error('Error deleting questions by author:', error);
+      res.status(500).json({ error: 'Failed to delete questions by author' });
+    }
+  });
+
   // IP Analytics endpoint - Unique IPs in past 6 hours  
   app.get('/api/analytics/unique-ips', async (req, res) => {
     try {
