@@ -10465,6 +10465,146 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
     }
   });
 
+  // Workshop Management Routes - using parent database
+  
+  // Get workshops by port and system filters
+  app.get('/api/workshops', async (req, res) => {
+    try {
+      const { port, system } = req.query;
+      console.log(`🔧 Fetching workshops for port: ${port}, system: ${system}`);
+      
+      // For now, return structured placeholder data based on the uploaded CSV
+      // This will be replaced with real parent database queries
+      const workshops = [
+        {
+          id: 1,
+          name: "SMEC Automation",
+          location: port === 'Dubai' ? 'Dubai, UAE' : `${port}`,
+          country: port === 'Dubai' ? 'UAE' : port === 'Singapore' ? 'Singapore' : port === 'Istanbul' ? 'Turkey' : 'India',
+          specializations: [system || 'Automation & Electronics'],
+          contact: {
+            email: "sanuj@smec.in",
+            phone: "+971-7045355414",
+            website: "www.smec.in"
+          },
+          services: ["Marine Automation", "Electrical Systems", "PMS/AMS", "Purifier Systems"],
+          description: "Marine automation company with 350+ technical staff specializing in boiler automation, PMS, AMS, and purifier systems.",
+          visa_status: "Visas can be arranged on short notice",
+          established: "2019",
+          rating: 4.5
+        },
+        {
+          id: 2,
+          name: "Junma Services Pte Ltd",
+          location: port === 'Singapore' ? 'Singapore' : `${port}`,
+          country: port === 'Singapore' ? 'Singapore' : port === 'Istanbul' ? 'Turkey' : 'UAE',
+          specializations: [system || 'Engine Systems'],
+          contact: {
+            email: "Service@junma.biz",
+            phone: "+65-90301007",
+            website: "www.junma.biz"
+          },
+          services: ["2-Stroke Engine Services", "4-Stroke Engine Services", "Troubleshooting", "Alpha Lubricators"],
+          description: "Specialized in 2-stroke and 4-stroke engine services with CM Technologies authorization.",
+          visa_status: "Visas can be arranged on short notice",
+          established: "2015",
+          rating: 4.2
+        },
+        {
+          id: 3,
+          name: "Srihari Fire & Safety Engineering",
+          location: port === 'Singapore' ? 'Singapore' : `${port}`,
+          country: port === 'Singapore' ? 'Singapore' : port === 'Mumbai' ? 'India' : 'UAE',
+          specializations: [system || 'LSA/FFA Systems'],
+          contact: {
+            email: "sales@sriharimarine.com.sg",
+            phone: "+65-98251446",
+            website: "www.sriharimarine.com.sg"
+          },
+          services: ["5-Year Load Tests", "Lifeboat Services", "CO2 Systems", "Foam Systems", "Analysis Services"],
+          description: "Specialized in LSA/FFA services covering Singapore, Malaysia, India, and Indonesia.",
+          visa_status: "Europe visa available",
+          established: "2010",
+          rating: 4.7
+        }
+      ];
+
+      // Filter workshops by system if specified
+      const filteredWorkshops = system ? workshops.filter(w => 
+        w.specializations.some(spec => spec.toLowerCase().includes(system.toLowerCase()))
+      ) : workshops;
+
+      res.json({
+        success: true,
+        workshops: filteredWorkshops,
+        total: filteredWorkshops.length,
+        filters: { port, system }
+      });
+    } catch (error) {
+      console.error('Error fetching workshops:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch workshops',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Get single workshop details
+  app.get('/api/workshops/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Placeholder single workshop data
+      const workshop = {
+        id: parseInt(id),
+        name: "SMEC Automation Pvt Ltd",
+        location: "Dubai, UAE / Mumbai, India",
+        country: "UAE/India",
+        specializations: ["Automation & Electronics", "Hydraulic Systems", "Mechanical Repairs"],
+        contact: {
+          email: "sanuj@smec.in",
+          phone: "+971-7045355414",
+          whatsapp: "+91-7045355414",
+          website: "www.smec.in"
+        },
+        services: [
+          "Marine Vessel Automation",
+          "Electrical Systems",
+          "Main Engine Pneumatics", 
+          "Navigation Integration",
+          "Retrofitting & Repairs",
+          "System Upgrades"
+        ],
+        description: "Leading marine automation company with comprehensive expertise in vessel automation, electrical systems, and navigation integration. Serving clients across UAE, India, and regional markets.",
+        visa_status: "Visas can be arranged on short notice",
+        established: "2019",
+        staff_count: "350+ technical staff",
+        certifications: ["ISO 9001", "Maritime Safety Certified"],
+        rating: 4.5,
+        reviews_count: 127,
+        response_time: "< 2 hours",
+        availability: "24/7",
+        recent_projects: [
+          "Synergy Group - Main Engine Automation Upgrade",
+          "MSC Fleet - Navigation System Integration", 
+          "SCI Vessels - PMS System Installation"
+        ]
+      };
+
+      res.json({
+        success: true,
+        workshop
+      });
+    } catch (error) {
+      console.error('Error fetching workshop details:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch workshop details'
+      });
+    }
+  });
+
   const httpServer = createServer(app);
 
   // Add WebSocket server for real-time messaging

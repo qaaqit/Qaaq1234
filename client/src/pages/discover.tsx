@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useQuery } from '@tanstack/react-query';
 
-// Top 12 Major Ports with their coordinates
+// Major Ports with Workshop Coverage
 const majorPorts = [
   { name: "Shanghai", country: "China", lat: 31.2304, lng: 121.4737, description: "World's busiest port and major global trade hub" },
   { name: "Singapore", country: "Singapore", lat: 1.2966, lng: 103.7764, description: "Leading port in Asia and the world for container traffic" },
@@ -19,7 +19,16 @@ const majorPorts = [
   { name: "Jebel Ali", country: "UAE", lat: 25.0118, lng: 55.1406, description: "Key transshipment hub for the Middle East and surrounding regions" },
   { name: "Los Angeles", country: "USA", lat: 33.7361, lng: -118.2644, description: "Largest port complex in the Americas" },
   { name: "Mumbai", country: "India", lat: 19.0760, lng: 72.8777, description: "Major port on India's west coast and gateway to the subcontinent" },
-  { name: "Istanbul", country: "Turkey", lat: 41.0082, lng: 28.9784, description: "Strategic port connecting Europe and Asia across the Bosphorus" }
+  { name: "Istanbul", country: "Turkey", lat: 41.0082, lng: 28.9784, description: "Strategic port connecting Europe and Asia across the Bosphorus" },
+  // Additional ports with workshop coverage
+  { name: "Dubai", country: "UAE", lat: 25.2048, lng: 55.2708, description: "Major Middle Eastern port and shipping hub" },
+  { name: "Bhavnagar", country: "India", lat: 21.7645, lng: 72.1519, description: "Major ship recycling and repair hub in Gujarat" },
+  { name: "Chennai", country: "India", lat: 13.0827, lng: 80.2707, description: "Important port city on India's east coast" },
+  { name: "Port Said", country: "Egypt", lat: 31.2653, lng: 32.3019, description: "Strategic port at the northern entrance of Suez Canal" },
+  { name: "Cape Town", country: "South Africa", lat: -33.9249, lng: 18.4241, description: "Major port serving southern Africa" },
+  { name: "Dalian", country: "China", lat: 38.9140, lng: 121.6147, description: "Important port city in northern China" },
+  { name: "Dammam", country: "Saudi Arabia", lat: 26.4207, lng: 50.0888, description: "Major port on the Persian Gulf" },
+  { name: "Kolkata", country: "India", lat: 22.5726, lng: 88.3639, description: "Principal commercial port of eastern India" }
 ];
 
 export default function Discover() {
