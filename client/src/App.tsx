@@ -43,6 +43,7 @@ import PremiumPage from "@/pages/premium";
 import PremiumStatusPage from "@/pages/premium-status";
 import PremiumSetupPage from "@/pages/premium-setup";
 import ReadMePage from "@/pages/readme";
+import WorkshopPage from "@/pages/workshop";
 
 import NotFound from "@/pages/not-found";
 import BottomNav from "@/components/bottom-nav";
@@ -146,6 +147,7 @@ function Router() {
           <Route path="/premium-status" component={() => currentUser ? <PremiumStatusPage /> : <Login />} />
           <Route path="/premium-setup" component={() => <PremiumSetupPage />} />
           <Route path="/readme" component={() => <ReadMePage />} />
+          <Route path="/workshop" component={() => <WorkshopPage />} />
           <Route path="/home-old" component={() => <Login />} />
 
           <Route component={NotFound} />

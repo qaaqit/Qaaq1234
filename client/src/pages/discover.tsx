@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
+import { useLocation } from 'wouter';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useQuery } from '@tanstack/react-query';
 
 // Top 12 Major Ports with their coordinates
 const majorPorts = [
@@ -23,6 +27,25 @@ export default function Discover() {
   const mapInstanceRef = useRef<L.Map | null>(null);
   const [uniqueIPs, setUniqueIPs] = useState<number>(0);
   const [lastUpdated, setLastUpdated] = useState<string>('');
+  const [selectedPort, setSelectedPort] = useState<string>('');
+  const [selectedSystem, setSelectedSystem] = useState<string>('');
+  const [, setLocation] = useLocation();
+
+  // Fetch SEMM systems for dropdown
+  const { data: semmData } = useQuery({
+    queryKey: ['/api/dev/semm-cards'],
+    queryFn: async () => {
+      const response = await fetch('/api/dev/semm-cards');
+      if (!response.ok) throw new Error('Failed to fetch SEMM data');
+      return response.json();
+    }
+  });
+
+  const handleSearch = () => {
+    if (selectedPort && selectedSystem) {
+      setLocation(`/workshop?port=${encodeURIComponent(selectedPort)}&system=${encodeURIComponent(selectedSystem)}`);
+    }
+  };
 
   // Fetch unique IP analytics on page load
   useEffect(() => {
@@ -135,13 +158,55 @@ export default function Discover() {
         </div>
       </div>
 
-      {/* Center screen message overlay */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-6 border border-orange-200">
-          <p className="text-xl font-semibold text-gray-800 text-center">
-            Awesome features being loaded.<br />
-            ETA very soon.
-          </p>
+      {/* Search boxes overlay */}
+      <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-[1000] pointer-events-auto">
+        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-6 border border-orange-200 min-w-[400px]">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Find Repair Workshops</h3>
+          
+          <div className="space-y-4">
+            {/* Port Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select Port</label>
+              <Select value={selectedPort} onValueChange={setSelectedPort}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Choose a major port" />
+                </SelectTrigger>
+                <SelectContent>
+                  {majorPorts.map((port) => (
+                    <SelectItem key={port.name} value={port.name}>
+                      {port.name}, {port.country}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* System Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select System</label>
+              <Select value={selectedSystem} onValueChange={setSelectedSystem}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Choose a system" />
+                </SelectTrigger>
+                <SelectContent>
+                  {semmData?.data?.map((system: any) => (
+                    <SelectItem key={system.code} value={system.code}>
+                      {system.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Search Button */}
+            <Button 
+              onClick={handleSearch}
+              disabled={!selectedPort || !selectedSystem}
+              className="w-full bg-orange-600 hover:bg-orange-700 text-white"
+            >
+              Find Workshops
+            </Button>
+          </div>
         </div>
       </div>
     </div>
