@@ -25,7 +25,7 @@ const translations = {
     'chat.placeholder': 'Ask your maritime question...',
     'chat.send': 'Send',
     'chat.typing': 'QBOT is typing...',
-    'chat.welcome.title': 'Welcome to QBOT',
+    'chat.welcome.title': 'Welcome to Qaaq',
     'chat.welcome.subtitle': 'Your Maritime AI Assistant',
     'chat.welcome.description': 'Ask questions about maritime operations, equipment, regulations, and more.',
     'chat.improve_prompt': 'Improve this prompt for better AI responses',
