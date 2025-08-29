@@ -76,12 +76,12 @@ export default function Register({ onSuccess }: RegisterProps) {
   // Common country codes for maritime professionals
   const countryCodes = [
     { code: "+91", country: "India", flag: "🇮🇳" },
+    { code: "+90", country: "Turkey", flag: "🇹🇷" },
     { code: "+63", country: "Philippines", flag: "🇵🇭" },
     { code: "+380", country: "Ukraine", flag: "🇺🇦" },
     { code: "+7", country: "Russia", flag: "🇷🇺" },
     { code: "+86", country: "China", flag: "🇨🇳" },
     { code: "+30", country: "Greece", flag: "🇬🇷" },
-    { code: "+90", country: "Turkey", flag: "🇹🇷" },
     { code: "+49", country: "Germany", flag: "🇩🇪" },
     { code: "+47", country: "Norway", flag: "🇳🇴" },
     { code: "+45", country: "Denmark", flag: "🇩🇰" },
