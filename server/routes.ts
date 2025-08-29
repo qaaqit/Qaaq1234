@@ -5357,12 +5357,12 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         'd': 4, // Compressed Air Systems (corrected from Fresh Water)
         'e': 5, // Oil Purification  
         'f': 6, // Fresh Water & Cooling (swapped from Compressed Air)
-        'g': 7, // Pumps & Auxiliary
+        'g': 7, // Automation & Control
         'h': 8, // Cargo Systems
         'i': 9, // Safety & Fire Fighting
         'j': 10, // Crane & Deck Equipment
         'k': 11, // Navigation Systems
-        'l': 12, // Automation & Control
+        'l': 12, // Pumps & Auxiliary
         'm': 13, // HVAC Systems
         'n': 14, // Pollution Control
         'o': 15, // Hull & Structure
@@ -5395,6 +5395,14 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         }
         else if (system.code === 'g' && system.title && system.title.toLowerCase().includes('oil purification')) {
           correctedSystem.title = system.title.replace(/oil purification/i, 'Pumps & Auxiliary');
+        }
+        
+        // Interchange system titles for 'g' and 'l' as requested
+        if (system.code === 'g' && system.title && system.title.toLowerCase().includes('pumps')) {
+          correctedSystem.title = system.title.replace(/pumps.*auxiliary/i, 'Automation & Control');
+        }
+        else if (system.code === 'l' && system.title && system.title.toLowerCase().includes('automation')) {
+          correctedSystem.title = system.title.replace(/automation.*control/i, 'Pumps & Auxiliary');
         }
         
         // Only add if we haven't seen this code before (avoid duplicates)
