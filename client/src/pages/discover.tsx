@@ -144,7 +144,7 @@ export default function Discover() {
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Choose a major port" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[1100]">
                   {majorPorts.map((port) => (
                     <SelectItem key={port.name} value={port.name}>
                       {port.name}, {port.country}
@@ -161,7 +161,7 @@ export default function Discover() {
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Choose a system" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[1100]">
                   {semmData?.data?.map((system: any) => (
                     <SelectItem key={system.code} value={system.code}>
                       {system.title}
