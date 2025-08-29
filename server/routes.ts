@@ -5355,9 +5355,9 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         'b': 2, // Power Generation  
         'c': 3, // Boiler
         'd': 4, // Compressed Air Systems (corrected from Fresh Water)
-        'e': 5, // Pumps & Auxiliary
+        'e': 5, // Oil Purification  
         'f': 6, // Fresh Water & Cooling (swapped from Compressed Air)
-        'g': 7, // Oil Purification
+        'g': 7, // Pumps & Auxiliary
         'h': 8, // Cargo Systems
         'i': 9, // Safety & Fire Fighting
         'j': 10, // Crane & Deck Equipment
@@ -5387,6 +5387,14 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         // Fix Fresh Water system - should be 'f' instead of 'd'
         else if (system.title && system.title.toLowerCase().includes('fresh water')) {
           correctedSystem.code = 'f';
+        }
+        
+        // Interchange system titles for 'e' and 'g' as requested  
+        if (system.code === 'e' && system.title && system.title.toLowerCase().includes('pumps')) {
+          correctedSystem.title = system.title.replace(/pumps.*auxiliary/i, 'Oil Purification');
+        }
+        else if (system.code === 'g' && system.title && system.title.toLowerCase().includes('oil purification')) {
+          correctedSystem.title = system.title.replace(/oil purification/i, 'Pumps & Auxiliary');
         }
         
         // Only add if we haven't seen this code before (avoid duplicates)
