@@ -134,12 +134,10 @@ export default function Discover() {
         className="w-full h-screen"
         style={{ minHeight: '100vh' }}
       />
-      
-
       {/* Search boxes overlay */}
       <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-[1000] pointer-events-auto">
         <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-6 border border-orange-200 min-w-[400px]">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Find Repair Workshops</h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Repair Workshop feature Coming soon</h3>
           
           <div className="space-y-4">
             {/* Port Selection */}
