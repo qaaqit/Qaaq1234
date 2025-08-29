@@ -230,8 +230,8 @@ export default function QBOTInputArea({ onSendMessage, disabled = false, onClear
     const isUserAdmin = localStorage.getItem('isAdmin') === 'true';
 
     if (!isUserAdmin) {
-      // Show subscription dialog for non-admin users (premium check will happen when message is sent)
-      setShowSubscriptionDialog(true);
+      // Navigate to premium page instead of showing subscription dialog
+      setLocation('/premium');
     } else {
       // Toggle premium mode for admin users
       setIsPremiumMode(!isPremiumMode);
