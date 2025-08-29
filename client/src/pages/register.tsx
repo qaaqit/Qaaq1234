@@ -189,7 +189,7 @@ export default function Register({ onSuccess }: RegisterProps) {
         setOtpSent(true);
         toast({
           title: "Verification Email Sent!",
-          description: `Check your inbox at ${formData.email} and click the verification link. If you don't see it, please check your junk/spam folder.`,
+          description: `Your User ID: ${data.userId || 'N/A'}. Check your inbox at ${formData.email} and click the verification link. If you don't see it, please check your junk/spam folder.`,
         });
       } else {
         console.error('Registration failed:', response.status, data);

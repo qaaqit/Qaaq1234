@@ -138,10 +138,14 @@ class EmailService {
               <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 25px 0;">
                 <p style="margin: 0; color: #6b7280; font-size: 14px;">
                   <strong>Your Registration Details:</strong><br>
+                  <strong style="color: #ea580c;">User ID: ${userData.userId}</strong><br>
                   Name: ${userData.firstName} ${userData.lastName}<br>
                   Email: ${email}<br>
                   Rank: ${userData.maritimeRank}<br>
                   Company: ${userData.company}
+                </p>
+                <p style="margin: 10px 0 0 0; color: #f59e0b; font-size: 13px; font-weight: bold;">
+                  📝 Important: Save your User ID (${userData.userId}) - you'll need it for login!
                 </p>
               </div>
               
@@ -157,7 +161,7 @@ class EmailService {
             </div>
           </div>
         `,
-        text: `Welcome to QaaqConnect, ${userData.firstName}!\n\nPlease verify your email address by clicking this link:\n${verificationUrl}\n\nThis link will expire in 24 hours.\n\nBest regards,\nQaaqConnect Team`
+        text: `Welcome to QaaqConnect, ${userData.firstName}!\n\nYour User ID: ${userData.userId}\nIMPORTANT: Save your User ID - you'll need it for login!\n\nPlease verify your email address by clicking this link:\n${verificationUrl}\n\nThis link will expire in 24 hours.\n\nBest regards,\nQaaqConnect Team`
       };
 
       const info = await this.transporter.sendMail(mailOptions);
