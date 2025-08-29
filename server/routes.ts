@@ -1,6 +1,6 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
-import { WebSocketServer } from "ws";
+import WebSocket from "ws";
 import jwt from "jsonwebtoken";
 import { storage } from "./storage";
 import {
@@ -12802,7 +12802,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   const httpServer = createServer(app);
 
   // Add WebSocket server for real-time messaging
-  const wss = new WebSocketServer({ server: httpServer, path: "/ws" });
+  const wss = new WebSocket.Server({ server: httpServer, path: "/ws" });
 
   // Store active connections for 1v1 chats
   const activeConnections = new Map();
