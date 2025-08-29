@@ -122,12 +122,8 @@ app.get("/questions/:id", async (req, res, next) => {
     );
 
     if (isCrawler) {
-      // Fetch question data for meta tag generation
       const question = await getQuestionById(questionId);
-
-      if (!question) {
-        return res.status(404).send("Question not found");
-      }
+      if (!question) return res.status(404).send("Question not found");
 
       const baseUrl =
         process.env.NODE_ENV === "production"
@@ -140,20 +136,18 @@ app.get("/questions/:id", async (req, res, next) => {
       return res.send(html);
     }
 
-    // For regular browsers, let React handle the routing
     next();
   } catch (error) {
     console.error("Error generating question preview:", error);
-    next(); // Fall back to React app
+    next();
   }
 });
 
-// Server-side route for share/question/:id (alternative URL format)
+// Server-side route for share/question/:id
 app.get("/share/question/:id", async (req, res, next) => {
   try {
     const questionId = parseInt(req.params.id);
     const userAgent = req.headers["user-agent"] || "";
-
     const isCrawler =
       /facebookexternalhit|twitterbot|linkedinbot|whatsapp|telegrambot|slackbot/i.test(
         userAgent,
@@ -161,10 +155,7 @@ app.get("/share/question/:id", async (req, res, next) => {
 
     if (isCrawler) {
       const question = await getQuestionById(questionId);
-
-      if (!question) {
-        return res.status(404).send("Question not found");
-      }
+      if (!question) return res.status(404).send("Question not found");
 
       const baseUrl =
         process.env.NODE_ENV === "production"
@@ -184,14 +175,13 @@ app.get("/share/question/:id", async (req, res, next) => {
   }
 });
 
-// Serve authentic maritime images from multiple sources
+// Serve authentic maritime images
 app.get("/uploads/:filename", async (req, res) => {
   try {
     const filename = req.params.filename;
     const { readFileSync, existsSync } = await import("fs");
     const { join } = await import("path");
 
-    // First try server/uploads for authentic WhatsApp images
     const serverUploadsPath = join("./server/uploads", filename);
     if (existsSync(serverUploadsPath)) {
       const fileContent = readFileSync(serverUploadsPath);
@@ -203,7 +193,6 @@ app.get("/uploads/:filename", async (req, res) => {
       return res.send(fileContent);
     }
 
-    // Then try root uploads directory
     const rootUploadsPath = join("./uploads", filename);
     if (existsSync(rootUploadsPath)) {
       const fileContent = readFileSync(rootUploadsPath);
@@ -218,23 +207,19 @@ app.get("/uploads/:filename", async (req, res) => {
       return res.send(fileContent);
     }
 
-    // If not found locally, return 404 but log the request
     console.log(`📸 Image requested but not found locally: ${filename}`);
-    res.status(404).json({
-      error: "Image not found locally",
-      filename: filename,
-      note: "This may be served by another instance",
-    });
+    res.status(404).json({ error: "Image not found locally" });
   } catch (error) {
     console.error("Error serving image:", error);
     res.status(500).json({ error: "Failed to serve image" });
   }
 });
 
+// Log API requests
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
+  let capturedJsonResponse: Record<string, any> | undefined;
 
   const originalResJson = res.json;
   res.json = function (bodyJson, ...args) {
@@ -249,11 +234,7 @@ app.use((req, res, next) => {
       if (capturedJsonResponse) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
-
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
-      }
-
+      if (logLine.length > 80) logLine = logLine.slice(0, 79) + "…";
       log(logLine);
     }
   });
@@ -266,7 +247,7 @@ let whatsappBot: QoiGPTBot | null = null;
 (async () => {
   const server = await registerRoutes(app);
 
-  // Add WhatsApp bot endpoints
+  // WhatsApp bot endpoints
   app.get("/api/whatsapp-status", (req, res) => {
     res.json({
       connected: whatsappBot?.isConnected() || false,
@@ -274,14 +255,12 @@ let whatsappBot: QoiGPTBot | null = null;
     });
   });
 
-  app.post("/api/whatsapp-start", async (req, res) => {
+  app.post("/api/whatsapp-start", async (_req, res) => {
     try {
       if (!whatsappBot) {
         whatsappBot = new QoiGPTBot();
         await whatsappBot.start();
-        res.json({
-          message: "WhatsApp bot starting... Check console for QR code.",
-        });
+        res.json({ message: "WhatsApp bot starting..." });
       } else {
         res.json({ message: "WhatsApp bot is already running." });
       }
@@ -291,7 +270,7 @@ let whatsappBot: QoiGPTBot | null = null;
     }
   });
 
-  app.post("/api/whatsapp-stop", async (req, res) => {
+  app.post("/api/whatsapp-stop", async (_req, res) => {
     try {
       if (whatsappBot) {
         await whatsappBot.stop();
@@ -307,7 +286,7 @@ let whatsappBot: QoiGPTBot | null = null;
   });
 
   // Deployment health monitoring
-  app.get("/api/deployment/status", (req, res) => {
+  app.get("/api/deployment/status", (_req, res) => {
     res.status(200).json({
       status: "operational",
       environment: process.env.REPLIT_DEPLOYMENT ? "production" : "development",
@@ -323,75 +302,52 @@ let whatsappBot: QoiGPTBot | null = null;
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
-    console.error("Server error:", {
-      message,
-      status,
-      stack: err.stack,
-      deployment: process.env.REPLIT_DEPLOYMENT || "development",
-    });
-
+    console.error("Server error:", { message, status, stack: err.stack });
     res.status(status).json({ message });
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
+  // ✅ Corrected production/dev switch
   if (process.env.NODE_ENV === "production" && process.env.REPLIT_DEPLOYMENT) {
-    // Only use serveStatic for true production builds
-    serveStatic(app);
+    console.log("🚀 Using serveStatic for production build");
+    try {
+      serveStatic(app);
+    } catch (e) {
+      console.error("❌ serveStatic failed:", e);
+    }
   } else {
-    // Use setupVite for development and Replit environments to handle client-side routing
+    console.log("⚙️ Using Vite middleware (dev mode)");
     await setupVite(app, server);
   }
 
-  // ALWAYS serve the app on the port specified in the environment variable PORT
-  // Other ports are firewalled. Default to 5000 if not specified.
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || "5000", 10);
-  server.listen(
-    {
-      port,
-      host: "0.0.0.0",
-      reusePort: true,
-    },
-    async () => {
-      log(`serving on port ${port}`);
-      console.log(`📱 WhatsApp Bot API available at /api/whatsapp-start`);
+  server.listen({ port, host: "0.0.0.0", reusePort: true }, async () => {
+    log(`serving on port ${port}`);
+    console.log("📱 WhatsApp Bot API available at /api/whatsapp-start");
 
-      // Initialize 15 individual rank groups on server startup
-      try {
-        const result = await initializeRankGroups();
-        if (result.success) {
-          console.log("🎯 Rank groups initialization completed during startup");
-        } else {
-          console.error("❌ Rank groups initialization failed:", result.error);
-        }
-      } catch (error) {
-        console.error("❌ Error during rank groups initialization:", error);
+    try {
+      const result = await initializeRankGroups();
+      if (result.success) {
+        console.log("🎯 Rank groups initialization completed");
+      } else {
+        console.error("❌ Rank groups initialization failed:", result.error);
       }
+    } catch (error) {
+      console.error("❌ Error during rank groups initialization:", error);
+    }
 
-      // Initialize glossary database and auto-update service
-      try {
-        await setupGlossaryDatabase();
-        console.log("📚 Glossary database setup completed");
+    try {
+      await setupGlossaryDatabase();
+      console.log("📚 Glossary database setup completed");
+      console.log("🚫 Glossary auto-update service DISABLED");
+    } catch (error) {
+      console.error("❌ Error setting up glossary system:", error);
+    }
+  });
 
-        // Auto-updater disabled - manual updates only via Admin panel
-        console.log(
-          "🚫 Glossary auto-update service DISABLED - Manual updates only",
-        );
-      } catch (error) {
-        console.error("❌ Error setting up glossary system:", error);
-      }
-    },
-  );
-
-  // Handle graceful shutdown
+  // Graceful shutdown
   process.on("SIGINT", async () => {
     console.log("\n🛑 Shutting down QaaqConnect server...");
-    if (whatsappBot) {
-      await whatsappBot.stop();
-    }
+    if (whatsappBot) await whatsappBot.stop();
     try {
       await pool.end();
       console.log("📊 Database connections closed");
@@ -401,17 +357,12 @@ let whatsappBot: QoiGPTBot | null = null;
     process.exit(0);
   });
 
-  // Handle uncaught exceptions and prevent crashes
   process.on("uncaughtException", (error) => {
     console.error("Uncaught Exception - QaaqConnect:", error);
-    // Don't exit in production to maintain uptime
-    if (!process.env.REPLIT_DEPLOYMENT) {
-      process.exit(1);
-    }
+    if (!process.env.REPLIT_DEPLOYMENT) process.exit(1);
   });
 
   process.on("unhandledRejection", (reason, promise) => {
     console.error("Unhandled Rejection at:", promise, "reason:", reason);
-    // Don't exit in production to maintain uptime
   });
 })();

@@ -25,7 +25,7 @@ export default defineConfig({
   },
   root: path.resolve(import.meta.dirname, "client"),
   build: {
-    outDir: path.resolve(import.meta.dirname, "dist/public"),
+    outDir: path.resolve(import.meta.dirname, "dist/public"), // ✅ matches serveStatic
     emptyOutDir: true,
   },
   server: {
@@ -33,13 +33,15 @@ export default defineConfig({
       strict: true,
       deny: ["**/.*"],
     },
-    // ✅ Allow all the domains you’ll use
     allowedHosts: [
-      "qaaq.app",
-      "workspace.qaaqme.replit.app",
-      "c826e82c-c32d-4829-9463-b0ff017b3bd2-00-19gakd8inzp0n.pike.replit.dev",
+      // ✅ ensures Replit deploy URL works
+      process.env.REPL_SLUG
+        ? `${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`
+        : undefined,
+      process.env.REPL_ID
+        ? `${process.env.REPL_ID}-00-19gakd8inzp0n.pike.replit.dev`
+        : undefined,
       "localhost",
-    ],
-    host: true,
+    ].filter(Boolean) as string[],
   },
 });
