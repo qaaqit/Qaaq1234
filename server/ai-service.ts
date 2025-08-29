@@ -71,18 +71,17 @@ export class AIService {
       
       LANGUAGE: ${language === 'tr' ? 'Respond in Turkish language only' : 'Respond in English language only'}
       
-      RESPONSE FORMAT:
+      CRITICAL RESPONSE FORMAT:
       - ALWAYS respond in bullet point format with exactly 3-5 bullet points
-      - Keep total response between 50-70 words
-      - Each bullet point should be 10-16 words maximum
-      - Use technical language with practical details
-      - Include safety considerations and maritime regulations when relevant
-      - Provide complete, actionable information within the word limit
+      - Keep total response between 30-50 words maximum
+      - Each bullet point should be 6-12 words maximum
+      - Use concise, technical language
+      - Prioritize safety and maritime regulations (SOLAS, MARPOL, STCW)
       - Example format:
-        • [Specific action/solution with technical detail]
-        • [Safety consideration or regulation reference]  
-        • [Additional guidance or best practice]
-        • [Follow-up recommendation if applicable]`;
+        • [Action/Solution in 6-12 words]
+        • [Technical detail in 6-12 words]  
+        • [Safety consideration in 6-12 words]
+        • [Regulation reference if applicable]`;
       
       if (activeRules) {
         systemPrompt += `\n\nActive bot documentation guidelines:\n${activeRules.substring(0, 800)}`;
@@ -90,11 +89,12 @@ export class AIService {
 
       console.log('🤖 OpenAI: Making API request...');
       
-      // Use GPT-4o for all users with consistent token limits
-      const model = "gpt-4o";
-      const maxTokens = 200;  // Consistent token limit for 50-70 word responses
+      // Use GPT-5 for premium users, GPT-4o-mini for free users
+      const isPremium = user?.isPremium || user?.isAdmin || false;
+      const model = isPremium ? "gpt-4o" : "gpt-4o-mini";  // Using gpt-4o as premium model
+      const maxTokens = isPremium ? 300 : 150;  // More tokens for premium users
       
-      console.log(`🚀 Using ${model} model with ${maxTokens} max tokens`);
+      console.log(`🚀 Using ${model} model for ${isPremium ? 'PREMIUM' : 'FREE'} user`);
       
       const response = await this.openai.chat.completions.create({
         model,
@@ -116,8 +116,8 @@ export class AIService {
       console.log('🤖 OpenAI: Response generated successfully:', content.substring(0, 100) + '...');
       const responseTime = Date.now() - startTime;
 
-      // Return content as-is since prompt already limits to 50-70 words
-      const finalContent = content;
+      // Apply free user limits if user is not premium
+      const finalContent = await this.applyFreeUserLimits(content, user);
 
       return {
         content: finalContent,
@@ -155,25 +155,23 @@ export class AIService {
       
       LANGUAGE: ${language === 'tr' ? 'Respond in Turkish language only' : 'Respond in English language only'}
       
-      RESPONSE FORMAT:
+      CRITICAL RESPONSE FORMAT:
       - ALWAYS respond in bullet point format with exactly 3-5 bullet points
-      - Keep total response between 50-70 words
-      - Each bullet point should be 10-16 words maximum
-      - Use technical language with practical details
-      - Include safety considerations and maritime regulations when relevant
-      - Provide complete, actionable information within the word limit
+      - Keep total response between 30-50 words maximum
+      - Each bullet point should be 6-12 words maximum
+      - Use concise, technical language
+      - Prioritize safety and maritime regulations (SOLAS, MARPOL, STCW)
       - Example format:
-        • [Specific action/solution with technical detail]
-        • [Safety consideration or regulation reference]  
-        • [Additional guidance or best practice]
-        • [Follow-up recommendation if applicable]`;
+        • [Action/Solution in 6-12 words]
+        • [Technical detail in 6-12 words]  
+        • [Safety consideration in 6-12 words]
+        • [Regulation reference if applicable]`;
       
       if (activeRules) {
         systemPrompt += `\n\nActive bot documentation guidelines:\n${activeRules.substring(0, 800)}`;
       }
 
-      // Direct API call to Gemini with consistent token limits
-      const maxOutputTokens = 200;
+      // Direct API call to Gemini
       const requestBody = {
         contents: [{
           parts: [{
@@ -184,7 +182,7 @@ export class AIService {
           temperature: 0.7,
           topK: 1,
           topP: 1,
-          maxOutputTokens,
+          maxOutputTokens: 150,
           stopSequences: []
         },
         safetySettings: [{
@@ -236,8 +234,8 @@ export class AIService {
       }
       const responseTime = Date.now() - startTime;
 
-      // Return content as-is since prompt already limits to 50-70 words
-      const finalContent = content;
+      // Apply free user limits if user is not premium
+      const finalContent = await this.applyFreeUserLimits(content, user);
 
       return {
         content: finalContent,
@@ -274,18 +272,17 @@ export class AIService {
       
       LANGUAGE: ${language === 'tr' ? 'Respond in Turkish language only' : 'Respond in English language only'}
       
-      RESPONSE FORMAT:
+      CRITICAL RESPONSE FORMAT:
       - ALWAYS respond in bullet point format with exactly 3-5 bullet points
-      - Keep total response between 50-70 words
-      - Each bullet point should be 10-16 words maximum
-      - Use technical language with practical details
-      - Include safety considerations and maritime regulations when relevant
-      - Provide complete, actionable information within the word limit
+      - Keep total response between 30-50 words maximum
+      - Each bullet point should be 6-12 words maximum
+      - Use concise, technical language
+      - Prioritize safety and maritime regulations (SOLAS, MARPOL, STCW)
       - Example format:
-        • [Specific action/solution with technical detail]
-        • [Safety consideration or regulation reference]  
-        • [Additional guidance or best practice]
-        • [Follow-up recommendation if applicable]`;
+        • [Action/Solution in 6-12 words]
+        • [Technical detail in 6-12 words]  
+        • [Safety consideration in 6-12 words]
+        • [Regulation reference if applicable]`;
       
       if (activeRules) {
         systemPrompt += `\n\nActive bot documentation guidelines:\n${activeRules.substring(0, 800)}`;
@@ -293,14 +290,13 @@ export class AIService {
 
       console.log('🤖 Deepseek: Making API request...');
       
-      const maxTokens = 200;
       const response = await this.deepseek.chat.completions.create({
         model: "deepseek-chat",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: message }
         ],
-        max_tokens: maxTokens,
+        max_tokens: 150,
         temperature: 0.2,
       });
 
@@ -314,8 +310,8 @@ export class AIService {
       console.log('🤖 Deepseek: Response generated successfully:', content.substring(0, 100) + '...');
       const responseTime = Date.now() - startTime;
 
-      // Return content as-is since prompt already limits to 50-70 words
-      const finalContent = content;
+      // Apply free user limits if user is not premium
+      const finalContent = await this.applyFreeUserLimits(content, user);
 
       return {
         content: finalContent,
@@ -353,18 +349,17 @@ export class AIService {
       
       LANGUAGE: ${language === 'tr' ? 'Respond in Turkish language only' : 'Respond in English language only'}
       
-      RESPONSE FORMAT:
+      CRITICAL RESPONSE FORMAT:
       - ALWAYS respond in bullet point format with exactly 3-5 bullet points
-      - Keep total response between 50-70 words
-      - Each bullet point should be 10-16 words maximum
-      - Use technical language with practical details
-      - Include safety considerations and maritime regulations when relevant
-      - Provide complete, actionable information within the word limit
+      - Keep total response between 30-50 words maximum
+      - Each bullet point should be 6-12 words maximum
+      - Use concise, technical language
+      - Prioritize safety and maritime regulations (SOLAS, MARPOL, STCW)
       - Example format:
-        • [Specific action/solution with technical detail]
-        • [Safety consideration or regulation reference]  
-        • [Additional guidance or best practice]
-        • [Follow-up recommendation if applicable]`;
+        • [Action/Solution in 6-12 words]
+        • [Technical detail in 6-12 words]  
+        • [Safety consideration in 6-12 words]
+        • [Regulation reference if applicable]`;
       
       if (activeRules) {
         systemPrompt += `\n\nActive bot documentation guidelines:\n${activeRules.substring(0, 800)}`;
@@ -372,14 +367,13 @@ export class AIService {
 
       console.log('🤖 Mistral: Making API request...');
       
-      const maxTokens = 200;
       const response = await this.mistral.chat.completions.create({
         model: "mistral-large-latest",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: message }
         ],
-        max_tokens: maxTokens,
+        max_tokens: 150,
         temperature: 0.7,
       });
 
@@ -393,8 +387,8 @@ export class AIService {
       console.log('🤖 Mistral: Response generated successfully:', content.substring(0, 100) + '...');
       const responseTime = Date.now() - startTime;
 
-      // Return content as-is since prompt already limits to 50-70 words
-      const finalContent = content;
+      // Apply free user limits if user is not premium
+      const finalContent = await this.applyFreeUserLimits(content, user);
 
       return {
         content: finalContent,
@@ -529,62 +523,66 @@ export class AIService {
     }
   }
 
-  // Check if user has premium status using centralized logic
-  private async checkPremiumStatus(user: any): Promise<boolean> {
+  // Apply free user limits - truncate based on configurable token limits for non-premium users
+  private async applyFreeUserLimits(content: string, user: any): Promise<string> {
     try {
+      // Check premium status using Razorpay service for accurate verification
       const userId = user?.id || user?.userId;
       if (!userId) {
         console.log('⚠️ No user ID available for premium check, treating as free user');
-        return false;
+        // Continue to free user logic below
+      } else {
+        // First check if user is admin (admins get unlimited access)
+        if (user?.isAdmin || user?.is_admin) {
+          console.log(`✅ Admin user verified (ID: ${userId}) - returning full response (${content.split(' ').length} words)`);
+          return content;
+        }
+        
+        // Check specific premium user IDs (workship.ai@gmail.com users)
+        const premiumUserIds = ['45016180', '44885683'];
+        if (premiumUserIds.includes(userId.toString())) {
+          console.log(`✅ Premium user ID verified (${userId}) - returning full response (${content.split(' ').length} words)`);
+          return content;
+        }
+        
+        // Import and use the Razorpay service directly
+        const { RazorpayService } = await import('./razorpay-service-production.js');
+        const razorpayService = RazorpayService.getInstance();
+        const premiumStatus = await razorpayService.checkUserPremiumStatus(userId.toString());
+        
+        if (premiumStatus.isPremium) {
+          console.log(`✅ Razorpay premium user verified - returning full response (${content.split(' ').length} words)`);
+          return content;
+        }
+        console.log(`🔍 Premium check result for user ${userId}: isPremium = ${premiumStatus.isPremium}, isAdmin = ${user?.isAdmin}`);
       }
-      
-      // First check if user is admin (admins get unlimited access)
-      if (user?.isAdmin || user?.is_admin) {
-        console.log(`✅ Admin user verified (ID: ${userId}) - premium access granted`);
-        return true;
-      }
-      
-      // Check if user object already has premium status set (from frontend)
-      if (user?.isPremium === true) {
-        console.log(`✅ User object has premium status (ID: ${userId}) - premium access granted`);
-        return true;
-      }
-      
-      // Handle premium-fallback case specifically
-      if (userId === 'premium-fallback') {
-        console.log(`✅ Premium fallback user detected - premium access granted`);
-        return true;
-      }
-      
-      // Check specific premium user IDs (workship.ai@gmail.com users)
-      const premiumUserIds = ['45016180', '44885683'];
-      if (premiumUserIds.includes(userId.toString())) {
-        console.log(`✅ Premium user ID verified (${userId}) - premium access granted`);
-        return true;
-      }
-      
-      // Import and use the Razorpay service directly
-      const { RazorpayService } = await import('./razorpay-service-production.js');
-      const razorpayService = RazorpayService.getInstance();
-      const premiumStatus = await razorpayService.checkUserPremiumStatus(userId.toString());
-      
-      if (premiumStatus.isPremium) {
-        console.log(`✅ Razorpay premium user verified - premium access granted`);
-        return true;
-      }
-      
-      console.log(`🔍 Premium check result for user ${userId}: isPremium = ${premiumStatus.isPremium}, isAdmin = ${user?.isAdmin}`);
-      return false;
     } catch (error) {
       console.error('❌ Error checking premium status:', error);
-      return false;
+      console.log('Continuing with free user limits as fallback');
     }
-  }
-
-  // Legacy function - no longer needed since all users get consistent 50-70 word responses
-  private async applyFreeUserLimits(content: string, user: any): Promise<string> {
-    // Simply return content as-is since prompts now handle word limits consistently
-    return content;
+    
+    // Get configurable token limits
+    const tokenLimits = await this.getTokenLimits();
+    
+    // For free users, limit to configured word count with upgrade prompt
+    const words = content.split(' ');
+    const wordCount = words.length;
+    
+    // Use average of min and max for target word count
+    const targetWordCount = Math.round((tokenLimits.min + tokenLimits.max) / 2);
+    
+    console.log(`🆓 Free user - limiting response from ${wordCount} words to ~${targetWordCount} words (${tokenLimits.min}-${tokenLimits.max} range)`);
+    
+    // Take configured number of words and add upgrade prompt
+    const limitedWords = words.slice(0, targetWordCount);
+    const limitedContent = limitedWords.join(' ');
+    
+    // Ensure it ends with ... and add upgrade prompt
+    const truncatedContent = limitedContent.endsWith('.') 
+      ? limitedContent.slice(0, -1) + '...'
+      : limitedContent + '...';
+    
+    return `${truncatedContent} (For detailed unlimited answers & whatsapp chat support, please upgrade to premium)`;
   }
 
   // Get available models

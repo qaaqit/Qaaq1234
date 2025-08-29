@@ -179,18 +179,32 @@ const translations = {
     'ai.models.gemini': 'Gemini', 
     'ai.models.grok': 'Grok',
     'ai.models.mistral': 'Mistral',
-
-    // Navigation and header (additional)
-    'nav.home': 'Ana Sayfa',
-    'nav.map': 'Harita',
-    'nav.radar': 'Radar',
-    'nav.profile': 'Profil',
-    'nav.settings': 'Ayarlar',
+  },
+  tr: {
+    // Common elements
+    'common.save': 'Kaydet',
+    'common.cancel': 'İptal',
+    'common.delete': 'Sil',
+    'common.edit': 'Düzenle',
+    'common.close': 'Kapat',
     'common.back': 'Geri',
     'common.next': 'İleri',
     'common.previous': 'Önceki',
+    'common.loading': 'Yükleniyor...',
+    'common.error': 'Hata',
+    'common.success': 'Başarılı',
     'common.warning': 'Uyarı',
     'common.info': 'Bilgi',
+
+    // Navigation and header
+    'nav.home': 'Ana Sayfa',
+    'nav.map': 'Harita',
+    'nav.radar': 'Radar',
+    'nav.chat': 'Sohbet',
+    'nav.profile': 'Profil',
+    'nav.settings': 'Ayarlar',
+    'nav.logout': 'Çıkış',
+    'nav.admin': 'Yönetici',
 
     // Authentication
     'auth.login': 'Giriş Yap',
@@ -200,8 +214,19 @@ const translations = {
     'auth.forgot_password': 'Şifremi Unuttum',
     'auth.remember_me': 'Beni Hatırla',
 
-    // Chat interface (additional)
+    // Chat interface
+    'chat.title': 'QBOT Denizcilik AI Asistanı',
+    'chat.placeholder': 'Denizcilik sorunuzu sorun...',
+    'chat.send': 'Gönder',
     'chat.clear': 'Temizle',
+    'chat.typing': 'Yazıyor...',
+    'chat.improve_prompt': '💡 Daha iyi AI yanıtları için bu metni iyileştir',
+    'chat.private_mode': 'Özel Mod: Sohbet veritabanında saklanmaz',
+    'chat.enable_private': 'Özel Modu Etkinleştir',
+    
+    // Welcome messages
+    'chat.welcome.title': 'Gemiye hoş geldiniz!',
+    'chat.welcome.description': 'Denizci olmayanlar! Tanrıçanızın burada hakimiyeti yok.',
 
     // Premium subscription
     'subscription.required': 'Premium abonelik gerekli',
@@ -236,6 +261,31 @@ const translations = {
     'map.my_location': 'Konumum',
     'map.satellite': 'Uydu',
     'map.terrain': 'Arazi',
+
+    // Premium dialog
+    'premium.title': 'premium',
+    'premium.active': 'Premium Aktif',
+    'premium.super_user_active': 'Süper Kullanıcı Aktif', 
+    'premium.expires': 'Bitiş',
+    'premium.selected': 'Seçili',
+    'premium.per_month': 'aylık',
+    'premium.per_year': 'yıllık',
+    'premium.advanced_reasoning': 'Gelişmiş akıl yürütme modeli',
+    'premium.coming_soon': 'Yakında Gelecek Planlar',
+    'premium.monthly': 'Premium Aylık',
+    'premium.yearly': 'Premium Yıllık',
+    'premium.enhanced_responses': 'Gelişmiş AI ile güçlendirilmiş QBOT yanıtları',
+    'premium.priority_chat': 'Öncelikli sohbet desteği',
+    'premium.advanced_search': 'Gelişmiş arama filtreleri',
+    'premium.export_history': 'Sohbet geçmişini dışa aktar',
+    'premium.knowledge_base': 'Premium denizcilik bilgi tabanı',
+    'premium.ad_free': 'Reklamsız deneyim',
+    
+    // AI Model names
+    'ai.models.chatgpt': 'ChatGPT',
+    'ai.models.gemini': 'Gemini',
+    'ai.models.grok': 'Grok',
+    'ai.models.mistral': 'Mistral',
   }
 };
 
