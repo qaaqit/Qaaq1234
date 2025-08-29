@@ -33,5 +33,13 @@ export default defineConfig({
       strict: true,
       deny: ["**/.*"],
     },
+    // ✅ Allow all the domains you’ll use
+    allowedHosts: [
+      "qaaq.app",
+      "workspace.qaaqme.replit.app",
+      "c826e82c-c32d-4829-9463-b0ff017b3bd2-00-19gakd8inzp0n.pike.replit.dev",
+      "localhost",
+    ],
+    host: true,
   },
 });
