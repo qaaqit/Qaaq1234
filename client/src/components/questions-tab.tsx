@@ -383,7 +383,7 @@ export function QuestionsTab() {
   // Share function for questions
   const handleShare = async (question: Question) => {
     const shareUrl = `${window.location.origin}/questions/${question.id}`;
-    const shareText = `Check out this maritime question: ${truncateToWords(question.content, 15)}\n\n`;
+    const shareText = `${truncateToWords(question.content, 15)}\n\n`;
     
     const shareData = {
       title: `Question #${question.id} - QaaqConnect`,
@@ -416,7 +416,7 @@ export function QuestionsTab() {
       }
     }).catch(() => {
       // If clipboard fails, try to open WhatsApp
-      const text = encodeURIComponent(`Check out this maritime question: ${url}`);
+      const text = encodeURIComponent(`${url}`);
       window.open(`https://wa.me/?text=${text}`, '_blank');
     });
   };
