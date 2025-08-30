@@ -89,7 +89,7 @@ function JWTLoginForm() {
       {/* User ID Field */}
       <div className="space-y-2">
         <Label htmlFor="userId" className="text-sm font-medium text-gray-700">
-          USER NAME (This may be ur country code +91 & whatsapp number )
+          USER NAME (This may be ur Email or country code & whatsapp number )
         </Label>
         <Input
           id="userId"

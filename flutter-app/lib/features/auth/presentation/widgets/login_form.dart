@@ -61,7 +61,7 @@ class _LoginFormState extends State<LoginForm> {
                 keyboardType: TextInputType.text,
                 textInputAction: TextInputAction.next,
                 decoration: InputDecoration(
-                  labelText: 'USER NAME (Country code +91 & WhatsApp number)',
+                  labelText: 'USER NAME (Email or country code & WhatsApp number)',
                   hintText: 'mushy.piyush@gmail.com or +91 9820011223',
                   prefixIcon: const Icon(LucideIcons.user),
                 ),

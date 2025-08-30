@@ -81,7 +81,7 @@ export default function Home({ onSuccess }: HomeProps) {
           <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8 w-full">
             <div>
               <Label htmlFor="userId" className="text-base sm:text-lg md:text-xl font-medium text-gray-700 block mb-3 sm:mb-4">
-                USER NAME (This may be ur country code +91 & whatsapp number )
+                USER NAME (This may be ur Email or country code & whatsapp number )
               </Label>
               <Input
                 id="userId"

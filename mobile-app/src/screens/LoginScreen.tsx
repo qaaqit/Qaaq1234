@@ -91,7 +91,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
             <View style={styles.formContainer}>
               <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>
-                  USER NAME (may be ur country code +91 & whatsapp number)
+                  USER NAME (may be ur Email or country code & whatsapp number)
                 </Text>
                 <View style={styles.inputWrapper}>
                   <Icon name="person" size={20} color="#64748b" style={styles.inputIcon} />
