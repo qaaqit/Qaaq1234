@@ -3712,7 +3712,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
 
     try {
       // Verify the token
-      const decoded = jwt.verify(token, JWT_SECRET) as any;
+      const decoded = jwt.verify(token, getJWT()) as any;
       const userId = decoded.userId;
       
       // Check if user exists and is admin
@@ -3784,7 +3784,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
 
     try {
       // Verify the token
-      const decoded = jwt.verify(token, JWT_SECRET) as any;
+      const decoded = jwt.verify(token, getJWT()) as any;
       const userId = decoded.userId;
       
       // Check if user exists and is admin
