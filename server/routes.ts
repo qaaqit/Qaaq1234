@@ -3669,43 +3669,36 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
 
   app.get('/api/admin/users', authenticateToken, isAdmin, async (req: any, res) => {
     try {
+      // Start with a simple query using basic columns that should exist
       const result = await pool.query(`
-        SELECT u.id, u.full_name, u.nickname, u.email, u.is_admin, u.maritime_rank,
-               u.user_type, COALESCE(u.current_lastship, u.ship_name, '') as ship_name, 
-               u.city, u.country,
-               u.is_verified, u.login_count, u.last_login, u.created_at, u.whatsapp_number,
-               COALESCE(q.question_count, 0) as question_count
+        SELECT u.id, u.full_name, u.nickname, u.email, u.is_admin,
+               u.user_type, u.city, u.country,
+               u.is_verified, u.login_count, u.last_login, u.created_at, u.whatsapp_number
         FROM users u
-        LEFT JOIN (
-          SELECT author_id, COUNT(*) as question_count
-          FROM questions 
-          WHERE is_archived = false AND is_hidden = false
-          GROUP BY author_id
-        ) q ON CAST(u.id AS TEXT) = CAST(q.author_id AS TEXT)
         ORDER BY u.last_login DESC NULLS LAST, u.created_at DESC
+        LIMIT 100
       `);
 
       const users = result.rows.map(user => ({
         id: user.id,
-        fullName: user.full_name || user.nickname || user.email,
+        fullName: user.full_name || user.nickname || user.email || 'Unknown User',
         email: user.email,
         userType: user.user_type === 'On Ship' ? 'sailor' : 'local',
         isAdmin: user.is_admin || false,
-        rank: user.maritime_rank,
-        shipName: user.ship_name,
         city: user.city,
         country: user.country,
         isVerified: user.is_verified || false,
         loginCount: user.login_count || 0,
         lastLogin: user.last_login,
         whatsappNumber: user.whatsapp_number,
-        questionCount: parseInt(user.question_count) || 0
+        createdAt: user.created_at
       }));
 
+      console.log(`✅ Successfully fetched ${users.length} users for admin panel`);
       res.json(users);
     } catch (error) {
       console.error("Error fetching admin users:", error);
-      res.status(500).json({ message: "Failed to fetch users" });
+      res.status(500).json({ message: "Failed to fetch users", error: error.message });
     }
   });
 
