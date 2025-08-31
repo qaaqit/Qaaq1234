@@ -14,6 +14,7 @@ import { FileText } from "lucide-react";
 import AdminAnalytics from "@/components/admin/AdminAnalytics";
 import DashboardAnalytics from "@/components/admin/DashboardAnalytics";
 import SearchAnalyticsPanel from "@/components/search-analytics-panel";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AdminUser {
   id: string;
@@ -107,21 +108,59 @@ export default function AdminPanel() {
   const [qbotRules, setQbotRules] = useState<string>("");
   const [loadingRules, setLoadingRules] = useState(false);
   const [glossaryUpdating, setGlossaryUpdating] = useState(false);
-
-  // Fetch admin stats
+  
+  // Authentication check
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  
+  // Check if user is admin
+  const isAdmin = user?.isAdmin || 
+                  user?.fullName === '+919029010070' || 
+                  user?.id === '44885683' ||
+                  user?.id === '+919029010070' ||
+                  user?.id === '5791e66f-9cc1-4be4-bd4b-7fc1bd2e258e' ||
+                  user?.id === '45016180';
+  
+  // Redirect if not authenticated or not admin
+  useEffect(() => {
+    if (!authLoading && (!isAuthenticated || !isAdmin)) {
+      setLocation("/login");
+    }
+  }, [authLoading, isAuthenticated, isAdmin, setLocation]);
+  
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-cyan-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
+          <p className="text-blue-200">Verifying admin access...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // Fetch admin stats - only if authenticated and admin
   const { data: stats, isLoading: statsLoading } = useQuery<AdminStats>({
     queryKey: ["/api/admin/stats"],
+    enabled: isAuthenticated && isAdmin,
   });
 
   // Fetch all users
   const { data: users, isLoading: usersLoading } = useQuery<AdminUser[]>({
     queryKey: ["/api/admin/users"],
+    enabled: isAuthenticated && isAdmin,
   });
 
   // Fetch country analytics
   const { data: countryAnalytics, isLoading: countryLoading } = useQuery<CountryAnalytics[]>({
     queryKey: ["/api/admin/analytics/countries"],
+    enabled: isAuthenticated && isAdmin,
   });
+  
+  // Don't render admin panel if not authenticated or not admin
+  if (!isAuthenticated || !isAdmin) {
+    return null;
+  }
 
   // Manual glossary update mutation
   const glossaryUpdateMutation = useMutation({
@@ -159,6 +198,7 @@ export default function AdminPanel() {
   // Fetch chat metrics
   const { data: chatMetrics, isLoading: chatMetricsLoading } = useQuery<ChatMetrics[]>({
     queryKey: ["/api/admin/analytics/chat-metrics"],
+    enabled: isAuthenticated && isAdmin,
   });
 
   // Fetch QBOT rules from database

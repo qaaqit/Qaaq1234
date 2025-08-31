@@ -8,7 +8,7 @@ async function throwIfResNotOk(res: Response) {
 }
 
 function getAuthHeaders() {
-  const token = localStorage.getItem('auth_token'); // Use consistent key with auth.ts
+  const token = localStorage.getItem('token'); // Match AuthContext key
   const headers: Record<string, string> = {};
   
   // Only add auth headers if token exists (optional authentication)
