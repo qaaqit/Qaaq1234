@@ -5073,7 +5073,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       console.log('🔧 Manual glossary update triggered by admin');
       
       // Get count before update
-      const beforeCountResult = await pool.query('SELECT COUNT(*) as count FROM shipping_dictionary');
+      const beforeCountResult = await pool.query('SELECT COUNT(*) as count FROM glossary_entries WHERE is_active = true');
       const beforeCount = parseInt(beforeCountResult.rows[0].count);
       
       // Import the glossary auto-updater dynamically
@@ -5081,7 +5081,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       await glossaryAutoUpdater.manualUpdate();
       
       // Get count after update
-      const afterCountResult = await pool.query('SELECT COUNT(*) as count FROM shipping_dictionary');
+      const afterCountResult = await pool.query('SELECT COUNT(*) as count FROM glossary_entries WHERE is_active = true');
       const afterCount = parseInt(afterCountResult.rows[0].count);
       
       const newKeywordsAdded = afterCount - beforeCount;
