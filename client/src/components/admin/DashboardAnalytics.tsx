@@ -73,193 +73,262 @@ export default function DashboardAnalytics() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-950 p-6">
-      {/* Header with Manual Refresh Button */}
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-white">Analytics Dashboard</h2>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-cyan-900 p-6 relative overflow-hidden">
+      {/* Maritime Background Effects */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-1/4 left-1/3 w-64 h-64 bg-blue-400/10 rounded-full animate-pulse"></div>
+        <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-teal-400/10 rounded-full animate-float"></div>
+        <div className="absolute top-3/4 left-1/4 w-48 h-48 bg-cyan-400/10 rounded-full animate-pulse delay-1000"></div>
+      </div>
+
+      {/* Header with Enhanced Maritime Design */}
+      <div className="flex justify-between items-center mb-8 relative z-10">
+        <div className="flex items-center space-x-4">
+          <div className="p-3 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full animate-maritime-glow">
+            <TrendingUp className="h-8 w-8 text-white" />
+          </div>
+          <div>
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-white via-blue-100 to-cyan-100 bg-clip-text text-transparent">
+              Maritime Analytics
+            </h2>
+            <p className="text-blue-200">Real-time platform insights</p>
+          </div>
+        </div>
         <Button 
           onClick={handleManualRefresh}
           disabled={isLoading}
-          variant="outline"
-          className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700"
+          className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
         >
-          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : 'group-hover:animate-spin'}`} />
           {isLoading ? 'Refreshing...' : 'Refresh Data'}
         </Button>
       </div>
 
-      {/* Header Stats - Replit Style */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <Card className="bg-gray-900 border-gray-800">
-          <CardContent className="p-4">
+      {/* Enhanced Stats Cards with Maritime Theme */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 relative z-10">
+        <Card className="group bg-gradient-to-br from-blue-800/80 to-blue-900/80 backdrop-blur-lg border border-blue-400/30 hover:border-blue-300/50 shadow-xl hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-500 transform hover:scale-105">
+          <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-400">Total Users</p>
-                <p className="text-2xl font-bold text-white">{data.subscriptionData.total.toLocaleString()}</p>
+                <p className="text-sm text-blue-200">Total Users</p>
+                <p className="text-3xl font-bold text-white group-hover:text-blue-100 transition-colors duration-300">
+                  {data.subscriptionData.total.toLocaleString()}
+                </p>
               </div>
-              <Users className="h-8 w-8 text-blue-400" />
+              <div className="p-3 bg-blue-500/20 rounded-full group-hover:bg-blue-400/30 transition-all duration-300">
+                <Users className="h-8 w-8 text-blue-300 group-hover:animate-pulse" />
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-900 border-gray-800">
-          <CardContent className="p-4">
+        <Card className="group bg-gradient-to-br from-teal-800/80 to-teal-900/80 backdrop-blur-lg border border-teal-400/30 hover:border-teal-300/50 shadow-xl hover:shadow-2xl hover:shadow-teal-500/20 transition-all duration-500 transform hover:scale-105">
+          <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-400">Sailors</p>
-                <p className="text-2xl font-bold text-white">
+                <p className="text-sm text-teal-200">Sailors</p>
+                <p className="text-3xl font-bold text-white group-hover:text-teal-100 transition-colors duration-300">
                   {data.userTypeData.find(d => d.name === 'On Ship')?.value?.toLocaleString() || 0}
                 </p>
               </div>
-              <Ship className="h-8 w-8 text-blue-400" />
+              <div className="p-3 bg-teal-500/20 rounded-full group-hover:bg-teal-400/30 transition-all duration-300">
+                <Ship className="h-8 w-8 text-teal-300 group-hover:animate-wave" />
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-900 border-gray-800">
-          <CardContent className="p-4">
+        <Card className="group bg-gradient-to-br from-yellow-800/80 to-amber-900/80 backdrop-blur-lg border border-yellow-400/30 hover:border-yellow-300/50 shadow-xl hover:shadow-2xl hover:shadow-yellow-500/20 transition-all duration-500 transform hover:scale-105">
+          <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-400">Premium Users</p>
-                <p className="text-2xl font-bold text-white">{data.subscriptionData.premium.toLocaleString()}</p>
+                <p className="text-sm text-yellow-200">Premium Users</p>
+                <p className="text-3xl font-bold text-white group-hover:text-yellow-100 transition-colors duration-300">
+                  {data.subscriptionData.premium.toLocaleString()}
+                </p>
               </div>
-              <Crown className="h-8 w-8 text-yellow-400" />
+              <div className="p-3 bg-yellow-500/20 rounded-full group-hover:bg-yellow-400/30 transition-all duration-300">
+                <Crown className="h-8 w-8 text-yellow-300 group-hover:animate-bounce" />
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-900 border-gray-800">
-          <CardContent className="p-4">
+        <Card className="group bg-gradient-to-br from-purple-800/80 to-indigo-900/80 backdrop-blur-lg border border-purple-400/30 hover:border-purple-300/50 shadow-xl hover:shadow-2xl hover:shadow-purple-500/20 transition-all duration-500 transform hover:scale-105">
+          <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-400">Countries</p>
-                <p className="text-2xl font-bold text-white">{data.countryData.length}</p>
+                <p className="text-sm text-purple-200">Countries</p>
+                <p className="text-3xl font-bold text-white group-hover:text-purple-100 transition-colors duration-300">
+                  {data.countryData.length}
+                </p>
               </div>
-              <Globe className="h-8 w-8 text-purple-400" />
+              <div className="p-3 bg-purple-500/20 rounded-full group-hover:bg-purple-400/30 transition-all duration-300">
+                <Globe className="h-8 w-8 text-purple-300 group-hover:animate-pulse" />
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Charts Grid - Replit Style */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Unique IP Addresses Trend - 6 Hours */}
-        <Card className="bg-gray-900 border-gray-800">
+      {/* Enhanced Charts Grid with Maritime Theme */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 relative z-10">
+        {/* Unique IP Addresses Trend - Enhanced */}
+        <Card className="group bg-gradient-to-br from-gray-800/90 to-blue-900/90 backdrop-blur-lg border border-blue-400/30 hover:border-blue-300/50 shadow-xl hover:shadow-2xl transition-all duration-500">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-white">
-              <TrendingUp className="h-5 w-5 text-blue-400" />
-              Unique IP addresses (Last 6 hours)
+            <CardTitle className="flex items-center gap-3 text-white">
+              <div className="p-2 bg-blue-500/20 rounded-lg">
+                <TrendingUp className="h-6 w-6 text-blue-300 group-hover:animate-pulse" />
+              </div>
+              <div>
+                <span className="bg-gradient-to-r from-blue-200 to-cyan-200 bg-clip-text text-transparent font-bold">
+                  Live IP Traffic
+                </span>
+                <p className="text-xs text-blue-300 mt-1">Last 6 hours activity</p>
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={data.ipTrendData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <CartesianGrid strokeDasharray="2 4" stroke="#374151" opacity={0.3} />
                   <XAxis 
                     dataKey="hour" 
-                    stroke="#9ca3af"
-                    fontSize={11}
+                    stroke="#94a3b8"
+                    fontSize={12}
                     axisLine={false}
                     tickLine={false}
                   />
                   <YAxis 
-                    stroke="#9ca3af" 
-                    fontSize={11}
+                    stroke="#94a3b8" 
+                    fontSize={12}
                     axisLine={false}
                     tickLine={false}
                   />
                   <Tooltip 
                     contentStyle={{ 
-                      backgroundColor: '#1f2937', 
-                      border: '1px solid #374151',
-                      borderRadius: '6px',
-                      color: '#ffffff'
+                      backgroundColor: 'rgba(15, 23, 42, 0.95)', 
+                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      borderRadius: '12px',
+                      color: '#ffffff',
+                      backdropFilter: 'blur(10px)'
                     }}
-                    labelStyle={{ color: '#9ca3af' }}
+                    labelStyle={{ color: '#94a3b8' }}
                   />
                   <Line 
                     type="monotone" 
                     dataKey="uniqueIPs" 
-                    stroke="#0969da" 
-                    strokeWidth={2}
+                    stroke="url(#blueGradient)" 
+                    strokeWidth={3}
                     name="Unique IPs"
                     dot={false}
-                    activeDot={{ r: 4, fill: '#0969da' }}
+                    activeDot={{ r: 6, fill: '#3b82f6', stroke: '#60a5fa', strokeWidth: 2 }}
                   />
+                  <defs>
+                    <linearGradient id="blueGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#3b82f6" />
+                      <stop offset="100%" stopColor="#06b6d4" />
+                    </linearGradient>
+                  </defs>
                 </LineChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
-        {/* User Growth Trend */}
-        <Card className="bg-gray-900 border-gray-800">
+        {/* User Growth Trend - Enhanced */}
+        <Card className="group bg-gradient-to-br from-gray-800/90 to-teal-900/90 backdrop-blur-lg border border-teal-400/30 hover:border-teal-300/50 shadow-xl hover:shadow-2xl transition-all duration-500">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-white">
-              <TrendingUp className="h-5 w-5 text-blue-400" />
-              User Growth (30 Days)
+            <CardTitle className="flex items-center gap-3 text-white">
+              <div className="p-2 bg-teal-500/20 rounded-lg">
+                <TrendingUp className="h-6 w-6 text-teal-300 group-hover:animate-bounce" />
+              </div>
+              <div>
+                <span className="bg-gradient-to-r from-teal-200 to-green-200 bg-clip-text text-transparent font-bold">
+                  Maritime Growth
+                </span>
+                <p className="text-xs text-teal-300 mt-1">30-day user expansion</p>
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={data.timeSeriesData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <CartesianGrid strokeDasharray="2 4" stroke="#374151" opacity={0.3} />
                   <XAxis 
                     dataKey="date" 
-                    stroke="#9ca3af"
-                    fontSize={11}
+                    stroke="#94a3b8"
+                    fontSize={12}
                     axisLine={false}
                     tickLine={false}
                     tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   />
                   <YAxis 
-                    stroke="#9ca3af" 
-                    fontSize={11}
+                    stroke="#94a3b8" 
+                    fontSize={12}
                     axisLine={false}
                     tickLine={false}
                   />
                   <Tooltip 
                     contentStyle={{ 
-                      backgroundColor: '#1f2937', 
-                      border: '1px solid #374151',
-                      borderRadius: '6px',
-                      color: '#ffffff'
+                      backgroundColor: 'rgba(15, 23, 42, 0.95)', 
+                      border: '1px solid rgba(20, 184, 166, 0.3)',
+                      borderRadius: '12px',
+                      color: '#ffffff',
+                      backdropFilter: 'blur(10px)'
                     }}
-                    labelStyle={{ color: '#9ca3af' }}
+                    labelStyle={{ color: '#94a3b8' }}
                     labelFormatter={(value) => new Date(value).toLocaleDateString()}
                   />
                   <Line 
                     type="monotone" 
                     dataKey="newUsers" 
-                    stroke="#0969da" 
-                    strokeWidth={2}
+                    stroke="url(#tealGradient)" 
+                    strokeWidth={3}
                     name="New Users"
                     dot={false}
-                    activeDot={{ r: 4, fill: '#0969da' }}
+                    activeDot={{ r: 6, fill: '#14b8a6', stroke: '#5eead4', strokeWidth: 2 }}
                   />
                   <Line 
                     type="monotone" 
                     dataKey="verifiedUsers" 
-                    stroke="#059669" 
-                    strokeWidth={2}
+                    stroke="url(#greenGradient)" 
+                    strokeWidth={3}
                     name="Verified Users"
                     dot={false}
-                    activeDot={{ r: 4, fill: '#059669' }}
+                    activeDot={{ r: 6, fill: '#10b981', stroke: '#6ee7b7', strokeWidth: 2 }}
                   />
+                  <defs>
+                    <linearGradient id="tealGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#14b8a6" />
+                      <stop offset="100%" stopColor="#06b6d4" />
+                    </linearGradient>
+                    <linearGradient id="greenGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#10b981" />
+                      <stop offset="100%" stopColor="#059669" />
+                    </linearGradient>
+                  </defs>
                 </LineChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
-        {/* Premium vs Free Users */}
-        <Card className="bg-gray-900 border-gray-800">
+        {/* Premium vs Free Users - Enhanced */}
+        <Card className="group bg-gradient-to-br from-gray-800/90 to-amber-900/90 backdrop-blur-lg border border-amber-400/30 hover:border-amber-300/50 shadow-xl hover:shadow-2xl transition-all duration-500">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-white">
-              <Crown className="h-5 w-5 text-yellow-400" />
-              Subscription Distribution
+            <CardTitle className="flex items-center gap-3 text-white">
+              <div className="p-2 bg-amber-500/20 rounded-lg">
+                <Crown className="h-6 w-6 text-amber-300 group-hover:animate-bounce" />
+              </div>
+              <div>
+                <span className="bg-gradient-to-r from-amber-200 to-yellow-200 bg-clip-text text-transparent font-bold">
+                  Subscription Tiers
+                </span>
+                <p className="text-xs text-amber-300 mt-1">Premium vs Free distribution</p>
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -270,9 +339,12 @@ export default function DashboardAnalytics() {
                     data={subscriptionChartData}
                     cx="50%"
                     cy="50%"
-                    outerRadius={100}
+                    outerRadius={110}
+                    innerRadius={60}
                     dataKey="value"
                     label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(1)}%)`}
+                    stroke="#1f2937"
+                    strokeWidth={2}
                   >
                     {subscriptionChartData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
@@ -280,10 +352,11 @@ export default function DashboardAnalytics() {
                   </Pie>
                   <Tooltip 
                     contentStyle={{ 
-                      backgroundColor: '#1f2937', 
-                      border: '1px solid #374151',
-                      borderRadius: '6px',
-                      color: '#ffffff'
+                      backgroundColor: 'rgba(15, 23, 42, 0.95)', 
+                      border: '1px solid rgba(245, 158, 11, 0.3)',
+                      borderRadius: '12px',
+                      color: '#ffffff',
+                      backdropFilter: 'blur(10px)'
                     }}
                   />
                 </PieChart>
@@ -292,41 +365,49 @@ export default function DashboardAnalytics() {
           </CardContent>
         </Card>
 
-        {/* User Types Distribution */}
-        <Card className="bg-gray-900 border-gray-800">
+        {/* User Types Distribution - Enhanced */}
+        <Card className="group bg-gradient-to-br from-gray-800/90 to-violet-900/90 backdrop-blur-lg border border-violet-400/30 hover:border-violet-300/50 shadow-xl hover:shadow-2xl transition-all duration-500">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-white">
-              <Users className="h-5 w-5 text-blue-400" />
-              User Types
+            <CardTitle className="flex items-center gap-3 text-white">
+              <div className="p-2 bg-violet-500/20 rounded-lg">
+                <Users className="h-6 w-6 text-violet-300 group-hover:animate-pulse" />
+              </div>
+              <div>
+                <span className="bg-gradient-to-r from-violet-200 to-purple-200 bg-clip-text text-transparent font-bold">
+                  Maritime Professionals
+                </span>
+                <p className="text-xs text-violet-300 mt-1">Role distribution breakdown</p>
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data.userTypeData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <CartesianGrid strokeDasharray="2 4" stroke="#374151" opacity={0.3} />
                   <XAxis 
                     dataKey="name" 
-                    stroke="#9ca3af"
-                    fontSize={11}
+                    stroke="#94a3b8"
+                    fontSize={12}
                     axisLine={false}
                     tickLine={false}
                   />
                   <YAxis 
-                    stroke="#9ca3af" 
-                    fontSize={11}
+                    stroke="#94a3b8" 
+                    fontSize={12}
                     axisLine={false}
                     tickLine={false}
                   />
                   <Tooltip 
                     contentStyle={{ 
-                      backgroundColor: '#1f2937', 
-                      border: '1px solid #374151',
-                      borderRadius: '6px',
-                      color: '#ffffff'
+                      backgroundColor: 'rgba(15, 23, 42, 0.95)', 
+                      border: '1px solid rgba(139, 92, 246, 0.3)',
+                      borderRadius: '12px',
+                      color: '#ffffff',
+                      backdropFilter: 'blur(10px)'
                     }}
                   />
-                  <Bar dataKey="value" radius={[2, 2, 0, 0]}>
+                  <Bar dataKey="value" radius={[6, 6, 0, 0]}>
                     {data.userTypeData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                     ))}
@@ -337,49 +418,63 @@ export default function DashboardAnalytics() {
           </CardContent>
         </Card>
 
-        {/* Daily Activity */}
-        <Card className="bg-gray-900 border-gray-800">
+        {/* Daily Activity - Enhanced */}
+        <Card className="group bg-gradient-to-br from-gray-800/90 to-emerald-900/90 backdrop-blur-lg border border-emerald-400/30 hover:border-emerald-300/50 shadow-xl hover:shadow-2xl transition-all duration-500">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-white">
-              <UserCheck className="h-5 w-5 text-green-400" />
-              Daily Active Users (7 Days)
+            <CardTitle className="flex items-center gap-3 text-white">
+              <div className="p-2 bg-emerald-500/20 rounded-lg">
+                <UserCheck className="h-6 w-6 text-emerald-300 group-hover:animate-pulse" />
+              </div>
+              <div>
+                <span className="bg-gradient-to-r from-emerald-200 to-teal-200 bg-clip-text text-transparent font-bold">
+                  Daily Activity
+                </span>
+                <p className="text-xs text-emerald-300 mt-1">7-day active user trends</p>
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data.loginActivity} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <CartesianGrid strokeDasharray="2 4" stroke="#374151" opacity={0.3} />
                   <XAxis 
                     dataKey="date" 
-                    stroke="#9ca3af"
-                    fontSize={11}
+                    stroke="#94a3b8"
+                    fontSize={12}
                     axisLine={false}
                     tickLine={false}
                     tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { weekday: 'short' })}
                   />
                   <YAxis 
-                    stroke="#9ca3af" 
-                    fontSize={11}
+                    stroke="#94a3b8" 
+                    fontSize={12}
                     axisLine={false}
                     tickLine={false}
                   />
                   <Tooltip 
                     contentStyle={{ 
-                      backgroundColor: '#1f2937', 
-                      border: '1px solid #374151',
-                      borderRadius: '6px',
-                      color: '#ffffff'
+                      backgroundColor: 'rgba(15, 23, 42, 0.95)', 
+                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                      borderRadius: '12px',
+                      color: '#ffffff',
+                      backdropFilter: 'blur(10px)'
                     }}
-                    labelStyle={{ color: '#9ca3af' }}
+                    labelStyle={{ color: '#94a3b8' }}
                     labelFormatter={(value) => new Date(value).toLocaleDateString()}
                   />
                   <Bar 
                     dataKey="activeUsers" 
-                    fill="#059669" 
-                    radius={[2, 2, 0, 0]}
+                    fill="url(#emeraldGradient)" 
+                    radius={[6, 6, 0, 0]}
                     name="Active Users"
                   />
+                  <defs>
+                    <linearGradient id="emeraldGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#10b981" />
+                      <stop offset="100%" stopColor="#059669" />
+                    </linearGradient>
+                  </defs>
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -387,55 +482,71 @@ export default function DashboardAnalytics() {
         </Card>
       </div>
 
-      {/* Country Distribution */}
+      {/* Country Distribution - Enhanced Maritime Theme */}
       {data.countryData.length > 0 && (
-        <Card className="bg-gray-900 border-gray-800">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-white">
-              <Globe className="h-5 w-5 text-purple-400" />
-              Top Countries by Users
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-96">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data.countryData.slice(0, 10)} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis 
-                    dataKey="country" 
-                    stroke="#9ca3af"
-                    fontSize={11}
-                    axisLine={false}
-                    tickLine={false}
-                    angle={-45}
-                    textAnchor="end"
-                    height={60}
-                  />
-                  <YAxis 
-                    stroke="#9ca3af" 
-                    fontSize={11}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#1f2937', 
-                      border: '1px solid #374151',
-                      borderRadius: '6px',
-                      color: '#ffffff'
-                    }}
-                  />
-                  <Bar 
-                    dataKey="users" 
-                    fill="#7c3aed" 
-                    radius={[2, 2, 0, 0]}
-                    name="Users"
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="mt-8 relative z-10">
+          <Card className="group bg-gradient-to-br from-gray-800/90 to-indigo-900/90 backdrop-blur-lg border border-indigo-400/30 hover:border-indigo-300/50 shadow-xl hover:shadow-2xl transition-all duration-500">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3 text-white">
+                <div className="p-2 bg-indigo-500/20 rounded-lg">
+                  <Globe className="h-6 w-6 text-indigo-300 group-hover:animate-spin-slow" />
+                </div>
+                <div>
+                  <span className="bg-gradient-to-r from-indigo-200 to-blue-200 bg-clip-text text-transparent font-bold">
+                    Global Maritime Presence
+                  </span>
+                  <p className="text-xs text-indigo-300 mt-1">Top 10 countries by professional network</p>
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-96">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={data.countryData.slice(0, 10)} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                    <CartesianGrid strokeDasharray="2 4" stroke="#374151" opacity={0.3} />
+                    <XAxis 
+                      dataKey="country" 
+                      stroke="#94a3b8"
+                      fontSize={12}
+                      axisLine={false}
+                      tickLine={false}
+                      angle={-45}
+                      textAnchor="end"
+                      height={60}
+                    />
+                    <YAxis 
+                      stroke="#94a3b8" 
+                      fontSize={12}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'rgba(15, 23, 42, 0.95)', 
+                        border: '1px solid rgba(99, 102, 241, 0.3)',
+                        borderRadius: '12px',
+                        color: '#ffffff',
+                        backdropFilter: 'blur(10px)'
+                      }}
+                    />
+                    <Bar 
+                      dataKey="users" 
+                      fill="url(#purpleGradient)" 
+                      radius={[6, 6, 0, 0]}
+                      name="Maritime Professionals"
+                    />
+                    <defs>
+                      <linearGradient id="purpleGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#8b5cf6" />
+                        <stop offset="100%" stopColor="#6366f1" />
+                      </linearGradient>
+                    </defs>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );

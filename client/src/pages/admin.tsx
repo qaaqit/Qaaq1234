@@ -244,8 +244,16 @@ export default function AdminPanel() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 relative overflow-hidden">
+      {/* Animated Maritime Background Elements */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-20 left-10 w-32 h-32 bg-blue-200/20 rounded-full animate-pulse"></div>
+        <div className="absolute top-40 right-20 w-24 h-24 bg-teal-200/20 rounded-full animate-bounce"></div>
+        <div className="absolute bottom-32 left-1/4 w-40 h-40 bg-cyan-200/15 rounded-full animate-pulse delay-1000"></div>
+        <div className="absolute bottom-20 right-1/3 w-28 h-28 bg-orange-200/20 rounded-full animate-bounce delay-500"></div>
+      </div>
+      
+      <div className="bg-gradient-to-r from-blue-600 via-teal-600 to-cyan-600 shadow-lg border-b backdrop-blur-sm relative">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
@@ -259,45 +267,45 @@ export default function AdminPanel() {
                 Back to Home
               </Button>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">
-                  <i className="fas fa-shield-alt text-ocean-teal mr-3"></i>
+                <h1 className="text-3xl font-bold text-white drop-shadow-lg">
+                  <i className="fas fa-shield-alt text-yellow-300 mr-3 animate-pulse"></i>
                   QaaqConnect Admin Panel
                 </h1>
-                <p className="text-gray-600 mt-1">Manage users and system settings</p>
+                <p className="text-blue-100 mt-1 drop-shadow">Manage users and system settings</p>
               </div>
             </div>
-            <Badge variant="outline" className="bg-ocean-teal text-white border-ocean-teal">
-              <i className="fas fa-user-crown mr-1"></i>
+            <Badge variant="outline" className="bg-yellow-400/20 text-yellow-100 border-yellow-300 backdrop-blur-sm animate-pulse">
+              <i className="fas fa-user-crown mr-1 text-yellow-300"></i>
               Administrator
             </Badge>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto p-4 sm:p-6">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 relative z-10">
         <div className="mb-4 sm:mb-6">
           <div className="flex flex-col sm:flex-row gap-3">
             <Button
               onClick={() => setLocation("/admin/bot-rules")}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 backdrop-blur-sm"
             >
-              <i className="fas fa-file-text mr-2"></i>
+              <i className="fas fa-file-text mr-2 animate-pulse"></i>
               Edit QBOT Rules
             </Button>
             
             <Button
               onClick={() => setLocation("/admin/token-limits")}
-              className="bg-green-600 hover:bg-green-700 text-white"
+              className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 backdrop-blur-sm"
               data-testid="button-token-limits"
             >
-              <i className="fas fa-cog mr-2"></i>
+              <i className="fas fa-cog mr-2 animate-spin-slow"></i>
               Configure Token Limits
             </Button>
             
             <Button
               onClick={handleGlossaryUpdate}
               disabled={glossaryUpdating || glossaryUpdateMutation.isPending}
-              className="bg-purple-600 hover:bg-purple-700 text-white"
+              className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 backdrop-blur-sm disabled:opacity-50"
               data-testid="button-update-glossary"
             >
               {glossaryUpdating || glossaryUpdateMutation.isPending ? (
@@ -320,78 +328,78 @@ export default function AdminPanel() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          {/* Mobile-friendly two-row layout */}
-          <div className="space-y-2">
+          {/* Enhanced Maritime-themed Navigation */}
+          <div className="space-y-3">
             {/* First Row: Analytics, Metrics, QBOT */}
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-3">
               <button
                 onClick={() => setActiveTab("analytics")}
-                className={`flex items-center justify-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${
+                className={`group flex items-center justify-center px-4 py-4 text-sm font-medium rounded-xl transition-all duration-300 transform hover:scale-105 ${
                   activeTab === "analytics"
-                    ? "bg-orange-600 text-white shadow-sm"
-                    : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                    ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30 scale-105"
+                    : "bg-white/80 backdrop-blur-sm text-gray-700 border border-blue-200/50 hover:bg-blue-50/80 hover:border-blue-300 shadow-md hover:shadow-lg"
                 }`}
               >
-                <i className="fas fa-chart-pie mr-2"></i>
+                <i className={`fas fa-chart-pie mr-2 ${activeTab === "analytics" ? "animate-pulse" : "group-hover:animate-bounce"}`}></i>
                 Analytics
               </button>
               <button
                 onClick={() => setActiveTab("metrics")}
-                className={`flex items-center justify-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${
+                className={`group flex items-center justify-center px-4 py-4 text-sm font-medium rounded-xl transition-all duration-300 transform hover:scale-105 ${
                   activeTab === "metrics"
-                    ? "bg-orange-600 text-white shadow-sm"
-                    : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                    ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30 scale-105"
+                    : "bg-white/80 backdrop-blur-sm text-gray-700 border border-teal-200/50 hover:bg-teal-50/80 hover:border-teal-300 shadow-md hover:shadow-lg"
                 }`}
               >
-                <i className="fas fa-chart-line mr-2"></i>
+                <i className={`fas fa-chart-line mr-2 ${activeTab === "metrics" ? "animate-pulse" : "group-hover:animate-bounce"}`}></i>
                 Metrics
               </button>
               <button
                 onClick={() => setActiveTab("qbot")}
-                className={`flex items-center justify-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${
+                className={`group flex items-center justify-center px-4 py-4 text-sm font-medium rounded-xl transition-all duration-300 transform hover:scale-105 ${
                   activeTab === "qbot"
-                    ? "bg-orange-600 text-white shadow-sm"
-                    : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                    ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30 scale-105"
+                    : "bg-white/80 backdrop-blur-sm text-gray-700 border border-cyan-200/50 hover:bg-cyan-50/80 hover:border-cyan-300 shadow-md hover:shadow-lg"
                 }`}
               >
-                <i className="fas fa-robot mr-2"></i>
+                <i className={`fas fa-robot mr-2 ${activeTab === "qbot" ? "animate-pulse" : "group-hover:animate-bounce"}`}></i>
                 QBOT
               </button>
             </div>
             
             {/* Second Row: Search Analytics, QOI, User Management */}
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-3">
               <button
                 onClick={() => setActiveTab("search")}
-                className={`flex items-center justify-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${
+                className={`group flex items-center justify-center px-4 py-4 text-sm font-medium rounded-xl transition-all duration-300 transform hover:scale-105 ${
                   activeTab === "search"
-                    ? "bg-orange-600 text-white shadow-sm"
-                    : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                    ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30 scale-105"
+                    : "bg-white/80 backdrop-blur-sm text-gray-700 border border-indigo-200/50 hover:bg-indigo-50/80 hover:border-indigo-300 shadow-md hover:shadow-lg"
                 }`}
               >
-                <i className="fas fa-search mr-2"></i>
+                <i className={`fas fa-search mr-2 ${activeTab === "search" ? "animate-pulse" : "group-hover:animate-bounce"}`}></i>
                 Search
               </button>
               <button
                 onClick={() => setActiveTab("qoi")}
-                className={`flex items-center justify-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${
+                className={`group flex items-center justify-center px-4 py-4 text-sm font-medium rounded-xl transition-all duration-300 transform hover:scale-105 ${
                   activeTab === "qoi"
-                    ? "bg-orange-600 text-white shadow-sm"
-                    : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                    ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30 scale-105"
+                    : "bg-white/80 backdrop-blur-sm text-gray-700 border border-emerald-200/50 hover:bg-emerald-50/80 hover:border-emerald-300 shadow-md hover:shadow-lg"
                 }`}
               >
-                <i className="fas fa-comments mr-2"></i>
+                <i className={`fas fa-comments mr-2 ${activeTab === "qoi" ? "animate-pulse" : "group-hover:animate-bounce"}`}></i>
                 QOI GPT
               </button>
               <button
                 onClick={() => setActiveTab("users")}
-                className={`flex items-center justify-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${
+                className={`group flex items-center justify-center px-4 py-4 text-sm font-medium rounded-xl transition-all duration-300 transform hover:scale-105 ${
                   activeTab === "users"
-                    ? "bg-orange-600 text-white shadow-sm"
-                    : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                    ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30 scale-105"
+                    : "bg-white/80 backdrop-blur-sm text-gray-700 border border-violet-200/50 hover:bg-violet-50/80 hover:border-violet-300 shadow-md hover:shadow-lg"
                 }`}
               >
-                <i className="fas fa-users mr-2"></i>
+                <i className={`fas fa-users mr-2 ${activeTab === "users" ? "animate-pulse" : "group-hover:animate-bounce"}`}></i>
                 Users
               </button>
             </div>
@@ -404,71 +412,91 @@ export default function AdminPanel() {
 
           {/* Metrics Tab */}
           <TabsContent value="metrics" className="space-y-6">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          <Card className="p-3">
-            <CardHeader className="p-0 pb-1">
-              <CardTitle className="text-xs font-medium text-gray-600">Total Users</CardTitle>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+          <Card className="group p-4 bg-gradient-to-br from-white/90 to-blue-50/90 backdrop-blur-sm border border-blue-200/50 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer">
+            <CardHeader className="p-0 pb-2">
+              <CardTitle className="text-xs font-medium text-blue-700 flex items-center">
+                <i className="fas fa-users mr-2 text-blue-500 group-hover:animate-pulse"></i>
+                Total Users
+              </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="text-lg font-bold text-ocean-teal">{stats?.totalUsers || 0}</div>
+              <div className="text-2xl font-bold text-blue-600 group-hover:text-blue-700 transition-colors">{stats?.totalUsers || 0}</div>
             </CardContent>
           </Card>
           
-          <Card className="p-3">
-            <CardHeader className="p-0 pb-1">
-              <CardTitle className="text-xs font-medium text-gray-600">Sailors</CardTitle>
+          <Card className="group p-4 bg-gradient-to-br from-white/90 to-teal-50/90 backdrop-blur-sm border border-teal-200/50 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer">
+            <CardHeader className="p-0 pb-2">
+              <CardTitle className="text-xs font-medium text-teal-700 flex items-center">
+                <i className="fas fa-anchor mr-2 text-teal-500 group-hover:animate-bounce"></i>
+                Sailors
+              </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="text-lg font-bold text-blue-600">{stats?.sailors || 0}</div>
+              <div className="text-2xl font-bold text-teal-600 group-hover:text-teal-700 transition-colors">{stats?.sailors || 0}</div>
             </CardContent>
           </Card>
 
-          <Card className="p-3">
-            <CardHeader className="p-0 pb-1">
-              <CardTitle className="text-xs font-medium text-gray-600">Local Pros</CardTitle>
+          <Card className="group p-4 bg-gradient-to-br from-white/90 to-cyan-50/90 backdrop-blur-sm border border-cyan-200/50 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer">
+            <CardHeader className="p-0 pb-2">
+              <CardTitle className="text-xs font-medium text-cyan-700 flex items-center">
+                <i className="fas fa-compass mr-2 text-cyan-500 group-hover:animate-spin"></i>
+                Local Pros
+              </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="text-lg font-bold text-teal-600">{stats?.locals || 0}</div>
+              <div className="text-2xl font-bold text-cyan-600 group-hover:text-cyan-700 transition-colors">{stats?.locals || 0}</div>
             </CardContent>
           </Card>
 
-          <Card className="p-3">
-            <CardHeader className="p-0 pb-1">
-              <CardTitle className="text-xs font-medium text-gray-600">Verified</CardTitle>
+          <Card className="group p-4 bg-gradient-to-br from-white/90 to-emerald-50/90 backdrop-blur-sm border border-emerald-200/50 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer">
+            <CardHeader className="p-0 pb-2">
+              <CardTitle className="text-xs font-medium text-emerald-700 flex items-center">
+                <i className="fas fa-certificate mr-2 text-emerald-500 group-hover:animate-pulse"></i>
+                Verified
+              </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="text-lg font-bold text-green-600">{stats?.verifiedUsers || 0}</div>
+              <div className="text-2xl font-bold text-emerald-600 group-hover:text-emerald-700 transition-colors">{stats?.verifiedUsers || 0}</div>
             </CardContent>
           </Card>
 
-          <Card className="p-3">
-            <CardHeader className="p-0 pb-1">
-              <CardTitle className="text-xs font-medium text-gray-600">Active Users</CardTitle>
+          <Card className="group p-4 bg-gradient-to-br from-white/90 to-purple-50/90 backdrop-blur-sm border border-purple-200/50 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer">
+            <CardHeader className="p-0 pb-2">
+              <CardTitle className="text-xs font-medium text-purple-700 flex items-center">
+                <i className="fas fa-heartbeat mr-2 text-purple-500 group-hover:animate-pulse"></i>
+                Active Users
+              </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="text-lg font-bold text-purple-600">{stats?.activeUsers || 0}</div>
+              <div className="text-2xl font-bold text-purple-600 group-hover:text-purple-700 transition-colors">{stats?.activeUsers || 0}</div>
             </CardContent>
           </Card>
 
-          <Card className="p-3">
-            <CardHeader className="p-0 pb-1">
-              <CardTitle className="text-xs font-medium text-gray-600">Total Logins</CardTitle>
+          <Card className="group p-4 bg-gradient-to-br from-white/90 to-orange-50/90 backdrop-blur-sm border border-orange-200/50 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer">
+            <CardHeader className="p-0 pb-2">
+              <CardTitle className="text-xs font-medium text-orange-700 flex items-center">
+                <i className="fas fa-ship mr-2 text-orange-500 group-hover:animate-bounce"></i>
+                Total Logins
+              </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="text-lg font-bold text-orange-600">{stats?.totalLogins || 0}</div>
+              <div className="text-2xl font-bold text-orange-600 group-hover:text-orange-700 transition-colors">{stats?.totalLogins || 0}</div>
             </CardContent>
           </Card>
             </div>
 
             {/* Top Countries Analytics Chart */}
             <div className="mt-8">
-              <Card>
+              <Card className="bg-gradient-to-br from-white/95 to-blue-50/95 backdrop-blur-sm border border-blue-200/60 shadow-xl hover:shadow-2xl transition-all duration-500">
                 <CardHeader>
                   <CardTitle className="text-lg font-semibold text-gray-800 flex items-center">
-                    <i className="fas fa-globe mr-2 text-ocean-teal"></i>
-                    Top Countries by Hits
+                    <i className="fas fa-globe mr-3 text-blue-600 animate-spin-slow"></i>
+                    <span className="bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">
+                      Top Countries by Hits
+                    </span>
                   </CardTitle>
-                  <p className="text-sm text-gray-600">User activity distribution by country</p>
+                  <p className="text-sm text-blue-600/80">Maritime professionals worldwide activity</p>
                 </CardHeader>
                 <CardContent>
                   {countryAnalytics && countryAnalytics.length > 0 ? (
