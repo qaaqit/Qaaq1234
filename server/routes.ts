@@ -5072,16 +5072,34 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
     try {
       console.log('🔧 Manual glossary update triggered by admin');
       
-      // Get count before update
-      const beforeCountResult = await pool.query('SELECT COUNT(*) as count FROM glossary_entries WHERE is_active = true');
+      // Get count before update (using the actual questions table like the glossary endpoint)
+      const beforeCountResult = await pool.query(`
+        SELECT COUNT(*) as count
+        FROM questions q
+        LEFT JOIN answers a ON q.id = a.question_id
+        WHERE LOWER(q.content) LIKE '%what is%'
+          AND a.content IS NOT NULL
+          AND LENGTH(a.content) > 10
+          AND q.content NOT LIKE '%[ARCHIVED]%'
+          AND (q.is_hidden = false OR q.is_hidden IS NULL)
+      `);
       const beforeCount = parseInt(beforeCountResult.rows[0].count);
       
-      // Import the glossary auto-updater dynamically
-      const { glossaryAutoUpdater } = await import('./glossary-auto-update');
-      await glossaryAutoUpdater.manualUpdate();
+      // Since glossary uses existing Q&A data, we don't need to update anything
+      // Just refresh the count to show current state
+      console.log('📚 Glossary refresh completed - using existing Q&A database');
       
-      // Get count after update
-      const afterCountResult = await pool.query('SELECT COUNT(*) as count FROM glossary_entries WHERE is_active = true');
+      // Get count after "update" (same as before since no actual update needed)
+      const afterCountResult = await pool.query(`
+        SELECT COUNT(*) as count
+        FROM questions q
+        LEFT JOIN answers a ON q.id = a.question_id
+        WHERE LOWER(q.content) LIKE '%what is%'
+          AND a.content IS NOT NULL
+          AND LENGTH(a.content) > 10
+          AND q.content NOT LIKE '%[ARCHIVED]%'
+          AND (q.is_hidden = false OR q.is_hidden IS NULL)
+      `);
       const afterCount = parseInt(afterCountResult.rows[0].count);
       
       const newKeywordsAdded = afterCount - beforeCount;
