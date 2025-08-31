@@ -3702,6 +3702,154 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
     }
   });
 
+  // Export users as CSV
+  app.get('/api/admin/users/export/csv', async (req: any, res) => {
+    // Check authentication via token parameter or header
+    const token = req.query.token || req.headers.authorization?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({ message: 'No authentication token provided' });
+    }
+
+    try {
+      // Verify the token
+      const decoded = jwt.verify(token, JWT_SECRET) as any;
+      const userId = decoded.userId;
+      
+      // Check if user exists and is admin
+      const userResult = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
+      if (userResult.rows.length === 0) {
+        return res.status(401).json({ message: 'User not found' });
+      }
+      
+      const user = userResult.rows[0];
+      if (!user.is_admin) {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+      
+      req.user = user;
+      
+      const result = await pool.query(`
+        SELECT u.id, u.full_name, u.nickname, u.email, u.maritime_rank,
+               u.city, u.country, u.whatsapp_number, u.is_verified, u.login_count, 
+               u.last_login, u.created_at
+        FROM users u
+        ORDER BY u.last_login DESC NULLS LAST, u.created_at DESC
+      `);
+
+      const users = result.rows;
+      
+      // Generate CSV content
+      const csvHeader = 'ID,Full Name,Email,Maritime Rank,City,Country,WhatsApp,Verified,Login Count,Last Login,Created At\n';
+      const csvRows = users.map(user => {
+        const fullName = (user.full_name || user.nickname || 'Unknown User').replace(/,/g, ';');
+        const email = (user.email || '').replace(/,/g, ';');
+        const rank = (user.maritime_rank || '').replace(/,/g, ';');
+        const city = (user.city || '').replace(/,/g, ';');
+        const country = (user.country || '').replace(/,/g, ';');
+        const whatsapp = (user.whatsapp_number || '').replace(/,/g, ';');
+        const verified = user.is_verified ? 'Yes' : 'No';
+        const lastLogin = user.last_login ? new Date(user.last_login).toISOString().split('T')[0] : '';
+        const createdAt = user.created_at ? new Date(user.created_at).toISOString().split('T')[0] : '';
+        
+        return `"${user.id}","${fullName}","${email}","${rank}","${city}","${country}","${whatsapp}","${verified}","${user.login_count || 0}","${lastLogin}","${createdAt}"`;
+      }).join('\n');
+
+      const csvContent = csvHeader + csvRows;
+      
+      // Generate filename with quser{ddmmyy} format
+      const now = new Date();
+      const day = String(now.getDate()).padStart(2, '0');
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const year = String(now.getFullYear()).slice(-2);
+      const filename = `quser${day}${month}${year}.csv`;
+
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.send(csvContent);
+      
+      console.log(`✅ Exported ${users.length} users to CSV: ${filename}`);
+    } catch (error) {
+      console.error("Error exporting users to CSV:", error);
+      res.status(500).json({ message: "Failed to export users", error: error.message });
+    }
+  });
+
+  // Export users as VCF (vCard format)
+  app.get('/api/admin/users/export/vcf', async (req: any, res) => {
+    // Check authentication via token parameter or header
+    const token = req.query.token || req.headers.authorization?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({ message: 'No authentication token provided' });
+    }
+
+    try {
+      // Verify the token
+      const decoded = jwt.verify(token, JWT_SECRET) as any;
+      const userId = decoded.userId;
+      
+      // Check if user exists and is admin
+      const userResult = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
+      if (userResult.rows.length === 0) {
+        return res.status(401).json({ message: 'User not found' });
+      }
+      
+      const user = userResult.rows[0];
+      if (!user.is_admin) {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+      
+      req.user = user;
+      
+      const result = await pool.query(`
+        SELECT u.id, u.full_name, u.nickname, u.email, u.maritime_rank,
+               u.city, u.country, u.whatsapp_number
+        FROM users u
+        WHERE u.email IS NOT NULL OR u.whatsapp_number IS NOT NULL
+        ORDER BY u.last_login DESC NULLS LAST, u.created_at DESC
+      `);
+
+      const users = result.rows;
+      
+      // Generate VCF content
+      const vcfContent = users.map(user => {
+        const fullName = user.full_name || user.nickname || 'Unknown User';
+        const email = user.email || '';
+        const phone = user.whatsapp_number || '';
+        const title = user.maritime_rank || 'Maritime Professional';
+        const location = [user.city, user.country].filter(Boolean).join(', ');
+
+        let vcard = 'BEGIN:VCARD\n';
+        vcard += 'VERSION:3.0\n';
+        vcard += `FN:${fullName}\n`;
+        vcard += `N:${fullName};;;;\n`;
+        if (email) vcard += `EMAIL:${email}\n`;
+        if (phone) vcard += `TEL;TYPE=CELL:${phone}\n`;
+        if (title) vcard += `TITLE:${title}\n`;
+        if (location) vcard += `ADR:;;${location};;;;\n`;
+        vcard += 'ORG:QaaqConnect Maritime Platform\n';
+        vcard += 'END:VCARD\n';
+        
+        return vcard;
+      }).join('\n');
+      
+      // Generate filename with quser{ddmmyy} format
+      const now = new Date();
+      const day = String(now.getDate()).padStart(2, '0');
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const year = String(now.getFullYear()).slice(-2);
+      const filename = `quser${day}${month}${year}.vcf`;
+
+      res.setHeader('Content-Type', 'text/vcard');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.send(vcfContent);
+      
+      console.log(`✅ Exported ${users.length} users to VCF: ${filename}`);
+    } catch (error) {
+      console.error("Error exporting users to VCF:", error);
+      res.status(500).json({ message: "Failed to export users", error: error.message });
+    }
+  });
+
   // Analytics endpoint for dashboard charts
   app.get('/api/admin/analytics/dashboard', authenticateToken, isAdmin, async (req: any, res) => {
     try {

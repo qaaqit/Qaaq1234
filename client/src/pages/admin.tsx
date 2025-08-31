@@ -949,9 +949,35 @@ START → Step 1 → Step 2 → Step 3/4
                       className="max-w-md"
                     />
                   </div>
-                  <Badge variant="secondary">
-                    {filteredUsers.length} professionals found
-                  </Badge>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const token = localStorage.getItem('token');
+                        window.open(`/api/admin/users/export/csv?token=${token}`, '_blank');
+                      }}
+                      className="text-xs"
+                    >
+                      <i className="fas fa-file-csv mr-1"></i>
+                      CSV
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const token = localStorage.getItem('token');
+                        window.open(`/api/admin/users/export/vcf?token=${token}`, '_blank');
+                      }}
+                      className="text-xs"
+                    >
+                      <i className="fas fa-address-book mr-1"></i>
+                      VCF
+                    </Button>
+                    <Badge variant="secondary">
+                      {filteredUsers.length} professionals found
+                    </Badge>
+                  </div>
                 </div>
                 <p className="text-sm text-gray-600 mt-2">
                   Users sorted by last login time (most recent first)
