@@ -977,21 +977,14 @@ START → Step 1 → Step 2 → Step 3/4
                                 {user.whatsappNumber}
                               </div>
                             )}
-                            {user.rank && (
-                              <Badge variant="outline" className="text-xs mt-1 bg-blue-50 text-blue-700 border-blue-200">
-                                <i className="fas fa-anchor mr-1"></i>
-                                {user.rank}
-                              </Badge>
-                            )}
                           </div>
                           <div className="flex flex-col items-end space-y-1">
-                            <Badge 
-                              variant={user.userType === 'sailor' ? 'default' : 'secondary'}
-                              className={`text-xs ${user.userType === 'sailor' ? 'bg-blue-100 text-blue-800' : 'bg-teal-100 text-teal-800'}`}
-                            >
-                              <i className={`fas ${user.userType === 'sailor' ? 'fa-ship' : 'fa-building'} mr-1`}></i>
-                              {user.userType}
-                            </Badge>
+                            {user.maritimeRank && (
+                              <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
+                                <i className="fas fa-anchor mr-1"></i>
+                                {user.maritimeRank}
+                              </Badge>
+                            )}
                           </div>
                         </div>
 

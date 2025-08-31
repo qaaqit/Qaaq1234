@@ -3671,8 +3671,8 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
     try {
       // Start with a simple query using basic columns that should exist
       const result = await pool.query(`
-        SELECT u.id, u.full_name, u.nickname, u.email, u.is_admin,
-               u.user_type, u.city, u.country,
+        SELECT u.id, u.full_name, u.nickname, u.email, u.is_admin, u.maritime_rank,
+               u.city, u.country,
                u.is_verified, u.login_count, u.last_login, u.created_at, u.whatsapp_number
         FROM users u
         ORDER BY u.last_login DESC NULLS LAST, u.created_at DESC
@@ -3683,7 +3683,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         id: user.id,
         fullName: user.full_name || user.nickname || user.email || 'Unknown User',
         email: user.email,
-        userType: user.user_type === 'On Ship' ? 'sailor' : 'local',
+        maritimeRank: user.maritime_rank,
         isAdmin: user.is_admin || false,
         city: user.city,
         country: user.country,
