@@ -3671,7 +3671,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
     try {
       const result = await pool.query(`
         SELECT u.id, u.full_name, u.nickname, u.email, u.is_admin, u.maritime_rank,
-               u.user_type, COALESCE(u.current_ship, u.ship_name, '') as ship_name, 
+               u.user_type, COALESCE(u.current_ship_name, u.ship_name, '') as ship_name, 
                u.city, u.country,
                u.is_verified, u.login_count, u.last_login, u.created_at, u.whatsapp_number,
                COALESCE(q.question_count, 0) as question_count
