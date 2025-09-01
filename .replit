@@ -4,7 +4,7 @@ hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["zip", "unzip"]
+packages = ["zip", "unzip", "glib", "nss", "gtk3", "libxkbcommon", "pango", "cairo", "alsa-lib", "dbus", "libdrm"]
 
 [deployment]
 deploymentTarget = "gce"
@@ -40,3 +40,4 @@ args = "npm run dev"
 waitForPort = 5000
 
 [agent]
+integrations = ["javascript_openai==1.0.0"]

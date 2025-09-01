@@ -4,6 +4,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { pool } from "./db"; // Import database pool for image serving
 import QoiGPTBot from "./whatsapp-bot";
+import QBOTwaBot from "./qbotwa-whatsapp-bot";
 import { initializeRankGroups } from "./rank-groups-service";
 import { setupGlossaryDatabase } from "./setup-glossary-db";
 import { getQuestionById } from "./questions-service";
@@ -237,6 +238,7 @@ app.use((req, res, next) => {
 });
 
 let whatsappBot: QoiGPTBot | null = null;
+let qbotwaBot: QBOTwaBot | null = null;
 
 (async () => {
   const server = await registerRoutes(app);
@@ -276,6 +278,52 @@ let whatsappBot: QoiGPTBot | null = null;
     } catch (error) {
       console.error('Failed to stop WhatsApp bot:', error);
       res.status(500).json({ error: 'Failed to stop WhatsApp bot' });
+    }
+  });
+
+  // Add QBOTwa bot endpoints
+  app.get("/api/qbotwa-status", (req, res) => {
+    res.json({
+      connected: qbotwaBot?.isConnected() || false,
+      status: qbotwaBot?.getStatus() || 'Not started',
+      phoneNumber: '+905363694997'
+    });
+  });
+
+  app.post("/api/qbotwa-start", async (req, res) => {
+    try {
+      if (!qbotwaBot) {
+        qbotwaBot = new QBOTwaBot();
+        await qbotwaBot.start();
+        res.json({ 
+          message: 'QBOTwa bot starting for +905363694997... Check console for QR code.',
+          phoneNumber: '+905363694997',
+          instructions: 'Scan QR code with WhatsApp account +905363694997 to connect the bot'
+        });
+      } else {
+        res.json({ 
+          message: 'QBOTwa bot is already running.',
+          status: qbotwaBot.getStatus()
+        });
+      }
+    } catch (error) {
+      console.error('Failed to start QBOTwa bot:', error);
+      res.status(500).json({ error: 'Failed to start QBOTwa bot' });
+    }
+  });
+
+  app.post("/api/qbotwa-stop", async (req, res) => {
+    try {
+      if (qbotwaBot) {
+        await qbotwaBot.stop();
+        qbotwaBot = null;
+        res.json({ message: 'QBOTwa bot stopped.' });
+      } else {
+        res.json({ message: 'QBOTwa bot is not running.' });
+      }
+    } catch (error) {
+      console.error('Failed to stop QBOTwa bot:', error);
+      res.status(500).json({ error: 'Failed to stop QBOTwa bot' });
     }
   });
 
@@ -329,6 +377,7 @@ let whatsappBot: QoiGPTBot | null = null;
   }, async () => {
     log(`serving on port ${port}`);
     console.log(`📱 WhatsApp Bot API available at /api/whatsapp-start`);
+    console.log(`🤖 QBOTwa Bot API available at /api/qbotwa-start`);
     
     // Initialize 15 individual rank groups on server startup
     try {
@@ -359,6 +408,9 @@ let whatsappBot: QoiGPTBot | null = null;
     console.log('\n🛑 Shutting down QaaqConnect server...');
     if (whatsappBot) {
       await whatsappBot.stop();
+    }
+    if (qbotwaBot) {
+      await qbotwaBot.stop();
     }
     try {
       await pool.end();
