@@ -56,10 +56,16 @@ class QBOTwaBot {
 
   private setupEventHandlers() {
     this.client.on('qr', (qr: string) => {
-      console.log('\n🤖 QBOTwa WhatsApp Bot - Scan QR Code for +905363694997:');
-      QRCode.generate(qr, { small: true });
-      console.log('\n📱 Scan the QR code above with WhatsApp phone +905363694997 to connect QBOTwa bot.\n');
-      console.log('🔗 Once connected, users can send technical maritime questions to get AI-powered answers.\n');
+      console.log('\n🤖 QBOTwa WhatsApp Bot - REAL QR Code for +905363694997:');
+      console.log('📱 SCAN THIS AUTHENTIC WHATSAPP QR CODE:');
+      try {
+        QRCode.generate(qr, { small: true });
+      } catch (error) {
+        console.log('QR generation error, showing QR data:', qr);
+      }
+      console.log('\n📱 Scan the QR code above with WhatsApp phone +905363694997 to connect QBOTwa bot.');
+      console.log('🔗 Once connected, users can send technical maritime questions to get AI-powered answers.');
+      console.log('⚠️  QR Code will expire in 60 seconds - scan quickly!\n');
     });
 
     this.client.on('ready', () => {
