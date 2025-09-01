@@ -482,19 +482,9 @@ export default function LoginPage() {
               <p className="text-gray-600">Sign in to QaaqConnect</p>
             </div>
 
-            {/* JWT Login Form */}
-            <JWTLoginForm />
-
-            {/* Divider */}
-            <div className="my-6 flex items-center">
-              <div className="flex-1 border-t border-gray-300"></div>
-              <div className="px-4 text-sm text-gray-500">or continue with</div>
-              <div className="flex-1 border-t border-gray-300"></div>
-            </div>
-
-            {/* OAuth Authentication Options */}
-            <div className="space-y-4">
-              {/* Replit Auth Button */}
+            {/* Primary Authentication Options */}
+            <div className="space-y-4 mb-6">
+              {/* Replit Auth Button - 1st Option */}
               <Button
                 type="button"
                 onClick={() => {
@@ -515,7 +505,7 @@ export default function LoginPage() {
                 </div>
               </Button>
 
-              {/* Google Auth Button */}
+              {/* Google Auth Button - 2nd Option */}
               <Button
                 type="button"
                 onClick={() => {
@@ -551,6 +541,35 @@ export default function LoginPage() {
                 </div>
               </Button>
             </div>
+
+            {/* Divider */}
+            <div className="my-6 flex items-center">
+              <div className="flex-1 border-t border-gray-300"></div>
+              <div className="px-4 text-sm text-gray-500">or use JWT login</div>
+              <div className="flex-1 border-t border-gray-300"></div>
+            </div>
+
+            {/* JWT Login Form - 3rd Option, Minimized */}
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-12 text-gray-600 border-gray-300 font-medium hover:bg-gray-50"
+                  data-testid="button-jwt-toggle"
+                >
+                  Sign in with Username & Password
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="text-xl font-bold text-gray-900">
+                    JWT Login
+                  </DialogTitle>
+                </DialogHeader>
+                <JWTLoginForm />
+              </DialogContent>
+            </Dialog>
 
             {/* Footer */}
             <div className="mt-8 text-center">
