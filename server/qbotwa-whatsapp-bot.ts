@@ -1,6 +1,6 @@
 import pkg from 'whatsapp-web.js';
 const { Client, LocalAuth } = pkg;
-import * as QRCode from 'qrcode-terminal';
+import qrcode from 'qrcode-terminal';
 import { AIService } from './ai-service';
 import { pool } from './db';
 
@@ -59,7 +59,7 @@ class QBOTwaBot {
       console.log('\n🤖 QBOTwa WhatsApp Bot - REAL QR Code for +905363694997:');
       console.log('📱 SCAN THIS AUTHENTIC WHATSAPP QR CODE:');
       try {
-        QRCode.generate(qr, { small: true });
+        qrcode.generate(qr, { small: true });
       } catch (error) {
         console.log('QR generation error, showing QR data:', qr);
       }
