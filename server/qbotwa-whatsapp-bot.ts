@@ -1,6 +1,6 @@
 import pkg from 'whatsapp-web.js';
 const { Client, LocalAuth } = pkg;
-import * as qrcode from 'qrcode-terminal';
+import * as QRCode from 'qrcode-terminal';
 import { AIService } from './ai-service';
 import { pool } from './db';
 
@@ -19,12 +19,17 @@ class QBOTwaBot {
   private isReady = false;
 
   constructor() {
+    // Set Puppeteer to use system Chromium
+    process.env.PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = 'true';
+    process.env.PUPPETEER_EXECUTABLE_PATH = '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium';
+    
     this.client = new Client({
       authStrategy: new LocalAuth({
         clientId: 'qbotwa-bot-905363694997'
       }),
       puppeteer: {
         headless: true,
+        executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
@@ -32,8 +37,15 @@ class QBOTwaBot {
           '--disable-accelerated-2d-canvas',
           '--no-first-run',
           '--no-zygote',
-          '--single-process',
-          '--disable-gpu'
+          '--disable-gpu',
+          '--disable-background-timer-throttling',
+          '--disable-backgrounding-occluded-windows',
+          '--disable-renderer-backgrounding',
+          '--disable-extensions',
+          '--disable-plugins',
+          '--disable-sync',
+          '--metrics-recording-only',
+          '--disable-features=VizDisplayCompositor'
         ]
       }
     });
@@ -45,7 +57,7 @@ class QBOTwaBot {
   private setupEventHandlers() {
     this.client.on('qr', (qr: string) => {
       console.log('\n🤖 QBOTwa WhatsApp Bot - Scan QR Code for +905363694997:');
-      qrcode.generate(qr, { small: true });
+      QRCode.generate(qr, { small: true });
       console.log('\n📱 Scan the QR code above with WhatsApp phone +905363694997 to connect QBOTwa bot.\n');
       console.log('🔗 Once connected, users can send technical maritime questions to get AI-powered answers.\n');
     });
