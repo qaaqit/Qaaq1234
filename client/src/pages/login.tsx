@@ -98,7 +98,7 @@ function JWTLoginForm() {
           onChange={(e) =>
             setFormData((prev) => ({ ...prev, userId: e.target.value }))
           }
-          placeholder="Enter your User ID"
+          placeholder="Enter ur Email"
           className="h-12 border-gray-300 focus:border-orange-500 focus:ring-orange-500"
           data-testid="input-user-id"
         />
@@ -545,26 +545,26 @@ export default function LoginPage() {
             {/* Divider */}
             <div className="my-6 flex items-center">
               <div className="flex-1 border-t border-gray-300"></div>
-              <div className="px-4 text-sm text-gray-500">or use JWT login</div>
+              <div className="px-4 text-sm text-gray-500">or use email login</div>
               <div className="flex-1 border-t border-gray-300"></div>
             </div>
 
-            {/* JWT Login Form - 3rd Option, Minimized */}
+            {/* Email Login Form - 3rd Option, Minimized */}
             <Dialog>
               <DialogTrigger asChild>
                 <Button
                   type="button"
                   variant="outline"
                   className="w-full h-12 text-gray-600 border-gray-300 font-medium hover:bg-gray-50"
-                  data-testid="button-jwt-toggle"
+                  data-testid="button-email-toggle"
                 >
-                  Sign in with Username & Password
+                  Sign in with Email & Password
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-md">
                 <DialogHeader>
                   <DialogTitle className="text-xl font-bold text-gray-900">
-                    JWT Login
+                    Email Login
                   </DialogTitle>
                 </DialogHeader>
                 <JWTLoginForm />
