@@ -1,3 +1,2 @@
-2025/09/01-03:09:21.972 656 Reusing MANIFEST /home/runner/workspace/.wwebjs_auth/session-qbotwa-bot-905363694997/Default/shared_proto_db/metadata/MANIFEST-000001
-2025/09/01-03:09:21.972 656 Recovering log #3
-2025/09/01-03:09:21.972 656 Reusing old log /home/runner/workspace/.wwebjs_auth/session-qbotwa-bot-905363694997/Default/shared_proto_db/metadata/000003.log 
+2025/09/01-03:11:09.162 823 Creating DB /home/runner/workspace/.wwebjs_auth/session-qbotwa-bot-905363694997/Default/shared_proto_db/metadata since it was missing.
+2025/09/01-03:11:09.170 823 Reusing MANIFEST /home/runner/workspace/.wwebjs_auth/session-qbotwa-bot-905363694997/Default/shared_proto_db/metadata/MANIFEST-000001

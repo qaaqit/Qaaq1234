@@ -1,3 +1,2 @@
-2025/09/01-03:09:22.528 656 Reusing MANIFEST /home/runner/workspace/.wwebjs_auth/session-qbotwa-bot-905363694997/Default/Session Storage/MANIFEST-000001
-2025/09/01-03:09:22.529 656 Recovering log #3
-2025/09/01-03:09:22.529 656 Reusing old log /home/runner/workspace/.wwebjs_auth/session-qbotwa-bot-905363694997/Default/Session Storage/000003.log 
+2025/09/01-03:11:09.697 823 Creating DB /home/runner/workspace/.wwebjs_auth/session-qbotwa-bot-905363694997/Default/Session Storage since it was missing.
+2025/09/01-03:11:09.706 823 Reusing MANIFEST /home/runner/workspace/.wwebjs_auth/session-qbotwa-bot-905363694997/Default/Session Storage/MANIFEST-000001

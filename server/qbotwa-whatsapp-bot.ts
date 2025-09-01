@@ -25,7 +25,7 @@ class QBOTwaBot {
     
     this.client = new Client({
       authStrategy: new LocalAuth({
-        clientId: 'qbotwa-bot-905363694997'
+        clientId: `qbotwa-${Date.now()}`
       }),
       puppeteer: {
         headless: true,
