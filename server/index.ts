@@ -5,6 +5,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import { pool } from "./db"; // Import database pool for image serving
 import QoiGPTBot from "./whatsapp-bot";
 import QBOTwaBot from "./qbotwa-whatsapp-bot";
+import { QRCodeGenerator } from "./qr-generator";
 import { initializeRankGroups } from "./rank-groups-service";
 import { setupGlossaryDatabase } from "./setup-glossary-db";
 import { getQuestionById } from "./questions-service";
@@ -327,6 +328,28 @@ let qbotwaBot: QBOTwaBot | null = null;
     }
   });
 
+  app.post("/api/qbotwa-generate-qr", (req, res) => {
+    try {
+      const qrData = QRCodeGenerator.generateWhatsAppQR();
+      res.json({
+        success: true,
+        message: 'QR code generated in console for +905363694997',
+        phoneNumber: '+905363694997',
+        qrData: qrData,
+        instructions: [
+          'Open WhatsApp on phone +905363694997',
+          'Go to Settings > Linked Devices',
+          'Tap "Link a Device"',
+          'Scan the QR code shown in console',
+          'Once connected, users can send technical questions'
+        ]
+      });
+    } catch (error) {
+      console.error('Failed to generate QR code:', error);
+      res.status(500).json({ error: 'Failed to generate QR code' });
+    }
+  });
+
   // Deployment health monitoring
   app.get('/api/deployment/status', (req, res) => {
     res.status(200).json({
@@ -378,6 +401,7 @@ let qbotwaBot: QBOTwaBot | null = null;
     log(`serving on port ${port}`);
     console.log(`📱 WhatsApp Bot API available at /api/whatsapp-start`);
     console.log(`🤖 QBOTwa Bot API available at /api/qbotwa-start`);
+    console.log(`📱 QBOTwa QR Generator available at /api/qbotwa-generate-qr`);
     
     // Initialize 15 individual rank groups on server startup
     try {
