@@ -252,14 +252,34 @@ let whatsappBot: QoiGPTBot | null = null;
   app.post("/api/whatsapp-start", async (req, res) => {
     try {
       if (!whatsappBot) {
+        console.log('🚀 Starting WhatsApp bot with timeout...');
         whatsappBot = new QoiGPTBot();
-        await whatsappBot.start();
-        res.json({ message: 'WhatsApp bot starting... Check console for QR code.' });
+        
+        // Start bot with timeout to prevent hanging
+        const startPromise = whatsappBot.start();
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Bot startup timeout after 8 seconds')), 8000);
+        });
+        
+        try {
+          await Promise.race([startPromise, timeoutPromise]);
+          res.json({ 
+            message: 'WhatsApp bot started successfully. Check server logs for QR code if needed.',
+            status: 'started'
+          });
+        } catch (timeoutError) {
+          console.log('⏰ Bot startup timed out, but continuing in background...');
+          res.json({ 
+            message: 'WhatsApp bot is starting in background. Check server logs for QR code.',
+            status: 'starting'
+          });
+        }
       } else {
         res.json({ message: 'WhatsApp bot is already running.' });
       }
     } catch (error) {
       console.error('Failed to start WhatsApp bot:', error);
+      whatsappBot = null;
       res.status(500).json({ error: 'Failed to start WhatsApp bot' });
     }
   });
