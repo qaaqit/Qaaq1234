@@ -71,6 +71,7 @@ class QoiGPTBot {
     this.client.on('qr', (qr: string) => {
       console.log('\n🔗 Qoi GPT WhatsApp Bot - QR Code Generated:');
       console.log('='.repeat(60));
+      console.log('✅ QR EVENT FIRED! QR Code received from WhatsApp Web.js');
       try {
         qrcode.generate(qr, { small: false });
       } catch (error) {
@@ -361,9 +362,26 @@ class QoiGPTBot {
   public async start() {
     try {
       console.log('🚀 Starting Qoi GPT WhatsApp Bot...');
+      console.log('🔧 Client state before initialization:', !!this.client);
+      console.log('🔧 Beginning client.initialize()...');
+      
+      // Add more detailed error handling
+      this.client.on('loading_screen', (percent: number, message: string) => {
+        console.log(`📱 Loading: ${percent}% - ${message}`);
+      });
+      
+      this.client.on('auth_failure', (msg: any) => {
+        console.error('❌ Auth failure during initialization:', msg);
+      });
+      
+      console.log('🔧 About to call client.initialize()...');
       await this.client.initialize();
+      console.log('✅ client.initialize() completed successfully');
     } catch (error) {
-      console.error('Failed to start WhatsApp bot:', error);
+      console.error('❌ Failed to start WhatsApp bot - Full Error Details:');
+      console.error('Error name:', error.name);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
     }
   }
 
