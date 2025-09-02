@@ -1,6 +1,6 @@
 import pkg from 'whatsapp-web.js';
 const { Client, LocalAuth } = pkg;
-import * as qrcode from 'qrcode-terminal';
+import qrcode from 'qrcode-terminal';
 import { DatabaseStorage } from './storage';
 import { FeedbackService } from './feedback-service';
 import { AIService } from './ai-service';
@@ -69,9 +69,21 @@ class QoiGPTBot {
 
   private setupEventHandlers() {
     this.client.on('qr', (qr: string) => {
-      console.log('\n🔗 Qoi GPT WhatsApp Bot - Scan QR Code:');
-      qrcode.generate(qr, { small: true });
-      console.log('\nScan the QR code above with your WhatsApp to connect the bot.\n');
+      console.log('\n🔗 Qoi GPT WhatsApp Bot - QR Code Generated:');
+      console.log('='.repeat(60));
+      try {
+        qrcode.generate(qr, { small: false });
+      } catch (error) {
+        console.log('QR Code Generation Error:', error);
+        console.log('QR Code Data:', qr.substring(0, 100) + '...');
+      }
+      console.log('='.repeat(60));
+      console.log('📱 Instructions:');
+      console.log('1. Open WhatsApp Business (+905363694997) on your phone');
+      console.log('2. Go to Settings → Linked Devices');
+      console.log('3. Tap "Link a Device"');
+      console.log('4. Scan the QR code above');
+      console.log('='.repeat(60));
     });
 
     this.client.on('ready', () => {
