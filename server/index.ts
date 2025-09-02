@@ -386,6 +386,38 @@ let whatsappBot: QoiGPTBot | null = null;
     }
   });
 
+  // Container workaround: Process message manually when events don't fire
+  app.post('/api/whatsapp-process-manual', async (req, res) => {
+    try {
+      const { phoneNumber, message } = req.body;
+      
+      if (!phoneNumber || !message) {
+        return res.status(400).json({ error: 'Phone number and message are required' });
+      }
+
+      if (!whatsappBot) {
+        return res.status(400).json({ error: 'WhatsApp bot is not running' });
+      }
+
+      console.log(`📱 CONTAINER WORKAROUND: Processing manual message from ${phoneNumber}: ${message}`);
+      
+      // Call the bot's message handler directly
+      const response = await (whatsappBot as any).processManualMessage(phoneNumber, message);
+      
+      res.json({ 
+        success: true, 
+        message: 'Message processed manually',
+        response: response
+      });
+    } catch (error) {
+      console.error('❌ Error processing manual message:', error);
+      res.status(500).json({ 
+        error: 'Failed to process manual message',
+        details: error.message 
+      });
+    }
+  });
+
   // Deployment health monitoring
   app.get('/api/deployment/status', (req, res) => {
     res.status(200).json({

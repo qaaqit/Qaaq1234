@@ -499,6 +499,33 @@ class QoiGPTBot {
     }
   }
 
+  // CONTAINER WORKAROUND: Manual message processor when events don't fire
+  public async processManualMessage(phoneNumber: string, messageText: string) {
+    console.log(`🔧 MANUAL CONTAINER BYPASS: Processing message from ${phoneNumber}: ${messageText}`);
+    
+    try {
+      // Create a mock message object for processing
+      const mockMessage = {
+        body: messageText,
+        getContact: async () => ({ number: phoneNumber }),
+        reply: async (text: string) => {
+          console.log(`📤 WOULD REPLY TO ${phoneNumber}: ${text}`);
+          return { success: true, response: text };
+        }
+      };
+
+      // Process the message using existing handler logic
+      const response = await this.handleMessage(mockMessage as any);
+      
+      console.log(`✅ CONTAINER BYPASS: Message processed successfully for ${phoneNumber}`);
+      return response;
+      
+    } catch (error) {
+      console.error('❌ Container bypass message processing failed:', error);
+      throw error;
+    }
+  }
+
   public isConnected(): boolean {
     // CONTAINER WORKAROUND: If client exists and session exists, consider it connected
     // even if ready event didn't fire due to WidFactory issues
