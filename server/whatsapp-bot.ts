@@ -1,5 +1,5 @@
 import pkg from 'whatsapp-web.js';
-const { Client, LocalAuth } = pkg;
+const { Client, LocalAuth, NoAuth } = pkg;
 import qrcode from 'qrcode-terminal';
 import { DatabaseStorage } from './storage';
 import { FeedbackService } from './feedback-service';
@@ -63,7 +63,12 @@ class QoiGPTBot {
           '--disable-ipc-flooding-protection',
           '--ignore-certificate-errors',
           '--ignore-ssl-errors',
-          '--ignore-certificate-errors-spki-list'
+          '--ignore-certificate-errors-spki-list',
+          '--disable-features=VizDisplayCompositor',
+          '--disable-blink-features=AutomationControlled',
+          '--no-default-browser-check',
+          '--disable-infobars',
+          '--disable-notifications'
         ]
       }
     });
@@ -474,14 +479,56 @@ class QoiGPTBot {
         throw new Error('WhatsApp client is not initialized');
       }
       
-      // Send message using WhatsApp Web client
-      await this.client.sendMessage(formattedNumber, message);
-      
-      console.log(`✅ Test message sent successfully to ${phoneNumber}`);
-      return { success: true, recipient: formattedNumber, status: this.isReady ? 'ready' : 'forced_send' };
+      // Enhanced error handling for WidFactory and container issues
+      try {
+        // First attempt with standard method
+        await this.client.sendMessage(formattedNumber, message);
+        console.log(`✅ Test message sent successfully to ${phoneNumber}`);
+        return { success: true, recipient: formattedNumber, status: this.isReady ? 'ready' : 'forced_send' };
+      } catch (sendError: any) {
+        if (sendError.message.includes('WidFactory') || sendError.message.includes('Cannot read properties of undefined')) {
+          console.log('🔄 WidFactory error detected - attempting container workaround...');
+          
+          // Wait a moment and retry with different approach
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          // Try to re-initialize client connection
+          try {
+            // Force refresh of client state
+            const info = await this.client.getState();
+            console.log(`📊 Client state: ${info}`);
+            
+            if (info === 'CONNECTED') {
+              await this.client.sendMessage(formattedNumber, message);
+              console.log(`✅ Test message sent successfully after retry to ${phoneNumber}`);
+              return { success: true, recipient: formattedNumber, status: 'retry_success' };
+            }
+          } catch (retryError) {
+            console.log('🚨 Container environment limitation: WidFactory evaluation blocked');
+            return { 
+              success: false, 
+              recipient: formattedNumber, 
+              status: 'container_limitation',
+              note: 'Connection active but message sending blocked by container environment. Incoming messages will work.'
+            };
+          }
+        }
+        throw sendError;
+      }
       
     } catch (error) {
       console.error(`❌ Failed to send test message to ${phoneNumber}:`, error);
+      
+      // Special handling for known container issues
+      if (error.message.includes('WidFactory')) {
+        return {
+          success: false,
+          recipient: phoneNumber,
+          status: 'container_limitation',
+          error: 'Container environment blocks outgoing messages. Bot can receive and process incoming messages normally.'
+        };
+      }
+      
       throw new Error(`Send failed: ${error.message} (Bot ready: ${this.isReady})`);
     }
   }
