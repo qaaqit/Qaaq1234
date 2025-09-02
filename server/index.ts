@@ -279,6 +279,26 @@ let whatsappBot: QoiGPTBot | null = null;
     }
   });
 
+  app.post("/api/whatsapp-test-message", async (req, res) => {
+    try {
+      const { phoneNumber, message } = req.body;
+      
+      if (!phoneNumber || !message) {
+        return res.status(400).json({ error: 'Phone number and message are required' });
+      }
+
+      if (!whatsappBot) {
+        return res.status(400).json({ error: 'WhatsApp bot is not running' });
+      }
+
+      const result = await whatsappBot.sendTestMessage(phoneNumber, message);
+      res.json({ success: true, message: 'Test message sent successfully', result });
+    } catch (error) {
+      console.error('Failed to send test message:', error);
+      res.status(500).json({ error: 'Failed to send test message: ' + error.message });
+    }
+  });
+
   // Deployment health monitoring
   app.get('/api/deployment/status', (req, res) => {
     res.status(200).json({

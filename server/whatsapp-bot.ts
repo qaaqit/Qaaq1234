@@ -377,6 +377,52 @@ class QoiGPTBot {
   public isConnected(): boolean {
     return this.isReady;
   }
+
+  public async getStatus() {
+    return {
+      connected: this.isReady,
+      status: this.isReady ? "Connected" : "Disconnected"
+    };
+  }
+
+  public async sendTestMessage(phoneNumber: string, message: string) {
+    // Force attempt to send even if internal status shows not ready
+    // This is because WhatsApp Web connection status in containerized environments is unreliable
+    console.log(`📱 Attempting to send test message (ready status: ${this.isReady})...`);
+
+    try {
+      // Format the phone number to ensure it has the country code
+      let formattedNumber = phoneNumber;
+      if (!phoneNumber.includes('@c.us')) {
+        // Remove any non-numeric characters except +
+        formattedNumber = phoneNumber.replace(/[^\d+]/g, '');
+        
+        // Add country code if not present
+        if (!formattedNumber.startsWith('+')) {
+          formattedNumber = '+91' + formattedNumber; // Default to India
+        }
+        
+        // Convert to WhatsApp format
+        formattedNumber = formattedNumber.replace('+', '') + '@c.us';
+      }
+
+      console.log(`📤 Sending test message to ${formattedNumber}: ${message.substring(0, 50)}...`);
+      
+      if (!this.client) {
+        throw new Error('WhatsApp client is not initialized');
+      }
+      
+      // Send message using WhatsApp Web client
+      await this.client.sendMessage(formattedNumber, message);
+      
+      console.log(`✅ Test message sent successfully to ${phoneNumber}`);
+      return { success: true, recipient: formattedNumber, status: this.isReady ? 'ready' : 'forced_send' };
+      
+    } catch (error) {
+      console.error(`❌ Failed to send test message to ${phoneNumber}:`, error);
+      throw new Error(`Send failed: ${error.message} (Bot ready: ${this.isReady})`);
+    }
+  }
 }
 
 export default QoiGPTBot;
