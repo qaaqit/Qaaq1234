@@ -60,7 +60,7 @@ class QoiGPTBot {
 
     this.client.on('ready', () => {
       console.log('✅ Qoi GPT WhatsApp Bot is ready!');
-      console.log('📱 Users can now send "\\koihai" to find nearby sailors');
+      console.log('📱 Basic greeting functionality enabled');
       this.isReady = true;
     });
 
@@ -85,20 +85,20 @@ class QoiGPTBot {
       const sender = await message.getContact();
       const senderNumber = sender.number;
 
-      // FIRST: Extract ship name from any message
-      await this.extractAndUpdateShipName(messageBody, senderNumber);
+      // DISABLED: Extract ship name from any message
+      // await this.extractAndUpdateShipName(messageBody, senderNumber);
 
-      // Check if it's a koihai command
-      if (messageBodyLower === '\\koihai' || messageBodyLower === '/koihai' || messageBodyLower === 'koihai') {
-        console.log(`📍 Koihai request from ${senderNumber}`);
-        await this.handleKoihaiRequest(message, senderNumber);
-      }
-      // Help command
-      else if (messageBodyLower === '\\help' || messageBodyLower === '/help' || messageBodyLower === 'help') {
-        await this.sendHelpMessage(message);
-      }
+      // DISABLED: Check if it's a koihai command
+      // if (messageBodyLower === '\\koihai' || messageBodyLower === '/koihai' || messageBodyLower === 'koihai') {
+      //   console.log(`📍 Koihai request from ${senderNumber}`);
+      //   await this.handleKoihaiRequest(message, senderNumber);
+      // }
+      // DISABLED: Help command
+      // else if (messageBodyLower === '\\help' || messageBodyLower === '/help' || messageBodyLower === 'help') {
+      //   await this.sendHelpMessage(message);
+      // }
       // Welcome new users or respond to greetings
-      else if (messageBodyLower.includes('hello') || messageBodyLower.includes('hi') || messageBodyLower.includes('hey')) {
+      if (messageBodyLower.includes('hello') || messageBodyLower.includes('hi') || messageBodyLower.includes('hey')) {
         await this.sendWelcomeMessage(message);
       }
     } catch (error) {
