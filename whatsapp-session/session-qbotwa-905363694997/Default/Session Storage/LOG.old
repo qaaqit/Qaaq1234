@@ -1,2 +1,3 @@
-2025/09/02-13:32:24.650 4300 Creating DB /home/runner/workspace/whatsapp-session/session-qbotwa-905363694997/Default/Session Storage since it was missing.
-2025/09/02-13:32:24.665 4300 Reusing MANIFEST /home/runner/workspace/whatsapp-session/session-qbotwa-905363694997/Default/Session Storage/MANIFEST-000001
+2025/09/02-13:32:35.638 4377 Reusing MANIFEST /home/runner/workspace/whatsapp-session/session-qbotwa-905363694997/Default/Session Storage/MANIFEST-000001
+2025/09/02-13:32:35.639 4377 Recovering log #3
+2025/09/02-13:32:35.639 4377 Reusing old log /home/runner/workspace/whatsapp-session/session-qbotwa-905363694997/Default/Session Storage/000003.log 
