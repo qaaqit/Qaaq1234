@@ -1,11 +1,8 @@
 import pkg from 'whatsapp-web.js';
-const { Client, LocalAuth, NoAuth } = pkg;
-import qrcode from 'qrcode-terminal';
-import fs from 'fs';
+const { Client, LocalAuth } = pkg;
+import * as qrcode from 'qrcode-terminal';
 import { DatabaseStorage } from './storage';
 import { FeedbackService } from './feedback-service';
-import { AIService } from './ai-service';
-import { getQuestions, searchQuestions } from './questions-service';
 
 // Type definitions to fix TypeScript errors
 type WhatsAppClient = InstanceType<typeof Client>;
@@ -28,23 +25,15 @@ interface ProximityUser {
 class QoiGPTBot {
   private client: WhatsAppClient;
   private storage: DatabaseStorage;
-  private aiService: AIService;
   private isReady = false;
-  private restorationAttempted = false;
 
   constructor() {
-    // PERMANENT SESSION MODE - Never require QR scan, auto-restore saved sessions
-    console.log('🚀 Initializing QBOTwa with PERMANENT SESSION mode');
-    console.log('🔐 AUTO-RESTORE: Will use saved session, no QR scan required');
-
     this.client = new Client({
       authStrategy: new LocalAuth({
-        clientId: 'qbotwa-905363694997',
-        dataPath: './whatsapp-session'
+        clientId: 'qoi-gpt-bot'
       }),
       puppeteer: {
         headless: true,
-        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
@@ -53,126 +42,26 @@ class QoiGPTBot {
           '--no-first-run',
           '--no-zygote',
           '--single-process',
-          '--disable-gpu',
-          '--disable-extensions',
-          '--disable-plugins',
-          '--disable-background-timer-throttling',
-          '--disable-backgrounding-occluded-windows',
-          '--disable-renderer-backgrounding',
-          '--disable-web-security',
-          '--disable-features=TranslateUI,VizDisplayCompositor',
-          '--disable-ipc-flooding-protection',
-          '--ignore-certificate-errors',
-          '--ignore-ssl-errors',
-          '--ignore-certificate-errors-spki-list',
-          '--disable-blink-features=AutomationControlled',
-          '--no-default-browser-check',
-          '--disable-infobars',
-          '--disable-notifications',
-          '--disable-logging',
-          '--disable-login-animations',
-          '--disable-motion-blur',
-          '--force-color-profile=srgb',
-          '--memory-pressure-off',
-          '--max_old_space_size=4096'
+          '--disable-gpu'
         ]
-      },
-      webVersionCache: {
-        type: 'remote',
-        remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html',
       }
     });
 
     this.storage = new DatabaseStorage();
-    this.aiService = new AIService();
     this.setupEventHandlers();
-    this.setupEventHandlersRest();
   }
 
   private setupEventHandlers() {
-    this.client.on('qr', async (qr: string) => {
-      if (!this.restorationAttempted) {
-        console.log('🚨 CRITICAL: QR CODE GENERATED - THIS SHOULD NOT HAPPEN IN PERMANENT SESSION MODE');
-        console.log('🔄 Attempting to bypass QR requirement with session restoration...');
-        
-        this.restorationAttempted = true;
-        
-        // Try to restore from existing session immediately
-        setTimeout(async () => {
-          console.log('🔄 Auto-attempting session restoration to avoid QR scan...');
-          try {
-            const { existsSync } = await import('fs');
-            if (existsSync('./whatsapp-session')) {
-              console.log('📁 Session directory exists - forcing session restore');
-              await this.client.destroy();
-              await this.start();
-            }
-          } catch (error) {
-            console.error('❌ Auto-restoration failed:', error);
-            this.showQRCode(qr);
-          }
-        }, 2000);
-      } else {
-        console.log('📱 Session restoration failed - displaying QR for initial authentication');
-        this.showQRCode(qr);
-      }
+    this.client.on('qr', (qr: string) => {
+      console.log('\n🔗 Qoi GPT WhatsApp Bot - Scan QR Code:');
+      qrcode.generate(qr, { small: true });
+      console.log('\nScan the QR code above with your WhatsApp to connect the bot.\n');
     });
-  }
 
-  private showQRCode(qr: string) {
-    console.log('\n🔗 QBOTwa WhatsApp Bot - QR Code Generated:');
-    console.log('='.repeat(60));
-    try {
-      qrcode.generate(qr, { small: false });
-    } catch (qrError) {
-      console.log('QR Code Generation Error:', qrError);
-      console.log('QR Code Data:', qr.substring(0, 100) + '...');
-    }
-    console.log('='.repeat(60));
-    console.log('📱 Instructions:');
-    console.log('1. Open WhatsApp Business (+905363694997) on your phone');
-    console.log('2. Go to Settings → Linked Devices');
-    console.log('3. Tap "Link a Device"');
-    console.log('4. Scan the QR code above');
-    console.log('='.repeat(60));
-  }
-
-  private setupEventHandlersRest() {
     this.client.on('ready', () => {
-      console.log('✅ QBOTwa (+905363694997) CONNECTED SUCCESSFULLY!');
-      console.log('🔐 PERMANENT SESSION ACTIVE - 24/7 AVAILABILITY CONFIRMED');
-      console.log('🚫 NO QR SCAN REQUIRED - AUTO-RESTORED FROM SAVED SESSION');
-      console.log('🤖 Maritime AI assistance ready for WhatsApp users');
+      console.log('✅ Qoi GPT WhatsApp Bot is ready!');
+      console.log('📱 Basic greeting functionality enabled');
       this.isReady = true;
-    });
-
-    this.client.on('authenticated', () => {
-      console.log('🔐 QBOTwa authenticated successfully');
-      console.log('✅ PERMANENT SESSION SAVED - Future restarts will NEVER require QR scan');
-      console.log('🛡️ 24/7 AVAILABILITY GUARANTEED - No hibernation QR requirements');
-      
-      // Force ready state in container environment
-      setTimeout(() => {
-        if (!this.isReady) {
-          console.log('🔧 CONTAINER WORKAROUND: Forcing ready state after authentication');
-          this.isReady = true;
-        }
-      }, 3000);
-    });
-
-    // Add loading screen handler to track initialization progress
-    this.client.on('loading_screen', (percent: number, message: string) => {
-      console.log(`📱 WhatsApp Loading: ${percent}% - ${message}`);
-      
-      // Force ready state when loading completes
-      if (percent === 100) {
-        setTimeout(() => {
-          if (!this.isReady) {
-            console.log('🔧 CONTAINER WORKAROUND: Loading complete, forcing ready state');
-            this.isReady = true;
-          }
-        }, 2000);
-      }
     });
 
     this.client.on('message', async (message: WhatsAppMessage) => {
@@ -208,19 +97,8 @@ class QoiGPTBot {
       // else if (messageBodyLower === '\\help' || messageBodyLower === '/help' || messageBodyLower === 'help') {
       //   await this.sendHelpMessage(message);
       // }
-      // QBOTwa Q&A functionality - any question that doesn't start with special commands
-      if (!messageBodyLower.startsWith('\\') && 
-          !messageBodyLower.startsWith('/') && 
-          !messageBodyLower.includes('hello') && 
-          !messageBodyLower.includes('hi') && 
-          !messageBodyLower.includes('hey') &&
-          messageBody.length > 5 && 
-          messageBody.includes('?')) {
-        console.log(`🤖 QBOTwa Q&A request from ${senderNumber}: ${messageBody.substring(0, 50)}...`);
-        await this.handleQBOTwaQA(message, messageBody, senderNumber);
-      }
       // Welcome new users or respond to greetings
-      else if (messageBodyLower.includes('hello') || messageBodyLower.includes('hi') || messageBodyLower.includes('hey')) {
+      if (messageBodyLower.includes('hello') || messageBodyLower.includes('hi') || messageBodyLower.includes('hey')) {
         await this.sendWelcomeMessage(message);
       }
     } catch (error) {
@@ -348,16 +226,12 @@ class QoiGPTBot {
   }
 
   private async sendWelcomeMessage(message: any) {
-    const welcomeText = `🌊 *Welcome to QBOTwa Maritime Assistant!*\n\n` +
-      `I'm your AI-powered maritime expert connected to the QAAQ database.\n\n` +
-      `*How to use:*\n` +
-      `• Ask any maritime question with a "?" - I'll provide expert answers\n` +
-      `• I search our extensive QAAQ maritime database for related content\n` +
-      `• Get AI-powered responses from OpenAI with maritime expertise\n\n` +
-      `*Example questions:*\n` +
-      `"How do I troubleshoot engine problems?"\n` +
-      `"What are the safety procedures for cargo handling?"\n\n` +
-      `🤖 Ready to help with your maritime challenges!`;
+    const welcomeText = `🌊 *Welcome to Qoi GPT!*\n\n` +
+      `I help maritime professionals connect with nearby sailors.\n\n` +
+      `*Commands:*\n` +
+      `• \\koihai - Find nearby sailors\n` +
+      `• \\help - Show all commands\n\n` +
+      `🚢 Ready to discover who's around you?`;
     
     await message.reply(welcomeText);
   }
@@ -376,119 +250,12 @@ class QoiGPTBot {
     await message.reply(helpText);
   }
 
-  private async handleQBOTwaQA(message: any, questionText: string, senderNumber: string) {
-    try {
-      console.log(`🤖 Processing QBOTwa Q&A for ${senderNumber}`);
-      
-      // First, search for similar questions in the QAAQ database
-      let relatedQuestions: any[] = [];
-      try {
-        const searchResults = await searchQuestions(questionText, 1, 3);
-        relatedQuestions = searchResults.questions || [];
-        console.log(`📚 Found ${relatedQuestions.length} related questions in QAAQ database`);
-      } catch (error: any) {
-        console.log('⚠️ Could not search questions database:', error?.message || 'Unknown error');
-      }
-
-      // Get user information from database for context
-      let userInfo = null;
-      try {
-        userInfo = await this.storage.getUserByWhatsApp(senderNumber);
-      } catch (error: any) {
-        console.log('⚠️ Could not get user info:', error?.message || 'Unknown error');
-      }
-
-      // Prepare context for AI response
-      let contextInfo = '';
-      if (relatedQuestions.length > 0) {
-        contextInfo = '\n\nRelated questions from QAAQ maritime database:\n';
-        relatedQuestions.forEach((q: any, index: number) => {
-          contextInfo += `${index + 1}. ${q.content.substring(0, 100)}...\n`;
-        });
-      }
-
-      // Generate AI response using OpenAI with QAAQ database context
-      const aiResponse = await this.aiService.generateOpenAIResponse(
-        questionText + contextInfo,
-        'Maritime Q&A',
-        userInfo || { maritimeRank: 'Maritime Professional' },
-        'Provide helpful, accurate maritime engineering and operational guidance',
-        'en'
-      );
-
-      // Format response for WhatsApp
-      let responseText = `🤖 *QBOTwa Maritime Assistant*\n\n`;
-      responseText += `${aiResponse.content}\n\n`;
-      
-      if (relatedQuestions.length > 0) {
-        responseText += `📚 *Related QAAQ Questions:*\n`;
-        relatedQuestions.forEach((q: any, index: number) => {
-          responseText += `${index + 1}. ${q.content.substring(0, 80)}...\n`;
-        });
-        responseText += `\n🔗 Visit QaaqConnect for detailed answers\n`;
-      }
-      
-      responseText += `\n⚡ Powered by QAAQ Maritime Database & OpenAI`;
-
-      // Send response
-      await message.reply(responseText);
-      
-      console.log(`✅ QBOTwa response sent to ${senderNumber}`);
-
-    } catch (error) {
-      console.error('Error in QBOTwa Q&A:', error);
-      await message.reply('🔧 Sorry, I encountered an issue processing your maritime question. Please try again or contact support.');
-    }
-  }
-
   public async start() {
     try {
-      console.log('🚀 Starting QBOTwa WhatsApp Bot...');
-      console.log('🔧 Client state before initialization:', !!this.client);
-      console.log('🔧 Beginning client.initialize()...');
-      
-      // Add more detailed error handling
-      this.client.on('loading_screen', (percent: number, message: string) => {
-        console.log(`📱 Loading: ${percent}% - ${message}`);
-      });
-      
-      this.client.on('auth_failure', (msg: any) => {
-        console.error('❌ Auth failure during initialization:', msg);
-      });
-      
-      // Container workaround: Set ready state if authentication succeeds
-      this.client.on('authenticated', async () => {
-        console.log('🔧 CONTAINER WORKAROUND: Authentication detected, monitoring for ready state...');
-        
-        // Wait for potential ready event, then force if needed
-        await new Promise((resolve) => {
-          const readyTimeout = setTimeout(() => {
-            if (!this.isReady) {
-              console.log('🔧 CONTAINER WORKAROUND: Ready event timeout, forcing ready state');
-              this.isReady = true;
-              console.log('✅ QBOTwa (+905363694997) FORCE-CONNECTED SUCCESSFULLY!');
-              console.log('🔐 PERMANENT SESSION ACTIVE - Container workaround applied');
-              console.log('🤖 Maritime AI assistance ready for WhatsApp users');
-            }
-            resolve(void 0);
-          }, 5000);
-          
-          // Clear timeout if ready event fires naturally
-          this.client.once('ready', () => {
-            clearTimeout(readyTimeout);
-            resolve(void 0);
-          });
-        });
-      });
-      
-      console.log('🔧 About to call client.initialize()...');
+      console.log('🚀 Starting Qoi GPT WhatsApp Bot...');
       await this.client.initialize();
-      console.log('✅ client.initialize() completed successfully');
     } catch (error) {
-      console.error('❌ Failed to start WhatsApp bot - Full Error Details:');
-      console.error('Error name:', error.name);
-      console.error('Error message:', error.message);
-      console.error('Error stack:', error.stack);
+      console.error('Failed to start WhatsApp bot:', error);
     }
   }
 
@@ -499,148 +266,8 @@ class QoiGPTBot {
     }
   }
 
-  // CONTAINER WORKAROUND: Manual message processor when events don't fire
-  public async processManualMessage(phoneNumber: string, messageText: string) {
-    console.log(`🔧 MANUAL CONTAINER BYPASS: Processing message from ${phoneNumber}: ${messageText}`);
-    
-    try {
-      // Create a mock message object for processing
-      const mockMessage = {
-        body: messageText,
-        getContact: async () => ({ number: phoneNumber }),
-        reply: async (text: string) => {
-          console.log(`📤 WOULD REPLY TO ${phoneNumber}: ${text}`);
-          return { success: true, response: text };
-        }
-      };
-
-      // Process the message using existing handler logic
-      const response = await this.handleMessage(mockMessage as any);
-      
-      console.log(`✅ CONTAINER BYPASS: Message processed successfully for ${phoneNumber}`);
-      return response;
-      
-    } catch (error) {
-      console.error('❌ Container bypass message processing failed:', error);
-      throw error;
-    }
-  }
-
   public isConnected(): boolean {
-    // CONTAINER WORKAROUND: If client exists and session exists, consider it connected
-    // even if ready event didn't fire due to WidFactory issues
-    const hasClient = !!this.client;
-    try {
-      const hasSession = fs.existsSync('./whatsapp-session');
-      return this.isReady || (hasClient && hasSession);
-    } catch (e) {
-      return this.isReady;
-    }
-  }
-
-  public async getStatus() {
-    const hasClient = !!this.client;
-    let hasSession = false;
-    let forceConnected = false;
-    
-    try {
-      hasSession = fs.existsSync('./whatsapp-session');
-      forceConnected = hasClient && hasSession;
-    } catch (e) {
-      // Fallback if fs access fails
-    }
-    
-    return {
-      connected: this.isReady || forceConnected,
-      status: this.isReady ? "Connected" : forceConnected ? "Connected (Container Workaround)" : "Disconnected",
-      debug: {
-        isReady: this.isReady,
-        hasClient,
-        hasSession,
-        forceConnected
-      }
-    };
-  }
-
-  public async sendTestMessage(phoneNumber: string, message: string) {
-    // Force attempt to send even if internal status shows not ready
-    // This is because WhatsApp Web connection status in containerized environments is unreliable
-    console.log(`📱 Attempting to send test message (ready status: ${this.isReady})...`);
-
-    try {
-      // Format the phone number to ensure it has the country code
-      let formattedNumber = phoneNumber;
-      if (!phoneNumber.includes('@c.us')) {
-        // Remove any non-numeric characters except +
-        formattedNumber = phoneNumber.replace(/[^\d+]/g, '');
-        
-        // Add country code if not present
-        if (!formattedNumber.startsWith('+')) {
-          formattedNumber = '+91' + formattedNumber; // Default to India
-        }
-        
-        // Convert to WhatsApp format
-        formattedNumber = formattedNumber.replace('+', '') + '@c.us';
-      }
-
-      console.log(`📤 Sending test message to ${formattedNumber}: ${message.substring(0, 50)}...`);
-      
-      if (!this.client) {
-        throw new Error('WhatsApp client is not initialized');
-      }
-      
-      // Enhanced error handling for WidFactory and container issues
-      try {
-        // First attempt with standard method
-        await this.client.sendMessage(formattedNumber, message);
-        console.log(`✅ Test message sent successfully to ${phoneNumber}`);
-        return { success: true, recipient: formattedNumber, status: this.isReady ? 'ready' : 'forced_send' };
-      } catch (sendError: any) {
-        if (sendError.message.includes('WidFactory') || sendError.message.includes('Cannot read properties of undefined')) {
-          console.log('🔄 WidFactory error detected - attempting container workaround...');
-          
-          // Wait a moment and retry with different approach
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          
-          // Try to re-initialize client connection
-          try {
-            // Force refresh of client state
-            const info = await this.client.getState();
-            console.log(`📊 Client state: ${info}`);
-            
-            if (info === 'CONNECTED') {
-              await this.client.sendMessage(formattedNumber, message);
-              console.log(`✅ Test message sent successfully after retry to ${phoneNumber}`);
-              return { success: true, recipient: formattedNumber, status: 'retry_success' };
-            }
-          } catch (retryError) {
-            console.log('🚨 Container environment limitation: WidFactory evaluation blocked');
-            return { 
-              success: false, 
-              recipient: formattedNumber, 
-              status: 'container_limitation',
-              note: 'Connection active but message sending blocked by container environment. Incoming messages will work.'
-            };
-          }
-        }
-        throw sendError;
-      }
-      
-    } catch (error) {
-      console.error(`❌ Failed to send test message to ${phoneNumber}:`, error);
-      
-      // Special handling for known container issues
-      if (error.message.includes('WidFactory')) {
-        return {
-          success: false,
-          recipient: phoneNumber,
-          status: 'container_limitation',
-          error: 'Container environment blocks outgoing messages. Bot can receive and process incoming messages normally.'
-        };
-      }
-      
-      throw new Error(`Send failed: ${error.message} (Bot ready: ${this.isReady})`);
-    }
+    return this.isReady;
   }
 }
 

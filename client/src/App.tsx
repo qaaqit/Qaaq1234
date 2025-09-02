@@ -44,7 +44,6 @@ import PremiumStatusPage from "@/pages/premium-status";
 import PremiumSetupPage from "@/pages/premium-setup";
 import ReadMePage from "@/pages/readme";
 import WorkshopPage from "@/pages/workshop";
-import WhatsAppTestPage from "@/pages/whatsapp-test";
 
 import NotFound from "@/pages/not-found";
 import BottomNav from "@/components/bottom-nav";
@@ -149,7 +148,6 @@ function Router() {
           <Route path="/premium-setup" component={() => <PremiumSetupPage />} />
           <Route path="/readme" component={() => <ReadMePage />} />
           <Route path="/workshop" component={() => <WorkshopPage />} />
-          <Route path="/whatsapp-test" component={() => <WhatsAppTestPage />} />
           <Route path="/home-old" component={() => <Login />} />
 
           <Route component={NotFound} />

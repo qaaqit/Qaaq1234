@@ -252,34 +252,14 @@ let whatsappBot: QoiGPTBot | null = null;
   app.post("/api/whatsapp-start", async (req, res) => {
     try {
       if (!whatsappBot) {
-        console.log('🚀 Starting WhatsApp bot with timeout...');
         whatsappBot = new QoiGPTBot();
-        
-        // Start bot with longer timeout for QR generation
-        const startPromise = whatsappBot.start();
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Bot startup timeout after 20 seconds')), 20000);
-        });
-        
-        try {
-          await Promise.race([startPromise, timeoutPromise]);
-          res.json({ 
-            message: 'WhatsApp bot started successfully. Check server logs for QR code if needed.',
-            status: 'started'
-          });
-        } catch (timeoutError) {
-          console.log('⏰ Bot startup timed out, but continuing in background...');
-          res.json({ 
-            message: 'WhatsApp bot is starting in background. Check server logs for QR code.',
-            status: 'starting'
-          });
-        }
+        await whatsappBot.start();
+        res.json({ message: 'WhatsApp bot starting... Check console for QR code.' });
       } else {
         res.json({ message: 'WhatsApp bot is already running.' });
       }
     } catch (error) {
       console.error('Failed to start WhatsApp bot:', error);
-      whatsappBot = null;
       res.status(500).json({ error: 'Failed to start WhatsApp bot' });
     }
   });
@@ -296,125 +276,6 @@ let whatsappBot: QoiGPTBot | null = null;
     } catch (error) {
       console.error('Failed to stop WhatsApp bot:', error);
       res.status(500).json({ error: 'Failed to stop WhatsApp bot' });
-    }
-  });
-
-  app.post("/api/whatsapp-test-message", async (req, res) => {
-    try {
-      const { phoneNumber, message } = req.body;
-      
-      if (!phoneNumber || !message) {
-        return res.status(400).json({ error: 'Phone number and message are required' });
-      }
-
-      if (!whatsappBot) {
-        return res.status(400).json({ error: 'WhatsApp bot is not running' });
-      }
-
-      const result = await whatsappBot.sendTestMessage(phoneNumber, message);
-      res.json({ success: true, message: 'Test message sent successfully', result });
-    } catch (error) {
-      console.error('Failed to send test message:', error);
-      res.status(500).json({ error: 'Failed to send test message: ' + error.message });
-    }
-  });
-
-  app.post("/api/whatsapp-force-qr", async (req, res) => {
-    try {
-      console.log('🔄 Forcing fresh QR generation...');
-      
-      // Stop existing bot if any
-      if (whatsappBot) {
-        try {
-          await whatsappBot.stop();
-        } catch (e) {
-          console.log('Note: Error stopping existing bot (expected)');
-        }
-        whatsappBot = null;
-      }
-
-      // Clear any existing session
-      const { existsSync, rmSync } = await import('fs');
-      const sessionPath = './whatsapp-session';
-      if (existsSync(sessionPath)) {
-        rmSync(sessionPath, { recursive: true, force: true });
-        console.log('🗑️ Cleared existing session');
-      }
-
-      // Create fresh bot instance
-      whatsappBot = new QoiGPTBot();
-      
-      // Start initialization in background and respond immediately
-      console.log('🚀 Starting fresh bot for QR generation...');
-      whatsappBot.start().catch((error) => {
-        console.log('Expected initialization error in container environment:', error.message);
-      });
-      
-      res.json({ 
-        message: 'Fresh QR generation started. Check server console for QR code in 5-10 seconds.',
-        status: 'qr_generating'
-      });
-      
-    } catch (error) {
-      console.error('Failed to force QR generation:', error);
-      res.status(500).json({ error: 'Failed to force QR generation: ' + error.message });
-    }
-  });
-
-  app.post('/api/whatsapp-force-ready', async (req, res) => {
-    try {
-      if (!whatsappBot) {
-        return res.status(400).json({ error: 'No WhatsApp bot instance' });
-      }
-      
-      console.log('🔧 MANUAL CONTAINER WORKAROUND: Forcing ready state...');
-      (whatsappBot as any).isReady = true;
-      console.log('✅ QBOTwa (+905363694997) FORCE-CONNECTED SUCCESSFULLY!');
-      console.log('🔐 PERMANENT SESSION ACTIVE - Manual container workaround applied');
-      console.log('🤖 Maritime AI assistance ready for WhatsApp users');
-      
-      res.json({ 
-        message: 'Ready state forced successfully',
-        status: 'force_ready_applied'
-      });
-    } catch (error) {
-      console.error('❌ Error forcing ready state:', error);
-      res.status(500).json({ 
-        error: 'Failed to force ready state',
-        details: error.message 
-      });
-    }
-  });
-
-  // Container workaround: Process message manually when events don't fire
-  app.post('/api/whatsapp-process-manual', async (req, res) => {
-    try {
-      const { phoneNumber, message } = req.body;
-      
-      if (!phoneNumber || !message) {
-        return res.status(400).json({ error: 'Phone number and message are required' });
-      }
-
-      if (!whatsappBot) {
-        return res.status(400).json({ error: 'WhatsApp bot is not running' });
-      }
-
-      console.log(`📱 CONTAINER WORKAROUND: Processing manual message from ${phoneNumber}: ${message}`);
-      
-      // Call the bot's message handler directly
-      const response = await (whatsappBot as any).processManualMessage(phoneNumber, message);
-      
-      res.json({ 
-        success: true, 
-        message: 'Message processed manually',
-        response: response
-      });
-    } catch (error) {
-      console.error('❌ Error processing manual message:', error);
-      res.status(500).json({ 
-        error: 'Failed to process manual message',
-        details: error.message 
-      });
     }
   });
 
