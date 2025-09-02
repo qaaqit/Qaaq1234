@@ -1,3 +1,2 @@
-2025/09/02-12:14:46.184 16be Reusing MANIFEST /home/runner/workspace/.wwebjs_auth/session-qoi-gpt-bot/Default/Session Storage/MANIFEST-000001
-2025/09/02-12:14:46.185 16be Recovering log #3
-2025/09/02-12:14:46.185 16be Reusing old log /home/runner/workspace/.wwebjs_auth/session-qoi-gpt-bot/Default/Session Storage/000003.log 
+2025/09/02-12:22:28.711 1aa9 Creating DB /home/runner/workspace/.wwebjs_auth/session-qoi-gpt-bot/Default/Session Storage since it was missing.
+2025/09/02-12:22:28.723 1aa9 Reusing MANIFEST /home/runner/workspace/.wwebjs_auth/session-qoi-gpt-bot/Default/Session Storage/MANIFEST-000001
