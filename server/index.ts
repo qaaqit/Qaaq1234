@@ -255,10 +255,10 @@ let whatsappBot: QoiGPTBot | null = null;
         console.log('🚀 Starting WhatsApp bot with timeout...');
         whatsappBot = new QoiGPTBot();
         
-        // Start bot with timeout to prevent hanging
+        // Start bot with longer timeout for QR generation
         const startPromise = whatsappBot.start();
         const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Bot startup timeout after 8 seconds')), 8000);
+          setTimeout(() => reject(new Error('Bot startup timeout after 20 seconds')), 20000);
         });
         
         try {
@@ -316,6 +316,48 @@ let whatsappBot: QoiGPTBot | null = null;
     } catch (error) {
       console.error('Failed to send test message:', error);
       res.status(500).json({ error: 'Failed to send test message: ' + error.message });
+    }
+  });
+
+  app.post("/api/whatsapp-force-qr", async (req, res) => {
+    try {
+      console.log('🔄 Forcing fresh QR generation...');
+      
+      // Stop existing bot if any
+      if (whatsappBot) {
+        try {
+          await whatsappBot.stop();
+        } catch (e) {
+          console.log('Note: Error stopping existing bot (expected)');
+        }
+        whatsappBot = null;
+      }
+
+      // Clear any existing session
+      const { existsSync, rmSync } = await import('fs');
+      const sessionPath = './whatsapp-session';
+      if (existsSync(sessionPath)) {
+        rmSync(sessionPath, { recursive: true, force: true });
+        console.log('🗑️ Cleared existing session');
+      }
+
+      // Create fresh bot instance
+      whatsappBot = new QoiGPTBot();
+      
+      // Start initialization in background and respond immediately
+      console.log('🚀 Starting fresh bot for QR generation...');
+      whatsappBot.start().catch((error) => {
+        console.log('Expected initialization error in container environment:', error.message);
+      });
+      
+      res.json({ 
+        message: 'Fresh QR generation started. Check server console for QR code in 5-10 seconds.',
+        status: 'qr_generating'
+      });
+      
+    } catch (error) {
+      console.error('Failed to force QR generation:', error);
+      res.status(500).json({ error: 'Failed to force QR generation: ' + error.message });
     }
   });
 

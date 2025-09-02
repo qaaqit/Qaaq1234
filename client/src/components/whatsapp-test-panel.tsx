@@ -15,6 +15,7 @@ interface WhatsAppStatus {
 export default function WhatsAppTestPanel() {
   const [isStarting, setIsStarting] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [isGeneratingQR, setIsGeneratingQR] = useState(false);
   const [status, setStatus] = useState<WhatsAppStatus | null>(null);
   const [phoneNumber, setPhoneNumber] = useState('9029010070');
   const [message, setMessage] = useState('🤖 Test message from QBOTwa Maritime Assistant!\n\nHello! This is a test message to verify your WhatsApp Business (+905363694997) connection is working properly.\n\n⚡ Ready to serve maritime professionals with AI-powered assistance!');
@@ -55,6 +56,34 @@ export default function WhatsAppTestPanel() {
       }
     } catch (error) {
       console.error('Failed to check status:', error);
+    }
+  };
+
+  const forceQRGeneration = async () => {
+    setIsGeneratingQR(true);
+    try {
+      const response = await fetch('/api/whatsapp-force-qr', {
+        method: 'POST',
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok) {
+        toast({
+          title: "QR Generation Started",
+          description: "Check server console for QR code in 5-10 seconds",
+        });
+      } else {
+        throw new Error(result.error || 'Failed to generate QR');
+      }
+    } catch (error) {
+      toast({
+        title: "QR Generation Failed",
+        description: error instanceof Error ? error.message : 'Unknown error occurred',
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingQR(false);
     }
   };
 
@@ -117,7 +146,7 @@ export default function WhatsAppTestPanel() {
                 {status ? status.status : 'Loading...'}
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Button
                 variant="outline"
                 size="sm"
@@ -132,6 +161,15 @@ export default function WhatsAppTestPanel() {
               >
                 {isStarting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Start Bot
+              </Button>
+              <Button
+                onClick={forceQRGeneration}
+                disabled={isGeneratingQR}
+                size="sm"
+                variant="secondary"
+              >
+                {isGeneratingQR && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Force QR Code
               </Button>
             </div>
           </div>
