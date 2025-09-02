@@ -3,6 +3,8 @@ const { Client, LocalAuth } = pkg;
 import * as qrcode from 'qrcode-terminal';
 import { DatabaseStorage } from './storage';
 import { FeedbackService } from './feedback-service';
+import { AIService } from './ai-service';
+import { getQuestions, searchQuestions } from './questions-service';
 
 // Type definitions to fix TypeScript errors
 type WhatsAppClient = InstanceType<typeof Client>;
@@ -25,6 +27,7 @@ interface ProximityUser {
 class QoiGPTBot {
   private client: WhatsAppClient;
   private storage: DatabaseStorage;
+  private aiService: AIService;
   private isReady = false;
 
   constructor() {
@@ -48,6 +51,7 @@ class QoiGPTBot {
     });
 
     this.storage = new DatabaseStorage();
+    this.aiService = new AIService();
     this.setupEventHandlers();
   }
 
@@ -97,8 +101,19 @@ class QoiGPTBot {
       // else if (messageBodyLower === '\\help' || messageBodyLower === '/help' || messageBodyLower === 'help') {
       //   await this.sendHelpMessage(message);
       // }
+      // QBOTwa Q&A functionality - any question that doesn't start with special commands
+      if (!messageBodyLower.startsWith('\\') && 
+          !messageBodyLower.startsWith('/') && 
+          !messageBodyLower.includes('hello') && 
+          !messageBodyLower.includes('hi') && 
+          !messageBodyLower.includes('hey') &&
+          messageBody.length > 5 && 
+          messageBody.includes('?')) {
+        console.log(`🤖 QBOTwa Q&A request from ${senderNumber}: ${messageBody.substring(0, 50)}...`);
+        await this.handleQBOTwaQA(message, messageBody, senderNumber);
+      }
       // Welcome new users or respond to greetings
-      if (messageBodyLower.includes('hello') || messageBodyLower.includes('hi') || messageBodyLower.includes('hey')) {
+      else if (messageBodyLower.includes('hello') || messageBodyLower.includes('hi') || messageBodyLower.includes('hey')) {
         await this.sendWelcomeMessage(message);
       }
     } catch (error) {
@@ -226,12 +241,16 @@ class QoiGPTBot {
   }
 
   private async sendWelcomeMessage(message: any) {
-    const welcomeText = `🌊 *Welcome to Qoi GPT!*\n\n` +
-      `I help maritime professionals connect with nearby sailors.\n\n` +
-      `*Commands:*\n` +
-      `• \\koihai - Find nearby sailors\n` +
-      `• \\help - Show all commands\n\n` +
-      `🚢 Ready to discover who's around you?`;
+    const welcomeText = `🌊 *Welcome to QBOTwa Maritime Assistant!*\n\n` +
+      `I'm your AI-powered maritime expert connected to the QAAQ database.\n\n` +
+      `*How to use:*\n` +
+      `• Ask any maritime question with a "?" - I'll provide expert answers\n` +
+      `• I search our extensive QAAQ maritime database for related content\n` +
+      `• Get AI-powered responses from OpenAI with maritime expertise\n\n` +
+      `*Example questions:*\n` +
+      `"How do I troubleshoot engine problems?"\n` +
+      `"What are the safety procedures for cargo handling?"\n\n` +
+      `🤖 Ready to help with your maritime challenges!`;
     
     await message.reply(welcomeText);
   }
@@ -248,6 +267,71 @@ class QoiGPTBot {
       `🌐 Powered by QaaqConnect - Maritime Community Platform`;
     
     await message.reply(helpText);
+  }
+
+  private async handleQBOTwaQA(message: any, questionText: string, senderNumber: string) {
+    try {
+      console.log(`🤖 Processing QBOTwa Q&A for ${senderNumber}`);
+      
+      // First, search for similar questions in the QAAQ database
+      let relatedQuestions: any[] = [];
+      try {
+        const searchResults = await searchQuestions(questionText, 1, 3);
+        relatedQuestions = searchResults.questions || [];
+        console.log(`📚 Found ${relatedQuestions.length} related questions in QAAQ database`);
+      } catch (error: any) {
+        console.log('⚠️ Could not search questions database:', error?.message || 'Unknown error');
+      }
+
+      // Get user information from database for context
+      let userInfo = null;
+      try {
+        userInfo = await this.storage.getUserByWhatsApp(senderNumber);
+      } catch (error: any) {
+        console.log('⚠️ Could not get user info:', error?.message || 'Unknown error');
+      }
+
+      // Prepare context for AI response
+      let contextInfo = '';
+      if (relatedQuestions.length > 0) {
+        contextInfo = '\n\nRelated questions from QAAQ maritime database:\n';
+        relatedQuestions.forEach((q: any, index: number) => {
+          contextInfo += `${index + 1}. ${q.content.substring(0, 100)}...\n`;
+        });
+      }
+
+      // Generate AI response using OpenAI with QAAQ database context
+      const aiResponse = await this.aiService.generateOpenAIResponse(
+        questionText + contextInfo,
+        'Maritime Q&A',
+        userInfo || { maritimeRank: 'Maritime Professional' },
+        'Provide helpful, accurate maritime engineering and operational guidance',
+        'en'
+      );
+
+      // Format response for WhatsApp
+      let responseText = `🤖 *QBOTwa Maritime Assistant*\n\n`;
+      responseText += `${aiResponse.content}\n\n`;
+      
+      if (relatedQuestions.length > 0) {
+        responseText += `📚 *Related QAAQ Questions:*\n`;
+        relatedQuestions.forEach((q: any, index: number) => {
+          responseText += `${index + 1}. ${q.content.substring(0, 80)}...\n`;
+        });
+        responseText += `\n🔗 Visit QaaqConnect for detailed answers\n`;
+      }
+      
+      responseText += `\n⚡ Powered by QAAQ Maritime Database & OpenAI`;
+
+      // Send response
+      await message.reply(responseText);
+      
+      console.log(`✅ QBOTwa response sent to ${senderNumber}`);
+
+    } catch (error) {
+      console.error('Error in QBOTwa Q&A:', error);
+      await message.reply('🔧 Sorry, I encountered an issue processing your maritime question. Please try again or contact support.');
+    }
   }
 
   public async start() {
