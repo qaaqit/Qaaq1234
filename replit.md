@@ -73,6 +73,16 @@ S>E>M>M hierarchical structure where System=Great Grandfather, Equipment=Grandfa
 - **Database Synchronization & Performance Features**: Keep-Alive service, Connection Pool Management, Data Synchronization, Performance Monitoring, Automated Maintenance, Admin Controls.
 - **SEMM Implementation**: Complete System > Equipment > Make > Model hierarchy with authentic data, dedicated equipment pages, admin-only editing controls, and enhanced reorder functionality with editable code cards.
 
+## Recent Changes
+- **🏷️ GANPATI BUILD CHECKPOINT (September 2, 2025)** - Major milestone sealed for rollback capability
+  - WhatsApp bot functions selectively disabled: Koi Hai discovery, ship detection, help system
+  - Only greeting functionality remains active in WhatsApp bot
+  - Full project export functionality implemented and tested (react-full-app.zip available)
+  - System running stable with healthy authentication monitoring
+  - Database connections optimized and performing well
+  - All core maritime platform features operational and tested
+  - Ready for production deployment or further development
+
 ## External Dependencies
 - **Shared QAAQ Database**: PostgreSQL database for maritime user data and Q&A records.
 - **WhatsApp Bot Services**: QBOT and QOI GPT.
