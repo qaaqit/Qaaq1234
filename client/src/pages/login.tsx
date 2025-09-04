@@ -477,9 +477,9 @@ export default function LoginPage() {
                 <img src={qaaqLogoPath} alt="QAAQ" className="w-14 h-14" />
               </div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                Welcome Back
+                Welcome onboard MV Qaaq
               </h1>
-              <p className="text-gray-600">Sign in to QaaqConnect</p>
+              <p className="text-gray-600">This is our Gangway.</p>
             </div>
 
             {/* Primary Authentication Options */}
