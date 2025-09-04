@@ -543,10 +543,8 @@ export default function LoginPage() {
             </div>
 
             {/* Divider */}
-            <div className="my-6 flex items-center">
-              <div className="flex-1 border-t border-gray-300"></div>
-              <div className="px-4 text-sm text-gray-500">or use email login</div>
-              <div className="flex-1 border-t border-gray-300"></div>
+            <div className="my-6">
+              <div className="border-t border-gray-300"></div>
             </div>
 
             {/* Email Login Form - 3rd Option, Minimized */}
