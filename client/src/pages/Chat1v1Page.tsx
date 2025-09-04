@@ -402,8 +402,8 @@ export default function ChatPage() {
                   <div
                     className={`px-4 py-2.5 rounded-2xl shadow-sm ${
                       isMyMessage
-                        ? 'bg-gradient-to-br from-orange-500 to-red-500 text-white rounded-br-md'
-                        : 'bg-white text-gray-800 border border-gray-100 rounded-bl-md'
+                        ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-br-md border border-orange-400'
+                        : 'bg-gradient-to-br from-amber-50 to-orange-50 text-gray-800 border border-orange-200 rounded-bl-md'
                     }`}
                   >
                     <p className="text-sm leading-relaxed">{message.content}</p>
