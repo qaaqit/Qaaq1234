@@ -384,7 +384,7 @@ export default function ChatPage() {
             return (
               <div
                 key={message.id}
-                className={`flex items-end space-x-2 ${isMyMessage ? 'justify-end flex-row-reverse space-x-reverse' : 'justify-start'}`}
+                className={`flex items-end space-x-2 ${isMyMessage ? 'justify-end' : 'justify-start'}`}
                 data-testid={`message-${message.id}`}
               >
                 {!isMyMessage && showAvatar && (
@@ -402,13 +402,13 @@ export default function ChatPage() {
                   <div
                     className={`px-4 py-2.5 rounded-2xl shadow-lg ${
                       isMyMessage
-                        ? 'bg-orange-600 text-white rounded-br-md border-2 border-orange-700'
-                        : 'bg-white text-gray-900 border-2 border-gray-300 rounded-bl-md'
+                        ? 'bg-orange-100 text-gray-900 rounded-br-md border-2 border-orange-300 ml-auto'
+                        : 'bg-white text-gray-900 border-2 border-gray-300 rounded-bl-md mr-auto'
                     }`}
                   >
                     <p className="text-sm leading-relaxed">{message.content}</p>
                     
-                    <div className={`flex items-center justify-between mt-1.5 ${isMyMessage ? 'text-orange-100' : 'text-gray-500'}`}>
+                    <div className={`flex items-center justify-between mt-1.5 ${isMyMessage ? 'text-gray-600' : 'text-gray-500'}`}>
                       <p className="text-xs">
                         {(() => {
                           try {
