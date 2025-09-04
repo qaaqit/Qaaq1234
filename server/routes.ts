@@ -5516,7 +5516,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         'd': 4, // Compressed Air Systems (corrected from Fresh Water)
         'e': 5, // Oil Purification  
         'f': 6, // Fresh Water & Cooling (swapped from Compressed Air)
-        'g': 7, // Automation & Control
+        'g': 7, // Electrical and Automation
         'h': 8, // Cargo Systems
         'i': 9, // Safety & Fire Fighting
         'j': 10, // Crane & Deck Equipment
@@ -5548,20 +5548,18 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
           correctedSystem.code = 'f';
         }
         
-        // Interchange system titles for 'e' and 'g' as requested  
-        if (system.code === 'e' && system.title && system.title.toLowerCase().includes('pumps')) {
-          correctedSystem.title = system.title.replace(/pumps.*auxiliary/i, 'Oil Purification');
+        // Ensure correct system titles
+        if (system.code === 'g') {
+          // System 'g' should be "Electrical and Automation"
+          correctedSystem.title = 'g. Electrical and Automation';
         }
-        else if (system.code === 'g' && system.title && system.title.toLowerCase().includes('oil purification')) {
-          correctedSystem.title = system.title.replace(/oil purification/i, 'Pumps & Auxiliary');
+        else if (system.code === 'e') {
+          // System 'e' should be Oil Purification
+          correctedSystem.title = 'e. Oil Purification';
         }
-        
-        // Interchange system titles for 'g' and 'l' as requested
-        if (system.code === 'g' && system.title && system.title.toLowerCase().includes('pumps')) {
-          correctedSystem.title = system.title.replace(/pumps.*auxiliary/i, 'Automation & Control');
-        }
-        else if (system.code === 'l' && system.title && system.title.toLowerCase().includes('automation')) {
-          correctedSystem.title = system.title.replace(/automation.*control/i, 'Pumps & Auxiliary');
+        else if (system.code === 'l') {
+          // System 'l' should be Pumps & Auxiliary
+          correctedSystem.title = 'l. Pumps & Auxiliary';
         }
         
         // Only add if we haven't seen this code before (avoid duplicates)
