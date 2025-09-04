@@ -378,8 +378,18 @@ export default function ChatPage() {
           </div>
         ) : (
           messages.map((message, index) => {
-            const isMyMessage = message.senderId === user?.id;
+            // Temporary: alternate colors by index for testing
+            const isMyMessage = index % 2 === 0;
             const showAvatar = index === 0 || messages[index - 1]?.senderId !== message.senderId;
+            
+            // Debug logging
+            console.log('Message debug:', {
+              messageId: message.id,
+              senderId: message.senderId,
+              userId: user?.id,
+              isMyMessage,
+              content: message.content.substring(0, 20)
+            });
             
             return (
               <div
