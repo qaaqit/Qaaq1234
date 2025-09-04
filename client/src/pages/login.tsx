@@ -542,11 +542,6 @@ export default function LoginPage() {
               </Button>
             </div>
 
-            {/* Divider */}
-            <div className="my-6">
-              <div className="border-t border-gray-300"></div>
-            </div>
-
             {/* Email Login Form - 3rd Option, Minimized */}
             <Dialog>
               <DialogTrigger asChild>
