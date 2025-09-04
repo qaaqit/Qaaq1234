@@ -400,10 +400,10 @@ export default function ChatPage() {
                 
                 <div className={`max-w-xs ${!isMyMessage && !showAvatar ? 'ml-8' : ''}`}>
                   <div
-                    className={`px-4 py-2.5 rounded-2xl shadow-sm ${
+                    className={`px-4 py-2.5 rounded-2xl shadow-lg ${
                       isMyMessage
-                        ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-br-md border border-orange-400'
-                        : 'bg-gradient-to-br from-amber-50 to-orange-50 text-gray-800 border border-orange-200 rounded-bl-md'
+                        ? 'bg-orange-600 text-white rounded-br-md border-2 border-orange-700'
+                        : 'bg-white text-gray-900 border-2 border-gray-300 rounded-bl-md'
                     }`}
                   >
                     <p className="text-sm leading-relaxed">{message.content}</p>
