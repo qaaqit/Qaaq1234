@@ -558,7 +558,7 @@ export default function LoginPage() {
                   className="w-full h-12 text-gray-600 border-gray-300 font-medium hover:bg-gray-50"
                   data-testid="button-email-toggle"
                 >
-                  Sign in with Email & Password
+                  SignIn with Email
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-md">
