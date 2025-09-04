@@ -5548,16 +5548,16 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
           correctedSystem.code = 'f';
         }
         
-        // Ensure correct system titles
-        if (system.code === 'g') {
+        // Ensure correct system titles based on the corrected code
+        if (correctedSystem.code === 'g') {
           // System 'g' should be "Electrical and Automation"
           correctedSystem.title = 'g. Electrical and Automation';
         }
-        else if (system.code === 'e') {
+        else if (correctedSystem.code === 'e') {
           // System 'e' should be Oil Purification
           correctedSystem.title = 'e. Oil Purification';
         }
-        else if (system.code === 'l') {
+        else if (correctedSystem.code === 'l') {
           // System 'l' should be Pumps & Auxiliary
           correctedSystem.title = 'l. Pumps & Auxiliary';
         }
