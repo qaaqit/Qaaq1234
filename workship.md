@@ -16,13 +16,75 @@
 
 ## 10-Step WorkShip Marketplace Implementation
 
-### Step 1: Database Schema Design
-**Goal**: Create comprehensive database tables for workshop marketplace
-- Create `workshop_providers` table (company details, certifications, location)
-- Create `workshop_services` table (8-hour shifts, overtime rates, travel rates)
-- Create `workshop_bookings` table (booking management, status tracking)
-- Create `workshop_reviews` table (rating and feedback system)
-- Create `workshop_availability` table (calendar management)
+### Step 1: Database Schema Design - Simplified Approach
+**Goal**: Create streamlined database tables leveraging existing user system
+**Core Principle**: Every User Can Be a Service Provider - No separate provider registration needed
+
+**1. workshop_services Table (Simplified)**
+Services offered by users (acting as companies)
+- id: varchar (UUID, Primary Key)
+- userId: varchar (Foreign Key to users.id - the provider)
+- serviceTitle: text (e.g., "Engine Overhaul", "Hull Repair")
+- serviceCategory: text (mechanical, electrical, hull, etc.)
+- semmSystemCode: text (links to SEMM equipment type)
+- Three-Tier Pricing:
+  - baseShiftRate: real (8-hour shift rate in USD)
+  - overtimeHourlyRate: real (per hour rate)
+  - travelHourlyRate: real (travel time rate)
+- Service Info:
+  - description: text
+  - portsCovered: text[] (array of ports they serve)
+  - responseTime: integer (hours to respond)
+  - isActive: boolean
+  - createdAt: timestamp
+
+**2. workshop_bookings Table (Simplified)**
+Anonymous booking system to prevent disintermediation
+- id: varchar (UUID, Primary Key)
+- bookingCode: text (anonymous reference like "WS-2024-001")
+- serviceId: varchar (Foreign Key to workshop_services.id)
+- providerId: varchar (hidden from ship manager)
+- shipManagerId: varchar (Foreign Key to users.id)
+- Service Details:
+  - shipName: text
+  - imoNumber: text
+  - portLocation: text
+  - requestedDate: date
+  - serviceDescription: text
+- Pricing:
+  - totalHours: real
+  - overtimeHours: real
+  - travelHours: real
+  - totalAmount: real
+- Status:
+  - status: text ('requested', 'quoted', 'confirmed', 'completed')
+  - createdAt: timestamp
+
+**3. workshop_messages Table**
+Anonymous communication channel
+- id: varchar (UUID, Primary Key)
+- bookingId: varchar (Foreign Key to workshop_bookings.id)
+- senderRole: text ('provider' or 'shipmanager')
+- message: text
+- createdAt: timestamp
+Note: No user IDs exposed - only roles
+
+**4. workshop_reviews Table (Optional)**
+Anonymous feedback system
+- id: varchar (UUID, Primary Key)
+- bookingId: varchar
+- rating: integer (1-5)
+- review: text
+- createdAt: timestamp
+Note: Reviews display as "Workshop Provider #123" not actual names
+
+**Key Privacy Features:**
+- Provider Anonymity: Ship managers see services as "Workshop WS-001" not company names
+- Existing User Integration: No new registration needed - users just add services
+- Simple Workflow: User registers → Adds workshop services → Ship managers book anonymously
+
+**Implementation**: Add single field to existing users table:
+- isWorkshopProvider: boolean("is_workshop_provider").default(false)
 
 ### Step 2: Workshop Provider Registration System
 **Goal**: Allow workshop providers to register and manage their services
