@@ -5517,14 +5517,14 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         'e': 5, // Oil Purification  
         'f': 6, // Fresh Water & Cooling (swapped from Compressed Air)
         'g': 7, // Electrical and Automation
-        'h': 8, // Cargo Systems
+        'h': 8, // Navigation Systems (moved from k)
         'i': 9, // Safety & Fire Fighting
-        'j': 10, // Crane & Deck Equipment
-        'k': 11, // Navigation Systems
+        'j': 10, // Hull & Structure (moved from o)
+        'k': 11, // Cargo (moved from h)
         'l': 12, // Pumps & Auxiliary
         'm': 13, // HVAC Systems
-        'n': 14, // Pollution Control
-        'o': 15, // Hull & Structure
+        'n': 14, // Crane & Deck Machinery (moved from j)
+        'o': 15, // Pollution Control (moved from n)
         'p': 16, // Accommodation
         'q': 17, // Workshop Equipment
         'r': 18, // Communication Systems
@@ -5532,6 +5532,18 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         'z': 20  // Miscellaneous
       };
 
+      // Fetch custom system titles from configurations table if it exists
+      let customTitles = new Map();
+      try {
+        const customTitlesResult = await pool.query(`
+          SELECT code, custom_title FROM system_configurations
+        `);
+        customTitles = new Map(customTitlesResult.rows.map(r => [r.code, r.custom_title]));
+      } catch (error) {
+        // Table doesn't exist or no custom titles, use default mappings
+        console.log('📝 No custom system titles found, using defaults');
+      }
+      
       // Apply code corrections for systems that have wrong codes but correct titles
       const correctedSystems = [];
       const seenCodes = new Set();
@@ -5548,8 +5560,12 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
           correctedSystem.code = 'f';
         }
         
-        // Ensure correct system titles based on the corrected code
-        if (correctedSystem.code === 'g') {
+        // Check if there's a custom title for this system
+        if (customTitles.has(correctedSystem.code)) {
+          correctedSystem.title = customTitles.get(correctedSystem.code);
+        }
+        // Otherwise, ensure correct system titles based on the corrected code
+        else if (correctedSystem.code === 'g') {
           // System 'g' should be "Electrical and Automation"
           correctedSystem.title = 'g. Electrical and Automation';
         }
@@ -5560,6 +5576,26 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         else if (correctedSystem.code === 'l') {
           // System 'l' should be Pumps & Auxiliary
           correctedSystem.title = 'l. Pumps & Auxiliary';
+        }
+        else if (correctedSystem.code === 'k') {
+          // System 'k' should be Cargo (moved from h)
+          correctedSystem.title = 'k. Cargo';
+        }
+        else if (correctedSystem.code === 'h') {
+          // System 'h' gets Navigation Systems (was at k)
+          correctedSystem.title = 'h. Navigation Systems';
+        }
+        else if (correctedSystem.code === 'n') {
+          // System 'n' should be Crane & Deck Machinery (moved from j)
+          correctedSystem.title = 'n. Crane & Deck Machinery';
+        }
+        else if (correctedSystem.code === 'j') {
+          // System 'j' gets Hull & Structure (was at o)
+          correctedSystem.title = 'j. Hull & Structure';
+        }
+        else if (correctedSystem.code === 'o') {
+          // System 'o' should be Pollution Control (moved from n)
+          correctedSystem.title = 'o. Pollution Control';
         }
         
         // Only add if we haven't seen this code before (avoid duplicates)
@@ -5697,6 +5733,52 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
     }
   });
 
+
+  // ==== SEMM UPDATE ENDPOINTS ====
+  
+  // Update System Title
+  app.post('/api/dev/semm/update-system-title', sessionBridge, async (req, res) => {
+    try {
+      const { code, title } = req.body;
+      
+      if (!code || !title) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'System code and title are required' 
+        });
+      }
+      
+      // Check if user is admin
+      const user = req.user;
+      const isAdmin = user?.isAdmin || user?.role === 'admin';
+      
+      if (!isAdmin) {
+        return res.status(403).json({ 
+          success: false, 
+          error: 'Admin access required' 
+        });
+      }
+      
+      console.log(`📝 Updating system ${code} title to: ${title}`);
+      
+      // Update the system title in the database
+      // Note: Since we're overriding titles in the API response, 
+      // we'll store this in a system configurations table
+      await pool.query(`
+        INSERT INTO system_configurations (code, custom_title, updated_at)
+        VALUES ($1, $2, NOW())
+        ON CONFLICT (code) 
+        DO UPDATE SET custom_title = $2, updated_at = NOW()
+      `, [code, `${code}. ${title}`]);
+      
+      console.log(`✅ Successfully updated system ${code} title`);
+      res.json({ success: true, message: 'System title updated successfully' });
+      
+    } catch (error) {
+      console.error('❌ Error updating system title:', error);
+      res.status(500).json({ success: false, error: 'Failed to update system title' });
+    }
+  });
 
   // ==== SEMM REORDER ENDPOINTS ====
   

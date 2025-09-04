@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { ChevronRight, ChevronDown, Package, Settings, Building, Ship, Heart, Share2, RotateCcw, Edit3, Plus, GripVertical, ExternalLink, ArrowLeft } from 'lucide-react';
 import { SemmReorderModal } from '@/components/semm-reorder-modal';
+import { EditSystemModal } from '@/components/edit-system-modal';
 import { apiRequest } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -46,6 +47,14 @@ export default function MachineTreePage() {
   const { user, isAuthenticated } = useAuth();
   const isAdmin = user?.isAdmin || user?.role === 'admin';
   
+  // Edit modal state
+  const [editSystem, setEditSystem] = useState<{
+    isOpen: boolean;
+    system: { code: string; title: string } | null;
+  }>({
+    isOpen: false,
+    system: null
+  });
 
   // Reorder modal state
   const [reorderModal, setReorderModal] = useState<{
@@ -123,8 +132,16 @@ export default function MachineTreePage() {
 
   // Admin edit functions
   const handleEditSystem = (systemId: string) => {
-    console.log('Edit system:', systemId);
-    // TODO: Implement edit system modal
+    const system = categories.find((cat: any) => cat.id === systemId || cat.code === systemId);
+    if (system) {
+      setEditSystem({
+        isOpen: true,
+        system: {
+          code: system.code,
+          title: system.title
+        }
+      });
+    }
   };
 
   // Admin functions - reorder systems and equipment
@@ -445,6 +462,13 @@ export default function MachineTreePage() {
         title={reorderModal.type === 'systems' ? 'Systems' : 'Equipment'}
         items={reorderModal.items}
         onReorder={handleReorderSubmit}
+      />
+      
+      {/* Edit System Modal */}
+      <EditSystemModal
+        isOpen={editSystem.isOpen}
+        onClose={() => setEditSystem({ isOpen: false, system: null })}
+        system={editSystem.system}
       />
     </div>
   );
