@@ -538,10 +538,10 @@ class BackupMonitor {
       // Show comparison note about live vs backup differences
       const comparisonNote = {
         success: true,
-        note: "Parent database (Autumn Hat) has live WebSocket connections, real-time features, and active sessions that constantly change size. Backup database (Tiny Hat) is more static. Size differences are expected due to live activity.",
+        note: "Parent database (Autumn Hat) has live WebSocket connections, real-time features, and active sessions that constantly change size. Backup database (Tiny Bar) is more static. Size differences are expected due to live activity.",
         comparison: {
           parent_db_name: 'Autumn Hat (Live)',
-          backup_db_name: 'Tiny Hat (Backup)', 
+          backup_db_name: 'Tiny Bar (Backup)', 
           parent_total_size: {
             bytes: 51000000, // ~49MB estimated
             human: '~49 MB (Live + Active Sessions)'
