@@ -105,7 +105,7 @@ export default function AdminPanel() {
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState("analytics");
+  const [activeTab, setActiveTab] = useState<"analytics" | "metrics" | "backups" | "search" | "qbot" | "qoi" | "users">("analytics");
   const [qbotRules, setQbotRules] = useState<string>("");
   const [loadingRules, setLoadingRules] = useState(false);
   const [glossaryUpdating, setGlossaryUpdating] = useState(false);
