@@ -174,7 +174,7 @@ class BackupMonitor {
       await this.ensureBackupTable();
       
       // Update or insert metrics using raw SQL
-      await this.pool.query(`
+      await pool.query(`
         INSERT INTO database_backup_metrics (
           source_database, database_size, database_size_bytes, table_count, 
           record_count, connection_status, connection_latency, health_score, metadata, updated_at
@@ -204,7 +204,7 @@ class BackupMonitor {
 
   private async ensureBackupTable(): Promise<void> {
     try {
-      await this.pool.query(`
+      await pool.query(`
         CREATE TABLE IF NOT EXISTS database_backup_metrics (
           id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
           source_database TEXT NOT NULL UNIQUE,
@@ -236,7 +236,7 @@ class BackupMonitor {
   private async analyzeBackupHealth(): Promise<void> {
     try {
       // Get all metrics for analysis using raw SQL
-      const allMetricsResult = await this.pool.query(`
+      const allMetricsResult = await pool.query(`
         SELECT * FROM database_backup_metrics 
         ORDER BY updated_at DESC
       `);
@@ -259,7 +259,7 @@ class BackupMonitor {
         const backupGap = backupSize - devSize;
 
         // Update with gap analysis and real parent/backup database info
-        await this.pool.query(`
+        await pool.query(`
           UPDATE database_backup_metrics 
           SET 
             size_discrepancy = $1,
@@ -279,7 +279,7 @@ class BackupMonitor {
   private async createParentDatabaseEntries(): Promise<void> {
     try {
       // Parent Database (Autumn Hat) - 49MB+
-      await this.pool.query(`
+      await pool.query(`
         INSERT INTO database_backup_metrics (
           source_database, database_size, database_size_bytes, table_count, record_count,
           connection_status, connection_latency, health_score, metadata, updated_at
@@ -303,7 +303,7 @@ class BackupMonitor {
       })]);
 
       // Backup Database (Tiny Hat) - 32.88MB  
-      await this.pool.query(`
+      await pool.query(`
         INSERT INTO database_backup_metrics (
           source_database, database_size, database_size_bytes, table_count, record_count,
           connection_status, connection_latency, health_score, metadata, updated_at
@@ -335,7 +335,7 @@ class BackupMonitor {
    */
   private async saveErrorMetrics(errorMessage: string): Promise<void> {
     try {
-      await this.pool.query(`
+      await pool.query(`
         INSERT INTO database_backup_metrics (
           source_database, connection_status, health_score, 
           alerts_triggered, metadata, updated_at
@@ -367,7 +367,7 @@ class BackupMonitor {
    */
   async getBackupStatus(): Promise<any> {
     try {
-      const metricsResult = await this.pool.query(`
+      const metricsResult = await pool.query(`
         SELECT * FROM database_backup_metrics 
         ORDER BY updated_at DESC
       `);
