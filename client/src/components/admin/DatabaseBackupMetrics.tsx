@@ -252,7 +252,7 @@ export default function DatabaseBackupMetrics() {
               <div>
                 <h4 className="font-semibold text-red-700">Critical Size Discrepancy Detected</h4>
                 <p className="text-red-600 text-sm">
-                  Parent DB (Autumn Hat): ~49MB | Backup DB (Tiny Hat): ~32.88MB | Current Dev: {formatBytes(devSize)}
+                  Parent DB (Autumn Hat): ~49MB | Backup DB (Tiny Bar): ~32.88MB | Current Dev: {formatBytes(devSize)}
                 </p>
                 <p className="text-red-600 text-sm font-medium">
                   Gap: {formatBytes(parentGap)} missing from backup - READ-ONLY detection, backup needs sync
@@ -374,7 +374,7 @@ export default function DatabaseBackupMetrics() {
                   <tr className="border-b bg-gray-50">
                     <th className="text-left p-3 font-semibold">Table Name</th>
                     <th className="text-right p-3 font-semibold text-blue-600">Autumn Hat</th>
-                    <th className="text-right p-3 font-semibold text-green-600">Tiny Hat</th>
+                    <th className="text-right p-3 font-semibold text-green-600">Tiny Bar</th>
                     <th className="text-right p-3 font-semibold text-red-600">Difference</th>
                     <th className="text-center p-3 font-semibold">Status</th>
                   </tr>
@@ -437,7 +437,7 @@ export default function DatabaseBackupMetrics() {
                   <i className="fas fa-server mr-2 text-orange-600"></i>
                   {db.source_database === 'dev' ? 'Development Database' : 
                    db.source_database === 'autumn_hat' ? 'Parent Database (Autumn Hat)' :
-                   db.source_database === 'tiny_hat' ? 'Backup Database (Tiny Hat)' :
+                   db.source_database === 'tiny_hat' ? 'Backup Database (Tiny Bar)' :
                    db.source_database}
                 </CardTitle>
                 <div className="flex items-center space-x-2">
