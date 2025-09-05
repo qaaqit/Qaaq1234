@@ -44,32 +44,6 @@ html, body, #root {
   background-color: #f3f4f6;
 }
 
-/* Maritime port background for toast notifications */
-.bg-maritime-port {
-  background-image: url('/attached_assets/Gemini_Generated_Image_nqlckmnqlckmnqlc_1757094401939.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  position: relative;
-}
-
-.bg-maritime-port::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(194, 65, 12, 0.7), rgba(154, 52, 18, 0.8));
-  border-radius: inherit;
-  z-index: 1;
-}
-
-.bg-maritime-port > * {
-  position: relative;
-  z-index: 2;
-}
-
 :root {
   --background: hsl(0, 0%, 100%);
   --foreground: hsl(0, 0%, 10%);

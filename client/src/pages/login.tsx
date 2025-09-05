@@ -63,8 +63,7 @@ function JWTLoginForm() {
 
         toast({
           title: "Welcome back!",
-          description: "Ready to explore the maritime network",
-          variant: "maritime",
+          description: "Login successful",
         });
       } else {
         toast({
@@ -154,23 +153,6 @@ function JWTLoginForm() {
         ) : (
           "Sign In"
         )}
-      </Button>
-
-      {/* Test Maritime Toast Button */}
-      <Button
-        type="button"
-        variant="outline"
-        className="w-full h-12 border-2 border-orange-500 text-orange-700 hover:bg-orange-100 font-semibold"
-        onClick={() => {
-          console.log("🌅 Maritime toast button clicked!");
-          toast({
-            title: "🚢 Welcome aboard MV Qaaq!",
-            description: "This is our Gangway - connecting maritime professionals worldwide",
-            variant: "maritime",
-          });
-        }}
-      >
-        🌅 TEST MARITIME BACKGROUND
       </Button>
 
       {/* New User Signup Link */}

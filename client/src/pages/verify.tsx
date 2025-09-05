@@ -50,8 +50,7 @@ export default function Verify({ onSuccess }: VerifyProps) {
       setLocation("/");
       toast({
         title: "Verified! 🎉",
-        description: "Welcome to QaaqConnect - Your Maritime Professional Network",
-        variant: "maritime",
+        description: "Welcome to QaaqConnect",
       });
     } catch (error) {
       toast({
