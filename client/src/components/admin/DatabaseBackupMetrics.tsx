@@ -318,6 +318,14 @@ export default function DatabaseBackupMetrics() {
               <i className="fas fa-table mr-3 text-orange-600"></i>
               Database Table Comparison
             </CardTitle>
+            {tableComparison.note && (
+              <div className="bg-blue-50 border border-blue-200 rounded p-3 mt-3">
+                <div className="flex items-start">
+                  <i className="fas fa-info-circle text-blue-500 mr-2 mt-1"></i>
+                  <p className="text-sm text-blue-700">{tableComparison.note}</p>
+                </div>
+              </div>
+            )}
             <div className="grid grid-cols-3 gap-4 text-sm">
               <div className="text-center">
                 <div className="font-semibold text-lg text-blue-600">
