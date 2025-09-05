@@ -103,9 +103,39 @@ export default function DatabaseBackupMetrics() {
     }
   });
 
+  const [syncing, setSyncing] = useState(false);
+  const [showSyncConfirm, setShowSyncConfirm] = useState(false);
+
+  const syncBackupMutation = useMutation({
+    mutationFn: () => apiRequest('/api/admin/backup-sync', 'POST'),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/backup-metrics'] });
+      toast({
+        title: "Backup Sync Complete",
+        description: result.message || "Backup database synchronized successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Sync Failed",
+        description: error instanceof Error ? error.message : "Failed to synchronize backup database",
+        variant: "destructive",
+      });
+    },
+    onSettled: () => {
+      setSyncing(false);
+      setShowSyncConfirm(false);
+    }
+  });
+
   const handleForceCheck = async () => {
     setForceChecking(true);
     await forceCheckMutation.mutateAsync();
+  };
+
+  const handleSyncBackup = () => {
+    setSyncing(true);
+    syncBackupMutation.mutate();
   };
 
   if (isLoading) {
@@ -186,6 +216,27 @@ export default function DatabaseBackupMetrics() {
               </>
             )}
           </Button>
+          
+          {/* One-Click Sync Button - Only show when gap detected */}
+          {parentGap > 0 && (
+            <Button
+              onClick={() => setShowSyncConfirm(true)}
+              disabled={syncing}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              {syncing ? (
+                <>
+                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                  Syncing...
+                </>
+              ) : (
+                <>
+                  <i className="fas fa-sync-alt mr-2"></i>
+                  Sync Backup
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -359,6 +410,45 @@ export default function DatabaseBackupMetrics() {
             </Button>
           </CardContent>
         </Card>
+      )}
+
+      {/* Sync Confirmation Dialog */}
+      {showSyncConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md mx-4">
+            <div className="flex items-center mb-4">
+              <i className="fas fa-exclamation-triangle text-yellow-500 text-2xl mr-3"></i>
+              <h3 className="text-lg font-semibold">Confirm Backup Synchronization</h3>
+            </div>
+            <p className="text-gray-600 mb-4">
+              This will copy missing data from the parent database (Autumn Hat) to the backup database (Tiny Hat). 
+              This action will write to the backup database but will NOT modify the parent database.
+            </p>
+            <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mb-4">
+              <p className="text-sm text-yellow-800">
+                <strong>Gap to sync:</strong> {formatBytes(parentGap)}<br/>
+                <strong>Safety:</strong> Parent database remains READ-ONLY
+              </p>
+            </div>
+            <div className="flex space-x-3">
+              <Button
+                onClick={handleSyncBackup}
+                disabled={syncing}
+                className="bg-green-600 hover:bg-green-700 text-white flex-1"
+              >
+                {syncing ? 'Syncing...' : 'Yes, Sync Backup'}
+              </Button>
+              <Button
+                onClick={() => setShowSyncConfirm(false)}
+                variant="outline"
+                disabled={syncing}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

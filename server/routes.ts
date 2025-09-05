@@ -10511,6 +10511,22 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       });
     }
   });
+
+  // One-Click Backup Synchronization (Admin only)
+  app.post('/api/admin/backup-sync', authenticateToken, isAdmin, async (req, res) => {
+    try {
+      console.log('🔄 Admin initiated one-click backup synchronization');
+      const result = await backupMonitor.synchronizeBackup();
+      res.json(result);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Failed to synchronize backup:', errorMessage);
+      res.status(500).json({
+        success: false,
+        message: `Failed to synchronize backup: ${errorMessage}`
+      });
+    }
+  });
   
   // Database Health Status (Admin only)
   app.get('/api/admin/db-health', authenticateToken, isAdmin, async (req, res) => {

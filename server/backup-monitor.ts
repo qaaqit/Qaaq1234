@@ -367,6 +367,170 @@ class BackupMonitor {
   }
 
   /**
+   * Synchronize backup database with parent database
+   * Copies missing data from parent to backup (ONE-CLICK SYNC)
+   */
+  async synchronizeBackup(): Promise<{ success: boolean; message: string; syncDetails?: any }> {
+    try {
+      console.log('🔄 Starting one-click backup synchronization...');
+      
+      // Get parent and backup database connection strings
+      const parentDbUrl = 'postgresql://neondb_owner:4wQCPzKJ4zJx@ep-autumn-hat-a27gd1cd.eu-central-1.aws.neon.tech/neondb?sslmode=require';
+      const backupDbUrl = 'postgresql://neondb_owner:pEFhR2X0LdQc@ep-tiny-hat-a2g82fiy.eu-central-1.aws.neon.tech/neondb?sslmode=require';
+      
+      // Connect to both databases
+      const parentPool = new Pool({ connectionString: parentDbUrl });
+      const backupPool = new Pool({ connectionString: backupDbUrl });
+      
+      let parentClient, backupClient;
+      const syncResults = {
+        tablesAnalyzed: 0,
+        tablesCreated: 0,
+        recordsCopied: 0,
+        sizeSynced: 0,
+        errors: [] as string[]
+      };
+      
+      try {
+        parentClient = await parentPool.connect();
+        backupClient = await backupPool.connect();
+        
+        console.log('🔍 Analyzing tables in parent database...');
+        
+        // Get all tables from parent database
+        const parentTablesResult = await parentClient.query(`
+          SELECT 
+            table_name,
+            pg_total_relation_size(quote_ident(table_name)) as table_size
+          FROM information_schema.tables 
+          WHERE table_schema = 'public' 
+          AND table_type = 'BASE TABLE'
+          ORDER BY table_size DESC
+        `);
+        
+        // Get existing tables in backup database
+        const backupTablesResult = await backupClient.query(`
+          SELECT table_name 
+          FROM information_schema.tables 
+          WHERE table_schema = 'public' 
+          AND table_type = 'BASE TABLE'
+        `);
+        
+        const parentTables = parentTablesResult.rows;
+        const backupTables = new Set(backupTablesResult.rows.map(row => row.table_name));
+        
+        console.log(`📊 Found ${parentTables.length} tables in parent, ${backupTables.size} in backup`);
+        
+        // Sync each missing table
+        for (const table of parentTables) {
+          syncResults.tablesAnalyzed++;
+          
+          if (!backupTables.has(table.table_name)) {
+            try {
+              console.log(`📝 Creating table: ${table.table_name}`);
+              
+              // Get table structure from parent
+              const createTableResult = await parentClient.query(`
+                SELECT pg_get_tabledef('${table.table_name}'::regclass) as table_definition
+              `);
+              
+              // Create table in backup (if pg_get_tabledef fails, use LIKE structure)
+              let createStatement;
+              if (createTableResult.rows.length > 0) {
+                createStatement = createTableResult.rows[0].table_definition;
+              } else {
+                createStatement = `CREATE TABLE ${table.table_name} (LIKE ${table.table_name} INCLUDING ALL)`;
+              }
+              
+              await backupClient.query(`DROP TABLE IF EXISTS ${table.table_name}`);
+              await backupClient.query(createStatement);
+              
+              // Copy data from parent to backup
+              const copyResult = await backupClient.query(`
+                INSERT INTO ${table.table_name} 
+                SELECT * FROM dblink(
+                  '${parentDbUrl}',
+                  'SELECT * FROM ${table.table_name}'
+                ) AS t(${await this.getTableColumns(parentClient, table.table_name)})
+              `);
+              
+              syncResults.tablesCreated++;
+              syncResults.recordsCopied += copyResult.rowCount || 0;
+              syncResults.sizeSynced += parseInt(table.table_size) || 0;
+              
+              console.log(`✅ Synced table ${table.table_name}: ${copyResult.rowCount} records`);
+              
+            } catch (tableError) {
+              console.error(`❌ Failed to sync table ${table.table_name}:`, tableError);
+              const errorMsg = tableError instanceof Error ? tableError.message : 'Unknown error';
+              syncResults.errors.push(`${table.table_name}: ${errorMsg}`);
+            }
+          }
+          
+          // Add small delay to prevent overwhelming the connections
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        // Update backup metrics after sync
+        await this.performBackupCheck();
+        
+        const message = `✅ Backup sync completed! Created ${syncResults.tablesCreated} tables, copied ${syncResults.recordsCopied} records, synced ${this.formatBytes(syncResults.sizeSynced)}`;
+        
+        console.log(message);
+        return {
+          success: true,
+          message,
+          syncDetails: syncResults
+        };
+        
+      } finally {
+        if (parentClient) parentClient.release();
+        if (backupClient) backupClient.release();
+        await parentPool.end();
+        await backupPool.end();
+      }
+      
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown sync error';
+      console.error('❌ Backup synchronization failed:', errorMessage);
+      
+      return {
+        success: false,
+        message: `❌ Sync failed: ${errorMessage}`
+      };
+    }
+  }
+  
+  /**
+   * Get table columns for dblink query
+   */
+  private async getTableColumns(client: any, tableName: string): Promise<string> {
+    try {
+      const result = await client.query(`
+        SELECT column_name, data_type 
+        FROM information_schema.columns 
+        WHERE table_name = $1 
+        ORDER BY ordinal_position
+      `, [tableName]);
+      
+      return result.rows.map((row: any) => `${row.column_name} ${row.data_type}`).join(', ');
+    } catch (error) {
+      return '*'; // Fallback to all columns
+    }
+  }
+  
+  /**
+   * Format bytes to human readable size
+   */
+  private formatBytes(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  /**
    * Get current backup status
    */
   async getBackupStatus(): Promise<any> {
