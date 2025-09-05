@@ -13,6 +13,7 @@ import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, LineChart, Line } fro
 import { FileText } from "lucide-react";
 import AdminAnalytics from "@/components/admin/AdminAnalytics";
 import DashboardAnalytics from "@/components/admin/DashboardAnalytics";
+import DatabaseBackupMetrics from "@/components/admin/DatabaseBackupMetrics";
 import SearchAnalyticsPanel from "@/components/search-analytics-panel";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -407,8 +408,19 @@ export default function AdminPanel() {
               </button>
             </div>
             
-            {/* Second Row: Search Analytics, QOI, User Management */}
-            <div className="grid grid-cols-3 gap-3">
+            {/* Second Row: DB Backups, Search Analytics, QOI, User Management */}
+            <div className="grid grid-cols-4 gap-3">
+              <button
+                onClick={() => setActiveTab("backups")}
+                className={`group flex items-center justify-center px-4 py-4 text-sm font-medium rounded-xl transition-all duration-300 transform hover:scale-105 ${
+                  activeTab === "backups"
+                    ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30 scale-105"
+                    : "bg-white/80 backdrop-blur-sm text-gray-700 border border-red-200/50 hover:bg-red-50/80 hover:border-red-300 shadow-md hover:shadow-lg"
+                }`}
+              >
+                <i className={`fas fa-database mr-2 ${activeTab === "backups" ? "animate-pulse" : "group-hover:animate-bounce"}`}></i>
+                DB Backups
+              </button>
               <button
                 onClick={() => setActiveTab("search")}
                 className={`group flex items-center justify-center px-4 py-4 text-sm font-medium rounded-xl transition-all duration-300 transform hover:scale-105 ${
@@ -715,6 +727,11 @@ export default function AdminPanel() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* Database Backup Metrics Tab */}
+          <TabsContent value="backups" className="space-y-6">
+            <DatabaseBackupMetrics />
           </TabsContent>
 
           {/* Search Analytics Tab */}

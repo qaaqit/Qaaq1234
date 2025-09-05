@@ -968,6 +968,40 @@ export type Payment = typeof payments.$inferSelect;
 export type InsertUserSubscriptionStatus = z.infer<typeof insertUserSubscriptionStatusSchema>;
 export type UserSubscriptionStatus = typeof userSubscriptionStatus.$inferSelect;
 
+// Database backup monitoring table
+export const databaseBackupMetrics = pgTable("database_backup_metrics", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sourceDatabase: text("source_database").notNull(), // 'autumn_hat', 'tiny_hat', 'dev'
+  databaseSize: text("database_size"), // Human readable size (e.g., "49 MB")
+  databaseSizeBytes: integer("database_size_bytes"), // Exact size in bytes
+  tableCount: integer("table_count").default(0),
+  recordCount: integer("record_count").default(0), // Total records across all tables
+  connectionStatus: text("connection_status").notNull().default("unknown"), // 'healthy', 'degraded', 'critical', 'offline'
+  connectionLatency: integer("connection_latency"), // Connection time in ms
+  lastSuccessfulBackup: timestamp("last_successful_backup"),
+  backupGapDetected: boolean("backup_gap_detected").default(false),
+  missingTables: jsonb("missing_tables").$type<string[]>().default([]), // Tables not synced
+  sizeDiscrepancy: integer("size_discrepancy"), // Size difference from parent in bytes
+  healthScore: integer("health_score").default(100), // 0-100 health score
+  alertsTriggered: jsonb("alerts_triggered").$type<{type: string, message: string, triggeredAt: string}[]>().default([]),
+  metadata: jsonb("metadata").$type<{
+    topTables?: {name: string, size: string, records: number}[];
+    lastErrors?: string[];
+    backupSpeed?: number; // MB/s
+    [key: string]: any;
+  }>().default({}),
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`),
+});
+
 // Types for system configs
 export type InsertSystemConfig = z.infer<typeof insertSystemConfigSchema>;
 export type SystemConfig = typeof systemConfigs.$inferSelect;
+
+// Insert schemas for backup metrics
+export const insertDatabaseBackupMetricsSchema = createInsertSchema(databaseBackupMetrics)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+
+// Types for backup metrics
+export type InsertDatabaseBackupMetrics = z.infer<typeof insertDatabaseBackupMetricsSchema>;
+export type DatabaseBackupMetrics = typeof databaseBackupMetrics.$inferSelect;

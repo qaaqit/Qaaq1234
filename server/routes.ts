@@ -10469,6 +10469,49 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
 
   // ==== DATABASE MONITORING & SYNC MANAGEMENT ENDPOINTS ====
   
+  // Import backup monitor
+  const { backupMonitor } = await import('./backup-monitor');
+  
+  // Start backup monitoring service
+  backupMonitor.start();
+  
+  // Database Backup Metrics (Admin only)
+  app.get('/api/admin/backup-metrics', authenticateToken, isAdmin, async (req, res) => {
+    try {
+      const status = await backupMonitor.getBackupStatus();
+      res.json({
+        success: true,
+        ...status
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Failed to get backup metrics:', errorMessage);
+      res.status(500).json({
+        success: false,
+        error: errorMessage
+      });
+    }
+  });
+
+  // Force Backup Check (Admin only)
+  app.post('/api/admin/backup-check', authenticateToken, isAdmin, async (req, res) => {
+    try {
+      const status = await backupMonitor.forceCheck();
+      res.json({
+        success: true,
+        message: 'Backup check completed',
+        ...status
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Failed to force backup check:', errorMessage);
+      res.status(500).json({
+        success: false,
+        error: errorMessage
+      });
+    }
+  });
+  
   // Database Health Status (Admin only)
   app.get('/api/admin/db-health', authenticateToken, isAdmin, async (req, res) => {
     try {
