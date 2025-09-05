@@ -109,39 +109,51 @@ export default function DatabaseBackupMetrics() {
     }
   });
 
-  const [syncing, setSyncing] = useState(false);
-  const [showSyncConfirm, setShowSyncConfirm] = useState(false);
-
-  const syncBackupMutation = useMutation({
-    mutationFn: () => apiRequest('/api/admin/backup-sync', 'POST'),
-    onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/backup-metrics'] });
-      toast({
-        title: "Backup Sync Complete",
-        description: result.message || "Backup database synchronized successfully",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Sync Failed",
-        description: error instanceof Error ? error.message : "Failed to synchronize backup database",
-        variant: "destructive",
-      });
-    },
-    onSettled: () => {
-      setSyncing(false);
-      setShowSyncConfirm(false);
+  // Calculate next sync time (assuming daily sync at 2 AM UTC)
+  const getNextSyncTime = () => {
+    const now = new Date();
+    const nextSync = new Date();
+    nextSync.setUTCHours(2, 0, 0, 0); // 2 AM UTC
+    
+    // If it's past 2 AM today, set for tomorrow
+    if (now.getUTCHours() >= 2) {
+      nextSync.setDate(nextSync.getDate() + 1);
     }
-  });
+    
+    return nextSync;
+  };
+
+  const [nextSyncTime] = useState(getNextSyncTime());
+  const [timeUntilSync, setTimeUntilSync] = useState('');
+
+  useEffect(() => {
+    const updateCountdown = () => {
+      const now = new Date();
+      const timeDiff = nextSyncTime.getTime() - now.getTime();
+      
+      if (timeDiff <= 0) {
+        setTimeUntilSync('Sync in progress...');
+        return;
+      }
+
+      const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+      const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+      
+      setTimeUntilSync(`${hours}h ${minutes}m ${seconds}s`);
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    
+    return () => clearInterval(interval);
+  }, [nextSyncTime]);
 
   const handleForceCheck = async () => {
     setForceChecking(true);
     await forceCheckMutation.mutateAsync();
-  };
-
-  const handleSyncBackup = () => {
-    setSyncing(true);
-    syncBackupMutation.mutate();
+    // Also refresh the table comparison data
+    queryClient.invalidateQueries({ queryKey: ['/api/admin/backup-comparison'] });
   };
 
   if (isLoading) {
@@ -175,7 +187,12 @@ export default function DatabaseBackupMetrics() {
     );
   }
 
-  const { databases = [], overallHealth, isActive, lastCheck } = backupMetrics;
+  const { databases: allDatabases = [], overallHealth, isActive, lastCheck } = backupMetrics;
+  
+  // Filter out development database, only show parent and backup
+  const databases = allDatabases.filter(db => 
+    db.source_database !== 'dev' && db.source_database !== 'development'
+  );
 
   // Calculate size discrepancy summary
   const autumnHatSize = 51380224; // 49MB simulated
@@ -223,26 +240,6 @@ export default function DatabaseBackupMetrics() {
             )}
           </Button>
           
-          {/* One-Click Sync Button - Only show when gap detected */}
-          {parentGap > 0 && (
-            <Button
-              onClick={() => setShowSyncConfirm(true)}
-              disabled={syncing}
-              className="bg-green-600 hover:bg-green-700 text-white"
-            >
-              {syncing ? (
-                <>
-                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                  Syncing...
-                </>
-              ) : (
-                <>
-                  <i className="fas fa-sync-alt mr-2"></i>
-                  Sync Backup
-                </>
-              )}
-            </Button>
-          )}
         </div>
       </div>
 
@@ -286,12 +283,26 @@ export default function DatabaseBackupMetrics() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Last Check</p>
+                <p className="text-sm text-gray-600">Last Backup Sync</p>
                 <p className="text-sm font-medium text-green-600">
                   {lastCheck ? formatDate(lastCheck) : 'Never'}
                 </p>
               </div>
               <i className="fas fa-clock text-green-500 text-2xl"></i>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-white to-blue-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Next Sync In</p>
+                <p className="text-sm font-medium text-blue-600">
+                  {timeUntilSync || 'Calculating...'}
+                </p>
+              </div>
+              <i className="fas fa-sync-alt text-blue-500 text-2xl"></i>
             </div>
           </CardContent>
         </Card>
@@ -525,44 +536,6 @@ export default function DatabaseBackupMetrics() {
         </Card>
       )}
 
-      {/* Sync Confirmation Dialog */}
-      {showSyncConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md mx-4">
-            <div className="flex items-center mb-4">
-              <i className="fas fa-exclamation-triangle text-yellow-500 text-2xl mr-3"></i>
-              <h3 className="text-lg font-semibold">Confirm Backup Synchronization</h3>
-            </div>
-            <p className="text-gray-600 mb-4">
-              This will copy missing data from the parent database (Autumn Hat) to the backup database (Tiny Hat). 
-              This action will write to the backup database but will NOT modify the parent database.
-            </p>
-            <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mb-4">
-              <p className="text-sm text-yellow-800">
-                <strong>Gap to sync:</strong> {formatBytes(parentGap)}<br/>
-                <strong>Safety:</strong> Parent database remains READ-ONLY
-              </p>
-            </div>
-            <div className="flex space-x-3">
-              <Button
-                onClick={handleSyncBackup}
-                disabled={syncing}
-                className="bg-green-600 hover:bg-green-700 text-white flex-1"
-              >
-                {syncing ? 'Syncing...' : 'Yes, Sync Backup'}
-              </Button>
-              <Button
-                onClick={() => setShowSyncConfirm(false)}
-                variant="outline"
-                disabled={syncing}
-                className="flex-1"
-              >
-                Cancel
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
