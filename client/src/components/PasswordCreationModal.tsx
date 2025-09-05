@@ -46,8 +46,8 @@ export function PasswordCreationModal({ isOpen, onClose, userId, isRenewal = fal
         title: isRenewal ? "Password Renewed" : "Password Created",
         description: isRenewal 
           ? "Your password has been successfully renewed for the next 12 months."
-          : "Your secure password has been created successfully.",
-        variant: "default",
+          : "Your secure password has been created successfully. Welcome aboard!",
+        variant: "maritime",
       });
       onClose();
       setPassword("");

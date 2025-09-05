@@ -63,7 +63,8 @@ function JWTLoginForm() {
 
         toast({
           title: "Welcome back!",
-          description: "Login successful",
+          description: "Ready to explore the maritime network",
+          variant: "maritime",
         });
       } else {
         toast({
