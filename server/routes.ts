@@ -10527,6 +10527,21 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       });
     }
   });
+
+  // Database Table Comparison (Admin only)
+  app.get('/api/admin/backup-comparison', authenticateToken, isAdmin, async (req, res) => {
+    try {
+      const comparison = await backupMonitor.getTableComparison();
+      res.json(comparison);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Failed to get table comparison:', errorMessage);
+      res.status(500).json({
+        success: false,
+        error: errorMessage
+      });
+    }
+  });
   
   // Database Health Status (Admin only)
   app.get('/api/admin/db-health', authenticateToken, isAdmin, async (req, res) => {

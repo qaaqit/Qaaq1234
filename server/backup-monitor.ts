@@ -531,6 +531,148 @@ class BackupMonitor {
   }
 
   /**
+   * Get detailed table comparison between parent and backup databases
+   */
+  async getTableComparison(): Promise<any> {
+    try {
+      // Connect to both databases for table comparison
+      const parentDbUrl = 'postgresql://neondb_owner:4wQCPzKJ4zJx@ep-autumn-hat-a27gd1cd.eu-central-1.aws.neon.tech/neondb?sslmode=require';
+      const backupDbUrl = 'postgresql://neondb_owner:pEFhR2X0LdQc@ep-tiny-hat-a2g82fiy.eu-central-1.aws.neon.tech/neondb?sslmode=require';
+      
+      const parentPool = new Pool({ connectionString: parentDbUrl });
+      const backupPool = new Pool({ connectionString: backupDbUrl });
+      
+      let parentClient, backupClient;
+      
+      try {
+        parentClient = await parentPool.connect();
+        backupClient = await backupPool.connect();
+        
+        // Get all tables with sizes from parent database (Autumn Hat)
+        const parentTablesResult = await parentClient.query(`
+          SELECT 
+            schemaname,
+            tablename as table_name,
+            pg_total_relation_size(schemaname||'.'||tablename) as table_size_bytes,
+            pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as table_size_human
+          FROM pg_tables 
+          WHERE schemaname = 'public'
+          ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC
+        `);
+        
+        // Get all tables with sizes from backup database (Tiny Hat)
+        const backupTablesResult = await backupClient.query(`
+          SELECT 
+            schemaname,
+            tablename as table_name,
+            pg_total_relation_size(schemaname||'.'||tablename) as table_size_bytes,
+            pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as table_size_human
+          FROM pg_tables 
+          WHERE schemaname = 'public'
+          ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC
+        `);
+        
+        // Get database sizes
+        const parentSizeResult = await parentClient.query(`
+          SELECT pg_database_size(current_database()) as db_size_bytes,
+                 pg_size_pretty(pg_database_size(current_database())) as db_size_human
+        `);
+        
+        const backupSizeResult = await backupClient.query(`
+          SELECT pg_database_size(current_database()) as db_size_bytes,
+                 pg_size_pretty(pg_database_size(current_database())) as db_size_human
+        `);
+        
+        // Create lookup maps
+        const parentTables = new Map();
+        const backupTables = new Map();
+        
+        parentTablesResult.rows.forEach(table => {
+          parentTables.set(table.table_name, {
+            size_bytes: parseInt(table.table_size_bytes),
+            size_human: table.table_size_human
+          });
+        });
+        
+        backupTablesResult.rows.forEach(table => {
+          backupTables.set(table.table_name, {
+            size_bytes: parseInt(table.table_size_bytes),
+            size_human: table.table_size_human
+          });
+        });
+        
+        // Get all unique table names
+        const allTableNames = new Set([
+          ...parentTables.keys(),
+          ...backupTables.keys()
+        ]);
+        
+        // Build comparison data
+        const tableComparisons = Array.from(allTableNames).map(tableName => {
+          const parentData = parentTables.get(tableName) || { size_bytes: 0, size_human: '0 bytes' };
+          const backupData = backupTables.get(tableName) || { size_bytes: 0, size_human: '0 bytes' };
+          const difference = parentData.size_bytes - backupData.size_bytes;
+          
+          return {
+            table_name: tableName,
+            parent_size_bytes: parentData.size_bytes,
+            parent_size_human: parentData.size_human,
+            backup_size_bytes: backupData.size_bytes,
+            backup_size_human: backupData.size_human,
+            difference_bytes: difference,
+            difference_human: this.formatBytes(Math.abs(difference)),
+            status: difference > 0 ? 'Missing in backup' : difference < 0 ? 'Extra in backup' : 'Synchronized',
+            exists_in_parent: parentTables.has(tableName),
+            exists_in_backup: backupTables.has(tableName)
+          };
+        }).sort((a, b) => b.difference_bytes - a.difference_bytes); // Sort by largest differences first
+        
+        const parentTotalSize = parseInt(parentSizeResult.rows[0].db_size_bytes);
+        const backupTotalSize = parseInt(backupSizeResult.rows[0].db_size_bytes);
+        const totalDifference = parentTotalSize - backupTotalSize;
+        
+        return {
+          success: true,
+          comparison: {
+            parent_db_name: 'Autumn Hat',
+            backup_db_name: 'Tiny Hat',
+            parent_total_size: {
+              bytes: parentTotalSize,
+              human: parentSizeResult.rows[0].db_size_human
+            },
+            backup_total_size: {
+              bytes: backupTotalSize,
+              human: backupSizeResult.rows[0].db_size_human
+            },
+            total_difference: {
+              bytes: totalDifference,
+              human: this.formatBytes(totalDifference)
+            },
+            tables: tableComparisons,
+            missing_tables_count: tableComparisons.filter(t => !t.exists_in_backup).length,
+            total_tables_parent: parentTables.size,
+            total_tables_backup: backupTables.size
+          }
+        };
+        
+      } finally {
+        if (parentClient) parentClient.release();
+        if (backupClient) backupClient.release();
+        await parentPool.end();
+        await backupPool.end();
+      }
+      
+    } catch (error) {
+      console.error('❌ Failed to get table comparison:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        comparison: null
+      };
+    }
+  }
+
+  /**
    * Get current backup status
    */
   async getBackupStatus(): Promise<any> {

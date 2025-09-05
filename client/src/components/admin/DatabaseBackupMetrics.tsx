@@ -81,6 +81,12 @@ export default function DatabaseBackupMetrics() {
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
+  // Get table comparison data
+  const { data: tableComparison, isLoading: comparisonLoading } = useQuery({
+    queryKey: ['/api/admin/backup-comparison'],
+    refetchInterval: 60000, // Refresh every minute
+  });
+
   // Force backup check mutation
   const forceCheckMutation = useMutation({
     mutationFn: () => apiRequest('/api/admin/backup-check', 'POST'),
@@ -304,6 +310,105 @@ export default function DatabaseBackupMetrics() {
       </div>
 
       {/* Database Details */}
+      {/* Table Comparison Spreadsheet */}
+      {tableComparison?.success && tableComparison.comparison && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <i className="fas fa-table mr-3 text-orange-600"></i>
+              Database Table Comparison
+            </CardTitle>
+            <div className="grid grid-cols-3 gap-4 text-sm">
+              <div className="text-center">
+                <div className="font-semibold text-lg text-blue-600">
+                  {tableComparison.comparison.parent_db_name}
+                </div>
+                <div className="text-gray-600">
+                  {tableComparison.comparison.parent_total_size.human} 
+                  ({tableComparison.comparison.total_tables_parent} tables)
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="font-semibold text-lg text-green-600">
+                  {tableComparison.comparison.backup_db_name}
+                </div>
+                <div className="text-gray-600">
+                  {tableComparison.comparison.backup_total_size.human}
+                  ({tableComparison.comparison.total_tables_backup} tables)
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="font-semibold text-lg text-red-600">
+                  Difference
+                </div>
+                <div className="text-gray-600">
+                  {tableComparison.comparison.total_difference.human}
+                  ({tableComparison.comparison.missing_tables_count} missing)
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b bg-gray-50">
+                    <th className="text-left p-3 font-semibold">Table Name</th>
+                    <th className="text-right p-3 font-semibold text-blue-600">Autumn Hat</th>
+                    <th className="text-right p-3 font-semibold text-green-600">Tiny Hat</th>
+                    <th className="text-right p-3 font-semibold text-red-600">Difference</th>
+                    <th className="text-center p-3 font-semibold">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tableComparison.comparison.tables.slice(0, 20).map((table, index) => (
+                    <tr key={table.table_name} className={`border-b hover:bg-gray-50 ${
+                      !table.exists_in_backup ? 'bg-red-50' : 
+                      table.difference_bytes > 0 ? 'bg-yellow-50' : ''
+                    }`}>
+                      <td className="p-3 font-medium">{table.table_name}</td>
+                      <td className="p-3 text-right text-blue-600">
+                        {table.exists_in_parent ? table.parent_size_human : '-'}
+                      </td>
+                      <td className="p-3 text-right text-green-600">
+                        {table.exists_in_backup ? table.backup_size_human : '-'}
+                      </td>
+                      <td className="p-3 text-right text-red-600 font-medium">
+                        {table.difference_bytes !== 0 ? table.difference_human : '-'}
+                      </td>
+                      <td className="p-3 text-center">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          table.status === 'Missing in backup' ? 'bg-red-100 text-red-800' :
+                          table.status === 'Extra in backup' ? 'bg-blue-100 text-blue-800' :
+                          'bg-green-100 text-green-800'
+                        }`}>
+                          {table.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {tableComparison.comparison.tables.length > 20 && (
+                <div className="text-center py-3 text-gray-500 text-sm">
+                  Showing top 20 tables with differences. Total: {tableComparison.comparison.tables.length} tables
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Loading State for Comparison */}
+      {comparisonLoading && (
+        <Card className="mb-6">
+          <CardContent className="p-8 text-center">
+            <div className="animate-spin w-8 h-8 border-4 border-orange-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading table comparison...</p>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid grid-cols-1 gap-6">
         {databases.map((db) => (
           <Card key={db.source_database} className="hover:shadow-lg transition-shadow">
