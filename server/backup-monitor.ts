@@ -5,7 +5,9 @@ import { sql } from 'drizzle-orm';
 
 /**
  * Database Backup Monitoring Service
- * Monitors multiple database instances and detects backup gaps
+ * READ-ONLY monitoring for parent databases - only detects gaps
+ * Never modifies parent database or backup databases
+ * Purpose: Gap detection and integrity verification only
  */
 class BackupMonitor {
   private monitoringInterval: NodeJS.Timeout | null = null;
@@ -56,19 +58,20 @@ class BackupMonitor {
 
   /**
    * Perform comprehensive backup check across all database instances
+   * READ-ONLY monitoring - never modifies parent databases
    */
   private async performBackupCheck(): Promise<void> {
     try {
-      console.log('🔍 Performing backup integrity check...');
+      console.log('🔍 Performing READ-ONLY backup integrity check...');
       
-      // Check current development database
+      // Check current development database (READ-ONLY)
       const devMetrics = await this.checkDatabaseMetrics('dev', pool);
       await this.saveMetrics(devMetrics);
 
       // Calculate health scores and detect gaps
       await this.analyzeBackupHealth();
       
-      console.log('✅ Backup check completed successfully');
+      console.log('✅ READ-ONLY backup gap scan completed successfully');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('❌ Backup check failed:', errorMessage);
@@ -79,7 +82,8 @@ class BackupMonitor {
   }
 
   /**
-   * Check database metrics for a specific instance
+   * Check database metrics for a specific instance (READ-ONLY)
+   * Never writes to or modifies any database
    */
   private async checkDatabaseMetrics(dbName: string, dbPool: Pool): Promise<any> {
     const startTime = Date.now();

@@ -87,14 +87,14 @@ export default function DatabaseBackupMetrics() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/backup-metrics'] });
       toast({
-        title: "Backup Check Complete",
-        description: "Database backup integrity check completed successfully",
+        title: "Gap Scan Complete",
+        description: "READ-ONLY database gap detection completed successfully",
       });
     },
     onError: (error) => {
       toast({
-        title: "Check Failed",
-        description: error instanceof Error ? error.message : "Failed to perform backup check",
+        title: "Scan Failed",
+        description: error instanceof Error ? error.message : "Failed to perform gap detection scan",
         variant: "destructive",
       });
     },
@@ -159,7 +159,7 @@ export default function DatabaseBackupMetrics() {
             Database Backup Metrics
           </h2>
           <p className="text-gray-600 mt-1">
-            Monitor database sizes, backup integrity, and sync gaps across all instances
+            READ-ONLY monitoring: Detect backup gaps and verify integrity without modifying parent databases
           </p>
         </div>
         <div className="flex items-center space-x-4">
@@ -177,12 +177,12 @@ export default function DatabaseBackupMetrics() {
             {forceChecking ? (
               <>
                 <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                Checking...
+                Scanning...
               </>
             ) : (
               <>
-                <i className="fas fa-sync-alt mr-2"></i>
-                Force Check
+                <i className="fas fa-search mr-2"></i>
+                Scan Gaps
               </>
             )}
           </Button>
@@ -201,7 +201,7 @@ export default function DatabaseBackupMetrics() {
                   Parent DB (Autumn Hat): ~49MB | Backup DB (Tiny Hat): ~32.88MB | Current Dev: {formatBytes(devSize)}
                 </p>
                 <p className="text-red-600 text-sm font-medium">
-                  Gap: {formatBytes(parentGap)} missing from backup - this indicates incomplete data sync
+                  Gap: {formatBytes(parentGap)} missing from backup - READ-ONLY detection, backup needs sync
                 </p>
               </div>
             </div>
@@ -351,11 +351,11 @@ export default function DatabaseBackupMetrics() {
             <i className="fas fa-database text-gray-400 text-4xl mb-4"></i>
             <h3 className="text-lg font-semibold text-gray-700 mb-2">No Database Metrics Available</h3>
             <p className="text-gray-600 mb-4">
-              The backup monitoring service hasn't collected any data yet.
+              The READ-ONLY gap detection service hasn't collected any data yet.
             </p>
             <Button onClick={handleForceCheck} disabled={forceChecking}>
-              <i className="fas fa-sync-alt mr-2"></i>
-              Run Initial Check
+              <i className="fas fa-search mr-2"></i>
+              Run Initial Gap Scan
             </Button>
           </CardContent>
         </Card>
