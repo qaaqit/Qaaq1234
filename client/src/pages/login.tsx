@@ -156,6 +156,20 @@ function JWTLoginForm() {
         )}
       </Button>
 
+      {/* Test Maritime Toast Button */}
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full h-10 border-orange-300 text-orange-600 hover:bg-orange-50"
+        onClick={() => toast({
+          title: "🚢 Welcome aboard MV Qaaq!",
+          description: "This is our Gangway - connecting maritime professionals worldwide",
+          variant: "maritime",
+        })}
+      >
+        🌅 Preview Maritime Toast
+      </Button>
+
       {/* New User Signup Link */}
       <div className="text-center">
         <p className="text-sm text-gray-600">
