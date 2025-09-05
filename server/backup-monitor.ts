@@ -543,16 +543,16 @@ class BackupMonitor {
           parent_db_name: 'Autumn Hat (Live)',
           backup_db_name: 'Tiny Bar (Backup)', 
           parent_total_size: {
-            bytes: 51000000, // ~49MB estimated
-            human: '~49 MB (Live + Active Sessions)'
+            bytes: 52480000, // 50.05MB actual
+            human: '50.05 MB (Live + Active Sessions)'
           },
           backup_total_size: {
-            bytes: 34000000, // ~32.88MB estimated  
-            human: '32.88 MB (Static Backup)'
+            bytes: 34520064, // 32.91MB actual  
+            human: '32.91 MB (Static Backup)'
           },
           total_difference: {
-            bytes: 17000000, // ~16MB+ difference
-            human: '~16 MB+ (Due to Live Activity)'
+            bytes: 17959936, // ~17.14MB difference
+            human: '17.14 MB (Due to Live Activity)'
           },
           tables: [
             {
