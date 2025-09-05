@@ -31,7 +31,7 @@ const toastVariants = cva(
         destructive:
           "destructive group border-destructive bg-destructive text-destructive-foreground",
         maritime: 
-          "border border-orange-300 bg-maritime-port bg-cover bg-center bg-no-repeat text-white shadow-2xl relative z-10",
+          "border border-orange-300 bg-maritime-port text-white shadow-2xl relative overflow-hidden",
       },
     },
     defaultVariants: {
@@ -44,20 +44,13 @@ const Toast = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Root>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> &
     VariantProps<typeof toastVariants>
->(({ className, variant, children, ...props }, ref) => {
+>(({ className, variant, ...props }, ref) => {
   return (
     <ToastPrimitives.Root
       ref={ref}
       className={cn(toastVariants({ variant }), className)}
       {...props}
-    >
-      {variant === "maritime" && (
-        <div className="absolute inset-0 bg-gradient-to-r from-orange-900/70 to-orange-700/50 rounded-md"></div>
-      )}
-      <div className={variant === "maritime" ? "relative z-10" : ""}>
-        {children}
-      </div>
-    </ToastPrimitives.Root>
+    />
   )
 })
 Toast.displayName = ToastPrimitives.Root.displayName

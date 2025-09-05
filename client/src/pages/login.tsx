@@ -160,14 +160,17 @@ function JWTLoginForm() {
       <Button
         type="button"
         variant="outline"
-        className="w-full h-10 border-orange-300 text-orange-600 hover:bg-orange-50"
-        onClick={() => toast({
-          title: "🚢 Welcome aboard MV Qaaq!",
-          description: "This is our Gangway - connecting maritime professionals worldwide",
-          variant: "maritime",
-        })}
+        className="w-full h-12 border-2 border-orange-500 text-orange-700 hover:bg-orange-100 font-semibold"
+        onClick={() => {
+          console.log("🌅 Maritime toast button clicked!");
+          toast({
+            title: "🚢 Welcome aboard MV Qaaq!",
+            description: "This is our Gangway - connecting maritime professionals worldwide",
+            variant: "maritime",
+          });
+        }}
       >
-        🌅 Preview Maritime Toast
+        🌅 TEST MARITIME BACKGROUND
       </Button>
 
       {/* New User Signup Link */}
