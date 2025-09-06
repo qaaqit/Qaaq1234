@@ -90,7 +90,7 @@ export class AIService {
       console.log('🤖 OpenAI: Making API request...');
       
       // Use GPT-5 for premium users, GPT-4o-mini for free users
-      const isPremium = user?.isPremium || user?.isAdmin || false;
+      const isPremium = this.isPremiumUser(user);
       const model = isPremium ? "gpt-4o" : "gpt-4o-mini";  // Using gpt-4o as premium model
       const maxTokens = isPremium ? 300 : 150;  // More tokens for premium users
       
@@ -132,7 +132,7 @@ export class AIService {
       const responseTime = Date.now() - startTime;
 
       // Apply free user limits if user is not premium
-      const finalContent = await this.applyFreeUserLimits(content, user);
+      const finalContent = this.isPremiumUser(user) ? content : await this.applyFreeUserLimits(content, user);
 
       return {
         content: finalContent,
@@ -250,7 +250,7 @@ export class AIService {
       const responseTime = Date.now() - startTime;
 
       // Apply free user limits if user is not premium
-      const finalContent = await this.applyFreeUserLimits(content, user);
+      const finalContent = this.isPremiumUser(user) ? content : await this.applyFreeUserLimits(content, user);
 
       return {
         content: finalContent,
@@ -326,7 +326,7 @@ export class AIService {
       const responseTime = Date.now() - startTime;
 
       // Apply free user limits if user is not premium
-      const finalContent = await this.applyFreeUserLimits(content, user);
+      const finalContent = this.isPremiumUser(user) ? content : await this.applyFreeUserLimits(content, user);
 
       return {
         content: finalContent,
@@ -403,7 +403,7 @@ export class AIService {
       const responseTime = Date.now() - startTime;
 
       // Apply free user limits if user is not premium
-      const finalContent = await this.applyFreeUserLimits(content, user);
+      const finalContent = this.isPremiumUser(user) ? content : await this.applyFreeUserLimits(content, user);
 
       return {
         content: finalContent,
@@ -536,6 +536,13 @@ export class AIService {
       console.error('Error fetching token limits from config:', error);
       return { min: 97, max: 97 }; // Fallback to defaults
     }
+  }
+
+  // Check if user is premium using multiple sources
+  private isPremiumUser(user: any): boolean {
+    const testingEmails = ['workship.ai@gmail.com', 'mushy.piyush@gmail.com'];
+    const userEmail = user?.email || user?.fullName || '';
+    return user?.isPremium || user?.isAdmin || testingEmails.includes(userEmail) || false;
   }
 
   // Apply free user limits - truncate based on configurable token limits for non-premium users
