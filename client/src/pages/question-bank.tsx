@@ -194,18 +194,55 @@ export default function QuestionBank() {
     return cleanContent.trim();
   };
 
-  // Function to clean premium upgrade messages from static answers
+  // Function to clean premium upgrade messages and promotional phrases from static answers
   const cleanStaticAnswer = (answer: string): string => {
     if (!answer) return '';
     
-    // Remove the premium upgrade message from the end of answers
-    const premiumPattern = /\s*\(For detailed unlimited answers[^)]*\)$/i;
-    const cleaned = answer.replace(premiumPattern, '');
+    let cleaned = answer;
+    
+    // Remove various premium upgrade messages (case insensitive)
+    const premiumPatterns = [
+      /\s*\(For detailed unlimited answers[^)]*\)$/i,
+      /\s*\(for detailed unlimited answers[^)]*\)$/i,
+      /\s*\(For detailed unlimited[^)]*\)$/i,
+      /\s*\(for detailed unlimited[^)]*\)$/i,
+      /\s*\(For unlimited answers[^)]*\)$/i,
+      /\s*\(for unlimited answers[^)]*\)$/i,
+      /\s*\(upgrade to premium[^)]*\)$/i,
+      /\s*\(Upgrade to premium[^)]*\)$/i
+    ];
+    
+    premiumPatterns.forEach(pattern => {
+      cleaned = cleaned.replace(pattern, '');
+    });
+    
+    // Remove promotional salutations and phrases at the beginning
+    const salutationPatterns = [
+      /^Great question[!.]?\s*/i,
+      /^Brilliant marine query[!.]?\s*/i,
+      /^Excellent question[!.]?\s*/i,
+      /^Good question[!.]?\s*/i,
+      /^That's a great question[!.]?\s*/i,
+      /^Interesting question[!.]?\s*/i,
+      /^Fantastic question[!.]?\s*/i,
+      /^Perfect question[!.]?\s*/i,
+      /^Nice question[!.]?\s*/i,
+      /^Well asked[!.]?\s*/i,
+      /^Great marine question[!.]?\s*/i,
+      /^Brilliant question[!.]?\s*/i
+    ];
+    
+    salutationPatterns.forEach(pattern => {
+      cleaned = cleaned.replace(pattern, '');
+    });
     
     // Remove trailing ellipsis if it was added for truncation
-    const withoutEllipsis = cleaned.replace(/\.{3}$/, '.');
+    cleaned = cleaned.replace(/\.{3}$/, '.');
     
-    return withoutEllipsis.trim();
+    // Clean up any double spaces or leading/trailing whitespace
+    cleaned = cleaned.replace(/\s+/g, ' ').trim();
+    
+    return cleaned;
   };
 
   // Toggle expanded state for question details
