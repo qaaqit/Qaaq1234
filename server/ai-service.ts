@@ -48,7 +48,7 @@ export class AIService {
     });
   }
 
-  async generateOpenAIResponse(message: string, category: string, user: any, activeRules?: string, language = 'en'): Promise<AIResponse> {
+  async generateOpenAIResponse(message: string, category: string, user: any, activeRules?: string, language = 'en', conversationHistory?: any[]): Promise<AIResponse> {
     const startTime = Date.now();
     
     try {
@@ -96,12 +96,27 @@ export class AIService {
       
       console.log(`🚀 Using ${model} model for ${isPremium ? 'PREMIUM' : 'FREE'} user`);
       
+      // Build conversation messages including history
+      const messages: any[] = [{ role: "system", content: systemPrompt }];
+      
+      // Add conversation history if provided (last 5 exchanges to stay within token limits)
+      if (conversationHistory && conversationHistory.length > 0) {
+        const recentHistory = conversationHistory.slice(-10); // Last 10 messages
+        recentHistory.forEach(msg => {
+          if (msg.sender === 'user') {
+            messages.push({ role: "user", content: msg.text });
+          } else if (msg.sender === 'bot') {
+            messages.push({ role: "assistant", content: msg.text });
+          }
+        });
+      }
+      
+      // Add current message
+      messages.push({ role: "user", content: message });
+
       const response = await this.openai.chat.completions.create({
         model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: message }
-        ],
+        messages,
         max_tokens: maxTokens,
         temperature: 0.7,
       });
@@ -132,7 +147,7 @@ export class AIService {
     }
   }
 
-  async generateGeminiResponse(message: string, category: string, user: any, activeRules?: string, language = 'en'): Promise<AIResponse> {
+  async generateGeminiResponse(message: string, category: string, user: any, activeRules?: string, language = 'en', conversationHistory?: any[]): Promise<AIResponse> {
     const startTime = Date.now();
     
     try {
@@ -249,7 +264,7 @@ export class AIService {
     }
   }
 
-  async generateDeepseekResponse(message: string, category: string, user: any, activeRules?: string, language = 'en'): Promise<AIResponse> {
+  async generateDeepseekResponse(message: string, category: string, user: any, activeRules?: string, language = 'en', conversationHistory?: any[]): Promise<AIResponse> {
     const startTime = Date.now();
     
     try {
@@ -326,7 +341,7 @@ export class AIService {
     }
   }
 
-  async generateMistralResponse(message: string, category: string, user: any, activeRules?: string, language = 'en'): Promise<AIResponse> {
+  async generateMistralResponse(message: string, category: string, user: any, activeRules?: string, language = 'en', conversationHistory?: any[]): Promise<AIResponse> {
     const startTime = Date.now();
     
     try {
@@ -404,7 +419,7 @@ export class AIService {
   }
 
 
-  async generateDualResponse(message: string, category: string, user: any, activeRules?: string, preferredModel?: 'openai' | 'gemini' | 'deepseek' | 'mistral', language = 'en'): Promise<AIResponse> {
+  async generateDualResponse(message: string, category: string, user: any, activeRules?: string, preferredModel?: 'openai' | 'gemini' | 'deepseek' | 'mistral', language = 'en', conversationHistory?: any[]): Promise<AIResponse> {
     // 4-model system: OpenAI, Gemini, Deepseek, Mistral
     const useModel = preferredModel || 'openai'; // Default to OpenAI
     
@@ -412,28 +427,28 @@ export class AIService {
     
     try {
       if (useModel === 'mistral' && process.env.MISTRAL_API_KEY) {
-        return await this.generateMistralResponse(message, category, user, activeRules, language);
+        return await this.generateMistralResponse(message, category, user, activeRules, language, conversationHistory);
       } else if (useModel === 'deepseek' && process.env.DEEPSEEK_API_KEY) {
-        return await this.generateDeepseekResponse(message, category, user, activeRules, language);
+        return await this.generateDeepseekResponse(message, category, user, activeRules, language, conversationHistory);
       } else if (useModel === 'gemini' && process.env.GEMINI_API_KEY) {
-        return await this.generateGeminiResponse(message, category, user, activeRules, language);
+        return await this.generateGeminiResponse(message, category, user, activeRules, language, conversationHistory);
       } else if (useModel === 'openai' && process.env.OPENAI_API_KEY) {
-        return await this.generateOpenAIResponse(message, category, user, activeRules, language);
+        return await this.generateOpenAIResponse(message, category, user, activeRules, language, conversationHistory);
       }
       
       // Fallback to available model in priority order
       if (process.env.OPENAI_API_KEY) {
         console.log('Falling back to OpenAI (primary model not available)');
-        return await this.generateOpenAIResponse(message, category, user, activeRules, language);
+        return await this.generateOpenAIResponse(message, category, user, activeRules, language, conversationHistory);
       } else if (process.env.MISTRAL_API_KEY) {
         console.log('Falling back to Mistral (primary model not available)');
-        return await this.generateMistralResponse(message, category, user, activeRules, language);
+        return await this.generateMistralResponse(message, category, user, activeRules, language, conversationHistory);
       } else if (process.env.GEMINI_API_KEY) {
         console.log('Falling back to Gemini (primary model not available)');
-        return await this.generateGeminiResponse(message, category, user, activeRules, language);
+        return await this.generateGeminiResponse(message, category, user, activeRules, language, conversationHistory);
       } else if (process.env.DEEPSEEK_API_KEY) {
         console.log('Falling back to Deepseek (primary model not available)');
-        return await this.generateDeepseekResponse(message, category, user, activeRules, language);
+        return await this.generateDeepseekResponse(message, category, user, activeRules, language, conversationHistory);
       }
       
       throw new Error('No AI models available');

@@ -2792,7 +2792,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       }
       // Commandment I: AI-powered technical responses
       else if (isQuestionMessage(message) || isTechnicalMessage(message)) {
-        const aiResponse = await generateAIResponse(message, category, user, activeRules, aiModels);
+        const aiResponse = await generateAIResponse(message, category, user, activeRules, aiModels, language, conversationHistory);
         response = aiResponse.content;
         aiModel = aiResponse.aiModel;
         responseTime = aiResponse.responseTime;
@@ -2808,7 +2808,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       }
       // Default AI response for all other messages (Commandment I)
       else {
-        const aiResponse = await generateAIResponse(message, category, user, activeRules, aiModels);
+        const aiResponse = await generateAIResponse(message, category, user, activeRules, aiModels, language, conversationHistory);
         response = aiResponse.content;
         aiModel = aiResponse.aiModel;
         responseTime = aiResponse.responseTime;
@@ -2973,7 +2973,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
     return followUps[Math.floor(Math.random() * followUps.length)];
   }
 
-  async function generateAIResponse(message: string, category: string, user: any, activeRules?: string, selectedModels?: string[], language = 'en'): Promise<{ content: string, aiModel: string, responseTime?: number, tokens?: number }> {
+  async function generateAIResponse(message: string, category: string, user: any, activeRules?: string, selectedModels?: string[], language = 'en', conversationHistory?: any[]): Promise<{ content: string, aiModel: string, responseTime?: number, tokens?: number }> {
     // Import AI service for multi-model response generation
     const { aiService } = await import('./ai-service');
     
@@ -2988,13 +2988,13 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
             let modelResponse;
             
             if (model === 'chatgpt') {
-              modelResponse = await aiService.generateOpenAIResponse(message, category, user, activeRules, language);
+              modelResponse = await aiService.generateOpenAIResponse(message, category, user, activeRules, language, conversationHistory);
             } else if (model === 'gemini') {
-              modelResponse = await aiService.generateGeminiResponse(message, category, user, activeRules, language);
+              modelResponse = await aiService.generateGeminiResponse(message, category, user, activeRules, language, conversationHistory);
             } else if (model === 'deepseek' || model === 'grok') {
-              modelResponse = await aiService.generateDeepseekResponse(message, category, user, activeRules, language);
+              modelResponse = await aiService.generateDeepseekResponse(message, category, user, activeRules, language, conversationHistory);
             } else if (model === 'mistral') {
-              modelResponse = await aiService.generateMistralResponse(message, category, user, activeRules, language);
+              modelResponse = await aiService.generateMistralResponse(message, category, user, activeRules, language, conversationHistory);
             }
             
             if (modelResponse) {
@@ -3036,7 +3036,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       }
       
       // Fallback to dual response system if no models selected or all failed
-      const aiResponse = await aiService.generateDualResponse(message, category, user, activeRules, language);
+      const aiResponse = await aiService.generateDualResponse(message, category, user, activeRules, language, conversationHistory);
       console.log(`🤖 AI Response generated using ${aiResponse.model} for ${category}: ${aiResponse.content.substring(0, 50)}...`);
       
       return {
@@ -4566,7 +4566,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   // QBOT chat endpoint - responds to user messages with AI
   app.post('/api/qbot/chat', optionalAuth, async (req, res) => {
     try {
-      const { message, attachments, isPrivate, aiModels, language = 'en', isPremium } = req.body;
+      const { message, attachments, isPrivate, aiModels, language = 'en', isPremium, conversationHistory } = req.body;
       const userId = req.userId;
       
       // Log AI models selection for debugging
@@ -4666,7 +4666,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
 
       // Generate AI response using multi-model selection or dual AI service
       const category = categorizeMessage(message);
-      const aiResponse = await generateAIResponse(message, category, user, null, aiModels, language);
+      const aiResponse = await generateAIResponse(message, category, user, null, aiModels, language, conversationHistory);
       
       // Store QBOT response in Questions database with SEMM breadcrumb and AI model info
       await storeQBOTResponseInDatabase(message, aiResponse.content, user, [], aiResponse.aiModel, aiResponse.responseTime, aiResponse.tokens);

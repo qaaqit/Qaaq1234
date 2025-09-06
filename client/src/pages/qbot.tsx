@@ -146,7 +146,8 @@ export default function QBOTPage({ user }: QBOTPageProps) {
           isPrivate: isPrivate,
           aiModels: aiModels || ['chatgpt'],
           isPremium: isPremiumUser,
-          language: language
+          language: language,
+          conversationHistory: qBotMessages.slice(-10) // Send last 10 messages as context
         })
       });
 
