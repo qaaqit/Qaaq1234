@@ -4960,6 +4960,88 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
     }
   });
 
+  // DELETE glossary entry (admin only)
+  app.delete('/api/glossary/delete/:id', bridgedAuth, async (req: any, res) => {
+    try {
+      const entryId = req.params.id;
+      const userId = req.user?.claims?.sub || req.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: 'Authentication required'
+        });
+      }
+      
+      // Check if user is admin using Replit Auth
+      const adminResult = await pool.query(
+        'SELECT is_admin FROM users WHERE user_id = $1',
+        [userId]
+      );
+      
+      const user = adminResult.rows[0];
+      if (!user || !user.is_admin) {
+        return res.status(403).json({
+          success: false,
+          message: 'Admin privileges required to delete entries'
+        });
+      }
+      
+      // Get the entry details before deletion for logging
+      const entryResult = await pool.query(`
+        SELECT q.id, q.content, q.user_id, ua.question
+        FROM questions q
+        LEFT JOIN user_answers ua ON q.id = ua.question_id
+        WHERE q.id = $1
+      `, [entryId]);
+      
+      if (entryResult.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Glossary entry not found'
+        });
+      }
+      
+      const entry = entryResult.rows[0];
+      
+      // Delete the entry permanently from both questions and user_answers tables
+      await pool.query('BEGIN');
+      
+      try {
+        // Delete from user_answers first (if exists)
+        await pool.query('DELETE FROM user_answers WHERE question_id = $1', [entryId]);
+        
+        // Delete from questions table
+        const deleteResult = await pool.query('DELETE FROM questions WHERE id = $1 RETURNING id', [entryId]);
+        
+        if (deleteResult.rows.length === 0) {
+          throw new Error('Failed to delete entry');
+        }
+        
+        await pool.query('COMMIT');
+        
+        console.log(`🗑️ Admin ${userId} permanently deleted glossary entry ${entryId}: "${entry.question || entry.content.substring(0, 50)}..."`);
+        
+        res.json({
+          success: true,
+          message: 'Entry permanently deleted',
+          deletedEntryId: entryId
+        });
+        
+      } catch (error) {
+        await pool.query('ROLLBACK');
+        throw error;
+      }
+      
+    } catch (error) {
+      console.error('Delete glossary entry error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to delete entry permanently'
+      });
+    }
+  });
+
   // Merge duplicate glossary entries (admin only)
   app.post('/api/glossary/merge-duplicates', authenticateToken, async (req, res) => {
     try {

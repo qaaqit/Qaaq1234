@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Loader2, EyeOff } from 'lucide-react';
+import { Loader2, EyeOff, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import qaaqLogo from '@assets/qaaq-logo.png';
@@ -200,6 +200,45 @@ export function GlossaryPage() {
     }
   };
 
+  const handleDeleteDefinition = async (entryId: string, term: string) => {
+    // Confirm deletion
+    if (!confirm(`Are you sure you want to PERMANENTLY DELETE "${term}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/glossary/delete/${entryId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include', // Include cookies for Replit Auth
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Remove the deleted entry from the local state
+        setGlossaryEntries(prev => prev.filter(entry => entry.id !== entryId));
+        setPagination(prev => ({ ...prev, total: prev.total - 1 }));
+        
+        toast({
+          title: "Definition Deleted",
+          description: `"${term}" has been permanently deleted from the database.`,
+        });
+      } else {
+        throw new Error(data.message || 'Failed to delete definition');
+      }
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast({
+        title: "Delete Failed", 
+        description: error.message || "Could not delete the definition. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   
 
 
@@ -329,18 +368,30 @@ export function GlossaryPage() {
                                 </span>
                               </div>
                               
-                              {/* Admin Hide Icon */}
+                              {/* Admin Controls */}
                               {(user as any)?.isAdmin && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleHideDefinition(entry.id, extractTerm(entry.question));
-                                  }}
-                                  className="opacity-0 group-hover:opacity-100 transition-opacity ml-2 p-1 rounded hover:bg-red-100 hover:text-red-600 text-gray-400"
-                                  title="Hide this definition"
-                                >
-                                  <EyeOff className="w-3 h-3" />
-                                </button>
+                                <div className="opacity-0 group-hover:opacity-100 transition-opacity ml-2 flex space-x-1">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleHideDefinition(entry.id, extractTerm(entry.question));
+                                    }}
+                                    className="p-1 rounded hover:bg-yellow-100 hover:text-yellow-600 text-gray-400"
+                                    title="Hide this definition"
+                                  >
+                                    <EyeOff className="w-3 h-3" />
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteDefinition(entry.id, extractTerm(entry.question));
+                                    }}
+                                    className="p-1 rounded hover:bg-red-100 hover:text-red-600 text-gray-400"
+                                    title="Permanently delete this definition"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                </div>
                               )}
                             </div>
                           </div>
