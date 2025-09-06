@@ -25,7 +25,6 @@ import ImageCarousel from "@/components/image-carousel";
 import { QuestionsTab } from "@/components/questions-tab";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Archive } from "lucide-react";
 // Using public asset path for better reliability
 const qaaqLogo = "/qaaq-logo.png";
