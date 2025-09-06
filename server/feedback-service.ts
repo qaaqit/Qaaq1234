@@ -142,38 +142,65 @@ export class FeedbackService {
       return { rating: starMatch.length, category: 'stars' };
     }
     
-    // Numeric ratings 1-5, 1-10
-    const numericMatch = response.match(/(\d+)(?:\/(\d+))?/);
-    if (numericMatch) {
-      const rating = parseInt(numericMatch[1]);
-      const scale = numericMatch[2] ? parseInt(numericMatch[2]) : (rating <= 5 ? 5 : 10);
-      const normalizedRating = Math.round((rating / scale) * 5); // Normalize to 5-star scale
-      return { rating: normalizedRating, category: 'numeric' };
+    // Numeric ratings 1-5, 1-10 (only when it looks like actual feedback)
+    // Avoid matching technical questions with numbers, units, or complex sentences
+    if (response.length < 20 && !response.includes('?') && !response.includes('how') && 
+        !response.includes('what') && !response.includes('when') && !response.includes('where') &&
+        !response.includes('why') && !response.includes('m') && !response.includes('meter') &&
+        !response.includes('pressure') && !response.includes('height') && !response.includes('pipe') &&
+        !response.includes('degree') && !response.includes('temperature') && !response.includes('rpm') &&
+        !response.includes('bar') && !response.includes('psi') && !response.includes('kg') &&
+        !response.includes('ton') && !response.includes('liter') && !response.includes('gallon')) {
+      
+      const numericMatch = response.match(/^(\d+)(?:\/(\d+))?$/);
+      if (numericMatch) {
+        const rating = parseInt(numericMatch[1]);
+        const scale = numericMatch[2] ? parseInt(numericMatch[2]) : (rating <= 5 ? 5 : 10);
+        
+        // Only treat as rating if it's in sensible range
+        if (rating >= 1 && rating <= scale && scale <= 10) {
+          const normalizedRating = Math.round((rating / scale) * 5); // Normalize to 5-star scale
+          return { rating: normalizedRating, category: 'numeric' };
+        }
+      }
     }
     
-    // Text-based ratings
-    if (response.includes('excellent') || response.includes('perfect') || response.includes('outstanding')) {
-      return { rating: 5, category: 'text' };
-    }
-    if (response.includes('good') || response.includes('helpful') || response.includes('satisfactory')) {
-      return { rating: 4, category: 'text' };
-    }
-    if (response.includes('ok') || response.includes('average') || response.includes('partial')) {
-      return { rating: 3, category: 'text' };
-    }
-    if (response.includes('poor') || response.includes('bad') || response.includes('not useful')) {
-      return { rating: 2, category: 'text' };
-    }
-    if (response.includes('terrible') || response.includes('useless') || response.includes('wrong')) {
-      return { rating: 1, category: 'text' };
+    // Text-based ratings (only for short, simple feedback responses)
+    // Avoid matching questions or technical discussions
+    if (response.length < 30 && !response.includes('?') && !response.includes('how') && 
+        !response.includes('what') && !response.includes('when') && !response.includes('where') &&
+        !response.includes('why') && !response.includes('explain') && !response.includes('tell me') &&
+        !response.includes('pressure') && !response.includes('pump') && !response.includes('engine') &&
+        !response.includes('system') && !response.includes('machine') && !response.includes('equipment')) {
+      
+      if (response.includes('excellent') || response.includes('perfect') || response.includes('outstanding')) {
+        return { rating: 5, category: 'text' };
+      }
+      if (response.includes('good') || response.includes('helpful') || response.includes('satisfactory')) {
+        return { rating: 4, category: 'text' };
+      }
+      if (response.includes('ok') || response.includes('average') || response.includes('partial')) {
+        return { rating: 3, category: 'text' };
+      }
+      if (response.includes('poor') || response.includes('bad') || response.includes('not useful')) {
+        return { rating: 2, category: 'text' };
+      }
+      if (response.includes('terrible') || response.includes('useless') || response.includes('wrong')) {
+        return { rating: 1, category: 'text' };
+      }
     }
     
-    // Thumbs up/down
-    if (response.includes('👍') || response.includes('yes')) {
+    // Thumbs up/down (only for simple emoji feedback or standalone yes/no)
+    if (response.includes('👍')) {
       return { rating: 5, category: 'thumbs' };
     }
-    if (response.includes('👎') || response.includes('no')) {
+    if (response.includes('👎')) {
       return { rating: 2, category: 'thumbs' };
+    }
+    
+    // Standalone yes/no as feedback (not part of technical answers)
+    if ((response === 'yes' || response === 'no') && response.length < 5) {
+      return { rating: response === 'yes' ? 5 : 2, category: 'thumbs' };
     }
     
     return { rating: null, category: 'unknown' };
