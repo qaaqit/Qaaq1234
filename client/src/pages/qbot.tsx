@@ -24,6 +24,9 @@ import type { Message } from "@/components/qbot-chat/QBOTMessageList";
 import ImageCarousel from "@/components/image-carousel";
 import { QuestionsTab } from "@/components/questions-tab";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Archive } from "lucide-react";
 // Using public asset path for better reliability
 const qaaqLogo = "/qaaq-logo.png";
 
@@ -39,6 +42,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
   const [activeTab, setActiveTab] = useState("chat");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showRoadblock, setShowRoadblock] = useState(true);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
@@ -197,6 +201,18 @@ export default function QBOTPage({ user }: QBOTPageProps) {
     } finally {
       setIsQBotTyping(false);
     }
+  };
+
+  // Archive conversation (clear context for fresh start)
+  const handleArchiveConversation = () => {
+    setQBotMessages([]);
+    setIsQBotTyping(false);
+    setShowClearConfirm(false);
+    toast({
+      title: "Conversation Archived",
+      description: "Started fresh conversation without previous context.",
+      duration: 3000,
+    });
   };
 
   const handleClearQBotChat = async () => {
@@ -368,6 +384,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                   {/* Minimalist Header */}
                   <QBOTChatHeader 
                     onClear={handleClearQBotChat}
+                    onArchive={() => setShowClearConfirm(true)}
                     isAdmin={user?.isAdmin}
                   />
                   
@@ -579,6 +596,36 @@ export default function QBOTPage({ user }: QBOTPageProps) {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Archive Confirmation Dialog */}
+      <Dialog open={showClearConfirm} onOpenChange={setShowClearConfirm}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Archive className="w-5 h-5 text-orange-600" />
+              Archive Conversation
+            </DialogTitle>
+            <DialogDescription>
+              This will clear your conversation history and start fresh without any previous context. 
+              QBOT will treat your next message as a new conversation.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-3 mt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowClearConfirm(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleArchiveConversation}
+              className="bg-orange-600 hover:bg-orange-700"
+            >
+              Archive & Start Fresh
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

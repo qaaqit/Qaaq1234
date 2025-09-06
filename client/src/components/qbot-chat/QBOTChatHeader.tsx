@@ -1,4 +1,4 @@
-import { Trash2, Upload, Edit3, Crown } from 'lucide-react';
+import { Trash2, Upload, Edit3, Crown, Archive } from 'lucide-react';
 import { useState } from 'react';
 import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -10,6 +10,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 
 interface QBOTChatHeaderProps {
   onClear?: () => void;
+  onArchive?: () => void;
   isAdmin?: boolean;
 }
 
@@ -46,7 +47,7 @@ const DEFAULT_CHATBOT_INVITES = [
   "Expert advice?"
 ];
 
-export default function QBOTChatHeader({ onClear, isAdmin = false }: QBOTChatHeaderProps) {
+export default function QBOTChatHeader({ onClear, onArchive, isAdmin = false }: QBOTChatHeaderProps) {
   const { t } = useLanguage();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [chatbotInvites, setChatbotInvites] = useState(() => {
@@ -107,8 +108,20 @@ export default function QBOTChatHeader({ onClear, isAdmin = false }: QBOTChatHea
         )}
       </div>
       
-      {/* Right: Language Switcher Only */}
+      {/* Right: Archive, Language Switcher & Admin Tools */}
       <div className="flex items-center space-x-1">
+        {/* Archive Chat Button */}
+        {onArchive && (
+          <button
+            onClick={onArchive}
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors group"
+            aria-label="Archive conversation"
+            title="Start fresh conversation (clear context)"
+          >
+            <Archive size={16} className="text-gray-600 group-hover:text-orange-500" />
+          </button>
+        )}
+        
         {/* Language Switcher */}
         <LanguageSwitcher size="icon" />
 
