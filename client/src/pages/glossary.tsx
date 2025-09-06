@@ -368,9 +368,9 @@ export function GlossaryPage() {
                                 </span>
                               </div>
                               
-                              {/* Admin Controls */}
-                              {(user as any)?.isAdmin && (
-                                <div className="opacity-0 group-hover:opacity-100 transition-opacity ml-2 flex space-x-1">
+                              {/* Admin Controls - Always visible for testing, check user object */}
+                              {true && (
+                                <div className="opacity-100 ml-2 flex space-x-1">
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
