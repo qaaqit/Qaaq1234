@@ -194,6 +194,20 @@ export default function QuestionBank() {
     return cleanContent.trim();
   };
 
+  // Function to clean premium upgrade messages from static answers
+  const cleanStaticAnswer = (answer: string): string => {
+    if (!answer) return '';
+    
+    // Remove the premium upgrade message from the end of answers
+    const premiumPattern = /\s*\(For detailed unlimited answers[^)]*\)$/i;
+    const cleaned = answer.replace(premiumPattern, '');
+    
+    // Remove trailing ellipsis if it was added for truncation
+    const withoutEllipsis = cleaned.replace(/\.{3}$/, '.');
+    
+    return withoutEllipsis.trim();
+  };
+
   // Toggle expanded state for question details
   const toggleExpanded = (questionId: number) => {
     const newExpanded = new Set(expandedQuestions);
@@ -472,7 +486,7 @@ export default function QuestionBank() {
                           )}
                         </div>
                         <p className="text-gray-800 text-sm mb-2">
-                          {answer.content}
+                          {cleanStaticAnswer(answer.content)}
                         </p>
                         
                         {/* Answer Images */}

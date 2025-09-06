@@ -129,6 +129,20 @@ export function GlossaryPage() {
     return words.slice(0, wordLimit).join(' ') + '...';
   };
 
+  // Function to clean premium upgrade messages from static answers
+  const cleanStaticAnswer = (answer: string): string => {
+    if (!answer) return '';
+    
+    // Remove the premium upgrade message from the end of answers
+    const premiumPattern = /\s*\(For detailed unlimited answers[^)]*\)$/i;
+    const cleaned = answer.replace(premiumPattern, '');
+    
+    // Remove trailing ellipsis if it was added for truncation
+    const withoutEllipsis = cleaned.replace(/\.{3}$/, '.');
+    
+    return withoutEllipsis.trim();
+  };
+
   const handleArchiveEntry = async (entryId: string, term: string) => {
     try {
       const response = await fetch(`/api/glossary/archive/${entryId}`, {
@@ -364,7 +378,7 @@ export function GlossaryPage() {
                                   {extractTerm(entry.question).toUpperCase()}
                                 </span>
                                 <span className="text-gray-600 group-hover:text-gray-800 transition-colors ml-1">
-                                  {truncateDefinition(entry.answer)}
+                                  {truncateDefinition(cleanStaticAnswer(entry.answer))}
                                 </span>
                               </div>
                               
@@ -410,7 +424,7 @@ export function GlossaryPage() {
                           </div>
                           
                           <div className="prose prose-sm max-w-none text-gray-700">
-                            {entry.answer.split('\n').map((line, idx) => (
+                            {cleanStaticAnswer(entry.answer).split('\n').map((line, idx) => (
                               <p key={`answer-${entry.id}-${idx}`} className="mb-2 last:mb-0">
                                 {line.startsWith('•') ? (
                                   <span className="flex items-start gap-2">
