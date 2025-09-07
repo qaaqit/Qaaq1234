@@ -106,7 +106,15 @@ export default function SemmMakePage() {
   // Admin edit functions
   const handleEditMake = (makeCode: string) => {
     console.log('Edit make:', makeCode);
-    // TODO: Implement edit make modal
+    
+    // Get current make title
+    const currentTitle = foundMake.title;
+    
+    setEditMakeForm({
+      makeCode: makeCode,
+      makeTitle: currentTitle
+    });
+    setShowEditMakeModal(true);
   };
 
   const handleAddNewModel = () => {
@@ -147,6 +155,37 @@ export default function SemmMakePage() {
     setAddModelForm({ modelName: '', description: '' });
   };
 
+  const handleEditMakeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!editMakeForm.makeTitle.trim()) return;
+    
+    try {
+      await apiRequest('/api/dev/semm/update-make-title', 'POST', {
+        code: editMakeForm.makeCode,
+        title: editMakeForm.makeTitle.trim()
+      });
+      
+      console.log('✅ Successfully updated make title');
+      
+      // Reset form and hide modal
+      setShowEditMakeModal(false);
+      setEditMakeForm({ makeCode: '', makeTitle: '' });
+      
+      // Refresh the data immediately
+      queryClient.invalidateQueries({ queryKey: ['/api/dev/semm-cards'] });
+      
+    } catch (error) {
+      console.error('❌ Error updating make title:', error);
+      alert('Failed to update make title. Please try again.');
+    }
+  };
+
+  const handleCancelEditMake = () => {
+    setShowEditMakeModal(false);
+    setEditMakeForm({ makeCode: '', makeTitle: '' });
+  };
+
   const handleEditModel = (modelCode: string) => {
     console.log('Edit model:', modelCode);
     // TODO: Implement edit model modal
@@ -161,6 +200,13 @@ export default function SemmMakePage() {
   const [addModelForm, setAddModelForm] = useState({
     modelName: '',
     description: ''
+  });
+  
+  // Edit make state
+  const [showEditMakeModal, setShowEditMakeModal] = useState(false);
+  const [editMakeForm, setEditMakeForm] = useState({
+    makeCode: '',
+    makeTitle: ''
   });
 
   const handleReorderModels = () => {
@@ -441,6 +487,60 @@ export default function SemmMakePage() {
                       onClick={handleCancelAddModel}
                       className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
                       data-testid="btn-cancel-model"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+            
+            {/* Edit Make Modal */}
+            {showEditMakeModal && (
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h3 className="text-lg font-medium text-blue-800 mb-4">Edit Make Title</h3>
+                <form onSubmit={handleEditMakeSubmit} className="space-y-4">
+                  <div>
+                    <label htmlFor="makeCode" className="block text-sm font-medium text-gray-700 mb-2">
+                      Make Code
+                    </label>
+                    <input
+                      type="text"
+                      id="makeCode"
+                      value={editMakeForm.makeCode}
+                      disabled
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600"
+                      data-testid="input-make-code"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="makeTitle" className="block text-sm font-medium text-gray-700 mb-2">
+                      Make Title *
+                    </label>
+                    <input
+                      type="text"
+                      id="makeTitle"
+                      value={editMakeForm.makeTitle}
+                      onChange={(e) => setEditMakeForm(prev => ({ ...prev, makeTitle: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      placeholder="e.g., Caterpillar, ABB, Siemens"
+                      required
+                      data-testid="input-make-title"
+                    />
+                  </div>
+                  <div className="flex space-x-3">
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      data-testid="btn-save-make-title"
+                    >
+                      Update Make Title
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCancelEditMake}
+                      className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                      data-testid="btn-cancel-make-title"
                     >
                       Cancel
                     </button>
