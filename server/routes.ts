@@ -5862,6 +5862,150 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
     }
   });
 
+  // Update Equipment Title
+  app.post('/api/dev/semm/update-equipment-title', sessionBridge, async (req, res) => {
+    try {
+      const { code, title } = req.body;
+      
+      if (!code || !title) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Equipment code and title are required' 
+        });
+      }
+      
+      // Check if user is admin
+      const user = req.user;
+      const isAdmin = user?.isAdmin || user?.role === 'admin';
+      
+      if (!isAdmin) {
+        return res.status(403).json({ 
+          success: false, 
+          error: 'Admin access required' 
+        });
+      }
+      
+      console.log(`📝 Updating equipment ${code} title to: ${title}`);
+      
+      // Update equipment title directly in the semm_structure table
+      const result = await pool.query(`
+        UPDATE semm_structure 
+        SET equipment = $1 
+        WHERE eid = $2
+      `, [title, code]);
+      
+      if (result.rowCount === 0) {
+        return res.status(404).json({ 
+          success: false, 
+          error: 'Equipment not found' 
+        });
+      }
+      
+      console.log(`✅ Successfully updated equipment ${code} title`);
+      res.json({ success: true, message: 'Equipment title updated successfully' });
+      
+    } catch (error) {
+      console.error('❌ Error updating equipment title:', error);
+      res.status(500).json({ success: false, error: 'Failed to update equipment title' });
+    }
+  });
+
+  // Update Make Title
+  app.post('/api/dev/semm/update-make-title', sessionBridge, async (req, res) => {
+    try {
+      const { code, title } = req.body;
+      
+      if (!code || !title) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Make code and title are required' 
+        });
+      }
+      
+      // Check if user is admin
+      const user = req.user;
+      const isAdmin = user?.isAdmin || user?.role === 'admin';
+      
+      if (!isAdmin) {
+        return res.status(403).json({ 
+          success: false, 
+          error: 'Admin access required' 
+        });
+      }
+      
+      console.log(`📝 Updating make ${code} title to: ${title}`);
+      
+      // Update make title directly in the semm_structure table
+      const result = await pool.query(`
+        UPDATE semm_structure 
+        SET make = $1 
+        WHERE mid = $2
+      `, [title, code]);
+      
+      if (result.rowCount === 0) {
+        return res.status(404).json({ 
+          success: false, 
+          error: 'Make not found' 
+        });
+      }
+      
+      console.log(`✅ Successfully updated make ${code} title`);
+      res.json({ success: true, message: 'Make title updated successfully' });
+      
+    } catch (error) {
+      console.error('❌ Error updating make title:', error);
+      res.status(500).json({ success: false, error: 'Failed to update make title' });
+    }
+  });
+
+  // Update Model Title
+  app.post('/api/dev/semm/update-model-title', sessionBridge, async (req, res) => {
+    try {
+      const { code, title } = req.body;
+      
+      if (!code || !title) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Model code and title are required' 
+        });
+      }
+      
+      // Check if user is admin
+      const user = req.user;
+      const isAdmin = user?.isAdmin || user?.role === 'admin';
+      
+      if (!isAdmin) {
+        return res.status(403).json({ 
+          success: false, 
+          error: 'Admin access required' 
+        });
+      }
+      
+      console.log(`📝 Updating model ${code} title to: ${title}`);
+      
+      // Update model title directly in the semm_structure table
+      const result = await pool.query(`
+        UPDATE semm_structure 
+        SET model = $1 
+        WHERE moid = $2
+      `, [title, code]);
+      
+      if (result.rowCount === 0) {
+        return res.status(404).json({ 
+          success: false, 
+          error: 'Model not found' 
+        });
+      }
+      
+      console.log(`✅ Successfully updated model ${code} title`);
+      res.json({ success: true, message: 'Model title updated successfully' });
+      
+    } catch (error) {
+      console.error('❌ Error updating model title:', error);
+      res.status(500).json({ success: false, error: 'Failed to update model title' });
+    }
+  });
+
   // ==== SEMM REORDER ENDPOINTS ====
   
   // Reorder Systems
