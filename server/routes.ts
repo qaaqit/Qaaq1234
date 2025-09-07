@@ -5495,7 +5495,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   // ==== SEMM CARDS DEVELOPMENT ENDPOINT ====
   
   // Development endpoint for daughter app team - SEMM cards with share functionality
-  app.get('/api/dev/semm-cards', sessionBridge, async (req, res) => {
+  app.get('/api/dev/semm-cards', robustAuth, async (req, res) => {
     try {
       // Query SEMM structure from parent database - single table approach with 4-level hierarchy
       const semmQuery = `
@@ -5819,7 +5819,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   // ==== SEMM UPDATE ENDPOINTS ====
   
   // Update System Title
-  app.post('/api/dev/semm/update-system-title', sessionBridge, async (req, res) => {
+  app.post('/api/dev/semm/update-system-title', robustAuth, async (req, res) => {
     try {
       const { code, title } = req.body;
       
@@ -5863,7 +5863,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   });
 
   // Update Equipment Title
-  app.post('/api/dev/semm/update-equipment-title', sessionBridge, async (req, res) => {
+  app.post('/api/dev/semm/update-equipment-title', robustAuth, async (req, res) => {
     try {
       const { code, title } = req.body;
       
@@ -5911,7 +5911,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   });
 
   // Update Make Title
-  app.post('/api/dev/semm/update-make-title', sessionBridge, async (req, res) => {
+  app.post('/api/dev/semm/update-make-title', robustAuth, async (req, res) => {
     try {
       const { code, title } = req.body;
       
@@ -5959,7 +5959,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   });
 
   // Update Model Title
-  app.post('/api/dev/semm/update-model-title', sessionBridge, async (req, res) => {
+  app.post('/api/dev/semm/update-model-title', robustAuth, async (req, res) => {
     try {
       const { code, title } = req.body;
       
@@ -6610,7 +6610,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   });
 
   // Add new equipment to system
-  app.post('/api/dev/semm/add-equipment', sessionBridge, async (req, res) => {
+  app.post('/api/dev/semm/add-equipment', robustAuth, async (req, res) => {
     try {
       console.log('🔧 Add equipment request:', req.body);
       
@@ -6693,7 +6693,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   });
 
   // Add new Model to Make
-  app.post('/api/dev/semm/add-model', sessionBridge, async (req, res) => {
+  app.post('/api/dev/semm/add-model', robustAuth, async (req, res) => {
     try {
       const { systemCode, equipmentCode, makeCode, modelName, description } = req.body;
       
