@@ -97,6 +97,13 @@ export default function SemmSystemPage() {
     description: ''
   });
   
+  // Edit system state
+  const [showEditSystemModal, setShowEditSystemModal] = useState(false);
+  const [editSystemForm, setEditSystemForm] = useState({
+    systemCode: '',
+    systemTitle: ''
+  });
+  
   const { user } = useAuth();
   const isAdmin = user?.isAdmin || false;
   
@@ -149,6 +156,15 @@ export default function SemmSystemPage() {
 
   const handleEditSystem = (systemCode: string) => {
     console.log('Edit system:', systemCode);
+    
+    // Extract title without the code prefix (e.g., "a. Propulsion" -> "Propulsion")
+    const currentTitle = foundSystem.title.replace(/^[a-z]\.\s*/, '');
+    
+    setEditSystemForm({
+      systemCode: systemCode,
+      systemTitle: currentTitle
+    });
+    setShowEditSystemModal(true);
   };
 
   const handleEditEquipment = (equipmentCode: string) => {
@@ -214,6 +230,38 @@ export default function SemmSystemPage() {
   const handleCancelAddEquipment = () => {
     setShowAddEquipmentForm(false);
     setAddEquipmentForm({ equipmentName: '', description: '' });
+  };
+
+  const handleEditSystemSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!editSystemForm.systemTitle.trim()) return;
+    
+    try {
+      await apiRequest('/api/dev/semm/update-system-title', 'POST', {
+        code: editSystemForm.systemCode,
+        title: editSystemForm.systemTitle.trim()
+      });
+      
+      console.log('✅ Successfully updated system title');
+      
+      // Reset form and hide modal
+      setShowEditSystemModal(false);
+      setEditSystemForm({ systemCode: '', systemTitle: '' });
+      
+      // Refresh the data immediately
+      await queryClient.invalidateQueries({ queryKey: ['/api/dev/semm-cards'] });
+      await queryClient.refetchQueries({ queryKey: ['/api/dev/semm-cards'] });
+      
+    } catch (error) {
+      console.error('❌ Error updating system title:', error);
+      alert('Failed to update system title. Please try again.');
+    }
+  };
+
+  const handleCancelEditSystem = () => {
+    setShowEditSystemModal(false);
+    setEditSystemForm({ systemCode: '', systemTitle: '' });
   };
 
   const handleReorderEquipment = () => {
@@ -463,6 +511,60 @@ export default function SemmSystemPage() {
                       onClick={handleCancelAddEquipment}
                       className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
                       data-testid="btn-cancel-equipment"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+            
+            {/* Edit System Modal */}
+            {showEditSystemModal && (
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h3 className="text-lg font-medium text-blue-800 mb-4">Edit System Title</h3>
+                <form onSubmit={handleEditSystemSubmit} className="space-y-4">
+                  <div>
+                    <label htmlFor="systemCode" className="block text-sm font-medium text-gray-700 mb-2">
+                      System Code
+                    </label>
+                    <input
+                      type="text"
+                      id="systemCode"
+                      value={editSystemForm.systemCode}
+                      disabled
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600"
+                      data-testid="input-system-code"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="systemTitle" className="block text-sm font-medium text-gray-700 mb-2">
+                      System Title *
+                    </label>
+                    <input
+                      type="text"
+                      id="systemTitle"
+                      value={editSystemForm.systemTitle}
+                      onChange={(e) => setEditSystemForm(prev => ({ ...prev, systemTitle: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      placeholder="e.g., Propulsion, Power Generation, Boiler"
+                      required
+                      data-testid="input-system-title"
+                    />
+                  </div>
+                  <div className="flex space-x-3">
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      data-testid="btn-save-system-title"
+                    >
+                      Update System Title
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCancelEditSystem}
+                      className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                      data-testid="btn-cancel-system-title"
                     >
                       Cancel
                     </button>
