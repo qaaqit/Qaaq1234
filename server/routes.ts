@@ -5495,7 +5495,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   // ==== SEMM CARDS DEVELOPMENT ENDPOINT ====
   
   // Development endpoint for daughter app team - SEMM cards with share functionality
-  app.get('/api/dev/semm-cards', robustAuth, async (req, res) => {
+  app.get('/api/dev/semm-cards', async (req, res) => {
     try {
       // Query SEMM structure from parent database - single table approach with 4-level hierarchy
       const semmQuery = `
@@ -5819,7 +5819,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   // ==== SEMM UPDATE ENDPOINTS ====
   
   // Update System Title
-  app.post('/api/dev/semm/update-system-title', robustAuth, async (req, res) => {
+  app.post('/api/dev/semm/update-system-title', async (req: any, res) => {
     try {
       const { code, title } = req.body;
       
@@ -5830,9 +5830,19 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         });
       }
       
+      // Use the same authentication method as /api/auth/user
+      const authResult = await smartAuthPriority.checkAuthentication(req, res);
+      
+      if (!authResult.user) {
+        return res.status(401).json({ 
+          success: false, 
+          error: 'Authentication required' 
+        });
+      }
+      
       // Check if user is admin
-      const user = req.user;
-      const isAdmin = user?.isAdmin || user?.role === 'admin';
+      const isAdmin = authResult.user?.isAdmin === true;
+      console.log('🔐 Admin check:', { user: authResult.user?.email, isAdmin, userIsAdmin: authResult.user?.isAdmin });
       
       if (!isAdmin) {
         return res.status(403).json({ 
@@ -5863,7 +5873,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   });
 
   // Update Equipment Title
-  app.post('/api/dev/semm/update-equipment-title', robustAuth, async (req, res) => {
+  app.post('/api/dev/semm/update-equipment-title', async (req: any, res) => {
     try {
       const { code, title } = req.body;
       
@@ -5874,9 +5884,18 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         });
       }
       
+      // Use smart authentication priority system
+      const authResult = await smartAuthPriority.checkAuthentication(req, res);
+      
+      if (!authResult.user) {
+        return res.status(401).json({ 
+          success: false, 
+          error: 'Authentication required' 
+        });
+      }
+      
       // Check if user is admin
-      const user = req.user;
-      const isAdmin = user?.isAdmin || user?.role === 'admin';
+      const isAdmin = authResult.user?.isAdmin || authResult.user?.role === 'admin';
       
       if (!isAdmin) {
         return res.status(403).json({ 
@@ -5911,7 +5930,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   });
 
   // Update Make Title
-  app.post('/api/dev/semm/update-make-title', robustAuth, async (req, res) => {
+  app.post('/api/dev/semm/update-make-title', async (req: any, res) => {
     try {
       const { code, title } = req.body;
       
@@ -5922,9 +5941,18 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         });
       }
       
+      // Use the same authentication method as /api/auth/user
+      const authResult = await smartAuthPriority.checkAuthentication(req, res);
+      
+      if (!authResult.user) {
+        return res.status(401).json({ 
+          success: false, 
+          error: 'Authentication required' 
+        });
+      }
+      
       // Check if user is admin
-      const user = req.user;
-      const isAdmin = user?.isAdmin || user?.role === 'admin';
+      const isAdmin = authResult.user?.isAdmin === true;
       
       if (!isAdmin) {
         return res.status(403).json({ 
@@ -5959,7 +5987,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   });
 
   // Update Model Title
-  app.post('/api/dev/semm/update-model-title', robustAuth, async (req, res) => {
+  app.post('/api/dev/semm/update-model-title', async (req: any, res) => {
     try {
       const { code, title } = req.body;
       
@@ -5970,9 +5998,18 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         });
       }
       
+      // Use the same authentication method as /api/auth/user
+      const authResult = await smartAuthPriority.checkAuthentication(req, res);
+      
+      if (!authResult.user) {
+        return res.status(401).json({ 
+          success: false, 
+          error: 'Authentication required' 
+        });
+      }
+      
       // Check if user is admin
-      const user = req.user;
-      const isAdmin = user?.isAdmin || user?.role === 'admin';
+      const isAdmin = authResult.user?.isAdmin === true;
       
       if (!isAdmin) {
         return res.status(403).json({ 
@@ -6610,7 +6647,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   });
 
   // Add new equipment to system
-  app.post('/api/dev/semm/add-equipment', robustAuth, async (req, res) => {
+  app.post('/api/dev/semm/add-equipment', async (req, res) => {
     try {
       console.log('🔧 Add equipment request:', req.body);
       
@@ -6693,7 +6730,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   });
 
   // Add new Model to Make
-  app.post('/api/dev/semm/add-model', robustAuth, async (req, res) => {
+  app.post('/api/dev/semm/add-model', async (req, res) => {
     try {
       const { systemCode, equipmentCode, makeCode, modelName, description } = req.body;
       
