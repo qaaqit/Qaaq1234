@@ -1,8 +1,9 @@
 import { useParams, useLocation } from 'wouter';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Share2, ChevronRight, Edit3 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { apiRequest } from '@/lib/queryClient';
 
 // Bottom edge roll out flip card animation
 const FlipCard = ({ char, index, large = false }: { char: string; index: number; large?: boolean }) => {
@@ -89,6 +90,16 @@ export default function SemmModelPage() {
   const { user, isAuthenticated } = useAuth();
   const isAdmin = user?.isAdmin || false;
   
+  // Query client for cache invalidation
+  const queryClient = useQueryClient();
+  
+  // Edit model state
+  const [showEditModelModal, setShowEditModelModal] = useState(false);
+  const [editModelForm, setEditModelForm] = useState({
+    modelCode: '',
+    modelTitle: ''
+  });
+  
   // Debug admin detection
   console.log('🔐 SEMM Model - User object:', user);
   console.log('🔐 SEMM Model - isAdmin check:', { isAdmin: user?.isAdmin, finalIsAdmin: isAdmin });
@@ -103,7 +114,46 @@ export default function SemmModelPage() {
   // Admin edit functions
   const handleEditModel = (modelCode: string) => {
     console.log('Edit model:', modelCode);
-    // TODO: Implement edit model modal
+    
+    // Get current model title
+    const currentTitle = foundModel.title;
+    
+    setEditModelForm({
+      modelCode: modelCode,
+      modelTitle: currentTitle
+    });
+    setShowEditModelModal(true);
+  };
+
+  const handleEditModelSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!editModelForm.modelTitle.trim()) return;
+    
+    try {
+      await apiRequest('/api/dev/semm/update-model-title', 'POST', {
+        code: editModelForm.modelCode,
+        title: editModelForm.modelTitle.trim()
+      });
+      
+      console.log('✅ Successfully updated model title');
+      
+      // Reset form and hide modal
+      setShowEditModelModal(false);
+      setEditModelForm({ modelCode: '', modelTitle: '' });
+      
+      // Refresh the data immediately
+      queryClient.invalidateQueries({ queryKey: ['/api/dev/semm-cards'] });
+      
+    } catch (error) {
+      console.error('❌ Error updating model title:', error);
+      alert('Failed to update model title. Please try again.');
+    }
+  };
+
+  const handleCancelEditModel = () => {
+    setShowEditModelModal(false);
+    setEditModelForm({ modelCode: '', modelTitle: '' });
   };
 
   if (isLoading) {
@@ -248,6 +298,60 @@ export default function SemmModelPage() {
             </button>
           )}
         </div>
+        
+        {/* Edit Model Modal */}
+        {showEditModelModal && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h3 className="text-lg font-medium text-blue-800 mb-4">Edit Model Title</h3>
+            <form onSubmit={handleEditModelSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="modelCode" className="block text-sm font-medium text-gray-700 mb-2">
+                  Model Code
+                </label>
+                <input
+                  type="text"
+                  id="modelCode"
+                  value={editModelForm.modelCode}
+                  disabled
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600"
+                  data-testid="input-model-code"
+                />
+              </div>
+              <div>
+                <label htmlFor="modelTitle" className="block text-sm font-medium text-gray-700 mb-2">
+                  Model Title *
+                </label>
+                <input
+                  type="text"
+                  id="modelTitle"
+                  value={editModelForm.modelTitle}
+                  onChange={(e) => setEditModelForm(prev => ({ ...prev, modelTitle: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  placeholder="e.g., 3512C, C18, 6L32/40"
+                  required
+                  data-testid="input-model-title"
+                />
+              </div>
+              <div className="flex space-x-3">
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  data-testid="btn-save-model-title"
+                >
+                  Update Model Title
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCancelEditModel}
+                  className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                  data-testid="btn-cancel-model-title"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
 
         {/* Model Details Card */}
         <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
