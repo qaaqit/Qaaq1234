@@ -5848,6 +5848,12 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       
       console.log(`📝 Updating system ${code} title to: ${title}`);
       
+      // Get old title for logging
+      const oldTitleResult = await pool.query(`
+        SELECT custom_title FROM system_configurations WHERE code = $1
+      `, [code]);
+      const oldTitle = oldTitleResult.rows[0]?.custom_title || null;
+      
       // Update the system title in the database
       // Note: Since we're overriding titles in the API response, 
       // we'll store this in a system configurations table
@@ -5858,7 +5864,13 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         DO UPDATE SET custom_title = $2, updated_at = NOW()
       `, [code, `${code}. ${title}`]);
       
-      console.log(`✅ Successfully updated system ${code} title`);
+      // Log the change for traceability
+      await pool.query(`
+        INSERT INTO semm_change_log (user_id, user_email, change_type, item_code, old_title, new_title)
+        VALUES ($1, $2, $3, $4, $5, $6)
+      `, [userId, userEmail, 'system', code, oldTitle, `${code}. ${title}`]);
+      
+      console.log(`✅ Successfully updated system ${code} title by user ${userEmail}`);
       res.json({ success: true, message: 'System title updated successfully' });
       
     } catch (error) {
@@ -5897,6 +5909,12 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       
       console.log(`📝 Updating equipment ${code} title to: ${title}`);
       
+      // Get old title for logging
+      const oldTitleResult = await pool.query(`
+        SELECT equipment FROM semm_structure WHERE eid = $1 LIMIT 1
+      `, [code]);
+      const oldTitle = oldTitleResult.rows[0]?.equipment || null;
+      
       // Update equipment title directly in the semm_structure table
       const result = await pool.query(`
         UPDATE semm_structure 
@@ -5911,7 +5929,13 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         });
       }
       
-      console.log(`✅ Successfully updated equipment ${code} title`);
+      // Log the change for traceability
+      await pool.query(`
+        INSERT INTO semm_change_log (user_id, user_email, change_type, item_code, old_title, new_title)
+        VALUES ($1, $2, $3, $4, $5, $6)
+      `, [userId, userEmail, 'equipment', code, oldTitle, title]);
+      
+      console.log(`✅ Successfully updated equipment ${code} title by user ${userEmail}`);
       res.json({ success: true, message: 'Equipment title updated successfully' });
       
     } catch (error) {
@@ -5950,6 +5974,12 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       
       console.log(`📝 Updating make ${code} title to: ${title}`);
       
+      // Get old title for logging
+      const oldTitleResult = await pool.query(`
+        SELECT make FROM semm_structure WHERE mid = $1 LIMIT 1
+      `, [code]);
+      const oldTitle = oldTitleResult.rows[0]?.make || null;
+      
       // Update make title directly in the semm_structure table
       const result = await pool.query(`
         UPDATE semm_structure 
@@ -5964,7 +5994,13 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         });
       }
       
-      console.log(`✅ Successfully updated make ${code} title`);
+      // Log the change for traceability
+      await pool.query(`
+        INSERT INTO semm_change_log (user_id, user_email, change_type, item_code, old_title, new_title)
+        VALUES ($1, $2, $3, $4, $5, $6)
+      `, [userId, userEmail, 'make', code, oldTitle, title]);
+      
+      console.log(`✅ Successfully updated make ${code} title by user ${userEmail}`);
       res.json({ success: true, message: 'Make title updated successfully' });
       
     } catch (error) {
@@ -6003,6 +6039,12 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       
       console.log(`📝 Updating model ${code} title to: ${title}`);
       
+      // Get old title for logging
+      const oldTitleResult = await pool.query(`
+        SELECT model FROM semm_structure WHERE moid = $1 LIMIT 1
+      `, [code]);
+      const oldTitle = oldTitleResult.rows[0]?.model || null;
+      
       // Update model title directly in the semm_structure table
       const result = await pool.query(`
         UPDATE semm_structure 
@@ -6017,7 +6059,13 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         });
       }
       
-      console.log(`✅ Successfully updated model ${code} title`);
+      // Log the change for traceability
+      await pool.query(`
+        INSERT INTO semm_change_log (user_id, user_email, change_type, item_code, old_title, new_title)
+        VALUES ($1, $2, $3, $4, $5, $6)
+      `, [userId, userEmail, 'model', code, oldTitle, title]);
+      
+      console.log(`✅ Successfully updated model ${code} title by user ${userEmail}`);
       res.json({ success: true, message: 'Model title updated successfully' });
       
     } catch (error) {
