@@ -144,74 +144,55 @@ export default function WorkshopPage() {
             </Card>
           ) : workshopsData?.workshops?.length > 0 ? (
             workshopsData.workshops.map((workshop: Workshop) => (
-              <Card key={workshop.id} className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setLocation(`/workshop/${workshop.id}`)}>
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="text-xl text-gray-900">{workshop.fullName}</CardTitle>
-                      <p className="text-gray-600 mt-1">{workshop.homePort}</p>
-                      <p className="text-sm text-gray-500 mt-1">{workshop.location || 'Location not specified'}</p>
-                    </div>
-                    <div className="flex flex-col items-end space-y-2">
-                      {workshop.isVerified ? (
-                        <Badge className="bg-green-100 text-green-800 flex items-center space-x-1">
-                          <Star className="w-3 h-3" />
-                          <span>Verified</span>
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-gray-600">
-                          <span>Unverified</span>
-                        </Badge>
-                      )}
-                      <span className="text-xs text-gray-500">
-                        Added {new Date(workshop.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {workshop.description && (
-                      <div>
-                        <h4 className="font-medium text-gray-900">Description</h4>
-                        <p className="text-gray-600">{workshop.description}</p>
-                      </div>
-                    )}
-                    
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-2">Services & Expertise</h4>
-                      <div className="bg-gray-50 p-3 rounded-lg">
-                        <p className="text-gray-700">{workshop.services}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="border-t pt-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          {workshop.whatsappNumber && (
-                            <div className="flex items-center space-x-2 text-sm text-gray-600">
-                              <Phone className="w-4 h-4" />
-                              <span>WhatsApp: {workshop.whatsappNumber}</span>
-                            </div>
-                          )}
-                          {workshop.officialWebsite && (
-                            <div className="flex items-center space-x-2 text-sm text-gray-600">
-                              <Globe className="w-4 h-4" />
-                              <a 
-                                href={workshop.officialWebsite.startsWith('http') ? workshop.officialWebsite : `https://${workshop.officialWebsite}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-orange-600 hover:text-orange-700 underline"
-                              >
-                                {workshop.officialWebsite}
-                              </a>
-                            </div>
-                          )}
-                        </div>
-                        <div>
-                          <div className="text-sm text-gray-600 mb-2">
-                            <strong>Home Port:</strong> {workshop.homePort}
+              <Card 
+                key={workshop.id} 
+                className="hover:shadow-md transition-shadow cursor-pointer bg-white border border-gray-200 rounded-lg"
+                onClick={() => setLocation(`/workshop/${workshop.id}`)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-4">
+                    {/* Workshop Image Area - 9x16 aspect ratio */}
+                    <div className="flex-shrink-0">
+                      <div className="w-12 h-16 bg-orange-100 rounded-md flex items-center justify-center overflow-hidden">
+                        {workshop.businessCardPhoto || workshop.workshopFrontPhoto ? (
+                          <img 
+                            src={workshop.businessCardPhoto || workshop.workshopFrontPhoto} 
+                            alt={`${workshop.fullName} workshop`}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="text-orange-600 text-xs font-bold text-center">
+                            <Wrench className="w-6 h-6 mx-auto mb-1" />
+                            <span className="text-[10px]">WS</span>
                           </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Workshop Details */}
+                    <div className="flex-grow min-w-0">
+                      <div className="flex items-start justify-between">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-base font-semibold text-gray-900 truncate">
+                            {workshop.fullName}
+                          </h3>
+                          <p className="text-sm text-gray-600 mt-1">
+                            {workshop.homePort}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                            {workshop.services}
+                          </p>
+                        </div>
+                        
+                        {/* Status Badge and Arrow */}
+                        <div className="flex items-center space-x-2 ml-4">
+                          {workshop.isVerified && (
+                            <Badge className="bg-green-100 text-green-800 text-xs px-2 py-1">
+                              <Star className="w-3 h-3 mr-1" />
+                              Verified
+                            </Badge>
+                          )}
+                          <ArrowLeft className="w-5 h-5 text-gray-400 rotate-180" />
                         </div>
                       </div>
                     </div>
