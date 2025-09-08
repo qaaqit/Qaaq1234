@@ -6527,6 +6527,54 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
     }
   });
 
+  // Search user by email (admin only)
+  app.get('/api/admin/search-user/:email', authenticateToken, isAdmin, async (req, res) => {
+    try {
+      const { email } = req.params;
+      
+      if (!email) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Email parameter is required' 
+        });
+      }
+
+      // Search for user by email in database
+      const db = await getDb();
+      const foundUsers = await db.select({
+        id: users.id,
+        fullName: users.fullName,
+        email: users.email,
+        isAdmin: users.isAdmin,
+        isIntern: users.isIntern,
+        rank: users.rank,
+        userType: users.userType,
+        isVerified: users.isVerified
+      })
+      .from(users)
+      .where(eq(users.email, email.toLowerCase()))
+      .limit(1);
+
+      if (foundUsers.length === 0) {
+        return res.status(404).json({ 
+          success: false, 
+          error: 'User not found with this email address' 
+        });
+      }
+
+      res.json({ 
+        success: true, 
+        user: foundUsers[0]
+      });
+    } catch (error) {
+      console.error('Error searching for user:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to search for user' 
+      });
+    }
+  });
+
   // Promote user to intern status (admin only)
   app.post('/api/admin/promote-to-intern', authenticateToken, isAdmin, async (req, res) => {
     try {

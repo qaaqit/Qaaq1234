@@ -332,19 +332,28 @@ export default function AdminPanel() {
     setPromoteEmailLoading(true);
     
     try {
-      // Find user by email
-      const targetUser = users?.find(user => 
-        user.email.toLowerCase() === promoteEmail.toLowerCase()
-      );
-
-      if (!targetUser) {
+      // Search for user directly in database using API
+      console.log('🔍 Searching for user with email:', promoteEmail);
+      
+      const searchResponse = await fetch(`/api/admin/search-user/${encodeURIComponent(promoteEmail.toLowerCase().trim())}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      const searchResult = await searchResponse.json();
+      
+      if (!searchResponse.ok || !searchResult.success) {
         toast({
           title: "User not found",
-          description: "No user found with this email address",
+          description: `No user found with email: ${promoteEmail}`,
           variant: "destructive"
         });
         return;
       }
+
+      const targetUser = searchResult.user;
+      console.log('🎯 Found user:', targetUser);
 
       if (targetUser.isAdmin) {
         toast({
