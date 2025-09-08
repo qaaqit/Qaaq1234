@@ -23,6 +23,7 @@ interface AdminUser {
   email: string;
   userType: 'sailor' | 'local';
   isAdmin: boolean;
+  isIntern?: boolean;
   rank?: string;
   shipName?: string;
   imoNumber?: string;
@@ -268,6 +269,48 @@ export default function AdminPanel() {
       toast({
         title: "Error updating verification",
         description: error instanceof Error ? error.message : "Failed to update verification",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation to promote user to intern status
+  const promoteToInternMutation = useMutation({
+    mutationFn: async ({ userId }: { userId: string }) => {
+      await apiRequest(`/api/admin/promote-to-intern`, "POST", { userId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "User promoted successfully",
+        description: "User has been promoted to intern status",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error promoting user",
+        description: error instanceof Error ? error.message : "Failed to promote user to intern",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation to remove intern status
+  const removeInternMutation = useMutation({
+    mutationFn: async ({ userId }: { userId: string }) => {
+      await apiRequest(`/api/admin/remove-intern`, "POST", { userId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "Intern status removed",
+        description: "User's intern status has been removed",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error removing intern status",
+        description: error instanceof Error ? error.message : "Failed to remove intern status",
         variant: "destructive",
       });
     },
@@ -1247,6 +1290,109 @@ START → Step 1 → Step 2 → Step 3/4
                     </CardContent>
                   </Card>
                 </div>
+
+                {/* Intern Management Section */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center">
+                      <i className="fas fa-user-graduate mr-2 text-purple-600"></i>
+                      Intern Management
+                    </CardTitle>
+                    <p className="text-sm text-gray-600">
+                      Promote users to intern status to allow SEMM editing permissions
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {/* Current Interns */}
+                      {users?.filter((user: AdminUser) => user.isIntern).length > 0 && (
+                        <div>
+                          <h4 className="font-medium text-gray-900 mb-3 flex items-center">
+                            <i className="fas fa-users mr-2 text-green-600"></i>
+                            Current Interns ({users?.filter((user: AdminUser) => user.isIntern).length})
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {users?.filter((user: AdminUser) => user.isIntern).map((user: AdminUser) => (
+                              <Card key={user.id} className="border-green-200 bg-green-50/50">
+                                <CardContent className="p-3">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex-1 min-w-0">
+                                      <div className="font-medium text-sm text-gray-900 truncate">
+                                        {user.fullName}
+                                      </div>
+                                      <div className="text-xs text-gray-600 truncate">
+                                        {user.email}
+                                      </div>
+                                      {user.rank && (
+                                        <div className="text-xs text-purple-600">
+                                          {user.rank}
+                                        </div>
+                                      )}
+                                    </div>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="ml-2 text-xs"
+                                      onClick={() => removeInternMutation.mutate({ userId: user.id })}
+                                      disabled={removeInternMutation.isPending}
+                                    >
+                                      <i className="fas fa-user-minus mr-1"></i>
+                                      Remove
+                                    </Button>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Regular Users (candidates for intern promotion) */}
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-3 flex items-center">
+                          <i className="fas fa-user-plus mr-2 text-blue-600"></i>
+                          Promote to Intern
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {users?.filter((user: AdminUser) => !user.isAdmin && !user.isIntern).slice(0, 12).map((user: AdminUser) => (
+                            <Card key={user.id} className="border-blue-200 bg-blue-50/50">
+                              <CardContent className="p-3">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="font-medium text-sm text-gray-900 truncate">
+                                      {user.fullName}
+                                    </div>
+                                    <div className="text-xs text-gray-600 truncate">
+                                      {user.email}
+                                    </div>
+                                    {user.rank && (
+                                      <div className="text-xs text-purple-600">
+                                        {user.rank}
+                                      </div>
+                                    )}
+                                    <div className="text-xs text-gray-500">
+                                      Logins: {user.loginCount}
+                                    </div>
+                                  </div>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="ml-2 text-xs bg-purple-100 border-purple-300 hover:bg-purple-200"
+                                    onClick={() => promoteToInternMutation.mutate({ userId: user.id })}
+                                    disabled={promoteToInternMutation.isPending}
+                                  >
+                                    <i className="fas fa-user-plus mr-1"></i>
+                                    Promote
+                                  </Button>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
                 {/* Recent Changes Preview */}
                 <Card>

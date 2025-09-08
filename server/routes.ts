@@ -6527,6 +6527,90 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
     }
   });
 
+  // Promote user to intern status (admin only)
+  app.post('/api/admin/promote-to-intern', authenticateToken, isAdmin, async (req, res) => {
+    try {
+      const { userId } = req.body;
+      
+      if (!userId) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'User ID is required' 
+        });
+      }
+
+      // Update user's intern status in database
+      const db = await getDb();
+      const result = await db.update(users)
+        .set({ isIntern: true })
+        .where(eq(users.id, userId))
+        .returning({ id: users.id, fullName: users.fullName, email: users.email });
+
+      if (result.length === 0) {
+        return res.status(404).json({ 
+          success: false, 
+          error: 'User not found' 
+        });
+      }
+
+      console.log(`✅ User ${userId} promoted to intern status by admin ${req.user.id}`);
+      
+      res.json({ 
+        success: true, 
+        message: `User ${result[0].fullName} promoted to intern status`,
+        user: result[0]
+      });
+    } catch (error) {
+      console.error('Error promoting user to intern:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to promote user to intern status' 
+      });
+    }
+  });
+
+  // Remove intern status from user (admin only)
+  app.post('/api/admin/remove-intern', authenticateToken, isAdmin, async (req, res) => {
+    try {
+      const { userId } = req.body;
+      
+      if (!userId) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'User ID is required' 
+        });
+      }
+
+      // Update user's intern status in database
+      const db = await getDb();
+      const result = await db.update(users)
+        .set({ isIntern: false })
+        .where(eq(users.id, userId))
+        .returning({ id: users.id, fullName: users.fullName, email: users.email });
+
+      if (result.length === 0) {
+        return res.status(404).json({ 
+          success: false, 
+          error: 'User not found' 
+        });
+      }
+
+      console.log(`✅ Intern status removed from user ${userId} by admin ${req.user.id}`);
+      
+      res.json({ 
+        success: true, 
+        message: `Intern status removed from ${result[0].fullName}`,
+        user: result[0]
+      });
+    } catch (error) {
+      console.error('Error removing intern status:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to remove intern status' 
+      });
+    }
+  });
+
   // Fix system names in database - one-time cleanup
   app.post('/api/dev/semm/fix-system-names', authenticateToken, isAdminOrIntern, async (req, res) => {
     try {
