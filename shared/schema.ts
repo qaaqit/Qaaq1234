@@ -106,6 +106,7 @@ export const users = pgTable("users", {
   hasCompletedOnboarding: boolean("has_completed_onboarding").default(false), // QAAQ field
   isPlatformAdmin: boolean("is_platform_admin").default(false), // QAAQ field
   isBlocked: boolean("is_blocked").default(false), // QAAQ field
+  isWorkshopProvider: boolean("is_workshop_provider").default(false), // Workshop service provider flag
   
   // Location tracking
   latitude: real("latitude"),
