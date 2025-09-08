@@ -112,11 +112,11 @@ export default function SemmSystemPage() {
   });
   
   const { user } = useAuth();
-  const isAdminOrIntern = user?.isAdmin || user?.isIntern || false;
+  const isAdminOrIntern = user?.isAdmin || false;
   
-  // Debug admin/intern detection
+  // Debug admin detection
   console.log('🔐 SEMM System - User object:', user);
-  console.log('🔐 SEMM System - admin/intern check:', { isAdmin: user?.isAdmin, isIntern: user?.isIntern, canEdit: isAdminOrIntern });
+  console.log('🔐 SEMM System - admin check:', { isAdmin: user?.isAdmin, canEdit: isAdminOrIntern });
 
   // Fetch SEMM data to find the specific system
   const { data: semmData, isLoading, error } = useQuery({
@@ -455,29 +455,29 @@ export default function SemmSystemPage() {
           </div>
         </div>
 
-        {/* Equipment Cards Grid */}
-        {foundSystem.equipment && foundSystem.equipment.length > 0 ? (
-          <div className="mt-8">
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-gray-800 flex items-center">
-                  <Ship className="h-6 w-6 text-orange-600 mr-3" />
-                  Equipment in {foundSystem.title}
-                  {isAdminOrIntern && (
-                    <button
-                      onClick={() => handleEditSystem(foundSystem.code)}
-                      className="ml-2 p-1 hover:bg-orange-100 rounded"
-                      title="Edit System"
-                      data-testid="edit-system"
-                    >
-                      <Edit3 className="h-4 w-4 text-orange-600" />
-                    </button>
-                  )}
-                </h2>
-                
-                {/* Admin Controls for Equipment - Right Edge */}
-                {isAdminOrIntern && !reorderEnabled ? (
-                  <div className="flex items-center space-x-2">
+        {/* Admin Controls Section - Always visible for admin/intern users */}
+        <div className="mt-8">
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-800 flex items-center">
+                <Ship className="h-6 w-6 text-orange-600 mr-3" />
+                Equipment in {foundSystem.title}
+                {isAdminOrIntern && (
+                  <button
+                    onClick={() => handleEditSystem(foundSystem.code)}
+                    className="ml-2 p-1 hover:bg-orange-100 rounded"
+                    title="Edit System"
+                    data-testid="edit-system"
+                  >
+                    <Edit3 className="h-4 w-4 text-orange-600" />
+                  </button>
+                )}
+              </h2>
+              
+              {/* Admin Controls for Equipment - Right Edge */}
+              {isAdminOrIntern && !reorderEnabled ? (
+                <div className="flex items-center space-x-2">
+                  {foundSystem.equipment && foundSystem.equipment.length > 0 && (
                     <button
                       onClick={handleReorderEquipment}
                       className="p-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-lg"
@@ -486,38 +486,39 @@ export default function SemmSystemPage() {
                     >
                       <RotateCcw className="h-5 w-5" />
                     </button>
-                    <button
-                      onClick={handleAddNewEquipment}
-                      disabled={showAddEquipmentForm}
-                      className="p-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="Add New Equipment"
-                      data-testid="add-new-equipment-btn"
-                    >
-                      <Plus className="w-5 h-5" />
-                    </button>
-                  </div>
-                ) : isAdminOrIntern && reorderEnabled ? (
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={handleSaveReorder}
-                      className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-                      data-testid="save-reorder"
-                    >
-                      <Save className="h-4 w-4" />
-                      <span>Save Order</span>
-                    </button>
-                    <button
-                      onClick={handleCancelReorder}
-                      className="flex items-center space-x-2 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
-                      data-testid="cancel-reorder"
-                    >
-                      <X className="h-4 w-4" />
-                      <span>Cancel</span>
-                    </button>
-                  </div>
-                ) : null}
-              </div>
+                  )}
+                  <button
+                    onClick={handleAddNewEquipment}
+                    disabled={showAddEquipmentForm}
+                    className="p-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Add New Equipment"
+                    data-testid="add-new-equipment-btn"
+                  >
+                    <Plus className="w-5 h-5" />
+                  </button>
+                </div>
+              ) : isAdminOrIntern && reorderEnabled ? (
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={handleSaveReorder}
+                    className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                    data-testid="save-reorder"
+                  >
+                    <Save className="h-4 w-4" />
+                    <span>Save Order</span>
+                  </button>
+                  <button
+                    onClick={handleCancelReorder}
+                    className="flex items-center space-x-2 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                    data-testid="cancel-reorder"
+                  >
+                    <X className="h-4 w-4" />
+                    <span>Cancel</span>
+                  </button>
+                </div>
+              ) : null}
             </div>
+          </div>
 
             {/* Add Equipment Form - Show when adding new equipment */}
             {showAddEquipmentForm && (
@@ -681,7 +682,10 @@ export default function SemmSystemPage() {
                 </form>
               </div>
             )}
-            
+
+            {/* Equipment listing conditional */}
+            {foundSystem.equipment && foundSystem.equipment.length > 0 ? (
+              <>
             {reorderEnabled ? (
               // Reorder Mode - Show ordered list with up/down controls
               <div className="space-y-3">
@@ -823,12 +827,21 @@ export default function SemmSystemPage() {
                 </button>
               </div>
             )}
-          </div>
-        ) : (
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8 text-center">
-            <p className="text-lg text-gray-600">No equipment found for this system.</p>
+              </>
+            ) : (
+          <div className="text-center py-12">
+            <Ship className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-500 mb-2">No Equipment Found</h3>
+            <p className="text-gray-400 mb-6">This system doesn't have any equipment registered yet.</p>
+            {!isAdminOrIntern && (
+              <div className="text-sm text-gray-400">
+                Contact your system administrator to add equipment to this category.
+              </div>
+            )}
           </div>
         )}
+        
+      </div>
 
       </div>
     </div>
