@@ -5840,16 +5840,11 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         });
       }
       
-      // Check if user is admin
-      const isAdmin = authResult.user?.isAdmin === true;
-      console.log('🔐 Admin check:', { user: authResult.user?.email, isAdmin, userIsAdmin: authResult.user?.isAdmin });
+      // Log user information for traceability 
+      const userId = authResult.user?.userId || authResult.user?.id;
+      const userEmail = authResult.user?.email;
       
-      if (!isAdmin) {
-        return res.status(403).json({ 
-          success: false, 
-          error: 'Admin access required' 
-        });
-      }
+      console.log(`🔐 User ${userEmail} (${userId}) attempting to update system title`);
       
       console.log(`📝 Updating system ${code} title to: ${title}`);
       
@@ -5894,15 +5889,11 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         });
       }
       
-      // Check if user is admin
-      const isAdmin = authResult.user?.isAdmin || authResult.user?.role === 'admin';
+      // Log user information for traceability 
+      const userId = authResult.user?.userId || authResult.user?.id;
+      const userEmail = authResult.user?.email;
       
-      if (!isAdmin) {
-        return res.status(403).json({ 
-          success: false, 
-          error: 'Admin access required' 
-        });
-      }
+      console.log(`🔐 User ${userEmail} (${userId}) attempting to update equipment title`);
       
       console.log(`📝 Updating equipment ${code} title to: ${title}`);
       
@@ -5951,15 +5942,11 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         });
       }
       
-      // Check if user is admin
-      const isAdmin = authResult.user?.isAdmin === true;
+      // Log user information for traceability 
+      const userId = authResult.user?.userId || authResult.user?.id;
+      const userEmail = authResult.user?.email;
       
-      if (!isAdmin) {
-        return res.status(403).json({ 
-          success: false, 
-          error: 'Admin access required' 
-        });
-      }
+      console.log(`🔐 User ${userEmail} (${userId}) attempting to update title`);
       
       console.log(`📝 Updating make ${code} title to: ${title}`);
       
@@ -6008,15 +5995,11 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         });
       }
       
-      // Check if user is admin
-      const isAdmin = authResult.user?.isAdmin === true;
+      // Log user information for traceability 
+      const userId = authResult.user?.userId || authResult.user?.id;
+      const userEmail = authResult.user?.email;
       
-      if (!isAdmin) {
-        return res.status(403).json({ 
-          success: false, 
-          error: 'Admin access required' 
-        });
-      }
+      console.log(`🔐 User ${userEmail} (${userId}) attempting to update title`);
       
       console.log(`📝 Updating model ${code} title to: ${title}`);
       
