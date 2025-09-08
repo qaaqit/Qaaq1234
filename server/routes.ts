@@ -37,6 +37,7 @@ import { AIService } from "./ai-service";
 import { FeedbackService } from "./feedback-service";
 import { WatiBotService } from "./wati-bot-service";
 import { GlossaryAutoUpdateService } from "./glossary-auto-update";
+import { workshopCSVImportService } from "./workshop-csv-import";
 
 // Import new unified authentication system
 import { sessionBridge, bridgedAuth, requireBridgedAuth } from "./session-bridge";
@@ -11936,5 +11937,158 @@ function generateUserQuestions(name: string, rank: string, questionCount: number
 
   return questions.sort((a, b) => new Date(b.askedDate).getTime() - new Date(a.askedDate).getTime());
 }
+
+// ================================
+// WORKSHOP CSV IMPORT API ROUTES
+// ================================
+
+// Upload and import workshop data from CSV - Admin only
+app.post('/api/workshops/upload-csv', authenticateToken, isAdminOrIntern, async (req: any, res) => {
+  try {
+    const { csvContent, fileName } = req.body;
+    
+    if (!csvContent) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'CSV content is required' 
+      });
+    }
+
+    const adminUserId = req.userId;
+    const result = await workshopCSVImportService.importFromCSV(csvContent, adminUserId);
+    
+    console.log(`📊 Workshop CSV import completed by admin ${adminUserId}: ${result.imported} imported, ${result.updated} updated, ${result.errors.length} errors`);
+    
+    res.json({
+      success: result.success,
+      result: {
+        imported: result.imported,
+        updated: result.updated,
+        errors: result.errors,
+        totalProcessed: result.imported + result.updated + result.errors.length
+      },
+      message: `Import completed: ${result.imported} new workshops, ${result.updated} updated`
+    });
+
+  } catch (error) {
+    console.error('❌ Error in workshop CSV upload:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to process CSV upload',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Get all workshops with pagination - Public access
+app.get('/api/workshops', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const activeOnly = req.query.active !== 'false'; // Default to true
+
+    const result = await workshopCSVImportService.getAllWorkshops(page, limit, activeOnly);
+    
+    res.json({
+      success: true,
+      workshops: result.workshops,
+      pagination: {
+        page: result.page,
+        limit: result.limit,
+        total: result.total,
+        hasMore: result.workshops.length === limit
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error fetching workshops:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to fetch workshops' 
+    });
+  }
+});
+
+// Get workshop by ID - Public access
+app.get('/api/workshops/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    if (!id) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Workshop ID is required' 
+      });
+    }
+
+    const workshop = await workshopCSVImportService.getWorkshopById(id);
+    
+    if (!workshop) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Workshop not found' 
+      });
+    }
+
+    res.json({
+      success: true,
+      workshop
+    });
+
+  } catch (error) {
+    console.error('❌ Error fetching workshop by ID:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to fetch workshop' 
+    });
+  }
+});
+
+// Get workshops by location/port - Public access
+app.get('/api/workshops/by-port/:port', async (req, res) => {
+  try {
+    const { port } = req.params;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    
+    if (!port) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Port name is required' 
+      });
+    }
+
+    // Get workshops filtered by port (case-insensitive)
+    const query = `
+      SELECT * FROM workshop_profiles 
+      WHERE LOWER(home_port) LIKE LOWER($1) 
+      AND is_active = true 
+      ORDER BY created_at DESC 
+      LIMIT $2 OFFSET $3
+    `;
+    
+    const offset = (page - 1) * limit;
+    const result = await pool.query(query, [`%${port}%`, limit, offset]);
+    
+    res.json({
+      success: true,
+      workshops: result.rows,
+      port: port,
+      pagination: {
+        page,
+        limit,
+        total: result.rows.length,
+        hasMore: result.rows.length === limit
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error fetching workshops by port:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to fetch workshops by port' 
+    });
+  }
+});
 
 
