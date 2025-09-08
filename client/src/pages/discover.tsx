@@ -134,44 +134,83 @@ export default function Discover() {
         className="w-full h-screen"
         style={{ minHeight: '100vh' }}
       />
-      {/* Horizontal Search Bar */}
-      <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-[1000] pointer-events-auto">
-        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-6 border border-orange-200 min-w-[600px]">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Workshop Finder</h3>
+      {/* Mobile-Friendly Search Bar */}
+      <div className="absolute top-4 sm:top-20 left-1/2 transform -translate-x-1/2 z-[1000] pointer-events-auto px-4 w-full max-w-[95vw] sm:max-w-none">
+        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 sm:p-6 border border-orange-200 w-full sm:min-w-[600px]">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 text-center">Workshop Finder</h3>
           
-          {/* Horizontal Search Bar with Text and Dropdowns */}
-          <div className="flex items-center justify-center space-x-2 text-lg">
-            <span className="text-gray-700 font-medium">I need a</span>
+          {/* Responsive Search Bar with Text and Dropdowns */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-center space-y-3 sm:space-y-0 sm:space-x-2 text-base sm:text-lg">
             
-            {/* Machine Search Dropdown */}
-            <Select value={selectedSystem} onValueChange={setSelectedSystem}>
-              <SelectTrigger className="w-[200px] bg-orange-50 border-orange-300 hover:bg-orange-100">
-                <SelectValue placeholder="Machine Search" />
-              </SelectTrigger>
-              <SelectContent className="z-[1100]">
-                {semmData?.data?.map((system: any) => (
-                  <SelectItem key={system.code} value={system.code}>
-                    {system.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            
-            <span className="text-gray-700 font-medium">workshop in</span>
-            
-            {/* Port Dropdown */}
-            <Select value={selectedPort} onValueChange={setSelectedPort}>
-              <SelectTrigger className="w-[200px] bg-orange-50 border-orange-300 hover:bg-orange-100">
-                <SelectValue placeholder="Port" />
-              </SelectTrigger>
-              <SelectContent className="z-[1100]">
-                {majorPorts.map((port) => (
-                  <SelectItem key={port.name} value={port.name}>
-                    {port.name}, {port.country}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {/* Mobile: Stacked Layout */}
+            <div className="flex flex-col sm:hidden space-y-3">
+              <div className="flex items-center space-x-2">
+                <span className="text-gray-700 font-medium flex-shrink-0">I need a</span>
+                <Select value={selectedSystem} onValueChange={setSelectedSystem}>
+                  <SelectTrigger className="flex-1 bg-orange-50 border-orange-300 hover:bg-orange-100">
+                    <SelectValue placeholder="Machine Search" />
+                  </SelectTrigger>
+                  <SelectContent className="z-[1100]">
+                    {semmData?.data?.map((system: any) => (
+                      <SelectItem key={system.code} value={system.code}>
+                        {system.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <span className="text-gray-700 font-medium flex-shrink-0">workshop in</span>
+                <Select value={selectedPort} onValueChange={setSelectedPort}>
+                  <SelectTrigger className="flex-1 bg-orange-50 border-orange-300 hover:bg-orange-100">
+                    <SelectValue placeholder="Port" />
+                  </SelectTrigger>
+                  <SelectContent className="z-[1100]">
+                    {majorPorts.map((port) => (
+                      <SelectItem key={port.name} value={port.name}>
+                        {port.name}, {port.country}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Desktop: Horizontal Layout */}
+            <div className="hidden sm:flex sm:items-center sm:space-x-2">
+              <span className="text-gray-700 font-medium">I need a</span>
+              
+              {/* Machine Search Dropdown */}
+              <Select value={selectedSystem} onValueChange={setSelectedSystem}>
+                <SelectTrigger className="w-[200px] bg-orange-50 border-orange-300 hover:bg-orange-100">
+                  <SelectValue placeholder="Machine Search" />
+                </SelectTrigger>
+                <SelectContent className="z-[1100]">
+                  {semmData?.data?.map((system: any) => (
+                    <SelectItem key={system.code} value={system.code}>
+                      {system.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              <span className="text-gray-700 font-medium">workshop in</span>
+              
+              {/* Port Dropdown */}
+              <Select value={selectedPort} onValueChange={setSelectedPort}>
+                <SelectTrigger className="w-[200px] bg-orange-50 border-orange-300 hover:bg-orange-100">
+                  <SelectValue placeholder="Port" />
+                </SelectTrigger>
+                <SelectContent className="z-[1100]">
+                  {majorPorts.map((port) => (
+                    <SelectItem key={port.name} value={port.name}>
+                      {port.name}, {port.country}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Search Button */}
@@ -179,7 +218,7 @@ export default function Discover() {
             <Button 
               onClick={handleSearch}
               disabled={!selectedPort}
-              className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-2"
+              className="bg-orange-600 hover:bg-orange-700 text-white px-6 sm:px-8 py-2 w-full sm:w-auto"
             >
               Find Workshops
             </Button>
