@@ -4,7 +4,7 @@ import { useLocation } from 'wouter';
 import { ChevronRight, ChevronDown, Package, Settings, Building, Ship, Heart, Share2, RotateCcw, Edit3, Plus, GripVertical, ExternalLink, ArrowLeft } from 'lucide-react';
 import { SemmReorderModal } from '@/components/semm-reorder-modal';
 import { EditSystemModal } from '@/components/edit-system-modal';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/useAuth';
 
 interface Category {
@@ -65,6 +65,16 @@ export default function MachineTreePage() {
     isOpen: false,
     type: 'systems',
     items: []
+  });
+
+  // Add System modal state
+  const [addSystemModal, setAddSystemModal] = useState({
+    isOpen: false
+  });
+
+  const [addSystemForm, setAddSystemForm] = useState({
+    systemName: '',
+    description: ''
   });
 
   // Fetch SEMM cards from local endpoint
@@ -164,7 +174,40 @@ export default function MachineTreePage() {
 
   const handleAddNewSystem = () => {
     console.log('Add new system');
-    // TODO: Implement add new system modal
+    setAddSystemModal({ isOpen: true });
+    setAddSystemForm({ systemName: '', description: '' });
+  };
+
+  const handleAddSystemSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!addSystemForm.systemName.trim()) return;
+    
+    try {
+      await apiRequest('/api/dev/semm/add-system', 'POST', {
+        systemName: addSystemForm.systemName.trim(),
+        description: addSystemForm.description.trim()
+      });
+      
+      console.log('✅ Successfully added new system');
+      
+      // Reset form and hide modal
+      setAddSystemModal({ isOpen: false });
+      setAddSystemForm({ systemName: '', description: '' });
+      
+      // Refresh the data immediately
+      await queryClient.invalidateQueries({ queryKey: ['/api/dev/semm-cards'] });
+      await queryClient.refetchQueries({ queryKey: ['/api/dev/semm-cards'] });
+      
+    } catch (error) {
+      console.error('❌ Error adding new system:', error);
+      alert('Failed to add system. Please try again.');
+    }
+  };
+
+  const handleCancelAddSystem = () => {
+    setAddSystemModal({ isOpen: false });
+    setAddSystemForm({ systemName: '', description: '' });
   };
 
   const handleEditEquipment = (equipmentId: string) => {
@@ -470,6 +513,63 @@ export default function MachineTreePage() {
         onClose={() => setEditSystem({ isOpen: false, system: null })}
         system={editSystem.system}
       />
+      
+      {/* Add System Modal */}
+      {addSystemModal.isOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-medium text-gray-800 mb-4">Add New System</h3>
+            <form onSubmit={handleAddSystemSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="systemName" className="block text-sm font-medium text-gray-700 mb-2">
+                  System Name *
+                </label>
+                <input
+                  type="text"
+                  id="systemName"
+                  value={addSystemForm.systemName}
+                  onChange={(e) => setAddSystemForm(prev => ({ ...prev, systemName: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  placeholder="e.g., Ventilation, Galley Equipment, Lighting Systems"
+                  required
+                  data-testid="input-system-name"
+                />
+              </div>
+              <div>
+                <label htmlFor="systemDescription" className="block text-sm font-medium text-gray-700 mb-2">
+                  Description (Optional)
+                </label>
+                <textarea
+                  id="systemDescription"
+                  value={addSystemForm.description}
+                  onChange={(e) => setAddSystemForm(prev => ({ ...prev, description: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  placeholder="Brief description of this system..."
+                  rows={3}
+                  data-testid="input-system-description"
+                />
+              </div>
+              <div className="flex space-x-3 pt-4">
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                  data-testid="btn-save-system"
+                >
+                  Add System
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCancelAddSystem}
+                  className="flex-1 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                  data-testid="btn-cancel-system"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
