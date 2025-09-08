@@ -5618,9 +5618,9 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       let customTitles = new Map();
       try {
         const customTitlesResult = await pool.query(`
-          SELECT code, custom_title FROM system_configurations
+          SELECT item_code, custom_title FROM system_configurations
         `);
-        customTitles = new Map(customTitlesResult.rows.map(r => [r.code, r.custom_title]));
+        customTitles = new Map(customTitlesResult.rows.map(r => [r.item_code, r.custom_title]));
       } catch (error) {
         // Table doesn't exist or no custom titles, use default mappings
         console.log('📝 No custom system titles found, using defaults');
@@ -5848,9 +5848,38 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       
       console.log(`📝 Updating system ${code} title to: ${title}`);
       
+      // Ensure system_configurations table exists
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS system_configurations (
+          id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+          level INTEGER NOT NULL,
+          item_code TEXT NOT NULL UNIQUE,
+          custom_title TEXT NOT NULL,
+          original_title TEXT,
+          created_by TEXT,
+          updated_by TEXT,
+          created_at TIMESTAMP DEFAULT now(),
+          updated_at TIMESTAMP DEFAULT now()
+        )
+      `);
+
+      // Ensure semm_change_log table exists
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS semm_change_log (
+          id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+          user_id TEXT NOT NULL,
+          user_email TEXT NOT NULL,
+          change_type TEXT NOT NULL,
+          item_code TEXT NOT NULL,
+          old_title TEXT,
+          new_title TEXT NOT NULL,
+          created_at TIMESTAMP DEFAULT now()
+        )
+      `);
+
       // Get old title for logging
       const oldTitleResult = await pool.query(`
-        SELECT custom_title FROM system_configurations WHERE code = $1
+        SELECT custom_title FROM system_configurations WHERE item_code = $1
       `, [code]);
       const oldTitle = oldTitleResult.rows[0]?.custom_title || null;
       
@@ -5858,11 +5887,11 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       // Note: Since we're overriding titles in the API response, 
       // we'll store this in a system configurations table
       await pool.query(`
-        INSERT INTO system_configurations (code, custom_title, updated_at)
-        VALUES ($1, $2, NOW())
-        ON CONFLICT (code) 
-        DO UPDATE SET custom_title = $2, updated_at = NOW()
-      `, [code, `${code}. ${title}`]);
+        INSERT INTO system_configurations (level, item_code, custom_title, original_title, updated_by, updated_at)
+        VALUES (1, $1, $2, $3, $4, NOW())
+        ON CONFLICT (item_code) 
+        DO UPDATE SET custom_title = $2, updated_by = $4, updated_at = NOW()
+      `, [code, `${code}. ${title}`, oldTitle, authResult.user?.id]);
       
       // Log the change for traceability
       await pool.query(`
