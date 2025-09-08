@@ -968,6 +968,31 @@ export type Payment = typeof payments.$inferSelect;
 export type InsertUserSubscriptionStatus = z.infer<typeof insertUserSubscriptionStatusSchema>;
 export type UserSubscriptionStatus = typeof userSubscriptionStatus.$inferSelect;
 
+// SEMM System Configurations table for custom titles
+export const systemConfigurations = pgTable("system_configurations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  level: integer("level").notNull(), // 1=System, 2=Equipment, 3=Make, 4=Model
+  itemCode: text("item_code").notNull(), // The code (e.g., 'h', 'h01', 'h01001', 'h01001001')
+  customTitle: text("custom_title").notNull(), // The custom title set by user
+  originalTitle: text("original_title"), // The original title for reference
+  createdBy: text("created_by"), // User ID who created this custom title
+  updatedBy: text("updated_by"), // User ID who last updated this title
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`),
+});
+
+// SEMM Change Log table for tracking all title changes
+export const semmChangeLog = pgTable("semm_change_log", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: text("user_id").notNull(), // ID of user who made the change
+  userEmail: text("user_email").notNull(), // Email of user who made the change
+  changeType: text("change_type").notNull(), // 'system', 'equipment', 'make', 'model'
+  itemCode: text("item_code").notNull(), // The code that was changed
+  oldTitle: text("old_title"), // Previous title (null for new entries)
+  newTitle: text("new_title").notNull(), // New title that was set
+  createdAt: timestamp("created_at").default(sql`now()`),
+});
+
 // Database backup monitoring table
 export const databaseBackupMetrics = pgTable("database_backup_metrics", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -994,9 +1019,22 @@ export const databaseBackupMetrics = pgTable("database_backup_metrics", {
   updatedAt: timestamp("updated_at").default(sql`now()`),
 });
 
+// Insert schemas for SEMM tables
+export const insertSystemConfigurationsSchema = createInsertSchema(systemConfigurations)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+
+export const insertSemmChangeLogSchema = createInsertSchema(semmChangeLog)
+  .omit({ id: true, createdAt: true });
+
 // Types for system configs
 export type InsertSystemConfig = z.infer<typeof insertSystemConfigSchema>;
 export type SystemConfig = typeof systemConfigs.$inferSelect;
+
+// Types for SEMM tables
+export type InsertSystemConfigurations = z.infer<typeof insertSystemConfigurationsSchema>;
+export type SystemConfigurations = typeof systemConfigurations.$inferSelect;
+export type InsertSemmChangeLog = z.infer<typeof insertSemmChangeLogSchema>;
+export type SemmChangeLog = typeof semmChangeLog.$inferSelect;
 
 // Insert schemas for backup metrics
 export const insertDatabaseBackupMetricsSchema = createInsertSchema(databaseBackupMetrics)
