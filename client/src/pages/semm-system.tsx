@@ -103,6 +103,13 @@ export default function SemmSystemPage() {
     systemCode: '',
     systemTitle: ''
   });
+
+  // Edit equipment state
+  const [showEditEquipmentModal, setShowEditEquipmentModal] = useState(false);
+  const [editEquipmentForm, setEditEquipmentForm] = useState({
+    equipmentCode: '',
+    equipmentTitle: ''
+  });
   
   const { user } = useAuth();
   const isAdmin = user?.isAdmin || false;
@@ -169,6 +176,22 @@ export default function SemmSystemPage() {
 
   const handleEditEquipment = (equipmentCode: string) => {
     console.log('Edit equipment:', equipmentCode);
+    
+    // Find the equipment in the current system
+    const equipment = foundSystem.equipment?.find((eq: any) => eq.code === equipmentCode);
+    if (!equipment) {
+      console.error('Equipment not found:', equipmentCode);
+      return;
+    }
+    
+    // Extract title without the code prefix (e.g., "ha. Main Engine" -> "Main Engine")
+    const currentTitle = equipment.title.replace(/^[a-z]+\.\s*/, '');
+    
+    setEditEquipmentForm({
+      equipmentCode: equipmentCode,
+      equipmentTitle: currentTitle
+    });
+    setShowEditEquipmentModal(true);
   };
 
   const handleDeleteEquipment = async (equipmentCode: string, equipmentName: string) => {
@@ -262,6 +285,38 @@ export default function SemmSystemPage() {
   const handleCancelEditSystem = () => {
     setShowEditSystemModal(false);
     setEditSystemForm({ systemCode: '', systemTitle: '' });
+  };
+
+  const handleEditEquipmentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!editEquipmentForm.equipmentTitle.trim()) return;
+    
+    try {
+      await apiRequest('/api/dev/semm/update-equipment-title', 'POST', {
+        code: editEquipmentForm.equipmentCode,
+        title: editEquipmentForm.equipmentTitle.trim()
+      });
+      
+      console.log('✅ Successfully updated equipment title');
+      
+      // Reset form and hide modal
+      setShowEditEquipmentModal(false);
+      setEditEquipmentForm({ equipmentCode: '', equipmentTitle: '' });
+      
+      // Refresh the data immediately
+      await queryClient.invalidateQueries({ queryKey: ['/api/dev/semm-cards'] });
+      await queryClient.refetchQueries({ queryKey: ['/api/dev/semm-cards'] });
+      
+    } catch (error) {
+      console.error('❌ Error updating equipment title:', error);
+      alert('Failed to update equipment title. Please try again.');
+    }
+  };
+
+  const handleCancelEditEquipment = () => {
+    setShowEditEquipmentModal(false);
+    setEditEquipmentForm({ equipmentCode: '', equipmentTitle: '' });
   };
 
   const handleReorderEquipment = () => {
@@ -565,6 +620,60 @@ export default function SemmSystemPage() {
                       onClick={handleCancelEditSystem}
                       className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
                       data-testid="btn-cancel-system-title"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* Edit Equipment Modal */}
+            {showEditEquipmentModal && (
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h3 className="text-lg font-medium text-blue-800 mb-4">Edit Equipment Title</h3>
+                <form onSubmit={handleEditEquipmentSubmit} className="space-y-4">
+                  <div>
+                    <label htmlFor="equipmentCode" className="block text-sm font-medium text-gray-700 mb-2">
+                      Equipment Code
+                    </label>
+                    <input
+                      type="text"
+                      id="equipmentCode"
+                      value={editEquipmentForm.equipmentCode}
+                      disabled
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600"
+                      data-testid="input-equipment-code"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="equipmentTitle" className="block text-sm font-medium text-gray-700 mb-2">
+                      Equipment Title *
+                    </label>
+                    <input
+                      type="text"
+                      id="equipmentTitle"
+                      value={editEquipmentForm.equipmentTitle}
+                      onChange={(e) => setEditEquipmentForm(prev => ({ ...prev, equipmentTitle: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      placeholder="e.g., Main Engine"
+                      required
+                      data-testid="input-equipment-title-edit"
+                    />
+                  </div>
+                  <div className="flex space-x-3">
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      data-testid="btn-save-equipment-edit"
+                    >
+                      Update Equipment
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCancelEditEquipment}
+                      className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                      data-testid="btn-cancel-equipment-edit"
                     >
                       Cancel
                     </button>
