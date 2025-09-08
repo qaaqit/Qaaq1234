@@ -10,6 +10,7 @@ import {
 import { ChevronDown } from "lucide-react";
 import qaaqLogo from "@/assets/qaaq-logo.png";
 import type { User } from "@/lib/auth";
+import UserDropdown from "@/components/user-dropdown";
 
 interface HeaderProps {
   user: User;
@@ -105,22 +106,10 @@ export default function Header({ user }: HeaderProps) {
           <span className="font-bold text-navy text-lg ml-3">QaaqConnect</span>
         </div>
 
-        {/* Admin Shield - Only visible for admin users */}
-        {user.isAdmin && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setLocation("/admin")}
-            className={`flex items-center space-x-2 px-3 py-2 ${
-              location === "/admin" 
-                ? "text-ocean-teal bg-ocean-teal/10" 
-                : "text-gray-600 hover:text-navy hover:bg-gray-50"
-            } transition-colors`}
-          >
-            <i className="fas fa-shield-alt text-lg"></i>
-            <span className="font-medium">Admin</span>
-          </Button>
-        )}
+        {/* User Profile Dropdown */}
+        <div className="flex items-center">
+          <UserDropdown user={user} onLogout={() => window.location.reload()} />
+        </div>
       </div>
     </header>
   );
