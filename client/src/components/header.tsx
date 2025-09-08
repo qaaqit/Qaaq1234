@@ -21,7 +21,7 @@ export default function Header({ user }: HeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <header className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 maritime-shadow z-50">
+    <header className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 maritime-shadow z-[1200]">
       <div className="flex items-center justify-between px-4 py-3">
         {/* Logo with Dropdown Menu */}
         <div className="flex items-center">
@@ -44,7 +44,7 @@ export default function Header({ user }: HeaderProps) {
                 </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-48 bg-white border border-gray-200 shadow-lg rounded-lg">
+            <DropdownMenuContent align="start" className="w-48 bg-white border border-gray-200 shadow-lg rounded-lg z-[1200]">
               <DropdownMenuItem 
                 onClick={() => setLocation("/")}
                 className="cursor-pointer flex items-center space-x-3 px-4 py-3 hover:bg-orange-50 transition-colors"
