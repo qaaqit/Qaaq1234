@@ -33,7 +33,7 @@ export class WorkshopCSVImportService {
   }
 
   /**
-   * Parse CSV content and convert to workshop profiles
+   * Parse CSV content and convert to workshop profiles (Google Forms compatible)
    */
   private parseCSV(csvContent: string): CSVRow[] {
     const lines = csvContent.trim().split('\n');
@@ -41,31 +41,84 @@ export class WorkshopCSVImportService {
       throw new Error('CSV must contain at least a header row and one data row');
     }
 
-    const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+    const headers = this.parseCSVLine(lines[0]);
     const rows: CSVRow[] = [];
 
-    for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
-      if (values.length !== headers.length) {
-        console.warn(`Row ${i + 1} has ${values.length} columns, expected ${headers.length}. Skipping.`);
-        continue;
-      }
+    console.log(`Parsing CSV with ${headers.length} columns`);
+    console.log('Headers:', headers.slice(0, 5).map(h => `"${h.substring(0, 50)}..."`));
 
-      const row: CSVRow = {};
-      headers.forEach((header, index) => {
-        row[header] = values[index] || '';
-      });
-      rows.push(row);
+    for (let i = 1; i < lines.length; i++) {
+      try {
+        const values = this.parseCSVLine(lines[i]);
+        
+        // Create row object with all available values
+        const row: CSVRow = {};
+        headers.forEach((header, index) => {
+          row[header] = values[index] || '';
+        });
+
+        // Check if row has essential data
+        const email = row['2. Primary Email'] || '';
+        const hasValidEmail = email && email.includes('@') && email.includes('.');
+        
+        if (hasValidEmail) {
+          rows.push(row);
+        } else {
+          console.log(`Row ${i + 1}: Skipping - invalid email: "${email}"`);
+        }
+      } catch (error) {
+        console.log(`Row ${i + 1}: Parse error - ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
     }
 
+    console.log(`Successfully parsed ${rows.length} valid rows from CSV`);
     return rows;
   }
 
   /**
-   * Map CSV row to workshop profile data
+   * Properly parse CSV line handling quoted fields
+   */
+  private parseCSVLine(line: string): string[] {
+    const values: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    let i = 0;
+
+    while (i < line.length) {
+      const char = line[i];
+      const nextChar = line[i + 1];
+
+      if (char === '"') {
+        if (inQuotes && nextChar === '"') {
+          // Escaped quote
+          current += '"';
+          i += 2;
+        } else {
+          // Toggle quote state
+          inQuotes = !inQuotes;
+          i++;
+        }
+      } else if (char === ',' && !inQuotes) {
+        // End of field
+        values.push(current.trim());
+        current = '';
+        i++;
+      } else {
+        current += char;
+        i++;
+      }
+    }
+
+    // Add final field
+    values.push(current.trim());
+    return values;
+  }
+
+  /**
+   * Map CSV row to workshop profile data - Google Forms format
    */
   private mapCSVToWorkshopProfile(row: CSVRow): any {
-    // Flexible field mapping - supports various CSV column names
+    // Google Forms CSV field mapping
     const getField = (possibleNames: string[]): string => {
       for (const name of possibleNames) {
         const value = row[name] || row[name.toLowerCase()] || row[name.toUpperCase()];
@@ -74,22 +127,88 @@ export class WorkshopCSVImportService {
       return '';
     };
 
+    // Extract data from Google Forms columns
+    const contactName = getField(['1.  Contact person Name (First Name, Last Name)', 'contact_name', 'name']);
+    const email = getField(['2. Primary Email', 'primary_email', 'email']);
+    const competency = getField(['3. Wshop Competency / Expertise  (Please select only 1)', 'competency', 'expertise']);
+    const description = getField(['4.  Briefly describe area of your workshop\'s core expertise, number of staff & year of establishment. ', 'description', 'about']);
+    const whatsapp = getField(['5. WhatsApp / WeChat/  Phone (with country code)', 'whatsapp', 'phone']);
+    const port = getField(['6. Port where your branch is located? (Write only one city with pincode). Multiple city entry will get rejected.', 'port', 'location']);
+    const visaStatus = getField(['7. Service Engineer Visa status', 'visa_status']);
+    const companies = getField(['8. Companies worked for  (in last 1 year):', 'companies']);
+    const website = getField(['Your workshop\'s official website', 'website']);
+
+    // Clean port name (remove pincode, country, extra info)
+    const cleanPort = this.cleanPortName(port);
+    
+    // Generate display ID
+    const displayId = this.generateDisplayId(cleanPort);
+
     return {
-      fullName: getField(['full_name', 'fullName', 'name', 'Full Name', 'Name']),
-      email: getField(['email', 'Email', 'email_address', 'Email Address']),
-      services: getField(['services', 'Services', 'expertise', 'Expertise', 'services_expertise', 'Services/Expertise']),
-      whatsappNumber: getField(['whatsapp_number', 'whatsappNumber', 'whatsapp', 'WhatsApp', 'phone', 'Phone']),
-      homePort: getField(['home_port', 'homePort', 'port', 'Port', 'base_port', 'Base Port']),
-      businessCardPhoto: getField(['business_card_photo', 'businessCardPhoto', 'card_photo', 'Card Photo']),
-      workshopFrontPhoto: getField(['workshop_front_photo', 'workshopFrontPhoto', 'front_photo', 'Front Photo']),
-      officialWebsite: getField(['official_website', 'officialWebsite', 'website', 'Website', 'url', 'URL']),
-      location: getField(['location', 'Location', 'address', 'Address']),
-      description: getField(['description', 'Description', 'about', 'About']),
-      importSource: 'csv',
+      fullName: contactName || 'Workshop Provider',
+      email: email,
+      services: competency + (description ? `. ${description}` : ''),
+      whatsappNumber: this.cleanPhoneNumber(whatsapp),
+      homePort: cleanPort,
+      businessCardPhoto: '',
+      workshopFrontPhoto: '',
+      officialWebsite: website,
+      location: port, // Keep original for reference
+      description: `${description}${companies ? ` | Companies worked for: ${companies}` : ''}${visaStatus ? ` | Visa status: ${visaStatus}` : ''}`,
+      displayId: displayId,
+      anonymousMode: true,
+      publicContactHidden: true,
+      directContactDisabled: true,
+      importSource: 'google_forms_bulk_2025',
       lastSyncAt: new Date(),
       isActive: true,
       isVerified: false
     };
+  }
+
+  /**
+   * Clean port name for display ID generation
+   */
+  private cleanPortName(port: string): string {
+    if (!port) return 'Unknown';
+    
+    // Remove common suffixes and clean up
+    return port
+      .replace(/,.*$/g, '') // Remove everything after comma
+      .replace(/\d+/g, '') // Remove numbers/pincode
+      .replace(/\s*(port|Port|PORT)\s*/g, '') // Remove "port" word
+      .replace(/\s*(city|City|CITY)\s*/g, '') // Remove "city" word
+      .replace(/\s+/g, '') // Remove spaces
+      .replace(/[^a-zA-Z]/g, '') // Keep only letters
+      .toLowerCase()
+      .replace(/^(.)/, (match) => match.toUpperCase()); // Capitalize first letter
+  }
+
+  /**
+   * Clean and standardize phone numbers
+   */
+  private cleanPhoneNumber(phone: string): string {
+    if (!phone) return '';
+    
+    // Remove common prefixes and clean up
+    return phone
+      .replace(/^\+/g, '') // Remove leading +
+      .replace(/\s+/g, ' ') // Normalize spaces
+      .trim();
+  }
+
+  private portCounters: Map<string, number> = new Map();
+
+  /**
+   * Generate anonymous display ID per port
+   */
+  private generateDisplayId(port: string): string {
+    const cleanedPort = port || 'Unknown';
+    const currentCount = this.portCounters.get(cleanedPort) || 0;
+    const newCount = currentCount + 1;
+    this.portCounters.set(cleanedPort, newCount);
+    
+    return `w${cleanedPort}${newCount}`;
   }
 
   /**
@@ -236,13 +355,13 @@ export class WorkshopCSVImportService {
   async getAllWorkshops(page: number = 1, limit: number = 20, activeOnly: boolean = true) {
     const offset = (page - 1) * limit;
     
-    let query = db.select().from(workshopProfiles);
+    let workshops;
     
     if (activeOnly) {
-      query = query.where(eq(workshopProfiles.isActive, true));
+      workshops = await db.select().from(workshopProfiles).where(eq(workshopProfiles.isActive, true)).limit(limit).offset(offset);
+    } else {
+      workshops = await db.select().from(workshopProfiles).limit(limit).offset(offset);
     }
-    
-    const workshops = await query.limit(limit).offset(offset);
     
     return {
       workshops,

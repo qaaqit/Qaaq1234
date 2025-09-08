@@ -14,6 +14,7 @@ export const sessions = pgTable(
   }
 );
 
+
 // System configuration table for admin settings
 export const systemConfigs = pgTable("system_configs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
