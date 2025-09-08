@@ -212,11 +212,6 @@ export default function WorkshopPage() {
                           <div className="text-sm text-gray-600 mb-2">
                             <strong>Home Port:</strong> {workshop.homePort}
                           </div>
-                          <div className="text-center">
-                            <p className="text-sm text-gray-500 italic">
-                              Click to view workshop details
-                            </p>
-                          </div>
                         </div>
                       </div>
                     </div>
