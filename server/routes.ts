@@ -7090,6 +7090,75 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
     }
   });
 
+  // Add new System to SEMM structure
+  app.post('/api/dev/semm/add-system', authenticateToken, isAdminOrIntern, async (req, res) => {
+    try {
+      const { systemName, description } = req.body;
+      
+      if (!systemName) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'System name is required' 
+        });
+      }
+      
+      console.log(`🆕 Adding new system '${systemName}'`);
+      
+      // Get existing systems to determine the next available code
+      const existingSystemsResult = await pool.query(`
+        SELECT DISTINCT sid FROM semm_structure 
+        WHERE sid IS NOT NULL 
+        ORDER BY sid
+      `);
+      
+      const existingCodes = existingSystemsResult.rows.map(row => row.sid);
+      console.log(`🔧 Existing system codes:`, existingCodes);
+      
+      // Find the next available alphabetical code
+      let newSystemCode = null;
+      for (let i = 0; i < 26; i++) {
+        const code = String.fromCharCode(97 + i); // a, b, c, ..., z
+        if (!existingCodes.includes(code)) {
+          newSystemCode = code;
+          break;
+        }
+      }
+      
+      if (!newSystemCode) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'No available system codes (a-z all used)' 
+        });
+      }
+      
+      console.log(`🔧 Generated new system code: ${newSystemCode}`);
+      
+      // Create the formatted system name with code prefix
+      const formattedSystemName = `${newSystemCode}. ${systemName}`;
+      
+      // Insert the new system (just the system entry, no equipment initially)
+      await pool.query(`
+        INSERT INTO semm_structure (sid, system, description, eid, equipment, mid, make, moid, model)
+        VALUES ($1, $2, $3, NULL, NULL, NULL, NULL, NULL, NULL)
+      `, [newSystemCode, formattedSystemName, description || `${systemName} system classification`]);
+      
+      console.log('✅ Successfully added new system');
+      res.json({ 
+        success: true, 
+        message: 'System added successfully',
+        data: {
+          systemCode: newSystemCode,
+          systemName: formattedSystemName,
+          description: description || `${systemName} system classification`
+        }
+      });
+      
+    } catch (error) {
+      console.error('❌ Error adding system:', error);
+      res.status(500).json({ success: false, error: 'Failed to add system' });
+    }
+  });
+
   // Add new Model to Make
   app.post('/api/dev/semm/add-model', authenticateToken, isAdminOrIntern, async (req, res) => {
     try {
