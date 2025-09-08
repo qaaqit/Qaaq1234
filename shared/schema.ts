@@ -58,6 +58,7 @@ export const users = pgTable("users", {
   mustCreatePassword: boolean("must_create_password").default(true).notNull(), // Force password creation on next login
   userType: text("user_type").notNull(), // 'sailor' or 'local'
   isAdmin: boolean("is_admin").default(false), // Admin role flag
+  isIntern: boolean("is_intern").default(false), // Intern role flag - can edit SEMM alongside admins
   nickname: text("nickname"),
   
   // Primary auth method tracking
@@ -597,6 +598,7 @@ export const updateProfileSchema = createInsertSchema(users).omit({
   password: true,
   needsPasswordChange: true,
   isAdmin: true,
+  isIntern: true,
   isPlatformAdmin: true,
   isBlocked: true,
   isVerified: true,
