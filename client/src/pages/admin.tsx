@@ -105,7 +105,7 @@ export default function AdminPanel() {
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState<"analytics" | "metrics" | "backups" | "search" | "qbot" | "qoi" | "users">("analytics");
+  const [activeTab, setActiveTab] = useState<"analytics" | "metrics" | "backups" | "search" | "qbot" | "qoi" | "users" | "semm">("analytics");
   const [qbotRules, setQbotRules] = useState<string>("");
   const [loadingRules, setLoadingRules] = useState(false);
   const [glossaryUpdating, setGlossaryUpdating] = useState(false);
@@ -408,8 +408,8 @@ export default function AdminPanel() {
               </button>
             </div>
             
-            {/* Second Row: DB Backups, Search Analytics, QOI, User Management */}
-            <div className="grid grid-cols-4 gap-3">
+            {/* Second Row: DB Backups, Search Analytics, QOI, User Management, SEMM */}
+            <div className="grid grid-cols-5 gap-3">
               <button
                 onClick={() => setActiveTab("backups")}
                 className={`group flex items-center justify-center px-4 py-4 text-sm font-medium rounded-xl transition-all duration-300 transform hover:scale-105 ${
@@ -453,6 +453,17 @@ export default function AdminPanel() {
               >
                 <i className={`fas fa-users mr-2 ${activeTab === "users" ? "animate-pulse" : "group-hover:animate-bounce"}`}></i>
                 Users
+              </button>
+              <button
+                onClick={() => setActiveTab("semm")}
+                className={`group flex items-center justify-center px-4 py-4 text-sm font-medium rounded-xl transition-all duration-300 transform hover:scale-105 ${
+                  activeTab === "semm"
+                    ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30 scale-105"
+                    : "bg-white/80 backdrop-blur-sm text-gray-700 border border-amber-200/50 hover:bg-amber-50/80 hover:border-amber-300 shadow-md hover:shadow-lg"
+                }`}
+              >
+                <i className={`fas fa-cogs mr-2 ${activeTab === "semm" ? "animate-pulse" : "group-hover:animate-bounce"}`}></i>
+                SEMM Logs
               </button>
             </div>
           </div>
@@ -1126,6 +1137,134 @@ START → Step 1 → Step 2 → Step 3/4
                     </Card>
                   ))}
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* SEMM Change Logs Tab */}
+          <TabsContent value="semm" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <i className="fas fa-cogs mr-2 text-orange-600"></i>
+                  SEMM Change Logs
+                </CardTitle>
+                <p className="text-sm text-gray-600">
+                  Download and review all System Equipment Make Model title changes made by users
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Download Options */}
+                  <Card className="border-dashed border-2 border-orange-200 bg-orange-50/50">
+                    <CardContent className="p-4">
+                      <h3 className="font-semibold text-gray-900 mb-2 flex items-center">
+                        <i className="fas fa-download mr-2 text-orange-600"></i>
+                        Download Change Log
+                      </h3>
+                      <p className="text-sm text-gray-600 mb-4">
+                        Download complete SEMM change history with user details and timestamps
+                      </p>
+                      <div className="space-y-2">
+                        <Button
+                          onClick={() => {
+                            const token = localStorage.getItem('token');
+                            if (token) {
+                              window.open(`/api/admin/semm-change-log?format=csv&token=${token}`, '_blank');
+                            } else {
+                              toast({
+                                title: "Authentication required",
+                                description: "Please refresh the page and try again",
+                                variant: "destructive"
+                              });
+                            }
+                          }}
+                          className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
+                          data-testid="button-download-csv"
+                        >
+                          <i className="fas fa-file-csv mr-2"></i>
+                          Download CSV
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            const token = localStorage.getItem('token');
+                            if (token) {
+                              window.open(`/api/admin/semm-change-log?format=json&token=${token}`, '_blank');
+                            } else {
+                              toast({
+                                title: "Authentication required", 
+                                description: "Please refresh the page and try again",
+                                variant: "destructive"
+                              });
+                            }
+                          }}
+                          variant="outline"
+                          className="w-full"
+                          data-testid="button-download-json"
+                        >
+                          <i className="fas fa-file-code mr-2"></i>
+                          Download JSON
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Information Panel */}
+                  <Card className="border-blue-200 bg-blue-50/50">
+                    <CardContent className="p-4">
+                      <h3 className="font-semibold text-gray-900 mb-2 flex items-center">
+                        <i className="fas fa-info-circle mr-2 text-blue-600"></i>
+                        Change Log Information
+                      </h3>
+                      <div className="space-y-2 text-sm text-gray-600">
+                        <div className="flex items-center">
+                          <i className="fas fa-circle text-xs text-green-500 mr-2"></i>
+                          All SEMM title changes are logged automatically
+                        </div>
+                        <div className="flex items-center">
+                          <i className="fas fa-circle text-xs text-blue-500 mr-2"></i>
+                          Includes user details and timestamps
+                        </div>
+                        <div className="flex items-center">
+                          <i className="fas fa-circle text-xs text-orange-500 mr-2"></i>
+                          Shows old and new values for comparison
+                        </div>
+                        <div className="flex items-center">
+                          <i className="fas fa-circle text-xs text-purple-500 mr-2"></i>
+                          Available in CSV and JSON formats
+                        </div>
+                      </div>
+                      <div className="mt-4 p-3 bg-white/80 rounded border">
+                        <div className="text-xs font-medium text-gray-700 mb-1">Log Fields Include:</div>
+                        <div className="text-xs text-gray-600 space-y-1">
+                          <div>• User ID & Email</div>
+                          <div>• Change Type (System/Equipment/Make/Model)</div>
+                          <div>• Item Code</div>
+                          <div>• Old & New Titles</div>
+                          <div>• Timestamp</div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Recent Changes Preview */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center">
+                      <i className="fas fa-history mr-2 text-gray-600"></i>
+                      Recent Changes Preview
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <p className="text-sm text-gray-600 text-center">
+                        <i className="fas fa-download mr-2"></i>
+                        Download the full log to view detailed change history
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
               </CardContent>
             </Card>
           </TabsContent>

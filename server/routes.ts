@@ -6349,8 +6349,30 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   // Download SEMM Change Log (Admin Only)
   app.get('/api/admin/semm-change-log', async (req: any, res) => {
     try {
-      // Use the same authentication method as other endpoints
-      const authResult = await smartAuthPriority.checkAuthentication(req, res);
+      const { token } = req.query;
+      let authResult;
+      
+      // If token is provided in query params, verify it directly
+      if (token) {
+        try {
+          const decoded = jwt.verify(token as string, JWT_SECRET) as any;
+          const userId = decoded.userId;
+          
+          // Get user details
+          const userResult = await pool.query('SELECT * FROM users WHERE "userId" = $1', [userId]);
+          if (userResult.rows.length > 0) {
+            authResult = { user: userResult.rows[0] };
+          }
+        } catch (error) {
+          return res.status(401).json({ 
+            success: false, 
+            error: 'Invalid token' 
+          });
+        }
+      } else {
+        // Use the standard authentication method
+        authResult = await smartAuthPriority.checkAuthentication(req, res);
+      }
       
       if (!authResult.user) {
         return res.status(401).json({ 
