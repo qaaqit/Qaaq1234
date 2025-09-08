@@ -199,6 +199,34 @@ export const adminAuth = async (req: Request, res: Response, next: NextFunction)
 };
 
 /**
+ * Admin or Intern Authentication Middleware
+ * Requires authentication AND either admin or intern privileges
+ * Used for SEMM editing functionality
+ */
+export const adminOrInternAuth = async (req: Request, res: Response, next: NextFunction) => {
+  await unifiedAuth(req, res, (error) => {
+    if (error) {
+      return next(error);
+    }
+    
+    const user = req.auth?.user;
+    const isAdminOrIntern = user?.isAdmin || user?.isIntern;
+    
+    if (!isAdminOrIntern) {
+      console.log(`❌ SEMM Auth: User ${user?.fullName} lacks admin or intern privileges`);
+      return res.status(403).json({ 
+        message: 'Admin or Intern privileges required for SEMM editing',
+        currentUser: user?.fullName 
+      });
+    }
+    
+    const roleType = user?.isAdmin ? 'Admin' : 'Intern';
+    console.log(`✅ SEMM Auth: ${roleType} user ${user.fullName} authenticated for SEMM editing`);
+    next();
+  });
+};
+
+/**
  * Generate JWT token for user
  */
 export const generateToken = (userId: string): string => {

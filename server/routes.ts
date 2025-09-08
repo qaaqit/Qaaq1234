@@ -3146,6 +3146,47 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
     }
   };
 
+  // Admin or Intern middleware for SEMM editing
+  const isAdminOrIntern = async (req: any, res: any, next: any) => {
+    try {
+      const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      console.log('Admin/Intern check for user ID:', userId, 'type:', typeof userId);
+      
+      // For specific admin user IDs, allow direct access
+      const adminIds = [
+        "5791e66f-9cc1-4be4-bd4b-7fc1bd2e258e",
+        "44885683", // Add other admin IDs as needed
+        "45016180"  // workship.ai@gmail.com
+      ];
+      
+      if (adminIds.includes(userId)) {
+        console.log('Direct admin access granted for SEMM editing:', userId);
+        return next();
+      }
+
+      const user = await storage.getUser(userId);
+      console.log('Admin/Intern check for user:', userId, 'user found:', !!user, 'isAdmin:', user?.isAdmin, 'isIntern:', user?.isIntern);
+      
+      if (!user || (!user.isAdmin && !user.isIntern)) {
+        return res.status(403).json({ 
+          message: "Admin or Intern access required for SEMM editing",
+          currentUser: user?.fullName 
+        });
+      }
+
+      const roleType = user.isAdmin ? 'Admin' : 'Intern';
+      console.log(`✅ SEMM auth: ${roleType} user ${user.fullName} (${userId}) authenticated`);
+      next();
+    } catch (error) {
+      console.error("Admin/Intern check error:", error);
+      res.status(500).json({ message: "Server error" });
+    }
+  };
+
   // Admin endpoint to grant premium status to a user
   app.post('/api/admin/grant-premium/:userId', authenticateToken, isAdmin, async (req: any, res) => {
     try {
@@ -5819,7 +5860,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   // ==== SEMM UPDATE ENDPOINTS ====
   
   // Update System Title
-  app.post('/api/dev/semm/update-system-title', async (req: any, res) => {
+  app.post('/api/dev/semm/update-system-title', authenticateToken, isAdminOrIntern, async (req: any, res) => {
     try {
       const { code, title } = req.body;
       
@@ -5917,7 +5958,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   });
 
   // Update Equipment Title
-  app.post('/api/dev/semm/update-equipment-title', async (req: any, res) => {
+  app.post('/api/dev/semm/update-equipment-title', authenticateToken, isAdminOrIntern, async (req: any, res) => {
     try {
       const { code, title } = req.body;
       
@@ -5990,7 +6031,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   });
 
   // Update Make Title
-  app.post('/api/dev/semm/update-make-title', async (req: any, res) => {
+  app.post('/api/dev/semm/update-make-title', authenticateToken, isAdminOrIntern, async (req: any, res) => {
     try {
       const { code, title } = req.body;
       
@@ -6055,7 +6096,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   });
 
   // Update Model Title
-  app.post('/api/dev/semm/update-model-title', async (req: any, res) => {
+  app.post('/api/dev/semm/update-model-title', authenticateToken, isAdminOrIntern, async (req: any, res) => {
     try {
       const { code, title } = req.body;
       
@@ -6122,7 +6163,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   // ==== SEMM REORDER ENDPOINTS ====
   
   // Reorder Systems
-  app.post('/api/dev/semm/reorder-systems', sessionBridge, async (req, res) => {
+  app.post('/api/dev/semm/reorder-systems', authenticateToken, isAdminOrIntern, async (req, res) => {
     try {
       const { orderedCodes } = req.body;
       
@@ -6154,7 +6195,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   });
   
   // Reorder Equipment within a System
-  app.post('/api/dev/semm/reorder-equipment', sessionBridge, async (req, res) => {
+  app.post('/api/dev/semm/reorder-equipment', authenticateToken, isAdminOrIntern, async (req, res) => {
     try {
       const { systemCode, orderedCodes } = req.body;
       
@@ -6227,7 +6268,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   });
   
   // Reorder Makes within an Equipment
-  app.post('/api/dev/semm/reorder-makes', sessionBridge, async (req, res) => {
+  app.post('/api/dev/semm/reorder-makes', authenticateToken, isAdminOrIntern, async (req, res) => {
     try {
       const { systemCode, equipmentCode, orderedMakes } = req.body;
       
@@ -6283,7 +6324,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   });
   
   // Reorder Models within a Make
-  app.post('/api/dev/semm/reorder-models', sessionBridge, async (req, res) => {
+  app.post('/api/dev/semm/reorder-models', authenticateToken, isAdminOrIntern, async (req, res) => {
     try {
       const { systemCode, equipmentCode, makeCode, orderedModels } = req.body;
       
@@ -6339,7 +6380,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   });
 
   // Add new Make to Equipment
-  app.post('/api/dev/semm/add-make', sessionBridge, async (req, res) => {
+  app.post('/api/dev/semm/add-make', authenticateToken, isAdminOrIntern, async (req, res) => {
     try {
       const { systemCode, equipmentCode, makeName, description } = req.body;
       
@@ -6487,7 +6528,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   });
 
   // Fix system names in database - one-time cleanup
-  app.post('/api/dev/semm/fix-system-names', sessionBridge, async (req, res) => {
+  app.post('/api/dev/semm/fix-system-names', authenticateToken, isAdminOrIntern, async (req, res) => {
     try {
       console.log('🔧 Fixing system names in database...');
       
@@ -6543,7 +6584,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   });
 
   // Delete equipment from system
-  app.delete('/api/dev/semm/delete-equipment/:equipmentCode', sessionBridge, async (req, res) => {
+  app.delete('/api/dev/semm/delete-equipment/:equipmentCode', authenticateToken, isAdminOrIntern, async (req, res) => {
     try {
       const { equipmentCode } = req.params;
       console.log(`🗑️ Delete equipment request for code: ${equipmentCode}`);
@@ -6584,7 +6625,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   });
 
   // Transfer equipment between systems with renaming
-  app.post('/api/dev/semm/transfer-equipment', sessionBridge, async (req, res) => {
+  app.post('/api/dev/semm/transfer-equipment', authenticateToken, isAdminOrIntern, async (req, res) => {
     try {
       const { equipmentCode, targetSystemCode, newEquipmentCode } = req.body;
       console.log(`🔄 Transfer equipment request: ${equipmentCode} -> ${targetSystemCode} as ${newEquipmentCode}`);
@@ -6647,7 +6688,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   });
 
   // Bulk transfer for system swap (batch operation)
-  app.post('/api/dev/semm/swap-systems', sessionBridge, async (req, res) => {
+  app.post('/api/dev/semm/swap-systems', authenticateToken, isAdminOrIntern, async (req, res) => {
     try {
       const { transfers } = req.body;
       console.log(`🔄 Bulk system swap request with ${transfers.length} transfers`);
@@ -6726,7 +6767,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   });
 
   // Manual equipment insertion with specific codes
-  app.post('/api/dev/semm/insert-manual-equipment', sessionBridge, async (req, res) => {
+  app.post('/api/dev/semm/insert-manual-equipment', authenticateToken, isAdminOrIntern, async (req, res) => {
     try {
       const { systemCode, equipmentCode, equipmentName, description } = req.body;
       console.log('🔧 Manual equipment insertion:', req.body);
@@ -6789,7 +6830,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   });
 
   // Update equipment name
-  app.post('/api/dev/semm/update-equipment-name', sessionBridge, async (req, res) => {
+  app.post('/api/dev/semm/update-equipment-name', authenticateToken, isAdminOrIntern, async (req, res) => {
     try {
       const { equipmentCode, newName } = req.body;
       console.log(`🔧 Updating equipment name: ${equipmentCode} -> ${newName}`);
@@ -6826,7 +6867,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   });
 
   // Add new equipment to system
-  app.post('/api/dev/semm/add-equipment', sessionBridge, async (req, res) => {
+  app.post('/api/dev/semm/add-equipment', authenticateToken, isAdminOrIntern, async (req, res) => {
     try {
       console.log('🔧 Add equipment request:', req.body);
       
@@ -6917,7 +6958,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   });
 
   // Add new Model to Make
-  app.post('/api/dev/semm/add-model', async (req, res) => {
+  app.post('/api/dev/semm/add-model', authenticateToken, isAdminOrIntern, async (req, res) => {
     try {
       const { systemCode, equipmentCode, makeCode, modelName, description } = req.body;
       
