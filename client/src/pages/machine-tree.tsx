@@ -348,14 +348,24 @@ export default function MachineTreePage() {
             
             {/* Add New System Button in Header */}
             {canEditSEMM && (
-              <button
-                onClick={handleAddNewSystem}
-                className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium"
-                data-testid="header-add-new-system"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Add New System</span>
-              </button>
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={handleAddNewSystem}
+                  className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium"
+                  data-testid="header-add-new-system"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Add New System</span>
+                </button>
+                <button
+                  onClick={handleReorderSystems}
+                  className="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                  data-testid="header-edit-system-list"
+                >
+                  <GripVertical className="h-4 w-4" />
+                  <span>Edit System List</span>
+                </button>
+              </div>
             )}
           </div>
         </div>
