@@ -177,7 +177,7 @@ export default function Discover() {
                   <SelectContent className="z-[1100]">
                     {semmData?.data?.map((system: any) => (
                       <SelectItem key={system.code} value={system.code}>
-                        {system.title}
+                        {system.title} Systems
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -213,7 +213,7 @@ export default function Discover() {
                 <SelectContent className="z-[1100]">
                   {semmData?.data?.map((system: any) => (
                     <SelectItem key={system.code} value={system.code}>
-                      {system.title}
+                      {system.title} Systems
                     </SelectItem>
                   ))}
                 </SelectContent>
