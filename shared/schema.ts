@@ -332,8 +332,39 @@ export const semmModels = pgTable("semm_models", {
   updatedAt: timestamp("updated_at").default(sql`now()`)
 });
 
-
-
+// Workshop Profiles Table - Stores workshop service provider information
+export const workshopProfiles = pgTable("workshop_profiles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id), // Optional link to existing user
+  
+  // Workshop Information
+  fullName: text("full_name").notNull(), // Workshop owner/manager name
+  email: text("email").notNull(), // Workshop contact email
+  services: text("services").notNull(), // Services/expertise offered (comma-separated)
+  whatsappNumber: text("whatsapp_number"), // Workshop WhatsApp contact
+  homePort: text("home_port").notNull(), // Base port location
+  
+  // Media and Web Presence
+  businessCardPhoto: text("business_card_photo"), // Business card image path
+  workshopFrontPhoto: text("workshop_front_photo"), // Workshop front image path
+  officialWebsite: text("official_website"), // Workshop website URL
+  
+  // Additional Info
+  location: text("location"), // Detailed location/address
+  description: text("description"), // Workshop description
+  
+  // Status and Verification
+  isVerified: boolean("is_verified").default(false), // Admin verification status
+  isActive: boolean("is_active").default(true), // Active listing status
+  
+  // Import tracking
+  importSource: text("import_source").default("csv"), // 'csv', 'manual', 'api'
+  lastSyncAt: timestamp("last_sync_at"), // Last data sync timestamp
+  
+  // Timestamps
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`)
+});
 
 // Relations - Note: usersRelations defined later with identity support
 
@@ -444,8 +475,13 @@ export const semmModelsRelations = relations(semmModels, ({ one }) => ({
   }),
 }));
 
-
-
+// Workshop Profiles Relations
+export const workshopProfilesRelations = relations(workshopProfiles, ({ one }) => ({
+  user: one(users, {
+    fields: [workshopProfiles.userId],
+    references: [users.id],
+  }),
+}));
 
 // Schemas
 // User Identities Relations
@@ -463,6 +499,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   sentMessages: many(chatMessages, { relationName: "senderMessages" }),
   receivedConnections: many(chatConnections, { relationName: "receiverConnections" }),
   sentConnections: many(chatConnections, { relationName: "senderConnections" }),
+  workshopProfile: one(workshopProfiles),
 }));
 
 // User Identity Schemas
@@ -547,6 +584,13 @@ export const insertSemmModelSchema = createInsertSchema(semmModels).omit({
   updatedAt: true,
 });
 
+// Workshop Profiles Insert Schema
+export const insertWorkshopProfileSchema = createInsertSchema(workshopProfiles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  lastSyncAt: true,
+});
 
 export const insertChatConnectionSchema = createInsertSchema(chatConnections).pick({
   receiverId: true,
