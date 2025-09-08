@@ -172,7 +172,7 @@ export default function Discover() {
                 <span className="text-gray-700 font-medium flex-shrink-0">I need a</span>
                 <Select value={selectedSystem} onValueChange={setSelectedSystem}>
                   <SelectTrigger className="flex-1 bg-orange-50 border-orange-300 hover:bg-orange-100">
-                    <SelectValue placeholder="Machine Search" />
+                    <SelectValue placeholder="Automation/ Hydraulic/ Mechanical" />
                   </SelectTrigger>
                   <SelectContent className="z-[1100]">
                     {semmData?.data?.map((system: any) => (
@@ -208,7 +208,7 @@ export default function Discover() {
               {/* Machine Search Dropdown */}
               <Select value={selectedSystem} onValueChange={setSelectedSystem}>
                 <SelectTrigger className="w-[200px] bg-orange-50 border-orange-300 hover:bg-orange-100">
-                  <SelectValue placeholder="Machine Search" />
+                  <SelectValue placeholder="Automation/ Hydraulic/ Mechanical" />
                 </SelectTrigger>
                 <SelectContent className="z-[1100]">
                   {semmData?.data?.map((system: any) => (
