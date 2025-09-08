@@ -6346,6 +6346,79 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
     }
   });
 
+  // Download SEMM Change Log (Admin Only)
+  app.get('/api/admin/semm-change-log', async (req: any, res) => {
+    try {
+      // Use the same authentication method as other endpoints
+      const authResult = await smartAuthPriority.checkAuthentication(req, res);
+      
+      if (!authResult.user) {
+        return res.status(401).json({ 
+          success: false, 
+          error: 'Authentication required' 
+        });
+      }
+      
+      // Check if user is admin
+      const isAdmin = authResult.user?.isAdmin === true;
+      
+      if (!isAdmin) {
+        return res.status(403).json({ 
+          success: false, 
+          error: 'Admin access required' 
+        });
+      }
+      
+      const { format = 'json', limit = 1000 } = req.query;
+      
+      console.log(`📊 Admin ${authResult.user?.email} downloading SEMM change log (format: ${format})`);
+      
+      // Fetch change log data
+      const result = await pool.query(`
+        SELECT 
+          id,
+          user_id,
+          user_email,
+          change_type,
+          item_code,
+          old_title,
+          new_title,
+          created_at
+        FROM semm_change_log 
+        ORDER BY created_at DESC 
+        LIMIT $1
+      `, [parseInt(limit as string) || 1000]);
+      
+      const logs = result.rows;
+      
+      if (format === 'csv') {
+        // Generate CSV format
+        const csvHeader = 'ID,User ID,User Email,Change Type,Item Code,Old Title,New Title,Created At\n';
+        const csvRows = logs.map(log => 
+          `${log.id},"${log.user_id}","${log.user_email}","${log.change_type}","${log.item_code}","${log.old_title || ''}","${log.new_title}","${log.created_at}"`
+        ).join('\n');
+        
+        const csvContent = csvHeader + csvRows;
+        
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="semm-change-log-${new Date().toISOString().split('T')[0]}.csv"`);
+        res.send(csvContent);
+      } else {
+        // Return JSON format
+        res.json({
+          success: true,
+          data: logs,
+          total: logs.length,
+          format: 'json'
+        });
+      }
+      
+    } catch (error) {
+      console.error('❌ Error fetching SEMM change log:', error);
+      res.status(500).json({ success: false, error: 'Failed to fetch change log' });
+    }
+  });
+
   // Fix system names in database - one-time cleanup
   app.post('/api/dev/semm/fix-system-names', sessionBridge, async (req, res) => {
     try {
