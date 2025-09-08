@@ -110,6 +110,8 @@ export default function AdminPanel() {
   const [qbotRules, setQbotRules] = useState<string>("");
   const [loadingRules, setLoadingRules] = useState(false);
   const [glossaryUpdating, setGlossaryUpdating] = useState(false);
+  const [promoteEmail, setPromoteEmail] = useState("");
+  const [promoteEmailLoading, setPromoteEmailLoading] = useState(false);
   
   // Authentication check
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -315,6 +317,63 @@ export default function AdminPanel() {
       });
     },
   });
+
+  // Function to promote user by email
+  const handlePromoteByEmail = async () => {
+    if (!promoteEmail.trim()) {
+      toast({
+        title: "Email required",
+        description: "Please enter a valid email address",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setPromoteEmailLoading(true);
+    
+    try {
+      // Find user by email
+      const targetUser = users?.find(user => 
+        user.email.toLowerCase() === promoteEmail.toLowerCase()
+      );
+
+      if (!targetUser) {
+        toast({
+          title: "User not found",
+          description: "No user found with this email address",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      if (targetUser.isAdmin) {
+        toast({
+          title: "Cannot promote admin",
+          description: "Admin users cannot be promoted to intern status",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      if (targetUser.isIntern) {
+        toast({
+          title: "Already an intern",
+          description: "This user is already an intern",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Promote the user
+      await promoteToInternMutation.mutateAsync({ userId: targetUser.id });
+      setPromoteEmail(""); // Clear the input on success
+      
+    } catch (error) {
+      // Error is handled by the mutation's onError
+    } finally {
+      setPromoteEmailLoading(false);
+    }
+  };
 
   if (statsLoading || usersLoading || countryLoading) {
     return (
@@ -1353,6 +1412,45 @@ START → Step 1 → Step 2 → Step 3/4
                           <i className="fas fa-user-plus mr-2 text-blue-600"></i>
                           Promote to Intern
                         </h4>
+                        
+                        {/* Email-based promotion */}
+                        <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+                          <div className="flex items-center space-x-3">
+                            <div className="flex-1">
+                              <Input
+                                type="email"
+                                placeholder="Enter user's email address..."
+                                value={promoteEmail}
+                                onChange={(e) => setPromoteEmail(e.target.value)}
+                                className="bg-white"
+                                onKeyPress={(e) => {
+                                  if (e.key === 'Enter') {
+                                    handlePromoteByEmail();
+                                  }
+                                }}
+                                data-testid="input-promote-email"
+                              />
+                            </div>
+                            <Button
+                              onClick={handlePromoteByEmail}
+                              disabled={promoteEmailLoading || !promoteEmail.trim()}
+                              className="bg-purple-600 hover:bg-purple-700 text-white"
+                              data-testid="button-promote-by-email"
+                            >
+                              {promoteEmailLoading ? (
+                                <i className="fas fa-spinner fa-spin mr-2"></i>
+                              ) : (
+                                <i className="fas fa-user-graduate mr-2"></i>
+                              )}
+                              Promote
+                            </Button>
+                          </div>
+                          <p className="text-xs text-gray-600 mt-2">
+                            <i className="fas fa-info-circle mr-1"></i>
+                            Type an email address and click Promote to give SEMM editing permissions
+                          </p>
+                        </div>
+                        
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                           {users?.filter((user: AdminUser) => !user.isAdmin && !user.isIntern).slice(0, 12).map((user: AdminUser) => (
                             <Card key={user.id} className="border-blue-200 bg-blue-50/50">
