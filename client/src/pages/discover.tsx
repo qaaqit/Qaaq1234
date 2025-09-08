@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useQuery } from '@tanstack/react-query';
 import Header from '@/components/header';
 import { useAuth } from '@/contexts/AuthContext';
+import { ChevronDown } from 'lucide-react';
 
 // Major Ports with Workshop Coverage
 const majorPorts = [
@@ -38,6 +39,7 @@ export default function Discover() {
   const mapInstanceRef = useRef<L.Map | null>(null);
   const [selectedPort, setSelectedPort] = useState<string>('');
   const [selectedSystem, setSelectedSystem] = useState<string>('');
+  const [isWorkshopFinderMinimized, setIsWorkshopFinderMinimized] = useState<boolean>(false);
   const [, setLocation] = useLocation();
   const { user } = useAuth();
 
@@ -143,7 +145,23 @@ export default function Discover() {
       {/* Mobile-Friendly Search Bar */}
       <div className="absolute top-20 sm:top-24 left-1/2 transform -translate-x-1/2 z-[1000] pointer-events-auto px-4 w-full max-w-[95vw] sm:max-w-none">
         <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 sm:p-6 border border-orange-200 w-full sm:min-w-[600px]">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 text-center">Workshop Finder</h3>
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-800 flex-1 text-center">Workshop Finder</h3>
+            <button
+              onClick={() => setIsWorkshopFinderMinimized(!isWorkshopFinderMinimized)}
+              className="p-1 rounded-full hover:bg-orange-100 transition-colors"
+              title={isWorkshopFinderMinimized ? "Expand Workshop Finder" : "Minimize Workshop Finder"}
+            >
+              <ChevronDown 
+                className={`w-5 h-5 text-orange-600 transition-transform duration-200 ${
+                  isWorkshopFinderMinimized ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+          </div>
+          
+          {!isWorkshopFinderMinimized && (
+            <>
           
           {/* Responsive Search Bar with Text and Dropdowns */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-center space-y-3 sm:space-y-0 sm:space-x-2 text-base sm:text-lg">
@@ -229,6 +247,8 @@ export default function Discover() {
               Find Workshops
             </Button>
           </div>
+          </>
+          )}
         </div>
       </div>
     </div>
