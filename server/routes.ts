@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import ws from 'ws';
 import jwt from 'jsonwebtoken';
 import { storage } from "./storage";
-import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, insertChatConnectionSchema, insertChatMessageSchema, insertRankGroupSchema, insertRankGroupMemberSchema, insertRankGroupMessageSchema, insertRankChatMessageSchema, insertEmailVerificationTokenSchema, emailVerificationTokens, rankChatMessages, ipAnalytics } from "@shared/schema";
+import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, insertChatConnectionSchema, insertChatMessageSchema, insertRankGroupSchema, insertRankGroupMemberSchema, insertRankGroupMessageSchema, insertRankChatMessageSchema, insertEmailVerificationTokenSchema, emailVerificationTokens, rankChatMessages, ipAnalytics, users } from "@shared/schema";
 import { emailService } from "./email-service";
 import { randomBytes } from 'crypto';
 import { eq } from 'drizzle-orm';
@@ -6540,7 +6540,6 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       }
 
       // Search for user by email in database
-      const db = await getDb();
       const foundUsers = await db.select({
         id: users.id,
         fullName: users.fullName,
