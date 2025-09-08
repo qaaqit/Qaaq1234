@@ -5839,6 +5839,14 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
           error: 'Authentication required' 
         });
       }
+
+      // Admin-only access for SEMM modifications
+      if (!authResult.user.isAdmin) {
+        return res.status(403).json({ 
+          success: false, 
+          error: 'Admin access required for SEMM modifications' 
+        });
+      }
       
       // Log user information for traceability 
       const userId = authResult.user?.userId || authResult.user?.id;
@@ -5927,6 +5935,14 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         return res.status(401).json({ 
           success: false, 
           error: 'Authentication required' 
+        });
+      }
+
+      // Admin-only access for SEMM modifications
+      if (!authResult.user.isAdmin) {
+        return res.status(403).json({ 
+          success: false, 
+          error: 'Admin access required for SEMM modifications' 
         });
       }
       
@@ -6539,6 +6555,14 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         });
       }
 
+      // Admin-only access for SEMM modifications
+      if (!req.user || !req.user.isAdmin) {
+        return res.status(403).json({ 
+          success: false, 
+          error: 'Admin access required for SEMM modifications' 
+        });
+      }
+
       // Delete the equipment from database
       const result = await pool.query(`
         DELETE FROM semm_structure 
@@ -6802,7 +6826,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   });
 
   // Add new equipment to system
-  app.post('/api/dev/semm/add-equipment', async (req, res) => {
+  app.post('/api/dev/semm/add-equipment', sessionBridge, async (req, res) => {
     try {
       console.log('🔧 Add equipment request:', req.body);
       
@@ -6812,6 +6836,14 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         return res.status(400).json({ 
           success: false, 
           error: 'System code and equipment name are required' 
+        });
+      }
+
+      // Admin-only access for SEMM modifications
+      if (!req.user || !req.user.isAdmin) {
+        return res.status(403).json({ 
+          success: false, 
+          error: 'Admin access required for SEMM modifications' 
         });
       }
 
