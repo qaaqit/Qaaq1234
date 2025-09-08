@@ -6355,7 +6355,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       // If token is provided in query params, verify it directly
       if (token) {
         try {
-          const decoded = jwt.verify(token as string, JWT_SECRET) as any;
+          const decoded = jwt.verify(token as string, getJWT()) as any;
           const userId = decoded.userId;
           
           // Get user details
