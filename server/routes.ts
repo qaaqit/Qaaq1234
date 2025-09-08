@@ -5973,40 +5973,60 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
     }
   });
 
-  // Get workshop by ID - Public access
+  // Get single workshop by ID
   app.get('/api/workshops/:id', async (req, res) => {
     try {
-      const { id } = req.params;
+      const workshopId = req.params.id;
+      console.log(`🔧 Fetching single workshop: ${workshopId}`);
       
-      if (!id) {
-        return res.status(400).json({ 
-          success: false, 
-          error: 'Workshop ID is required' 
-        });
-      }
-
-      const workshop = await workshopCSVImportService.getWorkshopById(id);
-      
-      if (!workshop) {
-        return res.status(404).json({ 
-          success: false, 
-          error: 'Workshop not found' 
-        });
-      }
-
-      res.json({
-        success: true,
-        workshop
+      // Use local DATABASE_URL to access the real CSV imported workshop data
+      const { Pool: LocalPool } = await import('@neondatabase/serverless');
+      const localPool = new LocalPool({ 
+        connectionString: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: false }
       });
-
+      
+      const client = await localPool.connect();
+      
+      try {
+        const query = `SELECT * FROM workshop_profiles WHERE id = $1 AND is_active = true`;
+        console.log(`🔧 Executing SQL query: ${query}`);
+        
+        const result = await client.query(query, [workshopId]);
+        
+        if (result.rows.length === 0) {
+          console.log(`❌ Workshop not found: ${workshopId}`);
+          return res.status(404).json({
+            success: false,
+            error: 'Workshop not found'
+          });
+        }
+        
+        const workshop = result.rows[0];
+        console.log(`✅ Found workshop: ${workshop.full_name}`);
+        
+        res.json(workshop);
+        
+      } catch (dbError) {
+        console.error(`❌ Database error fetching workshop:`, dbError);
+        res.status(500).json({
+          success: false,
+          error: 'Unable to access workshop database'
+        });
+      } finally {
+        client.release();
+        await localPool.end();
+      }
+      
     } catch (error) {
-      console.error('❌ Error fetching workshop by ID:', error);
+      console.error('❌ Error fetching workshop:', error);
       res.status(500).json({ 
         success: false, 
         error: 'Failed to fetch workshop' 
       });
     }
   });
+
 
   // Get workshops by location/port - Public access
   app.get('/api/workshops/by-port/:port', async (req, res) => {

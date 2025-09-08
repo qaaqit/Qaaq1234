@@ -144,7 +144,7 @@ export default function WorkshopPage() {
             </Card>
           ) : workshopsData?.workshops?.length > 0 ? (
             workshopsData.workshops.map((workshop: Workshop) => (
-              <Card key={workshop.id} className="hover:shadow-lg transition-shadow">
+              <Card key={workshop.id} className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setLocation(`/workshop/${workshop.id}`)}>
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div>
@@ -194,10 +194,6 @@ export default function WorkshopPage() {
                               <span>WhatsApp: {workshop.whatsappNumber}</span>
                             </div>
                           )}
-                          <div className="flex items-center space-x-2 text-sm text-gray-600">
-                            <Mail className="w-4 h-4" />
-                            <span>{workshop.email}</span>
-                          </div>
                           {workshop.officialWebsite && (
                             <div className="flex items-center space-x-2 text-sm text-gray-600">
                               <Globe className="w-4 h-4" />
@@ -216,22 +212,10 @@ export default function WorkshopPage() {
                           <div className="text-sm text-gray-600 mb-2">
                             <strong>Home Port:</strong> {workshop.homePort}
                           </div>
-                          <div className="space-y-2">
-                            <Button 
-                              className="w-full bg-orange-600 hover:bg-orange-700"
-                              onClick={() => window.open(`mailto:${workshop.email}?subject=Workshop Service Inquiry - ${selectedPort} ${selectedSystem ? getSystemTitle(selectedSystem) : ''}`, '_blank')}
-                            >
-                              Contact Workshop
-                            </Button>
-                            {workshop.whatsappNumber && (
-                              <Button 
-                                variant="outline"
-                                className="w-full border-green-500 text-green-600 hover:bg-green-50"
-                                onClick={() => window.open(`https://wa.me/${workshop.whatsappNumber?.replace(/[^\d]/g, '')}?text=Hello, I found your workshop on QaaqConnect Maritime. I'm interested in your services for ${selectedPort} ${selectedSystem ? getSystemTitle(selectedSystem) : ''}.`, '_blank')}
-                              >
-                                Contact via WhatsApp
-                              </Button>
-                            )}
+                          <div className="text-center">
+                            <p className="text-sm text-gray-500 italic">
+                              Click to view workshop details
+                            </p>
                           </div>
                         </div>
                       </div>
