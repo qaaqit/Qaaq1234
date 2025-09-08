@@ -90,11 +90,11 @@ export default function SemmEquipmentPage() {
   // Get user authentication info
   const { user, isAuthenticated } = useAuth();
   
-  const isAdmin = user?.isAdmin || false;
+  const isAdminOrIntern = user?.isAdmin || user?.isIntern || false;
   
-  // Debug admin detection
+  // Debug admin/intern detection
   console.log('🔐 SEMM Equipment - User object:', user);
-  console.log('🔐 SEMM Equipment - isAdmin check:', { isAdmin: user?.isAdmin, finalIsAdmin: isAdmin });
+  console.log('🔐 SEMM Equipment - admin/intern check:', { isAdmin: user?.isAdmin, isIntern: user?.isIntern, canEdit: isAdminOrIntern });
 
   // Admin state
   const [currentMakeIndex, setCurrentMakeIndex] = useState(0);
@@ -380,7 +380,7 @@ export default function SemmEquipmentPage() {
           </div>
 
           {/* Admin Edit Button */}
-          {isAdmin && (
+          {isAdminOrIntern && (
             <button
               onClick={() => handleEditEquipment(foundEquipment.code)}
               className="flex items-center space-x-2 px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors"
@@ -399,7 +399,7 @@ export default function SemmEquipmentPage() {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">Makes for {foundEquipment.title}</h2>
               <div className="flex items-center space-x-2">
-                {isAdmin && !reorderEnabled && (
+                {isAdminOrIntern && !reorderEnabled && (
                   <>
                     <button
                       onClick={handleReorderMakes}
@@ -624,7 +624,7 @@ export default function SemmEquipmentPage() {
                   </div>
 
                   {/* Admin edit button - only show when not in reorder mode */}
-                  {isAdmin && !reorderEnabled && (
+                  {isAdminOrIntern && !reorderEnabled && (
                     <div className="mt-4 pt-2 border-t border-gray-100">
                       <button
                         onClick={(e) => {

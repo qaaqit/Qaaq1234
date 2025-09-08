@@ -90,11 +90,11 @@ export default function SemmMakePage() {
 
   // Get user authentication info
   const { user, isAuthenticated } = useAuth();
-  const isAdmin = user?.isAdmin || false;
+  const isAdminOrIntern = user?.isAdmin || user?.isIntern || false;
   
-  // Debug admin detection
+  // Debug admin/intern detection
   console.log('🔐 SEMM Make - User object:', user);
-  console.log('🔐 SEMM Make - isAdmin check:', { isAdmin: user?.isAdmin, finalIsAdmin: isAdmin });
+  console.log('🔐 SEMM Make - admin/intern check:', { isAdmin: user?.isAdmin, isIntern: user?.isIntern, canEdit: isAdminOrIntern });
 
   // Fetch SEMM data to find the specific make
   const { data: semmData, isLoading, error } = useQuery({
@@ -378,7 +378,7 @@ export default function SemmMakePage() {
           </div>
 
           {/* Admin Edit Button */}
-          {isAdmin && (
+          {isAdminOrIntern && (
             <button
               onClick={() => handleEditMake(foundMake.code)}
               className="flex items-center space-x-2 px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors"
@@ -397,7 +397,7 @@ export default function SemmMakePage() {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">Models for {foundMake.title}</h2>
               <div className="flex items-center space-x-2">
-                {isAdmin && !reorderMode && (
+                {isAdminOrIntern && !reorderMode && (
                   <>
                     <button
                       onClick={handleReorderModels}
@@ -606,7 +606,7 @@ export default function SemmMakePage() {
                   </div>
 
                   {/* Admin edit button */}
-                  {isAdmin && !reorderMode && (
+                  {isAdminOrIntern && !reorderMode && (
                     <div className="mt-4 pt-2 border-t border-gray-100">
                       <button
                         onClick={(e) => {

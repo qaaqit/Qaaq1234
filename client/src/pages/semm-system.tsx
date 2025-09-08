@@ -112,11 +112,11 @@ export default function SemmSystemPage() {
   });
   
   const { user } = useAuth();
-  const isAdmin = user?.isAdmin || false;
+  const isAdminOrIntern = user?.isAdmin || user?.isIntern || false;
   
-  // Debug admin detection
+  // Debug admin/intern detection
   console.log('🔐 SEMM System - User object:', user);
-  console.log('🔐 SEMM System - isAdmin check:', { isAdmin: user?.isAdmin, finalIsAdmin: isAdmin });
+  console.log('🔐 SEMM System - admin/intern check:', { isAdmin: user?.isAdmin, isIntern: user?.isIntern, canEdit: isAdminOrIntern });
 
   // Fetch SEMM data to find the specific system
   const { data: semmData, isLoading, error } = useQuery({
@@ -463,7 +463,7 @@ export default function SemmSystemPage() {
                 <h2 className="text-xl font-semibold text-gray-800 flex items-center">
                   <Ship className="h-6 w-6 text-orange-600 mr-3" />
                   Equipment in {foundSystem.title}
-                  {isAdmin && (
+                  {isAdminOrIntern && (
                     <button
                       onClick={() => handleEditSystem(foundSystem.code)}
                       className="ml-2 p-1 hover:bg-orange-100 rounded"
@@ -476,7 +476,7 @@ export default function SemmSystemPage() {
                 </h2>
                 
                 {/* Admin Controls for Equipment - Right Edge */}
-                {isAdmin && !reorderEnabled ? (
+                {isAdminOrIntern && !reorderEnabled ? (
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={handleReorderEquipment}
@@ -496,7 +496,7 @@ export default function SemmSystemPage() {
                       <Plus className="w-5 h-5" />
                     </button>
                   </div>
-                ) : isAdmin && reorderEnabled ? (
+                ) : isAdminOrIntern && reorderEnabled ? (
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={handleSaveReorder}
@@ -775,7 +775,7 @@ export default function SemmSystemPage() {
                     </div>
 
                     {/* Admin edit and delete buttons */}
-                    {isAdmin && (
+                    {isAdminOrIntern && (
                       <div className="mt-4 pt-2 border-t border-gray-100">
                         <div className="flex space-x-2">
                           <button
@@ -811,7 +811,7 @@ export default function SemmSystemPage() {
             )}
 
             {/* Add New Equipment Button for Admins - Only show in normal mode */}
-            {isAdmin && !reorderEnabled && (
+            {isAdminOrIntern && !reorderEnabled && (
               <div className="mt-6">
                 <button
                   onClick={handleAddNewEquipment}

@@ -88,7 +88,7 @@ export default function SemmModelPage() {
 
   // Get user authentication info
   const { user, isAuthenticated } = useAuth();
-  const isAdmin = user?.isAdmin || false;
+  const isAdminOrIntern = user?.isAdmin || user?.isIntern || false;
   
   // Query client for cache invalidation
   const queryClient = useQueryClient();
@@ -100,9 +100,9 @@ export default function SemmModelPage() {
     modelTitle: ''
   });
   
-  // Debug admin detection
+  // Debug admin/intern detection
   console.log('🔐 SEMM Model - User object:', user);
-  console.log('🔐 SEMM Model - isAdmin check:', { isAdmin: user?.isAdmin, finalIsAdmin: isAdmin });
+  console.log('🔐 SEMM Model - admin/intern check:', { isAdmin: user?.isAdmin, isIntern: user?.isIntern, canEdit: isAdminOrIntern });
 
   // Fetch SEMM data to find the specific model
   const { data: semmData, isLoading, error } = useQuery({
@@ -286,7 +286,7 @@ export default function SemmModelPage() {
           </div>
 
           {/* Admin Edit Button */}
-          {isAdmin && (
+          {isAdminOrIntern && (
             <button
               onClick={() => handleEditModel(foundModel.code)}
               className="flex items-center space-x-2 px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors"
