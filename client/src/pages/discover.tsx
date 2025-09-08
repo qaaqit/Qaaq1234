@@ -5,6 +5,8 @@ import 'leaflet/dist/leaflet.css';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useQuery } from '@tanstack/react-query';
+import Header from '@/components/header';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Major Ports with Workshop Coverage
 const majorPorts = [
@@ -37,6 +39,7 @@ export default function Discover() {
   const [selectedPort, setSelectedPort] = useState<string>('');
   const [selectedSystem, setSelectedSystem] = useState<string>('');
   const [, setLocation] = useLocation();
+  const { user } = useAuth();
 
   // Fetch SEMM systems for dropdown
   const { data: semmData } = useQuery({
@@ -129,13 +132,16 @@ export default function Discover() {
 
   return (
     <div className="min-h-screen bg-gray-50 relative">
+      {/* Header */}
+      {user && <Header user={user as any} />}
+      
       <div 
         ref={mapRef} 
         className="w-full h-screen"
         style={{ minHeight: '100vh' }}
       />
       {/* Mobile-Friendly Search Bar */}
-      <div className="absolute top-4 sm:top-20 left-1/2 transform -translate-x-1/2 z-[1000] pointer-events-auto px-4 w-full max-w-[95vw] sm:max-w-none">
+      <div className="absolute top-20 sm:top-24 left-1/2 transform -translate-x-1/2 z-[1000] pointer-events-auto px-4 w-full max-w-[95vw] sm:max-w-none">
         <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 sm:p-6 border border-orange-200 w-full sm:min-w-[600px]">
           <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 text-center">Workshop Finder</h3>
           
