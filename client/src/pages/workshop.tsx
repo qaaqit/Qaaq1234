@@ -8,17 +8,22 @@ import { ArrowLeft, MapPin, Wrench, Phone, Mail, Globe, Star } from 'lucide-reac
 
 interface Workshop {
   id: string;
-  name: string;
-  location: string;
-  specialization: string;
-  description: string;
-  contact: {
-    phone?: string;
-    email?: string;
-    website?: string;
-  };
-  rating: number;
+  fullName: string;
+  email: string;
+  services: string;
+  whatsappNumber?: string;
+  homePort: string;
+  businessCardPhoto?: string;
+  workshopFrontPhoto?: string;
+  officialWebsite?: string;
+  location?: string;
+  description?: string;
   isVerified: boolean;
+  isActive: boolean;
+  importSource?: string;
+  lastSyncAt?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export default function WorkshopPage() {
@@ -138,86 +143,96 @@ export default function WorkshopPage() {
               </CardContent>
             </Card>
           ) : workshopsData?.workshops?.length > 0 ? (
-            workshopsData.workshops.map((workshop: any) => (
+            workshopsData.workshops.map((workshop: Workshop) => (
               <Card key={workshop.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div>
-                      <CardTitle className="text-xl text-gray-900">{workshop.name}</CardTitle>
-                      <p className="text-gray-600 mt-1">{workshop.location}</p>
-                      <p className="text-sm text-gray-500 mt-1">{workshop.country}</p>
+                      <CardTitle className="text-xl text-gray-900">{workshop.fullName}</CardTitle>
+                      <p className="text-gray-600 mt-1">{workshop.homePort}</p>
+                      <p className="text-sm text-gray-500 mt-1">{workshop.location || 'Location not specified'}</p>
                     </div>
                     <div className="flex flex-col items-end space-y-2">
-                      <Badge className="bg-orange-100 text-orange-800 flex items-center space-x-1">
-                        <Star className="w-3 h-3" />
-                        <span>{workshop.rating}/5.0</span>
-                      </Badge>
-                      <span className="text-xs text-gray-500">Est. {workshop.established}</span>
+                      {workshop.isVerified ? (
+                        <Badge className="bg-green-100 text-green-800 flex items-center space-x-1">
+                          <Star className="w-3 h-3" />
+                          <span>Verified</span>
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-gray-600">
+                          <span>Unverified</span>
+                        </Badge>
+                      )}
+                      <span className="text-xs text-gray-500">
+                        Added {new Date(workshop.createdAt).toLocaleDateString()}
+                      </span>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div>
-                      <h4 className="font-medium text-gray-900">Description</h4>
-                      <p className="text-gray-600">{workshop.description}</p>
-                    </div>
+                    {workshop.description && (
+                      <div>
+                        <h4 className="font-medium text-gray-900">Description</h4>
+                        <p className="text-gray-600">{workshop.description}</p>
+                      </div>
+                    )}
                     
                     <div>
-                      <h4 className="font-medium text-gray-900 mb-2">Specializations</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {workshop.specializations.map((spec: string, index: number) => (
-                          <Badge key={index} variant="outline" className="border-orange-200 text-orange-800">
-                            {spec}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-2">Services</h4>
-                      <div className="grid grid-cols-2 gap-2">
-                        {workshop.services.map((service: string, index: number) => (
-                          <div key={index} className="text-sm text-gray-600 flex items-center">
-                            <div className="w-2 h-2 bg-orange-400 rounded-full mr-2"></div>
-                            {service}
-                          </div>
-                        ))}
+                      <h4 className="font-medium text-gray-900 mb-2">Services & Expertise</h4>
+                      <div className="bg-gray-50 p-3 rounded-lg">
+                        <p className="text-gray-700">{workshop.services}</p>
                       </div>
                     </div>
                     
                     <div className="border-t pt-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          {workshop.contact.phone && (
+                          {workshop.whatsappNumber && (
                             <div className="flex items-center space-x-2 text-sm text-gray-600">
                               <Phone className="w-4 h-4" />
-                              <span>{workshop.contact.phone}</span>
+                              <span>WhatsApp: {workshop.whatsappNumber}</span>
                             </div>
                           )}
-                          {workshop.contact.email && (
-                            <div className="flex items-center space-x-2 text-sm text-gray-600">
-                              <Mail className="w-4 h-4" />
-                              <span>{workshop.contact.email}</span>
-                            </div>
-                          )}
-                          {workshop.contact.website && (
+                          <div className="flex items-center space-x-2 text-sm text-gray-600">
+                            <Mail className="w-4 h-4" />
+                            <span>{workshop.email}</span>
+                          </div>
+                          {workshop.officialWebsite && (
                             <div className="flex items-center space-x-2 text-sm text-gray-600">
                               <Globe className="w-4 h-4" />
-                              <span>{workshop.contact.website}</span>
+                              <a 
+                                href={workshop.officialWebsite.startsWith('http') ? workshop.officialWebsite : `https://${workshop.officialWebsite}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-orange-600 hover:text-orange-700 underline"
+                              >
+                                {workshop.officialWebsite}
+                              </a>
                             </div>
                           )}
                         </div>
                         <div>
                           <div className="text-sm text-gray-600 mb-2">
-                            <strong>Visa Status:</strong> {workshop.visa_status}
+                            <strong>Home Port:</strong> {workshop.homePort}
                           </div>
-                          <Button 
-                            className="w-full bg-orange-600 hover:bg-orange-700"
-                            onClick={() => window.open(`mailto:${workshop.contact.email}?subject=Workshop Inquiry - ${selectedPort} ${selectedSystem}`, '_blank')}
-                          >
-                            Contact Workshop
-                          </Button>
+                          <div className="space-y-2">
+                            <Button 
+                              className="w-full bg-orange-600 hover:bg-orange-700"
+                              onClick={() => window.open(`mailto:${workshop.email}?subject=Workshop Service Inquiry - ${selectedPort} ${selectedSystem ? getSystemTitle(selectedSystem) : ''}`, '_blank')}
+                            >
+                              Contact Workshop
+                            </Button>
+                            {workshop.whatsappNumber && (
+                              <Button 
+                                variant="outline"
+                                className="w-full border-green-500 text-green-600 hover:bg-green-50"
+                                onClick={() => window.open(`https://wa.me/${workshop.whatsappNumber?.replace(/[^\d]/g, '')}?text=Hello, I found your workshop on QaaqConnect Maritime. I'm interested in your services for ${selectedPort} ${selectedSystem ? getSystemTitle(selectedSystem) : ''}.`, '_blank')}
+                              >
+                                Contact via WhatsApp
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
