@@ -46,6 +46,8 @@ export default function MachineTreePage() {
   // Get user authentication info
   const { user, isAuthenticated } = useAuth();
   const isAdmin = user?.isAdmin || user?.role === 'admin';
+  const isIntern = user?.role === 'intern';
+  const canEditSEMM = isAdmin || isIntern;
   
   // Edit modal state
   const [editSystem, setEditSystem] = useState<{
@@ -375,7 +377,7 @@ export default function MachineTreePage() {
           <h2 className="text-xl font-semibold text-gray-800 flex items-center mb-4">
             <Ship className="h-6 w-6 text-red-600 mr-3" />
             Maritime Systems
-            {isAdmin && (
+            {canEditSEMM && (
               <button
                 onClick={() => handleEditSystem('title')}
                 className="ml-2 p-1 hover:bg-orange-100 rounded"
@@ -388,7 +390,7 @@ export default function MachineTreePage() {
           </h2>
           
           {/* Admin Controls for Systems */}
-          {isAdmin && (
+          {canEditSEMM && (
             <button
               onClick={handleReorderSystems}
               className="flex items-center space-x-2 text-sm text-orange-600 hover:text-orange-700 mb-4 px-3 py-2 bg-orange-50 rounded-lg"
@@ -429,7 +431,7 @@ export default function MachineTreePage() {
                         {category.count}
                       </span>
                     )}
-                    {isAdmin && (
+                    {canEditSEMM && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -483,8 +485,8 @@ export default function MachineTreePage() {
           ))}
         </div>
 
-        {/* Add New System Button for Admins */}
-        {isAdmin && (
+        {/* Add New System Button for Admins and Interns */}
+        {canEditSEMM && (
           <div className="mt-6">
             <button
               onClick={handleAddNewSystem}
