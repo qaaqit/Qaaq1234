@@ -49,17 +49,6 @@ export default function MachineTreePage() {
   const isIntern = user?.role === 'intern';
   const canEditSEMM = isAdmin || isIntern;
   
-  // Debug logging for permissions
-  console.log('🔧 SEMM Debug:', {
-    user,
-    isAuthenticated,
-    isAdmin,
-    isIntern,
-    canEditSEMM,
-    userRole: user?.role,
-    userIsAdmin: user?.isAdmin
-  });
-  
   // Edit modal state
   const [editSystem, setEditSystem] = useState<{
     isOpen: boolean;
@@ -357,25 +346,27 @@ export default function MachineTreePage() {
               </div>
             </div>
             
-            {/* Add New System Button in Header - Always visible for testing */}
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={handleAddNewSystem}
-                className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium"
-                data-testid="header-add-new-system"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Add New System</span>
-              </button>
-              <button
-                onClick={handleReorderSystems}
-                className="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
-                data-testid="header-edit-system-list"
-              >
-                <GripVertical className="h-4 w-4" />
-                <span>Edit System List</span>
-              </button>
-            </div>
+            {/* Add New System Button in Header */}
+            {canEditSEMM && (
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={handleAddNewSystem}
+                  className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium"
+                  data-testid="header-add-new-system"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Add New System</span>
+                </button>
+                <button
+                  onClick={handleReorderSystems}
+                  className="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                  data-testid="header-edit-system-list"
+                >
+                  <GripVertical className="h-4 w-4" />
+                  <span>Edit System List</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
