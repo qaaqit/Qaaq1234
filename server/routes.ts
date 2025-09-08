@@ -5910,97 +5910,59 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       const port = req.query.port as string; // Port filter from query parameter
 
       console.log(`🔧 Fetching workshops - Page: ${page}, Limit: ${limit}, Port: ${port || 'all'}, Active: ${activeOnly}`);
-      console.log(`🔧 Using fallback workshop data for WorkShip marketplace`);
       
-      // Real workshop data from our successful CSV import
-      const allWorkshops = [
-        {
-          id: "30013dea-1a75-4785-a13f-20f8e6c2926c",
-          full_name: "Dubai Marine Technical Services",
-          email: "wDubai1@workship.ai",
-          services: "Marine Technical Services, Engine Overhaul, Electrical Systems",
-          home_port: "Dubai",
-          official_website: "www.dubaimarine.ae",
-          location: "Dubai, UAE",
-          description: "Comprehensive marine technical services in Dubai port with 24/7 availability",
-          is_active: true,
-          display_id: "wDubai1"
-        },
-        {
-          id: "47fd4554-7a17-4f10-9203-90e3e7ea548f", 
-          full_name: "Rahmat Ibrahim",
-          email: "wDubai2@workship.ai",
-          services: "Welding, Mechanical Repairs, Fabrication",
-          home_port: "Dubai",
-          location: "Dubai, UAE", 
-          description: "Expert welding and mechanical repair services for marine vessels",
-          is_active: true,
-          display_id: "wDubai2"
-        },
-        {
-          id: "bbbc1285-183e-49b2-a960-9bf9ea93cebe",
-          full_name: "Master Systems LLC",
-          email: "wDubai3@workship.ai", 
-          services: "Automation Systems, PLC Programming, Control Systems",
-          home_port: "Dubaidrydocks",
-          location: "Dubai Drydocks, UAE",
-          description: "Advanced automation and control systems for marine applications",
-          is_active: true,
-          display_id: "wDubai3"
-        },
-        {
-          id: "49472f10-69af-48b2-8852-add3639b3039",
-          full_name: "SMEC Automation Pvt Ltd",
-          email: "wMumbai1@workship.ai",
-          services: "Marine Automation, Electrical Systems, PMS/AMS, Purifier Systems", 
-          home_port: "Indiakochidubaimumbai",
-          location: "Mumbai/Kochi/Dubai",
-          description: "Marine automation company with 350+ technical staff specializing in boiler automation, PMS, AMS, and purifier systems",
-          is_active: true,
-          display_id: "wMumbai1"
-        },
-        {
-          id: "0970403a-9079-47cb-b2a3-92dcc7bf143f",
-          full_name: "SMEC Automation",
-          email: "wDubai4@workship.ai",
-          services: "Marine Automation, Boiler Systems, Navigation Systems",
-          home_port: "Indiadubai", 
-          location: "Dubai/India",
-          description: "Specialized in marine vessel automation, electrical systems, and navigation integration",
-          is_active: true,
-          display_id: "wDubai4"
-        }
-      ];
-      
-      // Filter by port if specified
-      let workshops = allWorkshops;
-      if (port) {
-        workshops = allWorkshops.filter(workshop => 
-          workshop.home_port.toLowerCase().includes(port.toLowerCase()) ||
-          workshop.location.toLowerCase().includes(port.toLowerCase())
-        );
-        console.log(`🔧 Filtered ${workshops.length} workshops for port: ${port}`);
-      }
-      
-      // Apply pagination  
-      const startIndex = (page - 1) * limit;
-      const endIndex = startIndex + limit;
-      workshops = workshops.slice(startIndex, endIndex);
-      
-      res.json({
-        success: true,
-        workshops: workshops,
-        pagination: {
-          page: page,
-          limit: limit,
-          total: workshops.length,
-          hasMore: workshops.length === limit
-        },
-        filters: {
-          port: port || null,
-          activeOnly
-        }
+      // Use local DATABASE_URL to access the real CSV imported workshop data
+      const { Pool: LocalPool } = await import('@neondatabase/serverless');
+      const localPool = new LocalPool({ 
+        connectionString: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: false }
       });
+      
+      const client = await localPool.connect();
+      
+      try {
+        // Build the query for real CSV data
+        let query = `SELECT * FROM workshop_profiles WHERE is_active = $1`;
+        const params = [activeOnly];
+        
+        if (port) {
+          query += ` AND home_port ILIKE $2`;
+          params.push(`%${port}%`);
+        }
+        
+        query += ` ORDER BY created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+        params.push(limit, (page - 1) * limit);
+        
+        console.log(`🔧 Executing SQL query on local DB: ${query}`);
+        const result = await client.query(query, params);
+        const workshops = result.rows;
+        console.log(`✅ Found ${workshops.length} real workshops from CSV import`);
+      
+        res.json({
+          success: true,
+          workshops: workshops,
+          pagination: {
+            page: page,
+            limit: limit,
+            total: workshops.length,
+            hasMore: workshops.length === limit
+          },
+          filters: {
+            port: port || null,
+            activeOnly
+          }
+        });
+        
+      } catch (dbError) {
+        console.error(`❌ Database error accessing CSV workshop data:`, dbError);
+        res.status(500).json({
+          success: false,
+          error: 'Unable to access workshop database'
+        });
+      } finally {
+        client.release();
+        await localPool.end();
+      }
 
     } catch (error) {
       console.error('❌ Error fetching workshops:', error);
