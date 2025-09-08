@@ -329,20 +329,44 @@ export default function MachineTreePage() {
       {/* Header */}
       <div className="bg-white shadow-lg border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex items-center space-x-3">
-            <button 
-              onClick={() => setLocation('/')}
-              className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 transition-colors"
-              data-testid="back-to-home"
-              title="Back to Home"
-            >
-              <ArrowLeft className="h-6 w-6 text-gray-600 hover:text-orange-600" />
-            </button>
-            <Settings className="h-8 w-8 text-orange-600" />
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Machine Tree (SEMM)</h1>
-              <p className="text-orange-600 font-medium">System-Equipment-Make-Model Classification</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <button 
+                onClick={() => setLocation('/')}
+                className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 transition-colors"
+                data-testid="back-to-home"
+                title="Back to Home"
+              >
+                <ArrowLeft className="h-6 w-6 text-gray-600 hover:text-orange-600" />
+              </button>
+              <Settings className="h-8 w-8 text-orange-600" />
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Machine Tree (SEMM)</h1>
+                <p className="text-orange-600 font-medium">System-Equipment-Make-Model Classification</p>
+              </div>
             </div>
+            
+            {/* Add New System Button in Header */}
+            {canEditSEMM && (
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={handleAddNewSystem}
+                  className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium"
+                  data-testid="header-add-new-system"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Add New System</span>
+                </button>
+                <button
+                  onClick={handleReorderSystems}
+                  className="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                  data-testid="header-edit-system-list"
+                >
+                  <GripVertical className="h-4 w-4" />
+                  <span>Edit System List</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
