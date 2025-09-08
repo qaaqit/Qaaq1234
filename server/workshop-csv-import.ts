@@ -1,6 +1,6 @@
 import { db } from "./db";
 import { workshopProfiles, insertWorkshopProfileSchema } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { eq, and, ilike } from "drizzle-orm";
 import { promises as fs } from 'fs';
 import path from 'path';
 import { randomUUID } from 'crypto';
@@ -350,15 +350,31 @@ export class WorkshopCSVImportService {
   }
 
   /**
-   * Get all workshop profiles with pagination
+   * Get all workshop profiles with pagination and optional port filtering
    */
-  async getAllWorkshops(page: number = 1, limit: number = 20, activeOnly: boolean = true) {
+  async getAllWorkshops(page: number = 1, limit: number = 20, activeOnly: boolean = true, port?: string) {
     const offset = (page - 1) * limit;
+    
+    let whereConditions = [];
+    
+    if (activeOnly) {
+      whereConditions.push(eq(workshopProfiles.isActive, true));
+    }
+    
+    if (port) {
+      // Search for port in home_port field (case-insensitive, partial match)
+      whereConditions.push(ilike(workshopProfiles.homePort, `%${port}%`));
+    }
     
     let workshops;
     
-    if (activeOnly) {
-      workshops = await db.select().from(workshopProfiles).where(eq(workshopProfiles.isActive, true)).limit(limit).offset(offset);
+    if (whereConditions.length > 0) {
+      workshops = await db
+        .select()
+        .from(workshopProfiles)
+        .where(whereConditions.length === 1 ? whereConditions[0] : and(...whereConditions))
+        .limit(limit)
+        .offset(offset);
     } else {
       workshops = await db.select().from(workshopProfiles).limit(limit).offset(offset);
     }
