@@ -4621,6 +4621,8 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
 
       // CHECK IF MESSAGE IS FEEDBACK FIRST
       const feedbackParsed = FeedbackService.parseFeedbackRating(message);
+      console.log(`🧪 Feedback check for: "${message}" → Rating: ${feedbackParsed.rating}, Category: ${feedbackParsed.category}`);
+      
       if (feedbackParsed.rating !== null) {
         console.log(`🎯 Detected feedback: "${message}" → Rating: ${feedbackParsed.rating}/5 (${feedbackParsed.category})`);
         
