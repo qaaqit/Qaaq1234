@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useParams } from 'wouter';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, MapPin, Wrench, Globe, Star } from 'lucide-react';
+import { ArrowLeft, MapPin, Wrench, Globe, Star, Upload } from 'lucide-react';
+import { ImageUploadModal } from '@/components/ImageUploadModal';
+import { ImageViewerModal } from '@/components/ImageViewerModal';
+import { useToast } from '@/hooks/use-toast';
 
 interface Workshop {
   id: string;
@@ -30,6 +33,21 @@ export default function WorkshopDetailPage() {
   const [, setLocation] = useLocation();
   const params = useParams();
   const workshopId = params.id;
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  // Modal states
+  const [uploadModal, setUploadModal] = useState<{
+    isOpen: boolean;
+    imageType: 'business_card' | 'workshop_front';
+    title: string;
+  }>({ isOpen: false, imageType: 'business_card', title: '' });
+  
+  const [viewerModal, setViewerModal] = useState<{
+    isOpen: boolean;
+    imageUrl: string;
+    title: string;
+  }>({ isOpen: false, imageUrl: '', title: '' });
 
   // Fetch current user for admin check
   const { data: user } = useQuery({
@@ -119,33 +137,63 @@ export default function WorkshopDetailPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="w-full flex gap-0 rounded-lg overflow-hidden shadow-md">
           {/* First Image - Business Card / Workshop Front */}
-          <div className="w-1/2 aspect-video bg-orange-100 flex items-center justify-center overflow-hidden">
+          <div 
+            className="w-1/2 aspect-video bg-orange-100 flex items-center justify-center overflow-hidden cursor-pointer hover:bg-orange-200 transition-colors relative group"
+            onClick={() => handleImageClick('business_card', workshop.business_card_photo, 'Workshop Front')}
+          >
             {workshop.business_card_photo ? (
-              <img 
-                src={workshop.business_card_photo} 
-                alt="Workshop business reference"
-                className="w-full h-full object-cover"
-              />
+              <>
+                <img 
+                  src={workshop.business_card_photo} 
+                  alt="Workshop business reference"
+                  className="w-full h-full object-cover"
+                />
+                {isAdmin && (
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 flex items-center justify-center transition-all">
+                    <Upload className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                )}
+              </>
             ) : (
               <div className="text-orange-600 font-bold text-center">
                 <Wrench className="w-8 h-8 mx-auto mb-2" />
                 <span className="text-sm">WORKSHOP<br />FRONT</span>
+                {isAdmin && (
+                  <div className="mt-2">
+                    <Upload className="w-4 h-4 mx-auto opacity-50" />
+                  </div>
+                )}
               </div>
             )}
           </div>
           
           {/* Second Image - Workshop Front / Work */}
-          <div className="w-1/2 aspect-video bg-orange-50 flex items-center justify-center overflow-hidden">
+          <div 
+            className="w-1/2 aspect-video bg-orange-50 flex items-center justify-center overflow-hidden cursor-pointer hover:bg-orange-100 transition-colors relative group"
+            onClick={() => handleImageClick('workshop_front', workshop.workshop_front_photo, 'Work')}
+          >
             {workshop.workshop_front_photo ? (
-              <img 
-                src={workshop.workshop_front_photo} 
-                alt="Workshop facilities"
-                className="w-full h-full object-cover"
-              />
+              <>
+                <img 
+                  src={workshop.workshop_front_photo} 
+                  alt="Workshop facilities"
+                  className="w-full h-full object-cover"
+                />
+                {isAdmin && (
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 flex items-center justify-center transition-all">
+                    <Upload className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                )}
+              </>
             ) : (
               <div className="text-orange-600 font-bold text-center">
                 <Wrench className="w-8 h-8 mx-auto mb-2" />
                 <span className="text-sm">WORK</span>
+                {isAdmin && (
+                  <div className="mt-2">
+                    <Upload className="w-4 h-4 mx-auto opacity-50" />
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -277,6 +325,62 @@ export default function WorkshopDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Image Upload Modal for Admins */}
+      <ImageUploadModal
+        isOpen={uploadModal.isOpen}
+        onClose={() => setUploadModal({ isOpen: false, imageType: 'business_card', title: '' })}
+        onUploadSuccess={handleUploadSuccess}
+        title={uploadModal.title}
+        workshopId={workshopId!}
+        imageType={uploadModal.imageType}
+      />
+
+      {/* Image Viewer Modal for Regular Users */}
+      <ImageViewerModal
+        isOpen={viewerModal.isOpen}
+        onClose={() => setViewerModal({ isOpen: false, imageUrl: '', title: '' })}
+        imageUrl={viewerModal.imageUrl}
+        title={viewerModal.title}
+      />
     </div>
   );
+
+  // Handle image click - admin upload or user view
+  function handleImageClick(imageType: 'business_card' | 'workshop_front', imageUrl: string | undefined, title: string) {
+    if (isAdmin) {
+      // Admin: Open upload modal
+      setUploadModal({
+        isOpen: true,
+        imageType,
+        title
+      });
+    } else if (imageUrl) {
+      // Regular user: Open full-screen viewer if image exists
+      setViewerModal({
+        isOpen: true,
+        imageUrl,
+        title
+      });
+    } else {
+      // Regular user clicking on placeholder - show info toast
+      toast({
+        title: "No image available",
+        description: "This workshop hasn't uploaded this image yet.",
+        variant: "default"
+      });
+    }
+  }
+
+  // Handle successful upload
+  function handleUploadSuccess(newImageUrl: string) {
+    // Refresh workshop data to show new image
+    queryClient.invalidateQueries({ queryKey: ['/api/workshops', workshopId] });
+    
+    toast({
+      title: "Upload successful",
+      description: "Workshop image has been updated successfully.",
+      variant: "default"
+    });
+  }
 }
