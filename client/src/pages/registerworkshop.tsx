@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { authApi, setStoredToken, setStoredUser, type User } from "@/lib/auth";
-import { Eye, EyeOff, Mail, Shield, Clock, User as UserIcon, Briefcase, Anchor, ArrowLeft, Phone, Wrench, MapPin, Globe, DollarSign, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Mail, Shield, Clock, User as UserIcon, Briefcase, Anchor, ArrowLeft, Phone, Wrench, MapPin, Globe, DollarSign, Loader2, CheckCircle2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import qaaqLogoPath from "@assets/ICON_1754950288816.png";
 
 interface RegisterWorkshopProps {
@@ -36,7 +37,7 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
     password: "",
     otpCode: "",
     // Workshop-specific fields (all shown by default)
-    competencyExpertise: "",
+    competencyExpertise: [] as string[],
     homePort: "",
     visaStatus: "",
     companiesWorkedFor: "",
@@ -134,7 +135,7 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
   }, [otpCountdown]);
 
   // Handle form data changes
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string | string[]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
     if (field === "company" && value === "Other") {
@@ -142,6 +143,21 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
     } else if (field === "company" && value !== "Other") {
       setShowOtherCompany(false);
       setFormData(prev => ({ ...prev, otherCompany: "" }));
+    }
+  };
+
+  // Handle expertise selection (multi-select)
+  const handleExpertiseChange = (systemTitle: string, isChecked: boolean) => {
+    const currentExpertise = formData.competencyExpertise;
+    
+    if (isChecked) {
+      // Add if not already present and under limit of 5
+      if (!currentExpertise.includes(systemTitle) && currentExpertise.length < 5) {
+        handleInputChange("competencyExpertise", [...currentExpertise, systemTitle]);
+      }
+    } else {
+      // Remove if present
+      handleInputChange("competencyExpertise", currentExpertise.filter(item => item !== systemTitle));
     }
   };
 
