@@ -385,8 +385,10 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
                 <Label htmlFor="whatsapp">5. WhatsApp / Phone (with country code)</Label>
                 <div className="flex space-x-2">
                   <Select value={formData.countryCode} onValueChange={(value) => handleInputChange("countryCode", value)}>
-                    <SelectTrigger className="w-32" data-testid="select-countryCode">
-                      <SelectValue />
+                    <SelectTrigger className="w-16" data-testid="select-countryCode">
+                      <SelectValue>
+                        {countryCodes.find(country => country.code === formData.countryCode)?.flag}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {countryCodes.map((country) => (
