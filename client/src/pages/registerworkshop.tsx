@@ -293,8 +293,8 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-orange-100 to-orange-200 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-xl p-8 w-full max-w-2xl">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-orange-100 to-orange-200 p-4">
+      <div className="bg-white rounded-xl shadow-xl p-8 w-full">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
             <button
@@ -431,7 +431,7 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-1 gap-4 max-h-96 overflow-y-auto border border-orange-200 rounded-lg p-4 bg-white">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                   {maritimeExpertiseOptions.map((expertise) => {
                     const isSelected = formData.maritimeExpertise.includes(expertise.id);
                     const isDisabled = !isSelected && formData.maritimeExpertise.length >= 5;
@@ -441,35 +441,25 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
                       <div key={expertise.id} className="space-y-3">
                         {/* Expertise Category Selection */}
                         <div 
-                          className={`flex items-center space-x-3 p-3 rounded-lg border transition-colors ${
+                          className={`relative p-4 rounded-lg border-2 transition-all cursor-pointer text-center ${
                             isSelected 
-                              ? 'border-orange-300 bg-orange-50' 
+                              ? 'border-orange-400 bg-orange-100 shadow-lg transform scale-105' 
                               : isDisabled 
-                                ? 'border-gray-200 bg-gray-50 opacity-60' 
-                                : 'border-gray-200 hover:border-orange-200 hover:bg-orange-50'
+                                ? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed' 
+                                : 'border-gray-200 hover:border-orange-300 hover:bg-orange-50 hover:shadow-md'
                           }`}
+                          onClick={() => !isDisabled && handleMaritimeExpertiseChange(expertise.id, !isSelected)}
+                          data-testid={`expertise-${expertise.id}`}
                         >
-                          <Checkbox
-                            id={`expertise-${expertise.id}`}
-                            checked={isSelected}
-                            disabled={isDisabled}
-                            onCheckedChange={(checked) => handleMaritimeExpertiseChange(expertise.id, checked as boolean)}
-                            data-testid={`checkbox-expertise-${expertise.id}`}
-                          />
-                          <label 
-                            htmlFor={`expertise-${expertise.id}`}
-                            className={`flex-1 cursor-pointer ${isDisabled ? 'cursor-not-allowed' : ''}`}
-                          >
-                            <div className="flex items-center">
-                              <span className="text-lg mr-3">{expertise.icon}</span>
-                              <div>
-                                <span className={`font-medium ${isSelected ? 'text-orange-800' : 'text-gray-700'}`}>
-                                  {expertise.name}
-                                </span>
-                                <p className="text-xs text-gray-500 mt-1">{expertise.description}</p>
-                              </div>
+                          <div className="text-3xl mb-2">{expertise.icon}</div>
+                          <div className={`text-sm font-semibold ${isSelected ? 'text-orange-800' : 'text-gray-700'}`}>
+                            {expertise.name}
+                          </div>
+                          {isSelected && (
+                            <div className="absolute top-2 right-2 w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
+                              <span className="text-white text-sm font-bold">✓</span>
                             </div>
-                          </label>
+                          )}
                         </div>
                         
                         {/* Classification Society Approvals */}
