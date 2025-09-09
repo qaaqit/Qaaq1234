@@ -200,7 +200,8 @@ export class WatiBotService {
 
       return false;
     } catch (error) {
-      console.error('❌ Error checking feedback status:', error);
+      console.error('❌ Error checking feedback status (skipping feedback check):', error);
+      // If feedback checking fails, assume it's not feedback and continue processing as normal question
       return false;
     }
   }
@@ -372,25 +373,37 @@ export class WatiBotService {
       // Generate a simple numeric ID that fits in integer range (max 2.1 billion)
       const questionId = Math.floor(Math.random() * 1000000) + Math.floor(Date.now() / 1000);
       
-      // Store in whatsapp_messages table instead of questions table
-      await pool.query(`
-        INSERT INTO whatsapp_messages (
-          id, user_id, phone_number, message_body, message_type, 
-          direction, contact_name, created_at, updated_at
-        )
-        VALUES ($1, $2, $3, $4, 'text', 'incoming', $5, NOW(), NOW())
-      `, [
-        `wati_${questionId}`,
-        userPhone,
-        userPhone,
-        `Q: ${question}\nA: ${answer}`,
-        user?.name || 'WATI User'
-      ]);
+      // First try to store in whatsapp_messages table
+      try {
+        await pool.query(`
+          INSERT INTO whatsapp_messages (
+            id, user_id, phone_number, message_body, message_type, 
+            direction, contact_name, created_at, updated_at
+          )
+          VALUES ($1, $2, $3, $4, 'text', 'incoming', $5, NOW(), NOW())
+        `, [
+          `wati_${questionId}`,
+          userPhone,
+          userPhone,
+          `Q: ${question}\nA: ${answer}`,
+          user?.name || 'WATI User'
+        ]);
+        console.log(`✅ WATI: Question-Answer stored in whatsapp_messages for ${userPhone}`);
+      } catch (dbError: any) {
+        console.error('❌ Database storage failed, logging manually:', dbError.message);
+        // Fallback: Log the Q&A manually to console for tracking
+        console.log(`📝 WATI Q&A MANUAL LOG:
+          Phone: ${userPhone}
+          Name: ${user?.name || 'WATI User'}
+          Question: ${question}
+          Answer: ${answer}
+          Timestamp: ${new Date().toISOString()}
+          ID: wati_${questionId}`);
+      }
 
-      console.log(`✅ WATI: Question-Answer stored for ${userPhone}`);
       return questionId.toString();
     } catch (error) {
-      console.error('❌ Error storing Q&A:', error);
+      console.error('❌ Error in storeQuestionAnswer:', error);
       return 'unknown';
     }
   }
@@ -405,8 +418,10 @@ export class WatiBotService {
           awaiting_feedback = true,
           created_at = NOW()
       `, [userPhone, questionId]);
+      console.log(`✅ WATI: Marked ${userPhone} as awaiting feedback for question ${questionId}`);
     } catch (error) {
-      console.error('❌ Error marking awaiting feedback:', error);
+      console.error('❌ Error marking awaiting feedback (continuing without feedback tracking):', error);
+      // Continue processing even if feedback marking fails
     }
   }
 
