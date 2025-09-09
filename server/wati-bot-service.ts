@@ -81,11 +81,14 @@ export class WatiBotService {
       // Store Q&A in database for tracking
       const questionId = await this.storeQuestionAnswer(userPhone, question, aiResponse.content, user);
 
-      // Generate feedback message
-      const feedbackMessage = FeedbackService.generateCompactFeedbackMessage();
+      // Format response with QAAQ branding and question link
+      const fullResponse = this.formatWatiResponse(aiResponse.content, questionId);
       
-      // Combine technical answer with feedback prompt
-      const fullResponse = `${aiResponse.content}\n\n---\n${feedbackMessage}`;
+      // Debug: Log the formatted response to verify it includes question page link
+      console.log(`📝 WATI Formatted Response:\n${fullResponse}`);
+      
+      // Generate feedback message for tracking
+      const feedbackMessage = FeedbackService.generateCompactFeedbackMessage();
 
       // Send response via WATI
       await this.sendMessage({
@@ -366,6 +369,28 @@ export class WatiBotService {
     }
     
     return cleanName;
+  }
+
+  /**
+   * Format WATI response with QAAQ branding and question page link
+   */
+  private formatWatiResponse(aiAnswer: string, questionId: string): string {
+    // Clean up the AI answer - remove any existing branding or formatting
+    let cleanAnswer = aiAnswer.replace(/^🚢.*?\n\n?/g, '').trim();
+    
+    // Extract numeric question ID for URL (remove wati_ prefix if present)
+    const numericQuestionId = questionId.replace('wati_', '');
+    
+    return `🚢 QAAQ Maritime Expert Answer
+
+${cleanAnswer}
+
+📋 Question Page:
+https://qaaq.app/questions/${numericQuestionId}
+
+📊 Questions used: 1/75 (74 remaining)
+
+Powered by QAAQ Ship Superintendent AI`;
   }
 
   private async storeQuestionAnswer(userPhone: string, question: string, answer: string, user: any): Promise<string> {

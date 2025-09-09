@@ -7832,6 +7832,28 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
     }
   });
 
+  // Test endpoint to verify WATI response formatting
+  app.post('/api/wati/test-format', async (req, res) => {
+    try {
+      // Test the formatting method directly
+      const testAnswer = "• Engine misalignment causing excessive vibration\n• Worn bearings affecting stability\n• Imbalanced rotating components\n• Loose mounting supports\n• Regular monitoring per SOLAS regulations";
+      const testQuestionId = "wati_1234567";
+      
+      // Call the formatting method (accessing private method for testing)
+      const formattedResponse = (watiBotService as any).formatWatiResponse(testAnswer, testQuestionId);
+
+      res.json({
+        success: true,
+        formattedResponse: formattedResponse,
+        rawAnswer: testAnswer,
+        questionId: testQuestionId
+      });
+    } catch (error) {
+      console.error('Error in test format:', error);
+      res.status(500).json({ error: 'Failed to test format' });
+    }
+  });
+
   // Initialize WATI bot database tables
   app.post('/api/wati/initialize', authenticateToken, async (req, res) => {
     try {
