@@ -501,6 +501,7 @@ export default function Register({ onSuccess }: RegisterProps) {
                 <SelectValue placeholder="Select your rank" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="Marine workshop">Marine workshop</SelectItem>
                 <SelectItem value="Cap">Captain</SelectItem>
                 <SelectItem value="CO">Chief Officer</SelectItem>
                 <SelectItem value="2O">Second Officer</SelectItem>
