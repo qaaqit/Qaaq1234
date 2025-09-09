@@ -529,7 +529,7 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
               </div>
 
               <div>
-                <Label htmlFor="homePort">6. Port where your branch is located? (Write only one city) *</Label>
+                <Label htmlFor="homePort">6. Port location with ZIP/PIN code (Write city and postal code) *</Label>
                 <div className="flex items-center space-x-2">
                   <MapPin className="h-4 w-4 text-orange-600" />
                   <Input
@@ -537,7 +537,7 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
                     type="text"
                     value={formData.homePort}
                     onChange={(e) => handleInputChange("homePort", e.target.value)}
-                    placeholder="e.g., Singapore, Rotterdam, Mumbai"
+                    placeholder="e.g., Singapore 018989, Rotterdam 3011, Mumbai 400001"
                     data-testid="input-homePort"
                   />
                 </div>
