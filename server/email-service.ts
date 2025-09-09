@@ -147,17 +147,20 @@ class EmailService {
                 ${userData.maritimeRank === "Marine workshop" && workshopData ? `
                 <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
                   <p style="margin: 0; color: #6b7280; font-size: 14px;">
-                    <strong>🔧 Workshop Details:</strong><br>
-                    Competency/Expertise: ${workshopData.competencyExpertise}<br>
-                    Home Port: ${workshopData.homePort}<br>
-                    Visa Status: ${workshopData.visaStatus}<br>
-                    Companies Worked For: ${workshopData.companiesWorkedFor}<br>
-                    ${workshopData.officialWebsite ? `Website: ${workshopData.officialWebsite}<br>` : ''}
-                    Daily Service Rate: $${workshopData.perDayAttendanceRate} USD<br>
-                    Remote Support Rate: $${workshopData.remoteTroubleshootingRate} USD/hour
+                    <strong>🔧 Workshop Registration Details:</strong>
                   </p>
+                  <div style="margin: 10px 0; padding: 15px; background: #f8fafc; border-radius: 8px; font-size: 13px; line-height: 1.6;">
+                    <p style="margin: 0 0 8px 0; color: #374151;"><strong>3.</strong> Workshop Competency / Expertise: <span style="color: #1f2937;">${workshopData.competencyExpertise}</span></p>
+                    <p style="margin: 0 0 8px 0; color: #374151;"><strong>4.</strong> Workshop Description & Expertise Area: <span style="color: #1f2937;">${workshopData.competencyExpertise}</span></p>
+                    <p style="margin: 0 0 8px 0; color: #374151;"><strong>6.</strong> Port Location (Home Port): <span style="color: #1f2937;">${workshopData.homePort}</span></p>
+                    <p style="margin: 0 0 8px 0; color: #374151;"><strong>7.</strong> Service Engineer Visa Status: <span style="color: #1f2937;">${workshopData.visaStatus}</span></p>
+                    <p style="margin: 0 0 8px 0; color: #374151;"><strong>8.</strong> Companies Worked For (Last 1 Year): <span style="color: #1f2937;">${workshopData.companiesWorkedFor}</span></p>
+                    ${workshopData.officialWebsite ? `<p style="margin: 0 0 8px 0; color: #374151;"><strong>9.</strong> Official Website: <span style="color: #1f2937;">${workshopData.officialWebsite}</span></p>` : ''}
+                    <p style="margin: 0 0 8px 0; color: #374151;"><strong>Per Day Attendance Rate:</strong> <span style="color: #dc2626; font-weight: bold;">$${workshopData.perDayAttendanceRate} USD</span></p>
+                    <p style="margin: 0 0 0 0; color: #374151;"><strong>Remote Troubleshooting Rate:</strong> <span style="color: #dc2626; font-weight: bold;">$${workshopData.remoteTroubleshootingRate} USD/hour</span></p>
+                  </div>
                   <p style="margin: 10px 0 0 0; color: #16a34a; font-size: 13px; font-weight: bold;">
-                    ⚓ Your workshop profile will be created after email verification
+                    ⚓ Your workshop profile will be automatically created after email verification
                   </p>
                 </div>
                 ` : ''}
