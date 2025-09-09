@@ -164,7 +164,7 @@ export default function WorkshopPage() {
                         ) : (
                           <div className="text-orange-600 font-bold text-center">
                             <Wrench className="w-6 h-6 mx-auto mb-1" />
-                            <span className="text-xs">CARD</span>
+                            <span className="text-xs">WORKSHOP<br />FRONT</span>
                           </div>
                         )}
                       </div>
@@ -180,7 +180,7 @@ export default function WorkshopPage() {
                         ) : (
                           <div className="text-orange-600 font-bold text-center">
                             <Wrench className="w-6 h-6 mx-auto mb-1" />
-                            <span className="text-xs">SHOP</span>
+                            <span className="text-xs">WORK</span>
                           </div>
                         )}
                       </div>
