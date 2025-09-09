@@ -217,11 +217,10 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
     }
 
     // Validate workshop-specific fields
-    if (formData.maritimeExpertise.length === 0 || !formData.homePort || !formData.visaStatus || 
-        !formData.companiesWorkedFor || !formData.perDayAttendanceRate || !formData.remoteTroubleshootingRate) {
+    if (formData.maritimeExpertise.length === 0 || !formData.homePort) {
       toast({
         title: "Missing Workshop Information",
-        description: "Please select at least 1 maritime expertise area and fill in all workshop-specific fields",
+        description: "Please select at least 1 maritime expertise area and enter your port location",
         variant: "destructive",
       });
       return;
@@ -545,10 +544,10 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
               </div>
 
               <div>
-                <Label htmlFor="visaStatus">7. Service Engineer Visa Status *</Label>
+                <Label htmlFor="visaStatus">7. Service Engineer Visa Status</Label>
                 <Select value={formData.visaStatus} onValueChange={(value) => handleInputChange("visaStatus", value)}>
                   <SelectTrigger data-testid="select-visaStatus">
-                    <SelectValue placeholder="Select visa status" />
+                    <SelectValue placeholder="Select visa status (optional)" />
                   </SelectTrigger>
                   <SelectContent>
                     {visaStatusOptions.map((option) => (
@@ -561,13 +560,13 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
               </div>
 
               <div>
-                <Label htmlFor="companiesWorkedFor">8. Companies worked for (in last 1 year) *</Label>
+                <Label htmlFor="companiesWorkedFor">8. Companies worked for (in last 1 year)</Label>
                 <Input
                   id="companiesWorkedFor"
                   type="text"
                   value={formData.companiesWorkedFor}
                   onChange={(e) => handleInputChange("companiesWorkedFor", e.target.value)}
-                  placeholder="e.g., Maersk, MSC, COSCO Shipping"
+                  placeholder="e.g., Maersk, MSC, COSCO Shipping (optional)"
                   data-testid="input-companiesWorkedFor"
                 />
               </div>
@@ -589,47 +588,6 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
             </div>
           </div>
 
-          {/* Pricing Section */}
-          <div className="border border-green-200 rounded-lg p-6 bg-green-50">
-            <h3 className="text-lg font-semibold text-green-800 mb-4 flex items-center">
-              <DollarSign className="h-5 w-5 mr-2 text-green-600" />
-              Service Rates (USD)
-            </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="perDayAttendanceRate">Per Day Attendance Rate (USD) *</Label>
-                <div className="flex items-center space-x-2">
-                  <span className="text-green-600 font-bold">$</span>
-                  <Input
-                    id="perDayAttendanceRate"
-                    type="number"
-                    value={formData.perDayAttendanceRate}
-                    onChange={(e) => handleInputChange("perDayAttendanceRate", e.target.value)}
-                    placeholder="e.g., 150"
-                    data-testid="input-perDayAttendanceRate"
-                  />
-                  <span className="text-sm text-gray-600">USD</span>
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="remoteTroubleshootingRate">Remote Troubleshooting Rate/Hour (USD) *</Label>
-                <div className="flex items-center space-x-2">
-                  <span className="text-green-600 font-bold">$</span>
-                  <Input
-                    id="remoteTroubleshootingRate"
-                    type="number"
-                    value={formData.remoteTroubleshootingRate}
-                    onChange={(e) => handleInputChange("remoteTroubleshootingRate", e.target.value)}
-                    placeholder="e.g., 75"
-                    data-testid="input-remoteTroubleshootingRate"
-                  />
-                  <span className="text-sm text-gray-600">USD/hr</span>
-                </div>
-              </div>
-            </div>
-          </div>
 
           {/* Company Information Section */}
           <div className="border border-gray-200 rounded-lg p-6">
@@ -641,33 +599,15 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
             <div className="space-y-4">
               <div>
                 <Label htmlFor="company">Company/Workshop Name *</Label>
-                <Select value={formData.company} onValueChange={(value) => handleInputChange("company", value)}>
-                  <SelectTrigger data-testid="select-company">
-                    <SelectValue placeholder="Select or enter your company" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {maritimeCompanies.map((company) => (
-                      <SelectItem key={company} value={company}>
-                        {company}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input
+                  id="company"
+                  type="text"
+                  value={formData.company}
+                  onChange={(e) => handleInputChange("company", e.target.value)}
+                  placeholder="Enter your company/workshop name"
+                  data-testid="input-company"
+                />
               </div>
-
-              {showOtherCompany && (
-                <div>
-                  <Label htmlFor="otherCompany">Specify Company Name *</Label>
-                  <Input
-                    id="otherCompany"
-                    type="text"
-                    value={formData.otherCompany}
-                    onChange={(e) => handleInputChange("otherCompany", e.target.value)}
-                    placeholder="Enter your company name"
-                    data-testid="input-otherCompany"
-                  />
-                </div>
-              )}
             </div>
           </div>
 
