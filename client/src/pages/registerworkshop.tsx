@@ -468,18 +468,18 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
                             <p className="text-sm font-medium text-orange-700 mb-2">Classification Society Approvals (Optional):</p>
                             <div className="grid grid-cols-2 gap-2">
                               {classificationSocieties.map((society) => (
-                                <div key={society.id} className="flex items-center space-x-2">
+                                <div key={society.id} className="flex items-center space-x-1">
                                   <Checkbox
                                     id={`approval-${expertise.id}-${society.id}`}
                                     checked={approvals.includes(society.id)}
                                     onCheckedChange={(checked) => handleClassificationApprovalChange(expertise.id, society.id, checked as boolean)}
                                     data-testid={`checkbox-approval-${expertise.id}-${society.id}`}
+                                    className="w-3 h-3 scale-50"
                                   />
                                   <label 
                                     htmlFor={`approval-${expertise.id}-${society.id}`}
-                                    className="text-sm cursor-pointer flex items-center"
+                                    className="text-xs cursor-pointer"
                                   >
-                                    <span className="mr-1">{society.flag}</span>
                                     {society.name}
                                   </label>
                                 </div>
@@ -511,7 +511,6 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
                                   const society = classificationSocieties.find(s => s.id === societyId);
                                   return (
                                     <span key={societyId} className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-700 border border-blue-200">
-                                      <span className="mr-1">{society?.flag}</span>
                                       {society?.name}
                                     </span>
                                   );
