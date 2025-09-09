@@ -1232,6 +1232,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Grant premium access to user by email (admin only)
+  app.post('/api/debug/grant-premium-user', async (req, res) => {
+    try {
+      const { email, duration_months } = req.body;
+      
+      if (!email || !duration_months) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Email and duration_months are required' 
+        });
+      }
+
+      // Find user by email first
+      const userResult = await pool.query('SELECT id, full_name FROM users WHERE email = $1', [email]);
+      
+      if (userResult.rows.length === 0) {
+        return res.status(404).json({ 
+          success: false, 
+          message: 'User not found with this email address' 
+        });
+      }
+
+      const user = userResult.rows[0];
+      const userId = user.id;
+      const fullName = user.full_name;
+
+      // Grant premium access for the specified duration
+      const result = await pool.query(`
+        INSERT INTO user_subscription_status (
+          user_id, is_premium, premium_expires_at, subscription_type
+        ) VALUES (
+          $1, 
+          true, 
+          NOW() + INTERVAL '${duration_months} months',
+          'premium_manual'
+        )
+        ON CONFLICT (user_id) DO UPDATE SET
+          is_premium = true,
+          premium_expires_at = NOW() + INTERVAL '${duration_months} months',
+          subscription_type = 'premium_manual',
+          updated_at = NOW()
+      `, [userId]);
+
+      console.log(`✅ Premium access granted to ${fullName} (${email}) for ${duration_months} months`);
+      
+      res.json({
+        success: true,
+        message: `Premium access granted to ${fullName} for ${duration_months} months`,
+        user: {
+          id: userId,
+          fullName: fullName,
+          email: email,
+          premiumDuration: `${duration_months} months`
+        }
+      });
+    } catch (error) {
+      console.error('Error granting premium access:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to grant premium access',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Object storage upload endpoint
   app.post("/api/objects/upload", async (req, res) => {
     try {
