@@ -31,6 +31,32 @@ export default function WorkshopDetailPage() {
   const params = useParams();
   const workshopId = params.id;
 
+  // Fetch current user for admin check
+  const { data: user } = useQuery({
+    queryKey: ['/api/auth/verify-token'],
+    queryFn: async () => {
+      const token = localStorage.getItem('token');
+      if (!token) throw new Error('No token');
+      
+      const response = await fetch('/api/auth/verify-token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) throw new Error('Token verification failed');
+      const data = await response.json();
+      return data.user;
+    },
+    retry: false
+  });
+
+  // Check if user is admin
+  const isAdmin = user?.isAdmin || user?.isIntern || 
+    ['workship.ai@gmail.com', 'mushy.piyush@gmail.com'].includes(user?.email);
+
   // Fetch individual workshop details
   const { data: workshop, isLoading, error } = useQuery({
     queryKey: ['/api/workshops', workshopId],
@@ -89,14 +115,51 @@ export default function WorkshopDetailPage() {
         </div>
       </div>
 
+      {/* Workshop Images Header */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="w-full flex gap-0 rounded-lg overflow-hidden shadow-md">
+          {/* First Image - Business Card / Workshop Front */}
+          <div className="w-1/2 aspect-video bg-orange-100 flex items-center justify-center overflow-hidden">
+            {workshop.business_card_photo ? (
+              <img 
+                src={workshop.business_card_photo} 
+                alt="Workshop business reference"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="text-orange-600 font-bold text-center">
+                <Wrench className="w-8 h-8 mx-auto mb-2" />
+                <span className="text-sm">WORKSHOP<br />FRONT</span>
+              </div>
+            )}
+          </div>
+          
+          {/* Second Image - Workshop Front / Work */}
+          <div className="w-1/2 aspect-video bg-orange-50 flex items-center justify-center overflow-hidden">
+            {workshop.workshop_front_photo ? (
+              <img 
+                src={workshop.workshop_front_photo} 
+                alt="Workshop facilities"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="text-orange-600 font-bold text-center">
+                <Wrench className="w-8 h-8 mx-auto mb-2" />
+                <span className="text-sm">WORK</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Workshop Details */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <Card className="shadow-lg">
           <CardHeader className="bg-gradient-to-r from-orange-50 to-cream-50">
             <div className="flex justify-between items-start">
               <div>
                 <CardTitle className="text-3xl text-gray-900 mb-2">
-                  {workshop.full_name}
+                  {isAdmin ? workshop.full_name : 'WORKSHOP FRONT & WORK'}
                 </CardTitle>
                 <div className="flex items-center space-x-4 text-gray-600">
                   <div className="flex items-center space-x-1">
@@ -164,7 +227,7 @@ export default function WorkshopDetailPage() {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">Additional Info</h3>
                   <div className="space-y-2">
-                    {workshop.official_website && (
+                    {isAdmin && workshop.official_website && (
                       <div className="flex items-center space-x-2">
                         <Globe className="w-4 h-4 text-gray-500" />
                         <a 
@@ -175,6 +238,11 @@ export default function WorkshopDetailPage() {
                         >
                           {workshop.official_website}
                         </a>
+                      </div>
+                    )}
+                    {!isAdmin && (
+                      <div className="text-sm text-gray-500">
+                        Contact details available through secure messaging
                       </div>
                     )}
                     {workshop.import_source && (
