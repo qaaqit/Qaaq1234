@@ -309,8 +309,8 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
               className="h-12 w-12 mr-3"
             />
             <div>
-              <h1 className="text-3xl font-bold text-orange-600">⚓ QaaqConnect</h1>
-              <p className="text-sm text-gray-600">Maritime Workshop Registration</p>
+              <h1 className="text-3xl font-bold text-orange-600">⚓ Qaaqit</h1>
+              <p className="text-sm text-orange-600 font-medium">(Quickly Repair It)</p>
             </div>
           </div>
           
