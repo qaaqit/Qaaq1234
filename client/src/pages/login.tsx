@@ -106,9 +106,20 @@ function JWTLoginForm() {
 
       {/* Password Field */}
       <div className="space-y-2">
-        <Label htmlFor="password" className="text-sm font-medium text-gray-700">
-          PASSWORD
-        </Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+            PASSWORD
+          </Label>
+          <Button
+            type="button"
+            variant="link"
+            className="p-0 h-auto text-xs text-orange-600 hover:text-orange-700"
+            onClick={() => navigate("/forgot-password")}
+            data-testid="link-forgot-password"
+          >
+            (forgot password?)
+          </Button>
+        </div>
         <div className="relative">
           <Input
             id="password"

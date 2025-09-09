@@ -140,6 +140,64 @@ class PasswordManager {
   }
 
   /**
+   * Generate password reset code and send via email
+   */
+  async generatePasswordResetByEmail(email: string): Promise<{ success: boolean; message: string; userId?: string }> {
+    try {
+      // Find user by email in the database
+      const pool = require('./db').pool; // Import pool dynamically to avoid circular import
+      const result = await pool.query('SELECT id, full_name FROM users WHERE email = $1', [email]);
+      
+      if (result.rows.length === 0) {
+        return { 
+          success: false, 
+          message: 'No account found with this email address.' 
+        };
+      }
+
+      const user = result.rows[0];
+      const userId = user.id;
+      const userData = this.initializeUser(userId);
+      
+      // Generate 6-digit reset code
+      const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      // Store reset code temporarily (expires in 15 minutes)
+      userData.resetCode = resetCode;
+      userData.resetCodeExpiry = new Date(Date.now() + 15 * 60 * 1000);
+      userData.updatedAt = new Date();
+      this.passwords.set(userId, userData);
+
+      // Send reset code via email
+      const emailResult = await this.emailService.sendPasswordResetEmail(email, resetCode, userId);
+      
+      if (emailResult.success) {
+        console.log(`📧 Password reset code sent to ${email}: ${resetCode}`);
+        return { 
+          success: true, 
+          message: 'Password reset code sent to your email address',
+          userId: userId
+        };
+      } else {
+        // Remove stored reset code if email failed
+        delete userData.resetCode;
+        delete userData.resetCodeExpiry;
+        this.passwords.set(userId, userData);
+        return { 
+          success: false, 
+          message: emailResult.message || 'Failed to send password reset email'
+        };
+      }
+    } catch (error) {
+      console.error('Error generating password reset by email:', error);
+      return { 
+        success: false, 
+        message: 'Failed to send password reset email. Please try again.'
+      };
+    }
+  }
+
+  /**
    * Generate password reset request for WhatsApp
    */
   generatePasswordReset(userId: string): { success: boolean; message: string; resetCode?: string } {
@@ -211,6 +269,35 @@ class PasswordManager {
 
     // Now set the new password
     return this.setCustomPassword(userId, newPassword);
+  }
+
+  /**
+   * Reset password using email and reset code
+   */
+  async resetPasswordByEmail(email: string, resetCode: string, newPassword: string): Promise<{ success: boolean; message: string }> {
+    try {
+      // Find user by email in the database
+      const pool = require('./db').pool; // Import pool dynamically to avoid circular import
+      const result = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+      
+      if (result.rows.length === 0) {
+        return { 
+          success: false, 
+          message: 'No account found with this email address.' 
+        };
+      }
+
+      const userId = result.rows[0].id;
+      
+      // Use the existing resetPasswordWithCode method
+      return this.resetPasswordWithCode(userId, resetCode, newPassword);
+    } catch (error) {
+      console.error('Error resetting password by email:', error);
+      return { 
+        success: false, 
+        message: 'Failed to reset password. Please try again.'
+      };
+    }
   }
 
   /**

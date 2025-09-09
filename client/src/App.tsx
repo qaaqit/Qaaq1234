@@ -12,6 +12,7 @@ import Login from "@/pages/login";
 import Register from "@/pages/register";
 import RegisterWorkshop from "@/pages/registerworkshop";
 import Verify from "@/pages/verify";
+import ForgotPasswordPage from "@/pages/forgot-password";
 import Discover from "@/pages/discover";
 import Post from "@/pages/post";
 import Admin from "@/pages/admin";
@@ -102,6 +103,7 @@ function Router() {
           <Route path="/register" component={() => <Register />} />
           <Route path="/registerworkshop" component={() => <RegisterWorkshop onSuccess={(user) => console.log('Workshop registration successful:', user)} />} />
           <Route path="/verify" component={() => <Verify />} />
+          <Route path="/forgot-password" component={() => <ForgotPasswordPage />} />
           <Route path="/oauth-callback" component={() => <OAuthCallback />} />
           <Route path="/discover" component={() => currentUser ? <Discover user={currentUser} /> : <Login />} />
           <Route path="/qbot" component={() => {

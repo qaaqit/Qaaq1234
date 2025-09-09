@@ -1151,6 +1151,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Password Reset - Request reset code via email
+  app.post('/api/forgot-password', async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Email address is required' 
+        });
+      }
+      
+      const result = await passwordManager.generatePasswordResetByEmail(email);
+      
+      if (result.success) {
+        console.log(`📧 Password reset requested for ${email}`);
+        res.json({
+          success: true,
+          message: result.message
+        });
+      } else {
+        res.status(400).json({
+          success: false,
+          message: result.message
+        });
+      }
+    } catch (error: unknown) {
+      console.error('Password reset request error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to process password reset request',
+        error: errorMessage 
+      });
+    }
+  });
+
+  // Password Reset - Verify code and set new password
+  app.post('/api/reset-password', async (req, res) => {
+    try {
+      const { email, resetCode, newPassword } = req.body;
+      
+      if (!email || !resetCode || !newPassword) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Email, reset code, and new password are required' 
+        });
+      }
+      
+      if (newPassword.length < 6) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Password must be at least 6 characters long' 
+        });
+      }
+      
+      const result = await passwordManager.resetPasswordByEmail(email, resetCode, newPassword);
+      
+      if (result.success) {
+        console.log(`✅ Password reset successful for ${email}`);
+        res.json({
+          success: true,
+          message: result.message
+        });
+      } else {
+        res.status(400).json({
+          success: false,
+          message: result.message
+        });
+      }
+    } catch (error: unknown) {
+      console.error('Password reset error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to reset password',
+        error: errorMessage 
+      });
+    }
+  });
+
   // Object storage upload endpoint
   app.post("/api/objects/upload", async (req, res) => {
     try {
