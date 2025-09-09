@@ -42,6 +42,7 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
     maritimeExpertise: [] as string[], // New 12-category expertise system
     classificationApprovals: {} as { [expertiseCategory: string]: string[] }, // Classification approvals per expertise
     homePort: "",
+    zipCode: "",
     visaStatus: "",
     companiesWorkedFor: "",
     officialWebsite: "",
@@ -217,10 +218,10 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
     }
 
     // Validate workshop-specific fields
-    if (formData.maritimeExpertise.length === 0 || !formData.homePort) {
+    if (formData.maritimeExpertise.length === 0 || !formData.homePort || !formData.zipCode) {
       toast({
         title: "Missing Workshop Information",
-        description: "Please select at least 1 maritime expertise area and enter your port location",
+        description: "Please select at least 1 maritime expertise area and enter your port location with ZIP/PIN code",
         variant: "destructive",
       });
       return;
@@ -528,17 +529,31 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
                 </p>
               </div>
 
-              <div>
-                <Label htmlFor="homePort">6. Port location with ZIP/PIN code (Write city and postal code) *</Label>
-                <div className="flex items-center space-x-2">
-                  <MapPin className="h-4 w-4 text-orange-600" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="homePort">6a. Port/City Name *</Label>
+                  <div className="flex items-center space-x-2">
+                    <MapPin className="h-4 w-4 text-orange-600" />
+                    <Input
+                      id="homePort"
+                      type="text"
+                      value={formData.homePort}
+                      onChange={(e) => handleInputChange("homePort", e.target.value)}
+                      placeholder="e.g., Singapore, Rotterdam, Mumbai"
+                      data-testid="input-homePort"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="zipCode">6b. ZIP/PIN Code *</Label>
                   <Input
-                    id="homePort"
+                    id="zipCode"
                     type="text"
-                    value={formData.homePort}
-                    onChange={(e) => handleInputChange("homePort", e.target.value)}
-                    placeholder="e.g., Singapore 018989, Rotterdam 3011, Mumbai 400001"
-                    data-testid="input-homePort"
+                    value={formData.zipCode}
+                    onChange={(e) => handleInputChange("zipCode", e.target.value)}
+                    placeholder="e.g., 018989, 3011, 400001"
+                    data-testid="input-zipCode"
                   />
                 </div>
               </div>
