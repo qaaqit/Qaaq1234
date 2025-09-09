@@ -155,20 +155,29 @@ function JWTLoginForm() {
         )}
       </Button>
 
-      {/* New User Signup Link */}
+      {/* New User Signup Links */}
       <div className="text-center">
-        <p className="text-sm text-gray-600">
-          New to QaaqConnect?{" "}
+        <p className="text-sm text-gray-600 mb-2">New to QaaqConnect?</p>
+        <div className="flex flex-col space-y-2">
           <Button
             type="button"
             variant="link"
             className="p-0 h-auto text-orange-600 hover:text-orange-700 font-semibold"
             onClick={() => navigate("/register")}
-            data-testid="link-signup"
+            data-testid="link-user-signup"
           >
-            Create an account
+            Create an User account
           </Button>
-        </p>
+          <Button
+            type="button"
+            variant="link"
+            className="p-0 h-auto text-orange-600 hover:text-orange-700 font-semibold"
+            onClick={() => navigate("/registerworkshop")}
+            data-testid="link-workshop-signup"
+          >
+            Create a Workshop Account
+          </Button>
+        </div>
       </div>
     </form>
   );
