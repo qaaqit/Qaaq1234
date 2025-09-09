@@ -292,8 +292,8 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-orange-100 to-orange-200 p-4">
-      <div className="bg-white rounded-xl shadow-xl p-8 w-full">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-orange-100 to-orange-200 p-2 sm:p-4">
+      <div className="bg-white rounded-xl shadow-xl p-4 sm:p-8 w-full">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
             <button
@@ -325,9 +325,9 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
           </div>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Basic Information Section */}
-          <div className="border border-gray-200 rounded-lg p-6">
+          <div className="border border-gray-200 rounded-lg p-4 sm:p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
               <UserIcon className="h-5 w-5 mr-2 text-orange-600" />
               1. Contact Person Information
@@ -361,7 +361,7 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
           </div>
 
           {/* Contact Information Section */}
-          <div className="border border-gray-200 rounded-lg p-6">
+          <div className="border border-gray-200 rounded-lg p-4 sm:p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
               <Mail className="h-5 w-5 mr-2 text-orange-600" />
               2. Contact Details
@@ -412,7 +412,7 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
           </div>
 
           {/* Workshop Details Section */}
-          <div className="border border-orange-200 rounded-lg p-6 bg-orange-50">
+          <div className="border border-orange-200 rounded-lg p-4 sm:p-6 bg-orange-50">
             <h3 className="text-lg font-semibold text-orange-800 mb-4 flex items-center">
               <Wrench className="h-5 w-5 mr-2 text-orange-600" />
               3-9. Workshop Expertise & Details
@@ -430,7 +430,7 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3">
                   {maritimeExpertiseOptions.map((expertise) => {
                     const isSelected = formData.maritimeExpertise.includes(expertise.id);
                     const isDisabled = !isSelected && formData.maritimeExpertise.length >= 5;
@@ -463,21 +463,21 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
                         
                         {/* Classification Society Approvals */}
                         {isSelected && (
-                          <div className="ml-6 pl-4 border-l-2 border-orange-200 bg-orange-25">
-                            <p className="text-sm font-medium text-orange-700 mb-2">Classification Society Approvals (Optional):</p>
-                            <div className="grid grid-cols-2 gap-2">
+                          <div className="ml-2 sm:ml-6 pl-2 sm:pl-4 border-l-2 border-orange-200 bg-orange-25 mt-2">
+                            <p className="text-sm font-medium text-orange-700 mb-3">Classification Society Approvals (Optional):</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                               {classificationSocieties.map((society) => (
-                                <div key={society.id} className="flex items-center space-x-1">
+                                <div key={society.id} className="flex items-center space-x-2">
                                   <Checkbox
                                     id={`approval-${expertise.id}-${society.id}`}
                                     checked={approvals.includes(society.id)}
                                     onCheckedChange={(checked) => handleClassificationApprovalChange(expertise.id, society.id, checked as boolean)}
                                     data-testid={`checkbox-approval-${expertise.id}-${society.id}`}
-                                    className="w-3 h-3 scale-50"
+                                    className="w-4 h-4 sm:w-3 sm:h-3 sm:scale-50"
                                   />
                                   <label 
                                     htmlFor={`approval-${expertise.id}-${society.id}`}
-                                    className="text-xs cursor-pointer"
+                                    className="text-sm sm:text-xs cursor-pointer"
                                   >
                                     {society.name}
                                   </label>
@@ -590,7 +590,7 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
 
 
           {/* Company Information Section */}
-          <div className="border border-gray-200 rounded-lg p-6">
+          <div className="border border-gray-200 rounded-lg p-4 sm:p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
               <Briefcase className="h-5 w-5 mr-2 text-orange-600" />
               Company Information
@@ -612,7 +612,7 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
           </div>
 
           {/* Security Section */}
-          <div className="border border-gray-200 rounded-lg p-6">
+          <div className="border border-gray-200 rounded-lg p-4 sm:p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
               <Shield className="h-5 w-5 mr-2 text-orange-600" />
               Account Security
