@@ -501,7 +501,6 @@ export default function Register({ onSuccess }: RegisterProps) {
                 <SelectValue placeholder="Select your rank" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="TSI">Technical Superintendent</SelectItem>
                 <SelectItem value="Marine workshop">Marine workshop</SelectItem>
                 <SelectItem value="Cap">Captain</SelectItem>
                 <SelectItem value="CO">Chief Officer</SelectItem>
@@ -515,6 +514,7 @@ export default function Register({ onSuccess }: RegisterProps) {
                 <SelectItem value="Student">Student</SelectItem>
                 <SelectItem value="ETO">Electro Technical Officer</SelectItem>
                 <SelectItem value="ElecSupdt">Electrical Superintendent</SelectItem>
+                <SelectItem value="TSI">Technical Superintendent</SelectItem>
                 <SelectItem value="MSI">Marine Superintendent</SelectItem>
                 <SelectItem value="FM">Fleet Manager</SelectItem>
                 <SelectItem value="Maritime professional">Maritime Professional</SelectItem>
