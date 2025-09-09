@@ -341,7 +341,14 @@ export const workshopProfiles = pgTable("workshop_profiles", {
   // Workshop Information
   fullName: text("full_name").notNull(), // Workshop owner/manager name
   email: text("email").notNull(), // Workshop contact email
-  services: text("services").notNull(), // Services/expertise offered (comma-separated)
+  services: text("services").notNull(), // Services/expertise offered (comma-separated) - LEGACY FIELD
+  
+  // Maritime Expertise Categories (New 12-category system)
+  maritimeExpertise: jsonb("maritime_expertise").$type<string[]>().default([]), // Selected expertise categories
+  classificationApprovals: jsonb("classification_approvals").$type<{
+    [expertiseCategory: string]: string[]; // e.g., { "marine_welder": ["DNV", "Lloyd's"] }
+  }>().default({}), // Classification society approvals per expertise
+  
   whatsappNumber: text("whatsapp_number"), // Workshop WhatsApp contact
   homePort: text("home_port").notNull(), // Base port location
   
