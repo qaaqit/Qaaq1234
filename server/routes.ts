@@ -1424,17 +1424,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           const workshopProfile = await pool.query(`
             INSERT INTO workshop_profiles (
-              user_id, full_name, email, services, whatsapp_number, home_port,
-              official_website, visa_status, companies_worked_for, 
+              user_id, full_name, email, services, maritime_expertise, classification_approvals,
+              whatsapp_number, home_port, official_website, visa_status, companies_worked_for, 
               per_day_attendance_rate, remote_troubleshooting_rate,
               import_source, is_verified, is_active, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW())
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW())
             RETURNING id
           `, [
             newUser.id, // Link to user account
             `${userData.firstName} ${userData.lastName}`,
             userData.email,
-            userData.workshopData.competencyExpertise,
+            userData.workshopData.competencyExpertise || '', // Legacy services field
+            JSON.stringify(userData.workshopData.maritimeExpertise || []), // New expertise categories
+            JSON.stringify(userData.workshopData.classificationApprovals || {}), // Classification approvals
             userData.whatsapp,
             userData.workshopData.homePort,
             userData.workshopData.officialWebsite,
