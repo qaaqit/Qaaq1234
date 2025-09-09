@@ -369,18 +369,26 @@ export class WatiBotService {
 
   private async storeQuestionAnswer(userPhone: string, question: string, answer: string, user: any): Promise<string> {
     try {
-      const questionId = `wati_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+      // Generate a simple numeric ID that fits in integer range (max 2.1 billion)
+      const questionId = Math.floor(Math.random() * 1000000) + Math.floor(Date.now() / 1000);
       
+      // Store in whatsapp_messages table instead of questions table
       await pool.query(`
-        INSERT INTO questions (id, content, created_at, updated_at, author_id)
-        VALUES ($1, $2, NOW(), NOW(), $3)
+        INSERT INTO whatsapp_messages (
+          id, user_id, phone_number, message_body, message_type, 
+          direction, contact_name, created_at, updated_at
+        )
+        VALUES ($1, $2, $3, $4, 'text', 'incoming', $5, NOW(), NOW())
       `, [
-        parseInt(questionId.replace('wati_', '')),
-        `[WATI BOT]\nUser: ${userPhone}\nQuestion: ${question}\nAnswer: ${answer}`,
-        userPhone
+        `wati_${questionId}`,
+        userPhone,
+        userPhone,
+        `Q: ${question}\nA: ${answer}`,
+        user?.name || 'WATI User'
       ]);
 
-      return questionId;
+      console.log(`✅ WATI: Question-Answer stored for ${userPhone}`);
+      return questionId.toString();
     } catch (error) {
       console.error('❌ Error storing Q&A:', error);
       return 'unknown';
