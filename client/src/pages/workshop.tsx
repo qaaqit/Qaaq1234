@@ -151,20 +151,39 @@ export default function WorkshopPage() {
               >
                 <CardContent className="p-0">
                   <div className="flex flex-col">
-                    {/* Workshop Image Area - 16:9 landscape, half card width */}
-                    <div className="w-full h-24 bg-orange-100 flex items-center justify-center overflow-hidden">
-                      {workshop.businessCardPhoto || workshop.workshopFrontPhoto ? (
-                        <img 
-                          src={workshop.businessCardPhoto || workshop.workshopFrontPhoto} 
-                          alt={`${workshop.fullName} workshop`}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="text-orange-600 font-bold text-center">
-                          <Wrench className="w-8 h-8 mx-auto mb-1" />
-                          <span className="text-sm">WORKSHOP</span>
-                        </div>
-                      )}
+                    {/* Workshop Images Area - Two 16:9 images side by side */}
+                    <div className="w-full flex gap-0">
+                      {/* First Image */}
+                      <div className="w-1/2 aspect-video bg-orange-100 flex items-center justify-center overflow-hidden">
+                        {workshop.businessCardPhoto ? (
+                          <img 
+                            src={workshop.businessCardPhoto} 
+                            alt={`${workshop.fullName} business card`}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="text-orange-600 font-bold text-center">
+                            <Wrench className="w-6 h-6 mx-auto mb-1" />
+                            <span className="text-xs">CARD</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Second Image */}
+                      <div className="w-1/2 aspect-video bg-orange-50 flex items-center justify-center overflow-hidden">
+                        {workshop.workshopFrontPhoto ? (
+                          <img 
+                            src={workshop.workshopFrontPhoto} 
+                            alt={`${workshop.fullName} workshop front`}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="text-orange-600 font-bold text-center">
+                            <Wrench className="w-6 h-6 mx-auto mb-1" />
+                            <span className="text-xs">SHOP</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                     
                     {/* Workshop Details */}
