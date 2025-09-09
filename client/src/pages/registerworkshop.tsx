@@ -174,11 +174,11 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
     }
 
     // Validate workshop-specific fields
-    if (!formData.competencyExpertise || !formData.homePort || !formData.visaStatus || 
+    if (formData.competencyExpertise.length === 0 || !formData.homePort || !formData.visaStatus || 
         !formData.companiesWorkedFor || !formData.perDayAttendanceRate || !formData.remoteTroubleshootingRate) {
       toast({
         title: "Missing Workshop Information",
-        description: "Please fill in all workshop-specific fields",
+        description: "Please select at least 1 expertise area and fill in all workshop-specific fields",
         variant: "destructive",
       });
       return;
@@ -208,8 +208,8 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
           maritimeRank: formData.maritimeRank,
           company: showOtherCompany ? formData.otherCompany : formData.company,
           password: formData.password,
-          // Workshop-specific fields
-          competencyExpertise: formData.competencyExpertise,
+          // Workshop-specific fields (convert array to comma-separated string)
+          competencyExpertise: formData.competencyExpertise.join(", "),
           homePort: formData.homePort,
           visaStatus: formData.visaStatus,
           companiesWorkedFor: formData.companiesWorkedFor,
@@ -374,44 +374,89 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
             
             <div className="space-y-4">
               <div>
-                <Label htmlFor="competencyExpertise">3. Workshop Competency / Expertise (Please select only 1) *</Label>
-                <Select value={formData.competencyExpertise} onValueChange={(value) => handleInputChange("competencyExpertise", value)} disabled={semmLoading}>
-                  <SelectTrigger data-testid="select-competencyExpertise">
-                    <SelectValue placeholder={semmLoading ? "Loading maritime systems..." : "Select your primary expertise system"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {semmLoading ? (
-                      <SelectItem value="loading" disabled>
-                        <div className="flex items-center">
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Loading SEMM systems...
+                <div className="flex items-center justify-between mb-3">
+                  <Label htmlFor="competencyExpertise">3. Workshop Competency / Expertise (Select up to 5) *</Label>
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle2 className="h-4 w-4 text-orange-600" />
+                    <span className="text-sm font-medium text-orange-700">
+                      {formData.competencyExpertise.length}/5 selected
+                    </span>
+                  </div>
+                </div>
+                
+                {semmLoading ? (
+                  <div className="flex items-center justify-center p-8 border border-orange-200 rounded-lg bg-orange-50">
+                    <Loader2 className="h-6 w-6 mr-3 animate-spin text-orange-600" />
+                    <span className="text-orange-700">Loading maritime systems...</span>
+                  </div>
+                ) : semmError ? (
+                  <div className="p-4 border border-red-200 rounded-lg bg-red-50">
+                    <p className="text-red-600">Error loading systems. Please refresh the page.</p>
+                  </div>
+                ) : competencyOptions.length === 0 ? (
+                  <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                    <p className="text-gray-600">No systems available</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-80 overflow-y-auto border border-orange-200 rounded-lg p-4 bg-white">
+                    {competencyOptions.map((option: any) => {
+                      const isSelected = formData.competencyExpertise.includes(option.value);
+                      const isDisabled = !isSelected && formData.competencyExpertise.length >= 5;
+                      
+                      return (
+                        <div 
+                          key={option.code} 
+                          className={`flex items-center space-x-3 p-3 rounded-lg border transition-colors ${
+                            isSelected 
+                              ? 'border-orange-300 bg-orange-50' 
+                              : isDisabled 
+                                ? 'border-gray-200 bg-gray-50 opacity-60' 
+                                : 'border-gray-200 hover:border-orange-200 hover:bg-orange-50'
+                          }`}
+                        >
+                          <Checkbox
+                            id={`expertise-${option.code}`}
+                            checked={isSelected}
+                            disabled={isDisabled}
+                            onCheckedChange={(checked) => handleExpertiseChange(option.value, checked as boolean)}
+                            data-testid={`checkbox-expertise-${option.code}`}
+                          />
+                          <label 
+                            htmlFor={`expertise-${option.code}`}
+                            className={`flex-1 cursor-pointer ${isDisabled ? 'cursor-not-allowed' : ''}`}
+                          >
+                            <div className="flex items-center">
+                              <span className="font-mono text-xs text-gray-500 mr-2">{option.code}.</span>
+                              <span className={`${isSelected ? 'font-medium text-orange-800' : 'text-gray-700'}`}>
+                                {option.label}
+                              </span>
+                            </div>
+                          </label>
                         </div>
-                      </SelectItem>
-                    ) : semmError ? (
-                      <SelectItem value="error" disabled>
-                        Error loading systems. Please refresh.
-                      </SelectItem>
-                    ) : competencyOptions.length === 0 ? (
-                      <SelectItem value="empty" disabled>
-                        No systems available
-                      </SelectItem>
-                    ) : (
-                      competencyOptions.map((option: any) => (
-                        <SelectItem key={option.code} value={option.value}>
-                          <div className="flex items-center">
-                            <span className="font-mono text-xs text-gray-500 mr-2">{option.code}.</span>
-                            <span>{option.label}</span>
-                          </div>
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-                {semmError && (
-                  <p className="text-sm text-red-600 mt-1">
-                    Failed to load maritime systems. Please refresh the page.
-                  </p>
+                      );
+                    })}
+                  </div>
                 )}
+                
+                {formData.competencyExpertise.length > 0 && (
+                  <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                    <p className="text-sm text-orange-700 font-medium mb-2">Selected Expertise Areas:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {formData.competencyExpertise.map((expertise, index) => (
+                        <span 
+                          key={index}
+                          className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 border border-orange-200"
+                        >
+                          {expertise}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                <p className="text-xs text-gray-600 mt-2">
+                  Select 1-5 maritime systems that represent your workshop's primary expertise areas.
+                </p>
               </div>
 
               <div>
