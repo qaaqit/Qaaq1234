@@ -365,18 +365,18 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
                   </SelectTrigger>
                   <SelectContent>
                     {semmLoading ? (
-                      <SelectItem value="" disabled>
+                      <SelectItem value="loading" disabled>
                         <div className="flex items-center">
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                           Loading SEMM systems...
                         </div>
                       </SelectItem>
                     ) : semmError ? (
-                      <SelectItem value="" disabled>
+                      <SelectItem value="error" disabled>
                         Error loading systems. Please refresh.
                       </SelectItem>
                     ) : competencyOptions.length === 0 ? (
-                      <SelectItem value="" disabled>
+                      <SelectItem value="empty" disabled>
                         No systems available
                       </SelectItem>
                     ) : (
