@@ -10,6 +10,7 @@ import { authApi, setStoredToken, setStoredUser, type User } from "@/lib/auth";
 import { Eye, EyeOff, Mail, Shield, Clock, User as UserIcon, Briefcase, Anchor, ArrowLeft, Phone, Wrench, MapPin, Globe, DollarSign, Loader2, CheckCircle2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import qaaqLogoPath from "@assets/ICON_1754950288816.png";
+import { MARITIME_EXPERTISE_CATEGORIES, CLASSIFICATION_SOCIETIES, type MaritimeExpertiseCategory, type ClassificationSociety } from "@shared/maritime-expertise";
 
 interface RegisterWorkshopProps {
   onSuccess: (user: User) => void;
@@ -37,7 +38,9 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
     password: "",
     otpCode: "",
     // Workshop-specific fields (all shown by default)
-    competencyExpertise: [] as string[],
+    competencyExpertise: [] as string[], // Legacy field - kept for backward compatibility
+    maritimeExpertise: [] as string[], // New 12-category expertise system
+    classificationApprovals: {} as { [expertiseCategory: string]: string[] }, // Classification approvals per expertise
     homePort: "",
     visaStatus: "",
     companiesWorkedFor: "",
@@ -88,19 +91,19 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
     { code: "+64", country: "New Zealand", flag: "🇳🇿" },
   ];
 
-  // Fetch SEMM systems from API
-  const { data: semmData, isLoading: semmLoading, error: semmError } = useQuery({
-    queryKey: ['/api/dev/semm-cards'],
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: 3,
-  });
-
-  // Extract systems from SEMM data for workshop competency
-  const semmSystems = (semmData as any)?.data || [];
-  const competencyOptions = semmSystems.map((system: any) => ({
-    value: system.title,
-    label: system.title,
-    code: system.code
+  // Use static maritime expertise categories instead of fetching SEMM data
+  const maritimeExpertiseOptions = MARITIME_EXPERTISE_CATEGORIES.map(category => ({
+    id: category.id,
+    name: category.name,
+    description: category.description,
+    icon: category.icon
+  }));
+  
+  const classificationSocieties = CLASSIFICATION_SOCIETIES.map(society => ({
+    id: society.id,
+    name: society.name,
+    fullName: society.fullName,
+    flag: society.flag
   }));
 
   // Visa status options
@@ -146,18 +149,58 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
     }
   };
 
-  // Handle expertise selection (multi-select)
-  const handleExpertiseChange = (systemTitle: string, isChecked: boolean) => {
-    const currentExpertise = formData.competencyExpertise;
+  // Handle maritime expertise selection (multi-select)
+  const handleMaritimeExpertiseChange = (expertiseId: string, isChecked: boolean) => {
+    const currentExpertise = formData.maritimeExpertise;
     
     if (isChecked) {
       // Add if not already present and under limit of 5
-      if (!currentExpertise.includes(systemTitle) && currentExpertise.length < 5) {
-        handleInputChange("competencyExpertise", [...currentExpertise, systemTitle]);
+      if (!currentExpertise.includes(expertiseId) && currentExpertise.length < 5) {
+        setFormData(prev => ({
+          ...prev,
+          maritimeExpertise: [...currentExpertise, expertiseId],
+          // Also update legacy field for backward compatibility
+          competencyExpertise: [...currentExpertise, expertiseId]
+        }));
       }
     } else {
       // Remove if present
-      handleInputChange("competencyExpertise", currentExpertise.filter(item => item !== systemTitle));
+      const updatedExpertise = currentExpertise.filter(item => item !== expertiseId);
+      setFormData(prev => ({
+        ...prev,
+        maritimeExpertise: updatedExpertise,
+        competencyExpertise: updatedExpertise,
+        // Remove classification approvals for this expertise
+        classificationApprovals: {
+          ...prev.classificationApprovals,
+          [expertiseId]: []
+        }
+      }));
+    }
+  };
+  
+  // Handle classification society approval selection
+  const handleClassificationApprovalChange = (expertiseId: string, societyId: string, isChecked: boolean) => {
+    const currentApprovals = formData.classificationApprovals[expertiseId] || [];
+    
+    if (isChecked) {
+      if (!currentApprovals.includes(societyId)) {
+        setFormData(prev => ({
+          ...prev,
+          classificationApprovals: {
+            ...prev.classificationApprovals,
+            [expertiseId]: [...currentApprovals, societyId]
+          }
+        }));
+      }
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        classificationApprovals: {
+          ...prev.classificationApprovals,
+          [expertiseId]: currentApprovals.filter(id => id !== societyId)
+        }
+      }));
     }
   };
 
@@ -174,11 +217,11 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
     }
 
     // Validate workshop-specific fields
-    if (formData.competencyExpertise.length === 0 || !formData.homePort || !formData.visaStatus || 
+    if (formData.maritimeExpertise.length === 0 || !formData.homePort || !formData.visaStatus || 
         !formData.companiesWorkedFor || !formData.perDayAttendanceRate || !formData.remoteTroubleshootingRate) {
       toast({
         title: "Missing Workshop Information",
-        description: "Please select at least 1 expertise area and fill in all workshop-specific fields",
+        description: "Please select at least 1 maritime expertise area and fill in all workshop-specific fields",
         variant: "destructive",
       });
       return;
@@ -375,37 +418,25 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
             <div className="space-y-4">
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <Label htmlFor="competencyExpertise">3. Workshop Competency / Expertise (Select up to 5) *</Label>
+                  <Label htmlFor="maritimeExpertise">3. Maritime Workshop Expertise (Select up to 5) *</Label>
                   <div className="flex items-center space-x-2">
                     <CheckCircle2 className="h-4 w-4 text-orange-600" />
                     <span className="text-sm font-medium text-orange-700">
-                      {formData.competencyExpertise.length}/5 selected
+                      {formData.maritimeExpertise.length}/5 selected
                     </span>
                   </div>
                 </div>
                 
-                {semmLoading ? (
-                  <div className="flex items-center justify-center p-8 border border-orange-200 rounded-lg bg-orange-50">
-                    <Loader2 className="h-6 w-6 mr-3 animate-spin text-orange-600" />
-                    <span className="text-orange-700">Loading maritime systems...</span>
-                  </div>
-                ) : semmError ? (
-                  <div className="p-4 border border-red-200 rounded-lg bg-red-50">
-                    <p className="text-red-600">Error loading systems. Please refresh the page.</p>
-                  </div>
-                ) : competencyOptions.length === 0 ? (
-                  <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
-                    <p className="text-gray-600">No systems available</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-80 overflow-y-auto border border-orange-200 rounded-lg p-4 bg-white">
-                    {competencyOptions.map((option: any) => {
-                      const isSelected = formData.competencyExpertise.includes(option.value);
-                      const isDisabled = !isSelected && formData.competencyExpertise.length >= 5;
-                      
-                      return (
+                <div className="grid grid-cols-1 gap-4 max-h-96 overflow-y-auto border border-orange-200 rounded-lg p-4 bg-white">
+                  {maritimeExpertiseOptions.map((expertise) => {
+                    const isSelected = formData.maritimeExpertise.includes(expertise.id);
+                    const isDisabled = !isSelected && formData.maritimeExpertise.length >= 5;
+                    const approvals = formData.classificationApprovals[expertise.id] || [];
+                    
+                    return (
+                      <div key={expertise.id} className="space-y-3">
+                        {/* Expertise Category Selection */}
                         <div 
-                          key={option.code} 
                           className={`flex items-center space-x-3 p-3 rounded-lg border transition-colors ${
                             isSelected 
                               ? 'border-orange-300 bg-orange-50' 
@@ -415,47 +446,93 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
                           }`}
                         >
                           <Checkbox
-                            id={`expertise-${option.code}`}
+                            id={`expertise-${expertise.id}`}
                             checked={isSelected}
                             disabled={isDisabled}
-                            onCheckedChange={(checked) => handleExpertiseChange(option.value, checked as boolean)}
-                            data-testid={`checkbox-expertise-${option.code}`}
+                            onCheckedChange={(checked) => handleMaritimeExpertiseChange(expertise.id, checked as boolean)}
+                            data-testid={`checkbox-expertise-${expertise.id}`}
                           />
                           <label 
-                            htmlFor={`expertise-${option.code}`}
+                            htmlFor={`expertise-${expertise.id}`}
                             className={`flex-1 cursor-pointer ${isDisabled ? 'cursor-not-allowed' : ''}`}
                           >
                             <div className="flex items-center">
-                              <span className="font-mono text-xs text-gray-500 mr-2">{option.code}.</span>
-                              <span className={`${isSelected ? 'font-medium text-orange-800' : 'text-gray-700'}`}>
-                                {option.label}
-                              </span>
+                              <span className="text-lg mr-3">{expertise.icon}</span>
+                              <div>
+                                <span className={`font-medium ${isSelected ? 'text-orange-800' : 'text-gray-700'}`}>
+                                  {expertise.name}
+                                </span>
+                                <p className="text-xs text-gray-500 mt-1">{expertise.description}</p>
+                              </div>
                             </div>
                           </label>
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
+                        
+                        {/* Classification Society Approvals */}
+                        {isSelected && (
+                          <div className="ml-6 pl-4 border-l-2 border-orange-200 bg-orange-25">
+                            <p className="text-sm font-medium text-orange-700 mb-2">Classification Society Approvals (Optional):</p>
+                            <div className="grid grid-cols-2 gap-2">
+                              {classificationSocieties.map((society) => (
+                                <div key={society.id} className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id={`approval-${expertise.id}-${society.id}`}
+                                    checked={approvals.includes(society.id)}
+                                    onCheckedChange={(checked) => handleClassificationApprovalChange(expertise.id, society.id, checked as boolean)}
+                                    data-testid={`checkbox-approval-${expertise.id}-${society.id}`}
+                                  />
+                                  <label 
+                                    htmlFor={`approval-${expertise.id}-${society.id}`}
+                                    className="text-sm cursor-pointer flex items-center"
+                                  >
+                                    <span className="mr-1">{society.flag}</span>
+                                    {society.name}
+                                  </label>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
                 
-                {formData.competencyExpertise.length > 0 && (
+                {formData.maritimeExpertise.length > 0 && (
                   <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                    <p className="text-sm text-orange-700 font-medium mb-2">Selected Expertise Areas:</p>
+                    <p className="text-sm text-orange-700 font-medium mb-2">Selected Maritime Expertise:</p>
                     <div className="flex flex-wrap gap-2">
-                      {formData.competencyExpertise.map((expertise, index) => (
-                        <span 
-                          key={index}
-                          className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 border border-orange-200"
-                        >
-                          {expertise}
-                        </span>
-                      ))}
+                      {formData.maritimeExpertise.map((expertiseId) => {
+                        const expertise = maritimeExpertiseOptions.find(e => e.id === expertiseId);
+                        const approvals = formData.classificationApprovals[expertiseId] || [];
+                        return (
+                          <div key={expertiseId} className="inline-flex flex-col">
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 border border-orange-200">
+                              <span className="mr-1">{expertise?.icon}</span>
+                              {expertise?.name}
+                            </span>
+                            {approvals.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {approvals.map(societyId => {
+                                  const society = classificationSocieties.find(s => s.id === societyId);
+                                  return (
+                                    <span key={societyId} className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-700 border border-blue-200">
+                                      <span className="mr-1">{society?.flag}</span>
+                                      {society?.name}
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
                 
                 <p className="text-xs text-gray-600 mt-2">
-                  Select 1-5 maritime systems that represent your workshop's primary expertise areas.
+                  Select 1-5 maritime job roles that represent your workshop's core expertise. Add classification society approvals to increase trust.
                 </p>
               </div>
 
