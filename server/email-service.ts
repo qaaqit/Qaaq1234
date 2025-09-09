@@ -150,8 +150,11 @@ class EmailService {
                     <strong>🔧 Workshop Registration Details:</strong>
                   </p>
                   <div style="margin: 10px 0; padding: 15px; background: #f8fafc; border-radius: 8px; font-size: 13px; line-height: 1.6;">
-                    <p style="margin: 0 0 8px 0; color: #374151;"><strong>3.</strong> Workshop Competency / Expertise: <span style="color: #1f2937;">${workshopData.competencyExpertise}</span></p>
-                    <p style="margin: 0 0 8px 0; color: #374151;"><strong>4.</strong> Workshop Description & Expertise Area: <span style="color: #1f2937;">${workshopData.competencyExpertise}</span></p>
+                    <p style="margin: 0 0 8px 0; color: #374151;"><strong>3.</strong> Workshop Competency / Expertise Areas:</p>
+                    <div style="margin: 5px 0 12px 20px; background: #fef3c7; padding: 8px; border-radius: 6px; border: 1px solid #f59e0b;">
+                      <span style="color: #92400e; font-weight: bold; font-size: 13px;">${workshopData.competencyExpertise.replace(/,/g, ' •')}</span>
+                    </div>
+                    <p style="margin: 0 0 8px 0; color: #374151;"><strong>4.</strong> Workshop Description & Expertise Areas: <span style="color: #1f2937;">${workshopData.competencyExpertise}</span></p>
                     <p style="margin: 0 0 8px 0; color: #374151;"><strong>6.</strong> Port Location (Home Port): <span style="color: #1f2937;">${workshopData.homePort}</span></p>
                     <p style="margin: 0 0 8px 0; color: #374151;"><strong>7.</strong> Service Engineer Visa Status: <span style="color: #1f2937;">${workshopData.visaStatus}</span></p>
                     <p style="margin: 0 0 8px 0; color: #374151;"><strong>8.</strong> Companies Worked For (Last 1 Year): <span style="color: #1f2937;">${workshopData.companiesWorkedFor}</span></p>
