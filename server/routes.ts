@@ -1166,24 +1166,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register new user with email verification
   app.post("/api/register", async (req, res) => {
     try {
-      const { 
-        firstName, lastName, email, whatsapp, maritimeRank, company, password,
-        // Workshop-specific fields
-        competencyExpertise, homePort, visaStatus, companiesWorkedFor,
-        officialWebsite, perDayAttendanceRate, remoteTroubleshootingRate
-      } = req.body;
+      const { firstName, lastName, email, whatsapp, maritimeRank, company, password } = req.body;
       
       if (!firstName || !lastName || !email || !maritimeRank || !company || !password) {
         return res.status(400).json({ message: "All required fields must be provided" });
-      }
-
-      // Additional validation for Marine workshop users
-      if (maritimeRank === "Marine workshop") {
-        if (!competencyExpertise || !homePort || !visaStatus || !companiesWorkedFor || !perDayAttendanceRate || !remoteTroubleshootingRate) {
-          return res.status(400).json({ 
-            message: "Marine workshop users must provide all workshop-specific information: Competency/Expertise, Home Port, Visa Status, Companies Worked For, Daily Rate, and Remote Rate" 
-          });
-        }
       }
 
       // Check if user already exists
@@ -1217,23 +1203,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: userId // Include generated user ID
       };
 
-      // Workshop-specific data for Marine workshop users
-      let workshopData = null;
-      if (maritimeRank === "Marine workshop") {
-        workshopData = {
-          competencyExpertise,
-          homePort,
-          visaStatus,
-          companiesWorkedFor,
-          officialWebsite,
-          perDayAttendanceRate,
-          remoteTroubleshootingRate
-        };
-        
-        // Store workshop data in verification token for later use
-        userData.workshopData = workshopData;
-      }
-
       // Save verification token to database
       console.log('Saving verification token for:', email);
       console.log('Token to save:', verificationToken);
@@ -1259,8 +1228,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         throw dbError;
       }
 
-      // Send verification email (with workshop data if applicable)
-      const emailResult = await emailService.sendVerificationEmail(email, verificationToken, userData, workshopData);
+      // Send verification email
+      const emailResult = await emailService.sendVerificationEmail(email, verificationToken, userData);
       
       if (emailResult.success) {
         console.log(`✅ Registration initiated for ${email} with User ID: ${userId}`);
@@ -1405,43 +1374,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ]);
 
       const newUser = result.rows[0];
-
-      // Create workshop profile if user is Marine workshop
-      if (userData.maritimeRank === "Marine workshop" && userData.workshopData) {
-        try {
-          console.log('Creating workshop profile for Marine workshop user:', userData.userId);
-          
-          const workshopProfile = await pool.query(`
-            INSERT INTO workshop_profiles (
-              user_id, full_name, email, services, whatsapp_number, home_port,
-              official_website, visa_status, companies_worked_for, 
-              per_day_attendance_rate, remote_troubleshooting_rate,
-              import_source, is_verified, is_active, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW())
-            RETURNING id
-          `, [
-            newUser.id, // Link to user account
-            `${userData.firstName} ${userData.lastName}`,
-            userData.email,
-            userData.workshopData.competencyExpertise,
-            userData.whatsapp,
-            userData.workshopData.homePort,
-            userData.workshopData.officialWebsite,
-            userData.workshopData.visaStatus,
-            userData.workshopData.companiesWorkedFor,
-            userData.workshopData.perDayAttendanceRate,
-            userData.workshopData.remoteTroubleshootingRate,
-            'registration', // Source
-            false, // Needs admin verification
-            true // Active
-          ]);
-          
-          console.log(`✅ Workshop profile created with ID: ${workshopProfile.rows[0].id}`);
-        } catch (workshopError) {
-          console.error('❌ Failed to create workshop profile:', workshopError);
-          // Don't fail the entire verification, just log the error
-        }
-      }
 
       // Mark token as used
       await pool.query(
