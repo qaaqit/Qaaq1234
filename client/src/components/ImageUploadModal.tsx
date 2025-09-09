@@ -10,7 +10,7 @@ interface ImageUploadModalProps {
   onUploadSuccess: (imageUrl: string) => void;
   title: string;
   workshopId: string;
-  imageType: 'business_card' | 'workshop_front';
+  imageType: 'workshop_front' | 'work_photo';
 }
 
 export function ImageUploadModal({ 

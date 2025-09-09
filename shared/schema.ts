@@ -346,8 +346,9 @@ export const workshopProfiles = pgTable("workshop_profiles", {
   homePort: text("home_port").notNull(), // Base port location
   
   // Media and Web Presence
-  businessCardPhoto: text("business_card_photo"), // Business card image path
+  businessCardPhoto: text("business_card_photo"), // Business card image path (deprecated)
   workshopFrontPhoto: text("workshop_front_photo"), // Workshop front image path
+  workPhoto: text("work_photo"), // Work/facilities image path  
   officialWebsite: text("official_website"), // Workshop website URL
   
   // Additional Info

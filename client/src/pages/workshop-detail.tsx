@@ -16,8 +16,9 @@ interface Workshop {
   services: string;
   whatsapp_number?: string;
   home_port: string;
-  business_card_photo?: string;
+  business_card_photo?: string; // deprecated
   workshop_front_photo?: string;
+  work_photo?: string; // new field for WORK image
   official_website?: string;
   location?: string;
   description?: string;
@@ -39,9 +40,9 @@ export default function WorkshopDetailPage() {
   // Modal states
   const [uploadModal, setUploadModal] = useState<{
     isOpen: boolean;
-    imageType: 'business_card' | 'workshop_front';
+    imageType: 'workshop_front' | 'work_photo';
     title: string;
-  }>({ isOpen: false, imageType: 'business_card', title: '' });
+  }>({ isOpen: false, imageType: 'workshop_front', title: '' });
   
   const [viewerModal, setViewerModal] = useState<{
     isOpen: boolean;
@@ -136,16 +137,16 @@ export default function WorkshopDetailPage() {
       {/* Workshop Images Header */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="w-full flex gap-0 rounded-lg overflow-hidden shadow-md">
-          {/* First Image - Business Card / Workshop Front */}
+          {/* First Image - Workshop Front */}
           <div 
             className="w-1/2 aspect-video bg-orange-100 flex items-center justify-center overflow-hidden cursor-pointer hover:bg-orange-200 transition-colors relative group"
-            onClick={() => handleImageClick('business_card', workshop.business_card_photo, 'Workshop Front')}
+            onClick={() => handleImageClick('workshop_front', workshop.workshop_front_photo, 'Workshop Front')}
           >
-            {workshop.business_card_photo ? (
+            {workshop.workshop_front_photo ? (
               <>
                 <img 
-                  src={workshop.business_card_photo} 
-                  alt="Workshop business reference"
+                  src={workshop.workshop_front_photo} 
+                  alt="Workshop front view"
                   className="w-full h-full object-cover"
                 />
                 {isAdmin && (
@@ -167,16 +168,16 @@ export default function WorkshopDetailPage() {
             )}
           </div>
           
-          {/* Second Image - Workshop Front / Work */}
+          {/* Second Image - Work */}
           <div 
             className="w-1/2 aspect-video bg-orange-50 flex items-center justify-center overflow-hidden cursor-pointer hover:bg-orange-100 transition-colors relative group"
-            onClick={() => handleImageClick('workshop_front', workshop.workshop_front_photo, 'Work')}
+            onClick={() => handleImageClick('work_photo', workshop.work_photo, 'Work')}
           >
-            {workshop.workshop_front_photo ? (
+            {workshop.work_photo ? (
               <>
                 <img 
-                  src={workshop.workshop_front_photo} 
-                  alt="Workshop facilities"
+                  src={workshop.work_photo} 
+                  alt="Workshop work facilities"
                   className="w-full h-full object-cover"
                 />
                 {isAdmin && (
@@ -347,7 +348,7 @@ export default function WorkshopDetailPage() {
   );
 
   // Handle image click - admin upload or user view
-  function handleImageClick(imageType: 'business_card' | 'workshop_front', imageUrl: string | undefined, title: string) {
+  function handleImageClick(imageType: 'workshop_front' | 'work_photo', imageUrl: string | undefined, title: string) {
     if (isAdmin) {
       // Admin: Open upload modal
       setUploadModal({

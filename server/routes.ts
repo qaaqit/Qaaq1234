@@ -6040,10 +6040,10 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         });
       }
       
-      if (!['business_card', 'workshop_front'].includes(imageType)) {
+      if (!['workshop_front', 'work_photo'].includes(imageType)) {
         return res.status(400).json({
           success: false,
-          error: 'Image type must be either business_card or workshop_front'
+          error: 'Image type must be either workshop_front or work_photo'
         });
       }
       
@@ -6064,7 +6064,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       
       try {
         // Update the appropriate image field in the workshop profile
-        const columnName = imageType === 'business_card' ? 'business_card_photo' : 'workshop_front_photo';
+        const columnName = imageType === 'workshop_front' ? 'workshop_front_photo' : 'work_photo';
         
         const query = `
           UPDATE workshop_profiles 
