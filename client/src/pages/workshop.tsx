@@ -146,31 +146,29 @@ export default function WorkshopPage() {
             workshopsData.workshops.map((workshop: Workshop) => (
               <Card 
                 key={workshop.id} 
-                className="hover:shadow-md transition-shadow cursor-pointer bg-white border border-gray-200 rounded-lg"
+                className="hover:shadow-md transition-shadow cursor-pointer bg-white border border-gray-200 rounded-lg overflow-hidden"
                 onClick={() => setLocation(`/workshop/${workshop.id}`)}
               >
-                <CardContent className="p-4">
-                  <div className="flex items-center space-x-4">
-                    {/* Workshop Image Area - 9x16 aspect ratio */}
-                    <div className="flex-shrink-0">
-                      <div className="w-12 h-16 bg-orange-100 rounded-md flex items-center justify-center overflow-hidden">
-                        {workshop.businessCardPhoto || workshop.workshopFrontPhoto ? (
-                          <img 
-                            src={workshop.businessCardPhoto || workshop.workshopFrontPhoto} 
-                            alt={`${workshop.fullName} workshop`}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="text-orange-600 text-xs font-bold text-center">
-                            <Wrench className="w-6 h-6 mx-auto mb-1" />
-                            <span className="text-[10px]">WS</span>
-                          </div>
-                        )}
-                      </div>
+                <CardContent className="p-0">
+                  <div className="flex items-stretch">
+                    {/* Workshop Image Area - Flush with card edges */}
+                    <div className="flex-shrink-0 w-12 bg-orange-100 flex items-center justify-center overflow-hidden">
+                      {workshop.businessCardPhoto || workshop.workshopFrontPhoto ? (
+                        <img 
+                          src={workshop.businessCardPhoto || workshop.workshopFrontPhoto} 
+                          alt={`${workshop.fullName} workshop`}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="text-orange-600 text-xs font-bold text-center py-2">
+                          <Wrench className="w-6 h-6 mx-auto mb-1" />
+                          <span className="text-[10px]">WS</span>
+                        </div>
+                      )}
                     </div>
                     
                     {/* Workshop Details */}
-                    <div className="flex-grow min-w-0">
+                    <div className="flex-grow min-w-0 p-4">
                       <div className="flex items-start justify-between">
                         <div className="min-w-0 flex-1">
                           <h3 className="text-base font-semibold text-gray-900 truncate">
