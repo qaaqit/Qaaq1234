@@ -187,7 +187,7 @@ class AuthConnectionPool {
       const latency = Date.now() - startTime;
       
       return {
-        healthy: latency < 1000, // Healthy if under 1 second
+        healthy: latency < 3000, // Accept up to 3s for Neon EU
         latency
       };
     } catch (error: any) {
