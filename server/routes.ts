@@ -6027,6 +6027,94 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
     }
   });
 
+  // Update workshop image - Admin only
+  app.put('/api/workshops/:id/image', authenticateToken, isAdminOrIntern, async (req, res) => {
+    try {
+      const workshopId = req.params.id;
+      const { imageType, imageUrl } = req.body;
+      
+      if (!workshopId || !imageType || !imageUrl) {
+        return res.status(400).json({
+          success: false,
+          error: 'Workshop ID, image type, and image URL are required'
+        });
+      }
+      
+      if (!['business_card', 'workshop_front'].includes(imageType)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Image type must be either business_card or workshop_front'
+        });
+      }
+      
+      console.log(`🖼️ Updating workshop ${workshopId} - ${imageType} image`);
+      
+      // Use object storage service to handle the image URL and set ACL
+      const objectStorageService = new ObjectStorageService();
+      const objectPath = objectStorageService.normalizeObjectEntityPath(imageUrl);
+      
+      // Use local DATABASE_URL to access the workshop database
+      const { Pool: LocalPool } = await import('@neondatabase/serverless');
+      const localPool = new LocalPool({ 
+        connectionString: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: false }
+      });
+      
+      const client = await localPool.connect();
+      
+      try {
+        // Update the appropriate image field in the workshop profile
+        const columnName = imageType === 'business_card' ? 'business_card_photo' : 'workshop_front_photo';
+        
+        const query = `
+          UPDATE workshop_profiles 
+          SET ${columnName} = $1, updated_at = NOW() 
+          WHERE id = $2 AND is_active = true
+          RETURNING id, full_name, ${columnName}
+        `;
+        
+        const result = await client.query(query, [objectPath, workshopId]);
+        
+        if (result.rows.length === 0) {
+          return res.status(404).json({
+            success: false,
+            error: 'Workshop not found or inactive'
+          });
+        }
+        
+        const workshop = result.rows[0];
+        console.log(`✅ Updated ${imageType} image for workshop: ${workshop.full_name}`);
+        
+        res.json({
+          success: true,
+          message: `${imageType} image updated successfully`,
+          objectPath: objectPath,
+          workshop: {
+            id: workshop.id,
+            name: workshop.full_name,
+            [columnName]: workshop[columnName]
+          }
+        });
+        
+      } catch (dbError) {
+        console.error(`❌ Database error updating workshop image:`, dbError);
+        res.status(500).json({
+          success: false,
+          error: 'Unable to update workshop image in database'
+        });
+      } finally {
+        client.release();
+        await localPool.end();
+      }
+      
+    } catch (error) {
+      console.error('❌ Error updating workshop image:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to update workshop image'
+      });
+    }
+  });
 
   // Get workshops by location/port - Public access
   app.get('/api/workshops/by-port/:port', async (req, res) => {
