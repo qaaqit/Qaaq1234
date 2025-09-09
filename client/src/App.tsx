@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import Home from "@/pages/home";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
+import RegisterWorkshop from "@/pages/registerworkshop";
 import Verify from "@/pages/verify";
 import Discover from "@/pages/discover";
 import Post from "@/pages/post";
@@ -99,6 +100,7 @@ function Router() {
           }} />
           <Route path="/login" component={() => <Login />} />
           <Route path="/register" component={() => <Register />} />
+          <Route path="/registerworkshop" component={() => <RegisterWorkshop onSuccess={(user) => console.log('Workshop registration successful:', user)} />} />
           <Route path="/verify" component={() => <Verify />} />
           <Route path="/oauth-callback" component={() => <OAuthCallback />} />
           <Route path="/discover" component={() => currentUser ? <Discover user={currentUser} /> : <Login />} />
