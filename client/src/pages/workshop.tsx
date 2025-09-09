@@ -150,9 +150,9 @@ export default function WorkshopPage() {
                 onClick={() => setLocation(`/workshop/${workshop.id}`)}
               >
                 <CardContent className="p-0">
-                  <div className="flex items-stretch">
-                    {/* Workshop Image Area - Flush with card edges */}
-                    <div className="flex-shrink-0 w-12 bg-orange-100 flex items-center justify-center overflow-hidden">
+                  <div className="flex flex-col">
+                    {/* Workshop Image Area - 16:9 landscape, half card width */}
+                    <div className="w-full h-24 bg-orange-100 flex items-center justify-center overflow-hidden">
                       {workshop.businessCardPhoto || workshop.workshopFrontPhoto ? (
                         <img 
                           src={workshop.businessCardPhoto || workshop.workshopFrontPhoto} 
@@ -160,15 +160,15 @@ export default function WorkshopPage() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="text-orange-600 text-xs font-bold text-center py-2">
-                          <Wrench className="w-6 h-6 mx-auto mb-1" />
-                          <span className="text-[10px]">WS</span>
+                        <div className="text-orange-600 font-bold text-center">
+                          <Wrench className="w-8 h-8 mx-auto mb-1" />
+                          <span className="text-sm">WORKSHOP</span>
                         </div>
                       )}
                     </div>
                     
                     {/* Workshop Details */}
-                    <div className="flex-grow min-w-0 p-4">
+                    <div className="p-4">
                       <div className="flex items-start justify-between">
                         <div className="min-w-0 flex-1">
                           <h3 className="text-base font-semibold text-gray-900 truncate">
