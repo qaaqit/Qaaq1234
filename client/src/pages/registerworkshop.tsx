@@ -251,8 +251,10 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
           maritimeRank: formData.maritimeRank,
           company: showOtherCompany ? formData.otherCompany : formData.company,
           password: formData.password,
-          // Workshop-specific fields (convert array to comma-separated string)
-          competencyExpertise: formData.competencyExpertise.join(", "),
+          // Workshop-specific fields - send both legacy and new formats
+          competencyExpertise: formData.competencyExpertise.join(", "), // Legacy format
+          maritimeExpertise: formData.maritimeExpertise, // New expertise categories
+          classificationApprovals: formData.classificationApprovals, // Classification society approvals
           homePort: formData.homePort,
           visaStatus: formData.visaStatus,
           companiesWorkedFor: formData.companiesWorkedFor,

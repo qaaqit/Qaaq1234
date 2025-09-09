@@ -1168,8 +1168,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { 
         firstName, lastName, email, whatsapp, maritimeRank, company, password,
-        // Workshop-specific fields
-        competencyExpertise, homePort, visaStatus, companiesWorkedFor,
+        // Workshop-specific fields (legacy and new)
+        competencyExpertise, maritimeExpertise, classificationApprovals, homePort, visaStatus, companiesWorkedFor,
         officialWebsite, perDayAttendanceRate, remoteTroubleshootingRate
       } = req.body;
       
@@ -1179,9 +1179,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Additional validation for Marine workshop users
       if (maritimeRank === "Marine workshop") {
-        if (!competencyExpertise || !homePort || !visaStatus || !companiesWorkedFor || !perDayAttendanceRate || !remoteTroubleshootingRate) {
+        // Check for either legacy competencyExpertise or new maritimeExpertise
+        const hasExpertise = (competencyExpertise && competencyExpertise.trim()) || 
+                            (maritimeExpertise && Array.isArray(maritimeExpertise) && maritimeExpertise.length > 0);
+        
+        if (!hasExpertise || !homePort || !visaStatus || !companiesWorkedFor || !perDayAttendanceRate || !remoteTroubleshootingRate) {
           return res.status(400).json({ 
-            message: "Marine workshop users must provide all workshop-specific information: Competency/Expertise, Home Port, Visa Status, Companies Worked For, Daily Rate, and Remote Rate" 
+            message: "Marine workshop users must provide all workshop-specific information: Maritime Expertise, Home Port, Visa Status, Companies Worked For, Daily Rate, and Remote Rate" 
           });
         }
       }
@@ -1221,7 +1225,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let workshopData = null;
       if (maritimeRank === "Marine workshop") {
         workshopData = {
+          // Legacy expertise field (for backward compatibility)
           competencyExpertise,
+          
+          // New 12-category maritime expertise system
+          maritimeExpertise: Array.isArray(maritimeExpertise) ? maritimeExpertise : [],
+          classificationApprovals: typeof classificationApprovals === 'object' ? classificationApprovals : {},
+          
+          // Other workshop fields
           homePort,
           visaStatus,
           companiesWorkedFor,
