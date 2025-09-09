@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 import { authApi, setStoredToken, setStoredUser, type User } from "@/lib/auth";
-import { Eye, EyeOff, Mail, Shield, Clock, User as UserIcon, Briefcase, Anchor, ArrowLeft, Phone, Wrench, MapPin, Globe, DollarSign } from "lucide-react";
+import { Eye, EyeOff, Mail, Shield, Clock, User as UserIcon, Briefcase, Anchor, ArrowLeft, Phone, Wrench, MapPin, Globe, DollarSign, Loader2 } from "lucide-react";
 import qaaqLogoPath from "@assets/ICON_1754950288816.png";
 
 interface RegisterWorkshopProps {
@@ -86,29 +87,20 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
     { code: "+64", country: "New Zealand", flag: "🇳🇿" },
   ];
 
-  // Workshop competency options based on existing database
-  const competencyOptions = [
-    "Engine Room Repairs",
-    "Navigation Equipment",
-    "Safety Equipment Servicing",
-    "Electronic Systems",
-    "Hydraulic Systems",
-    "Deck Machinery",
-    "Refrigeration Systems",
-    "Fire Fighting Systems",
-    "Crane & Lifting Equipment",
-    "Propulsion Systems",
-    "Electrical Systems",
-    "Communication Equipment",
-    "Automation Systems",
-    "Boiler & Heat Exchanger",
-    "Pump & Compressor Repairs",
-    "Welding & Fabrication",
-    "Hull Maintenance",
-    "Coating & Painting",
-    "Marine Survey",
-    "General Workshop Services"
-  ];
+  // Fetch SEMM systems from API
+  const { data: semmData, isLoading: semmLoading, error: semmError } = useQuery({
+    queryKey: ['/api/dev/semm-cards'],
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 3,
+  });
+
+  // Extract systems from SEMM data for workshop competency
+  const semmSystems = (semmData as any)?.data || [];
+  const competencyOptions = semmSystems.map((system: any) => ({
+    value: system.title,
+    label: system.title,
+    code: system.code
+  }));
 
   // Visa status options
   const visaStatusOptions = [
@@ -367,18 +359,43 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
             <div className="space-y-4">
               <div>
                 <Label htmlFor="competencyExpertise">3. Workshop Competency / Expertise (Please select only 1) *</Label>
-                <Select value={formData.competencyExpertise} onValueChange={(value) => handleInputChange("competencyExpertise", value)}>
+                <Select value={formData.competencyExpertise} onValueChange={(value) => handleInputChange("competencyExpertise", value)} disabled={semmLoading}>
                   <SelectTrigger data-testid="select-competencyExpertise">
-                    <SelectValue placeholder="Select your primary expertise" />
+                    <SelectValue placeholder={semmLoading ? "Loading maritime systems..." : "Select your primary expertise system"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {competencyOptions.map((option) => (
-                      <SelectItem key={option} value={option}>
-                        {option}
+                    {semmLoading ? (
+                      <SelectItem value="" disabled>
+                        <div className="flex items-center">
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Loading SEMM systems...
+                        </div>
                       </SelectItem>
-                    ))}
+                    ) : semmError ? (
+                      <SelectItem value="" disabled>
+                        Error loading systems. Please refresh.
+                      </SelectItem>
+                    ) : competencyOptions.length === 0 ? (
+                      <SelectItem value="" disabled>
+                        No systems available
+                      </SelectItem>
+                    ) : (
+                      competencyOptions.map((option: any) => (
+                        <SelectItem key={option.code} value={option.value}>
+                          <div className="flex items-center">
+                            <span className="font-mono text-xs text-gray-500 mr-2">{option.code}.</span>
+                            <span>{option.label}</span>
+                          </div>
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
+                {semmError && (
+                  <p className="text-sm text-red-600 mt-1">
+                    Failed to load maritime systems. Please refresh the page.
+                  </p>
+                )}
               </div>
 
               <div>
