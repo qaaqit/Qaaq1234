@@ -355,6 +355,12 @@ export const workshopProfiles = pgTable("workshop_profiles", {
   location: text("location"), // Detailed location/address
   description: text("description"), // Workshop description
   
+  // Workshop-specific fields for Marine workshop rank users
+  visaStatus: text("visa_status"), // Service Engineer Visa status
+  companiesWorkedFor: text("companies_worked_for"), // Companies worked for in last 1 year
+  perDayAttendanceRate: text("per_day_attendance_rate"), // Per day attendance rate in USD
+  remoteTroubleshootingRate: text("remote_troubleshooting_rate"), // Remote troubleshooting rate per hour in USD
+  
   // Status and Verification
   isVerified: boolean("is_verified").default(false), // Admin verification status
   isActive: boolean("is_active").default(true), // Active listing status

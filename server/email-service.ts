@@ -104,7 +104,7 @@ class EmailService {
   /**
    * Send email verification link
    */
-  async sendVerificationEmail(email: string, verificationToken: string, userData: any): Promise<{ success: boolean; message: string }> {
+  async sendVerificationEmail(email: string, verificationToken: string, userData: any, workshopData?: any): Promise<{ success: boolean; message: string }> {
     try {
       await this.ensureInitialized();
 
@@ -144,6 +144,23 @@ class EmailService {
                   Rank: ${userData.maritimeRank}<br>
                   Company: ${userData.company}
                 </p>
+                ${userData.maritimeRank === "Marine workshop" && workshopData ? `
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
+                  <p style="margin: 0; color: #6b7280; font-size: 14px;">
+                    <strong>🔧 Workshop Details:</strong><br>
+                    Competency/Expertise: ${workshopData.competencyExpertise}<br>
+                    Home Port: ${workshopData.homePort}<br>
+                    Visa Status: ${workshopData.visaStatus}<br>
+                    Companies Worked For: ${workshopData.companiesWorkedFor}<br>
+                    ${workshopData.officialWebsite ? `Website: ${workshopData.officialWebsite}<br>` : ''}
+                    Daily Service Rate: $${workshopData.perDayAttendanceRate} USD<br>
+                    Remote Support Rate: $${workshopData.remoteTroubleshootingRate} USD/hour
+                  </p>
+                  <p style="margin: 10px 0 0 0; color: #16a34a; font-size: 13px; font-weight: bold;">
+                    ⚓ Your workshop profile will be created after email verification
+                  </p>
+                </div>
+                ` : ''}
                 <p style="margin: 10px 0 0 0; color: #f59e0b; font-size: 13px; font-weight: bold;">
                   📝 Important: Save your User ID (${userData.userId}) - you'll need it for login!
                 </p>
