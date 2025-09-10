@@ -1040,13 +1040,20 @@ export default function LoginPage() {
                     {/* Edge Handles */}
                     {/* Top edge */}
                     <div
-                      className="absolute -top-1 left-4 right-4 h-2 bg-blue-600/50 cursor-n-resize hover:bg-blue-600"
+                      className="absolute h-3 bg-blue-600/70 cursor-n-resize hover:bg-blue-600 border border-white/50"
+                      style={{
+                        top: -6,
+                        left: 16,
+                        right: 16,
+                      }}
                       onMouseDown={(e) => {
                         e.stopPropagation();
+                        e.preventDefault();
                         const handleMouseMove = (e: MouseEvent) => {
                           const img = document.getElementById('cropImage') as HTMLImageElement;
                           const rect = img.getBoundingClientRect();
-                          const newY = Math.max(0, Math.min(e.clientY - rect.top, cropArea.y + cropArea.height - 30));
+                          const relativeY = e.clientY - rect.top;
+                          const newY = Math.max(0, Math.min(relativeY, cropArea.y + cropArea.height - 30));
                           const newHeight = cropArea.y + cropArea.height - newY;
                           if (newHeight > 30) {
                             setCropArea(prev => ({ ...prev, y: newY, height: newHeight }));
@@ -1063,13 +1070,20 @@ export default function LoginPage() {
 
                     {/* Bottom edge */}
                     <div
-                      className="absolute -bottom-1 left-4 right-4 h-2 bg-blue-600/50 cursor-s-resize hover:bg-blue-600"
+                      className="absolute h-3 bg-blue-600/70 cursor-s-resize hover:bg-blue-600 border border-white/50"
+                      style={{
+                        bottom: -6,
+                        left: 16,
+                        right: 16,
+                      }}
                       onMouseDown={(e) => {
                         e.stopPropagation();
+                        e.preventDefault();
                         const handleMouseMove = (e: MouseEvent) => {
                           const img = document.getElementById('cropImage') as HTMLImageElement;
                           const rect = img.getBoundingClientRect();
-                          const newHeight = Math.max(30, Math.min(e.clientY - rect.top - cropArea.y, rect.height - cropArea.y));
+                          const relativeY = e.clientY - rect.top;
+                          const newHeight = Math.max(30, Math.min(relativeY - cropArea.y, rect.height - cropArea.y));
                           setCropArea(prev => ({ ...prev, height: newHeight }));
                         };
                         const handleMouseUp = () => {
@@ -1083,13 +1097,20 @@ export default function LoginPage() {
 
                     {/* Left edge */}
                     <div
-                      className="absolute -left-1 top-4 bottom-4 w-2 bg-blue-600/50 cursor-w-resize hover:bg-blue-600"
+                      className="absolute w-3 bg-blue-600/70 cursor-w-resize hover:bg-blue-600 border border-white/50"
+                      style={{
+                        left: -6,
+                        top: 16,
+                        bottom: 16,
+                      }}
                       onMouseDown={(e) => {
                         e.stopPropagation();
+                        e.preventDefault();
                         const handleMouseMove = (e: MouseEvent) => {
                           const img = document.getElementById('cropImage') as HTMLImageElement;
                           const rect = img.getBoundingClientRect();
-                          const newX = Math.max(0, Math.min(e.clientX - rect.left, cropArea.x + cropArea.width - 50));
+                          const relativeX = e.clientX - rect.left;
+                          const newX = Math.max(0, Math.min(relativeX, cropArea.x + cropArea.width - 50));
                           const newWidth = cropArea.x + cropArea.width - newX;
                           if (newWidth > 50) {
                             setCropArea(prev => ({ ...prev, x: newX, width: newWidth }));
@@ -1106,13 +1127,20 @@ export default function LoginPage() {
 
                     {/* Right edge */}
                     <div
-                      className="absolute -right-1 top-4 bottom-4 w-2 bg-blue-600/50 cursor-e-resize hover:bg-blue-600"
+                      className="absolute w-3 bg-blue-600/70 cursor-e-resize hover:bg-blue-600 border border-white/50"
+                      style={{
+                        right: -6,
+                        top: 16,
+                        bottom: 16,
+                      }}
                       onMouseDown={(e) => {
                         e.stopPropagation();
+                        e.preventDefault();
                         const handleMouseMove = (e: MouseEvent) => {
                           const img = document.getElementById('cropImage') as HTMLImageElement;
                           const rect = img.getBoundingClientRect();
-                          const newWidth = Math.max(50, Math.min(e.clientX - rect.left - cropArea.x, rect.width - cropArea.x));
+                          const relativeX = e.clientX - rect.left;
+                          const newWidth = Math.max(50, Math.min(relativeX - cropArea.x, rect.width - cropArea.x));
                           setCropArea(prev => ({ ...prev, width: newWidth }));
                         };
                         const handleMouseUp = () => {
