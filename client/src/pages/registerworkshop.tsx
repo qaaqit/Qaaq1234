@@ -618,7 +618,7 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
                 <Label htmlFor="visaStatus">7. Service Engineer Visa Status</Label>
                 <Select value={formData.visaStatus} onValueChange={(value) => handleInputChange("visaStatus", value)}>
                   <SelectTrigger data-testid="select-visaStatus">
-                    <SelectValue placeholder="Select visa status (optional)" />
+                    <SelectValue placeholder="Select visa status" />
                   </SelectTrigger>
                   <SelectContent>
                     {visaStatusOptions.map((option) => (
@@ -637,7 +637,7 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
                   type="text"
                   value={formData.companiesWorkedFor}
                   onChange={(e) => handleInputChange("companiesWorkedFor", e.target.value)}
-                  placeholder="e.g., Maersk, MSC, COSCO Shipping (optional)"
+                  placeholder="e.g., Maersk, MSC, COSCO Shipping"
                   data-testid="input-companiesWorkedFor"
                 />
               </div>
@@ -651,7 +651,7 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
                     type="url"
                     value={formData.officialWebsite}
                     onChange={(e) => handleInputChange("officialWebsite", e.target.value)}
-                    placeholder="https://www.yourworkshop.com (optional)"
+                    placeholder="https://www.yourworkshop.com"
                     data-testid="input-officialWebsite"
                   />
                 </div>
