@@ -405,7 +405,7 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
             
             <div className="space-y-4">
               <div>
-                <Label htmlFor="email">Primary Email *</Label>
+                <Label htmlFor="email">Primary Email * (This will be your login id)</Label>
                 <Input
                   id="email"
                   type="email"
