@@ -57,6 +57,7 @@ import { authRateLimiter } from "./auth-rate-limiter";
 import { smartAuthPriority } from "./auth-priority";
 import { authPool } from "./auth-pool";
 import { authMonitor } from "./auth-monitor";
+import businessCardRoutes from "./business-card-routes.js";
 
 // Extend Express Request type
 declare global {
@@ -12271,6 +12272,11 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   });
 
   console.log('WebSocket server setup complete on path /ws');
+
+  // Business Card OCR Routes
+  console.log('📷 Setting up business card OCR routes...');
+  app.use('/api/business-card', businessCardRoutes);
+  console.log('✅ Business card OCR routes configured');
 
   return httpServer;
 }
