@@ -405,18 +405,118 @@ export default function LoginPage() {
     }
   };
 
-  // Crop functionality
+  // Auto-detect rectangle in image (like CamScanner)
+  const detectRectangle = (img: HTMLImageElement): { x: number; y: number; width: number; height: number } => {
+    try {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d')!;
+      
+      // Set canvas size to match image
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      
+      // Draw image to canvas for analysis
+      ctx.drawImage(img, 0, 0);
+      
+      // Get image data for edge detection
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+      
+      // Simple edge detection algorithm
+      const edges: number[][] = [];
+      for (let y = 1; y < canvas.height - 1; y++) {
+        edges[y] = [];
+        for (let x = 1; x < canvas.width - 1; x++) {
+          const idx = (y * canvas.width + x) * 4;
+          const current = data[idx] + data[idx + 1] + data[idx + 2]; // RGB sum
+          
+          // Check surrounding pixels for edge detection
+          const left = data[((y * canvas.width + x - 1) * 4)] + data[((y * canvas.width + x - 1) * 4) + 1] + data[((y * canvas.width + x - 1) * 4) + 2];
+          const right = data[((y * canvas.width + x + 1) * 4)] + data[((y * canvas.width + x + 1) * 4) + 1] + data[((y * canvas.width + x + 1) * 4) + 2];
+          const top = data[(((y - 1) * canvas.width + x) * 4)] + data[(((y - 1) * canvas.width + x) * 4) + 1] + data[(((y - 1) * canvas.width + x) * 4) + 2];
+          const bottom = data[(((y + 1) * canvas.width + x) * 4)] + data[(((y + 1) * canvas.width + x) * 4) + 1] + data[(((y + 1) * canvas.width + x) * 4) + 2];
+          
+          // Calculate edge strength
+          const edgeStrength = Math.abs(current - left) + Math.abs(current - right) + Math.abs(current - top) + Math.abs(current - bottom);
+          edges[y][x] = edgeStrength > 100 ? 1 : 0; // Threshold for edge detection
+        }
+      }
+      
+      // Find potential rectangular regions
+      let bestRect = { x: 0, y: 0, width: canvas.width, height: canvas.height, score: 0 };
+      
+      // Sample different rectangular regions and score them
+      for (let y = 0; y < canvas.height * 0.3; y += 10) {
+        for (let x = 0; x < canvas.width * 0.3; x += 10) {
+          for (let w = canvas.width * 0.4; w < canvas.width - x; w += 20) {
+            for (let h = canvas.height * 0.3; h < canvas.height - y; h += 20) {
+              if (w / h < 0.5 || w / h > 2.5) continue; // Skip non-card-like ratios
+              
+              // Score this rectangle based on edge density around perimeter
+              let edgeScore = 0;
+              let perimeter = 0;
+              
+              // Check top and bottom edges
+              for (let px = Math.floor(x); px < Math.floor(x + w) && px < canvas.width; px++) {
+                const topY = Math.floor(y);
+                const bottomY = Math.floor(y + h);
+                if (topY < edges.length && edges[topY] && edges[topY][px]) edgeScore++;
+                if (bottomY < edges.length && edges[bottomY] && edges[bottomY][px]) edgeScore++;
+                perimeter += 2;
+              }
+              
+              // Check left and right edges
+              for (let py = Math.floor(y); py < Math.floor(y + h) && py < canvas.height; py++) {
+                const leftX = Math.floor(x);
+                const rightX = Math.floor(x + w);
+                if (py < edges.length && edges[py] && edges[py][leftX]) edgeScore++;
+                if (py < edges.length && edges[py] && edges[py][rightX]) edgeScore++;
+                perimeter += 2;
+              }
+              
+              const score = perimeter > 0 ? (edgeScore / perimeter) * (w * h) : 0;
+              if (score > bestRect.score) {
+                bestRect = { x, y, width: w, height: h, score };
+              }
+            }
+          }
+        }
+      }
+      
+      // Convert back to display coordinates
+      const displayRect = img.getBoundingClientRect();
+      const scaleX = displayRect.width / canvas.width;
+      const scaleY = displayRect.height / canvas.height;
+      
+      return {
+        x: bestRect.x * scaleX,
+        y: bestRect.y * scaleY,
+        width: bestRect.width * scaleX,
+        height: bestRect.height * scaleY
+      };
+      
+    } catch (error) {
+      console.log('Rectangle detection failed, using center crop:', error);
+      // Fallback to center crop
+      const rect = img.getBoundingClientRect();
+      return {
+        x: rect.width * 0.1,
+        y: rect.height * 0.2,
+        width: rect.width * 0.8,
+        height: rect.height * 0.6
+      };
+    }
+  };
+
+  // Crop functionality with auto-detection
   const handleImageLoad = (event: React.SyntheticEvent<HTMLImageElement>) => {
     const img = event.target as HTMLImageElement;
-    const rect = img.getBoundingClientRect();
     
-    // Initialize crop area to center 80% of the image
-    const width = rect.width * 0.8;
-    const height = rect.height * 0.6;
-    const x = (rect.width - width) / 2;
-    const y = (rect.height - height) / 2;
+    // Auto-detect rectangle in the image
+    const detectedRect = detectRectangle(img);
     
-    setCropArea({ x, y, width, height });
+    // Use detected rectangle or fallback to center crop
+    setCropArea(detectedRect);
     setImageLoaded(true);
   };
 
