@@ -327,11 +327,33 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
         </div>
 
         <div className="space-y-4 sm:space-y-6">
-          {/* Basic Information Section */}
+          {/* Company Information Section - Moved to top */}
+          <div className="border border-gray-200 rounded-lg p-4 sm:p-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+              <Briefcase className="h-5 w-5 mr-2 text-orange-600" />
+              1. Company/Workshop Information
+            </h3>
+            
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="company">Company/Workshop Name *</Label>
+                <Input
+                  id="company"
+                  type="text"
+                  value={formData.company}
+                  onChange={(e) => handleInputChange("company", e.target.value)}
+                  placeholder="Enter your company/workshop name"
+                  data-testid="input-company"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Contact Person Information Section */}
           <div className="border border-gray-200 rounded-lg p-4 sm:p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
               <UserIcon className="h-5 w-5 mr-2 text-orange-600" />
-              1. Contact Person Information
+              2. Contact Person Information
             </h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -365,7 +387,7 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
           <div className="border border-gray-200 rounded-lg p-4 sm:p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
               <Mail className="h-5 w-5 mr-2 text-orange-600" />
-              2. Contact Details
+              3. Contact Details
             </h3>
             
             <div className="space-y-4">
@@ -416,7 +438,7 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
           <div className="border border-orange-200 rounded-lg p-4 sm:p-6 bg-orange-50">
             <h3 className="text-lg font-semibold text-orange-800 mb-4 flex items-center">
               <Wrench className="h-5 w-5 mr-2 text-orange-600" />
-              3-9. Workshop Expertise & Details
+              4-9. Workshop Expertise & Details
             </h3>
             
             <div className="space-y-4">
@@ -604,33 +626,12 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
           </div>
 
 
-          {/* Company Information Section */}
-          <div className="border border-gray-200 rounded-lg p-4 sm:p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-              <Briefcase className="h-5 w-5 mr-2 text-orange-600" />
-              Company Information
-            </h3>
-            
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="company">Company/Workshop Name *</Label>
-                <Input
-                  id="company"
-                  type="text"
-                  value={formData.company}
-                  onChange={(e) => handleInputChange("company", e.target.value)}
-                  placeholder="Enter your company/workshop name"
-                  data-testid="input-company"
-                />
-              </div>
-            </div>
-          </div>
 
           {/* Security Section */}
           <div className="border border-gray-200 rounded-lg p-4 sm:p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
               <Shield className="h-5 w-5 mr-2 text-orange-600" />
-              Account Security
+              10. Account Security
             </h3>
             
             <div>
