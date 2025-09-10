@@ -900,40 +900,229 @@ export default function LoginPage() {
                 
                 {imageLoaded && (
                   <div
-                    className="absolute border-2 border-blue-500 bg-blue-500/20 cursor-move"
+                    className="absolute border-2 border-blue-500 bg-blue-500/20"
                     style={{
                       left: cropArea.x,
                       top: cropArea.y,
                       width: cropArea.width,
                       height: cropArea.height,
                     }}
-                    onMouseDown={(e) => {
-                      setIsDragging(true);
-                      const startX = e.clientX - cropArea.x;
-                      const startY = e.clientY - cropArea.y;
-                      
-                      const handleMouseMove = (e: MouseEvent) => {
-                        const img = document.getElementById('cropImage') as HTMLImageElement;
-                        const rect = img.getBoundingClientRect();
-                        const newX = Math.max(0, Math.min(e.clientX - startX, rect.width - cropArea.width));
-                        const newY = Math.max(0, Math.min(e.clientY - startY, rect.height - cropArea.height));
-                        setCropArea(prev => ({ ...prev, x: newX, y: newY }));
-                      };
-                      
-                      const handleMouseUp = () => {
-                        setIsDragging(false);
-                        document.removeEventListener('mousemove', handleMouseMove);
-                        document.removeEventListener('mouseup', handleMouseUp);
-                      };
-                      
-                      document.addEventListener('mousemove', handleMouseMove);
-                      document.addEventListener('mouseup', handleMouseUp);
-                    }}
                   >
-                    <div className="absolute inset-0 border-2 border-dashed border-white/50"></div>
+                    {/* Center area - for moving */}
+                    <div
+                      className="absolute inset-2 cursor-move"
+                      onMouseDown={(e) => {
+                        setIsDragging(true);
+                        const startX = e.clientX - cropArea.x;
+                        const startY = e.clientY - cropArea.y;
+                        
+                        const handleMouseMove = (e: MouseEvent) => {
+                          const img = document.getElementById('cropImage') as HTMLImageElement;
+                          const rect = img.getBoundingClientRect();
+                          const newX = Math.max(0, Math.min(e.clientX - startX, rect.width - cropArea.width));
+                          const newY = Math.max(0, Math.min(e.clientY - startY, rect.height - cropArea.height));
+                          setCropArea(prev => ({ ...prev, x: newX, y: newY }));
+                        };
+                        
+                        const handleMouseUp = () => {
+                          setIsDragging(false);
+                          document.removeEventListener('mousemove', handleMouseMove);
+                          document.removeEventListener('mouseup', handleMouseUp);
+                        };
+                        
+                        document.addEventListener('mousemove', handleMouseMove);
+                        document.addEventListener('mouseup', handleMouseUp);
+                      }}
+                    >
+                      <div className="absolute inset-0 border-2 border-dashed border-white/50"></div>
+                    </div>
+
+                    {/* Label */}
                     <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-2 py-1 rounded text-xs">
                       Business Card Area
                     </div>
+
+                    {/* Corner Handles */}
+                    {/* Top-left */}
+                    <div
+                      className="absolute -top-1 -left-1 w-4 h-4 bg-blue-600 border-2 border-white cursor-nw-resize hover:bg-blue-700"
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                        const handleMouseMove = (e: MouseEvent) => {
+                          const img = document.getElementById('cropImage') as HTMLImageElement;
+                          const rect = img.getBoundingClientRect();
+                          const newX = Math.max(0, Math.min(e.clientX - rect.left, cropArea.x + cropArea.width - 50));
+                          const newY = Math.max(0, Math.min(e.clientY - rect.top, cropArea.y + cropArea.height - 30));
+                          const newWidth = cropArea.x + cropArea.width - newX;
+                          const newHeight = cropArea.y + cropArea.height - newY;
+                          if (newWidth > 50 && newHeight > 30) {
+                            setCropArea({ x: newX, y: newY, width: newWidth, height: newHeight });
+                          }
+                        };
+                        const handleMouseUp = () => {
+                          document.removeEventListener('mousemove', handleMouseMove);
+                          document.removeEventListener('mouseup', handleMouseUp);
+                        };
+                        document.addEventListener('mousemove', handleMouseMove);
+                        document.addEventListener('mouseup', handleMouseUp);
+                      }}
+                    />
+
+                    {/* Top-right */}
+                    <div
+                      className="absolute -top-1 -right-1 w-4 h-4 bg-blue-600 border-2 border-white cursor-ne-resize hover:bg-blue-700"
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                        const handleMouseMove = (e: MouseEvent) => {
+                          const img = document.getElementById('cropImage') as HTMLImageElement;
+                          const rect = img.getBoundingClientRect();
+                          const newY = Math.max(0, Math.min(e.clientY - rect.top, cropArea.y + cropArea.height - 30));
+                          const newWidth = Math.max(50, Math.min(e.clientX - rect.left - cropArea.x, rect.width - cropArea.x));
+                          const newHeight = cropArea.y + cropArea.height - newY;
+                          if (newHeight > 30) {
+                            setCropArea(prev => ({ ...prev, y: newY, width: newWidth, height: newHeight }));
+                          }
+                        };
+                        const handleMouseUp = () => {
+                          document.removeEventListener('mousemove', handleMouseMove);
+                          document.removeEventListener('mouseup', handleMouseUp);
+                        };
+                        document.addEventListener('mousemove', handleMouseMove);
+                        document.addEventListener('mouseup', handleMouseUp);
+                      }}
+                    />
+
+                    {/* Bottom-left */}
+                    <div
+                      className="absolute -bottom-1 -left-1 w-4 h-4 bg-blue-600 border-2 border-white cursor-sw-resize hover:bg-blue-700"
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                        const handleMouseMove = (e: MouseEvent) => {
+                          const img = document.getElementById('cropImage') as HTMLImageElement;
+                          const rect = img.getBoundingClientRect();
+                          const newX = Math.max(0, Math.min(e.clientX - rect.left, cropArea.x + cropArea.width - 50));
+                          const newWidth = cropArea.x + cropArea.width - newX;
+                          const newHeight = Math.max(30, Math.min(e.clientY - rect.top - cropArea.y, rect.height - cropArea.y));
+                          if (newWidth > 50) {
+                            setCropArea(prev => ({ ...prev, x: newX, width: newWidth, height: newHeight }));
+                          }
+                        };
+                        const handleMouseUp = () => {
+                          document.removeEventListener('mousemove', handleMouseMove);
+                          document.removeEventListener('mouseup', handleMouseUp);
+                        };
+                        document.addEventListener('mousemove', handleMouseMove);
+                        document.addEventListener('mouseup', handleMouseUp);
+                      }}
+                    />
+
+                    {/* Bottom-right */}
+                    <div
+                      className="absolute -bottom-1 -right-1 w-4 h-4 bg-blue-600 border-2 border-white cursor-se-resize hover:bg-blue-700"
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                        const handleMouseMove = (e: MouseEvent) => {
+                          const img = document.getElementById('cropImage') as HTMLImageElement;
+                          const rect = img.getBoundingClientRect();
+                          const newWidth = Math.max(50, Math.min(e.clientX - rect.left - cropArea.x, rect.width - cropArea.x));
+                          const newHeight = Math.max(30, Math.min(e.clientY - rect.top - cropArea.y, rect.height - cropArea.y));
+                          setCropArea(prev => ({ ...prev, width: newWidth, height: newHeight }));
+                        };
+                        const handleMouseUp = () => {
+                          document.removeEventListener('mousemove', handleMouseMove);
+                          document.removeEventListener('mouseup', handleMouseUp);
+                        };
+                        document.addEventListener('mousemove', handleMouseMove);
+                        document.addEventListener('mouseup', handleMouseUp);
+                      }}
+                    />
+
+                    {/* Edge Handles */}
+                    {/* Top edge */}
+                    <div
+                      className="absolute -top-1 left-4 right-4 h-2 bg-blue-600/50 cursor-n-resize hover:bg-blue-600"
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                        const handleMouseMove = (e: MouseEvent) => {
+                          const img = document.getElementById('cropImage') as HTMLImageElement;
+                          const rect = img.getBoundingClientRect();
+                          const newY = Math.max(0, Math.min(e.clientY - rect.top, cropArea.y + cropArea.height - 30));
+                          const newHeight = cropArea.y + cropArea.height - newY;
+                          if (newHeight > 30) {
+                            setCropArea(prev => ({ ...prev, y: newY, height: newHeight }));
+                          }
+                        };
+                        const handleMouseUp = () => {
+                          document.removeEventListener('mousemove', handleMouseMove);
+                          document.removeEventListener('mouseup', handleMouseUp);
+                        };
+                        document.addEventListener('mousemove', handleMouseMove);
+                        document.addEventListener('mouseup', handleMouseUp);
+                      }}
+                    />
+
+                    {/* Bottom edge */}
+                    <div
+                      className="absolute -bottom-1 left-4 right-4 h-2 bg-blue-600/50 cursor-s-resize hover:bg-blue-600"
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                        const handleMouseMove = (e: MouseEvent) => {
+                          const img = document.getElementById('cropImage') as HTMLImageElement;
+                          const rect = img.getBoundingClientRect();
+                          const newHeight = Math.max(30, Math.min(e.clientY - rect.top - cropArea.y, rect.height - cropArea.y));
+                          setCropArea(prev => ({ ...prev, height: newHeight }));
+                        };
+                        const handleMouseUp = () => {
+                          document.removeEventListener('mousemove', handleMouseMove);
+                          document.removeEventListener('mouseup', handleMouseUp);
+                        };
+                        document.addEventListener('mousemove', handleMouseMove);
+                        document.addEventListener('mouseup', handleMouseUp);
+                      }}
+                    />
+
+                    {/* Left edge */}
+                    <div
+                      className="absolute -left-1 top-4 bottom-4 w-2 bg-blue-600/50 cursor-w-resize hover:bg-blue-600"
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                        const handleMouseMove = (e: MouseEvent) => {
+                          const img = document.getElementById('cropImage') as HTMLImageElement;
+                          const rect = img.getBoundingClientRect();
+                          const newX = Math.max(0, Math.min(e.clientX - rect.left, cropArea.x + cropArea.width - 50));
+                          const newWidth = cropArea.x + cropArea.width - newX;
+                          if (newWidth > 50) {
+                            setCropArea(prev => ({ ...prev, x: newX, width: newWidth }));
+                          }
+                        };
+                        const handleMouseUp = () => {
+                          document.removeEventListener('mousemove', handleMouseMove);
+                          document.removeEventListener('mouseup', handleMouseUp);
+                        };
+                        document.addEventListener('mousemove', handleMouseMove);
+                        document.addEventListener('mouseup', handleMouseUp);
+                      }}
+                    />
+
+                    {/* Right edge */}
+                    <div
+                      className="absolute -right-1 top-4 bottom-4 w-2 bg-blue-600/50 cursor-e-resize hover:bg-blue-600"
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                        const handleMouseMove = (e: MouseEvent) => {
+                          const img = document.getElementById('cropImage') as HTMLImageElement;
+                          const rect = img.getBoundingClientRect();
+                          const newWidth = Math.max(50, Math.min(e.clientX - rect.left - cropArea.x, rect.width - cropArea.x));
+                          setCropArea(prev => ({ ...prev, width: newWidth }));
+                        };
+                        const handleMouseUp = () => {
+                          document.removeEventListener('mousemove', handleMouseMove);
+                          document.removeEventListener('mouseup', handleMouseUp);
+                        };
+                        document.addEventListener('mousemove', handleMouseMove);
+                        document.addEventListener('mouseup', handleMouseUp);
+                      }}
+                    />
                   </div>
                 )}
               </div>
