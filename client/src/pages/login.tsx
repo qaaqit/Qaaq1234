@@ -647,7 +647,7 @@ export default function LoginPage() {
                       ) : (
                         <>
                           <Upload className="h-3 w-3 mr-2" />
-                          Scan Business Card
+                          Upload Business Card
                         </>
                       )}
                     </Button>
