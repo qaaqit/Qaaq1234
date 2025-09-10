@@ -417,7 +417,30 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
               </div>
 
               <div>
-                <Label htmlFor="whatsapp">5. WhatsApp / Phone (with country code)</Label>
+                <Label htmlFor="password">Password *</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={formData.password}
+                    onChange={(e) => handleInputChange("password", e.target.value)}
+                    placeholder="Create a secure password (min 6 characters)"
+                    className="pr-10"
+                    data-testid="input-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    data-testid="toggle-password"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="whatsapp">WhatsApp / Phone (with country code)</Label>
                 <div className="flex space-x-2">
                   <Select value={formData.countryCode} onValueChange={(value) => handleInputChange("countryCode", value)}>
                     <SelectTrigger className="w-16" data-testid="select-countryCode">
@@ -639,37 +662,6 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
           </div>
 
 
-
-          {/* Security Section */}
-          <div className="border border-gray-200 rounded-lg p-4 sm:p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-              <Shield className="h-5 w-5 mr-2 text-orange-600" />
-              10. Account Security
-            </h3>
-            
-            <div>
-              <Label htmlFor="password">Password *</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={formData.password}
-                  onChange={(e) => handleInputChange("password", e.target.value)}
-                  placeholder="Create a secure password (min 6 characters)"
-                  className="pr-10"
-                  data-testid="input-password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  data-testid="toggle-password"
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-            </div>
-          </div>
 
           {/* Submit Section */}
           <div className="space-y-4">
