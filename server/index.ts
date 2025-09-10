@@ -13,8 +13,8 @@ import { secretValidator } from "./secret-validation";
 secretValidator.validateStartupSecrets();
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: false }));
 
 // Generate dynamic HTML with meta tags for question pages
 const generateQuestionHTML = (question: any, baseUrl: string) => {
