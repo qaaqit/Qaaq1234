@@ -29,6 +29,7 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
+    designation: "",
     countryCode: "+91", // Default to India
     whatsapp: "",
     email: "",
@@ -356,7 +357,7 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
               2. Contact Person Information
             </h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="firstName">First Name *</Label>
                 <Input
@@ -378,6 +379,18 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
                   onChange={(e) => handleInputChange("lastName", e.target.value)}
                   placeholder="Enter last name"
                   data-testid="input-lastName"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="designation">Designation</Label>
+                <Input
+                  id="designation"
+                  type="text"
+                  value={formData.designation}
+                  onChange={(e) => handleInputChange("designation", e.target.value)}
+                  placeholder="e.g., Workshop Manager, Technical Director"
+                  data-testid="input-designation"
                 />
               </div>
             </div>
