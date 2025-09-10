@@ -20,7 +20,7 @@ export interface ClassificationSociety {
 export const MARITIME_EXPERTISE_CATEGORIES: MaritimeExpertiseCategory[] = [
   {
     id: "marine_engineer",
-    name: "Marine Engineer",
+    name: "Marine Service Engineer",
     description: "System design, troubleshooting, overhauls",
     icon: "⚙️"
   },

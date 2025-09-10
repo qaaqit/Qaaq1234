@@ -39,7 +39,7 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
     otpCode: "",
     // Workshop-specific fields (all shown by default)
     competencyExpertise: [] as string[], // Legacy field - kept for backward compatibility
-    maritimeExpertise: [] as string[], // New 12-category expertise system
+    maritimeExpertise: ["marine_engineer"] as string[], // Default to Marine Service Engineer
     classificationApprovals: {} as { [expertiseCategory: string]: string[] }, // Classification approvals per expertise
     homePort: "",
     zipCode: "",
@@ -218,10 +218,10 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
     }
 
     // Validate workshop-specific fields
-    if (formData.maritimeExpertise.length === 0 || !formData.homePort || !formData.zipCode) {
+    if (!formData.homePort || !formData.zipCode) {
       toast({
-        title: "Missing Workshop Information",
-        description: "Please select at least 1 maritime expertise area and enter your port location with ZIP/PIN code",
+        title: "Missing Workshop Information", 
+        description: "Please enter your port location with ZIP/PIN code",
         variant: "destructive",
       });
       return;
@@ -422,7 +422,7 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
             <div className="space-y-4">
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <Label htmlFor="maritimeExpertise">3. Maritime Workshop Expertise (Select up to 5) *</Label>
+                  <Label htmlFor="maritimeExpertise">3. Maritime Workshop Expertise (Select up to 5) - Optional</Label>
                   <div className="flex items-center space-x-2">
                     <CheckCircle2 className="h-4 w-4 text-orange-600" />
                     <span className="text-sm font-medium text-orange-700">
