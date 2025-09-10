@@ -19,6 +19,10 @@ import {
   Search,
   Eye,
   EyeOff,
+  Camera,
+  Upload,
+  CreditCard,
+  Loader2,
 } from "lucide-react";
 import qaaqLogoPath from "@assets/ICON_1754950288816.png";
 import qaaqLogo from "@assets/qaaq-logo.png";
@@ -203,6 +207,10 @@ export default function LoginPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [displayCount, setDisplayCount] = useState(20);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  
+  // Business card scanning states
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanningLoading, setScanningLoading] = useState(false);
 
   // Handle Google auth errors from URL params
   useEffect(() => {
@@ -278,6 +286,105 @@ export default function LoginPage() {
       fetchGlossaryEntries();
     }
   }, []);
+
+  // Business card scanning functionality
+  const handleBusinessCardScan = async (file: File) => {
+    setScanningLoading(true);
+    try {
+      // Convert file to base64
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64Data = e.target?.result as string;
+        
+        try {
+          const response = await fetch('/api/business-card/scan', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              imageData: base64Data,
+              fileName: file.name
+            })
+          });
+
+          const result = await response.json();
+          
+          if (result.success && result.data) {
+            // Navigate to workshop registration with pre-filled data
+            const data = result.data;
+            const queryParams = new URLSearchParams();
+            
+            // Add extracted data as query parameters
+            if (data.firstName) queryParams.set('firstName', data.firstName);
+            if (data.lastName) queryParams.set('lastName', data.lastName);
+            if (data.designation) queryParams.set('designation', data.designation);
+            if (data.company) queryParams.set('company', data.company);
+            if (data.email) queryParams.set('email', data.email);
+            if (data.phone) queryParams.set('whatsapp', data.phone);
+            if (data.website) queryParams.set('officialWebsite', data.website);
+
+            navigate(`/registerworkshop?${queryParams.toString()}`);
+
+            toast({
+              title: "✅ Business card scanned successfully!",
+              description: `Extracted ${Object.keys(result.data).filter(k => result.data[k]).length} fields. Redirecting to workshop registration...`,
+            });
+          } else {
+            throw new Error(result.error || 'Failed to process business card');
+          }
+        } catch (error) {
+          console.error('Business card scan error:', error);
+          toast({
+            title: "❌ Scan failed",
+            description: "Could not extract data from business card. You can still register manually.",
+            variant: "destructive",
+          });
+          // Navigate to registration page anyway
+          navigate('/registerworkshop');
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('File read error:', error);
+      toast({
+        title: "❌ Upload failed",
+        description: "Could not read the image file. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setScanningLoading(false);
+      setIsScanning(false);
+    }
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        toast({
+          title: "❌ Invalid file type",
+          description: "Please upload a JPEG, PNG, or WebP image file.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "❌ File too large",
+          description: "Please upload an image smaller than 5MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      handleBusinessCardScan(file);
+    }
+  };
 
   const GlossaryContent = ({ isMinimized }: { isMinimized: boolean }) => (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-yellow-50">
@@ -501,6 +608,76 @@ export default function LoginPage() {
                 MV Qaaq
               </h1>
               <p className="text-gray-600">This is our Gangway.</p>
+            </div>
+
+            {/* Business Card Quick Registration */}
+            <div className="mb-6">
+              <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">
+                <h3 className="text-sm font-semibold text-blue-800 mb-3 flex items-center">
+                  <CreditCard className="h-4 w-4 mr-2 text-blue-600" />
+                  Quick Workshop Registration
+                </h3>
+                <p className="text-xs text-blue-700 mb-4">
+                  📱 Scan your business card to instantly create a workshop account with AI
+                </p>
+                
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="flex-1">
+                    <input
+                      type="file"
+                      id="businessCardLogin"
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      disabled={scanningLoading}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => document.getElementById('businessCardLogin')?.click()}
+                      disabled={scanningLoading}
+                      className="w-full h-10 border-blue-300 text-blue-700 hover:bg-blue-100 text-sm"
+                      data-testid="button-upload-business-card-login"
+                    >
+                      {scanningLoading ? (
+                        <>
+                          <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-3 w-3 mr-2" />
+                          Scan Business Card
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsScanning(!isScanning)}
+                    disabled={scanningLoading}
+                    className="h-10 border-blue-300 text-blue-700 hover:bg-blue-100 text-sm"
+                    data-testid="button-camera-business-card-login"
+                  >
+                    <Camera className="h-3 w-3 mr-1" />
+                    Camera
+                  </Button>
+                </div>
+                
+                {isScanning && (
+                  <div className="mt-3 p-3 bg-blue-100 border border-blue-200 rounded-lg">
+                    <p className="text-xs text-blue-800 mb-2">
+                      📸 Take a clear photo or upload an image of your business card
+                    </p>
+                    <div className="text-xs text-blue-700 space-y-1">
+                      <div>✅ JPEG, PNG, WebP • 📏 Max 5MB</div>
+                      <div>🔒 Secure AI processing • 🚀 Instant registration</div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Primary Authentication Options */}
