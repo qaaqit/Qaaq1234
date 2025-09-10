@@ -23,6 +23,9 @@ import {
   Upload,
   CreditCard,
   Loader2,
+  Crop,
+  Check,
+  X,
 } from "lucide-react";
 import qaaqLogoPath from "@assets/ICON_1754950288816.png";
 import qaaqLogo from "@assets/qaaq-logo.png";
@@ -210,6 +213,11 @@ export default function LoginPage() {
   
   // Business card scanning states
   const [scanningLoading, setScanningLoading] = useState(false);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [cropArea, setCropArea] = useState({ x: 0, y: 0, width: 0, height: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   // Handle Google auth errors from URL params
   useEffect(() => {
@@ -380,8 +388,98 @@ export default function LoginPage() {
         return;
       }
 
-      handleBusinessCardScan(file);
+      // Check if this is from camera (capture input) or upload
+      const inputId = event.target.id;
+      if (inputId === 'businessCardCamera') {
+        // Show crop interface for camera captures
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setCapturedImage(e.target?.result as string);
+          setShowCropModal(true);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        // Direct processing for uploaded files
+        handleBusinessCardScan(file);
+      }
     }
+  };
+
+  // Crop functionality
+  const handleImageLoad = (event: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = event.target as HTMLImageElement;
+    const rect = img.getBoundingClientRect();
+    
+    // Initialize crop area to center 80% of the image
+    const width = rect.width * 0.8;
+    const height = rect.height * 0.6;
+    const x = (rect.width - width) / 2;
+    const y = (rect.height - height) / 2;
+    
+    setCropArea({ x, y, width, height });
+    setImageLoaded(true);
+  };
+
+  const handleCropConfirm = async () => {
+    if (!capturedImage) return;
+    
+    try {
+      setScanningLoading(true);
+      
+      // Create canvas to crop the image
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d')!;
+        
+        // Calculate actual image dimensions vs displayed dimensions
+        const displayImg = document.getElementById('cropImage') as HTMLImageElement;
+        const scaleX = img.naturalWidth / displayImg.offsetWidth;
+        const scaleY = img.naturalHeight / displayImg.offsetHeight;
+        
+        // Set canvas size to cropped area
+        canvas.width = cropArea.width * scaleX;
+        canvas.height = cropArea.height * scaleY;
+        
+        // Draw cropped portion
+        ctx.drawImage(
+          img,
+          cropArea.x * scaleX,
+          cropArea.y * scaleY,
+          cropArea.width * scaleX,
+          cropArea.height * scaleY,
+          0,
+          0,
+          canvas.width,
+          canvas.height
+        );
+        
+        // Convert to blob and process
+        canvas.toBlob(async (blob) => {
+          if (blob) {
+            const file = new File([blob], 'cropped-business-card.jpg', { type: 'image/jpeg' });
+            setShowCropModal(false);
+            setCapturedImage(null);
+            await handleBusinessCardScan(file);
+          }
+        }, 'image/jpeg', 0.9);
+      };
+      
+      img.src = capturedImage;
+    } catch (error) {
+      console.error('Crop error:', error);
+      toast({
+        title: "❌ Crop failed",
+        description: "Could not crop image. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCropCancel = () => {
+    setShowCropModal(false);
+    setCapturedImage(null);
+    setImageLoaded(false);
   };
 
   const GlossaryContent = ({ isMinimized }: { isMinimized: boolean }) => (
@@ -774,6 +872,107 @@ export default function LoginPage() {
           </div>
         </div>
       )}
+
+      {/* Crop Modal */}
+      <Dialog open={showCropModal} onOpenChange={setShowCropModal}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-gray-900 flex items-center">
+              <Crop className="h-5 w-5 mr-2 text-blue-600" />
+              Crop Your Business Card
+            </DialogTitle>
+            <p className="text-sm text-gray-600">
+              Drag to select the business card area for better OCR accuracy
+            </p>
+          </DialogHeader>
+          
+          {capturedImage && (
+            <div className="relative bg-gray-100 rounded-lg overflow-hidden">
+              <div className="relative inline-block max-w-full">
+                <img
+                  id="cropImage"
+                  src={capturedImage}
+                  alt="Captured business card"
+                  onLoad={handleImageLoad}
+                  className="max-w-full max-h-[400px] object-contain"
+                  draggable={false}
+                />
+                
+                {imageLoaded && (
+                  <div
+                    className="absolute border-2 border-blue-500 bg-blue-500/20 cursor-move"
+                    style={{
+                      left: cropArea.x,
+                      top: cropArea.y,
+                      width: cropArea.width,
+                      height: cropArea.height,
+                    }}
+                    onMouseDown={(e) => {
+                      setIsDragging(true);
+                      const startX = e.clientX - cropArea.x;
+                      const startY = e.clientY - cropArea.y;
+                      
+                      const handleMouseMove = (e: MouseEvent) => {
+                        const img = document.getElementById('cropImage') as HTMLImageElement;
+                        const rect = img.getBoundingClientRect();
+                        const newX = Math.max(0, Math.min(e.clientX - startX, rect.width - cropArea.width));
+                        const newY = Math.max(0, Math.min(e.clientY - startY, rect.height - cropArea.height));
+                        setCropArea(prev => ({ ...prev, x: newX, y: newY }));
+                      };
+                      
+                      const handleMouseUp = () => {
+                        setIsDragging(false);
+                        document.removeEventListener('mousemove', handleMouseMove);
+                        document.removeEventListener('mouseup', handleMouseUp);
+                      };
+                      
+                      document.addEventListener('mousemove', handleMouseMove);
+                      document.addEventListener('mouseup', handleMouseUp);
+                    }}
+                  >
+                    <div className="absolute inset-0 border-2 border-dashed border-white/50"></div>
+                    <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-2 py-1 rounded text-xs">
+                      Business Card Area
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+          
+          <div className="flex justify-end gap-3 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCropCancel}
+              disabled={scanningLoading}
+              data-testid="button-crop-cancel"
+            >
+              <X className="h-4 w-4 mr-2" />
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleCropConfirm}
+              disabled={scanningLoading || !imageLoaded}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              data-testid="button-crop-confirm"
+            >
+              {scanningLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <Check className="h-4 w-4 mr-2" />
+                  Scan Cropped Card
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
