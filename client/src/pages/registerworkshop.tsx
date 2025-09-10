@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { authApi, setStoredToken, setStoredUser, type User } from "@/lib/auth";
-import { Eye, EyeOff, Mail, Shield, Clock, User as UserIcon, Briefcase, Anchor, ArrowLeft, Phone, Wrench, MapPin, Globe, DollarSign, Loader2, CheckCircle2 } from "lucide-react";
+import { Eye, EyeOff, Mail, Shield, Clock, User as UserIcon, Briefcase, Anchor, ArrowLeft, Phone, Wrench, MapPin, Globe, DollarSign, Loader2, CheckCircle2, Camera, Upload, CreditCard } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import qaaqLogoPath from "@assets/ICON_1754950288816.png";
 import { MARITIME_EXPERTISE_CATEGORIES, CLASSIFICATION_SOCIETIES, type MaritimeExpertiseCategory, type ClassificationSociety } from "@shared/maritime-expertise";
@@ -25,6 +25,10 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
   const [otpSent, setOtpSent] = useState(false);
   const [otpCountdown, setOtpCountdown] = useState(0);
   const [showOtherCompany, setShowOtherCompany] = useState(false);
+  
+  // Business card scanning states
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanningLoading, setScanningLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -136,6 +140,101 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
       return () => clearTimeout(timer);
     }
   }, [otpCountdown]);
+
+  // Business card scanning functionality
+  const handleBusinessCardScan = async (file: File) => {
+    setScanningLoading(true);
+    try {
+      // Convert file to base64
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64Data = e.target?.result as string;
+        
+        try {
+          const response = await fetch('/api/business-card/scan', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              imageData: base64Data,
+              fileName: file.name
+            })
+          });
+
+          const result = await response.json();
+          
+          if (result.success && result.data) {
+            // Auto-populate form fields with extracted data
+            const data = result.data;
+            setFormData(prev => ({
+              ...prev,
+              firstName: data.firstName || prev.firstName,
+              lastName: data.lastName || prev.lastName,
+              designation: data.designation || prev.designation,
+              company: data.company || prev.company,
+              email: data.email || prev.email,
+              whatsapp: data.phone || prev.whatsapp,
+              officialWebsite: data.website || prev.officialWebsite,
+            }));
+
+            toast({
+              title: "✅ Business card scanned successfully!",
+              description: `Extracted ${Object.keys(result.data).filter(k => result.data[k]).length} fields from your business card.`,
+            });
+          } else {
+            throw new Error(result.error || 'Failed to process business card');
+          }
+        } catch (error) {
+          console.error('Business card scan error:', error);
+          toast({
+            title: "❌ Scan failed",
+            description: "Could not extract data from business card. Please fill the form manually.",
+            variant: "destructive",
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('File read error:', error);
+      toast({
+        title: "❌ Upload failed",
+        description: "Could not read the image file. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setScanningLoading(false);
+      setIsScanning(false);
+    }
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        toast({
+          title: "❌ Invalid file type",
+          description: "Please upload a JPEG, PNG, or WebP image file.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "❌ File too large",
+          description: "Please upload an image smaller than 5MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      handleBusinessCardScan(file);
+    }
+  };
 
   // Handle form data changes
   const handleInputChange = (field: string, value: string | string[]) => {
@@ -326,6 +425,78 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
         </div>
 
         <div className="space-y-4 sm:space-y-6">
+          {/* Business Card Scanning Section */}
+          <div className="border border-blue-200 rounded-lg p-4 sm:p-6 bg-blue-50">
+            <h3 className="text-lg font-semibold text-blue-800 mb-4 flex items-center">
+              <CreditCard className="h-5 w-5 mr-2 text-blue-600" />
+              Quick Setup: Scan Business Card
+            </h3>
+            <div className="space-y-4">
+              <p className="text-sm text-blue-700 mb-4">
+                📱 Save time! Upload your business card and we'll automatically fill in your details using AI.
+              </p>
+              
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex-1">
+                  <input
+                    type="file"
+                    id="businessCard"
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    disabled={scanningLoading}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => document.getElementById('businessCard')?.click()}
+                    disabled={scanningLoading}
+                    className="w-full border-blue-300 text-blue-700 hover:bg-blue-100"
+                    data-testid="button-upload-business-card"
+                  >
+                    {scanningLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Processing card...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4 mr-2" />
+                        Upload Business Card
+                      </>
+                    )}
+                  </Button>
+                </div>
+                
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsScanning(!isScanning)}
+                  disabled={scanningLoading}
+                  className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                  data-testid="button-scan-business-card"
+                >
+                  <Camera className="h-4 w-4 mr-2" />
+                  Use Camera
+                </Button>
+              </div>
+              
+              {isScanning && (
+                <div className="mt-4 p-4 bg-blue-100 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-800 mb-3">
+                    📸 Take a clear photo of your business card or upload an existing image.
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-blue-700">
+                    <div>✅ Supported: JPEG, PNG, WebP</div>
+                    <div>📏 Max size: 5MB</div>
+                    <div>🔍 Best quality: Well-lit, clear text</div>
+                    <div>🔒 Secure: Processed with AI, not stored</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Company Information Section - Moved to top */}
           <div className="border border-gray-200 rounded-lg p-4 sm:p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
