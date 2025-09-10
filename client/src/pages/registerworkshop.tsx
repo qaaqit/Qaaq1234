@@ -110,12 +110,10 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
 
   // Visa status options
   const visaStatusOptions = [
-    "Valid Multiple Entry Visa",
-    "Single Entry Visa",
-    "Transit Visa Only",
-    "Visa on Arrival Eligible", 
-    "No Visa Required (Local)",
-    "Visa Processing Required"
+    "US B1/B2visa",
+    "Schengen Multiple entry",
+    "China Visa",
+    "Will need to apply"
   ];
 
   // Maritime companies for dropdown
