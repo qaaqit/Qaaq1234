@@ -209,7 +209,6 @@ export default function LoginPage() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   
   // Business card scanning states
-  const [isScanning, setIsScanning] = useState(false);
   const [scanningLoading, setScanningLoading] = useState(false);
 
   // Handle Google auth errors from URL params
@@ -354,7 +353,6 @@ export default function LoginPage() {
       });
     } finally {
       setScanningLoading(false);
-      setIsScanning(false);
     }
   };
 
@@ -653,10 +651,19 @@ export default function LoginPage() {
                     </Button>
                   </div>
                   
+                  <input
+                    type="file"
+                    id="businessCardCamera"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    disabled={scanningLoading}
+                  />
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setIsScanning(!isScanning)}
+                    onClick={() => document.getElementById('businessCardCamera')?.click()}
                     disabled={scanningLoading}
                     className="h-10 border-blue-300 text-blue-700 hover:bg-blue-100 text-sm"
                     data-testid="button-camera-business-card-login"
@@ -665,18 +672,6 @@ export default function LoginPage() {
                     Camera
                   </Button>
                 </div>
-                
-                {isScanning && (
-                  <div className="mt-3 p-3 bg-blue-100 border border-blue-200 rounded-lg">
-                    <p className="text-xs text-blue-800 mb-2">
-                      📸 Take a clear photo or upload an image of your business card
-                    </p>
-                    <div className="text-xs text-blue-700 space-y-1">
-                      <div>✅ JPEG, PNG, WebP • 📏 Max 5MB</div>
-                      <div>🔒 Secure AI processing • 🚀 Instant registration</div>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
 
