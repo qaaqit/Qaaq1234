@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, integer, boolean, jsonb, real, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, integer, boolean, jsonb, real, uuid, serial } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -336,6 +336,7 @@ export const semmModels = pgTable("semm_models", {
 // Workshop Profiles Table - Stores workshop service provider information
 export const workshopProfiles = pgTable("workshop_profiles", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  workshopNumber: serial("workshop_number").unique(), // Unique incremental ID for workshops
   userId: varchar("user_id").references(() => users.id), // Optional link to existing user
   
   // Workshop Information
