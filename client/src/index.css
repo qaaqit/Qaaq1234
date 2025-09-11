@@ -44,6 +44,37 @@ html, body, #root {
   background-color: #f3f4f6;
 }
 
+/* Placeholder text styling - grey and italic */
+::placeholder {
+  color: #9ca3af !important; /* Tailwind gray-400 */
+  font-style: italic !important;
+  opacity: 1 !important; /* Ensure consistent opacity across browsers */
+}
+
+::-webkit-input-placeholder {
+  color: #9ca3af !important;
+  font-style: italic !important;
+  opacity: 1 !important;
+}
+
+::-moz-placeholder {
+  color: #9ca3af !important;
+  font-style: italic !important;
+  opacity: 1 !important;
+}
+
+:-ms-input-placeholder {
+  color: #9ca3af !important;
+  font-style: italic !important;
+  opacity: 1 !important;
+}
+
+:-moz-placeholder {
+  color: #9ca3af !important;
+  font-style: italic !important;
+  opacity: 1 !important;
+}
+
 :root {
   --background: hsl(0, 0%, 100%);
   --foreground: hsl(0, 0%, 10%);
