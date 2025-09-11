@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { X, FlashlightIcon, RotateCcw, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
+import { X, FlashlightIcon, RotateCcw, CheckCircle2, Loader2, AlertCircle, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface CameraScannerProps {
@@ -38,9 +38,9 @@ export default function CameraScanner({ onScanComplete, onClose, isOpen }: Camer
   // Stability tracking for auto-capture
   const stableFramesRef = useRef(0);
   const lastRectRef = useRef<DetectedRectangle | null>(null);
-  const STABILITY_THRESHOLD = 15; // frames needed for stable detection
-  const MIN_CONFIDENCE = 0.7;
-  const AUTO_CAPTURE_DELAY = 500;
+  const STABILITY_THRESHOLD = 8; // Reduced for faster capture
+  const MIN_CONFIDENCE = 0.3; // Lowered for better detection
+  const AUTO_CAPTURE_DELAY = 200; // Faster capture
 
   // Initialize camera when component opens
   useEffect(() => {
@@ -139,7 +139,18 @@ export default function CameraScanner({ onScanComplete, onClose, isOpen }: Camer
       const edges = findEdges(data, width, height);
       const rect = findLargestRectangle(edges, width, height);
       
+      // Debug logging every 30 frames to avoid spam
+      if (Math.random() < 0.03) {
+        console.log('🔍 Detection attempt:', { 
+          hasRect: !!rect, 
+          confidence: rect?.confidence, 
+          minConfidence: MIN_CONFIDENCE,
+          willReturn: rect && rect.confidence > MIN_CONFIDENCE
+        });
+      }
+      
       if (rect && rect.confidence > MIN_CONFIDENCE) {
+        console.log('✅ Business card detected!', rect);
         return rect;
       }
       
@@ -280,6 +291,15 @@ export default function CameraScanner({ onScanComplete, onClose, isOpen }: Camer
       return;
     }
     
+    // Debug logging for stability tracking
+    if (Math.random() < 0.05) {
+      console.log('📐 Stability check:', { 
+        stable: stableFramesRef.current, 
+        threshold: STABILITY_THRESHOLD,
+        confidence: rect.confidence 
+      });
+    }
+    
     const lastRect = lastRectRef.current;
     
     if (lastRect) {
@@ -305,6 +325,7 @@ export default function CameraScanner({ onScanComplete, onClose, isOpen }: Camer
       setGuidance("Perfect! Auto-capturing...");
       
       if (!isScanning) {
+        console.log('🎯 Triggering auto-capture in', AUTO_CAPTURE_DELAY, 'ms');
         setTimeout(() => {
           captureAndProcess();
         }, AUTO_CAPTURE_DELAY);
@@ -335,6 +356,7 @@ export default function CameraScanner({ onScanComplete, onClose, isOpen }: Camer
   const captureAndProcess = async () => {
     if (!videoRef.current || !canvasRef.current || isScanning) return;
     
+    console.log('📸 Starting capture and process...');
     setIsScanning(true);
     
     try {
@@ -426,6 +448,54 @@ export default function CameraScanner({ onScanComplete, onClose, isOpen }: Camer
     }
   };
 
+  const testOCR = async () => {
+    if (isScanning) return;
+    
+    console.log('🧪 Testing OCR with mock data...');
+    setIsScanning(true);
+    
+    try {
+      const response = await fetch('/api/business-card/test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          testData: {
+            fullName: 'Captain John Maritime',
+            company: 'QaaqConnect Workshop',
+            designation: 'Maritime Engineer',
+            email: 'john@workshop.example.com',
+            phone: '+1234567890'
+          }
+        })
+      });
+
+      const result = await response.json();
+      
+      if (result.success && result.data) {
+        console.log('✅ Test OCR successful:', result.data);
+        toast({
+          title: "✅ Test successful!",
+          description: "OCR working correctly. Using test data...",
+        });
+        
+        cleanup();
+        onScanComplete(result.data);
+      } else {
+        throw new Error(result.error || 'Test failed');
+      }
+    } catch (error) {
+      console.error('❌ Test OCR failed:', error);
+      toast({
+        title: "❌ Test failed",
+        description: "OCR test unsuccessful. Check logs.",
+        variant: "destructive",
+      });
+      setIsScanning(false);
+    }
+  };
+
   const cleanup = () => {
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
@@ -500,14 +570,25 @@ export default function CameraScanner({ onScanComplete, onClose, isOpen }: Camer
             <p className="text-white/80 text-sm">{guidance}</p>
           </div>
           
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={toggleTorch}
-            className="text-white hover:bg-white/20"
-          >
-            <FlashlightIcon className={`h-5 w-5 ${torchEnabled ? 'text-yellow-400' : ''}`} />
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={testOCR}
+              className="text-white hover:bg-white/20"
+              disabled={isScanning}
+            >
+              <Zap className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleTorch}
+              className="text-white hover:bg-white/20"
+            >
+              <FlashlightIcon className={`h-5 w-5 ${torchEnabled ? 'text-yellow-400' : ''}`} />
+            </Button>
+          </div>
         </div>
         
         {/* Bottom Controls */}
