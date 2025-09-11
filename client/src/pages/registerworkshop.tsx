@@ -351,10 +351,10 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
     }
 
     // Validate workshop-specific fields
-    if (!formData.homePort || !formData.zipCode) {
+    if (!formData.homePort) {
       toast({
         title: "Missing Workshop Information", 
-        description: "Please enter your port location with ZIP/PIN code",
+        description: "Please enter your port location",
         variant: "destructive",
       });
       return;
@@ -828,7 +828,7 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
                 </div>
                 
                 <div>
-                  <Label htmlFor="zipCode">6b. ZIP/PIN Code *</Label>
+                  <Label htmlFor="zipCode">6b. ZIP/PIN Code</Label>
                   <Input
                     id="zipCode"
                     type="text"
