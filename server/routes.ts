@@ -9944,9 +9944,8 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       const limit = parseInt(req.query.limit as string) || 20;
       const search = req.query.search as string;
       
-      // Import both shared DB and QAAQ Notion services to get all 1228 questions
+      // Import shared DB service to get authentic questions from QAAQ database (same as published site)
       const { getAllQuestionsFromSharedDB, searchQuestionsInSharedDB } = await import('./shared-qa-service');
-      const { getAllQAAQQuestions } = await import('./qa-service');
       
       console.log(`Fetching real questions from QAAQ database - page ${page}, limit ${limit}, search: ${search || 'none'}`);
       
