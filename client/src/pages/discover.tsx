@@ -54,14 +54,14 @@ export default function Discover() {
   });
 
   const handleSearch = () => {
+    const params = new URLSearchParams();
     if (selectedPort) {
-      const params = new URLSearchParams();
       params.append('port', selectedPort);
-      if (selectedSystem) {
-        params.append('system', selectedSystem);
-      }
-      setLocation(`/workshop?${params.toString()}`);
     }
+    if (selectedSystem) {
+      params.append('system', selectedSystem);
+    }
+    setLocation(`/workshop?${params.toString()}`);
   };
 
 
@@ -241,7 +241,6 @@ export default function Discover() {
           <div className="mt-4 flex justify-center">
             <Button 
               onClick={handleSearch}
-              disabled={!selectedPort}
               className="bg-orange-600 hover:bg-orange-700 text-white px-6 sm:px-8 py-2 w-full sm:w-auto"
             >
               Find Workshops
