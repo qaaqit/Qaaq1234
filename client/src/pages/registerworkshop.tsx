@@ -360,6 +360,26 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
       return;
     }
 
+    // Validate all required workshop-specific fields
+    if (!formData.visaStatus || !formData.companiesWorkedFor || !formData.perDayAttendanceRate || !formData.remoteTroubleshootingRate) {
+      toast({
+        title: "Registration Failed",
+        description: "Marine workshop users must provide all workshop-specific information: Maritime Expertise, Home Port, Visa Status, Companies Worked For, Daily Rate, and Remote Rate",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate maritime expertise
+    if (!formData.maritimeExpertise || formData.maritimeExpertise.length === 0) {
+      toast({
+        title: "Missing Maritime Expertise",
+        description: "Please select at least one maritime expertise category",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Validate password strength
     if (formData.password.length < 6) {
       toast({
@@ -860,6 +880,39 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
                     placeholder="https://www.yourworkshop.com"
                     data-testid="input-officialWebsite"
                   />
+                </div>
+              </div>
+
+              {/* Daily Rate and Remote Rate Fields */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="perDayAttendanceRate">10. Daily Attendance Rate (USD) *</Label>
+                  <div className="flex items-center space-x-2">
+                    <DollarSign className="h-4 w-4 text-orange-600" />
+                    <Input
+                      id="perDayAttendanceRate"
+                      type="number"
+                      value={formData.perDayAttendanceRate}
+                      onChange={(e) => handleInputChange("perDayAttendanceRate", e.target.value)}
+                      placeholder="e.g., 500"
+                      data-testid="input-perDayAttendanceRate"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="remoteTroubleshootingRate">11. Remote Troubleshooting Rate (USD) *</Label>
+                  <div className="flex items-center space-x-2">
+                    <DollarSign className="h-4 w-4 text-orange-600" />
+                    <Input
+                      id="remoteTroubleshootingRate"
+                      type="number"
+                      value={formData.remoteTroubleshootingRate}
+                      onChange={(e) => handleInputChange("remoteTroubleshootingRate", e.target.value)}
+                      placeholder="e.g., 100"
+                      data-testid="input-remoteTroubleshootingRate"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
