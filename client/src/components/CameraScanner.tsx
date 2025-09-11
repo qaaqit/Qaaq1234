@@ -54,44 +54,103 @@ export default function CameraScanner({ onScanComplete, onClose, isOpen }: Camer
   }, [isOpen]);
 
   const initializeCamera = async () => {
+    console.log('📷 Starting camera initialization...');
     setIsInitializing(true);
     
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
+      // Try with more compatible constraints first
+      let constraints = {
         video: {
           facingMode: 'environment',
-          width: { ideal: 1920, min: 1280 },
-          height: { ideal: 1080, min: 720 }
+          width: { ideal: 1280, max: 1920 },
+          height: { ideal: 720, max: 1080 }
         }
-      });
+      };
+
+      console.log('📷 Requesting camera access...');
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      console.log('✅ Camera access granted');
       
       streamRef.current = stream;
       
       if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.addEventListener('loadedmetadata', () => {
+        const video = videoRef.current;
+        video.srcObject = stream;
+        
+        // Use multiple events to ensure initialization
+        const onReady = () => {
+          console.log('✅ Video ready, starting detection...');
           setHasPermission(true);
           setIsInitializing(false);
-          startDetection();
-        });
+          setTimeout(() => startDetection(), 100); // Small delay to ensure video is ready
+        };
+
+        video.addEventListener('loadedmetadata', onReady);
+        video.addEventListener('canplay', onReady);
+        
+        // Fallback timeout
+        setTimeout(() => {
+          if (isInitializing) {
+            console.log('⚠️ Using fallback initialization');
+            onReady();
+          }
+        }, 2000);
+        
+        // Start playing video
+        video.play().catch(e => console.warn('Video play warning:', e));
       }
     } catch (error) {
-      console.error('Camera initialization failed:', error);
+      console.error('❌ Camera initialization failed:', error);
       setIsInitializing(false);
-      toast({
-        title: "❌ Camera Access Denied",
-        description: "Please allow camera access to scan business cards.",
-        variant: "destructive",
-      });
+      
+      // Try fallback with any available camera
+      try {
+        console.log('📷 Trying fallback camera...');
+        const fallbackStream = await navigator.mediaDevices.getUserMedia({
+          video: true
+        });
+        
+        streamRef.current = fallbackStream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = fallbackStream;
+          setHasPermission(true);
+          setIsInitializing(false);
+          setTimeout(() => startDetection(), 100);
+        }
+      } catch (fallbackError) {
+        console.error('❌ Fallback camera also failed:', fallbackError);
+        toast({
+          title: "❌ Camera Access Failed",
+          description: "Please enable camera access and try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
   const startDetection = () => {
-    if (!videoRef.current || !canvasRef.current || !overlayCanvasRef.current) return;
+    console.log('🔍 Starting detection system...');
+    
+    if (!videoRef.current || !canvasRef.current || !overlayCanvasRef.current) {
+      console.warn('⚠️ Missing refs for detection:', {
+        video: !!videoRef.current,
+        canvas: !!canvasRef.current,
+        overlay: !!overlayCanvasRef.current
+      });
+      return;
+    }
     
     const video = videoRef.current;
     const canvas = canvasRef.current;
     const overlayCanvas = overlayCanvasRef.current;
+    
+    // Check if video is actually ready
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
+      console.warn('⚠️ Video not ready yet, retrying in 500ms...');
+      setTimeout(() => startDetection(), 500);
+      return;
+    }
+    
     const ctx = canvas.getContext('2d')!;
     const overlayCtx = overlayCanvas.getContext('2d')!;
     
@@ -102,6 +161,12 @@ export default function CameraScanner({ onScanComplete, onClose, isOpen }: Camer
     canvas.height = canvas.width * aspectRatio;
     overlayCanvas.width = video.offsetWidth;
     overlayCanvas.height = video.offsetHeight;
+    
+    console.log('✅ Detection setup complete:', {
+      videoSize: `${video.videoWidth}x${video.videoHeight}`,
+      canvasSize: `${canvas.width}x${canvas.height}`,
+      overlaySize: `${overlayCanvas.width}x${overlayCanvas.height}`
+    });
     
     let frameCount = 0;
     const DETECTION_THROTTLE = 3; // Only process every 3rd frame for mobile performance
