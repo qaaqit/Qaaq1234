@@ -52,8 +52,7 @@ export default function WorkshopPage() {
       const response = await fetch(`/api/workshops?${queryParams.toString()}`);
       if (!response.ok) throw new Error('Failed to fetch workshops');
       return response.json();
-    },
-    enabled: selectedPort ? true : false
+    }
   });
 
   const handleBack = () => {
@@ -226,9 +225,9 @@ export default function WorkshopPage() {
                     Workshop Data Coming Soon
                   </h3>
                   <p className="text-gray-600 max-w-md mx-auto">
-                    {selectedPort && selectedSystem ? 
-                      `No workshops found for ${selectedPort} specializing in ${getSystemTitle(selectedSystem)}. Try adjusting your search criteria.` :
-                      'Please select both a port and system from the discover page to find relevant workshops.'
+                    {selectedPort || selectedSystem ? 
+                      `No workshops found${selectedPort ? ` in ${selectedPort}` : ''}${selectedSystem ? ` specializing in ${getSystemTitle(selectedSystem)}` : ''}. Try adjusting your search criteria.` :
+                      'No workshops found. Please check back later as more workshops join our platform.'
                     }
                   </p>
                   <Button
