@@ -134,6 +134,41 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
   ];
 
   // OTP countdown timer
+  // Auto-fill form with scanned business card data
+  useEffect(() => {
+    const scannedData = localStorage.getItem('scannedBusinessCardData');
+    if (scannedData) {
+      try {
+        const data = JSON.parse(scannedData);
+        
+        // Check if data is recent (within last 5 minutes)
+        if (Date.now() - data.scanTimestamp < 5 * 60 * 1000) {
+          setFormData(prev => ({
+            ...prev,
+            firstName: data.firstName || prev.firstName,
+            lastName: data.lastName || prev.lastName,
+            designation: data.designation || prev.designation,
+            company: data.company || prev.company,
+            email: data.email || prev.email,
+            whatsapp: data.whatsapp || prev.whatsapp,
+            officialWebsite: data.officialWebsite || prev.officialWebsite,
+          }));
+          
+          // Show success message
+          toast({
+            title: "✅ Business card data loaded!",
+            description: "Your details have been automatically filled from your scanned business card.",
+          });
+          
+          // Clear the data after use
+          localStorage.removeItem('scannedBusinessCardData');
+        }
+      } catch (error) {
+        console.error('Error loading scanned business card data:', error);
+      }
+    }
+  }, [toast]);
+
   useEffect(() => {
     if (otpCountdown > 0) {
       const timer = setTimeout(() => setOtpCountdown(otpCountdown - 1), 1000);

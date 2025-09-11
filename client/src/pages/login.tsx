@@ -30,6 +30,7 @@ import {
 import qaaqLogoPath from "@assets/ICON_1754950288816.png";
 import qaaqLogo from "@assets/qaaq-logo.png";
 import { User } from "@/lib/auth";
+import CameraScanner from "@/components/CameraScanner";
 
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -213,11 +214,7 @@ export default function LoginPage() {
   
   // Business card scanning states
   const [scanningLoading, setScanningLoading] = useState(false);
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const [showCropModal, setShowCropModal] = useState(false);
-  const [cropArea, setCropArea] = useState({ x: 0, y: 0, width: 0, height: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
+  const [showCameraScanner, setShowCameraScanner] = useState(false);
 
   // Handle Google auth errors from URL params
   useEffect(() => {
@@ -388,198 +385,38 @@ export default function LoginPage() {
         return;
       }
 
-      // Check if this is from camera (capture input) or upload
-      const inputId = event.target.id;
-      if (inputId === 'businessCardCamera') {
-        // Show crop interface for camera captures
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          setCapturedImage(e.target?.result as string);
-          setShowCropModal(true);
-        };
-        reader.readAsDataURL(file);
-      } else {
-        // Direct processing for uploaded files
-        handleBusinessCardScan(file);
-      }
+      // Process all uploaded files directly (camera uses CameraScanner component)
+      handleBusinessCardScan(file);
     }
   };
 
-  // Auto-detect rectangle in image (like CamScanner)
-  const detectRectangle = (img: HTMLImageElement): { x: number; y: number; width: number; height: number } => {
-    try {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d')!;
-      
-      // Set canvas size to match image
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      
-      // Draw image to canvas for analysis
-      ctx.drawImage(img, 0, 0);
-      
-      // Get image data for edge detection
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imageData.data;
-      
-      // Simple edge detection algorithm
-      const edges: number[][] = [];
-      for (let y = 1; y < canvas.height - 1; y++) {
-        edges[y] = [];
-        for (let x = 1; x < canvas.width - 1; x++) {
-          const idx = (y * canvas.width + x) * 4;
-          const current = data[idx] + data[idx + 1] + data[idx + 2]; // RGB sum
-          
-          // Check surrounding pixels for edge detection
-          const left = data[((y * canvas.width + x - 1) * 4)] + data[((y * canvas.width + x - 1) * 4) + 1] + data[((y * canvas.width + x - 1) * 4) + 2];
-          const right = data[((y * canvas.width + x + 1) * 4)] + data[((y * canvas.width + x + 1) * 4) + 1] + data[((y * canvas.width + x + 1) * 4) + 2];
-          const top = data[(((y - 1) * canvas.width + x) * 4)] + data[(((y - 1) * canvas.width + x) * 4) + 1] + data[(((y - 1) * canvas.width + x) * 4) + 2];
-          const bottom = data[(((y + 1) * canvas.width + x) * 4)] + data[(((y + 1) * canvas.width + x) * 4) + 1] + data[(((y + 1) * canvas.width + x) * 4) + 2];
-          
-          // Calculate edge strength
-          const edgeStrength = Math.abs(current - left) + Math.abs(current - right) + Math.abs(current - top) + Math.abs(current - bottom);
-          edges[y][x] = edgeStrength > 100 ? 1 : 0; // Threshold for edge detection
-        }
-      }
-      
-      // Find potential rectangular regions
-      let bestRect = { x: 0, y: 0, width: canvas.width, height: canvas.height, score: 0 };
-      
-      // Sample different rectangular regions and score them
-      for (let y = 0; y < canvas.height * 0.3; y += 10) {
-        for (let x = 0; x < canvas.width * 0.3; x += 10) {
-          for (let w = canvas.width * 0.4; w < canvas.width - x; w += 20) {
-            for (let h = canvas.height * 0.3; h < canvas.height - y; h += 20) {
-              if (w / h < 0.5 || w / h > 2.5) continue; // Skip non-card-like ratios
-              
-              // Score this rectangle based on edge density around perimeter
-              let edgeScore = 0;
-              let perimeter = 0;
-              
-              // Check top and bottom edges
-              for (let px = Math.floor(x); px < Math.floor(x + w) && px < canvas.width; px++) {
-                const topY = Math.floor(y);
-                const bottomY = Math.floor(y + h);
-                if (topY < edges.length && edges[topY] && edges[topY][px]) edgeScore++;
-                if (bottomY < edges.length && edges[bottomY] && edges[bottomY][px]) edgeScore++;
-                perimeter += 2;
-              }
-              
-              // Check left and right edges
-              for (let py = Math.floor(y); py < Math.floor(y + h) && py < canvas.height; py++) {
-                const leftX = Math.floor(x);
-                const rightX = Math.floor(x + w);
-                if (py < edges.length && edges[py] && edges[py][leftX]) edgeScore++;
-                if (py < edges.length && edges[py] && edges[py][rightX]) edgeScore++;
-                perimeter += 2;
-              }
-              
-              const score = perimeter > 0 ? (edgeScore / perimeter) * (w * h) : 0;
-              if (score > bestRect.score) {
-                bestRect = { x, y, width: w, height: h, score };
-              }
-            }
-          }
-        }
-      }
-      
-      // Convert back to display coordinates
-      const displayRect = img.getBoundingClientRect();
-      const scaleX = displayRect.width / canvas.width;
-      const scaleY = displayRect.height / canvas.height;
-      
-      return {
-        x: bestRect.x * scaleX,
-        y: bestRect.y * scaleY,
-        width: bestRect.width * scaleX,
-        height: bestRect.height * scaleY
-      };
-      
-    } catch (error) {
-      console.log('Rectangle detection failed, using center crop:', error);
-      // Fallback to center crop
-      const rect = img.getBoundingClientRect();
-      return {
-        x: rect.width * 0.1,
-        y: rect.height * 0.2,
-        width: rect.width * 0.8,
-        height: rect.height * 0.6
-      };
-    }
-  };
-
-  // Crop functionality with auto-detection
-  const handleImageLoad = (event: React.SyntheticEvent<HTMLImageElement>) => {
-    const img = event.target as HTMLImageElement;
+  // Handle successful business card scan - redirect to workshop registration
+  const handleScanComplete = (data: any) => {
+    setShowCameraScanner(false);
     
-    // Auto-detect rectangle in the image
-    const detectedRect = detectRectangle(img);
+    // Store scanned data in localStorage for workshop registration
+    const scannedData = {
+      firstName: data.firstName || "",
+      lastName: data.lastName || "",
+      designation: data.designation || "",
+      company: data.company || "",
+      email: data.email || "",
+      whatsapp: data.phone || "",
+      officialWebsite: data.website || "",
+      scanTimestamp: Date.now()
+    };
     
-    // Use detected rectangle or fallback to center crop
-    setCropArea(detectedRect);
-    setImageLoaded(true);
-  };
-
-  const handleCropConfirm = async () => {
-    if (!capturedImage) return;
+    localStorage.setItem('scannedBusinessCardData', JSON.stringify(scannedData));
     
-    try {
-      setScanningLoading(true);
-      
-      // Create canvas to crop the image
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d')!;
-        
-        // Calculate actual image dimensions vs displayed dimensions
-        const displayImg = document.getElementById('cropImage') as HTMLImageElement;
-        const scaleX = img.naturalWidth / displayImg.offsetWidth;
-        const scaleY = img.naturalHeight / displayImg.offsetHeight;
-        
-        // Set canvas size to cropped area
-        canvas.width = cropArea.width * scaleX;
-        canvas.height = cropArea.height * scaleY;
-        
-        // Draw cropped portion
-        ctx.drawImage(
-          img,
-          cropArea.x * scaleX,
-          cropArea.y * scaleY,
-          cropArea.width * scaleX,
-          cropArea.height * scaleY,
-          0,
-          0,
-          canvas.width,
-          canvas.height
-        );
-        
-        // Convert to blob and process
-        canvas.toBlob(async (blob) => {
-          if (blob) {
-            const file = new File([blob], 'cropped-business-card.jpg', { type: 'image/jpeg' });
-            setShowCropModal(false);
-            setCapturedImage(null);
-            await handleBusinessCardScan(file);
-          }
-        }, 'image/jpeg', 0.9);
-      };
-      
-      img.src = capturedImage;
-    } catch (error) {
-      console.error('Crop error:', error);
-      toast({
-        title: "❌ Crop failed",
-        description: "Could not crop image. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleCropCancel = () => {
-    setShowCropModal(false);
-    setCapturedImage(null);
-    setImageLoaded(false);
+    toast({
+      title: "✅ Business card scanned successfully!",
+      description: "Redirecting to workshop registration with your details...",
+    });
+    
+    // Redirect to workshop registration after brief delay
+    setTimeout(() => {
+      window.location.href = '/registerworkshop';
+    }, 1000);
   };
 
   const GlossaryContent = ({ isMinimized }: { isMinimized: boolean }) => (
@@ -861,7 +698,7 @@ export default function LoginPage() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => document.getElementById('businessCardCamera')?.click()}
+                    onClick={() => setShowCameraScanner(true)}
                     disabled={scanningLoading}
                     className="h-10 border-blue-300 text-blue-700 hover:bg-blue-100 text-sm"
                     data-testid="button-camera-business-card-login"
@@ -973,323 +810,12 @@ export default function LoginPage() {
         </div>
       )}
 
-      {/* Crop Modal */}
-      <Dialog open={showCropModal} onOpenChange={setShowCropModal}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-gray-900 flex items-center">
-              <Crop className="h-5 w-5 mr-2 text-blue-600" />
-              Crop Your Business Card
-            </DialogTitle>
-            <p className="text-sm text-gray-600">
-              Drag to select the business card area for better OCR accuracy
-            </p>
-          </DialogHeader>
-          
-          {capturedImage && (
-            <div className="relative bg-gray-100 rounded-lg overflow-hidden">
-              <div className="relative inline-block max-w-full">
-                <img
-                  id="cropImage"
-                  src={capturedImage}
-                  alt="Captured business card"
-                  onLoad={handleImageLoad}
-                  className="max-w-full max-h-[400px] object-contain"
-                  draggable={false}
-                />
-                
-                {imageLoaded && (
-                  <div
-                    className="absolute border-2 border-blue-500 bg-blue-500/20"
-                    style={{
-                      left: cropArea.x,
-                      top: cropArea.y,
-                      width: cropArea.width,
-                      height: cropArea.height,
-                    }}
-                  >
-                    {/* Center area - for moving */}
-                    <div
-                      className="absolute inset-2 cursor-move"
-                      onMouseDown={(e) => {
-                        setIsDragging(true);
-                        const startX = e.clientX - cropArea.x;
-                        const startY = e.clientY - cropArea.y;
-                        
-                        const handleMouseMove = (e: MouseEvent) => {
-                          const img = document.getElementById('cropImage') as HTMLImageElement;
-                          const rect = img.getBoundingClientRect();
-                          const newX = Math.max(0, Math.min(e.clientX - startX, rect.width - cropArea.width));
-                          const newY = Math.max(0, Math.min(e.clientY - startY, rect.height - cropArea.height));
-                          setCropArea(prev => ({ ...prev, x: newX, y: newY }));
-                        };
-                        
-                        const handleMouseUp = () => {
-                          setIsDragging(false);
-                          document.removeEventListener('mousemove', handleMouseMove);
-                          document.removeEventListener('mouseup', handleMouseUp);
-                        };
-                        
-                        document.addEventListener('mousemove', handleMouseMove);
-                        document.addEventListener('mouseup', handleMouseUp);
-                      }}
-                    >
-                      <div className="absolute inset-0 border-2 border-dashed border-white/50"></div>
-                    </div>
-
-                    {/* Label */}
-                    <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-2 py-1 rounded text-xs">
-                      Business Card Area
-                    </div>
-
-                    {/* Corner Handles */}
-                    {/* Top-left */}
-                    <div
-                      className="absolute -top-1 -left-1 w-4 h-4 bg-blue-600 border-2 border-white cursor-nw-resize hover:bg-blue-700"
-                      onMouseDown={(e) => {
-                        e.stopPropagation();
-                        const handleMouseMove = (e: MouseEvent) => {
-                          const img = document.getElementById('cropImage') as HTMLImageElement;
-                          const rect = img.getBoundingClientRect();
-                          const newX = Math.max(0, Math.min(e.clientX - rect.left, cropArea.x + cropArea.width - 50));
-                          const newY = Math.max(0, Math.min(e.clientY - rect.top, cropArea.y + cropArea.height - 30));
-                          const newWidth = cropArea.x + cropArea.width - newX;
-                          const newHeight = cropArea.y + cropArea.height - newY;
-                          if (newWidth > 50 && newHeight > 30) {
-                            setCropArea({ x: newX, y: newY, width: newWidth, height: newHeight });
-                          }
-                        };
-                        const handleMouseUp = () => {
-                          document.removeEventListener('mousemove', handleMouseMove);
-                          document.removeEventListener('mouseup', handleMouseUp);
-                        };
-                        document.addEventListener('mousemove', handleMouseMove);
-                        document.addEventListener('mouseup', handleMouseUp);
-                      }}
-                    />
-
-                    {/* Top-right */}
-                    <div
-                      className="absolute -top-1 -right-1 w-4 h-4 bg-blue-600 border-2 border-white cursor-ne-resize hover:bg-blue-700"
-                      onMouseDown={(e) => {
-                        e.stopPropagation();
-                        const handleMouseMove = (e: MouseEvent) => {
-                          const img = document.getElementById('cropImage') as HTMLImageElement;
-                          const rect = img.getBoundingClientRect();
-                          const newY = Math.max(0, Math.min(e.clientY - rect.top, cropArea.y + cropArea.height - 30));
-                          const newWidth = Math.max(50, Math.min(e.clientX - rect.left - cropArea.x, rect.width - cropArea.x));
-                          const newHeight = cropArea.y + cropArea.height - newY;
-                          if (newHeight > 30) {
-                            setCropArea(prev => ({ ...prev, y: newY, width: newWidth, height: newHeight }));
-                          }
-                        };
-                        const handleMouseUp = () => {
-                          document.removeEventListener('mousemove', handleMouseMove);
-                          document.removeEventListener('mouseup', handleMouseUp);
-                        };
-                        document.addEventListener('mousemove', handleMouseMove);
-                        document.addEventListener('mouseup', handleMouseUp);
-                      }}
-                    />
-
-                    {/* Bottom-left */}
-                    <div
-                      className="absolute -bottom-1 -left-1 w-4 h-4 bg-blue-600 border-2 border-white cursor-sw-resize hover:bg-blue-700"
-                      onMouseDown={(e) => {
-                        e.stopPropagation();
-                        const handleMouseMove = (e: MouseEvent) => {
-                          const img = document.getElementById('cropImage') as HTMLImageElement;
-                          const rect = img.getBoundingClientRect();
-                          const newX = Math.max(0, Math.min(e.clientX - rect.left, cropArea.x + cropArea.width - 50));
-                          const newWidth = cropArea.x + cropArea.width - newX;
-                          const newHeight = Math.max(30, Math.min(e.clientY - rect.top - cropArea.y, rect.height - cropArea.y));
-                          if (newWidth > 50) {
-                            setCropArea(prev => ({ ...prev, x: newX, width: newWidth, height: newHeight }));
-                          }
-                        };
-                        const handleMouseUp = () => {
-                          document.removeEventListener('mousemove', handleMouseMove);
-                          document.removeEventListener('mouseup', handleMouseUp);
-                        };
-                        document.addEventListener('mousemove', handleMouseMove);
-                        document.addEventListener('mouseup', handleMouseUp);
-                      }}
-                    />
-
-                    {/* Bottom-right */}
-                    <div
-                      className="absolute -bottom-1 -right-1 w-4 h-4 bg-blue-600 border-2 border-white cursor-se-resize hover:bg-blue-700"
-                      onMouseDown={(e) => {
-                        e.stopPropagation();
-                        const handleMouseMove = (e: MouseEvent) => {
-                          const img = document.getElementById('cropImage') as HTMLImageElement;
-                          const rect = img.getBoundingClientRect();
-                          const newWidth = Math.max(50, Math.min(e.clientX - rect.left - cropArea.x, rect.width - cropArea.x));
-                          const newHeight = Math.max(30, Math.min(e.clientY - rect.top - cropArea.y, rect.height - cropArea.y));
-                          setCropArea(prev => ({ ...prev, width: newWidth, height: newHeight }));
-                        };
-                        const handleMouseUp = () => {
-                          document.removeEventListener('mousemove', handleMouseMove);
-                          document.removeEventListener('mouseup', handleMouseUp);
-                        };
-                        document.addEventListener('mousemove', handleMouseMove);
-                        document.addEventListener('mouseup', handleMouseUp);
-                      }}
-                    />
-
-                    {/* Edge Handles */}
-                    {/* Top edge */}
-                    <div
-                      className="absolute h-3 bg-blue-600/70 cursor-n-resize hover:bg-blue-600 border border-white/50"
-                      style={{
-                        top: -6,
-                        left: 16,
-                        right: 16,
-                      }}
-                      onMouseDown={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        const handleMouseMove = (e: MouseEvent) => {
-                          const img = document.getElementById('cropImage') as HTMLImageElement;
-                          const rect = img.getBoundingClientRect();
-                          const relativeY = e.clientY - rect.top;
-                          const newY = Math.max(0, Math.min(relativeY, cropArea.y + cropArea.height - 30));
-                          const newHeight = cropArea.y + cropArea.height - newY;
-                          if (newHeight > 30) {
-                            setCropArea(prev => ({ ...prev, y: newY, height: newHeight }));
-                          }
-                        };
-                        const handleMouseUp = () => {
-                          document.removeEventListener('mousemove', handleMouseMove);
-                          document.removeEventListener('mouseup', handleMouseUp);
-                        };
-                        document.addEventListener('mousemove', handleMouseMove);
-                        document.addEventListener('mouseup', handleMouseUp);
-                      }}
-                    />
-
-                    {/* Bottom edge */}
-                    <div
-                      className="absolute h-3 bg-blue-600/70 cursor-s-resize hover:bg-blue-600 border border-white/50"
-                      style={{
-                        bottom: -6,
-                        left: 16,
-                        right: 16,
-                      }}
-                      onMouseDown={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        const handleMouseMove = (e: MouseEvent) => {
-                          const img = document.getElementById('cropImage') as HTMLImageElement;
-                          const rect = img.getBoundingClientRect();
-                          const relativeY = e.clientY - rect.top;
-                          const newHeight = Math.max(30, Math.min(relativeY - cropArea.y, rect.height - cropArea.y));
-                          setCropArea(prev => ({ ...prev, height: newHeight }));
-                        };
-                        const handleMouseUp = () => {
-                          document.removeEventListener('mousemove', handleMouseMove);
-                          document.removeEventListener('mouseup', handleMouseUp);
-                        };
-                        document.addEventListener('mousemove', handleMouseMove);
-                        document.addEventListener('mouseup', handleMouseUp);
-                      }}
-                    />
-
-                    {/* Left edge */}
-                    <div
-                      className="absolute w-3 bg-blue-600/70 cursor-w-resize hover:bg-blue-600 border border-white/50"
-                      style={{
-                        left: -6,
-                        top: 16,
-                        bottom: 16,
-                      }}
-                      onMouseDown={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        const handleMouseMove = (e: MouseEvent) => {
-                          const img = document.getElementById('cropImage') as HTMLImageElement;
-                          const rect = img.getBoundingClientRect();
-                          const relativeX = e.clientX - rect.left;
-                          const newX = Math.max(0, Math.min(relativeX, cropArea.x + cropArea.width - 50));
-                          const newWidth = cropArea.x + cropArea.width - newX;
-                          if (newWidth > 50) {
-                            setCropArea(prev => ({ ...prev, x: newX, width: newWidth }));
-                          }
-                        };
-                        const handleMouseUp = () => {
-                          document.removeEventListener('mousemove', handleMouseMove);
-                          document.removeEventListener('mouseup', handleMouseUp);
-                        };
-                        document.addEventListener('mousemove', handleMouseMove);
-                        document.addEventListener('mouseup', handleMouseUp);
-                      }}
-                    />
-
-                    {/* Right edge */}
-                    <div
-                      className="absolute w-3 bg-blue-600/70 cursor-e-resize hover:bg-blue-600 border border-white/50"
-                      style={{
-                        right: -6,
-                        top: 16,
-                        bottom: 16,
-                      }}
-                      onMouseDown={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        const handleMouseMove = (e: MouseEvent) => {
-                          const img = document.getElementById('cropImage') as HTMLImageElement;
-                          const rect = img.getBoundingClientRect();
-                          const relativeX = e.clientX - rect.left;
-                          const newWidth = Math.max(50, Math.min(relativeX - cropArea.x, rect.width - cropArea.x));
-                          setCropArea(prev => ({ ...prev, width: newWidth }));
-                        };
-                        const handleMouseUp = () => {
-                          document.removeEventListener('mousemove', handleMouseMove);
-                          document.removeEventListener('mouseup', handleMouseUp);
-                        };
-                        document.addEventListener('mousemove', handleMouseMove);
-                        document.addEventListener('mouseup', handleMouseUp);
-                      }}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-          
-          <div className="flex justify-end gap-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleCropCancel}
-              disabled={scanningLoading}
-              data-testid="button-crop-cancel"
-            >
-              <X className="h-4 w-4 mr-2" />
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={handleCropConfirm}
-              disabled={scanningLoading || !imageLoaded}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-              data-testid="button-crop-confirm"
-            >
-              {scanningLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <Check className="h-4 w-4 mr-2" />
-                  Scan Cropped Card
-                </>
-              )}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Real-time Camera Scanner */}
+      <CameraScanner
+        isOpen={showCameraScanner}
+        onClose={() => setShowCameraScanner(false)}
+        onScanComplete={handleScanComplete}
+      />
     </>
   );
 }
