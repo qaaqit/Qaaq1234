@@ -704,7 +704,7 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
             <div className="space-y-4">
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <Label htmlFor="maritimeExpertise">3. Maritime Workshop Expertise (Select up to 5) - Optional</Label>
+                  <Label htmlFor="maritimeExpertise">4. Maritime Workshop Expertise (Select up to 5) - Optional</Label>
                   <div className="flex items-center space-x-2">
                     <CheckCircle2 className="h-4 w-4 text-orange-600" />
                     <span className="text-sm font-medium text-orange-700">
