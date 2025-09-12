@@ -38,6 +38,7 @@ import { FeedbackService } from "./feedback-service";
 import { WatiBotService } from "./wati-bot-service";
 import { GlossaryAutoUpdateService } from "./glossary-auto-update";
 import { workshopCSVImportService } from "./workshop-csv-import";
+import { WorkshopDisplayIdBackfillService } from "./workshop-displayid-backfill";
 
 // Import new unified authentication system
 import { sessionBridge, bridgedAuth, requireBridgedAuth } from "./session-bridge";
@@ -7742,6 +7743,68 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
     } catch (error) {
       console.error('❌ Error adding new model:', error);
       res.status(500).json({ success: false, error: 'Failed to add new model' });
+    }
+  });
+
+  // ==== WORKSHOP DISPLAY ID BACKFILL ====
+  
+  // Development endpoint to backfill display IDs for existing workshops
+  app.post('/api/dev/workshop-displayid-backfill', authenticateToken, isAdminOrIntern, async (req, res) => {
+    try {
+      console.log('🏗️ Starting workshop display ID backfill process...');
+      
+      const backfillService = new WorkshopDisplayIdBackfillService();
+      const result = await backfillService.backfillDisplayIds();
+      
+      if (result.success) {
+        console.log(`✅ Backfill completed successfully! Processed ${result.processed} workshops`);
+        res.json({
+          success: true,
+          message: `Successfully processed ${result.processed} workshops`,
+          processed: result.processed,
+          errors: result.errors
+        });
+      } else {
+        console.log(`⚠️ Backfill completed with errors. Processed ${result.processed} workshops`);
+        res.status(206).json({
+          success: false,
+          message: `Processed ${result.processed} workshops with ${result.errors.length} errors`,
+          processed: result.processed,
+          errors: result.errors
+        });
+      }
+      
+    } catch (error) {
+      console.error('❌ Backfill process failed:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Backfill process failed',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Development endpoint to verify display ID assignments
+  app.get('/api/dev/workshop-displayid-verify', authenticateToken, isAdminOrIntern, async (req, res) => {
+    try {
+      const backfillService = new WorkshopDisplayIdBackfillService();
+      const verification = await backfillService.verifyDisplayIds();
+      
+      console.log(`📊 Display ID Verification: ${verification.assigned}/${verification.total} workshops have display IDs`);
+      
+      res.json({
+        success: true,
+        verification,
+        coverage: verification.total > 0 ? Math.round((verification.assigned / verification.total) * 100) : 0
+      });
+      
+    } catch (error) {
+      console.error('❌ Verification failed:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Verification failed',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
