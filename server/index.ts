@@ -206,6 +206,17 @@ app.get('/uploads/:filename', async (req, res) => {
   }
 });
 
+// Add dedicated HEAD handler for /api to stop polling spam
+app.head('/api', (req, res) => {
+  console.log('[DIAG] HEAD /api request from:', { 
+    userAgent: req.headers['user-agent'] || 'unknown', 
+    ip: req.headers['x-forwarded-for'] || req.ip || 'unknown',
+    referer: req.headers['referer'] || 'none'
+  });
+  res.setHeader('Cache-Control', 'no-store');
+  return res.sendStatus(204); // Empty response
+});
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -219,7 +230,8 @@ app.use((req, res, next) => {
 
   res.on("finish", () => {
     const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
+    // Skip logging HEAD requests to /api to prevent spam
+    if (path.startsWith("/api") && !(req.method === 'HEAD' && path === '/api')) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
