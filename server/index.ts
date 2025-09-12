@@ -206,15 +206,11 @@ app.get('/uploads/:filename', async (req, res) => {
   }
 });
 
-// Add dedicated HEAD handler for /api to stop polling spam
+// Redirect HEAD /api to proper health endpoint and discourage polling
 app.head('/api', (req, res) => {
-  console.log('[DIAG] HEAD /api request from:', { 
-    userAgent: req.headers['user-agent'] || 'unknown', 
-    ip: req.headers['x-forwarded-for'] || req.ip || 'unknown',
-    referer: req.headers['referer'] || 'none'
-  });
   res.setHeader('Cache-Control', 'no-store');
-  return res.sendStatus(204); // Empty response
+  res.setHeader('Location', '/api/health');
+  return res.sendStatus(307); // Temporary redirect to proper health endpoint
 });
 
 app.use((req, res, next) => {
@@ -230,8 +226,8 @@ app.use((req, res, next) => {
 
   res.on("finish", () => {
     const duration = Date.now() - start;
-    // Skip logging HEAD requests to /api to prevent spam
-    if (path.startsWith("/api") && !(req.method === 'HEAD' && path === '/api')) {
+    // Skip logging HEAD requests to /api and /api/health to prevent spam
+    if (path.startsWith("/api") && !(req.method === 'HEAD' && (path === '/api' || path === '/api/health'))) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
