@@ -353,9 +353,6 @@ export const workshopProfiles = pgTable("workshop_profiles", {
   whatsappNumber: text("whatsapp_number"), // Workshop WhatsApp contact
   homePort: text("home_port").notNull(), // Base port location
   
-  // Anonymous Display ID (e.g., wDubai1, wBhavnagar1)
-  displayId: text("display_id").unique(), // Anonymous workshop identifier per port
-  
   // Media and Web Presence
   businessCardPhoto: text("business_card_photo"), // Business card image path (deprecated)
   workshopFrontPhoto: text("workshop_front_photo"), // Workshop front image path
