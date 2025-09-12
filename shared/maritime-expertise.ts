@@ -73,10 +73,10 @@ export const MARITIME_EXPERTISE_CATEGORIES: MaritimeExpertiseCategory[] = [
     icon: "🤖"
   },
   {
-    id: "insulation_specialist",
-    name: "Insulation Specialist",
-    description: "Thermal/acoustic insulation",
-    icon: "🧱"
+    id: "assistant",
+    name: "Assistant",
+    description: "General maritime support and assistance",
+    icon: "🤝"
   },
   {
     id: "vibration_analyst",

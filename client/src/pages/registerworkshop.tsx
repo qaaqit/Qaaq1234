@@ -744,8 +744,8 @@ export default function RegisterWorkshop({ onSuccess }: RegisterWorkshopProps) {
                           )}
                         </div>
                         
-                        {/* Classification Society Approvals */}
-                        {isSelected && (
+                        {/* Classification Society Approvals - Don't show for Assistant category */}
+                        {isSelected && expertise.id !== "assistant" && (
                           <div className="ml-2 sm:ml-6 pl-2 sm:pl-4 border-l-2 border-orange-200 bg-orange-25 mt-2">
                             <p className="text-sm font-medium text-orange-700 mb-3">Classification Society Approvals (Optional):</p>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
