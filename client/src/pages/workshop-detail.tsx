@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 
 interface Workshop {
   id: string;
+  display_id: string; // Anonymous workshop identifier (e.g., wDubai1)
   full_name: string;
   email: string;
   services: string;
@@ -207,8 +208,11 @@ export default function WorkshopDetailPage() {
           <CardHeader className="bg-gradient-to-r from-orange-50 to-cream-50">
             <div className="flex justify-between items-start">
               <div>
-                <CardTitle className="text-3xl text-gray-900 mb-2">
-                  {isAdmin ? workshop.full_name : 'WORKSHOP FRONT & WORK'}
+                <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                  {workshop.display_id}
+                </h1>
+                <CardTitle className="text-xl text-gray-700 mb-2">
+                  {isAdmin ? workshop.full_name : 'Workshop Details'}
                 </CardTitle>
                 <div className="flex items-center space-x-4 text-gray-600">
                   <div className="flex items-center space-x-1">

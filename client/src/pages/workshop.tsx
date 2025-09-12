@@ -8,22 +8,23 @@ import { ArrowLeft, MapPin, Wrench, Phone, Mail, Globe, Star } from 'lucide-reac
 
 interface Workshop {
   id: string;
-  fullName: string;
+  display_id: string; // Anonymous workshop identifier (e.g., wDubai1)
+  full_name: string;
   email: string;
   services: string;
-  whatsappNumber?: string;
-  homePort: string;
-  businessCardPhoto?: string;
-  workshopFrontPhoto?: string;
-  officialWebsite?: string;
+  whatsapp_number?: string;
+  home_port: string;
+  business_card_photo?: string;
+  workshop_front_photo?: string;
+  official_website?: string;
   location?: string;
   description?: string;
-  isVerified: boolean;
-  isActive: boolean;
-  importSource?: string;
-  lastSyncAt?: string;
-  createdAt: string;
-  updatedAt: string;
+  is_verified: boolean;
+  is_active: boolean;
+  import_source?: string;
+  last_sync_at?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export default function WorkshopPage() {
@@ -154,10 +155,10 @@ export default function WorkshopPage() {
                     <div className="w-full flex gap-0">
                       {/* First Image */}
                       <div className="w-1/2 aspect-video bg-orange-100 flex items-center justify-center overflow-hidden">
-                        {workshop.businessCardPhoto ? (
+                        {workshop.business_card_photo ? (
                           <img 
-                            src={workshop.businessCardPhoto} 
-                            alt={`${workshop.fullName} business card`}
+                            src={workshop.business_card_photo} 
+                            alt={`${workshop.display_id} business card`}
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -170,10 +171,10 @@ export default function WorkshopPage() {
                       
                       {/* Second Image */}
                       <div className="w-1/2 aspect-video bg-orange-50 flex items-center justify-center overflow-hidden">
-                        {workshop.workshopFrontPhoto ? (
+                        {workshop.workshop_front_photo ? (
                           <img 
-                            src={workshop.workshopFrontPhoto} 
-                            alt={`${workshop.fullName} workshop front`}
+                            src={workshop.workshop_front_photo} 
+                            alt={`${workshop.display_id} workshop front`}
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -189,11 +190,15 @@ export default function WorkshopPage() {
                     <div className="p-4">
                       <div className="flex items-start justify-between">
                         <div className="min-w-0 flex-1">
+                          {/* Display ID - Orange and prominent */}
+                          <div className="text-xs font-medium text-orange-600 mb-1">
+                            {workshop.display_id}
+                          </div>
                           <h3 className="text-base font-semibold text-gray-900 truncate">
-                            {workshop.fullName}
+                            Maritime Workshop
                           </h3>
                           <p className="text-sm text-gray-600 mt-1">
-                            {workshop.homePort}
+                            {workshop.home_port}
                           </p>
                           <p className="text-xs text-gray-500 mt-1 line-clamp-2">
                             {workshop.services}
@@ -202,7 +207,7 @@ export default function WorkshopPage() {
                         
                         {/* Status Badge and Arrow */}
                         <div className="flex items-center space-x-2 ml-4">
-                          {workshop.isVerified && (
+                          {workshop.is_verified && (
                             <Badge className="bg-green-100 text-green-800 text-xs px-2 py-1">
                               <Star className="w-3 h-3 mr-1" />
                               Verified
