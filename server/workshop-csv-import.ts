@@ -1,6 +1,6 @@
 import { db } from "./db";
 import { workshopProfiles, insertWorkshopProfileSchema } from "@shared/schema";
-import { eq, and, ilike } from "drizzle-orm";
+import { eq, and, ilike, isNotNull, like } from "drizzle-orm";
 import { promises as fs } from 'fs';
 import path from 'path';
 import { randomUUID } from 'crypto';
@@ -116,8 +116,9 @@ export class WorkshopCSVImportService {
 
   /**
    * Map CSV row to workshop profile data - Google Forms format
+   * CRITICAL: Only generates display ID if generateDisplayId is true (for new workshops)
    */
-  private mapCSVToWorkshopProfile(row: CSVRow): any {
+  private async mapCSVToWorkshopProfile(row: CSVRow, generateDisplayId: boolean = true): Promise<any> {
     // Google Forms CSV field mapping
     const getField = (possibleNames: string[]): string => {
       for (const name of possibleNames) {
@@ -138,13 +139,11 @@ export class WorkshopCSVImportService {
     const companies = getField(['8. Companies worked for  (in last 1 year):', 'companies']);
     const website = getField(['Your workshop\'s official website', 'website']);
 
-    // Clean port name (remove pincode, country, extra info)
+    // Clean port name
     const cleanPort = this.cleanPortName(port);
     
-    // Generate display ID
-    const displayId = this.generateDisplayId(cleanPort);
-
-    return {
+    // Base workshop data without display ID
+    const baseData = {
       fullName: contactName || 'Workshop Provider',
       email: email,
       services: competency + (description ? `. ${description}` : ''),
@@ -155,7 +154,6 @@ export class WorkshopCSVImportService {
       officialWebsite: website,
       location: port, // Keep original for reference
       description: `${description}${companies ? ` | Companies worked for: ${companies}` : ''}${visaStatus ? ` | Visa status: ${visaStatus}` : ''}`,
-      displayId: displayId,
       anonymousMode: true,
       publicContactHidden: true,
       directContactDisabled: true,
@@ -164,24 +162,38 @@ export class WorkshopCSVImportService {
       isActive: true,
       isVerified: false
     };
+
+    // Only generate display ID for new workshops
+    if (generateDisplayId) {
+      const displayId = await this.generateDisplayId(cleanPort);
+      return {
+        ...baseData,
+        displayId: displayId
+      };
+    }
+
+    return baseData;
   }
 
   /**
-   * Clean port name for display ID generation
+   * Clean port name for display ID generation - UNIFIED with backfill service
+   * CRITICAL: DO NOT remove "port" or "city" words to maintain consistency
+   * with existing display IDs like wMumbaiPort1, wDubai1, etc.
    */
   private cleanPortName(port: string): string {
-    if (!port) return 'Unknown';
+    if (!port || port.trim() === '') {
+      return 'Unknown';
+    }
     
-    // Remove common suffixes and clean up
+    // Match backfill service logic exactly
     return port
-      .replace(/,.*$/g, '') // Remove everything after comma
-      .replace(/\d+/g, '') // Remove numbers/pincode
-      .replace(/\s*(port|Port|PORT)\s*/g, '') // Remove "port" word
-      .replace(/\s*(city|City|CITY)\s*/g, '') // Remove "city" word
+      .split(',')[0] // Take first part if comma-separated
+      .split('-')[0] // Take first part if dash-separated
       .replace(/\s+/g, '') // Remove spaces
       .replace(/[^a-zA-Z]/g, '') // Keep only letters
+      .substring(0, 20) // Limit length
       .toLowerCase()
-      .replace(/^(.)/, (match) => match.toUpperCase()); // Capitalize first letter
+      .replace(/^./, (str) => str.toUpperCase()) || 'Unknown'; // Capitalize first letter
   }
 
   /**
@@ -197,18 +209,56 @@ export class WorkshopCSVImportService {
       .trim();
   }
 
-  private portCounters: Map<string, number> = new Map();
+  /**
+   * Get next available sequence number for a port - UNIFIED with backfill service
+   */
+  private async getNextSequenceForPort(cleanedPort: string): Promise<number> {
+    const pattern = `w${cleanedPort}%`;
+    
+    const existingIds = await db
+      .select({ displayId: workshopProfiles.displayId })
+      .from(workshopProfiles)
+      .where(
+        and(
+          eq(workshopProfiles.isActive, true),
+          ilike(workshopProfiles.displayId, pattern)
+        )
+      );
+
+    // Extract numeric suffixes and find max
+    let maxSequence = 0;
+    for (const row of existingIds) {
+      if (row.displayId) {
+        const match = row.displayId.match(/^w[A-Za-z]+(\d+)$/);
+        if (match) {
+          const num = parseInt(match[1], 10);
+          if (num > maxSequence) {
+            maxSequence = num;
+          }
+        }
+      }
+    }
+    
+    return maxSequence + 1;
+  }
 
   /**
-   * Generate anonymous display ID per port
+   * Generate database-aware anonymous display ID per port
+   * Matches the algorithm from WorkshopDisplayIdBackfillService exactly
    */
-  private generateDisplayId(port: string): string {
-    const cleanedPort = port || 'Unknown';
-    const currentCount = this.portCounters.get(cleanedPort) || 0;
-    const newCount = currentCount + 1;
-    this.portCounters.set(cleanedPort, newCount);
-    
-    return `w${cleanedPort}${newCount}`;
+  private async generateDisplayId(cleanedPort: string): Promise<string> {
+    try {
+      const nextSequence = await this.getNextSequenceForPort(cleanedPort);
+      const displayId = `w${cleanedPort}${nextSequence}`;
+      
+      console.log(`🏷️ Generated display ID for ${cleanedPort}: ${displayId} (sequence: ${nextSequence})`);
+      return displayId;
+      
+    } catch (error) {
+      console.error(`❌ Error generating display ID for port ${cleanedPort}:`, error);
+      // Fallback to timestamp-based ID if database query fails
+      return `w${cleanedPort}${Date.now() % 10000}`;
+    }
   }
 
   /**
@@ -281,7 +331,19 @@ export class WorkshopCSVImportService {
         const rowNumber = i + 2; // +2 because we skip header and arrays are 0-indexed
 
         try {
-          const workshopData = this.mapCSVToWorkshopProfile(row);
+          // First, check if this is a new or existing workshop to decide on display ID generation
+          const tempEmail = row['2. Primary Email'] || row['primary_email'] || row['email'] || '';
+          const existingCheck = tempEmail ? await db
+            .select({ id: workshopProfiles.id, displayId: workshopProfiles.displayId })
+            .from(workshopProfiles)
+            .where(and(
+              eq(workshopProfiles.email, tempEmail),
+              eq(workshopProfiles.isActive, true)
+            ))
+            .limit(1) : [];
+          
+          const isNewWorkshop = existingCheck.length === 0;
+          const workshopData = await this.mapCSVToWorkshopProfile(row, isNewWorkshop);
           const validation = this.validateWorkshopProfile(workshopData);
 
           if (!validation.isValid) {
@@ -293,26 +355,61 @@ export class WorkshopCSVImportService {
           const existingWorkshop = await db
             .select()
             .from(workshopProfiles)
-            .where(eq(workshopProfiles.email, workshopData.email))
+            .where(and(
+              eq(workshopProfiles.email, workshopData.email),
+              eq(workshopProfiles.isActive, true)
+            ))
             .limit(1);
 
           if (existingWorkshop.length > 0) {
-            // Update existing workshop
+            // CRITICAL: Preserve existing display ID when updating, or generate new one if missing
+            const existingDisplayId = existingWorkshop[0].displayId;
+            const hasExistingDisplayId = existingDisplayId && existingDisplayId.trim() !== '';
+            
+            let finalDisplayId: string;
+            
+            if (hasExistingDisplayId) {
+              // Preserve existing display ID
+              finalDisplayId = existingDisplayId;
+              console.log(`🔄 Updating existing workshop: ${workshopData.email}, preserving display ID: ${existingDisplayId}`);
+            } else {
+              // Generate new display ID for existing workshop that lacks one
+              const cleanPort = this.cleanPortName(workshopData.location || '');
+              finalDisplayId = await this.generateDisplayId(cleanPort);
+              console.log(`🔄 Updating existing workshop: ${workshopData.email}, generating new display ID: ${finalDisplayId} (was null/empty)`);
+            }
+            
+            // Update existing workshop with proper display ID
+            const updateData = { 
+              ...workshopData, 
+              displayId: finalDisplayId, 
+              updatedAt: new Date() 
+            };
+            
             await db
               .update(workshopProfiles)
-              .set({
-                ...workshopData,
-                updatedAt: new Date()
-              })
+              .set(updateData)
               .where(eq(workshopProfiles.email, workshopData.email));
 
             result.updated++;
-            result.details?.push({ row: rowNumber, action: 'updated', email: workshopData.email });
+            result.details?.push({ 
+              row: rowNumber, 
+              action: 'updated', 
+              email: workshopData.email,
+              displayId: finalDisplayId,
+              displayIdStatus: hasExistingDisplayId ? 'preserved' : 'generated'
+            });
           } else {
-            // Insert new workshop
+            // Insert new workshop - displayId was already generated
+            console.log(`➕ Importing new workshop: ${workshopData.email}, display ID: ${workshopData.displayId}`);
             await db.insert(workshopProfiles).values(workshopData);
             result.imported++;
-            result.details?.push({ row: rowNumber, action: 'imported', email: workshopData.email });
+            result.details?.push({ 
+              row: rowNumber, 
+              action: 'imported', 
+              email: workshopData.email,
+              displayId: workshopData.displayId
+            });
           }
 
         } catch (error) {
@@ -376,7 +473,13 @@ export class WorkshopCSVImportService {
         .limit(limit)
         .offset(offset);
     } else {
-      workshops = await db.select().from(workshopProfiles).limit(limit).offset(offset);
+      // Default to active workshops only even when no specific filters are applied
+      workshops = await db
+        .select()
+        .from(workshopProfiles)
+        .where(eq(workshopProfiles.isActive, true))
+        .limit(limit)
+        .offset(offset);
     }
     
     return {
