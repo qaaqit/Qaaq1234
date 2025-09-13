@@ -94,6 +94,14 @@ export default function Header({ user }: HeaderProps) {
                 <span className="text-gray-700 font-medium">Repair Workshops Directory</span>
               </DropdownMenuItem>
               <DropdownMenuItem 
+                onClick={() => setLocation("/workshop-services")}
+                className="cursor-pointer flex items-center space-x-3 px-4 py-3 hover:bg-orange-50 transition-colors"
+                data-testid="menu-item-workshop-services"
+              >
+                <i className="fas fa-anchor text-orange-600 w-4"></i>
+                <span className="text-gray-700 font-medium">Workshop Services</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem 
                 onClick={() => setLocation("/readme")}
                 className="cursor-pointer flex items-center space-x-3 px-4 py-3 hover:bg-orange-50 transition-colors"
                 data-testid="menu-item-readme"

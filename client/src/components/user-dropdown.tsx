@@ -13,7 +13,10 @@ import {
   Database,
   Shield,
   LogOut,
-  ChevronDown
+  ChevronDown,
+  Wrench,
+  DollarSign,
+  Calendar
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
@@ -119,6 +122,38 @@ export default function UserDropdown({ user, className = "", onLogout }: UserDro
       label: "Storage Management",
       onClick: () => {
         // Navigate to storage management when implemented
+        setIsOpen(false);
+      }
+    },
+    {
+      icon: Wrench,
+      label: "My Workshop",
+      onClick: () => {
+        setLocation('/workshop-dashboard');
+        setIsOpen(false);
+      }
+    },
+    {
+      icon: Calendar,
+      label: "Workshop Bookings",
+      onClick: () => {
+        setLocation('/workshop-bookings');
+        setIsOpen(false);
+      }
+    },
+    {
+      icon: DollarSign,
+      label: "Workshop Pricing",
+      onClick: () => {
+        setLocation('/workshop-pricing');
+        setIsOpen(false);
+      }
+    },
+    {
+      icon: Settings,
+      label: "Workshop Tasks",
+      onClick: () => {
+        setLocation('/workshop-tasks');
         setIsOpen(false);
       }
     }

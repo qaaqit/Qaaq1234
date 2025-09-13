@@ -47,6 +47,10 @@ import PremiumSetupPage from "@/pages/premium-setup";
 import ReadMePage from "@/pages/readme";
 import WorkshopPage from "@/pages/workshop";
 import WorkshopDetailPage from "@/pages/workshop-detail";
+import WorkshopDashboard from "@/pages/workshop-owner-dashboard";
+import WorkshopBookings from "@/pages/workshop-bookings";
+import WorkshopPricing from "@/pages/workshop-pricing";
+import WorkshopTasks from "@/pages/workshop-tasks";
 
 import NotFound from "@/pages/not-found";
 import BottomNav from "@/components/bottom-nav";
@@ -154,6 +158,11 @@ function Router() {
           <Route path="/readme" component={() => <ReadMePage />} />
           <Route path="/workshop" component={() => <WorkshopPage />} />
           <Route path="/workshop/:id" component={() => <WorkshopDetailPage />} />
+          <Route path="/workshop-services" component={() => currentUser ? <WorkshopPage /> : <Login />} />
+          <Route path="/workshop-dashboard" component={() => currentUser ? <WorkshopDashboard /> : <Login />} />
+          <Route path="/workshop-bookings" component={() => currentUser ? <WorkshopBookings /> : <Login />} />
+          <Route path="/workshop-pricing" component={() => currentUser ? <WorkshopPricing /> : <Login />} />
+          <Route path="/workshop-tasks" component={() => currentUser ? <WorkshopTasks /> : <Login />} />
           <Route path="/home-old" component={() => <Login />} />
 
           <Route component={NotFound} />
