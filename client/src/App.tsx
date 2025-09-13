@@ -110,12 +110,12 @@ function Router() {
             return currentUser ? <QBOTPage user={currentUser} /> : <Login />;
           }} />
           <Route path="/login" component={() => <Login />} />
-          <Route path="/register" component={() => <Register />} />
+          <Route path="/register" component={() => <Register onSuccess={(user) => console.log('Registration successful:', user)} />} />
           <Route path="/registerworkshop" component={() => <RegisterWorkshop onSuccess={(user) => console.log('Workshop registration successful:', user)} />} />
-          <Route path="/verify" component={() => <Verify />} />
+          <Route path="/verify" component={() => <Verify onSuccess={(user) => console.log('Verification successful:', user)} />} />
           <Route path="/forgot-password" component={() => <ForgotPasswordPage />} />
           <Route path="/oauth-callback" component={() => <OAuthCallback />} />
-          <Route path="/discover" component={() => currentUser ? <Discover user={currentUser} /> : <Login />} />
+          <Route path="/discover" component={() => currentUser ? <Discover /> : <Login />} />
           <Route path="/qbot" component={() => {
             console.log('🤖 QBOT route - Current user:', currentUser ? currentUser.fullName : 'None');
             if (!currentUser && !isLoading) {

@@ -8808,13 +8808,13 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
           equipment_code,
           MIN(task_name) as sample_task_name,
           COUNT(DISTINCT task_code) as task_count,
-          array_agg(DISTINCT unnest_expertise) FILTER (WHERE unnest_expertise IS NOT NULL) as required_expertise
+          array_agg(DISTINCT expertise_item) FILTER (WHERE expertise_item IS NOT NULL) as required_expertise
         FROM (
           SELECT 
             equipment_code,
             task_code,
             task_name,
-            unnest(required_expertise::text[]) as unnest_expertise
+            jsonb_array_elements_text(required_expertise) as expertise_item
           FROM workshop_service_tasks
           WHERE system_code = $1 AND is_active = true
         ) t
@@ -8942,7 +8942,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       
       if (requiredExpertise.length > 0) {
         // Filter by workshops that have at least one of the required expertise
-        portsQuery += ` AND maritime_expertise::jsonb ?| $1`;
+        portsQuery += ` AND maritime_expertise && $1::text[]`;
       }
       
       portsQuery += ` GROUP BY home_port ORDER BY home_port ASC`;
@@ -9023,7 +9023,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         LEFT JOIN workshop_pricing wpr ON wp.id = wpr.workshop_id AND wpr.expertise_category = $1
         WHERE wp.home_port = $2
           AND wp.is_active = true
-          AND wp.maritime_expertise::jsonb ? $1
+          AND $1 = ANY(wp.maritime_expertise)
         ORDER BY wp.average_rating DESC NULLS LAST, wp.workshop_number ASC
       `, [expertiseId, port]);
       

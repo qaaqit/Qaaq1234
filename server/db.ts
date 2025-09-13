@@ -5,15 +5,14 @@ import * as schema from "@shared/schema";
 
 neonConfig.webSocketConstructor = ws;
 
-// Connect ONLY to parent QAAQ database - NO local database
-const databaseUrl = process.env.QAAQ_DATABASE_URL || process.env.QAAQ_PRODUCTION_DATABASE_URL;
+// Use the standard DATABASE_URL for the application database
+const databaseUrl = process.env.DATABASE_URL || process.env.QAAQ_DATABASE_URL || process.env.QAAQ_PRODUCTION_DATABASE_URL;
 
 if (!databaseUrl) {
-  throw new Error('QAAQ Parent Database URL not found. App must connect only to shared QAAQ database.');
+  throw new Error('Database URL not found. Please set DATABASE_URL environment variable.');
 }
 
-console.log('🔗 CONNECTING TO PARENT QAAQ DATABASE ONLY');
-console.log('🚫 LOCAL DATABASE DELETED - Using shared QAAQ database:', databaseUrl.replace(/:[^@]+@/, ':****@'));
+console.log('🔗 Connecting to database:', databaseUrl.replace(/:[^@]+@/, ':****@'));
 
 // Enhanced connection pool for subscription reliability
 export const pool = new Pool({ 
@@ -36,7 +35,7 @@ async function testConnection(retries = 3) {
       const client = await pool.connect();
       await client.query('SELECT 1 as connection_test');
       client.release();
-      console.log('✅ CONNECTED TO PARENT QAAQ DATABASE (LOCAL DATABASE DELETED)');
+      console.log('✅ Connected to database successfully');
       return true;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
