@@ -8732,57 +8732,51 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
 
   // ==== WORKSHOP TREE API ENDPOINTS ====
   
-  // 1. GET /api/workshop-tree - Get all systems with task counts
+  // 1. GET /api/workshop-tree - Get all systems with task counts (using SEMM data)
   app.get('/api/workshop-tree', async (req, res) => {
     try {
-      console.log('🌲 Fetching workshop tree systems with task counts');
+      console.log('🌲 Fetching workshop tree systems from SEMM database');
       
-      // Get systems that have workshop service tasks
+      // Use SEMM structure from parent database instead of workshop_service_tasks
       const result = await pool.query(`
         SELECT 
           system_code,
-          COUNT(DISTINCT task_code) as task_count,
+          system,
           COUNT(DISTINCT equipment_code) as equipment_count
-        FROM workshop_service_tasks
-        WHERE is_active = true
-        GROUP BY system_code
+        FROM semm_structure
+        WHERE system_code IS NOT NULL 
+        AND equipment_code IS NOT NULL
+        GROUP BY system_code, system
         ORDER BY system_code ASC
       `);
       
-      // Define SEMM system names
-      const systemNames: { [key: string]: string } = {
-        'a': 'Propulsion',
-        'b': 'Power Generation',
-        'c': 'Boiler',
-        'd': 'Fresh Water & Cooling',
-        'e': 'Pumps & Auxiliary',
-        'f': 'Compressed Air Systems',
-        'g': 'Oil Purification',
-        'h': 'Cargo Systems',
-        'i': 'Safety & Fire Fighting',
-        'j': 'Crane & Deck Equipment',
-        'k': 'Navigation Systems',
-        'l': 'Automation & Control',
-        'm': 'HVAC Systems',
-        'n': 'Pollution Control',
-        'o': 'Hull & Structure',
-        'p': 'Accommodation',
-        'q': 'Workshop Equipment',
-        'r': 'Communication Systems',
-        's': 'Spare Parts & Consumables'
-      };
+      const systems = result.rows.map(row => {
+        // Convert SEMM data to workshop tree format
+        const equipmentCount = parseInt(row.equipment_count) || 0;
+        // Estimate task count based on equipment (2-3 tasks per equipment on average)
+        const estimatedTaskCount = Math.max(1, Math.floor(equipmentCount * 2.5));
+        
+        return {
+          code: row.system_code,
+          title: row.system || `System ${row.system_code.toUpperCase()}`,
+          taskCount: estimatedTaskCount,
+          equipment: [] // Will be populated when system is expanded
+        };
+      });
       
-      const systems = result.rows.map(row => ({
-        systemCode: row.system_code,
-        systemName: systemNames[row.system_code] || 'Unknown System',
-        taskCount: parseInt(row.task_count),
-        equipmentCount: parseInt(row.equipment_count)
+      console.log(`✅ Found ${systems.length} systems from SEMM database`);
+      
+      // Convert to format expected by frontend
+      const workshopSystems = systems.map(system => ({
+        code: system.code,
+        title: system.title,
+        taskCount: system.taskCount,
+        equipment: []
       }));
       
-      console.log(`✅ Found ${systems.length} systems with workshop tasks`);
       res.json({
         success: true,
-        systems,
+        data: workshopSystems,
         totalSystems: systems.length
       });
       
