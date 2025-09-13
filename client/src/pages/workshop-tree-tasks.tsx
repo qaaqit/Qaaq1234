@@ -87,7 +87,7 @@ export default function WorkshopTreeTasksPage() {
                 className="text-orange-600 hover:underline"
                 data-testid="link-workshop-tree"
               >
-                Workshop Tree
+                20 Ports
               </button>
               <ChevronRight className="h-4 w-4 text-gray-400" />
               <button
@@ -95,10 +95,10 @@ export default function WorkshopTreeTasksPage() {
                 className="text-orange-600 hover:underline"
                 data-testid={`link-system-${systemCode}`}
               >
-                {systemTitle}
+                12 Expertise
               </button>
               <ChevronRight className="h-4 w-4 text-gray-400" />
-              <span className="text-gray-800 font-medium">{equipmentTitle}</span>
+              <span className="text-gray-800 font-medium">Workshop Ids</span>
             </div>
             <Button
               variant="ghost"

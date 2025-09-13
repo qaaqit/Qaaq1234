@@ -84,17 +84,11 @@ export default function WorkshopTreePage() {
                 </div>
               </div>
               <div className="flex items-center space-x-2 text-sm ml-12">
-                <span className="text-gray-800 font-medium">System</span>
+                <span className="text-gray-800 font-medium">20 Ports</span>
                 <ChevronRight className="h-4 w-4 text-gray-400" />
-                <span className="text-gray-500">Equipment</span>
+                <span className="text-gray-500">12 Expertise</span>
                 <ChevronRight className="h-4 w-4 text-gray-400" />
-                <span className="text-gray-500">Task</span>
-                <ChevronRight className="h-4 w-4 text-gray-400" />
-                <span className="text-gray-500">Expertise</span>
-                <ChevronRight className="h-4 w-4 text-gray-400" />
-                <span className="text-gray-500">Port</span>
-                <ChevronRight className="h-4 w-4 text-gray-400" />
-                <span className="text-gray-500">Workshop</span>
+                <span className="text-gray-500">Workshop Ids</span>
               </div>
             </div>
             <Badge variant="outline" className="bg-orange-50 border-orange-300">
