@@ -9066,6 +9066,90 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
     }
   });
   
+  // ==== SEMM TASK API ENDPOINTS ====
+  
+  // GET /api/semm-tasks/:systemCode/:equipmentCode?/:makeCode?/:modelCode? - Get tasks for specific SEMM item
+  app.get('/api/semm-tasks/:systemCode/:equipmentCode?/:makeCode?/:modelCode?', async (req, res) => {
+    try {
+      const { systemCode, equipmentCode, makeCode, modelCode } = req.params;
+      
+      console.log('🔧 Fetching SEMM tasks for:', { systemCode, equipmentCode, makeCode, modelCode });
+      
+      // Connect to parent database for workshop tasks
+      const { Client } = require('pg');
+      const parentClient = new Client({
+        connectionString: process.env.QAAQ_PARENT_DB_URL,
+        ssl: { rejectUnauthorized: false }
+      });
+      await parentClient.connect();
+
+      // Determine which level we're querying and build query
+      let whereClause = 'WHERE system_code = $1';
+      let queryParams: string[] = [systemCode];
+      let semmTitle = `System ${systemCode.toUpperCase()}`;
+      
+      if (equipmentCode) {
+        whereClause += ' AND equipment_code = $2';
+        queryParams.push(equipmentCode);
+        semmTitle = `Equipment ${equipmentCode.toUpperCase()}`;
+      }
+      
+      if (makeCode) {
+        whereClause += ' AND make_code = $3';
+        queryParams.push(makeCode);
+        semmTitle = `Make ${makeCode.toUpperCase()}`;
+      }
+      
+      if (modelCode) {
+        whereClause += ' AND model_code = $4';
+        queryParams.push(modelCode);
+        semmTitle = `Model ${modelCode.toUpperCase()}`;
+      }
+
+      // Fetch tasks from workshop_service_tasks table
+      const tasksQuery = `
+        SELECT DISTINCT 
+          id, 
+          task as task, 
+          system_code, 
+          equipment_code, 
+          make_code, 
+          model_code,
+          description
+        FROM workshop_service_tasks 
+        ${whereClause}
+        ORDER BY task
+      `;
+
+      const tasksResult = await parentClient.query(tasksQuery, queryParams);
+      await parentClient.end();
+
+      console.log('✅ Found', tasksResult.rows.length, 'tasks for SEMM item');
+
+      res.json({
+        success: true,
+        data: tasksResult.rows.map(row => ({
+          id: row.id.toString(),
+          task: row.task,
+          systemCode: row.system_code,
+          equipmentCode: row.equipment_code || '',
+          makeCode: row.make_code || '',
+          modelCode: row.model_code || '',
+          description: row.description
+        })),
+        semmTitle,
+        semmLevel: modelCode ? 'model' : makeCode ? 'make' : equipmentCode ? 'equipment' : 'system'
+      });
+
+    } catch (error) {
+      console.error('❌ Error fetching SEMM tasks:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch SEMM tasks'
+      });
+    }
+  });
+  
   // 6. GET /api/workshop-tree/workshop/:workshopId - Get workshop details
   app.get('/api/workshop-tree/workshop/:workshopId', async (req, res) => {
     try {

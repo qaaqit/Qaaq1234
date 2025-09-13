@@ -1,6 +1,6 @@
 import { useParams, useLocation } from 'wouter';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Share2, ChevronRight, Edit3 } from 'lucide-react';
+import { ArrowLeft, Share2, ChevronRight, Edit3, Wrench } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/queryClient';
@@ -253,13 +253,23 @@ export default function SemmModelPage() {
             <span className="text-gray-700 font-medium">{foundModel.title}</span>
           </div>
 
-          {/* Share Icon */}
-          <button
-            className="flex items-center space-x-2 px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors"
-            data-testid="button-share"
-          >
-            <Share2 className="w-4 h-4" />
-          </button>
+          {/* Share and Workshop Icons */}
+          <div className="flex flex-col space-y-2">
+            <button
+              className="flex items-center space-x-2 px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors"
+              data-testid="button-share"
+            >
+              <Share2 className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setLocation(`/semm-tasks/${parentSystem.code}/${parentEquipment.code}/${parentMake.code}/${foundModel.code}`)}
+              className="flex items-center space-x-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+              data-testid="button-workshop-tasks"
+              title="Workshop Tasks"
+            >
+              <Wrench className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Code Card - Top Left */}

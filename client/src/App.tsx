@@ -57,6 +57,7 @@ import WorkshopTreeTasksPage from "@/pages/workshop-tree-tasks";
 import WorkshopTreePortsPage from "@/pages/workshop-tree-ports";
 import WorkshopTreeWorkshopsPage from "@/pages/workshop-tree-workshops";
 import WorkshopTreeDetailPage from "@/pages/workshop-tree-detail";
+import SemmTasksPage from "@/pages/semm-tasks";
 
 import NotFound from "@/pages/not-found";
 import BottomNav from "@/components/bottom-nav";
@@ -157,6 +158,10 @@ function Router() {
             if (code.length === 4) return <SemmModelPage />;
             return <SemmEquipmentPage />;
           }} />
+          
+          {/* SEMM Tasks Routes */}
+          <Route path="/semm-tasks/:systemCode/:equipmentCode?/:makeCode?/:modelCode?" component={() => <SemmTasksPage />} />
+          
           <Route path="/privacy-policy" component={() => <PrivacyPolicyPage />} />
           <Route path="/premium" component={() => currentUser ? <PremiumPage /> : <Login />} />
           <Route path="/premium-status" component={() => currentUser ? <PremiumStatusPage /> : <Login />} />
