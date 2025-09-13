@@ -8732,51 +8732,57 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
 
   // ==== WORKSHOP TREE API ENDPOINTS ====
   
-  // 1. GET /api/workshop-tree - Get all systems with task counts (using SEMM data)
+  // 1. GET /api/workshop-tree - Get all systems with task counts (using workshop_service_tasks)
   app.get('/api/workshop-tree', async (req, res) => {
     try {
-      console.log('🌲 Fetching workshop tree systems from SEMM database');
+      console.log('🌲 Fetching workshop tree systems from workshop_service_tasks table');
       
-      // Use SEMM structure from parent database instead of workshop_service_tasks
+      // Get systems that have workshop service tasks
       const result = await pool.query(`
         SELECT 
           system_code,
-          system,
+          COUNT(DISTINCT task_code) as task_count,
           COUNT(DISTINCT equipment_code) as equipment_count
-        FROM semm_structure
-        WHERE system_code IS NOT NULL 
-        AND equipment_code IS NOT NULL
-        GROUP BY system_code, system
+        FROM workshop_service_tasks
+        WHERE is_active = true
+        GROUP BY system_code
         ORDER BY system_code ASC
       `);
       
-      const systems = result.rows.map(row => {
-        // Convert SEMM data to workshop tree format
-        const equipmentCount = parseInt(row.equipment_count) || 0;
-        // Estimate task count based on equipment (2-3 tasks per equipment on average)
-        const estimatedTaskCount = Math.max(1, Math.floor(equipmentCount * 2.5));
-        
-        return {
-          code: row.system_code,
-          title: row.system || `System ${row.system_code.toUpperCase()}`,
-          taskCount: estimatedTaskCount,
-          equipment: [] // Will be populated when system is expanded
-        };
-      });
+      // Define SEMM system names
+      const systemNames: { [key: string]: string } = {
+        'a': 'a. Main Engine Propulsion',
+        'b': 'b. Power Generation',
+        'c': 'c. Boiler',
+        'd': 'd. Fresh Water & Cooling',
+        'e': 'e. Pumps & Auxiliary',
+        'f': 'f. Compressed Air Systems',
+        'g': 'g. Oil Purification',
+        'h': 'h. Cargo Systems',
+        'i': 'i. Safety & Fire Fighting',
+        'j': 'j. Crane & Deck Equipment',
+        'k': 'k. Navigation Systems',
+        'l': 'l. Automation & Control',
+        'm': 'm. HVAC Systems',
+        'n': 'n. Pollution Control',
+        'o': 'o. Hull & Structure',
+        'p': 'p. Accommodation',
+        'q': 'q. Workshop Equipment',
+        'r': 'r. Communication Systems',
+        's': 's. Spare Parts & Consumables'
+      };
       
-      console.log(`✅ Found ${systems.length} systems from SEMM database`);
-      
-      // Convert to format expected by frontend
-      const workshopSystems = systems.map(system => ({
-        code: system.code,
-        title: system.title,
-        taskCount: system.taskCount,
-        equipment: []
+      const systems = result.rows.map(row => ({
+        code: row.system_code,
+        title: systemNames[row.system_code] || `System ${row.system_code.toUpperCase()}`,
+        taskCount: parseInt(row.task_count),
+        equipment: [] // Will be populated when system is expanded
       }));
       
+      console.log(`✅ Found ${systems.length} systems with workshop tasks`);
       res.json({
         success: true,
-        data: workshopSystems,
+        data: systems,
         totalSystems: systems.length
       });
       
