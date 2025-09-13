@@ -5,8 +5,8 @@ import * as schema from "@shared/schema";
 
 neonConfig.webSocketConstructor = ws;
 
-// Use the standard DATABASE_URL for the application database
-const databaseUrl = process.env.DATABASE_URL || process.env.QAAQ_DATABASE_URL || process.env.QAAQ_PRODUCTION_DATABASE_URL;
+// Use the parent QAAQ database URL for access to questions, SEMM, and other shared data
+const databaseUrl = process.env.QAAQ_PARENT_DB_URL || process.env.DATABASE_URL || process.env.QAAQ_DATABASE_URL || process.env.QAAQ_PRODUCTION_DATABASE_URL;
 
 if (!databaseUrl) {
   throw new Error('Database URL not found. Please set DATABASE_URL environment variable.');
