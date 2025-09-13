@@ -586,25 +586,30 @@ export class AIService {
     // Get configurable token limits
     const tokenLimits = await this.getTokenLimits();
     
-    // For free users, limit to configured word count with upgrade prompt
+    // For free users, provide full professional answer within reasonable token limits
     const words = content.split(' ');
     const wordCount = words.length;
     
-    // Use average of min and max for target word count
-    const targetWordCount = Math.round((tokenLimits.min + tokenLimits.max) / 2);
+    // Use maximum allowed word count for free users to provide comprehensive answers
+    const maxWordCount = tokenLimits.max;
     
-    console.log(`🆓 Free user - limiting response from ${wordCount} words to ~${targetWordCount} words (${tokenLimits.min}-${tokenLimits.max} range)`);
+    console.log(`🆓 Free user - response length: ${wordCount} words (limit: ${maxWordCount} words)`);
     
-    // Take configured number of words and add upgrade prompt
-    const limitedWords = words.slice(0, targetWordCount);
-    const limitedContent = limitedWords.join(' ');
+    // If content is within limits, return full response
+    if (wordCount <= maxWordCount) {
+      return content;
+    }
     
-    // Ensure it ends with ... and add upgrade prompt
-    const truncatedContent = limitedContent.endsWith('.') 
-      ? limitedContent.slice(0, -1) + '...'
-      : limitedContent + '...';
+    // If content exceeds limits, truncate but ensure it ends properly
+    const limitedWords = words.slice(0, maxWordCount);
+    let limitedContent = limitedWords.join(' ');
     
-    return `${truncatedContent} (For detailed unlimited answers & whatsapp chat support, please upgrade to premium)`;
+    // Ensure professional ending without upgrade prompts
+    if (!limitedContent.endsWith('.') && !limitedContent.endsWith('!') && !limitedContent.endsWith('?')) {
+      limitedContent += '.';
+    }
+    
+    return limitedContent;
   }
 
   // Get available models
