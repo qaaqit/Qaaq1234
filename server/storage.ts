@@ -1,4 +1,4 @@
-import { users, userIdentities, posts, likes, verificationCodes, chatConnections, chatMessages, whatsappMessages, userAnswers, answerLikes, type User, type InsertUser, type UserIdentity, type InsertUserIdentity, type Post, type InsertPost, type VerificationCode, type Like, type ChatConnection, type ChatMessage, type InsertChatConnection, type InsertChatMessage, type WhatsappMessage, type InsertWhatsappMessage, type UserAnswer, type InsertUserAnswer, type AnswerLike, type InsertAnswerLike } from "@shared/schema";
+import { users, userIdentities, posts, likes, verificationCodes, chatConnections, chatMessages, whatsappMessages, userAnswers, answerLikes, workshopServiceTasks, workshopPricing, workshopBookings, type User, type InsertUser, type UserIdentity, type InsertUserIdentity, type Post, type InsertPost, type VerificationCode, type Like, type ChatConnection, type ChatMessage, type InsertChatConnection, type InsertChatMessage, type WhatsappMessage, type InsertWhatsappMessage, type UserAnswer, type InsertUserAnswer, type AnswerLike, type InsertAnswerLike, type WorkshopServiceTask, type InsertWorkshopServiceTask, type WorkshopPricing, type InsertWorkshopPricing, type WorkshopBooking, type InsertWorkshopBooking } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, desc, and, ilike, or, sql, isNotNull, not } from "drizzle-orm";
 
@@ -63,6 +63,37 @@ export interface IStorage {
   createVerificationCode(userId: string, code: string, expiresAt: Date): Promise<VerificationCode>;
   getVerificationCode(userId: string, code: string): Promise<VerificationCode | undefined>;
   markCodeAsUsed(codeId: string): Promise<void>;
+  
+  // Workshop Service Tasks Management
+  createServiceTask(task: InsertWorkshopServiceTask): Promise<WorkshopServiceTask>;
+  getServiceTask(taskId: string): Promise<WorkshopServiceTask | undefined>;
+  getServiceTaskByCode(taskCode: string): Promise<WorkshopServiceTask | undefined>;
+  getServiceTasksBySystem(systemCode: string): Promise<WorkshopServiceTask[]>;
+  getServiceTasksByEquipment(equipmentCode: string): Promise<WorkshopServiceTask[]>;
+  getAllServiceTasks(filters?: { isActive?: boolean; systemCode?: string; equipmentCode?: string }): Promise<WorkshopServiceTask[]>;
+  updateServiceTask(taskId: string, updates: Partial<WorkshopServiceTask>): Promise<WorkshopServiceTask | undefined>;
+  deleteServiceTask(taskId: string): Promise<void>;
+  
+  // Workshop Pricing Management
+  createWorkshopPricing(pricing: InsertWorkshopPricing): Promise<WorkshopPricing>;
+  getWorkshopPricing(pricingId: string): Promise<WorkshopPricing | undefined>;
+  getWorkshopPricingByWorkshop(workshopId: string): Promise<WorkshopPricing[]>;
+  getWorkshopPricingByExpertise(workshopId: string, expertiseCategory: string): Promise<WorkshopPricing | undefined>;
+  updateWorkshopPricing(pricingId: string, updates: Partial<WorkshopPricing>): Promise<WorkshopPricing | undefined>;
+  deleteWorkshopPricing(pricingId: string): Promise<void>;
+  upsertWorkshopPricing(workshopId: string, expertiseCategory: string, pricing: Partial<InsertWorkshopPricing>): Promise<WorkshopPricing>;
+  
+  // Workshop Booking Management
+  createWorkshopBooking(booking: InsertWorkshopBooking): Promise<WorkshopBooking>;
+  getWorkshopBooking(bookingId: string): Promise<WorkshopBooking | undefined>;
+  getWorkshopBookingByNumber(bookingNumber: string): Promise<WorkshopBooking | undefined>;
+  getBookingsByShipManager(shipManagerId: string, filters?: { status?: string }): Promise<WorkshopBooking[]>;
+  getBookingsByWorkshop(workshopId: string, filters?: { status?: string }): Promise<WorkshopBooking[]>;
+  getAllWorkshopBookings(filters?: { status?: string; port?: string; priority?: string }): Promise<WorkshopBooking[]>;
+  updateWorkshopBooking(bookingId: string, updates: Partial<WorkshopBooking>): Promise<WorkshopBooking | undefined>;
+  generateBookingNumber(): Promise<string>;
+  cancelWorkshopBooking(bookingId: string, userId: string): Promise<WorkshopBooking | undefined>;
+  completeWorkshopBooking(bookingId: string, actualHours: number, finalAmount?: number): Promise<WorkshopBooking | undefined>;
 
 }
 
@@ -156,12 +187,19 @@ export class DatabaseStorage implements IStorage {
       // Create user
       const [user] = await db.insert(users).values(userToCreate).returning();
       
-      // Create identity
-      await db.insert(userIdentities).values({
-        userId: user.id,
-        isPrimary: true,
-        ...identity
-      });
+      // Create identity using direct SQL to avoid schema mismatch issues
+      await pool.query(`
+        INSERT INTO user_identities (
+          user_id, provider, provider_id, is_primary, is_verified, metadata
+        ) VALUES ($1, $2, $3, $4, $5, $6)
+      `, [
+        user.id,
+        identity.provider,
+        identity.providerId,
+        true,
+        identity.isVerified || false,
+        JSON.stringify(identity.metadata || {})
+      ]);
       
       console.log(`✅ Created user: ${user.fullName} (${user.id})`);
       return this.convertDbUserToAppUser(user);
@@ -239,7 +277,7 @@ export class DatabaseStorage implements IStorage {
         metadata: {
           phone: phoneNumber,
           displayName: displayName
-        }
+        } as Record<string, any>
       }
     );
   }
@@ -688,9 +726,17 @@ export class DatabaseStorage implements IStorage {
       fullName: fullName,
       email: dbUser.email || '',
       password: dbUser.password || '',
+      hasSetCustomPassword: dbUser.has_set_custom_password || false,
+      needsPasswordChange: dbUser.needs_password_change || true,
+      passwordCreatedAt: dbUser.password_created_at || null,
+      passwordRenewalDue: dbUser.password_renewal_due || null,
+      mustCreatePassword: dbUser.must_create_password || true,
       userType: dbUser.onboard_status === 'ONBOARD' || dbUser.current_ship_name || dbUser.ship_name ? 'Onboard' : 'On land',
       isAdmin: dbUser.is_admin || dbUser.is_platform_admin || false,
+      isIntern: dbUser.is_intern || false,
       nickname: dbUser.nickname || '',
+      primaryAuthProvider: dbUser.primary_auth_provider || 'qaaq',
+      authProviders: Array.isArray(dbUser.auth_providers) ? dbUser.auth_providers : (dbUser.auth_providers ? JSON.parse(dbUser.auth_providers) : ['qaaq']),
       rank: dbUser.rank || dbUser.maritime_rank || '',
       maritimeRank: dbUser.maritime_rank,
       shipName: dbUser.ship_name || dbUser.current_ship_name || '',
@@ -722,6 +768,7 @@ export class DatabaseStorage implements IStorage {
       hasCompletedOnboarding: dbUser.has_completed_onboarding || false,
       isPlatformAdmin: dbUser.is_platform_admin || false,
       isBlocked: dbUser.is_blocked || false,
+      isWorkshopProvider: dbUser.is_workshop_provider || false,
       latitude: parseFloat(dbUser.latitude) || null,
       longitude: parseFloat(dbUser.longitude) || null,
       currentLatitude: parseFloat(dbUser.current_latitude) || null,
@@ -738,11 +785,6 @@ export class DatabaseStorage implements IStorage {
       lastLogin: dbUser.last_login,
       lastUpdated: dbUser.last_updated,
       createdAt: dbUser.created_at,
-      hasSetCustomPassword: dbUser.has_set_custom_password || false,
-      needsPasswordChange: dbUser.needs_password_change || false,
-      passwordCreatedAt: dbUser.password_created_at,
-      passwordRenewalDue: dbUser.password_renewal_due,
-      mustCreatePassword: dbUser.must_create_password || false,
       // Subscription fields - safe access for parent QAAQ database compatibility
       isPremium: dbUser.is_premium || false,
       premiumExpiresAt: dbUser.premium_expires_at || null,
@@ -889,13 +931,12 @@ export class DatabaseStorage implements IStorage {
         id: row.id,
         connectionId: row.connection_id,
         senderId: row.sender_id,
-        content: row.content,
-        messageType: 'text',
-        sentAt: row.created_at,
+        message: row.content || row.message, // Support both field names for compatibility
         isRead: row.is_read || false,
         isDelivered: row.is_delivered || false,
+        readAt: row.read_at,
         deliveredAt: row.delivered_at,
-        readAt: row.read_at
+        createdAt: row.created_at
       };
     } catch (error) {
       console.error('Error sending message:', error);
@@ -916,13 +957,12 @@ export class DatabaseStorage implements IStorage {
         id: row.id,
         connectionId: row.connection_id,
         senderId: row.sender_id,
-        content: row.content,
-        messageType: 'text',
-        sentAt: row.created_at,
+        message: row.content || row.message, // Support both field names for compatibility
         isRead: row.is_read || false,
         isDelivered: row.is_delivered || false,
+        readAt: row.read_at,
         deliveredAt: row.delivered_at,
-        readAt: row.read_at
+        createdAt: row.created_at
       }));
     } catch (error) {
       console.error('Error getting chat messages:', error);
@@ -1026,11 +1066,22 @@ export class DatabaseStorage implements IStorage {
         throw new Error(`Identity ${identity.provider}:${identity.providerId} already linked to another user`);
       }
       
-      // Create new identity link
-      const [linkedIdentity] = await db.insert(userIdentities).values({
+      // Create new identity link using direct SQL to avoid schema mismatch issues
+      const result = await pool.query(`
+        INSERT INTO user_identities (
+          user_id, provider, provider_id, is_primary, is_verified, metadata
+        ) VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING *
+      `, [
         userId,
-        ...identity
-      }).returning();
+        identity.provider,
+        identity.providerId,
+        identity.isPrimary || false,
+        identity.isVerified || false,
+        JSON.stringify(identity.metadata || {})
+      ]);
+      
+      const linkedIdentity = result.rows[0];
       
       // Update user's auth providers list
       await pool.query(`
@@ -1261,6 +1312,504 @@ export class DatabaseStorage implements IStorage {
       return like || undefined;
     } catch (error) {
       console.error('Error getting user answer like:', error);
+      return undefined;
+    }
+  }
+
+  // Workshop Service Tasks Management Implementation
+  async createServiceTask(task: InsertWorkshopServiceTask): Promise<WorkshopServiceTask> {
+    try {
+      // Use direct SQL to avoid schema mismatch issues with Drizzle
+      const result = await pool.query(`
+        INSERT INTO workshop_service_tasks (
+          task_code, system_code, equipment_code, task_sequence, task_name,
+          task_description, required_expertise, estimated_hours, difficulty_level,
+          "order", tags, is_active
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        RETURNING *
+      `, [
+        task.taskCode,
+        task.systemCode,
+        task.equipmentCode,
+        task.taskSequence,
+        task.taskName,
+        task.taskDescription,
+        JSON.stringify(task.requiredExpertise || []),
+        task.estimatedHours,
+        task.difficultyLevel || 'medium',
+        task.order,
+        JSON.stringify(task.tags || []),
+        task.isActive !== false // Default to true unless explicitly false
+      ]);
+      
+      const newTask = result.rows[0];
+      console.log(`✅ Created service task: ${newTask.task_code} - ${newTask.task_name}`);
+      return newTask;
+    } catch (error) {
+      console.error('Error creating service task:', error);
+      throw error;
+    }
+  }
+
+  async getServiceTask(taskId: string): Promise<WorkshopServiceTask | undefined> {
+    try {
+      const [task] = await db
+        .select()
+        .from(workshopServiceTasks)
+        .where(eq(workshopServiceTasks.id, taskId));
+      return task || undefined;
+    } catch (error) {
+      console.error('Error getting service task:', error);
+      return undefined;
+    }
+  }
+
+  async getServiceTaskByCode(taskCode: string): Promise<WorkshopServiceTask | undefined> {
+    try {
+      const [task] = await db
+        .select()
+        .from(workshopServiceTasks)
+        .where(eq(workshopServiceTasks.taskCode, taskCode));
+      return task || undefined;
+    } catch (error) {
+      console.error('Error getting service task by code:', error);
+      return undefined;
+    }
+  }
+
+  async getServiceTasksBySystem(systemCode: string): Promise<WorkshopServiceTask[]> {
+    try {
+      const tasks = await db
+        .select()
+        .from(workshopServiceTasks)
+        .where(
+          and(
+            eq(workshopServiceTasks.systemCode, systemCode),
+            eq(workshopServiceTasks.isActive, true)
+          )
+        )
+        .orderBy(workshopServiceTasks.order);
+      return tasks;
+    } catch (error) {
+      console.error('Error getting service tasks by system:', error);
+      return [];
+    }
+  }
+
+  async getServiceTasksByEquipment(equipmentCode: string): Promise<WorkshopServiceTask[]> {
+    try {
+      const tasks = await db
+        .select()
+        .from(workshopServiceTasks)
+        .where(
+          and(
+            eq(workshopServiceTasks.equipmentCode, equipmentCode),
+            eq(workshopServiceTasks.isActive, true)
+          )
+        )
+        .orderBy(workshopServiceTasks.order);
+      return tasks;
+    } catch (error) {
+      console.error('Error getting service tasks by equipment:', error);
+      return [];
+    }
+  }
+
+  async getAllServiceTasks(filters?: { isActive?: boolean; systemCode?: string; equipmentCode?: string }): Promise<WorkshopServiceTask[]> {
+    try {
+      let query = db.select().from(workshopServiceTasks);
+      
+      const conditions = [];
+      if (filters?.isActive !== undefined) {
+        conditions.push(eq(workshopServiceTasks.isActive, filters.isActive));
+      }
+      if (filters?.systemCode) {
+        conditions.push(eq(workshopServiceTasks.systemCode, filters.systemCode));
+      }
+      if (filters?.equipmentCode) {
+        conditions.push(eq(workshopServiceTasks.equipmentCode, filters.equipmentCode));
+      }
+
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions));
+      }
+
+      const tasks = await query.orderBy(workshopServiceTasks.systemCode, workshopServiceTasks.equipmentCode, workshopServiceTasks.order);
+      return tasks;
+    } catch (error) {
+      console.error('Error getting all service tasks:', error);
+      return [];
+    }
+  }
+
+  async updateServiceTask(taskId: string, updates: Partial<WorkshopServiceTask>): Promise<WorkshopServiceTask | undefined> {
+    try {
+      const [updatedTask] = await db
+        .update(workshopServiceTasks)
+        .set({ ...updates, updatedAt: sql`now()` })
+        .where(eq(workshopServiceTasks.id, taskId))
+        .returning();
+      console.log(`✅ Updated service task: ${taskId}`);
+      return updatedTask || undefined;
+    } catch (error) {
+      console.error('Error updating service task:', error);
+      return undefined;
+    }
+  }
+
+  async deleteServiceTask(taskId: string): Promise<void> {
+    try {
+      await db
+        .delete(workshopServiceTasks)
+        .where(eq(workshopServiceTasks.id, taskId));
+      console.log(`✅ Deleted service task: ${taskId}`);
+    } catch (error) {
+      console.error('Error deleting service task:', error);
+      throw error;
+    }
+  }
+
+  // Workshop Pricing Management Implementation
+  async createWorkshopPricing(pricing: InsertWorkshopPricing): Promise<WorkshopPricing> {
+    try {
+      const [newPricing] = await db.insert(workshopPricing).values(pricing).returning();
+      console.log(`✅ Created workshop pricing: ${pricing.workshopId} - ${pricing.expertiseCategory}`);
+      return newPricing;
+    } catch (error) {
+      console.error('Error creating workshop pricing:', error);
+      throw error;
+    }
+  }
+
+  async getWorkshopPricing(pricingId: string): Promise<WorkshopPricing | undefined> {
+    try {
+      const [pricing] = await db
+        .select()
+        .from(workshopPricing)
+        .where(eq(workshopPricing.id, pricingId));
+      return pricing || undefined;
+    } catch (error) {
+      console.error('Error getting workshop pricing:', error);
+      return undefined;
+    }
+  }
+
+  async getWorkshopPricingByWorkshop(workshopId: string): Promise<WorkshopPricing[]> {
+    try {
+      const pricing = await db
+        .select()
+        .from(workshopPricing)
+        .where(
+          and(
+            eq(workshopPricing.workshopId, workshopId),
+            eq(workshopPricing.isActive, true)
+          )
+        )
+        .orderBy(workshopPricing.expertiseCategory);
+      return pricing;
+    } catch (error) {
+      console.error('Error getting workshop pricing by workshop:', error);
+      return [];
+    }
+  }
+
+  async getWorkshopPricingByExpertise(workshopId: string, expertiseCategory: string): Promise<WorkshopPricing | undefined> {
+    try {
+      const [pricing] = await db
+        .select()
+        .from(workshopPricing)
+        .where(
+          and(
+            eq(workshopPricing.workshopId, workshopId),
+            eq(workshopPricing.expertiseCategory, expertiseCategory),
+            eq(workshopPricing.isActive, true)
+          )
+        );
+      return pricing || undefined;
+    } catch (error) {
+      console.error('Error getting workshop pricing by expertise:', error);
+      return undefined;
+    }
+  }
+
+  async updateWorkshopPricing(pricingId: string, updates: Partial<WorkshopPricing>): Promise<WorkshopPricing | undefined> {
+    try {
+      const [updatedPricing] = await db
+        .update(workshopPricing)
+        .set({ ...updates, updatedAt: sql`now()` })
+        .where(eq(workshopPricing.id, pricingId))
+        .returning();
+      console.log(`✅ Updated workshop pricing: ${pricingId}`);
+      return updatedPricing || undefined;
+    } catch (error) {
+      console.error('Error updating workshop pricing:', error);
+      return undefined;
+    }
+  }
+
+  async deleteWorkshopPricing(pricingId: string): Promise<void> {
+    try {
+      await db
+        .delete(workshopPricing)
+        .where(eq(workshopPricing.id, pricingId));
+      console.log(`✅ Deleted workshop pricing: ${pricingId}`);
+    } catch (error) {
+      console.error('Error deleting workshop pricing:', error);
+      throw error;
+    }
+  }
+
+  async upsertWorkshopPricing(workshopId: string, expertiseCategory: string, pricingData: Partial<InsertWorkshopPricing>): Promise<WorkshopPricing> {
+    try {
+      // Check if pricing already exists
+      const existingPricing = await this.getWorkshopPricingByExpertise(workshopId, expertiseCategory);
+      
+      if (existingPricing) {
+        // Update existing pricing
+        return this.updateWorkshopPricing(existingPricing.id, pricingData) as Promise<WorkshopPricing>;
+      } else {
+        // Create new pricing
+        return this.createWorkshopPricing({
+          workshopId,
+          expertiseCategory,
+          ...pricingData
+        } as InsertWorkshopPricing);
+      }
+    } catch (error) {
+      console.error('Error upserting workshop pricing:', error);
+      throw error;
+    }
+  }
+
+  // Workshop Booking Management Implementation
+  async createWorkshopBooking(booking: InsertWorkshopBooking): Promise<WorkshopBooking> {
+    try {
+      // Use direct SQL to avoid schema mismatch issues with Drizzle
+      // bookingNumber is auto-generated in the database
+      const result = await pool.query(`
+        INSERT INTO workshop_bookings (
+          ship_manager_id, ship_name, imo_number, port, workshop_id,
+          service_type, estimated_hours, description, urgency_level,
+          preferred_date, expected_completion, status, budget_range,
+          contact_person, contact_phone, contact_email, special_requirements,
+          port_regulations, vessel_specifications, booking_notes
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+        RETURNING *
+      `, [
+        booking.shipManagerId,
+        booking.shipName,
+        booking.imoNumber || null,
+        booking.port,
+        booking.workshopId,
+        booking.serviceType,
+        booking.estimatedHours,
+        booking.description || null,
+        booking.urgencyLevel || 'medium',
+        booking.preferredDate || null,
+        booking.expectedCompletion || null,
+        booking.status || 'pending',
+        booking.budgetRange || null,
+        booking.contactPerson || null,
+        booking.contactPhone || null,
+        booking.contactEmail || null,
+        booking.specialRequirements || null,
+        booking.portRegulations || null,
+        booking.vesselSpecifications || null,
+        booking.bookingNotes || null
+      ]);
+      
+      const newBooking = result.rows[0];
+      console.log(`✅ Created workshop booking: ${newBooking.booking_number}`);
+      return newBooking;
+    } catch (error) {
+      console.error('Error creating workshop booking:', error);
+      throw error;
+    }
+  }
+
+  async getWorkshopBooking(bookingId: string): Promise<WorkshopBooking | undefined> {
+    try {
+      const [booking] = await db
+        .select()
+        .from(workshopBookings)
+        .where(eq(workshopBookings.id, bookingId));
+      return booking || undefined;
+    } catch (error) {
+      console.error('Error getting workshop booking:', error);
+      return undefined;
+    }
+  }
+
+  async getWorkshopBookingByNumber(bookingNumber: string): Promise<WorkshopBooking | undefined> {
+    try {
+      const [booking] = await db
+        .select()
+        .from(workshopBookings)
+        .where(eq(workshopBookings.bookingNumber, bookingNumber));
+      return booking || undefined;
+    } catch (error) {
+      console.error('Error getting workshop booking by number:', error);
+      return undefined;
+    }
+  }
+
+  async getBookingsByShipManager(shipManagerId: string, filters?: { status?: string }): Promise<WorkshopBooking[]> {
+    try {
+      const conditions = [eq(workshopBookings.shipManagerId, shipManagerId)];
+      
+      if (filters?.status) {
+        conditions.push(eq(workshopBookings.status, filters.status));
+      }
+
+      const bookings = await db
+        .select()
+        .from(workshopBookings)
+        .where(and(...conditions))
+        .orderBy(desc(workshopBookings.createdAt));
+      
+      return bookings;
+    } catch (error) {
+      console.error('Error getting bookings by ship manager:', error);
+      return [];
+    }
+  }
+
+  async getBookingsByWorkshop(workshopId: string, filters?: { status?: string }): Promise<WorkshopBooking[]> {
+    try {
+      const conditions = [eq(workshopBookings.workshopId, workshopId)];
+      
+      if (filters?.status) {
+        conditions.push(eq(workshopBookings.status, filters.status));
+      }
+
+      const bookings = await db
+        .select()
+        .from(workshopBookings)
+        .where(and(...conditions))
+        .orderBy(desc(workshopBookings.createdAt));
+      
+      return bookings;
+    } catch (error) {
+      console.error('Error getting bookings by workshop:', error);
+      return [];
+    }
+  }
+
+  async getAllWorkshopBookings(filters?: { status?: string; port?: string; priority?: string }): Promise<WorkshopBooking[]> {
+    try {
+      let query = db.select().from(workshopBookings);
+      
+      const conditions = [];
+      if (filters?.status) {
+        conditions.push(eq(workshopBookings.status, filters.status));
+      }
+      if (filters?.port) {
+        conditions.push(eq(workshopBookings.port, filters.port));
+      }
+      if (filters?.priority) {
+        conditions.push(eq(workshopBookings.priority, filters.priority));
+      }
+
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions));
+      }
+
+      const bookings = await query.orderBy(desc(workshopBookings.createdAt));
+      return bookings;
+    } catch (error) {
+      console.error('Error getting all workshop bookings:', error);
+      return [];
+    }
+  }
+
+  async updateWorkshopBooking(bookingId: string, updates: Partial<WorkshopBooking>): Promise<WorkshopBooking | undefined> {
+    try {
+      const [updatedBooking] = await db
+        .update(workshopBookings)
+        .set({ ...updates, updatedAt: sql`now()` })
+        .where(eq(workshopBookings.id, bookingId))
+        .returning();
+      
+      console.log(`✅ Updated workshop booking: ${bookingId}`);
+      return updatedBooking || undefined;
+    } catch (error) {
+      console.error('Error updating workshop booking:', error);
+      return undefined;
+    }
+  }
+
+  async generateBookingNumber(): Promise<string> {
+    try {
+      // Generate booking number format: WB-YYYY-NNNNNN (e.g., WB-2025-000001)
+      const year = new Date().getFullYear();
+      
+      // Count existing bookings this year to get next number
+      const yearStart = `${year}-01-01`;
+      const yearEnd = `${year + 1}-01-01`;
+      
+      const [result] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(workshopBookings)
+        .where(
+          and(
+            sql`${workshopBookings.createdAt} >= ${yearStart}`,
+            sql`${workshopBookings.createdAt} < ${yearEnd}`
+          )
+        );
+      
+      const nextNumber = (result.count || 0) + 1;
+      const bookingNumber = `WB-${year}-${nextNumber.toString().padStart(6, '0')}`;
+      
+      return bookingNumber;
+    } catch (error) {
+      console.error('Error generating booking number:', error);
+      // Fallback to timestamp-based booking number
+      return `WB-${Date.now()}`;
+    }
+  }
+
+  async cancelWorkshopBooking(bookingId: string, userId: string): Promise<WorkshopBooking | undefined> {
+    try {
+      const [updatedBooking] = await db
+        .update(workshopBookings)
+        .set({ 
+          status: 'cancelled',
+          updatedAt: sql`now()`
+        })
+        .where(eq(workshopBookings.id, bookingId))
+        .returning();
+      
+      console.log(`✅ Cancelled workshop booking: ${bookingId} by user: ${userId}`);
+      return updatedBooking || undefined;
+    } catch (error) {
+      console.error('Error cancelling workshop booking:', error);
+      return undefined;
+    }
+  }
+
+  async completeWorkshopBooking(bookingId: string, actualHours: number, finalAmount?: number): Promise<WorkshopBooking | undefined> {
+    try {
+      const updates: any = {
+        status: 'completed',
+        actualHours,
+        completedAt: sql`now()`,
+        updatedAt: sql`now()`
+      };
+
+      if (finalAmount !== undefined) {
+        updates.finalAmount = finalAmount;
+      }
+
+      const [updatedBooking] = await db
+        .update(workshopBookings)
+        .set(updates)
+        .where(eq(workshopBookings.id, bookingId))
+        .returning();
+      
+      console.log(`✅ Completed workshop booking: ${bookingId} with ${actualHours} hours`);
+      return updatedBooking || undefined;
+    } catch (error) {
+      console.error('Error completing workshop booking:', error);
       return undefined;
     }
   }

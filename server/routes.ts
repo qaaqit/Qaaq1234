@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import ws from 'ws';
 import jwt from 'jsonwebtoken';
 import { storage } from "./storage";
-import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, insertChatConnectionSchema, insertChatMessageSchema, insertRankGroupSchema, insertRankGroupMemberSchema, insertRankGroupMessageSchema, insertRankChatMessageSchema, insertEmailVerificationTokenSchema, emailVerificationTokens, rankChatMessages, ipAnalytics, users } from "@shared/schema";
+import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, insertChatConnectionSchema, insertChatMessageSchema, insertRankGroupSchema, insertRankGroupMemberSchema, insertRankGroupMessageSchema, insertRankChatMessageSchema, insertEmailVerificationTokenSchema, emailVerificationTokens, rankChatMessages, ipAnalytics, users, insertWorkshopServiceTaskSchema, insertWorkshopPricingSchema, insertWorkshopBookingSchema, updateWorkshopBookingStatusSchema, completeWorkshopBookingSchema } from "@shared/schema";
 import { emailService } from "./email-service";
 import { randomBytes } from 'crypto';
 import { eq } from 'drizzle-orm';
@@ -39,6 +39,7 @@ import { WatiBotService } from "./wati-bot-service";
 import { GlossaryAutoUpdateService } from "./glossary-auto-update";
 import { workshopCSVImportService } from "./workshop-csv-import";
 import { WorkshopDisplayIdBackfillService } from "./workshop-displayid-backfill";
+import { WorkshopPricingCalculator, PricingCalculationOptions } from "./pricing-calculator";
 
 // Import new unified authentication system
 import { sessionBridge, bridgedAuth, requireBridgedAuth } from "./session-bridge";
@@ -140,15 +141,13 @@ const authenticateSession = async (req: Request, res: Response, next: NextFuncti
         console.log(`✅ JWT auth successful for user: ${req.userId}`);
         return next();
       } catch (error) {
-        console.log('🔒 JWT token invalid, falling back to session auth');
+        console.log('🔒 JWT token invalid, no session fallback available');
       }
     }
 
-    // For user 44885683, hardcode the user ID temporarily
-    const hardcodedAdminId = '44885683';
-    req.userId = hardcodedAdminId;
-    console.log(`✅ Hardcoded admin auth for user: ${req.userId}`);
-    return next();
+    // No valid authentication found
+    console.error('🔒 Session authentication failed: No valid JWT token');
+    return res.status(401).json({ message: 'Authentication required' });
 
   } catch (error) {
     console.error('Session authentication error:', error);
@@ -7761,6 +7760,911 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
     } catch (error) {
       console.error('❌ Error adding new model:', error);
       res.status(500).json({ success: false, error: 'Failed to add new model' });
+    }
+  });
+
+  // ================================
+  // WORKSHOP SERVICE TASKS API ROUTES  
+  // ================================
+
+  // Helper middleware for workshop owner authentication
+  const isWorkshopOwner = async (req: any, res: any, next: any) => {
+    try {
+      const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      // Check if user is a workshop provider
+      const user = await storage.getUser(userId);
+      if (!user || !user.isWorkshopProvider) {
+        return res.status(403).json({ 
+          error: 'Access denied - Workshop provider privileges required',
+          userType: user?.userType,
+          isWorkshopProvider: user?.isWorkshopProvider 
+        });
+      }
+
+      next();
+    } catch (error) {
+      console.error('Workshop owner authentication error:', error);
+      res.status(500).json({ error: 'Authentication check failed' });
+    }
+  };
+
+  // ===== ADMIN TASK MANAGEMENT ROUTES =====
+
+  // GET /api/admin/workshop-tasks - List all service tasks
+  app.get('/api/admin/workshop-tasks', authenticateToken, isAdminOrIntern, async (req, res) => {
+    try {
+      console.log('🔧 Admin fetching all workshop service tasks');
+
+      const isActive = req.query.active !== 'false';
+      const systemCode = req.query.systemCode as string;
+      const equipmentCode = req.query.equipmentCode as string;
+
+      const filters = {
+        isActive,
+        systemCode: systemCode || undefined,
+        equipmentCode: equipmentCode || undefined
+      };
+
+      const tasks = await storage.getAllServiceTasks(filters);
+      
+      console.log(`✅ Retrieved ${tasks.length} service tasks for admin`);
+      res.json({
+        success: true,
+        tasks: tasks,
+        filters: filters,
+        total: tasks.length
+      });
+
+    } catch (error) {
+      console.error('❌ Error fetching admin workshop tasks:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to fetch service tasks',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // POST /api/admin/workshop-tasks - Create new service task
+  app.post('/api/admin/workshop-tasks', authenticateToken, isAdminOrIntern, async (req, res) => {
+    try {
+      console.log('🔧 Admin creating new workshop service task');
+
+      const { taskCode, taskTitle, systemCode, equipmentCode, estimatedHours, skillLevel, description, isActive } = req.body;
+
+      if (!taskCode || !taskTitle || !systemCode || !equipmentCode || !estimatedHours) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required fields: taskCode, taskTitle, systemCode, equipmentCode, estimatedHours'
+        });
+      }
+
+      // Check if task code already exists
+      const existingTask = await storage.getServiceTaskByCode(taskCode);
+      if (existingTask) {
+        return res.status(409).json({
+          success: false,
+          error: `Service task with code '${taskCode}' already exists`
+        });
+      }
+
+      const taskData = {
+        taskCode,
+        taskTitle,
+        systemCode,
+        equipmentCode,
+        estimatedHours: parseFloat(estimatedHours),
+        skillLevel: skillLevel || 'intermediate',
+        description: description || '',
+        isActive: isActive !== false,
+        createdBy: req.userId
+      };
+
+      const newTask = await storage.createServiceTask(taskData);
+      
+      console.log(`✅ Created new service task: ${newTask.taskCode} - ${newTask.taskTitle}`);
+      res.status(201).json({
+        success: true,
+        task: newTask,
+        message: 'Service task created successfully'
+      });
+
+    } catch (error) {
+      console.error('❌ Error creating workshop task:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to create service task',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // PUT /api/admin/workshop-tasks/:id - Update existing task
+  app.put('/api/admin/workshop-tasks/:id', authenticateToken, isAdminOrIntern, async (req, res) => {
+    try {
+      const taskId = req.params.id;
+      console.log(`🔧 Admin updating workshop service task: ${taskId}`);
+
+      const { taskTitle, estimatedHours, skillLevel, description, isActive } = req.body;
+
+      const existingTask = await storage.getServiceTask(taskId);
+      if (!existingTask) {
+        return res.status(404).json({
+          success: false,
+          error: 'Service task not found'
+        });
+      }
+
+      const updates: any = { updatedBy: req.userId };
+      if (taskTitle !== undefined) updates.taskTitle = taskTitle;
+      if (estimatedHours !== undefined) updates.estimatedHours = parseFloat(estimatedHours);
+      if (skillLevel !== undefined) updates.skillLevel = skillLevel;
+      if (description !== undefined) updates.description = description;
+      if (isActive !== undefined) updates.isActive = isActive;
+
+      const updatedTask = await storage.updateServiceTask(taskId, updates);
+      
+      console.log(`✅ Updated service task: ${updatedTask?.taskCode} - ${updatedTask?.taskTitle}`);
+      res.json({
+        success: true,
+        task: updatedTask,
+        message: 'Service task updated successfully'
+      });
+
+    } catch (error) {
+      console.error('❌ Error updating workshop task:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to update service task',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // DELETE /api/admin/workshop-tasks/:id - Delete task
+  app.delete('/api/admin/workshop-tasks/:id', authenticateToken, isAdminOrIntern, async (req, res) => {
+    try {
+      const taskId = req.params.id;
+      console.log(`🔧 Admin deleting workshop service task: ${taskId}`);
+
+      const existingTask = await storage.getServiceTask(taskId);
+      if (!existingTask) {
+        return res.status(404).json({
+          success: false,
+          error: 'Service task not found'
+        });
+      }
+
+      await storage.deleteServiceTask(taskId);
+      
+      console.log(`✅ Deleted service task: ${existingTask.taskCode} - ${existingTask.taskTitle}`);
+      res.json({
+        success: true,
+        message: 'Service task deleted successfully',
+        deletedTask: {
+          id: existingTask.id,
+          taskCode: existingTask.taskCode,
+          taskTitle: existingTask.taskTitle
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ Error deleting workshop task:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to delete service task',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // GET /api/admin/workshop-tasks/by-equipment/:equipmentCode - Get tasks by equipment
+  app.get('/api/admin/workshop-tasks/by-equipment/:equipmentCode', authenticateToken, isAdminOrIntern, async (req, res) => {
+    try {
+      const equipmentCode = req.params.equipmentCode;
+      console.log(`🔧 Admin fetching service tasks for equipment: ${equipmentCode}`);
+
+      const tasks = await storage.getServiceTasksByEquipment(equipmentCode);
+      
+      console.log(`✅ Retrieved ${tasks.length} service tasks for equipment ${equipmentCode}`);
+      res.json({
+        success: true,
+        equipmentCode: equipmentCode,
+        tasks: tasks,
+        total: tasks.length
+      });
+
+    } catch (error) {
+      console.error('❌ Error fetching tasks by equipment:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to fetch tasks by equipment',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // ===== WORKSHOP PRICING ROUTES =====
+
+  // POST /api/workshop/pricing/calculate - Calculate pricing for service request
+  app.post('/api/workshop/pricing/calculate', authenticateToken, async (req, res) => {
+    try {
+      const { workshopId, expertiseCategory, hours, urgencyLevel, isAfterHours, isWeekend } = req.body;
+      
+      console.log(`🔧 Calculating pricing: ${workshopId}, ${expertiseCategory}, ${hours}h`);
+
+      if (!workshopId || !expertiseCategory || !hours) {
+        return res.status(400).json({
+          success: false,
+          error: 'workshopId, expertiseCategory, and hours are required'
+        });
+      }
+
+      // Get pricing data for the workshop and expertise category
+      const pricingData = await storage.getWorkshopPricingByExpertise(workshopId, expertiseCategory);
+      
+      if (!pricingData) {
+        return res.status(404).json({
+          success: false,
+          error: `No pricing data found for workshop ${workshopId} and expertise ${expertiseCategory}`
+        });
+      }
+
+      // Calculate pricing using the 8-hour shift calculator
+      const calculation = WorkshopPricingCalculator.calculateServicePricing(pricingData, {
+        hours: parseFloat(hours),
+        urgencyLevel: urgencyLevel || 'medium',
+        expertiseCategory,
+        isAfterHours: isAfterHours === 'true' || isAfterHours === true,
+        isWeekend: isWeekend === 'true' || isWeekend === true
+      });
+
+      console.log(`✅ Calculated pricing: $${calculation.totalAmount} for ${hours}h work`);
+      res.json({
+        success: true,
+        workshopId,
+        expertiseCategory,
+        hours: parseFloat(hours),
+        pricing: calculation
+      });
+
+    } catch (error) {
+      console.error('❌ Error calculating workshop pricing:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to calculate pricing',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // GET /api/workshop/pricing/estimate - Get pricing estimates for booking
+  app.get('/api/workshop/pricing/estimate', authenticateToken, async (req, res) => {
+    try {
+      const { workshopId, expertiseCategory, estimatedHours, urgencyLevel } = req.query;
+      
+      console.log(`🔧 Getting pricing estimate: ${workshopId}, ${expertiseCategory}, ${estimatedHours}h`);
+
+      if (!workshopId || !expertiseCategory || !estimatedHours) {
+        return res.status(400).json({
+          success: false,
+          error: 'workshopId, expertiseCategory, and estimatedHours are required'
+        });
+      }
+
+      // Get all pricing data for the workshop
+      const allPricingData = await storage.getWorkshopPricingByWorkshop(workshopId as string);
+      
+      if (allPricingData.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: `No pricing data found for workshop ${workshopId}`
+        });
+      }
+
+      // Calculate estimate for the specific expertise category
+      const estimate = WorkshopPricingCalculator.calculateBookingEstimate(
+        allPricingData,
+        expertiseCategory as string,
+        parseFloat(estimatedHours as string),
+        urgencyLevel as string || 'medium'
+      );
+
+      if (!estimate) {
+        return res.status(404).json({
+          success: false,
+          error: `No pricing available for expertise category: ${expertiseCategory}`
+        });
+      }
+
+      // Also get pricing tiers for reference
+      const pricingTiers = WorkshopPricingCalculator.getPricingTiers(allPricingData);
+
+      console.log(`✅ Generated pricing estimate: $${estimate.totalAmount}`);
+      res.json({
+        success: true,
+        workshopId,
+        expertiseCategory,
+        estimatedHours: parseFloat(estimatedHours as string),
+        estimate,
+        availableTiers: pricingTiers
+      });
+
+    } catch (error) {
+      console.error('❌ Error getting pricing estimate:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to get pricing estimate',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // GET /api/workshop/pricing/:workshopId - Get workshop pricing for all expertise
+  app.get('/api/workshop/pricing/:workshopId', authenticateToken, isWorkshopOwner, async (req, res) => {
+    try {
+      const workshopId = req.params.workshopId;
+      console.log(`🔧 Fetching pricing for workshop: ${workshopId}`);
+
+      const pricing = await storage.getWorkshopPricingByWorkshop(workshopId);
+      
+      // Generate pricing tiers with 8-hour shift calculations
+      const pricingTiers = WorkshopPricingCalculator.getPricingTiers(pricing);
+      
+      console.log(`✅ Retrieved ${pricing.length} pricing entries for workshop ${workshopId}`);
+      res.json({
+        success: true,
+        workshopId: workshopId,
+        pricing: pricing,
+        pricingTiers: pricingTiers,
+        total: pricing.length
+      });
+
+    } catch (error) {
+      console.error('❌ Error fetching workshop pricing:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to fetch workshop pricing',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // POST /api/workshop/pricing - Set/update pricing for expertise categories
+  app.post('/api/workshop/pricing', authenticateToken, isWorkshopOwner, async (req, res) => {
+    try {
+      console.log('🔧 Setting/updating workshop pricing');
+
+      // Validate request body using drizzle-zod schema
+      const validationResult = insertWorkshopPricingSchema.safeParse(req.body);
+      
+      if (!validationResult.success) {
+        console.error('❌ Workshop pricing validation failed:', validationResult.error.issues);
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid pricing data',
+          details: validationResult.error.issues.map(issue => ({
+            field: issue.path.join('.'),
+            message: issue.message
+          }))
+        });
+      }
+
+      const pricingData = validationResult.data;
+
+      // Calculate default rates based on 8-hour shift base rate if not provided
+      const baseRate8Hours = pricingData.baseRate8Hours!;
+      const finalPricingData = {
+        ...pricingData,
+        overtimeMultiplier: pricingData.overtimeMultiplier || 1.5,
+        isActive: pricingData.isActive ?? true,
+      };
+
+      const pricing = await storage.upsertWorkshopPricing(
+        pricingData.workshopId, 
+        pricingData.expertiseCategory, 
+        finalPricingData
+      );
+      
+      console.log(`✅ Set pricing for workshop ${pricingData.workshopId} - ${pricingData.expertiseCategory}: $${baseRate8Hours}/8hr shift`);
+      res.json({
+        success: true,
+        pricing: pricing,
+        message: 'Workshop pricing updated successfully'
+      });
+
+    } catch (error) {
+      console.error('❌ Error setting workshop pricing:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to set workshop pricing',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // GET /api/workshop/expertise-rates/:workshopId - Get current shift rates
+  app.get('/api/workshop/expertise-rates/:workshopId', authenticateToken, isWorkshopOwner, async (req, res) => {
+    try {
+      const workshopId = req.params.workshopId;
+      console.log(`🔧 Fetching expertise rates for workshop: ${workshopId}`);
+
+      const pricing = await storage.getWorkshopPricingByWorkshop(workshopId);
+      
+      // Format rates by expertise category
+      const ratesByExpertise = pricing.reduce((acc, price) => {
+        acc[price.expertiseCategory] = {
+          regular: price.regularShiftRate,
+          overtime: price.overtimeRate,
+          emergency: price.emergencyRate,
+          specialist: price.specialistRate,
+          lastUpdated: price.updatedAt
+        };
+        return acc;
+      }, {} as any);
+
+      console.log(`✅ Retrieved rates for ${Object.keys(ratesByExpertise).length} expertise categories`);
+      res.json({
+        success: true,
+        workshopId: workshopId,
+        expertiseRates: ratesByExpertise,
+        totalCategories: Object.keys(ratesByExpertise).length
+      });
+
+    } catch (error) {
+      console.error('❌ Error fetching expertise rates:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to fetch expertise rates',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // ===== PUBLIC/SHIP MANAGER ROUTES =====
+
+  // GET /api/workshop-services/tasks - Browse available service tasks
+  app.get('/api/workshop-services/tasks', authenticateToken, async (req, res) => {
+    try {
+      console.log('🔧 Fetching available workshop service tasks for ship manager');
+
+      const systemCode = req.query.systemCode as string;
+      const equipmentCode = req.query.equipmentCode as string;
+      const skillLevel = req.query.skillLevel as string;
+
+      const filters = {
+        isActive: true,
+        systemCode: systemCode || undefined,
+        equipmentCode: equipmentCode || undefined
+      };
+
+      let tasks = await storage.getAllServiceTasks(filters);
+
+      // Filter by skill level if specified
+      if (skillLevel) {
+        tasks = tasks.filter(task => task.skillLevel === skillLevel);
+      }
+
+      console.log(`✅ Retrieved ${tasks.length} available service tasks`);
+      res.json({
+        success: true,
+        tasks: tasks,
+        filters: { systemCode, equipmentCode, skillLevel },
+        total: tasks.length
+      });
+
+    } catch (error) {
+      console.error('❌ Error fetching service tasks:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to fetch service tasks',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // GET /api/workshop-services/pricing - Get workshop pricing by location/expertise
+  app.get('/api/workshop-services/pricing', authenticateToken, async (req, res) => {
+    try {
+      console.log('🔧 Fetching workshop pricing by location/expertise');
+
+      const port = req.query.port as string;
+      const expertiseCategory = req.query.expertiseCategory as string;
+      const limit = parseInt(req.query.limit as string) || 10;
+
+      if (!port) {
+        return res.status(400).json({
+          success: false,
+          error: 'Port parameter is required'
+        });
+      }
+
+      // Get workshops in the specified port
+      const workshopsQuery = `
+        SELECT wp.*, wpr.expertise_category, wpr.regular_shift_rate, wpr.overtime_rate, 
+               wpr.emergency_rate, wpr.specialist_rate
+        FROM workshop_profiles wp
+        LEFT JOIN workshop_pricing wpr ON wp.id = wpr.workshop_id
+        WHERE wp.is_active = true 
+        AND wp.home_port ILIKE $1
+        ${expertiseCategory ? 'AND wpr.expertise_category = $2' : ''}
+        ORDER BY wpr.regular_shift_rate ASC
+        LIMIT $${expertiseCategory ? '3' : '2'}
+      `;
+
+      const params = [`%${port}%`];
+      if (expertiseCategory) {
+        params.push(expertiseCategory);
+      }
+      params.push(limit.toString());
+
+      const result = await pool.query(workshopsQuery, params);
+      
+      console.log(`✅ Retrieved pricing for ${result.rows.length} workshops in ${port}`);
+      res.json({
+        success: true,
+        port: port,
+        expertiseCategory: expertiseCategory || 'all',
+        workshops: result.rows,
+        total: result.rows.length
+      });
+
+    } catch (error) {
+      console.error('❌ Error fetching workshop pricing:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to fetch workshop pricing',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // POST /api/workshop-services/booking - Create new booking
+  app.post('/api/workshop-services/booking', authenticateToken, async (req, res) => {
+    try {
+      console.log('🔧 Creating new workshop service booking');
+
+      const {
+        workshopId, serviceTaskIds, shipName, imoNumber, arrivalDate, departureDate,
+        urgencyLevel, specialRequirements, estimatedDuration, contactInfo
+      } = req.body;
+
+      if (!workshopId || !serviceTaskIds || !Array.isArray(serviceTaskIds) || serviceTaskIds.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required fields: workshopId, serviceTaskIds (array)'
+        });
+      }
+
+      if (!shipName || !arrivalDate) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required fields: shipName, arrivalDate'
+        });
+      }
+
+      // Generate booking number
+      const bookingNumber = await storage.generateBookingNumber();
+
+      const bookingData = {
+        bookingNumber,
+        workshopId,
+        shipManagerId: req.userId,
+        serviceTaskIds,
+        shipName,
+        imoNumber: imoNumber || null,
+        arrivalDate: new Date(arrivalDate),
+        departureDate: departureDate ? new Date(departureDate) : null,
+        urgencyLevel: urgencyLevel || 'normal',
+        specialRequirements: specialRequirements || '',
+        estimatedDuration: estimatedDuration || 8,
+        contactInfo: contactInfo || {},
+        status: 'pending',
+        createdBy: req.userId
+      };
+
+      const booking = await storage.createWorkshopBooking(bookingData);
+      
+      console.log(`✅ Created workshop booking: ${booking.bookingNumber} for ship ${shipName}`);
+      res.status(201).json({
+        success: true,
+        booking: booking,
+        message: 'Workshop booking created successfully'
+      });
+
+    } catch (error) {
+      console.error('❌ Error creating workshop booking:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to create workshop booking',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // GET /api/workshop-services/bookings/:userId - Get user's bookings
+  app.get('/api/workshop-services/bookings/:userId', authenticateToken, async (req, res) => {
+    try {
+      const userId = req.params.userId;
+      const status = req.query.status as string;
+      
+      console.log(`🔧 Fetching bookings for user: ${userId}`);
+
+      // Ensure user can only access their own bookings (or admin can access any)
+      const currentUser = await storage.getUser(req.userId);
+      if (req.userId !== userId && !currentUser?.isAdmin) {
+        return res.status(403).json({
+          success: false,
+          error: 'Access denied - can only view your own bookings'
+        });
+      }
+
+      const filters = status ? { status } : undefined;
+      const bookings = await storage.getBookingsByShipManager(userId, filters);
+      
+      console.log(`✅ Retrieved ${bookings.length} bookings for user ${userId}`);
+      res.json({
+        success: true,
+        userId: userId,
+        bookings: bookings,
+        filters: { status: status || 'all' },
+        total: bookings.length
+      });
+
+    } catch (error) {
+      console.error('❌ Error fetching user bookings:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to fetch user bookings',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // PUT /api/workshop-services/bookings/:id/status - Update booking status
+  app.put('/api/workshop-services/bookings/:id/status', authenticateToken, async (req, res) => {
+    try {
+      const bookingId = req.params.id;
+      
+      console.log(`🔧 Updating booking status: ${bookingId}`);
+
+      // Validate request body using drizzle-zod schema
+      const validationResult = updateWorkshopBookingStatusSchema.safeParse(req.body);
+      
+      if (!validationResult.success) {
+        console.error('❌ Booking status validation failed:', validationResult.error.issues);
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid booking status data',
+          details: validationResult.error.issues.map(issue => ({
+            field: issue.path.join('.'),
+            message: issue.message
+          }))
+        });
+      }
+
+      const { status, notes } = validationResult.data;
+
+      const existingBooking = await storage.getWorkshopBooking(bookingId);
+      if (!existingBooking) {
+        return res.status(404).json({
+          success: false,
+          error: 'Booking not found'
+        });
+      }
+
+      // Check authorization - ship manager can cancel, workshop owner can change status
+      const currentUser = await storage.getUser(req.userId);
+      const canModify = currentUser?.isAdmin || 
+                       existingBooking.shipManagerId === req.userId ||
+                       (currentUser?.isWorkshopProvider && existingBooking.workshopId);
+
+      if (!canModify) {
+        return res.status(403).json({
+          success: false,
+          error: 'Access denied - insufficient permissions to modify this booking'
+        });
+      }
+
+      const updates: any = { status };
+      if (notes) updates.notes = notes;
+
+      const updatedBooking = await storage.updateWorkshopBooking(bookingId, updates);
+      
+      console.log(`✅ Updated booking ${bookingId} status to ${status}`);
+      res.json({
+        success: true,
+        booking: updatedBooking,
+        message: `Booking status updated to ${status}`
+      });
+
+    } catch (error) {
+      console.error('❌ Error updating booking status:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to update booking status',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // ===== WORKSHOP MANAGEMENT ROUTES =====
+
+  // GET /api/workshop/bookings - Get bookings for workshop
+  app.get('/api/workshop/bookings', authenticateToken, isWorkshopOwner, async (req, res) => {
+    try {
+      console.log('🔧 Fetching bookings for workshop owner');
+
+      const status = req.query.status as string;
+      const priority = req.query.priority as string;
+
+      // Get workshop ID from user profile
+      const workshopQuery = await pool.query(
+        'SELECT id FROM workshop_profiles WHERE user_id = $1 AND is_active = true',
+        [req.userId]
+      );
+
+      if (workshopQuery.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: 'No active workshop profile found for this user'
+        });
+      }
+
+      const workshopId = workshopQuery.rows[0].id;
+      const filters = status ? { status } : undefined;
+      const bookings = await storage.getBookingsByWorkshop(workshopId, filters);
+
+      // Filter by priority if specified
+      let filteredBookings = bookings;
+      if (priority) {
+        filteredBookings = bookings.filter(booking => booking.urgencyLevel === priority);
+      }
+      
+      console.log(`✅ Retrieved ${filteredBookings.length} bookings for workshop ${workshopId}`);
+      res.json({
+        success: true,
+        workshopId: workshopId,
+        bookings: filteredBookings,
+        filters: { status: status || 'all', priority: priority || 'all' },
+        total: filteredBookings.length
+      });
+
+    } catch (error) {
+      console.error('❌ Error fetching workshop bookings:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to fetch workshop bookings',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // PUT /api/workshop/bookings/:id/accept - Accept booking
+  app.put('/api/workshop/bookings/:id/accept', authenticateToken, isWorkshopOwner, async (req, res) => {
+    try {
+      const bookingId = req.params.id;
+      const { scheduledStartTime, estimatedCompletionTime, assignedTechnician, notes } = req.body;
+      
+      console.log(`🔧 Workshop accepting booking: ${bookingId}`);
+
+      const existingBooking = await storage.getWorkshopBooking(bookingId);
+      if (!existingBooking) {
+        return res.status(404).json({
+          success: false,
+          error: 'Booking not found'
+        });
+      }
+
+      if (existingBooking.status !== 'pending') {
+        return res.status(400).json({
+          success: false,
+          error: `Cannot accept booking with status: ${existingBooking.status}`
+        });
+      }
+
+      const updates: any = {
+        status: 'confirmed',
+        scheduledStartTime: scheduledStartTime ? new Date(scheduledStartTime) : undefined,
+        estimatedCompletionTime: estimatedCompletionTime ? new Date(estimatedCompletionTime) : undefined,
+        assignedTechnician: assignedTechnician || null,
+        workshopNotes: notes || '',
+        acceptedAt: new Date(),
+        acceptedBy: req.userId
+      };
+
+      const updatedBooking = await storage.updateWorkshopBooking(bookingId, updates);
+      
+      console.log(`✅ Workshop accepted booking ${bookingId}`);
+      res.json({
+        success: true,
+        booking: updatedBooking,
+        message: 'Booking accepted successfully'
+      });
+
+    } catch (error) {
+      console.error('❌ Error accepting workshop booking:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to accept workshop booking',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // PUT /api/workshop/bookings/:id/complete - Mark booking complete
+  app.put('/api/workshop/bookings/:id/complete', authenticateToken, isWorkshopOwner, async (req, res) => {
+    try {
+      const bookingId = req.params.id;
+      
+      console.log(`🔧 Workshop completing booking: ${bookingId}`);
+
+      // Validate request body using drizzle-zod schema
+      const validationResult = completeWorkshopBookingSchema.safeParse(req.body);
+      
+      if (!validationResult.success) {
+        console.error('❌ Booking completion validation failed:', validationResult.error.issues);
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid booking completion data',
+          details: validationResult.error.issues.map(issue => ({
+            field: issue.path.join('.'),
+            message: issue.message
+          }))
+        });
+      }
+
+      const { actualHours, finalAmount, completionNotes, workPhotos } = validationResult.data;
+
+      const existingBooking = await storage.getWorkshopBooking(bookingId);
+      if (!existingBooking) {
+        return res.status(404).json({
+          success: false,
+          error: 'Booking not found'
+        });
+      }
+
+      if (!['confirmed', 'in_progress'].includes(existingBooking.status)) {
+        return res.status(400).json({
+          success: false,
+          error: `Cannot complete booking with status: ${existingBooking.status}`
+        });
+      }
+
+      const updatedBooking = await storage.completeWorkshopBooking(
+        bookingId, 
+        actualHours,
+        finalAmount
+      );
+
+      // Add completion notes and photos if provided
+      if (completionNotes || workPhotos) {
+        const additionalUpdates: any = {};
+        if (completionNotes) additionalUpdates.completionNotes = completionNotes;
+        if (workPhotos) additionalUpdates.workPhotos = workPhotos;
+        if (Object.keys(additionalUpdates).length > 0) {
+          await storage.updateWorkshopBooking(bookingId, additionalUpdates);
+        }
+      }
+      
+      console.log(`✅ Workshop completed booking ${bookingId} - ${actualHours} hours`);
+      res.json({
+        success: true,
+        booking: updatedBooking,
+        message: 'Booking completed successfully'
+      });
+
+    } catch (error) {
+      console.error('❌ Error completing workshop booking:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to complete workshop booking',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 

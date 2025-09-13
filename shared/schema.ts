@@ -385,6 +385,90 @@ export const workshopProfiles = pgTable("workshop_profiles", {
   updatedAt: timestamp("updated_at").default(sql`now()`)
 });
 
+// Workshop Service Tasks Table - Pre-defined tasks with hierarchical codes (aa1, aa2, etc.)
+export const workshopServiceTasks = pgTable("workshop_service_tasks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  taskCode: text("task_code").notNull().unique(), // e.g., 'aa1', 'aa2', 'ab1', etc.
+  systemCode: text("system_code").notNull(), // e.g., 'a' (Propulsion)
+  equipmentCode: text("equipment_code").notNull(), // e.g., 'aa' (Main Engine)
+  taskSequence: integer("task_sequence").notNull(), // e.g., 1 for aa1, 2 for aa2
+  taskName: text("task_name").notNull(), // Human-readable task name
+  taskDescription: text("task_description").notNull(), // Detailed task description
+  requiredExpertise: jsonb("required_expertise").$type<string[]>().default([]), // Required expertise categories from maritime-expertise.ts
+  estimatedHours: real("estimated_hours").notNull(), // Estimated hours for the task (can be fractional)
+  difficultyLevel: text("difficulty_level").notNull().default("medium"), // 'easy', 'medium', 'hard', 'expert'
+  tags: jsonb("tags").$type<string[]>().default([]), // Searchable tags
+  isActive: boolean("is_active").default(true), // Admin can disable tasks
+  order: integer("order").notNull(), // Display order within equipment
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`),
+});
+
+// Workshop Pricing Table - 8-hour shift rates by expertise and workshop
+export const workshopPricing = pgTable("workshop_pricing", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  workshopId: varchar("workshop_id").references(() => workshopProfiles.id).notNull(),
+  expertiseCategory: text("expertise_category").notNull(), // Must match maritime-expertise.ts categories
+  baseRate8Hours: real("base_rate_8_hours"), // 8-hour shift rate in USD
+  overtimeMultiplier: real("overtime_multiplier").default(1.5), // Overtime rate multiplier (typically 1.5x)
+  minimumHours: real("minimum_hours").default(1), // Minimum billable hours
+  currency: text("currency").default("USD"), // Currency for rates
+  isActive: boolean("is_active").default(true),
+  notes: text("notes"), // Additional pricing notes
+  validFrom: timestamp("valid_from").default(sql`now()`), // Rate valid from date
+  validUntil: timestamp("valid_until"), // Rate expiry date (null = no expiry)
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`),
+});
+
+// Workshop Bookings Table - Ship manager bookings for workshop services
+export const workshopBookings = pgTable("workshop_bookings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  bookingNumber: text("booking_number").unique(), // Auto-generated booking reference
+  
+  // Ship Manager Information
+  shipManagerId: varchar("ship_manager_id").references(() => users.id).notNull(),
+  shipName: text("ship_name").notNull(),
+  imoNumber: text("imo_number"), // International Maritime Organization number
+  port: text("port").notNull(), // Port where service will be performed
+  
+  // Workshop Information
+  workshopId: varchar("workshop_id").references(() => workshopProfiles.id).notNull(),
+  
+  // Service Details
+  serviceType: text("service_type").notNull(), // 'predefined_task', 'expertise_hire', 'custom_job'
+  taskIds: jsonb("task_ids").$type<string[]>().default([]), // Selected predefined task IDs
+  expertiseRequired: jsonb("expertise_required").$type<string[]>().default([]), // Required expertise categories
+  customDescription: text("custom_description"), // Custom job description
+  
+  // Timing and Duration
+  scheduledDate: timestamp("scheduled_date"), // Requested service date
+  estimatedHours: real("estimated_hours").notNull(), // Estimated total hours
+  actualHours: real("actual_hours"), // Actual hours worked (filled after completion)
+  
+  // Pricing
+  quotedAmount: real("quoted_amount"), // Quoted price in USD
+  finalAmount: real("final_amount"), // Final invoiced amount
+  currency: text("currency").default("USD"),
+  
+  // Status Tracking
+  status: text("status").notNull().default("pending"), // 'pending', 'confirmed', 'in_progress', 'completed', 'cancelled'
+  priority: text("priority").default("normal"), // 'low', 'normal', 'high', 'urgent'
+  
+  // Communication
+  shipManagerNotes: text("ship_manager_notes"), // Special requirements or notes
+  workshopNotes: text("workshop_notes"), // Workshop internal notes
+  
+  // Completion and Rating
+  completedAt: timestamp("completed_at"),
+  shipManagerRating: integer("ship_manager_rating"), // 1-5 rating from ship manager
+  workshopRating: integer("workshop_rating"), // 1-5 rating from workshop
+  feedback: text("feedback"), // Mutual feedback
+  
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`),
+});
+
 // Relations - Note: usersRelations defined later with identity support
 
 export const postsRelations = relations(posts, ({ one, many }) => ({
@@ -495,10 +579,44 @@ export const semmModelsRelations = relations(semmModels, ({ one }) => ({
 }));
 
 // Workshop Profiles Relations
-export const workshopProfilesRelations = relations(workshopProfiles, ({ one }) => ({
+export const workshopProfilesRelations = relations(workshopProfiles, ({ one, many }) => ({
   user: one(users, {
     fields: [workshopProfiles.userId],
     references: [users.id],
+  }),
+  pricing: many(workshopPricing),
+  bookings: many(workshopBookings),
+}));
+
+// Workshop Service Tasks Relations
+export const workshopServiceTasksRelations = relations(workshopServiceTasks, ({ one }) => ({
+  system: one(semmSystems, {
+    fields: [workshopServiceTasks.systemCode],
+    references: [semmSystems.code],
+  }),
+  equipment: one(semmEquipment, {
+    fields: [workshopServiceTasks.equipmentCode],
+    references: [semmEquipment.code],
+  }),
+}));
+
+// Workshop Pricing Relations
+export const workshopPricingRelations = relations(workshopPricing, ({ one }) => ({
+  workshop: one(workshopProfiles, {
+    fields: [workshopPricing.workshopId],
+    references: [workshopProfiles.id],
+  }),
+}));
+
+// Workshop Bookings Relations
+export const workshopBookingsRelations = relations(workshopBookings, ({ one, many }) => ({
+  shipManager: one(users, {
+    fields: [workshopBookings.shipManagerId],
+    references: [users.id],
+  }),
+  workshop: one(workshopProfiles, {
+    fields: [workshopBookings.workshopId],
+    references: [workshopProfiles.id],
   }),
 }));
 
@@ -531,8 +649,14 @@ export const insertUserIdentitySchema = createInsertSchema(userIdentities).omit(
 export const insertUserSchema = createInsertSchema(users).pick({
   fullName: true,
   email: true,
+  password: true,
+  userId: true,
   userType: true,
   nickname: true,
+  rank: true,
+  lastCompany: true,
+  whatsAppNumber: true,
+  whatsAppDisplayName: true,
   city: true,
   country: true,
   latitude: true,
@@ -609,6 +733,28 @@ export const insertWorkshopProfileSchema = createInsertSchema(workshopProfiles).
   createdAt: true,
   updatedAt: true,
   lastSyncAt: true,
+});
+
+// Workshop Service Tasks Insert Schema
+export const insertWorkshopServiceTaskSchema = createInsertSchema(workshopServiceTasks).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Workshop Pricing Insert Schema
+export const insertWorkshopPricingSchema = createInsertSchema(workshopPricing).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Workshop Bookings Insert Schema
+export const insertWorkshopBookingSchema = createInsertSchema(workshopBookings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  bookingNumber: true, // Auto-generated
 });
 
 export const insertChatConnectionSchema = createInsertSchema(chatConnections).pick({
@@ -1109,3 +1255,32 @@ export const insertDatabaseBackupMetricsSchema = createInsertSchema(databaseBack
 // Types for backup metrics
 export type InsertDatabaseBackupMetrics = z.infer<typeof insertDatabaseBackupMetricsSchema>;
 export type DatabaseBackupMetrics = typeof databaseBackupMetrics.$inferSelect;
+
+// Workshop service tasks types
+export type InsertWorkshopServiceTask = z.infer<typeof insertWorkshopServiceTaskSchema>;
+export type WorkshopServiceTask = typeof workshopServiceTasks.$inferSelect;
+
+// Workshop pricing types
+export type InsertWorkshopPricing = z.infer<typeof insertWorkshopPricingSchema>;
+export type WorkshopPricing = typeof workshopPricing.$inferSelect;
+
+// Workshop booking types
+export type InsertWorkshopBooking = z.infer<typeof insertWorkshopBookingSchema>;
+export type WorkshopBooking = typeof workshopBookings.$inferSelect;
+
+// Workshop booking update validation schemas
+export const updateWorkshopBookingStatusSchema = z.object({
+  status: z.enum(['pending', 'confirmed', 'in_progress', 'completed', 'cancelled']),
+  notes: z.string().optional(),
+});
+
+export const completeWorkshopBookingSchema = z.object({
+  actualHours: z.number().positive().min(0.1, "Actual hours must be at least 0.1"),
+  finalAmount: z.number().positive().optional(),
+  completionNotes: z.string().optional(),
+  workPhotos: z.array(z.string()).optional(),
+});
+
+// Types for workshop booking updates
+export type UpdateWorkshopBookingStatus = z.infer<typeof updateWorkshopBookingStatusSchema>;
+export type CompleteWorkshopBooking = z.infer<typeof completeWorkshopBookingSchema>;
