@@ -51,6 +51,12 @@ import WorkshopDashboard from "@/pages/workshop-owner-dashboard";
 import WorkshopBookings from "@/pages/workshop-bookings";
 import WorkshopPricing from "@/pages/workshop-pricing";
 import WorkshopTasks from "@/pages/workshop-tasks";
+import WorkshopTreePage from "@/pages/workshop-tree";
+import WorkshopTreeEquipmentPage from "@/pages/workshop-tree-equipment";
+import WorkshopTreeTasksPage from "@/pages/workshop-tree-tasks";
+import WorkshopTreePortsPage from "@/pages/workshop-tree-ports";
+import WorkshopTreeWorkshopsPage from "@/pages/workshop-tree-workshops";
+import WorkshopTreeDetailPage from "@/pages/workshop-tree-detail";
 
 import NotFound from "@/pages/not-found";
 import BottomNav from "@/components/bottom-nav";
@@ -163,6 +169,15 @@ function Router() {
           <Route path="/workshop-bookings" component={() => currentUser ? <WorkshopBookings /> : <Login />} />
           <Route path="/workshop-pricing" component={() => currentUser ? <WorkshopPricing /> : <Login />} />
           <Route path="/workshop-tasks" component={() => currentUser ? <WorkshopTasks /> : <Login />} />
+          
+          {/* Workshop Tree Routes */}
+          <Route path="/workshop-tree" component={() => <WorkshopTreePage />} />
+          <Route path="/workshop-tree/system/:systemCode" component={() => <WorkshopTreeEquipmentPage />} />
+          <Route path="/workshop-tree/equipment/:systemCode/:equipmentCode" component={() => <WorkshopTreeTasksPage />} />
+          <Route path="/workshop-tree/task/:taskId/ports" component={() => <WorkshopTreePortsPage />} />
+          <Route path="/workshop-tree/task/:taskId/port/:port" component={() => <WorkshopTreeWorkshopsPage />} />
+          <Route path="/workshop-tree/workshop/:workshopId" component={() => <WorkshopTreeDetailPage />} />
+          
           <Route path="/home-old" component={() => <Login />} />
 
           <Route component={NotFound} />
