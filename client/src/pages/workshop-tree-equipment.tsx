@@ -84,10 +84,10 @@ const FlipCard = ({ char, index, large = false }: { char: string; index: number;
 };
 
 interface WorkshopEquipment {
-  code: string;
-  title: string;
+  equipmentCode: string;
+  equipmentName: string;
   taskCount: number;
-  totalHours: number;
+  requiredExpertise?: string[];
   tasks?: WorkshopTask[];
 }
 
@@ -210,13 +210,14 @@ export default function WorkshopTreeEquipmentPage() {
 
       {/* Equipment Grid */}
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {equipment.map((eq: WorkshopEquipment) => (
+        {equipment.length > 0 ? (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {equipment.map((eq: WorkshopEquipment) => (
             <Card
-              key={eq.code}
+              key={eq.equipmentCode}
               className="overflow-hidden hover:shadow-xl transition-all cursor-pointer"
-              onClick={() => navigateToTasks(eq.code)}
-              data-testid={`card-equipment-${eq.code}`}
+              onClick={() => navigateToTasks(eq.equipmentCode)}
+              data-testid={`card-equipment-${eq.equipmentCode}`}
             >
               <div className="p-6">
                 <div className="flex items-start justify-between mb-4">
@@ -228,28 +229,47 @@ export default function WorkshopTreeEquipmentPage() {
                   </Badge>
                 </div>
                 
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">{eq.title}</h3>
-                <p className="text-sm text-gray-600 mb-4">Equipment Code: {eq.code}</p>
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">{eq.equipmentName}</h3>
+                <p className="text-sm text-gray-600 mb-4">Equipment Code: {eq.equipmentCode}</p>
                 
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center text-gray-500">
                     <Clock className="h-4 w-4 mr-1" />
-                    <span>~{eq.totalHours}h total</span>
+                    <span>{eq.taskCount} tasks available</span>
                   </div>
                   <button
                     className="text-orange-600 font-medium hover:underline"
                     onClick={(e) => {
                       e.stopPropagation();
-                      toggleEquipment(eq.code);
+                      toggleEquipment(eq.equipmentCode);
                     }}
-                    data-testid={`button-toggle-${eq.code}`}
+                    data-testid={`button-toggle-${eq.equipmentCode}`}
                   >
                     View Tasks →
                   </button>
                 </div>
 
+                {/* Required Expertise */}
+                {eq.requiredExpertise && eq.requiredExpertise.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <p className="text-xs text-gray-600 mb-2">Required Expertise:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {eq.requiredExpertise.slice(0, 3).map((expertise, index) => (
+                        <Badge key={index} variant="outline" className="text-xs">
+                          {expertise}
+                        </Badge>
+                      ))}
+                      {eq.requiredExpertise.length > 3 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{eq.requiredExpertise.length - 3} more
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Expanded Tasks Preview */}
-                {expandedEquipment.has(eq.code) && eq.tasks && (
+                {expandedEquipment.has(eq.equipmentCode) && eq.tasks && (
                   <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
                     {eq.tasks.slice(0, 3).map((task: WorkshopTask) => (
                       <div key={task.id} className="text-xs">
@@ -270,8 +290,23 @@ export default function WorkshopTreeEquipmentPage() {
                 )}
               </div>
             </Card>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <Card className="p-8 text-center">
+            <div className="flex flex-col items-center space-y-4">
+              <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
+                <Settings className="h-8 w-8 text-gray-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">No Equipment Available</h3>
+                <p className="text-sm text-gray-600 max-w-md">
+                  No equipment has been configured for this system yet. Equipment definitions are being updated regularly.
+                </p>
+              </div>
+            </div>
+          </Card>
+        )}
       </div>
     </div>
   );
