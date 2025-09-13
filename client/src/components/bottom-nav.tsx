@@ -49,13 +49,6 @@ export default function BottomNav({ user, onLogout }: BottomNavProps) {
       active: location === "/discover" || location === "/users",
       onClick: () => setLocation("/discover")
     },
-    { 
-      path: "/workshop-tree", 
-      icon: "fas fa-tools", 
-      label: ["Workshop", "Services"],
-      active: location.startsWith("/workshop-tree"),
-      onClick: () => setLocation("/workshop-tree")
-    }
   ];
 
   const navItems = baseNavItems;
