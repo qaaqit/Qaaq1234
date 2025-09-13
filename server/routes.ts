@@ -8730,6 +8730,437 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
     }
   });
 
+  // ==== WORKSHOP TREE API ENDPOINTS ====
+  
+  // 1. GET /api/workshop-tree - Get all systems with task counts
+  app.get('/api/workshop-tree', async (req, res) => {
+    try {
+      console.log('🌲 Fetching workshop tree systems with task counts');
+      
+      // Get systems that have workshop service tasks
+      const result = await pool.query(`
+        SELECT 
+          system_code,
+          COUNT(DISTINCT task_code) as task_count,
+          COUNT(DISTINCT equipment_code) as equipment_count
+        FROM workshop_service_tasks
+        WHERE is_active = true
+        GROUP BY system_code
+        ORDER BY system_code ASC
+      `);
+      
+      // Define SEMM system names
+      const systemNames: { [key: string]: string } = {
+        'a': 'Propulsion',
+        'b': 'Power Generation',
+        'c': 'Boiler',
+        'd': 'Fresh Water & Cooling',
+        'e': 'Pumps & Auxiliary',
+        'f': 'Compressed Air Systems',
+        'g': 'Oil Purification',
+        'h': 'Cargo Systems',
+        'i': 'Safety & Fire Fighting',
+        'j': 'Crane & Deck Equipment',
+        'k': 'Navigation Systems',
+        'l': 'Automation & Control',
+        'm': 'HVAC Systems',
+        'n': 'Pollution Control',
+        'o': 'Hull & Structure',
+        'p': 'Accommodation',
+        'q': 'Workshop Equipment',
+        'r': 'Communication Systems',
+        's': 'Spare Parts & Consumables'
+      };
+      
+      const systems = result.rows.map(row => ({
+        systemCode: row.system_code,
+        systemName: systemNames[row.system_code] || 'Unknown System',
+        taskCount: parseInt(row.task_count),
+        equipmentCount: parseInt(row.equipment_count)
+      }));
+      
+      console.log(`✅ Found ${systems.length} systems with workshop tasks`);
+      res.json({
+        success: true,
+        systems,
+        totalSystems: systems.length
+      });
+      
+    } catch (error) {
+      console.error('❌ Error fetching workshop tree systems:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch workshop tree systems',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+  
+  // 2. GET /api/workshop-tree/system/:systemCode - Get equipment for a system
+  app.get('/api/workshop-tree/system/:systemCode', async (req, res) => {
+    try {
+      const { systemCode } = req.params;
+      console.log(`🌲 Fetching equipment for system: ${systemCode}`);
+      
+      // Get equipment within the system that has workshop tasks
+      const result = await pool.query(`
+        SELECT 
+          equipment_code,
+          MIN(task_name) as sample_task_name,
+          COUNT(DISTINCT task_code) as task_count,
+          array_agg(DISTINCT unnest_expertise) FILTER (WHERE unnest_expertise IS NOT NULL) as required_expertise
+        FROM (
+          SELECT 
+            equipment_code,
+            task_code,
+            task_name,
+            unnest(required_expertise::text[]) as unnest_expertise
+          FROM workshop_service_tasks
+          WHERE system_code = $1 AND is_active = true
+        ) t
+        GROUP BY equipment_code
+        ORDER BY equipment_code ASC
+      `, [systemCode]);
+      
+      const equipment = result.rows.map(row => ({
+        equipmentCode: row.equipment_code,
+        equipmentName: row.sample_task_name ? row.sample_task_name.split('-')[0].trim() : `Equipment ${row.equipment_code.toUpperCase()}`,
+        taskCount: parseInt(row.task_count),
+        requiredExpertise: row.required_expertise || []
+      }));
+      
+      console.log(`✅ Found ${equipment.length} equipment types for system ${systemCode}`);
+      res.json({
+        success: true,
+        systemCode,
+        equipment,
+        totalEquipment: equipment.length
+      });
+      
+    } catch (error) {
+      console.error('❌ Error fetching equipment for system:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch equipment',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+  
+  // 3. GET /api/workshop-tree/equipment/:systemCode/:equipmentCode - Get tasks for equipment
+  app.get('/api/workshop-tree/equipment/:systemCode/:equipmentCode', async (req, res) => {
+    try {
+      const { systemCode, equipmentCode } = req.params;
+      console.log(`🌲 Fetching tasks for equipment: ${systemCode}/${equipmentCode}`);
+      
+      // Get workshop service tasks for the selected equipment
+      const result = await pool.query(`
+        SELECT 
+          id,
+          task_code,
+          task_name,
+          task_description,
+          required_expertise,
+          estimated_hours,
+          difficulty_level,
+          tags
+        FROM workshop_service_tasks
+        WHERE system_code = $1 
+          AND equipment_code = $2
+          AND is_active = true
+        ORDER BY task_sequence ASC, "order" ASC
+      `, [systemCode, equipmentCode]);
+      
+      const tasks = result.rows.map(row => ({
+        taskId: row.id,
+        taskCode: row.task_code,
+        taskName: row.task_name,
+        taskDescription: row.task_description,
+        requiredExpertise: row.required_expertise || [],
+        estimatedHours: parseFloat(row.estimated_hours),
+        difficultyLevel: row.difficulty_level,
+        tags: row.tags || []
+      }));
+      
+      console.log(`✅ Found ${tasks.length} tasks for equipment ${systemCode}/${equipmentCode}`);
+      res.json({
+        success: true,
+        systemCode,
+        equipmentCode,
+        tasks,
+        totalTasks: tasks.length
+      });
+      
+    } catch (error) {
+      console.error('❌ Error fetching tasks for equipment:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch tasks',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+  
+  // 4. GET /api/workshop-tree/task/:taskId - Get expertise and ports for a task
+  app.get('/api/workshop-tree/task/:taskId', async (req, res) => {
+    try {
+      const { taskId } = req.params;
+      console.log(`🌲 Fetching expertise and ports for task: ${taskId}`);
+      
+      // Get task details
+      const taskResult = await pool.query(`
+        SELECT 
+          id,
+          task_code,
+          task_name,
+          task_description,
+          required_expertise,
+          estimated_hours,
+          difficulty_level
+        FROM workshop_service_tasks
+        WHERE id = $1 AND is_active = true
+      `, [taskId]);
+      
+      if (taskResult.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: 'Task not found'
+        });
+      }
+      
+      const task = taskResult.rows[0];
+      const requiredExpertise = task.required_expertise || [];
+      
+      // Get all ports that have workshops offering the required expertise
+      let portsQuery = `
+        SELECT DISTINCT 
+          home_port,
+          COUNT(DISTINCT id) as workshop_count
+        FROM workshop_profiles
+        WHERE is_active = true
+      `;
+      
+      if (requiredExpertise.length > 0) {
+        // Filter by workshops that have at least one of the required expertise
+        portsQuery += ` AND maritime_expertise::jsonb ?| $1`;
+      }
+      
+      portsQuery += ` GROUP BY home_port ORDER BY home_port ASC`;
+      
+      const portsResult = requiredExpertise.length > 0 
+        ? await pool.query(portsQuery, [requiredExpertise])
+        : await pool.query(portsQuery);
+      
+      const ports = portsResult.rows.map(row => ({
+        port: row.home_port,
+        workshopCount: parseInt(row.workshop_count)
+      }));
+      
+      console.log(`✅ Found ${ports.length} ports with workshops for task ${taskId}`);
+      res.json({
+        success: true,
+        task: {
+          taskId: task.id,
+          taskCode: task.task_code,
+          taskName: task.task_name,
+          taskDescription: task.task_description,
+          estimatedHours: parseFloat(task.estimated_hours),
+          difficultyLevel: task.difficulty_level
+        },
+        requiredExpertise,
+        ports,
+        totalPorts: ports.length
+      });
+      
+    } catch (error) {
+      console.error('❌ Error fetching expertise and ports for task:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch expertise and ports',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+  
+  // 5. GET /api/workshop-tree/task/:taskId/expertise/:expertiseId/port/:port - Get workshops
+  app.get('/api/workshop-tree/task/:taskId/expertise/:expertiseId/port/:port', async (req, res) => {
+    try {
+      const { taskId, expertiseId, port } = req.params;
+      console.log(`🌲 Fetching workshops for task ${taskId}, expertise ${expertiseId}, port ${port}`);
+      
+      // Get task to verify expertise requirement
+      const taskResult = await pool.query(`
+        SELECT required_expertise
+        FROM workshop_service_tasks
+        WHERE id = $1 AND is_active = true
+      `, [taskId]);
+      
+      if (taskResult.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: 'Task not found'
+        });
+      }
+      
+      // Get workshops in the specified port offering the required expertise
+      const workshopsResult = await pool.query(`
+        SELECT 
+          wp.id,
+          wp.workshop_number,
+          wp.display_id,
+          wp.full_name,
+          wp.email,
+          wp.whatsapp_number,
+          wp.maritime_expertise,
+          wp.classification_approvals,
+          wp.average_rating,
+          wp.total_reviews,
+          wpr.base_rate_8_hours,
+          wpr.overtime_multiplier,
+          wpr.minimum_hours,
+          wpr.currency
+        FROM workshop_profiles wp
+        LEFT JOIN workshop_pricing wpr ON wp.id = wpr.workshop_id AND wpr.expertise_category = $1
+        WHERE wp.home_port = $2
+          AND wp.is_active = true
+          AND wp.maritime_expertise::jsonb ? $1
+        ORDER BY wp.average_rating DESC NULLS LAST, wp.workshop_number ASC
+      `, [expertiseId, port]);
+      
+      const workshops = workshopsResult.rows.map(row => ({
+        workshopId: row.id,
+        workshopNumber: row.workshop_number,
+        displayId: row.display_id,
+        fullName: row.full_name,
+        email: row.email,
+        whatsappNumber: row.whatsapp_number,
+        maritimeExpertise: row.maritime_expertise || [],
+        classificationApprovals: row.classification_approvals || {},
+        averageRating: row.average_rating ? parseFloat(row.average_rating) : null,
+        totalReviews: row.total_reviews || 0,
+        pricing: row.base_rate_8_hours ? {
+          baseRate8Hours: parseFloat(row.base_rate_8_hours),
+          overtimeMultiplier: parseFloat(row.overtime_multiplier),
+          minimumHours: parseFloat(row.minimum_hours),
+          currency: row.currency
+        } : null
+      }));
+      
+      console.log(`✅ Found ${workshops.length} workshops in ${port} for expertise ${expertiseId}`);
+      res.json({
+        success: true,
+        taskId,
+        expertiseId,
+        port,
+        workshops,
+        totalWorkshops: workshops.length
+      });
+      
+    } catch (error) {
+      console.error('❌ Error fetching workshops:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch workshops',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+  
+  // 6. GET /api/workshop-tree/workshop/:workshopId - Get workshop details
+  app.get('/api/workshop-tree/workshop/:workshopId', async (req, res) => {
+    try {
+      const { workshopId } = req.params;
+      console.log(`🌲 Fetching workshop details: ${workshopId}`);
+      
+      // Get full workshop profile with contact info
+      const workshopResult = await pool.query(`
+        SELECT 
+          id,
+          workshop_number,
+          display_id,
+          full_name,
+          email,
+          whatsapp_number,
+          home_port,
+          maritime_expertise,
+          classification_approvals,
+          operational_hours,
+          workforce_size,
+          facility_details,
+          average_rating,
+          total_reviews,
+          is_verified,
+          created_at
+        FROM workshop_profiles
+        WHERE id = $1 AND is_active = true
+      `, [workshopId]);
+      
+      if (workshopResult.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: 'Workshop not found'
+        });
+      }
+      
+      const workshop = workshopResult.rows[0];
+      
+      // Get all pricing for this workshop
+      const pricingResult = await pool.query(`
+        SELECT 
+          expertise_category,
+          base_rate_8_hours,
+          overtime_multiplier,
+          minimum_hours,
+          currency,
+          notes
+        FROM workshop_pricing
+        WHERE workshop_id = $1 AND is_active = true
+        ORDER BY expertise_category ASC
+      `, [workshopId]);
+      
+      const pricing = pricingResult.rows.map(row => ({
+        expertiseCategory: row.expertise_category,
+        baseRate8Hours: parseFloat(row.base_rate_8_hours),
+        overtimeMultiplier: parseFloat(row.overtime_multiplier),
+        minimumHours: parseFloat(row.minimum_hours),
+        currency: row.currency,
+        notes: row.notes
+      }));
+      
+      console.log(`✅ Retrieved workshop details for ${workshop.display_id || workshop.workshop_number}`);
+      res.json({
+        success: true,
+        workshop: {
+          workshopId: workshop.id,
+          workshopNumber: workshop.workshop_number,
+          displayId: workshop.display_id,
+          fullName: workshop.full_name,
+          email: workshop.email,
+          whatsappNumber: workshop.whatsapp_number,
+          homePort: workshop.home_port,
+          maritimeExpertise: workshop.maritime_expertise || [],
+          classificationApprovals: workshop.classification_approvals || {},
+          operationalHours: workshop.operational_hours,
+          workforceSize: workshop.workforce_size,
+          facilityDetails: workshop.facility_details,
+          averageRating: workshop.average_rating ? parseFloat(workshop.average_rating) : null,
+          totalReviews: workshop.total_reviews || 0,
+          isVerified: workshop.is_verified,
+          createdAt: workshop.created_at,
+          pricing
+        }
+      });
+      
+    } catch (error) {
+      console.error('❌ Error fetching workshop details:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch workshop details',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
 
   // Add machine share route
   app.get('/share/machine/:id', async (req, res) => {
