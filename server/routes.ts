@@ -617,6 +617,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Lightweight geolocation endpoint - reads CDN country headers only (zero external APIs)
+  app.get('/api/geo', (req, res) => {
+    // Check common CDN country headers - instant response, no external calls
+    const country = 
+      req.headers['cf-ipcountry'] ||           // Cloudflare
+      req.headers['x-vercel-ip-country'] ||     // Vercel
+      req.headers['cloudfront-viewer-country'] || // AWS CloudFront
+      req.headers['fastly-client-ip-country'] || // Fastly
+      req.headers['x-country-code'] ||          // Generic
+      req.headers['x-appengine-country'] ||     // Google Cloud
+      null;
+    
+    // Return country code or null (< 2ms response)
+    res.json({ 
+      country: typeof country === 'string' ? country.toUpperCase() : null 
+    });
+  });
+
   app.get('/api/health', async (req, res) => {
     try {
       // Test database connection
