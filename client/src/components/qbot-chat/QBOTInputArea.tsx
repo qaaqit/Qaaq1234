@@ -247,25 +247,9 @@ export default function QBOTInputArea({ onSendMessage, disabled = false, onClear
     }
   };
 
-  // Toggle AI models with premium restriction
+  // Toggle AI models - now available for all users
   const toggleAiModel = (model: 'chatgpt' | 'gemini' | 'grok' | 'mistral') => {
-    // Allow ChatGPT for all users
-    if (model === 'chatgpt') {
-      setAiModels(prev => ({
-        ...prev,
-        [model]: !prev[model]
-      }));
-      return;
-    }
-    
-    // Restrict Gemini, DeepSeek, and Mistral to premium users only
-    if ((model === 'gemini' || model === 'grok' || model === 'mistral') && !isPremium) {
-      // Redirect free users to premium page
-      setLocation('/premium');
-      return;
-    }
-    
-    // Toggle for premium users
+    // Allow all AI models for all users
     setAiModels(prev => ({
       ...prev,
       [model]: !prev[model]
