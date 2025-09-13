@@ -64,22 +64,37 @@ export default function WorkshopTreePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100">
-      {/* Header */}
+      {/* Header with breadcrumb */}
       <div className="bg-white shadow-md border-b border-orange-200">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setLocation('/')}
-                data-testid="button-home"
-              >
-                <Home className="h-5 w-5" />
-              </Button>
-              <div className="flex items-center space-x-2">
-                <Wrench className="h-6 w-6 text-orange-600" />
-                <h1 className="text-2xl font-bold text-gray-800">Workshop Service Tree</h1>
+            <div className="flex flex-col space-y-2">
+              <div className="flex items-center space-x-4">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setLocation('/')}
+                  data-testid="button-home"
+                >
+                  <Home className="h-5 w-5" />
+                </Button>
+                <div className="flex items-center space-x-2">
+                  <Wrench className="h-6 w-6 text-orange-600" />
+                  <h1 className="text-2xl font-bold text-gray-800">Workshop Service Tree</h1>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2 text-sm ml-12">
+                <span className="text-gray-800 font-medium">System</span>
+                <ChevronRight className="h-4 w-4 text-gray-400" />
+                <span className="text-gray-500">Equipment</span>
+                <ChevronRight className="h-4 w-4 text-gray-400" />
+                <span className="text-gray-500">Task</span>
+                <ChevronRight className="h-4 w-4 text-gray-400" />
+                <span className="text-gray-500">Expertise</span>
+                <ChevronRight className="h-4 w-4 text-gray-400" />
+                <span className="text-gray-500">Port</span>
+                <ChevronRight className="h-4 w-4 text-gray-400" />
+                <span className="text-gray-500">Workshop</span>
               </div>
             </div>
             <Badge variant="outline" className="bg-orange-50 border-orange-300">
@@ -94,13 +109,13 @@ export default function WorkshopTreePage() {
         <div className="space-y-4">
           {workshopSystems.map((system: WorkshopSystem) => (
             <Card key={system.code} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
-              <div
-                className="p-6 cursor-pointer hover:bg-orange-50 transition-colors"
-                onClick={() => toggleSystem(system.code)}
-                data-testid={`button-toggle-system-${system.code}`}
-              >
+              <div className="p-6">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
+                  <div 
+                    className="flex items-center space-x-4 cursor-pointer hover:bg-orange-50 transition-colors flex-1 p-2 rounded"
+                    onClick={() => navigateToSystem(system.code)}
+                    data-testid={`button-navigate-system-${system.code}`}
+                  >
                     <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
                       <span className="text-white font-bold text-lg">{system.code.toUpperCase()}</span>
                     </div>
@@ -109,15 +124,25 @@ export default function WorkshopTreePage() {
                       <p className="text-sm text-gray-600">System Code: {system.code}</p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
                     <Badge className="bg-orange-100 text-orange-800">
                       {system.taskCount} Tasks
                     </Badge>
-                    {expandedSystems.has(system.code) ? (
-                      <ChevronDown className="h-5 w-5 text-gray-400" />
-                    ) : (
-                      <ChevronRight className="h-5 w-5 text-gray-400" />
-                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleSystem(system.code);
+                      }}
+                      data-testid={`button-toggle-system-${system.code}`}
+                    >
+                      {expandedSystems.has(system.code) ? (
+                        <ChevronDown className="h-5 w-5 text-gray-400" />
+                      ) : (
+                        <ChevronRight className="h-5 w-5 text-gray-400" />
+                      )}
+                    </Button>
                   </div>
                 </div>
               </div>

@@ -165,10 +165,18 @@ export default function WorkshopTreeEquipmentPage() {
                 className="text-orange-600 hover:underline"
                 data-testid="link-workshop-tree"
               >
-                Workshop Tree
+                System
               </button>
               <ChevronRight className="h-4 w-4 text-gray-400" />
-              <span className="text-gray-800 font-medium">{systemTitle}</span>
+              <span className="text-gray-800 font-medium">Equipment</span>
+              <ChevronRight className="h-4 w-4 text-gray-400" />
+              <span className="text-gray-500">Task</span>
+              <ChevronRight className="h-4 w-4 text-gray-400" />
+              <span className="text-gray-500">Expertise</span>
+              <ChevronRight className="h-4 w-4 text-gray-400" />
+              <span className="text-gray-500">Port</span>
+              <ChevronRight className="h-4 w-4 text-gray-400" />
+              <span className="text-gray-500">Workshop</span>
             </div>
             <Button
               variant="ghost"
