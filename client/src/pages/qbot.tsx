@@ -321,6 +321,19 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                     <span className="text-gray-700 font-medium">Machine Tree</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem 
+                    onClick={() => setLocation("/workshop-tree")}
+                    className="cursor-pointer flex flex-col items-start space-y-1 px-4 py-3 hover:bg-orange-50 transition-colors"
+                    data-testid="menu-item-workshop-tree"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <i className="fas fa-network-wired text-orange-600 w-4"></i>
+                      <span className="text-gray-700 font-medium">Workshop Tree</span>
+                    </div>
+                    <div className="text-xs text-gray-500 pl-6 leading-tight">
+                      System → Equipment → Task → Expertise → Port → Workshop
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
                     onClick={() => setLocation("/premium")}
                     className="cursor-pointer flex items-center space-x-3 px-4 py-3 hover:bg-orange-50 transition-colors"
                     data-testid="menu-item-premium"
