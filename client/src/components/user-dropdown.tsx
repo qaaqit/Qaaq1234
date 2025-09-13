@@ -124,40 +124,46 @@ export default function UserDropdown({ user, className = "", onLogout }: UserDro
         // Navigate to storage management when implemented
         setIsOpen(false);
       }
-    },
-    {
-      icon: Wrench,
-      label: "My Workshop",
-      onClick: () => {
-        setLocation('/workshop-dashboard');
-        setIsOpen(false);
-      }
-    },
-    {
-      icon: Calendar,
-      label: "Workshop Bookings",
-      onClick: () => {
-        setLocation('/workshop-bookings');
-        setIsOpen(false);
-      }
-    },
-    {
-      icon: DollarSign,
-      label: "Workshop Pricing",
-      onClick: () => {
-        setLocation('/workshop-pricing');
-        setIsOpen(false);
-      }
-    },
-    {
-      icon: Settings,
-      label: "Workshop Tasks",
-      onClick: () => {
-        setLocation('/workshop-tasks');
-        setIsOpen(false);
-      }
     }
   ];
+
+  // Add workshop management options only for workshop providers
+  if (user.isWorkshopProvider) {
+    menuItems.push(
+      {
+        icon: Wrench,
+        label: "My Workshop",
+        onClick: () => {
+          setLocation('/workshop-dashboard');
+          setIsOpen(false);
+        }
+      },
+      {
+        icon: Calendar,
+        label: "Workshop Bookings",
+        onClick: () => {
+          setLocation('/workshop-bookings');
+          setIsOpen(false);
+        }
+      },
+      {
+        icon: DollarSign,
+        label: "Workshop Pricing",
+        onClick: () => {
+          setLocation('/workshop-pricing');
+          setIsOpen(false);
+        }
+      },
+      {
+        icon: Settings,
+        label: "Workshop Tasks",
+        onClick: () => {
+          setLocation('/workshop-tasks');
+          setIsOpen(false);
+        }
+      }
+    );
+  }
 
   // Add admin panel if user is admin
   if (user.isAdmin) {

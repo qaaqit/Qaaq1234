@@ -6,6 +6,7 @@ export interface User {
   email: string;
   userType: 'sailor' | 'local';
   isAdmin?: boolean;
+  isWorkshopProvider?: boolean;
   nickname?: string;
   isVerified: boolean;
   loginCount: number;
