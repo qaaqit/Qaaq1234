@@ -151,7 +151,7 @@ export default function RFQPage({ user }: RFQPageProps) {
     }
 
     // Validate required fields
-    if (!formData.title || !formData.category || !formData.description || !formData.vesselName || !formData.location || !formData.deadline) {
+    if (!formData.title || !formData.category || !formData.description || !formData.location || !formData.deadline) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields.",
@@ -546,7 +546,7 @@ export default function RFQPage({ user }: RFQPageProps) {
                       
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <Label htmlFor="vessel">Vessel Name *</Label>
+                          <Label htmlFor="vessel">Vessel Name</Label>
                           <Input
                             id="vessel"
                             placeholder="M.V. Example"
