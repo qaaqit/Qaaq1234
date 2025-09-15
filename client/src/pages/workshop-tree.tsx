@@ -123,7 +123,7 @@ export default function WorkshopTreePage() {
           )}
         </div>
         <div className="flex flex-wrap gap-1">
-          {workshop.expertise.slice(0, 3).map((exp, index) => (
+          {(workshop.expertise || []).slice(0, 3).map((exp, index) => (
             <Badge
               key={index}
               variant="outline"
@@ -133,9 +133,9 @@ export default function WorkshopTreePage() {
               {exp}
             </Badge>
           ))}
-          {workshop.expertise.length > 3 && (
+          {(workshop.expertise || []).length > 3 && (
             <Badge variant="outline" className="text-xs bg-gray-50 border-gray-200 text-gray-600">
-              +{workshop.expertise.length - 3} more
+              +{(workshop.expertise || []).length - 3} more
             </Badge>
           )}
         </div>
