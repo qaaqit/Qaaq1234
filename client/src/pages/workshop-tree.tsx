@@ -29,7 +29,7 @@ interface FeaturedWorkshop {
   expertiseTags: string[];
   heroImageUrl?: string;
   websiteUrl?: string;
-  websitePreviewImage?: string;
+  websitePreviewImage?: string; // Secure server-generated screenshot URL
   verified: boolean;
   rating: number;
   servicesCount?: number;
@@ -84,29 +84,27 @@ export default function WorkshopTreePage() {
       }
     };
 
-    // Simple screenshot approach - generate direct screenshot URL for workshop websites
+    // SECURE APPROACH: Use server-generated screenshot URLs from API
     let imageSource = null;
+    let fallbackImageSource = null;
     
-    // If workshop has a website URL, create a simple screenshot URL
-    if (workshop.websiteUrl && workshop.websiteUrl.trim()) {
-      const websiteUrl = workshop.websiteUrl.startsWith('http') ? workshop.websiteUrl : `https://${workshop.websiteUrl}`;
-      // Use a simple screenshot service URL with basic parameters
-      imageSource = `https://api.screenshotone.com/take?access_key=iylJb375ZyVUhg&url=${encodeURIComponent(websiteUrl)}&viewport_width=1200&viewport_height=800&format=png&block_ads=true&cache=true`;
+    // Primary: Use secure website preview image from API (generated server-side)
+    if (workshop.websitePreviewImage && workshop.websitePreviewImage.trim()) {
+      imageSource = workshop.websitePreviewImage;
     }
     
-    // Fallback to heroImageUrl if no website or if screenshot fails
-    let fallbackImageSource = workshop.heroImageUrl && workshop.heroImageUrl.trim() || null;
-    if (fallbackImageSource && !fallbackImageSource.startsWith('http')) {
-      fallbackImageSource = `https://${fallbackImageSource}`;
+    // Fallback to heroImageUrl if no secure screenshot is available
+    if (workshop.heroImageUrl && workshop.heroImageUrl.trim()) {
+      const heroImage = workshop.heroImageUrl.startsWith('http') 
+        ? workshop.heroImageUrl 
+        : `https://${workshop.heroImageUrl}`;
+      
+      if (!imageSource) {
+        imageSource = heroImage; // Use as primary if no screenshot
+      } else {
+        fallbackImageSource = heroImage; // Use as fallback for screenshot errors
+      }
     }
-    
-    // Use screenshot as primary, hero image as fallback
-    if (!imageSource) {
-      imageSource = fallbackImageSource;
-      fallbackImageSource = null; // No secondary fallback needed
-    }
-
-    // Image error tracking is handled at component level, no useEffect needed here
 
     return (
       <div
