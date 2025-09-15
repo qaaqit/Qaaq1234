@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
-import { ChevronRight, ChevronDown, Wrench, Home, Settings, Building, MapPin, Clock, Star, Shield, Image as ImageIcon } from 'lucide-react';
+import { ChevronRight, ChevronDown, Wrench, Home, Settings, Building, MapPin, Clock, Star, Shield, Image as ImageIcon, Globe, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +28,8 @@ interface FeaturedWorkshop {
   country: string;
   expertise: string[];
   heroImage?: string;
+  websiteUrl?: string;
+  websitePreviewImage?: string;
   isVerified: boolean;
   rating: number;
   reviewCount: number;
@@ -69,79 +71,130 @@ export default function WorkshopTreePage() {
     setLocation(`/workshop/${workshopId}`);
   };
 
-  const renderWorkshopCard = (workshop: FeaturedWorkshop) => (
-    <div
-      key={workshop.id}
-      className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer group min-w-[280px] max-w-[320px]"
-      onClick={() => navigateToWorkshop(workshop.id)}
-      data-testid={`card-workshop-${workshop.id}`}
-    >
-      <div className="relative h-48 bg-gradient-to-br from-orange-100 to-orange-200 rounded-t-xl overflow-hidden">
-        {workshop.heroImage ? (
-          <img
-            src={workshop.heroImage}
-            alt={workshop.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.style.display = 'none';
-              target.nextElementSibling?.classList.remove('hidden');
-            }}
-          />
-        ) : null}
-        <div className={`${workshop.heroImage ? 'hidden' : 'flex'} absolute inset-0 items-center justify-center`}>
-          <ImageIcon className="h-16 w-16 text-orange-400" />
-        </div>
-        {workshop.isVerified && (
-          <div className="absolute top-3 right-3 bg-green-500 rounded-full p-1">
-            <Shield className="h-4 w-4 text-white" />
-          </div>
-        )}
-      </div>
-      <div className="p-4">
-        <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2" data-testid={`text-workshop-name-${workshop.id}`}>
-          {workshop.name}
-        </h3>
-        <div className="flex items-center text-sm text-gray-600 mb-3">
-          <MapPin className="h-4 w-4 mr-1" />
-          <span data-testid={`text-workshop-location-${workshop.id}`}>
-            {workshop.city}, {workshop.country}
-          </span>
-        </div>
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center">
-            <Star className="h-4 w-4 text-yellow-400 fill-current" />
-            <span className="text-sm font-medium ml-1" data-testid={`text-workshop-rating-${workshop.id}`}>
-              {workshop.rating.toFixed(1)}
-            </span>
-            <span className="text-xs text-gray-500 ml-1">({workshop.reviewCount})</span>
+  const renderWorkshopCard = (workshop: FeaturedWorkshop) => {
+    // Helper function to extract domain from URL
+    const extractDomain = (url?: string) => {
+      if (!url) return null;
+      try {
+        const domain = new URL(url.startsWith('http') ? url : `https://${url}`).hostname;
+        return domain.startsWith('www.') ? domain : `www.${domain}`;
+      } catch {
+        return url;
+      }
+    };
+
+    // Use websitePreviewImage first, then fallback to heroImage
+    const imageSource = workshop.websitePreviewImage || workshop.heroImage;
+
+    return (
+      <div
+        key={workshop.id}
+        className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer group min-w-[280px] max-w-[320px]"
+        onClick={() => navigateToWorkshop(workshop.id)}
+        data-testid={`card-workshop-${workshop.id}`}
+      >
+        <div className="relative h-48 bg-gradient-to-br from-orange-100 to-orange-200 rounded-t-xl overflow-hidden">
+          {imageSource ? (
+            <img
+              src={imageSource}
+              alt={workshop.name}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              data-testid={`img-workshop-preview-${workshop.id}`}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                target.nextElementSibling?.classList.remove('hidden');
+              }}
+            />
+          ) : null}
+          <div className={`${imageSource ? 'hidden' : 'flex'} absolute inset-0 items-center justify-center`}>
+            <ImageIcon className="h-16 w-16 text-orange-400" />
           </div>
           {workshop.isVerified && (
-            <Badge variant="secondary" className="text-xs bg-green-50 text-green-700">
-              Verified
-            </Badge>
+            <div className="absolute top-3 right-3 bg-green-500 rounded-full p-1">
+              <Shield className="h-4 w-4 text-white" />
+            </div>
           )}
         </div>
-        <div className="flex flex-wrap gap-1">
-          {(workshop.expertise || []).slice(0, 3).map((exp, index) => (
-            <Badge
-              key={index}
-              variant="outline"
-              className="text-xs bg-orange-50 border-orange-200 text-orange-700"
-              data-testid={`badge-expertise-${workshop.id}-${index}`}
-            >
-              {exp}
-            </Badge>
-          ))}
-          {(workshop.expertise || []).length > 3 && (
-            <Badge variant="outline" className="text-xs bg-gray-50 border-gray-200 text-gray-600">
-              +{(workshop.expertise || []).length - 3} more
-            </Badge>
-          )}
+        <div className="p-4">
+          <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2" data-testid={`text-workshop-name-${workshop.id}`}>
+            {workshop.name}
+          </h3>
+          
+          {/* Website URL or Location Display */}
+          <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
+            {workshop.websiteUrl ? (
+              <div className="flex items-center flex-1 min-w-0">
+                <Globe className="h-4 w-4 mr-1 flex-shrink-0" />
+                <span 
+                  className="truncate" 
+                  data-testid={`text-workshop-website-${workshop.id}`}
+                  title={extractDomain(workshop.websiteUrl) || workshop.websiteUrl}
+                >
+                  {extractDomain(workshop.websiteUrl) || workshop.websiteUrl}
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center flex-1">
+                <MapPin className="h-4 w-4 mr-1" />
+                <span data-testid={`text-workshop-location-${workshop.id}`}>
+                  {workshop.city}, {workshop.country}
+                </span>
+              </div>
+            )}
+            
+            {/* External Link Button */}
+            {workshop.websiteUrl && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const url = workshop.websiteUrl!.startsWith('http') ? workshop.websiteUrl : `https://${workshop.websiteUrl}`;
+                  window.open(url, '_blank', 'noopener,noreferrer');
+                }}
+                className="ml-2 p-1 hover:bg-gray-100 rounded transition-colors"
+                title="Visit website"
+                data-testid={`button-external-website-${workshop.id}`}
+              >
+                <ExternalLink className="h-3 w-3 text-gray-500 hover:text-orange-600" />
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center">
+              <Star className="h-4 w-4 text-yellow-400 fill-current" />
+              <span className="text-sm font-medium ml-1" data-testid={`text-workshop-rating-${workshop.id}`}>
+                {workshop.rating.toFixed(1)}
+              </span>
+              <span className="text-xs text-gray-500 ml-1">({workshop.reviewCount})</span>
+            </div>
+            {workshop.isVerified && (
+              <Badge variant="secondary" className="text-xs bg-green-50 text-green-700">
+                Verified
+              </Badge>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-1">
+            {(workshop.expertise || []).slice(0, 3).map((exp, index) => (
+              <Badge
+                key={index}
+                variant="outline"
+                className="text-xs bg-orange-50 border-orange-200 text-orange-700"
+                data-testid={`badge-expertise-${workshop.id}-${index}`}
+              >
+                {exp}
+              </Badge>
+            ))}
+            {(workshop.expertise || []).length > 3 && (
+              <Badge variant="outline" className="text-xs bg-gray-50 border-gray-200 text-gray-600">
+                +{(workshop.expertise || []).length - 3} more
+              </Badge>
+            )}
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderWorkshopSkeleton = () => (
     <div className="min-w-[280px] max-w-[320px]">
