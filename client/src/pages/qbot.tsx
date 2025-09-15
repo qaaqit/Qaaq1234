@@ -404,19 +404,6 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                   <QBOTChatArea>
                     <div className="flex flex-col h-full p-4 relative">
 
-                      {/* Minimized Roadblock Indicator */}
-                      {!isPremiumUser && !showRoadblock && (
-                        <div className="absolute top-4 right-4 z-40">
-                          <button
-                            onClick={() => setShowRoadblock(true)}
-                            className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-4 py-2 rounded-full shadow-lg flex items-center space-x-2 hover:from-yellow-600 hover:to-orange-600 transition-all duration-200"
-                            title="View premium upgrade options"
-                          >
-                            <span className="text-sm font-medium">⭐ Upgrade</span>
-                            <ChevronUp className="w-4 h-4" />
-                          </button>
-                        </div>
-                      )}
 
                       {/* Messages or Welcome State */}
                       {isLoadingHistory ? (
@@ -468,66 +455,6 @@ export default function QBOTPage({ user }: QBOTPageProps) {
             <div className="h-[200px] relative">
               <ImageCarousel className="h-full" />
               
-              {/* Premium Roadblock over Carousel - Above Bottom Navigation */}
-              {!isPremiumUser && showRoadblock && (
-                <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-50 flex items-start justify-center pt-4">
-                  <div className="w-48 bg-white rounded-lg shadow-xl border border-orange-400 p-2 text-center relative">
-                    {/* Minimize/Restore Chevron */}
-                    <button
-                      onClick={() => setShowRoadblock(false)}
-                      className="absolute top-1 right-1 w-1 h-1 bg-orange-100 hover:bg-orange-200 rounded-full flex items-center justify-center transition-all duration-200"
-                      title="Minimize"
-                    >
-                      <ChevronDown className="w-1 h-1 text-orange-600" />
-                    </button>
-
-                    {/* Compact Header */}
-                    <div className="mb-1.5">
-                      <h2 className="text-xs font-bold text-gray-800">QBOT Premium</h2>
-                    </div>
-
-                    {/* Compact Features - 2x2 Grid */}
-                    <div className="mb-1.5 grid grid-cols-2 gap-0.5 bg-gray-50 rounded p-1 text-xs">
-                      <div className="flex items-center text-gray-700">
-                        <span className="text-green-500 mr-0.5">✓</span>
-                        <span className="text-xs">Unlimited</span>
-                      </div>
-                      <div className="flex items-center text-gray-700">
-                        <span className="text-green-500 mr-0.5">✓</span>
-                        <span className="text-xs">Multi-AI</span>
-                      </div>
-                      <div className="flex items-center text-gray-700">
-                        <span className="text-green-500 mr-0.5">✓</span>
-                        <span className="text-xs">Priority</span>
-                      </div>
-                      <div className="flex items-center text-gray-700">
-                        <span className="text-green-500 mr-0.5">✓</span>
-                        <span className="text-xs">Files</span>
-                      </div>
-                    </div>
-
-                    {/* Compact Buttons */}
-                    <div className="flex gap-0.5">
-                      <a
-                        href="https://rzp.io/rzp/jwQW9TW"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium py-1 px-0.5 rounded text-xs text-center leading-none"
-                      >
-                        Monthly<br />₹451
-                      </a>
-                      <a
-                        href="https://rzp.io/rzp/NAU59cv"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium py-1 px-0.5 rounded text-xs text-center leading-none"
-                      >
-                        Yearly<br />₹2,611
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </TabsContent>
 
@@ -537,66 +464,6 @@ export default function QBOTPage({ user }: QBOTPageProps) {
             <div className="h-[200px] relative">
               <ImageCarousel className="h-full" />
               
-              {/* Premium Roadblock over Carousel - Above Bottom Navigation */}
-              {!isPremiumUser && showRoadblock && (
-                <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-50 flex items-end justify-center pb-4">
-                  <div className="w-48 bg-white rounded-lg shadow-xl border border-orange-400 p-2 text-center relative">
-                    {/* Minimize/Restore Chevron */}
-                    <button
-                      onClick={() => setShowRoadblock(false)}
-                      className="absolute top-1 right-1 w-1 h-1 bg-orange-100 hover:bg-orange-200 rounded-full flex items-center justify-center transition-all duration-200"
-                      title="Minimize"
-                    >
-                      <ChevronDown className="w-1 h-1 text-orange-600" />
-                    </button>
-
-                    {/* Compact Header */}
-                    <div className="mb-1.5">
-                      <h2 className="text-xs font-bold text-gray-800">QBOT Premium</h2>
-                    </div>
-
-                    {/* Compact Features - 2x2 Grid */}
-                    <div className="mb-1.5 grid grid-cols-2 gap-0.5 bg-gray-50 rounded p-1 text-xs">
-                      <div className="flex items-center text-gray-700">
-                        <span className="text-green-500 mr-0.5">✓</span>
-                        <span className="text-xs">Unlimited</span>
-                      </div>
-                      <div className="flex items-center text-gray-700">
-                        <span className="text-green-500 mr-0.5">✓</span>
-                        <span className="text-xs">Multi-AI</span>
-                      </div>
-                      <div className="flex items-center text-gray-700">
-                        <span className="text-green-500 mr-0.5">✓</span>
-                        <span className="text-xs">Priority</span>
-                      </div>
-                      <div className="flex items-center text-gray-700">
-                        <span className="text-green-500 mr-0.5">✓</span>
-                        <span className="text-xs">Files</span>
-                      </div>
-                    </div>
-
-                    {/* Compact Buttons */}
-                    <div className="flex gap-0.5">
-                      <a
-                        href="https://rzp.io/rzp/jwQW9TW"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium py-1 px-0.5 rounded text-xs text-center leading-none"
-                      >
-                        Monthly<br />₹451
-                      </a>
-                      <a
-                        href="https://rzp.io/rzp/NAU59cv"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium py-1 px-0.5 rounded text-xs text-center leading-none"
-                      >
-                        Yearly<br />₹2,611
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
             
             {/* Questions Tab below carousel with improved layout */}
