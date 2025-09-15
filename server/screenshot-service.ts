@@ -113,7 +113,7 @@ export class ScreenshotService {
       block_ads: (options.blockAds !== false).toString(), // Default to true
       block_cookie_banners: 'true',
       block_chats: 'true',
-      response_type: 'image',
+      response_type: 'by_format', // Use by_format instead of image
       cache: 'true',
       cache_ttl: '86400' // 24 hours cache
     });

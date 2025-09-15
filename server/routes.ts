@@ -6463,15 +6463,23 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
           let websitePreviewImage = workshop.website_preview_image; // Use stored image first
           if (workshop.official_website && !websitePreviewImage) {
             try {
-              websitePreviewImage = await screenshotService.generateScreenshotUrl({
-                url: workshop.official_website,
-                width: 1200,
-                height: 800,
-                format: 'png',
-                blockAds: true,
-                fullPage: false // Viewport screenshot for faster loading
-              });
-              console.log(`📸 Generated screenshot for ${workshop.display_id || workshop.full_name}: ${websitePreviewImage ? 'Success' : 'Failed'}`);
+              // Only generate screenshots for real domains (avoid test domains)
+              const validDomains = ['dubaimarine.ae', 'smesolutions.sg', 'rotterdamship.nl'];
+              const domain = new URL(workshop.official_website.startsWith('http') ? workshop.official_website : `https://${workshop.official_website}`).hostname;
+              
+              if (validDomains.includes(domain.replace('www.', ''))) {
+                websitePreviewImage = await screenshotService.generateScreenshotUrl({
+                  url: workshop.official_website,
+                  width: 1200,
+                  height: 800,
+                  format: 'png',
+                  blockAds: true,
+                  fullPage: false // Viewport screenshot for faster loading
+                });
+                console.log(`📸 Generated screenshot for ${workshop.display_id || workshop.full_name}: ${websitePreviewImage ? 'Success' : 'Failed'}`);
+              } else {
+                console.log(`🚫 Skipped screenshot for test domain: ${domain}`);
+              }
             } catch (error) {
               console.error(`❌ Screenshot generation failed for ${workshop.official_website}:`, error);
             }
