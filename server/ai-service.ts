@@ -81,7 +81,15 @@ export class AIService {
         • [Action/Solution in 6-12 words]
         • [Technical detail in 6-12 words]  
         • [Safety consideration in 6-12 words]
-        • [Regulation reference if applicable]`;
+        • [Regulation reference if applicable]
+      
+      Q2Q FOLLOW-UP REQUIREMENT:
+      - ALWAYS end your response with exactly TWO relevant follow-up questions
+      - Format: "Would you like to know [specific related topic]?" 
+      - Questions should deepen understanding of the core topic
+      - Example: If asked about centrifugal pump, follow with:
+        "Would you like to know what is Lantern Ring in a Centrifugal pump?"
+        "Would you like to know the material by which impeller, casing & mouth ring are made?"`;
       
       if (activeRules) {
         systemPrompt += `\n\nActive bot documentation guidelines:\n${activeRules.substring(0, 800)}`;
@@ -92,7 +100,7 @@ export class AIService {
       // Use GPT-5 for premium users, GPT-4o-mini for free users
       const isPremium = this.isPremiumUser(user);
       const model = isPremium ? "gpt-4o" : "gpt-4o-mini";  // Using gpt-4o as premium model
-      const maxTokens = isPremium ? 300 : 150;  // More tokens for premium users
+      const maxTokens = isPremium ? 450 : 250;  // More tokens for premium users (increased for Q2Q questions)
       
       console.log(`🚀 Using ${model} model for ${isPremium ? 'PREMIUM' : 'FREE'} user`);
       
@@ -180,7 +188,15 @@ export class AIService {
         • [Action/Solution in 6-12 words]
         • [Technical detail in 6-12 words]  
         • [Safety consideration in 6-12 words]
-        • [Regulation reference if applicable]`;
+        • [Regulation reference if applicable]
+      
+      Q2Q FOLLOW-UP REQUIREMENT:
+      - ALWAYS end your response with exactly TWO relevant follow-up questions
+      - Format: "Would you like to know [specific related topic]?" 
+      - Questions should deepen understanding of the core topic
+      - Example: If asked about centrifugal pump, follow with:
+        "Would you like to know what is Lantern Ring in a Centrifugal pump?"
+        "Would you like to know the material by which impeller, casing & mouth ring are made?"`;
       
       if (activeRules) {
         systemPrompt += `\n\nActive bot documentation guidelines:\n${activeRules.substring(0, 800)}`;
@@ -197,7 +213,7 @@ export class AIService {
           temperature: 0.7,
           topK: 1,
           topP: 1,
-          maxOutputTokens: 150,
+          maxOutputTokens: 250,
           stopSequences: []
         },
         safetySettings: [{
@@ -297,7 +313,15 @@ export class AIService {
         • [Action/Solution in 6-12 words]
         • [Technical detail in 6-12 words]  
         • [Safety consideration in 6-12 words]
-        • [Regulation reference if applicable]`;
+        • [Regulation reference if applicable]
+      
+      Q2Q FOLLOW-UP REQUIREMENT:
+      - ALWAYS end your response with exactly TWO relevant follow-up questions
+      - Format: "Would you like to know [specific related topic]?" 
+      - Questions should deepen understanding of the core topic
+      - Example: If asked about centrifugal pump, follow with:
+        "Would you like to know what is Lantern Ring in a Centrifugal pump?"
+        "Would you like to know the material by which impeller, casing & mouth ring are made?"`;
       
       if (activeRules) {
         systemPrompt += `\n\nActive bot documentation guidelines:\n${activeRules.substring(0, 800)}`;
@@ -311,7 +335,7 @@ export class AIService {
           { role: "system", content: systemPrompt },
           { role: "user", content: message }
         ],
-        max_tokens: 150,
+        max_tokens: 250,
         temperature: 0.2,
       });
 
@@ -374,7 +398,15 @@ export class AIService {
         • [Action/Solution in 6-12 words]
         • [Technical detail in 6-12 words]  
         • [Safety consideration in 6-12 words]
-        • [Regulation reference if applicable]`;
+        • [Regulation reference if applicable]
+      
+      Q2Q FOLLOW-UP REQUIREMENT:
+      - ALWAYS end your response with exactly TWO relevant follow-up questions
+      - Format: "Would you like to know [specific related topic]?" 
+      - Questions should deepen understanding of the core topic
+      - Example: If asked about centrifugal pump, follow with:
+        "Would you like to know what is Lantern Ring in a Centrifugal pump?"
+        "Would you like to know the material by which impeller, casing & mouth ring are made?"`;
       
       if (activeRules) {
         systemPrompt += `\n\nActive bot documentation guidelines:\n${activeRules.substring(0, 800)}`;
@@ -388,7 +420,7 @@ export class AIService {
           { role: "system", content: systemPrompt },
           { role: "user", content: message }
         ],
-        max_tokens: 150,
+        max_tokens: 250,
         temperature: 0.7,
       });
 
