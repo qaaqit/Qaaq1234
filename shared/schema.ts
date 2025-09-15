@@ -361,6 +361,7 @@ export const workshopProfiles = pgTable("workshop_profiles", {
   workshopFrontPhoto: text("workshop_front_photo"), // Workshop front image path
   workPhoto: text("work_photo"), // Work/facilities image path  
   officialWebsite: text("official_website"), // Workshop website URL
+  websitePreviewImage: text("website_preview_image"), // Automated website preview/screenshot URL
   
   // Additional Info
   location: text("location"), // Detailed location/address

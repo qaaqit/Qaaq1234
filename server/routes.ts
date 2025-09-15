@@ -6465,6 +6465,8 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
             country: country,
             expertiseTags: expertiseTags,
             heroImageUrl: heroImageUrl,
+            websiteUrl: workshop.official_website || null, // Workshop website URL
+            websitePreviewImage: workshop.website_preview_image || null, // Website preview/screenshot URL
             verified: !!workshop.is_verified,
             rating: 4.2 + (authenticityScore / 100) * 0.8, // Generate rating between 4.2-5.0 based on authenticity
             servicesCount: parseInt(workshop.services_count) || 0,
