@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { ChevronRight, ChevronDown, Wrench, Home, Settings, Building, MapPin, Clock, Star, Shield, Image as ImageIcon, Globe, ExternalLink } from 'lucide-react';
@@ -72,6 +72,8 @@ export default function WorkshopTreePage() {
   };
 
   const renderWorkshopCard = (workshop: FeaturedWorkshop) => {
+    const [imageError, setImageError] = useState(false);
+    
     // Helper function to extract domain from URL
     const extractDomain = (url?: string) => {
       if (!url) return null;
@@ -93,6 +95,9 @@ export default function WorkshopTreePage() {
       imageSource = `https://${imageSource}`;
     }
 
+    // Reset image error when workshop changes
+    useEffect(() => setImageError(false), [workshop.id]);
+
     return (
       <div
         key={workshop.id}
@@ -101,20 +106,16 @@ export default function WorkshopTreePage() {
         data-testid={`card-workshop-${workshop.id}`}
       >
         <div className="relative h-48 bg-gradient-to-br from-orange-100 to-orange-200 rounded-t-xl overflow-hidden">
-          {imageSource ? (
+          {imageSource && !imageError ? (
             <img
               src={imageSource}
               alt={workshop.displayName}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               data-testid={`img-workshop-preview-${workshop.id}`}
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
-                target.nextElementSibling?.classList.remove('hidden');
-              }}
+              onError={() => setImageError(true)}
             />
           ) : null}
-          <div className={`${imageSource ? 'hidden' : 'flex'} absolute inset-0 items-center justify-center`}>
+          <div className={`${imageSource && !imageError ? 'hidden' : 'flex'} absolute inset-0 items-center justify-center`}>
             <ImageIcon className="h-16 w-16 text-orange-400" />
           </div>
           {workshop.verified && (
