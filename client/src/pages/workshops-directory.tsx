@@ -12,14 +12,14 @@ import qaaqLogo from '@assets/qaaq-logo.png';
 
 interface Workshop {
   id: string;
-  displayId: string;
-  fullName: string;
-  homePort: string;
+  display_id: string;
+  full_name: string;
+  home_port: string;
   services: string;
   description?: string;
-  officialWebsite?: string;
-  isVerified: boolean;
-  isActive: boolean;
+  official_website?: string;
+  is_verified: boolean;
+  is_active: boolean;
 }
 
 interface PaginationInfo {
@@ -79,7 +79,7 @@ export function WorkshopsDirectoryPage() {
       if (data.success) {
         // Sort by port name alphabetically
         const sortedWorkshops = data.workshops.sort((a: Workshop, b: Workshop) => {
-          return a.homePort.localeCompare(b.homePort);
+          return a.home_port.localeCompare(b.home_port);
         });
         
         if (reset || page === 1) {
@@ -128,16 +128,16 @@ export function WorkshopsDirectoryPage() {
 
   const filteredWorkshops = workshops.filter(workshop => {
     const matchesSearch = !searchTerm || 
-                         workshop.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         workshop.homePort.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         workshop.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         workshop.home_port.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          workshop.services.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         workshop.displayId.toLowerCase().includes(searchTerm.toLowerCase());
+                         workshop.display_id.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
 
   // Group workshops by port
   const groupedWorkshops = filteredWorkshops.reduce((acc, workshop) => {
-    const port = workshop.homePort;
+    const port = workshop.home_port;
     if (!acc[port]) {
       acc[port] = [];
     }
@@ -278,15 +278,15 @@ export function WorkshopsDirectoryPage() {
                           <div 
                             ref={isLastWorkshop ? lastWorkshopElementRef : null}
                             className="py-2 border-b border-gray-50 hover:bg-orange-25 hover:border-orange-100 transition-colors cursor-pointer group relative"
-                            data-testid={`workshop-item-${workshop.displayId}`}
+                            data-testid={`workshop-item-${workshop.display_id}`}
                           >
                             <div className="text-sm flex items-center justify-between">
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
                                   <span className="font-mono text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded font-bold">
-                                    {workshop.displayId}
+                                    {workshop.display_id}
                                   </span>
-                                  {workshop.isVerified && (
+                                  {workshop.is_verified && (
                                     <span className="text-green-600 text-xs">✓ Verified</span>
                                   )}
                                 </div>
@@ -297,7 +297,7 @@ export function WorkshopsDirectoryPage() {
                                 </div>
                               </div>
                               
-                              {workshop.officialWebsite && (
+                              {workshop.official_website && (
                                 <div className="opacity-0 group-hover:opacity-100 transition-opacity ml-2">
                                   <ExternalLink className="w-4 h-4 text-gray-400 hover:text-orange-600" />
                                 </div>
@@ -310,9 +310,9 @@ export function WorkshopsDirectoryPage() {
                           <DialogHeader>
                             <DialogTitle className="text-xl font-bold text-gray-900 mb-2 flex items-center gap-2">
                               <span className="font-mono text-sm bg-orange-100 text-orange-800 px-2 py-1 rounded">
-                                {workshop.displayId}
+                                {workshop.display_id}
                               </span>
-                              {workshop.isVerified && (
+                              {workshop.is_verified && (
                                 <span className="text-green-600 text-sm">✓ Verified</span>
                               )}
                             </DialogTitle>
@@ -320,7 +320,7 @@ export function WorkshopsDirectoryPage() {
                           
                           <div className="space-y-4">
                             <div className="text-sm text-gray-600 bg-orange-50 p-3 rounded-lg">
-                              <strong>Port:</strong> {workshop.homePort}
+                              <strong>Port:</strong> {workshop.home_port}
                             </div>
                             
                             <div className="prose prose-sm max-w-none text-gray-700">
@@ -335,10 +335,10 @@ export function WorkshopsDirectoryPage() {
                               )}
                             </div>
                             
-                            {workshop.officialWebsite && (
+                            {workshop.official_website && (
                               <div className="pt-3 border-t border-gray-200">
                                 <a 
-                                  href={workshop.officialWebsite} 
+                                  href={workshop.official_website} 
                                   target="_blank" 
                                   rel="noopener noreferrer"
                                   className="text-orange-600 hover:text-orange-700 flex items-center gap-1 text-sm"
