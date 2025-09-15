@@ -38,6 +38,7 @@ interface FeaturedWorkshop {
 export default function WorkshopTreePage() {
   const [expandedSystems, setExpandedSystems] = useState<Set<string>>(new Set());
   const [, setLocation] = useLocation();
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
 
   // Fetch featured workshops
   const { data: featuredWorkshops, isLoading: workshopsLoading, error: workshopsError } = useQuery({
@@ -71,8 +72,12 @@ export default function WorkshopTreePage() {
     setLocation(`/workshop/${workshopId}`);
   };
 
+  const handleImageError = (workshopId: string) => {
+    setImageErrors(prev => ({ ...prev, [workshopId]: true }));
+  };
+
   const renderWorkshopCard = (workshop: FeaturedWorkshop) => {
-    const [imageError, setImageError] = useState(false);
+    const imageError = imageErrors[workshop.id] || false;
     
     // Helper function to extract domain from URL
     const extractDomain = (url?: string) => {
@@ -96,7 +101,11 @@ export default function WorkshopTreePage() {
     }
 
     // Reset image error when workshop changes
-    useEffect(() => setImageError(false), [workshop.id]);
+    useEffect(() => {
+      if (imageErrors[workshop.id]) {
+        setImageErrors(prev => ({ ...prev, [workshop.id]: false }));
+      }
+    }, [workshop.id, imageErrors]);
 
     return (
       <div
@@ -112,7 +121,7 @@ export default function WorkshopTreePage() {
               alt={workshop.displayName}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               data-testid={`img-workshop-preview-${workshop.id}`}
-              onError={() => setImageError(true)}
+              onError={() => handleImageError(workshop.id)}
             />
           ) : null}
           <div className={`${imageSource && !imageError ? 'hidden' : 'flex'} absolute inset-0 items-center justify-center`}>

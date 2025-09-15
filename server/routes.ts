@@ -40,6 +40,7 @@ import { GlossaryAutoUpdateService } from "./glossary-auto-update";
 import { workshopCSVImportService } from "./workshop-csv-import";
 import { WorkshopDisplayIdBackfillService } from "./workshop-displayid-backfill";
 import { WorkshopPricingCalculator, PricingCalculationOptions } from "./pricing-calculator";
+import { screenshotService } from "./screenshot-service";
 
 // Import new unified authentication system
 import { sessionBridge, bridgedAuth, requireBridgedAuth } from "./session-bridge";
@@ -6441,7 +6442,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         console.log(`✅ Found ${rawWorkshops.length} authentic workshops from database`);
         
         // Calculate authenticity scores and format response
-        const scoredWorkshops = rawWorkshops.map(workshop => {
+        const scoredWorkshops = await Promise.all(rawWorkshops.map(async workshop => {
           const authenticityScore = calculateAuthenticityScore(workshop);
           const country = extractCountry(workshop.location || '', workshop.home_port || '');
           const expertiseTags = parseExpertiseTags(workshop.maritime_expertise, workshop.services);
@@ -6458,6 +6459,24 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
               : `${process.env.REPLIT_DEV_DOMAIN || 'https://qaaqconnect-patalpacific.replit.app'}/api/storage/object/${workshop.work_photo}`;
           }
           
+          // Generate dynamic website preview if website URL exists
+          let websitePreviewImage = workshop.website_preview_image; // Use stored image first
+          if (workshop.official_website && !websitePreviewImage) {
+            try {
+              websitePreviewImage = await screenshotService.generateScreenshotUrl({
+                url: workshop.official_website,
+                width: 1200,
+                height: 800,
+                format: 'png',
+                blockAds: true,
+                fullPage: false // Viewport screenshot for faster loading
+              });
+              console.log(`📸 Generated screenshot for ${workshop.display_id || workshop.full_name}: ${websitePreviewImage ? 'Success' : 'Failed'}`);
+            } catch (error) {
+              console.error(`❌ Screenshot generation failed for ${workshop.official_website}:`, error);
+            }
+          }
+          
           return {
             id: workshop.id,
             displayName: workshop.display_id || workshop.full_name,
@@ -6466,7 +6485,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
             expertiseTags: expertiseTags,
             heroImageUrl: heroImageUrl,
             websiteUrl: workshop.official_website || null, // Workshop website URL
-            websitePreviewImage: workshop.website_preview_image || null, // Website preview/screenshot URL
+            websitePreviewImage: websitePreviewImage, // Dynamic website preview/screenshot URL
             verified: !!workshop.is_verified,
             rating: 4.2 + (authenticityScore / 100) * 0.8, // Generate rating between 4.2-5.0 based on authenticity
             servicesCount: parseInt(workshop.services_count) || 0,
@@ -6474,7 +6493,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
             authenticityScore: authenticityScore,
             lastActive: workshop.updated_at || workshop.created_at
           };
-        });
+        }));
         
         // Sort by authenticity score (highest first) and take the best ones
         const featuredWorkshops = scoredWorkshops
