@@ -99,7 +99,7 @@ export default function Header({ user }: HeaderProps) {
                 <span className="text-gray-700 font-medium">Premium Subscription</span>
               </DropdownMenuItem>
               <DropdownMenuItem 
-                onClick={() => setLocation("/repair-workshops")}
+                onClick={() => setLocation("/workshops-directory")}
                 className="cursor-pointer flex items-center space-x-3 px-4 py-3 hover:bg-orange-50 transition-colors"
                 data-testid="menu-item-repair-workshops"
               >
