@@ -146,6 +146,16 @@ export default function RFQPage({ user }: RFQPageProps) {
       .join('.');
   };
 
+  // Helper function to convert vessel name to initials
+  const getVesselInitials = (vesselName: string): string => {
+    if (!vesselName) return 'Vessel N/A';
+    // Remove common prefixes and get initials
+    const cleanName = vesselName.replace(/^(M\.V\.|MV|MS|MT)\s+/i, '');
+    const words = cleanName.split(' ').filter(word => word.length > 0);
+    if (words.length === 0) return 'Vessel N/A';
+    return words.map(word => word.charAt(0).toUpperCase()).join('.') + '.';
+  };
+
   // Mock data for demonstration
   useEffect(() => {
     const mockRFQs: RFQRequest[] = [
@@ -160,7 +170,8 @@ export default function RFQPage({ user }: RFQPageProps) {
         deadline: "2024-01-15",
         postedBy: "Chief Engineer J.S.",
         postedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-        status: "active"
+        status: "active",
+        attachments: ["https://via.placeholder.com/300x200/f97316/ffffff?text=Engine+Part+1", "https://via.placeholder.com/300x200/f97316/ffffff?text=Engine+Part+2"]
       },
       {
         id: "2", 
@@ -173,7 +184,8 @@ export default function RFQPage({ user }: RFQPageProps) {
         deadline: "2024-01-20",
         postedBy: "Captain M.R.",
         postedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-        status: "active"
+        status: "active",
+        attachments: []
       },
       {
         id: "3",
@@ -186,7 +198,8 @@ export default function RFQPage({ user }: RFQPageProps) {
         deadline: "2024-01-10",
         postedBy: "Chief Engineer A.H.",
         postedAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
-        status: "active"
+        status: "active",
+        attachments: ["https://via.placeholder.com/400x300/dc2626/ffffff?text=Generator+Damage+Video"]
       }
     ];
     
@@ -512,12 +525,52 @@ export default function RFQPage({ user }: RFQPageProps) {
                       </CardHeader>
                       
                       <CardContent className="space-y-3">
-                        <div className="flex items-center gap-2 text-sm">
-                          <MapPin className="w-4 h-4 text-orange-600" />
-                          <span>{rfq.location}</span>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div className="flex items-center gap-2">
+                            <Ship className="w-4 h-4 text-orange-600" />
+                            <span className="font-medium">{getVesselInitials(rfq.vesselName)}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <MapPin className="w-4 h-4 text-orange-600" />
+                            <span>{rfq.location}</span>
+                          </div>
                         </div>
                         
                         <p className="text-gray-700 line-clamp-3">{rfq.description}</p>
+                        
+                        {/* Attachments Display - flush with left edge */}
+                        {rfq.attachments && rfq.attachments.length > 0 && (
+                          <div className="grid grid-cols-2 gap-2 -mx-6 px-6">
+                            {rfq.attachments.slice(0, 4).map((attachment, index) => (
+                              <div key={index} className="relative">
+                                {attachment.includes('video') || attachment.includes('.mp4') || attachment.includes('.mov') ? (
+                                  <div className="relative bg-gray-100 rounded aspect-video flex items-center justify-center">
+                                    <div className="text-center">
+                                      <div className="w-8 h-8 mx-auto mb-1 bg-orange-600 rounded-full flex items-center justify-center">
+                                        <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                          <path d="M8 5v14l11-7z"/>
+                                        </svg>
+                                      </div>
+                                      <p className="text-xs text-gray-600">Video</p>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <img 
+                                    src={attachment} 
+                                    alt={`RFQ attachment ${index + 1}`}
+                                    className="w-full h-24 object-cover rounded border border-orange-200"
+                                    data-testid={`img-rfq-attachment-${index}`}
+                                  />
+                                )}
+                                {rfq.attachments && rfq.attachments.length > 4 && index === 3 && (
+                                  <div className="absolute inset-0 bg-black bg-opacity-50 rounded flex items-center justify-center">
+                                    <span className="text-white font-semibold">+{rfq.attachments.length - 4} more</span>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
                         
                         <div className="flex justify-between items-center pt-2 border-t border-gray-100">
                           <div className="text-sm text-gray-500">
