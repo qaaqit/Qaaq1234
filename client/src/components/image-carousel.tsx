@@ -144,9 +144,18 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
                 title={`${workshop.displayName} - ${workshop.city}, ${workshop.country}`}
               >
                 <div className="relative h-24">
-                  <div className="w-full h-full bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center">
-                    <Wrench className="h-8 w-8 text-orange-500" />
-                  </div>
+                  {workshop.websitePreviewImage && !imageError.has(workshop.id) ? (
+                    <img
+                      src={workshop.websitePreviewImage}
+                      alt={`${workshop.displayName} website preview`}
+                      className="w-full h-full object-cover"
+                      onError={() => handleImageError(workshop.id)}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center">
+                      <Wrench className="h-8 w-8 text-orange-500" />
+                    </div>
+                  )}
                 </div>
                 <div className="p-2">
                   <h4 className="font-medium text-sm text-gray-800 truncate">{workshop.displayName}</h4>
@@ -169,9 +178,18 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
               onClick={() => handleWorkshopClick(workshop)}
             >
               <div className="relative h-32">
-                <div className="w-full h-full bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center">
-                  <Wrench className="h-12 w-12 text-orange-500" />
-                </div>
+                {workshop.websitePreviewImage && !imageError.has(workshop.id) ? (
+                  <img
+                    src={workshop.websitePreviewImage}
+                    alt={`${workshop.displayName} website preview`}
+                    className="w-full h-full object-cover"
+                    onError={() => handleImageError(workshop.id)}
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center">
+                    <Wrench className="h-12 w-12 text-orange-500" />
+                  </div>
+                )}
               </div>
               <div className="p-3">
                 <h4 className="font-semibold text-gray-800 mb-1 line-clamp-1">{workshop.displayName}</h4>
