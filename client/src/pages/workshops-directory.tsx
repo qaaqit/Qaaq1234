@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Loader2, ExternalLink } from 'lucide-react';
+import { Loader2, ArrowRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import qaaqLogo from '@assets/qaaq-logo.png';
@@ -297,11 +297,19 @@ export function WorkshopsDirectoryPage() {
                                 </div>
                               </div>
                               
-                              {workshop.official_website && (
-                                <div className="opacity-0 group-hover:opacity-100 transition-opacity ml-2">
-                                  <ExternalLink className="w-4 h-4 text-gray-400 hover:text-orange-600" />
-                                </div>
-                              )}
+                              <div className="opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setLocation(`/workshop/${workshop.id}`);
+                                  }}
+                                  className="p-1 rounded-full bg-orange-100 hover:bg-orange-200 transition-colors"
+                                  title="View Workshop Page"
+                                  data-testid={`button-workshop-page-${workshop.display_id}`}
+                                >
+                                  <ArrowRight className="w-3 h-3 text-orange-600" />
+                                </button>
+                              </div>
                             </div>
                           </div>
                         </DialogTrigger>
@@ -335,19 +343,16 @@ export function WorkshopsDirectoryPage() {
                               )}
                             </div>
                             
-                            {workshop.official_website && (
-                              <div className="pt-3 border-t border-gray-200">
-                                <a 
-                                  href={workshop.official_website} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="text-orange-600 hover:text-orange-700 flex items-center gap-1 text-sm"
-                                >
-                                  <ExternalLink className="w-4 h-4" />
-                                  Visit Website
-                                </a>
-                              </div>
-                            )}
+                            <div className="pt-3 border-t border-gray-200">
+                              <button
+                                onClick={() => setLocation(`/workshop/${workshop.id}`)}
+                                className="w-full bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
+                                data-testid={`button-visit-workshop-${workshop.display_id}`}
+                              >
+                                <ArrowRight className="w-4 h-4" />
+                                View Workshop Page
+                              </button>
+                            </div>
                           </div>
                         </DialogContent>
                       </Dialog>
