@@ -35,6 +35,7 @@ import PasswordDemoPage from "@/pages/password-demo";
 import OAuthCallback from "@/pages/oauth-callback";
 import TopQProfessionalsPage from "@/pages/TopQProfessionalsPage";
 import { GlossaryPage } from "@/pages/glossary";
+import { WorkshopsDirectoryPage } from "@/pages/workshops-directory";
 import MachineTreePage from "@/pages/machine-tree";
 import SemmEquipmentPage from "@/pages/semm-equipment";
 import SemmSystemPage from "@/pages/semm-system";
@@ -147,6 +148,7 @@ function Router() {
           <Route path="/top-professionals" component={TopQProfessionalsPage} />
           <Route path="/qh13" component={TopQProfessionalsPage} />
           <Route path="/glossary" component={() => <GlossaryPage />} />
+          <Route path="/workshops-directory" component={() => <WorkshopsDirectoryPage />} />
           <Route path="/machinetree" component={() => <MachineTreePage />} />
           <Route path="/machine-tree" component={() => <MachineTreePage />} />
           <Route path="/machinetree/:code" component={({ params }: any) => {
