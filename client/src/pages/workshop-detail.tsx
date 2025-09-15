@@ -212,7 +212,10 @@ export default function WorkshopDetailPage() {
                   {workshop.display_id}
                 </h1>
                 <CardTitle className="text-xl text-gray-700 mb-2">
-                  {isAdmin ? workshop.full_name : 'Workshop Details'}
+                  Workshop Details
+                  {isAdmin && (
+                    <span className="ml-2 text-sm font-normal text-gray-500">({workshop.full_name})</span>
+                  )}
                 </CardTitle>
                 <div className="flex items-center space-x-4 text-gray-600">
                   <div className="flex items-center space-x-1">
@@ -334,7 +337,7 @@ export default function WorkshopDetailPage() {
       {/* Image Upload Modal for Admins */}
       <ImageUploadModal
         isOpen={uploadModal.isOpen}
-        onClose={() => setUploadModal({ isOpen: false, imageType: 'business_card', title: '' })}
+        onClose={() => setUploadModal({ isOpen: false, imageType: 'workshop_front', title: '' })}
         onUploadSuccess={handleUploadSuccess}
         title={uploadModal.title}
         workshopId={workshopId!}
