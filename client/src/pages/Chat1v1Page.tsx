@@ -406,13 +406,13 @@ export default function ChatPage() {
                         : 'bg-white text-gray-900 border-2 border-gray-300 rounded-bl-md mr-auto'
                     }`}
                   >
-                    <p className="text-sm leading-relaxed">{message.content}</p>
+                    <p className="text-sm leading-relaxed">{message.content || message.message}</p>
                     
                     <div className={`flex items-center justify-between mt-1.5 ${isMyMessage ? 'text-gray-600' : 'text-gray-500'}`}>
                       <p className="text-xs">
                         {(() => {
                           try {
-                            const date = new Date(message.sentAt);
+                            const date = new Date(message.sentAt || message.createdAt);
                             if (isNaN(date.getTime())) {
                               return 'just now';
                             }
@@ -428,7 +428,7 @@ export default function ChatPage() {
                           isRead={message.isRead}
                           isDelivered={true}
                           readAt={message.readAt}
-                          deliveredAt={message.deliveredAt || message.sentAt}
+                          deliveredAt={message.deliveredAt || message.sentAt || message.createdAt}
                           className="ml-2"
                         />
                       )}
