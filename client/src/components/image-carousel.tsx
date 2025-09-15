@@ -62,15 +62,9 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
   };
 
   const handleWorkshopClick = (workshop: FeaturedWorkshop) => {
-    // Navigate to workshop tree page
-    console.log('Workshop click: Navigating to workshops');
-    window.location.href = '/workshop-tree';
-  };
-
-  const handleWebsiteClick = (e: React.MouseEvent, websiteUrl: string) => {
-    e.stopPropagation();
-    const url = websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
+    // Navigate to discover page
+    console.log('Workshop click: Navigating to discover');
+    window.location.href = '/discover';
   };
 
   const workshopsPerView = viewMode === 'carousel' ? 3 : Math.min(6, workshops.length);
@@ -150,19 +144,9 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
                 title={`${workshop.displayName} - ${workshop.city}, ${workshop.country}`}
               >
                 <div className="relative h-24">
-                  {workshop.websitePreviewImage && !imageError.has(workshop.id) ? (
-                    <img
-                      src={workshop.websitePreviewImage}
-                      alt={workshop.displayName}
-                      className="w-full h-full object-cover"
-                      onError={() => handleImageError(workshop.id)}
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center">
-                      <Wrench className="h-8 w-8 text-orange-500" />
-                    </div>
-                  )}
+                  <div className="w-full h-full bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center">
+                    <Wrench className="h-8 w-8 text-orange-500" />
+                  </div>
                 </div>
                 <div className="p-2">
                   <h4 className="font-medium text-sm text-gray-800 truncate">{workshop.displayName}</h4>
@@ -185,28 +169,9 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
               onClick={() => handleWorkshopClick(workshop)}
             >
               <div className="relative h-32">
-                {workshop.websitePreviewImage && !imageError.has(workshop.id) ? (
-                  <img
-                    src={workshop.websitePreviewImage}
-                    alt={workshop.displayName}
-                    className="w-full h-full object-cover"
-                    onError={() => handleImageError(workshop.id)}
-                    loading="lazy"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center">
-                    <Wrench className="h-12 w-12 text-orange-500" />
-                  </div>
-                )}
-                {workshop.websiteUrl && (
-                  <button
-                    onClick={(e) => handleWebsiteClick(e, workshop.websiteUrl!)}
-                    className="absolute top-2 right-2 p-1 bg-black/20 hover:bg-black/40 text-white rounded transition-colors"
-                    title="Visit website"
-                  >
-                    <ExternalLink className="h-3 w-3" />
-                  </button>
-                )}
+                <div className="w-full h-full bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center">
+                  <Wrench className="h-12 w-12 text-orange-500" />
+                </div>
               </div>
               <div className="p-3">
                 <h4 className="font-semibold text-gray-800 mb-1 line-clamp-1">{workshop.displayName}</h4>
