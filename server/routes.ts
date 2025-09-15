@@ -40,6 +40,7 @@ import { GlossaryAutoUpdateService } from "./glossary-auto-update";
 import { workshopCSVImportService } from "./workshop-csv-import";
 import { csvWorkshopDomainLinker } from "./csv-workshop-domain-linker";
 import { WorkshopDisplayIdBackfillService } from "./workshop-displayid-backfill";
+import { WorkshopMissingImportService } from "./workshop-missing-import";
 import { WorkshopPricingCalculator, PricingCalculationOptions } from "./pricing-calculator";
 import { screenshotService } from "./screenshot-service";
 
