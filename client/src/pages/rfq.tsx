@@ -70,7 +70,6 @@ export default function RFQPage({ user }: RFQPageProps) {
 
   // Form state for creating new RFQ
   const [formData, setFormData] = useState({
-    title: "",
     category: "",
     description: "",
     vesselName: "",
@@ -228,7 +227,7 @@ export default function RFQPage({ user }: RFQPageProps) {
     }
 
     // Validate required fields
-    if (!formData.title || !formData.description || !formData.location) {
+    if (!formData.description || !formData.location) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields.",
@@ -237,11 +236,14 @@ export default function RFQPage({ user }: RFQPageProps) {
       return;
     }
 
+    // Extract title from first line of description
+    const titleFromDescription = formData.description.split('\n')[0].trim() || formData.description.substring(0, 50).trim();
+
     try {
       // Create new RFQ (mock implementation)
       const newRFQ: RFQRequest = {
         id: Date.now().toString(),
-        title: formData.title,
+        title: titleFromDescription,
         category: formData.category,
         description: formData.description,
         vesselName: formData.vesselName,
@@ -258,7 +260,6 @@ export default function RFQPage({ user }: RFQPageProps) {
       
       // Reset form
       setFormData({
-        title: "",
         category: "",
         description: "",
         vesselName: "",
