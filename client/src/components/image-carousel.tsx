@@ -114,23 +114,6 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
 
   return (
     <div className={`bg-gradient-to-r from-orange-50 to-yellow-50 border-t border-orange-200 relative ${className}`}>
-      {/* Header */}
-      <div className="px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Wrench className="h-5 w-5 text-orange-600" />
-            <h3 className="font-semibold text-gray-800">Workshop Carousel</h3>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setViewMode(viewMode === 'grid' ? 'carousel' : 'grid')}
-            className="bg-white/80 hover:bg-white text-orange-600 border border-orange-200 px-3 py-1 text-xs rounded-full"
-          >
-            {viewMode === 'grid' ? 'Carousel' : 'Show All'}
-          </Button>
-        </div>
-      </div>
 
       {viewMode === 'grid' ? (
         // Grid mode - show workshops in a scrollable grid
