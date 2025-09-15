@@ -11599,22 +11599,14 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
 
   // User Profile API endpoints
   
-  // Get user profile for CV/Profile page - session auth only
-  app.get('/api/users/profile', async (req, res) => {
+  // Get user profile for CV/Profile page - supports JWT and session auth
+  app.get('/api/users/profile', requireBridgedAuth, async (req, res) => {
     try {
-      let userId = null;
+      const currentUser = (req as any).currentUser;
       
-      // Check session authentication only (Google/Replit Auth)
-      if (req.user) {
-        const sessionUserId = (req.user as any).claims?.sub || (req.user as any).id || (req.user as any).userId;
-        if (sessionUserId) {
-          // Use identity resolver to find the user
-          const user = await identityResolver.resolveUserByAnyMethod(sessionUserId, 'replit');
-          if (user) {
-            console.log(`📋 Profile found for session user: ${user.fullName}`);
-            return res.json(user);
-          }
-        }
+      if (currentUser) {
+        console.log(`📋 Profile found for user: ${currentUser.fullName}`);
+        return res.json(currentUser);
       }
       
       return res.status(401).json({ error: 'Authentication required' });
@@ -11624,19 +11616,10 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
     }
   });
 
-  // Update user profile - session auth only
-  app.put('/api/users/profile', async (req, res) => {
+  // Update user profile - supports JWT and session auth
+  app.put('/api/users/profile', requireBridgedAuth, async (req, res) => {
     try {
-      let user = null;
-      
-      // Check session authentication only (Google/Replit Auth)
-      if (req.user) {
-        const sessionUserId = (req.user as any).claims?.sub || (req.user as any).id || (req.user as any).userId;
-        if (sessionUserId) {
-          // Use identity resolver to find the user
-          user = await identityResolver.resolveUserByAnyMethod(sessionUserId, 'replit');
-        }
-      }
+      const user = (req as any).currentUser;
       
       if (!user) {
         return res.status(401).json({ error: 'Authentication required' });
