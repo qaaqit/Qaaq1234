@@ -79,6 +79,7 @@ export default function RFQPage({ user }: RFQPageProps) {
   });
   const [attachments, setAttachments] = useState<string[]>([]);
   const [showAdditionalData, setShowAdditionalData] = useState(false);
+  const [editingRFQ, setEditingRFQ] = useState<RFQRequest | null>(null);
 
   // Upload handlers
   const handleGetUploadParameters = async () => {
@@ -136,6 +137,14 @@ export default function RFQPage({ user }: RFQPageProps) {
   ];
 
   const canPostRFQ = user?.isAdmin || seniorRoles.includes(user?.maritimeRank || '');
+
+  // Check if current user can edit an RFQ
+  const canEditRFQ = (rfq: RFQRequest) => {
+    if (!user) return false;
+    // User can edit their own posts (check by matching the formatted name)
+    const userFormattedName = `${user.maritimeRank} ${getInitials(user.fullName || '')}`;
+    return rfq.postedBy === userFormattedName;
+  };
 
   // Helper function to convert full name to initials for privacy protection
   const getInitials = (fullName: string): string => {
@@ -241,23 +250,54 @@ export default function RFQPage({ user }: RFQPageProps) {
     const titleFromDescription = formData.description.split('\n')[0].trim() || formData.description.substring(0, 50).trim();
 
     try {
-      // Create new RFQ (mock implementation)
-      const newRFQ: RFQRequest = {
-        id: Date.now().toString(),
-        title: titleFromDescription,
-        category: formData.category,
-        description: formData.description,
-        vesselName: formData.vesselName,
-        location: formData.location,
-        urgency: formData.urgency as 'normal' | 'urgent' | 'critical',
-        deadline: formData.deadline,
-        postedBy: `${user.maritimeRank} ${getInitials(user.fullName || '')}`,
-        postedAt: new Date(),
-        status: "active",
-        attachments: attachments
-      };
+      if (editingRFQ) {
+        // Update existing RFQ
+        const updatedRFQ: RFQRequest = {
+          ...editingRFQ,
+          title: titleFromDescription,
+          category: formData.category,
+          description: formData.description,
+          vesselName: formData.vesselName,
+          location: formData.location,
+          urgency: formData.urgency as 'normal' | 'urgent' | 'critical',
+          deadline: formData.deadline,
+          attachments: attachments,
+        };
 
-      setRfqRequests(prev => [newRFQ, ...prev]);
+        setRfqRequests(prev => prev.map(rfq => rfq.id === editingRFQ.id ? updatedRFQ : rfq));
+        
+        // Reset editing state
+        setEditingRFQ(null);
+        setActiveTab('feed');
+        
+        toast({
+          title: "RFQ Updated Successfully",
+          description: "Your RFQ request has been updated."
+        });
+      } else {
+        // Create new RFQ
+        const newRFQ: RFQRequest = {
+          id: Date.now().toString(),
+          title: titleFromDescription,
+          category: formData.category,
+          description: formData.description,
+          vesselName: formData.vesselName,
+          location: formData.location,
+          urgency: formData.urgency as 'normal' | 'urgent' | 'critical',
+          deadline: formData.deadline,
+          postedBy: `${user.maritimeRank} ${getInitials(user.fullName || '')}`,
+          postedAt: new Date(),
+          status: "active",
+          attachments: attachments
+        };
+
+        setRfqRequests(prev => [newRFQ, ...prev]);
+        
+        toast({
+          title: "RFQ Posted Successfully",
+          description: "Your request has been posted to the maritime community."
+        });
+      }
       
       // Reset form
       setFormData({
@@ -269,11 +309,6 @@ export default function RFQPage({ user }: RFQPageProps) {
         deadline: ""
       });
       setAttachments([]);
-
-      toast({
-        title: "RFQ Posted Successfully",
-        description: "Your request has been posted to the maritime community.",
-      });
       
     } catch (error) {
       console.error('Error posting RFQ:', error);
@@ -283,6 +318,35 @@ export default function RFQPage({ user }: RFQPageProps) {
         variant: "destructive"
       });
     }
+  };
+
+  // Start editing an RFQ
+  const startEditRFQ = (rfq: RFQRequest) => {
+    setEditingRFQ(rfq);
+    setFormData({
+      category: rfq.category,
+      description: rfq.description,
+      vesselName: rfq.vesselName,
+      location: rfq.location,
+      urgency: rfq.urgency,
+      deadline: rfq.deadline
+    });
+    setAttachments(rfq.attachments || []);
+    setActiveTab('create');
+  };
+
+  // Cancel editing
+  const cancelEdit = () => {
+    setEditingRFQ(null);
+    setFormData({
+      category: "",
+      description: "",
+      vesselName: "",
+      location: "",
+      urgency: "normal",
+      deadline: ""
+    });
+    setAttachments([]);
   };
 
   const getUrgencyColor = (urgency: string) => {
@@ -590,9 +654,25 @@ export default function RFQPage({ user }: RFQPageProps) {
                               Deadline: {new Date(rfq.deadline).toLocaleDateString()}
                             </div>
                           </div>
-                          <Button size="sm" variant="outline" className="border-orange-200 hover:bg-orange-50">
-                            View Details
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline" className="border-orange-200 hover:bg-orange-50">
+                              View Details
+                            </Button>
+                            {canEditRFQ(rfq) && (
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="border-blue-200 hover:bg-blue-50 text-blue-600"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  startEditRFQ(rfq);
+                                }}
+                                data-testid={`button-edit-rfq-${rfq.id}`}
+                              >
+                                Edit
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -608,10 +688,24 @@ export default function RFQPage({ user }: RFQPageProps) {
               {canPostRFQ ? (
                 <Card className="max-w-2xl mx-auto">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Plus className="w-5 h-5" />
-                      Post New RFQ Request
-                    </CardTitle>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2">
+                        <Plus className="w-5 h-5" />
+                        {editingRFQ ? 'Edit RFQ Request' : 'Post New RFQ Request'}
+                      </CardTitle>
+                      {editingRFQ && (
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={cancelEdit}
+                          className="text-gray-500 hover:text-gray-700"
+                          data-testid="button-cancel-edit"
+                        >
+                          Cancel
+                        </Button>
+                      )}
+                    </div>
                   </CardHeader>
                   
                   <CardContent>
@@ -741,7 +835,7 @@ export default function RFQPage({ user }: RFQPageProps) {
                         data-testid="button-submit-rfq"
                       >
                         <Send className="w-4 h-4 mr-2" />
-                        Post RFQ Request
+                        {editingRFQ ? 'Update RFQ Request' : 'Post RFQ Request'}
                       </Button>
                     </form>
                   </CardContent>
