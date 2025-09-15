@@ -4881,7 +4881,70 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         return res.status(400).json({ message: 'Message is required' });
       }
 
-      // CHECK IF MESSAGE IS FEEDBACK FIRST
+      // CHECK IF MESSAGE IS Q2Q SELECTION FIRST (before feedback check)
+      const isQ2QSelection = (message.trim() === '1' || message.trim() === '2') && 
+        conversationHistory && conversationHistory.length > 0;
+      
+      let lastBotMessage = '';
+      if (conversationHistory && conversationHistory.length > 0) {
+        // Find the last bot message
+        for (let i = conversationHistory.length - 1; i >= 0; i--) {
+          if (conversationHistory[i].sender === 'bot') {
+            lastBotMessage = conversationHistory[i].text || '';
+            break;
+          }
+        }
+      }
+      
+      const hasQ2QOptions = lastBotMessage.includes('Would u \'also\' like to know') && 
+                           lastBotMessage.includes('Reply 1 or 2 to confirm');
+      
+      console.log(`🔍 Q2Q Check: Message="${message.trim()}", Has Q2Q Options: ${hasQ2QOptions}, Last bot message length: ${lastBotMessage.length}`);
+      
+      // If this is a Q2Q selection (1 or 2) and previous bot message had Q2Q options, handle as Q2Q
+      if (isQ2QSelection && hasQ2QOptions) {
+        console.log(`📋 Detected Q2Q selection: "${message.trim()}" - processing as follow-up question`);
+        
+        // Extract the selected question from the last bot message
+        const selectedOption = message.trim();
+        let selectedQuestion = '';
+        
+        if (selectedOption === '1') {
+          const q1Match = lastBotMessage.match(/q1\)\s*([^or\n]+)/i);
+          selectedQuestion = q1Match ? q1Match[1].trim() : 'selected question 1';
+        } else if (selectedOption === '2') {
+          const q2Match = lastBotMessage.match(/q2\)\s*([^Reply]+)/i);
+          selectedQuestion = q2Match ? q2Match[1].trim() : 'selected question 2';
+        }
+        
+        console.log(`🎯 Q2Q Selected question: "${selectedQuestion}"`);
+        
+        // Process the selected question as a new query
+        // Continue to AI generation with the extracted question
+        const category = categorizeMessage(selectedQuestion);
+        const aiResponse = await generateAIResponse(selectedQuestion, category, user, null, aiModels, language, conversationHistory);
+        
+        // Store QBOT response
+        await storeQBOTResponseInDatabase(selectedQuestion, aiResponse.content, user, [], aiResponse.aiModel, aiResponse.responseTime, aiResponse.tokens);
+        
+        // Increment user question count for authenticated users
+        if (user) {
+          await storage.incrementUserQuestionCount(user.id);
+        }
+        
+        console.log(`🤖 Q2Q Follow-up - Question: ${selectedQuestion.substring(0, 50)}... | Response: ${aiResponse.content.substring(0, 50)}...`);
+        
+        return res.json({ 
+          response: aiResponse.content,
+          aiModel: aiResponse.aiModel,
+          responseTime: aiResponse.responseTime,
+          timestamp: new Date().toISOString(),
+          q2qSelection: true,
+          selectedQuestion: selectedQuestion
+        });
+      }
+      
+      // CHECK IF MESSAGE IS FEEDBACK (after Q2Q check)
       const feedbackParsed = FeedbackService.parseFeedbackRating(message);
       console.log(`🧪 Feedback check for: "${message}" → Rating: ${feedbackParsed.rating}, Category: ${feedbackParsed.category}`);
       
