@@ -146,14 +146,22 @@ export default function RFQPage({ user }: RFQPageProps) {
       .join('.');
   };
 
-  // Helper function to convert vessel name to initials
+  // Helper function to convert vessel name to privacy format (MV Axxx Vxxx)
   const getVesselInitials = (vesselName: string): string => {
     if (!vesselName) return 'Vessel N/A';
-    // Remove common prefixes and get initials
-    const cleanName = vesselName.replace(/^(M\.V\.|MV|MS|MT)\s+/i, '');
-    const words = cleanName.split(' ').filter(word => word.length > 0);
-    if (words.length === 0) return 'Vessel N/A';
-    return words.map(word => word.charAt(0).toUpperCase()).join('.') + '.';
+    // Extract prefix and name parts
+    const prefixMatch = vesselName.match(/^(M\.V\.|MV|MS|MT)\s+(.+)/i);
+    if (!prefixMatch) return vesselName; // Return as-is if no standard prefix
+    
+    const prefix = prefixMatch[1].replace(/\./g, '').toUpperCase(); // Remove dots, make uppercase
+    const namesPart = prefixMatch[2];
+    const words = namesPart.split(' ').filter(word => word.length > 0);
+    
+    if (words.length === 0) return `${prefix} N/A`;
+    
+    // Format as "MV Axxx Vxxx" - first letter + xxx for each word
+    const formattedWords = words.map(word => word.charAt(0).toUpperCase() + 'xxx');
+    return `${prefix} ${formattedWords.join(' ')}`;
   };
 
   // Mock data for demonstration
