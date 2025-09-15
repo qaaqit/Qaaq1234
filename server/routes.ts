@@ -6601,7 +6601,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
           
           return {
             id: workshop.id,
-            displayName: workshop.display_id || workshop.full_name,
+            displayName: workshop.full_name || workshop.display_id,
             city: workshop.home_port || 'Unknown',
             country: country,
             expertiseTags: expertiseTags,
