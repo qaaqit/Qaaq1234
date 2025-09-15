@@ -858,8 +858,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // CRITICAL: Add session bridge middleware AFTER passport is set up
       // This ensures req.user is populated before the bridge runs
       console.log('🌉 Installing session bridge middleware after passport setup');
-      // DISABLED: Session bridge to prevent constant polling
-      // app.use(sessionBridge);
+      app.use(sessionBridge);
       
       // Unified logout endpoint - handles all auth methods
       app.post('/api/auth/logout', async (req: any, res) => {
@@ -11599,8 +11598,8 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
 
   // User Profile API endpoints
   
-  // Get user profile for CV/Profile page - supports JWT and session auth
-  app.get('/api/users/profile', requireBridgedAuth, async (req, res) => {
+  // Get user profile for CV/Profile page - supports JWT and session auth  
+  app.get('/api/users/profile', requireUnifiedAuth, async (req, res) => {
     try {
       const currentUser = (req as any).currentUser;
       

@@ -93,13 +93,16 @@ export const sessionBridge = async (req: Request, res: Response, next: NextFunct
         const { getJWTSecret } = await import('./secret-validation');
         const decoded = jwt.verify(token, getJWTSecret()) as { userId: string };
         
+        console.log('🔍 SESSION BRIDGE: JWT decoded userId:', decoded.userId);
         user = await identityResolver.resolveUserByAnyMethod(decoded.userId, 'jwt');
         if (user) {
           method = 'jwt';
           console.log('✅ SESSION BRIDGE: Resolved JWT user:', user.fullName);
+        } else {
+          console.log('❌ SESSION BRIDGE: JWT token valid but user not found for userId:', decoded.userId);
         }
       } catch (error) {
-        // console.log('❌ SESSION BRIDGE: Invalid JWT token');
+        console.log('❌ SESSION BRIDGE: Invalid JWT token:', error);
       }
     }
 
