@@ -137,6 +137,15 @@ export default function RFQPage({ user }: RFQPageProps) {
 
   const canPostRFQ = user?.isAdmin || seniorRoles.includes(user?.maritimeRank || '');
 
+  // Helper function to convert full name to initials for privacy protection
+  const getInitials = (fullName: string): string => {
+    if (!fullName) return 'N/A';
+    return fullName
+      .split(' ')
+      .map(name => name.charAt(0).toUpperCase())
+      .join('.');
+  };
+
   // Mock data for demonstration
   useEffect(() => {
     const mockRFQs: RFQRequest[] = [
@@ -149,7 +158,7 @@ export default function RFQPage({ user }: RFQPageProps) {
         location: "Singapore",
         urgency: "urgent",
         deadline: "2024-01-15",
-        postedBy: "Chief Engineer John Smith",
+        postedBy: "Chief Engineer J.S.",
         postedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
         status: "active"
       },
@@ -162,7 +171,7 @@ export default function RFQPage({ user }: RFQPageProps) {
         location: "Rotterdam",
         urgency: "normal",
         deadline: "2024-01-20",
-        postedBy: "Captain Maria Rodriguez",
+        postedBy: "Captain M.R.",
         postedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
         status: "active"
       },
@@ -175,7 +184,7 @@ export default function RFQPage({ user }: RFQPageProps) {
         location: "Hamburg",
         urgency: "critical",
         deadline: "2024-01-10",
-        postedBy: "Chief Engineer Ahmed Hassan",
+        postedBy: "Chief Engineer A.H.",
         postedAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
         status: "active"
       }
@@ -218,7 +227,7 @@ export default function RFQPage({ user }: RFQPageProps) {
         location: formData.location,
         urgency: formData.urgency as 'normal' | 'urgent' | 'critical',
         deadline: formData.deadline,
-        postedBy: `${user.maritimeRank} ${user.fullName}`,
+        postedBy: `${user.maritimeRank} ${getInitials(user.fullName || '')}`,
         postedAt: new Date(),
         status: "active",
         attachments: attachments
