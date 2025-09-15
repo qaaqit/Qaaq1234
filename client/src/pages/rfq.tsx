@@ -512,15 +512,9 @@ export default function RFQPage({ user }: RFQPageProps) {
                       </CardHeader>
                       
                       <CardContent className="space-y-3">
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div className="flex items-center gap-2">
-                            <Ship className="w-4 h-4 text-orange-600" />
-                            <span className="font-medium">{rfq.vesselName}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <MapPin className="w-4 h-4 text-orange-600" />
-                            <span>{rfq.location}</span>
-                          </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <MapPin className="w-4 h-4 text-orange-600" />
+                          <span>{rfq.location}</span>
                         </div>
                         
                         <p className="text-gray-700 line-clamp-3">{rfq.description}</p>
