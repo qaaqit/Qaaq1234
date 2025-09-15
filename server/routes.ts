@@ -6306,6 +6306,56 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
     }
   });
 
+  // Get workshop count - Public access
+  app.get('/api/workshops/count', async (req, res) => {
+    try {
+      console.log('📊 Fetching workshop count');
+      
+      // Use local DATABASE_URL to access the real workshop data
+      const { Pool: LocalPool } = await import('@neondatabase/serverless');
+      const localPool = new LocalPool({ 
+        connectionString: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: false }
+      });
+      
+      const client = await localPool.connect();
+      
+      try {
+        // Query to count active workshops
+        const result = await client.query(`
+          SELECT COUNT(*) as count 
+          FROM workshop_profiles 
+          WHERE is_active = true
+        `);
+        
+        const count = parseInt(result.rows[0].count);
+        console.log(`✅ Found ${count} active workshops`);
+        
+        res.json({
+          success: true,
+          count: count
+        });
+        
+      } catch (dbError) {
+        console.error(`❌ Database error accessing workshop count:`, dbError);
+        res.status(500).json({
+          success: false,
+          error: 'Unable to access workshop database'
+        });
+      } finally {
+        client.release();
+        await localPool.end();
+      }
+
+    } catch (error) {
+      console.error('❌ Error fetching workshop count:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to fetch workshop count' 
+      });
+    }
+  });
+
   // ==== FEATURED WORKSHOPS ENDPOINT ====
   
   // In-memory cache for featured workshops with 15-minute expiry
