@@ -31,7 +31,7 @@ export default function BottomNav({ user, onLogout }: BottomNavProps) {
     { 
       path: "/dm", 
       icon: "fas fa-comments", 
-      label: ["Qh13"],
+      label: ["DM"],
       active: location === "/qhf" || location === "/dm" || location === "/chat",
       onClick: () => setLocation("/dm")
     },
