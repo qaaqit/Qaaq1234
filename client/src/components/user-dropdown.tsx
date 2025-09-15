@@ -124,6 +124,14 @@ export default function UserDropdown({ user, className = "", onLogout }: UserDro
         // Navigate to storage management when implemented
         setIsOpen(false);
       }
+    },
+    {
+      icon: Users,
+      label: "Rank Groups",
+      onClick: () => {
+        setLocation('/rank-groups');
+        setIsOpen(false);
+      }
     }
   ];
 

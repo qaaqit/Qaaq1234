@@ -27,6 +27,7 @@ import MyQuestions from "@/pages/my-questions";
 import QuestionPage from "@/pages/question";
 import QuestionBank from "@/pages/question-bank";
 import RankGroupsPage from "@/pages/rank-groups";
+import RFQPage from "@/pages/rfq";
 import QBOTPage from "@/pages/qbot";
 import MergeAccountsPage from "@/pages/merge-accounts";
 import AuthTestPage from "@/pages/auth-test";
@@ -138,6 +139,7 @@ function Router() {
           <Route path="/share/question/:id" component={() => <QuestionPage />} />
           <Route path="/questions/:id" component={() => <QuestionPage />} />
           <Route path="/rank-groups" component={() => <RankGroupsPage />} />
+          <Route path="/rfq" component={() => currentUser ? <RFQPage user={currentUser} /> : <Login />} />
           <Route path="/admin" component={() => <Admin />} />
           <Route path="/admin/bot-rules" component={() => <BotRulesAdmin />} />
           <Route path="/admin/token-limits" component={() => <TokenLimitsAdmin />} />
