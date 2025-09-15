@@ -17,6 +17,7 @@ interface Workshop {
   business_card_photo?: string;
   workshop_front_photo?: string;
   official_website?: string;
+  website_preview_image?: string; // Automated website preview/screenshot URL
   location?: string;
   description?: string;
   is_verified: boolean;
@@ -154,13 +155,27 @@ export default function WorkshopPage() {
                     {/* Workshop Images Area - Two 16:9 images side by side */}
                     <div className="w-full flex gap-0">
                       {/* First Image */}
-                      <div className="w-1/2 aspect-video bg-orange-100 flex items-center justify-center overflow-hidden">
+                      <div className="w-1/2 aspect-video bg-orange-100 flex items-center justify-center overflow-hidden relative">
                         {workshop.business_card_photo ? (
                           <img 
                             src={workshop.business_card_photo} 
                             alt={`${workshop.display_id} business card`}
                             className="w-full h-full object-cover"
                           />
+                        ) : workshop.website_preview_image ? (
+                          <div className="w-full h-full relative">
+                            <img 
+                              src={workshop.website_preview_image} 
+                              alt={`${workshop.display_id} website preview`}
+                              className="w-full h-full object-cover blur-md opacity-40"
+                            />
+                            <div className="absolute inset-0 bg-orange-100/60 flex items-center justify-center">
+                              <div className="text-orange-700 font-bold text-center">
+                                <Wrench className="w-6 h-6 mx-auto mb-1" />
+                                <span className="text-xs">WORKSHOP<br />FRONT</span>
+                              </div>
+                            </div>
+                          </div>
                         ) : (
                           <div className="text-orange-600 font-bold text-center">
                             <Wrench className="w-6 h-6 mx-auto mb-1" />
@@ -170,13 +185,27 @@ export default function WorkshopPage() {
                       </div>
                       
                       {/* Second Image */}
-                      <div className="w-1/2 aspect-video bg-orange-50 flex items-center justify-center overflow-hidden">
+                      <div className="w-1/2 aspect-video bg-orange-50 flex items-center justify-center overflow-hidden relative">
                         {workshop.workshop_front_photo ? (
                           <img 
                             src={workshop.workshop_front_photo} 
                             alt={`${workshop.display_id} workshop front`}
                             className="w-full h-full object-cover"
                           />
+                        ) : workshop.website_preview_image ? (
+                          <div className="w-full h-full relative">
+                            <img 
+                              src={workshop.website_preview_image} 
+                              alt={`${workshop.display_id} website preview`}
+                              className="w-full h-full object-cover blur-md opacity-30"
+                            />
+                            <div className="absolute inset-0 bg-orange-50/70 flex items-center justify-center">
+                              <div className="text-orange-700 font-bold text-center">
+                                <Wrench className="w-6 h-6 mx-auto mb-1" />
+                                <span className="text-xs">WORK</span>
+                              </div>
+                            </div>
+                          </div>
                         ) : (
                           <div className="text-orange-600 font-bold text-center">
                             <Wrench className="w-6 h-6 mx-auto mb-1" />
