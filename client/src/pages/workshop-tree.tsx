@@ -104,7 +104,7 @@ export default function WorkshopTreePage() {
         data-testid={`card-workshop-${workshop.id}`}
       >
         <div className="relative h-48 bg-gradient-to-br from-orange-100 to-orange-200 rounded-t-xl overflow-hidden">
-          {imageSource && !imageError ? (
+          {imageSource ? (
             <img
               src={imageSource}
               alt={workshop.displayName}
