@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import UserDropdown from "@/components/user-dropdown";
+import { ObjectUploader } from "@/components/ObjectUploader";
 import { 
   ChevronDown, 
   Crown, 
@@ -27,7 +28,9 @@ import {
   MapPin, 
   AlertTriangle,
   Filter,
-  Search
+  Search,
+  Paperclip,
+  X
 } from "lucide-react";
 
 // Using public asset path for better reliability
@@ -49,6 +52,7 @@ interface RFQRequest {
   postedBy: string;
   postedAt: Date;
   status: 'active' | 'filled' | 'expired';
+  attachments?: string[];
 }
 
 export default function RFQPage({ user }: RFQPageProps) {
@@ -74,6 +78,49 @@ export default function RFQPage({ user }: RFQPageProps) {
     urgency: "normal",
     deadline: ""
   });
+  const [attachments, setAttachments] = useState<string[]>([]);
+
+  // Upload handlers
+  const handleGetUploadParameters = async () => {
+    try {
+      const response = await fetch('/api/objects/upload', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        return {
+          method: 'PUT' as const,
+          url: data.uploadURL,
+        };
+      } else {
+        throw new Error('Failed to get upload URL');
+      }
+    } catch (error) {
+      console.error('Error getting upload URL:', error);
+      throw error;
+    }
+  };
+
+  const handleUploadComplete = (result: any) => {
+    if (result.successful && result.successful.length > 0) {
+      const fileUrls = result.successful.map((file: any) => file.name);
+      setAttachments(prev => [...prev, ...fileUrls]);
+      
+      toast({
+        title: "Files uploaded successfully",
+        description: `${result.successful.length} file(s) added to your RFQ`,
+      });
+    }
+  };
+
+  const removeAttachment = (fileUrl: string) => {
+    setAttachments(prev => prev.filter(url => url !== fileUrl));
+  };
 
   // Check premium status for known testing accounts since JWT is disabled
   const testingEmails = ['workship.ai@gmail.com', 'mushy.piyush@gmail.com'];
@@ -173,7 +220,8 @@ export default function RFQPage({ user }: RFQPageProps) {
         deadline: formData.deadline,
         postedBy: `${user.maritimeRank} ${user.fullName}`,
         postedAt: new Date(),
-        status: "active"
+        status: "active",
+        attachments: attachments
       };
 
       setRfqRequests(prev => [newRFQ, ...prev]);
@@ -188,6 +236,7 @@ export default function RFQPage({ user }: RFQPageProps) {
         urgency: "normal",
         deadline: ""
       });
+      setAttachments([]);
 
       toast({
         title: "RFQ Posted Successfully",
@@ -579,6 +628,63 @@ export default function RFQPage({ user }: RFQPageProps) {
                           className="border-orange-200 focus:border-orange-500"
                           data-testid="textarea-rfq-description"
                         />
+                      </div>
+                      
+                      {/* Photo/Video Upload Section */}
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                          Photos / Videos (Optional)
+                        </Label>
+                        <div className="space-y-3">
+                          {/* Upload Button */}
+                          <ObjectUploader
+                            maxNumberOfFiles={5}
+                            maxFileSize={52428800} // 50MB
+                            onGetUploadParameters={handleGetUploadParameters}
+                            onComplete={handleUploadComplete}
+                            buttonClassName="w-full border-2 border-dashed border-orange-300 hover:border-orange-500 bg-orange-50 hover:bg-orange-100 text-orange-700 py-4 px-4 rounded-lg transition-colors"
+                          >
+                            <div className="flex flex-col items-center gap-2">
+                              <Paperclip className="w-5 h-5" />
+                              <span className="text-sm font-medium">
+                                Upload Photos/Videos
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                JPG, PNG, MP4, MOV (Max 50MB, 5 files)
+                              </span>
+                            </div>
+                          </ObjectUploader>
+
+                          {/* Uploaded Files List */}
+                          {attachments.length > 0 && (
+                            <div className="space-y-2">
+                              <p className="text-sm font-medium text-gray-700">
+                                Uploaded files ({attachments.length}):
+                              </p>
+                              <div className="space-y-2 max-h-32 overflow-y-auto">
+                                {attachments.map((fileUrl, index) => (
+                                  <div
+                                    key={index}
+                                    className="flex items-center justify-between p-2 bg-gray-50 rounded border border-gray-200"
+                                  >
+                                    <span className="text-sm text-gray-600 truncate flex-1 mr-2">
+                                      {fileUrl.split('/').pop() || `File ${index + 1}`}
+                                    </span>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => removeAttachment(fileUrl)}
+                                      className="h-6 w-6 p-0 text-gray-400 hover:text-red-500"
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </Button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                       
                       <div>
