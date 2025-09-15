@@ -327,7 +327,7 @@ export default function RFQPage({ user }: RFQPageProps) {
               </DropdownMenu>
               <div className="min-w-0 flex items-center space-x-2">
                 <h1 className="text-base sm:text-xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent whitespace-nowrap">
-                  Maritime RFQ Board{isPremium ? " Premium" : ""}
+                  Requisition For Quotation{isPremium ? " Premium" : ""}
                 </h1>
                 {isPremium && (
                   <Crown className="w-5 h-5 text-yellow-500 animate-pulse" />
@@ -346,7 +346,7 @@ export default function RFQPage({ user }: RFQPageProps) {
         <div className="flex items-center gap-3">
           <i className="fas fa-clipboard-list text-2xl"></i>
           <div>
-            <h2 className="text-xl font-bold">Request for Quote Board</h2>
+            <h2 className="text-xl font-bold">Requisition for Quotation Board</h2>
             <p className="text-orange-100 text-sm">Maritime services & ship parts marketplace</p>
           </div>
         </div>
