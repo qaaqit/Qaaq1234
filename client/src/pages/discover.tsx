@@ -53,6 +53,16 @@ export default function Discover() {
     }
   });
 
+  // Fetch workshop count
+  const { data: workshopCountData } = useQuery({
+    queryKey: ['/api/workshops/count'],
+    queryFn: async () => {
+      const response = await fetch('/api/workshops/count');
+      if (!response.ok) throw new Error('Failed to fetch workshop count');
+      return response.json();
+    }
+  });
+
   const handleSearch = () => {
     const params = new URLSearchParams();
     if (selectedPort) {
