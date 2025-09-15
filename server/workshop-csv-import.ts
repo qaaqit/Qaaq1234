@@ -139,6 +139,9 @@ export class WorkshopCSVImportService {
     const companies = getField(['8. Companies worked for  (in last 1 year):', 'companies']);
     const website = getField(['Your workshop\'s official website', 'website']);
 
+    // Normalize and clean website URL
+    const normalizedWebsite = this.normalizeWebsiteUrl(website);
+
     // Clean port name
     const cleanPort = this.cleanPortName(port);
     
@@ -151,7 +154,7 @@ export class WorkshopCSVImportService {
       homePort: cleanPort,
       businessCardPhoto: '',
       workshopFrontPhoto: '',
-      officialWebsite: website,
+      officialWebsite: normalizedWebsite,
       location: port, // Keep original for reference
       description: `${description}${companies ? ` | Companies worked for: ${companies}` : ''}${visaStatus ? ` | Visa status: ${visaStatus}` : ''}`,
       anonymousMode: true,
@@ -194,6 +197,40 @@ export class WorkshopCSVImportService {
       .substring(0, 20) // Limit length
       .toLowerCase()
       .replace(/^./, (str) => str.toUpperCase()) || 'Unknown'; // Capitalize first letter
+  }
+
+  /**
+   * Normalize and clean website URLs for consistent storage and domain matching
+   */
+  private normalizeWebsiteUrl(url: string): string {
+    if (!url || !url.trim()) return '';
+    
+    try {
+      // Remove protocol and www prefix for normalization
+      let cleanUrl = url.trim().toLowerCase();
+      
+      // Remove protocol if present
+      cleanUrl = cleanUrl.replace(/^https?:\/\//, '');
+      
+      // Remove www prefix
+      cleanUrl = cleanUrl.replace(/^www\./, '');
+      
+      // Remove trailing slash and paths (keep only domain)
+      cleanUrl = cleanUrl.split('/')[0];
+      
+      // Validate domain format
+      if (!cleanUrl.includes('.') || cleanUrl.length < 4) {
+        console.warn(`Invalid website URL format: ${url}`);
+        return '';
+      }
+      
+      // Add back https protocol for storage
+      return `https://${cleanUrl}`;
+      
+    } catch (error) {
+      console.error(`Error normalizing website URL ${url}:`, error);
+      return '';
+    }
   }
 
   /**

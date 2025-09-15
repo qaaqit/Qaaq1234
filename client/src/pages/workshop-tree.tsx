@@ -94,6 +94,12 @@ export default function WorkshopTreePage() {
       imageSource = `https://${imageSource}`;
     }
 
+    // Get fallback image URL (heroImageUrl)
+    let fallbackImageSource = workshop.heroImageUrl && workshop.heroImageUrl.trim() || null;
+    if (fallbackImageSource && !fallbackImageSource.startsWith('http')) {
+      fallbackImageSource = `https://${fallbackImageSource}`;
+    }
+
     // Image error tracking is handled at component level, no useEffect needed here
 
     return (
@@ -112,9 +118,16 @@ export default function WorkshopTreePage() {
               data-testid={`img-workshop-preview-${workshop.id}`}
               onError={(e) => {
                 const img = e.target as HTMLImageElement;
-                img.style.display = 'none';
-                const placeholder = img.parentElement?.querySelector('.placeholder-icon');
-                if (placeholder) placeholder.classList.remove('hidden');
+                // If screenshot fails and we have a fallback image, use it
+                if (fallbackImageSource && img.src !== fallbackImageSource) {
+                  console.log(`Screenshot failed for ${workshop.displayName}, falling back to stored image`);
+                  img.src = fallbackImageSource;
+                } else {
+                  // No fallback available, show placeholder
+                  img.style.display = 'none';
+                  const placeholder = img.parentElement?.querySelector('.placeholder-icon');
+                  if (placeholder) placeholder.classList.remove('hidden');
+                }
               }}
             />
           ) : null}

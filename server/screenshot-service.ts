@@ -1,4 +1,5 @@
 // No need to import fetch in Node.js 18+
+import crypto from 'crypto';
 
 export interface ScreenshotOptions {
   url: string;
@@ -13,23 +14,105 @@ export interface ScreenshotOptions {
 
 export class ScreenshotService {
   private apiKey: string;
+  private secretKey: string;
   private baseUrl: string = 'https://api.screenshotone.com/take';
   private cache: Map<string, { url: string; timestamp: number }> = new Map();
-  private cacheTimeout: number = 24 * 60 * 60 * 1000; // 24 hours
+  private cacheTimeout: number = 15 * 60 * 1000; // 15 minutes
+  private ipThrottle: Map<string, { count: number; resetTime: number }> = new Map();
+  private readonly THROTTLE_LIMIT = 10; // 10 screenshots per 5 minutes per IP
+  private readonly THROTTLE_WINDOW = 5 * 60 * 1000; // 5 minutes
 
   constructor() {
     this.apiKey = process.env.SCREENSHOTONE_API_KEY || '';
+    this.secretKey = process.env.SCREENSHOTONE_SECRET_KEY || '';
+    
     if (!this.apiKey) {
       console.warn('⚠️  SCREENSHOTONE_API_KEY not found - dynamic website previews will not work');
+    }
+    
+    if (!this.secretKey) {
+      console.warn('⚠️  SCREENSHOTONE_SECRET_KEY not found - signed URLs will not work');
     }
   }
 
   /**
-   * Generate a screenshot URL for a given website
+   * Check IP throttling for screenshot generation
    */
-  async generateScreenshotUrl(options: ScreenshotOptions): Promise<string | null> {
-    if (!this.apiKey) {
-      console.warn('ScreenshotOne API key not configured');
+  private checkIPThrottle(ip: string): boolean {
+    const now = Date.now();
+    const throttleData = this.ipThrottle.get(ip);
+    
+    if (!throttleData || now > throttleData.resetTime) {
+      // Reset or initialize throttle
+      this.ipThrottle.set(ip, {
+        count: 1,
+        resetTime: now + this.THROTTLE_WINDOW
+      });
+      return true;
+    }
+    
+    if (throttleData.count >= this.THROTTLE_LIMIT) {
+      console.warn(`🚫 IP throttle limit exceeded for ${ip}`);
+      return false;
+    }
+    
+    throttleData.count++;
+    return true;
+  }
+
+  /**
+   * Generate ScreenshotOne signed URL using their native HMAC mechanism
+   */
+  private generateSignedUrl(url: string, options: ScreenshotOptions): string {
+    // Build query parameters
+    const params = new URLSearchParams({
+      access_key: this.apiKey,
+      url: url,
+      viewport_width: (options.width || 1200).toString(),
+      viewport_height: (options.height || 800).toString(),
+      device_scale_factor: '2', // High DPI for crisp images
+      format: options.format || 'png',
+      full_page: (options.fullPage !== false).toString(),
+      block_ads: (options.blockAds !== false).toString(),
+      block_cookie_banners: 'true',
+      block_chats: 'true',
+      response_type: 'by_format',
+      cache: 'true',
+      cache_ttl: '86400' // 24 hours cache
+    });
+
+    if (options.quality && options.format === 'jpg') {
+      params.set('quality', options.quality.toString());
+    }
+
+    if (options.timeout) {
+      params.set('timeout', options.timeout.toString());
+    }
+
+    // Create the query string for signing
+    const queryString = params.toString();
+    
+    // Generate HMAC-SHA256 signature using ScreenshotOne's method
+    const signature = crypto
+      .createHmac('sha256', this.secretKey)
+      .update(queryString)
+      .digest('hex');
+    
+    // Return the signed URL
+    return `${this.baseUrl}?${queryString}&signature=${signature}`;
+  }
+
+  /**
+   * Generate a signed screenshot URL using ScreenshotOne's native signing
+   */
+  async generateSignedScreenshotUrl(options: ScreenshotOptions, clientIP?: string): Promise<string | null> {
+    if (!this.apiKey || !this.secretKey) {
+      console.warn('ScreenshotOne API key or secret key not configured');
+      return null;
+    }
+    
+    // Check IP throttling if IP provided
+    if (clientIP && !this.checkIPThrottle(clientIP)) {
       return null;
     }
 
@@ -48,30 +131,47 @@ export class ScreenshotService {
         return cached.url;
       }
 
-      // Build screenshot URL
-      const screenshotUrl = this.buildScreenshotUrl(targetUrl, options);
+      // Generate signed URL using ScreenshotOne's native method
+      const signedUrl = this.generateSignedUrl(targetUrl, options);
       
       // Cache the result
       this.cache.set(cacheKey, {
-        url: screenshotUrl,
+        url: signedUrl,
         timestamp: Date.now()
       });
 
-      return screenshotUrl;
+      console.log(`🔒 Generated signed screenshot URL for ${targetUrl}`);
+      return signedUrl;
 
     } catch (error) {
-      console.error('Error generating screenshot URL:', error);
+      console.error('Error generating signed screenshot URL:', error);
       return null;
     }
   }
 
   /**
-   * Generate screenshot URLs for multiple websites
+   * DEPRECATED: Use generateSignedScreenshotUrl() instead
+   */
+  async generateScreenshotUrl(options: ScreenshotOptions): Promise<string | null> {
+    console.warn('⚠️ generateScreenshotUrl is deprecated. Use generateSignedScreenshotUrl() instead');
+    return this.generateSignedScreenshotUrl(options);
+  }
+  
+  /**
+   * DEPRECATED: Legacy method for backward compatibility
+   */
+  async generateScreenshotToken(options: ScreenshotOptions, clientIP?: string): Promise<string | null> {
+    console.warn('⚠️ generateScreenshotToken is deprecated. Use generateSignedScreenshotUrl() instead');
+    return this.generateSignedScreenshotUrl(options, clientIP);
+  }
+
+  /**
+   * Generate signed screenshot URLs for multiple websites
    */
   async generateBulkScreenshots(urls: string[], options: Partial<ScreenshotOptions> = {}): Promise<Array<{ url: string; screenshot: string | null }>> {
     const promises = urls.map(async (url) => ({
       url,
-      screenshot: await this.generateScreenshotUrl({ ...options, url })
+      screenshot: await this.generateSignedScreenshotUrl({ ...options, url })
     }));
 
     return Promise.all(promises);
@@ -96,37 +196,6 @@ export class ScreenshotService {
     } catch {
       return null;
     }
-  }
-
-  /**
-   * Build ScreenshotOne API URL with parameters
-   */
-  private buildScreenshotUrl(url: string, options: ScreenshotOptions): string {
-    const params = new URLSearchParams({
-      access_key: this.apiKey,
-      url: url,
-      viewport_width: (options.width || 1200).toString(),
-      viewport_height: (options.height || 800).toString(),
-      device_scale_factor: '2', // High DPI for crisp images
-      format: options.format || 'png',
-      full_page: (options.fullPage !== false).toString(), // Default to true
-      block_ads: (options.blockAds !== false).toString(), // Default to true
-      block_cookie_banners: 'true',
-      block_chats: 'true',
-      response_type: 'by_format', // Use by_format instead of image
-      cache: 'true',
-      cache_ttl: '86400' // 24 hours cache
-    });
-
-    if (options.quality && options.format === 'jpg') {
-      params.set('quality', options.quality.toString());
-    }
-
-    if (options.timeout) {
-      params.set('timeout', options.timeout.toString());
-    }
-
-    return `${this.baseUrl}?${params.toString()}`;
   }
 
   /**

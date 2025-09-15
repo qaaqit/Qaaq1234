@@ -38,6 +38,7 @@ import { FeedbackService } from "./feedback-service";
 import { WatiBotService } from "./wati-bot-service";
 import { GlossaryAutoUpdateService } from "./glossary-auto-update";
 import { workshopCSVImportService } from "./workshop-csv-import";
+import { csvWorkshopDomainLinker } from "./csv-workshop-domain-linker";
 import { WorkshopDisplayIdBackfillService } from "./workshop-displayid-backfill";
 import { WorkshopPricingCalculator, PricingCalculationOptions } from "./pricing-calculator";
 import { screenshotService } from "./screenshot-service";
@@ -6148,6 +6149,92 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
     }
   });
 
+  // Link CSV domains to existing workshop database records - Admin only
+  app.post('/api/workshops/link-csv-domains', authenticateToken, isAdminOrIntern, async (req: any, res) => {
+    try {
+      const { csvContent, fileName } = req.body;
+      
+      if (!csvContent) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'CSV content is required for domain linking' 
+        });
+      }
+
+      const adminUserId = req.userId;
+      console.log(`🔗 Starting CSV domain linking process by admin ${adminUserId}...`);
+      
+      // Perform domain linking
+      const linkingResult = await csvWorkshopDomainLinker.linkDomainsFromCSV(csvContent);
+      
+      // Generate verification report
+      const verificationReport = await csvWorkshopDomainLinker.generateVerificationReport(linkingResult);
+      
+      console.log(`📊 CSV domain linking completed by admin ${adminUserId}: ${linkingResult.matched} matched, ${linkingResult.updated} updated, ${linkingResult.errors.length} errors`);
+      
+      res.json({
+        success: linkingResult.success,
+        result: {
+          processed: linkingResult.processed,
+          matched: linkingResult.matched,
+          updated: linkingResult.updated,
+          skipped: linkingResult.skipped,
+          errors: linkingResult.errors,
+          matches: linkingResult.matches
+        },
+        verificationReport: verificationReport,
+        message: `Domain linking completed: ${linkingResult.matched} domains matched, ${linkingResult.updated} workshop records updated`
+      });
+
+    } catch (error) {
+      console.error('❌ Error in CSV domain linking:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to process CSV domain linking',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+  
+  // Run CSV domain verification script - Admin only
+  app.post('/api/workshops/verify-csv-domains', authenticateToken, isAdminOrIntern, async (req: any, res) => {
+    try {
+      const { csvFilePath } = req.body;
+      const defaultPath = 'attached_assets/Marine Repairs Workshop Database.csv';
+      const filePath = csvFilePath || defaultPath;
+      
+      console.log(`🔍 Running CSV domain verification for file: ${filePath}`);
+      
+      // Run domain linking with file
+      const linkingResult = await csvWorkshopDomainLinker.linkDomainsFromFile(filePath);
+      
+      // Generate verification report
+      const verificationReport = await csvWorkshopDomainLinker.generateVerificationReport(linkingResult);
+      
+      res.json({
+        success: linkingResult.success,
+        verification: {
+          processed: linkingResult.processed,
+          matched: linkingResult.matched,
+          updated: linkingResult.updated,
+          skipped: linkingResult.skipped,
+          matchRate: linkingResult.processed > 0 ? ((linkingResult.matched / linkingResult.processed) * 100).toFixed(1) : '0',
+          errors: linkingResult.errors
+        },
+        report: verificationReport,
+        message: `Verification completed: ${linkingResult.matched}/${linkingResult.processed} domains matched (${linkingResult.processed > 0 ? ((linkingResult.matched / linkingResult.processed) * 100).toFixed(1) : '0'}%)`
+      });
+
+    } catch (error) {
+      console.error('❌ Error in CSV domain verification:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to run CSV domain verification',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Get all workshops with pagination and port filtering - Public access
   app.get('/api/workshops', async (req, res) => {
     try {
@@ -6363,6 +6450,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
     return [...new Set(tags)].slice(0, 6);
   };
   
+
   // Get featured workshops - Public access with rate limiting and caching
   app.get('/api/workshops/featured', async (req, res) => {
     try {
@@ -6463,22 +6551,48 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
           let websitePreviewImage = workshop.website_preview_image; // Use stored image first
           if (workshop.official_website && !websitePreviewImage) {
             try {
-              // Only generate screenshots for real domains (avoid test domains)
-              const validDomains = ['dubaimarine.ae', 'smesolutions.sg', 'rotterdamship.nl'];
-              const domain = new URL(workshop.official_website.startsWith('http') ? workshop.official_website : `https://${workshop.official_website}`).hostname;
+              // Normalize domain for consistent matching
+              const normalizeDomain = (url: string): string => {
+                try {
+                  const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`);
+                  return urlObj.hostname.toLowerCase().replace(/^www\./, '');
+                } catch {
+                  return url.toLowerCase().replace(/^www\./, '');
+                }
+              };
               
-              if (validDomains.includes(domain.replace('www.', ''))) {
-                websitePreviewImage = await screenshotService.generateScreenshotUrl({
+              const normalizedDomain = normalizeDomain(workshop.official_website);
+              
+              // Check if this workshop has a real website (not generated/placeholder)
+              // This replaces the hardcoded domain list with dynamic validation
+              const isValidDomain = normalizedDomain && 
+                !normalizedDomain.includes('gmail.com') && 
+                !normalizedDomain.includes('yahoo.com') && 
+                !normalizedDomain.includes('outlook.com') && 
+                !normalizedDomain.includes('example.com') && 
+                normalizedDomain.includes('.') && 
+                normalizedDomain.length > 4;
+              
+              if (isValidDomain) {
+                // Generate ScreenshotOne signed URL
+                const signedScreenshotUrl = await screenshotService.generateSignedScreenshotUrl({
                   url: workshop.official_website,
                   width: 1200,
                   height: 800,
                   format: 'png',
                   blockAds: true,
                   fullPage: false // Viewport screenshot for faster loading
-                });
-                console.log(`📸 Generated screenshot for ${workshop.display_id || workshop.full_name}: ${websitePreviewImage ? 'Success' : 'Failed'}`);
+                }, clientIP);
+                
+                if (signedScreenshotUrl) {
+                  // Use direct signed URL from ScreenshotOne
+                  websitePreviewImage = signedScreenshotUrl;
+                  console.log(`📸 Generated signed screenshot URL for ${workshop.display_id || workshop.full_name}: Success`);
+                } else {
+                  console.log(`❌ Failed to generate signed screenshot URL for ${workshop.display_id || workshop.full_name}`);
+                }
               } else {
-                console.log(`🚫 Skipped screenshot for test domain: ${domain}`);
+                console.log(`🚫 Skipped screenshot for invalid/email domain: ${normalizedDomain}`);
               }
             } catch (error) {
               console.error(`❌ Screenshot generation failed for ${workshop.official_website}:`, error);
@@ -6492,7 +6606,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
             country: country,
             expertiseTags: expertiseTags,
             heroImageUrl: heroImageUrl,
-            websiteUrl: workshop.official_website || null, // Workshop website URL
+            websiteUrl: workshop.official_website || null, // Workshop website URL (normalized)
             websitePreviewImage: websitePreviewImage, // Dynamic website preview/screenshot URL
             verified: !!workshop.is_verified,
             rating: 4.2 + (authenticityScore / 100) * 0.8, // Generate rating between 4.2-5.0 based on authenticity
