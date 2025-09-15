@@ -228,7 +228,7 @@ export default function RFQPage({ user }: RFQPageProps) {
     }
 
     // Validate required fields
-    if (!formData.title || !formData.category || !formData.description || !formData.location || !formData.deadline) {
+    if (!formData.title || !formData.description || !formData.location) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields.",
@@ -628,7 +628,7 @@ export default function RFQPage({ user }: RFQPageProps) {
                       
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <Label htmlFor="category">Category *</Label>
+                          <Label htmlFor="category">Category</Label>
                           <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({...prev, category: value}))}>
                             <SelectTrigger data-testid="select-rfq-category">
                               <SelectValue placeholder="Select category" />
@@ -642,7 +642,7 @@ export default function RFQPage({ user }: RFQPageProps) {
                           </Select>
                         </div>
                         <div>
-                          <Label htmlFor="urgency">Urgency Level *</Label>
+                          <Label htmlFor="urgency">Urgency Level</Label>
                           <Select value={formData.urgency} onValueChange={(value) => setFormData(prev => ({...prev, urgency: value}))}>
                             <SelectTrigger data-testid="select-rfq-urgency">
                               <SelectValue placeholder="Select urgency" />
@@ -752,7 +752,7 @@ export default function RFQPage({ user }: RFQPageProps) {
                       </div>
                       
                       <div>
-                        <Label htmlFor="deadline">Response Deadline *</Label>
+                        <Label htmlFor="deadline">Response Deadline</Label>
                         <Input
                           type="date"
                           id="deadline"
