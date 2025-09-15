@@ -17,7 +17,7 @@ interface Workshop {
   business_card_photo?: string;
   workshop_front_photo?: string;
   official_website?: string;
-  website_preview_image?: string; // Automated website preview/screenshot URL
+  websitePreviewImage?: string; // Automated website preview/screenshot URL
   location?: string;
   description?: string;
   is_verified: boolean;
@@ -162,10 +162,10 @@ export default function WorkshopPage() {
                             alt={`${workshop.display_id} business card`}
                             className="w-full h-full object-cover"
                           />
-                        ) : workshop.website_preview_image ? (
+                        ) : workshop.websitePreviewImage ? (
                           <div className="w-full h-full relative">
                             <img 
-                              src={workshop.website_preview_image} 
+                              src={workshop.websitePreviewImage} 
                               alt={`${workshop.display_id} website preview`}
                               className="w-full h-full object-cover blur-md opacity-40"
                             />
@@ -192,10 +192,10 @@ export default function WorkshopPage() {
                             alt={`${workshop.display_id} workshop front`}
                             className="w-full h-full object-cover"
                           />
-                        ) : workshop.website_preview_image ? (
+                        ) : workshop.websitePreviewImage ? (
                           <div className="w-full h-full relative">
                             <img 
-                              src={workshop.website_preview_image} 
+                              src={workshop.websitePreviewImage} 
                               alt={`${workshop.display_id} website preview`}
                               className="w-full h-full object-cover blur-md opacity-30"
                             />
