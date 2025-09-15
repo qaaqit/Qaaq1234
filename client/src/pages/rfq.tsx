@@ -78,6 +78,7 @@ export default function RFQPage({ user }: RFQPageProps) {
     deadline: ""
   });
   const [attachments, setAttachments] = useState<string[]>([]);
+  const [showAdditionalData, setShowAdditionalData] = useState(false);
 
   // Upload handlers
   const handleGetUploadParameters = async () => {
@@ -615,78 +616,26 @@ export default function RFQPage({ user }: RFQPageProps) {
                   
                   <CardContent>
                     <form onSubmit={handleSubmitRFQ} className="space-y-4">
+                      
+                      {/* Location Field - Always Visible */}
                       <div>
-                        <Label htmlFor="title">Request Title *</Label>
+                        <Label htmlFor="location">Location *</Label>
                         <Input
-                          id="title"
-                          placeholder="e.g., Main Engine Spare Parts Required"
-                          value={formData.title}
-                          onChange={(e) => setFormData(prev => ({...prev, title: e.target.value}))}
+                          id="location"
+                          placeholder="Port/Position"
+                          value={formData.location}
+                          onChange={(e) => setFormData(prev => ({...prev, location: e.target.value}))}
                           className="border-orange-200 focus:border-orange-500"
-                          data-testid="input-rfq-title"
+                          data-testid="input-rfq-location"
                         />
                       </div>
                       
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="category">Category</Label>
-                          <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({...prev, category: value}))}>
-                            <SelectTrigger data-testid="select-rfq-category">
-                              <SelectValue placeholder="Select category" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="parts">Spare Parts</SelectItem>
-                              <SelectItem value="repair">Repair Workshop</SelectItem>
-                              <SelectItem value="supply">IMPA STORES</SelectItem>
-                              <SelectItem value="emergency">Emergency</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label htmlFor="urgency">Urgency Level</Label>
-                          <Select value={formData.urgency} onValueChange={(value) => setFormData(prev => ({...prev, urgency: value}))}>
-                            <SelectTrigger data-testid="select-rfq-urgency">
-                              <SelectValue placeholder="Select urgency" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="normal">Normal</SelectItem>
-                              <SelectItem value="urgent">Urgent</SelectItem>
-                              <SelectItem value="critical">Critical</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="vessel">Vessel Name</Label>
-                          <Input
-                            id="vessel"
-                            placeholder="M.V. Example"
-                            value={formData.vesselName}
-                            onChange={(e) => setFormData(prev => ({...prev, vesselName: e.target.value}))}
-                            className="border-orange-200 focus:border-orange-500"
-                            data-testid="input-rfq-vessel"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="location">Current Location *</Label>
-                          <Input
-                            id="location"
-                            placeholder="Port/Position"
-                            value={formData.location}
-                            onChange={(e) => setFormData(prev => ({...prev, location: e.target.value}))}
-                            className="border-orange-200 focus:border-orange-500"
-                            data-testid="input-rfq-location"
-                          />
-                        </div>
-                      </div>
-                      
+                      {/* Requirements Field - Always Visible */}
                       <div>
-                        <Label htmlFor="description">Detailed Requirements *</Label>
+                        <Label htmlFor="description">Requirement *</Label>
                         <Textarea
                           id="description"
-                          placeholder="Provide detailed specifications, quantities, technical requirements, and any special conditions..."
+                          placeholder="What do you need? (First line will be used as title)"
                           rows={5}
                           value={formData.description}
                           onChange={(e) => setFormData(prev => ({...prev, description: e.target.value}))}
@@ -695,73 +644,95 @@ export default function RFQPage({ user }: RFQPageProps) {
                         />
                       </div>
                       
-                      {/* Photo/Video Upload Section */}
-                      <div>
-                        <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                          Photos / Videos (Optional)
-                        </Label>
-                        <div className="space-y-3">
-                          {/* Upload Button */}
-                          <ObjectUploader
-                            maxNumberOfFiles={5}
-                            maxFileSize={52428800} // 50MB
-                            onGetUploadParameters={handleGetUploadParameters}
-                            onComplete={handleUploadComplete}
-                            buttonClassName="w-full border-2 border-dashed border-orange-300 hover:border-orange-500 bg-orange-50 hover:bg-orange-100 text-orange-700 py-4 px-4 rounded-lg transition-colors"
-                          >
-                            <div className="flex flex-col items-center gap-2">
-                              <Paperclip className="w-5 h-5" />
-                              <span className="text-sm font-medium">
-                                Upload Photos/Videos
-                              </span>
-                              <span className="text-xs text-gray-500">
-                                JPG, PNG, MP4, MOV (Max 50MB, 5 files)
-                              </span>
-                            </div>
-                          </ObjectUploader>
-
-                          {/* Uploaded Files List */}
-                          {attachments.length > 0 && (
-                            <div className="space-y-2">
-                              <p className="text-sm font-medium text-gray-700">
-                                Uploaded files ({attachments.length}):
-                              </p>
-                              <div className="space-y-2 max-h-32 overflow-y-auto">
-                                {attachments.map((fileUrl, index) => (
-                                  <div
-                                    key={index}
-                                    className="flex items-center justify-between p-2 bg-gray-50 rounded border border-gray-200"
-                                  >
-                                    <span className="text-sm text-gray-600 truncate flex-1 mr-2">
-                                      {fileUrl.split('/').pop() || `File ${index + 1}`}
-                                    </span>
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => removeAttachment(fileUrl)}
-                                      className="h-6 w-6 p-0 text-gray-400 hover:text-red-500"
-                                    >
-                                      <X className="w-3 h-3" />
-                                    </Button>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
+                      {/* Additional Data Toggle */}
+                      <div className="border-t pt-4">
+                        <button
+                          type="button"
+                          onClick={() => setShowAdditionalData(!showAdditionalData)}
+                          className="flex items-center gap-2 text-orange-600 hover:text-orange-700 font-medium"
+                          data-testid="button-additional-data"
+                        >
+                          <ChevronDown className={`w-4 h-4 transition-transform ${showAdditionalData ? 'rotate-180' : ''}`} />
+                          Additional data
+                        </button>
                       </div>
                       
-                      <div>
-                        <Label htmlFor="deadline">Response Deadline</Label>
-                        <Input
-                          type="date"
-                          id="deadline"
-                          value={formData.deadline}
-                          onChange={(e) => setFormData(prev => ({...prev, deadline: e.target.value}))}
-                          className="border-orange-200 focus:border-orange-500"
-                          data-testid="input-rfq-deadline"
-                        />
+                      {/* Additional Fields - Hidden by Default */}
+                      {showAdditionalData && (
+                        <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor="category">Category</Label>
+                              <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({...prev, category: value}))}>
+                                <SelectTrigger data-testid="select-rfq-category">
+                                  <SelectValue placeholder="Select category" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="parts">Spare Parts</SelectItem>
+                                  <SelectItem value="repair">Repair Workshop</SelectItem>
+                                  <SelectItem value="supply">IMPA STORES</SelectItem>
+                                  <SelectItem value="emergency">Emergency</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label htmlFor="urgency">Urgency Level</Label>
+                              <Select value={formData.urgency} onValueChange={(value) => setFormData(prev => ({...prev, urgency: value}))}>
+                                <SelectTrigger data-testid="select-rfq-urgency">
+                                  <SelectValue placeholder="Select urgency" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="normal">Normal</SelectItem>
+                                  <SelectItem value="urgent">Urgent</SelectItem>
+                                  <SelectItem value="critical">Critical</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor="vessel">Vessel Name</Label>
+                              <Input
+                                id="vessel"
+                                placeholder="M.V. Example"
+                                value={formData.vesselName}
+                                onChange={(e) => setFormData(prev => ({...prev, vesselName: e.target.value}))}
+                                className="border-orange-200 focus:border-orange-500"
+                                data-testid="input-rfq-vessel"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="deadline">Response Deadline</Label>
+                              <Input
+                                type="date"
+                                id="deadline"
+                                value={formData.deadline}
+                                onChange={(e) => setFormData(prev => ({...prev, deadline: e.target.value}))}
+                                className="border-orange-200 focus:border-orange-500"
+                                data-testid="input-rfq-deadline"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Upload Section - Clip Icon Only */}
+                      <div className="flex items-center gap-3">
+                        <ObjectUploader
+                          maxNumberOfFiles={5}
+                          maxFileSize={52428800} // 50MB
+                          onGetUploadParameters={handleGetUploadParameters}
+                          onComplete={handleUploadComplete}
+                          buttonClassName="p-2 border border-orange-300 hover:border-orange-500 bg-orange-50 hover:bg-orange-100 text-orange-700 rounded-lg transition-colors"
+                        >
+                          <Paperclip className="w-5 h-5" />
+                        </ObjectUploader>
+                        {attachments.length > 0 && (
+                          <span className="text-sm text-gray-600">
+                            {attachments.length} file{attachments.length !== 1 ? 's' : ''} uploaded
+                          </span>
+                        )}
                       </div>
                       
                       <Button 
