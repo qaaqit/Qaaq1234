@@ -1,19 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Wrench, ChevronRight, ChevronLeft, ExternalLink, Star, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
-
-interface QuestionAttachment {
+interface FeaturedWorkshop {
   id: string;
-  questionId: number;
-  attachmentType: string;
-  attachmentUrl: string;
-  fileName: string;
-  question?: {
-    id: number;
-    content: string;
-    authorId: string;
-  };
+  displayName: string;
+  city: string;
+  country: string;
+  expertiseTags: string[];
+  heroImageUrl?: string;
+  websiteUrl?: string;
+  websitePreviewImage?: string;
+  verified: boolean;
+  rating: number;
+  servicesCount: number;
 }
 
 interface ImageCarouselProps {
@@ -21,17 +22,17 @@ interface ImageCarouselProps {
 }
 
 export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
-  const [attachments, setAttachments] = useState<QuestionAttachment[]>([]);
+  const [workshops, setWorkshops] = useState<FeaturedWorkshop[]>([]);
   const [loading, setLoading] = useState(true);
   const [imageError, setImageError] = useState<Set<string>>(new Set());
   const [currentStartIndex, setCurrentStartIndex] = useState(0);
-  const [viewMode, setViewMode] = useState<'carousel' | 'grid'>('grid'); // Default to showing all images
+  const [viewMode, setViewMode] = useState<'carousel' | 'grid'>('carousel'); // Default to carousel for workshops
 
-  // Fetch question attachments
+  // Fetch featured workshops
   useEffect(() => {
-    const fetchAttachments = async () => {
+    const fetchWorkshops = async () => {
       try {
-        const response = await fetch('/api/questions/attachments?limit=18', {
+        const response = await fetch('/api/workshops/featured?limit=12', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
             'Content-Type': 'application/json'
@@ -40,48 +41,42 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
 
         if (response.ok) {
           const data = await response.json();
-          // Filter for image attachments only (all available)
-          const imageAttachments = data
-            .filter((att: QuestionAttachment) => att.attachmentType === 'image');
-          setAttachments(imageAttachments);
-        } else if (response.status === 404) {
-          console.warn('No attachments found, using empty state');
-          setAttachments([]);
+          setWorkshops(data.workshops || []);
         } else {
-          console.warn('Failed to fetch attachments from API:', response.status);
-          setAttachments([]);
+          console.warn('Failed to fetch workshops from API:', response.status);
+          setWorkshops([]);
         }
       } catch (error) {
-        console.error('Error fetching attachments:', error);
-        setAttachments([]); // No fallback data - use authentic data only
+        console.error('Error fetching workshops:', error);
+        setWorkshops([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAttachments();
+    fetchWorkshops();
   }, []);
 
-  const handleImageError = (attachmentId: string) => {
-    setImageError(prev => new Set([...Array.from(prev), attachmentId]));
+  const handleImageError = (workshopId: string) => {
+    setImageError(prev => new Set([...Array.from(prev), workshopId]));
   };
 
-  const handleViewQuestion = (questionId: number) => {
-    // Navigate to the question page for this specific maritime image with proper routing
-    console.log('Carousel click: Navigating to question ID:', questionId);
-    
-    if (questionId && questionId > 0) {
-      // Navigate to question page
-      window.location.href = `/questions/${questionId}`;
-    } else {
-      console.error('Invalid question ID for navigation:', questionId);
-    }
+  const handleWorkshopClick = (workshop: FeaturedWorkshop) => {
+    // Navigate to workshop tree page
+    console.log('Workshop click: Navigating to workshops');
+    window.location.href = '/workshop-tree';
   };
 
-  const imagesPerView = viewMode === 'carousel' ? 3 : Math.min(7, attachments.length); // Show 7 images in grid mode, or all if fewer
+  const handleWebsiteClick = (e: React.MouseEvent, websiteUrl: string) => {
+    e.stopPropagation();
+    const url = websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const workshopsPerView = viewMode === 'carousel' ? 3 : Math.min(6, workshops.length);
 
   const scrollNext = () => {
-    if (currentStartIndex + imagesPerView < attachments.length) {
+    if (currentStartIndex + workshopsPerView < workshops.length) {
       setCurrentStartIndex(prev => prev + 1);
     }
   };
@@ -92,7 +87,7 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
     }
   };
 
-  const canScrollNext = currentStartIndex + imagesPerView < attachments.length;
+  const canScrollNext = currentStartIndex + workshopsPerView < workshops.length;
   const canScrollPrev = currentStartIndex > 0;
 
   if (loading) {
@@ -105,86 +100,132 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
     );
   }
 
-  if (!attachments.length) {
-    return null;
+  if (!workshops.length) {
+    return (
+      <div className={`bg-gradient-to-r from-orange-50 to-yellow-50 border-t border-orange-200 ${className}`}>
+        <div className="flex items-center justify-center py-8">
+          <div className="text-center">
+            <Wrench className="h-12 w-12 text-orange-400 mx-auto mb-2" />
+            <p className="text-gray-600">No workshops available</p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  // Show all images in grid mode, or limited images in carousel mode
-  const displayImages = viewMode === 'grid' 
-    ? attachments 
-    : attachments.slice(currentStartIndex, currentStartIndex + imagesPerView);
+  // Show workshops based on view mode
+  const displayWorkshops = viewMode === 'grid' 
+    ? workshops 
+    : workshops.slice(currentStartIndex, currentStartIndex + workshopsPerView);
 
   return (
     <div className={`bg-gradient-to-r from-orange-50 to-yellow-50 border-t border-orange-200 relative ${className}`}>
-      {/* Toggle button to switch between grid and carousel */}
-      <div className="absolute top-2 right-2 z-10">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setViewMode(viewMode === 'grid' ? 'carousel' : 'grid')}
-          className="bg-white/80 hover:bg-white text-orange-600 border border-orange-200 px-3 py-1 text-xs rounded-full"
-        >
-          {viewMode === 'grid' ? 'Carousel' : 'Show All'}
-        </Button>
+      {/* Header */}
+      <div className="px-4 py-3 border-b border-orange-200">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Wrench className="h-5 w-5 text-orange-600" />
+            <h3 className="font-semibold text-gray-800">Workshop Carousel</h3>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setViewMode(viewMode === 'grid' ? 'carousel' : 'grid')}
+            className="bg-white/80 hover:bg-white text-orange-600 border border-orange-200 px-3 py-1 text-xs rounded-full"
+          >
+            {viewMode === 'grid' ? 'Carousel' : 'Show All'}
+          </Button>
+        </div>
       </div>
 
       {viewMode === 'grid' ? (
-        // Grid mode - show all images in a scrollable grid
+        // Grid mode - show workshops in a scrollable grid
         <div className="px-4 py-3">
-          <div className="grid grid-cols-7 gap-2 max-h-32 overflow-y-auto">
-            {displayImages.map((attachment, index) => (
+          <div className="grid grid-cols-3 gap-3 max-h-48 overflow-y-auto">
+            {displayWorkshops.map((workshop) => (
               <div 
-                key={attachment.id} 
-                className="relative cursor-pointer group aspect-square hover:scale-105 transition-transform duration-200"
-                onClick={() => handleViewQuestion(attachment.questionId)}
-                title={`Click to view: ${attachment.question?.content?.substring(0, 50)}...`}
+                key={workshop.id} 
+                className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer group overflow-hidden"
+                onClick={() => handleWorkshopClick(workshop)}
+                title={`${workshop.displayName} - ${workshop.city}, ${workshop.country}`}
               >
-                {!imageError.has(attachment.id) ? (
-                  <img
-                    src={attachment.attachmentUrl}
-                    alt="Maritime Question"
-                    className="w-full h-full object-cover rounded-lg border-2 border-white shadow-md group-hover:shadow-lg transition-shadow duration-200"
-                    onError={() => handleImageError(attachment.id)}
-                    loading="lazy"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gray-100 border-2 border-white rounded-lg flex items-center justify-center shadow-md">
-                    <Eye size={16} className="text-gray-400" />
+                <div className="relative h-24">
+                  {workshop.websitePreviewImage && !imageError.has(workshop.id) ? (
+                    <img
+                      src={workshop.websitePreviewImage}
+                      alt={workshop.displayName}
+                      className="w-full h-full object-cover"
+                      onError={() => handleImageError(workshop.id)}
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center">
+                      <Wrench className="h-8 w-8 text-orange-500" />
+                    </div>
+                  )}
+                </div>
+                <div className="p-2">
+                  <h4 className="font-medium text-sm text-gray-800 truncate">{workshop.displayName}</h4>
+                  <div className="flex items-center text-xs text-gray-500 mt-1">
+                    <MapPin className="h-3 w-3 mr-1" />
+                    <span className="truncate">{workshop.city}</span>
                   </div>
-                )}
-                
-                {/* Subtle hover overlay */}
-                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity duration-200 rounded-lg"></div>
+                </div>
               </div>
             ))}
           </div>
         </div>
       ) : (
-        // Carousel mode - show limited images with navigation
-        <div className="flex items-stretch justify-center space-x-3 px-4 h-full">
-          {displayImages.map((attachment, index) => (
+        // Carousel mode - show workshop cards with navigation
+        <div className="flex items-stretch justify-center space-x-4 px-4 py-3">
+          {displayWorkshops.map((workshop) => (
             <div 
-              key={attachment.id} 
-              className="relative cursor-pointer group flex-1 max-w-[120px] hover:scale-105 transition-transform duration-200"
-              onClick={() => handleViewQuestion(attachment.questionId)}
-              title={`Click to view: ${attachment.question?.content?.substring(0, 50)}...`}
+              key={workshop.id} 
+              className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer group flex-1 max-w-[280px] overflow-hidden"
+              onClick={() => handleWorkshopClick(workshop)}
             >
-              {!imageError.has(attachment.id) ? (
-                <img
-                  src={attachment.attachmentUrl}
-                  alt="Maritime Question"
-                  className="w-full h-full object-cover rounded-lg border-2 border-white shadow-md group-hover:shadow-lg transition-shadow duration-200"
-                  onError={() => handleImageError(attachment.id)}
-                  loading="lazy"
-                />
-              ) : (
-                <div className="w-full h-full bg-gray-100 border-2 border-white rounded-lg flex items-center justify-center shadow-md">
-                  <Eye size={20} className="text-gray-400" />
+              <div className="relative h-32">
+                {workshop.websitePreviewImage && !imageError.has(workshop.id) ? (
+                  <img
+                    src={workshop.websitePreviewImage}
+                    alt={workshop.displayName}
+                    className="w-full h-full object-cover"
+                    onError={() => handleImageError(workshop.id)}
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center">
+                    <Wrench className="h-12 w-12 text-orange-500" />
+                  </div>
+                )}
+                {workshop.websiteUrl && (
+                  <button
+                    onClick={(e) => handleWebsiteClick(e, workshop.websiteUrl!)}
+                    className="absolute top-2 right-2 p-1 bg-black/20 hover:bg-black/40 text-white rounded transition-colors"
+                    title="Visit website"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                  </button>
+                )}
+              </div>
+              <div className="p-3">
+                <h4 className="font-semibold text-gray-800 mb-1 line-clamp-1">{workshop.displayName}</h4>
+                <div className="flex items-center text-sm text-gray-600 mb-2">
+                  <MapPin className="h-3 w-3 mr-1" />
+                  <span className="truncate">{workshop.city}, {workshop.country}</span>
                 </div>
-              )}
-              
-              {/* Subtle hover overlay */}
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity duration-200 rounded-lg"></div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Star className="h-3 w-3 text-yellow-400 fill-current" />
+                    <span className="text-xs font-medium ml-1">{workshop.rating.toFixed(1)}</span>
+                  </div>
+                  {workshop.verified && (
+                    <Badge variant="secondary" className="text-xs bg-green-50 text-green-700">
+                      Verified
+                    </Badge>
+                  )}
+                </div>
+              </div>
             </div>
           ))}
         </div>
