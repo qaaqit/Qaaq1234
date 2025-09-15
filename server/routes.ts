@@ -11599,13 +11599,13 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   // User Profile API endpoints
   
   // Get user profile for CV/Profile page - supports JWT and session auth  
-  app.get('/api/users/profile', requireUnifiedAuth, async (req, res) => {
+  app.get('/api/users/profile', unifiedAuthMiddleware, requireUnifiedAuth, async (req, res) => {
     try {
-      const currentUser = (req as any).currentUser;
+      const unifiedUser = (req as any).unifiedUser;
       
-      if (currentUser) {
-        console.log(`📋 Profile found for user: ${currentUser.fullName}`);
-        return res.json(currentUser);
+      if (unifiedUser) {
+        console.log(`📋 Profile found for user: ${unifiedUser.fullName}`);
+        return res.json(unifiedUser);
       }
       
       return res.status(401).json({ error: 'Authentication required' });
