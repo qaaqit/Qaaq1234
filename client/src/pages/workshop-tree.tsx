@@ -23,16 +23,16 @@ interface WorkshopEquipment {
 
 interface FeaturedWorkshop {
   id: string;
-  name: string;
+  displayName: string;
   city: string;
   country: string;
-  expertise: string[];
-  heroImage?: string;
+  expertiseTags: string[];
+  heroImageUrl?: string;
   websiteUrl?: string;
   websitePreviewImage?: string;
-  isVerified: boolean;
+  verified: boolean;
   rating: number;
-  reviewCount: number;
+  servicesCount?: number;
 }
 
 export default function WorkshopTreePage() {
@@ -83,8 +83,15 @@ export default function WorkshopTreePage() {
       }
     };
 
-    // Use websitePreviewImage first, then fallback to heroImage
-    const imageSource = workshop.websitePreviewImage || workshop.heroImage;
+    // Use websitePreviewImage first, then fallback to heroImageUrl
+    // Ensure we have a valid image URL (not null, undefined, or empty)
+    let imageSource = (workshop.websitePreviewImage && workshop.websitePreviewImage.trim()) || 
+                     (workshop.heroImageUrl && workshop.heroImageUrl.trim()) || null;
+    
+    // Fix protocol issue: if URL doesn't start with http/https, add https://
+    if (imageSource && !imageSource.startsWith('http')) {
+      imageSource = `https://${imageSource}`;
+    }
 
     return (
       <div
@@ -97,7 +104,7 @@ export default function WorkshopTreePage() {
           {imageSource ? (
             <img
               src={imageSource}
-              alt={workshop.name}
+              alt={workshop.displayName}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               data-testid={`img-workshop-preview-${workshop.id}`}
               onError={(e) => {
@@ -110,7 +117,7 @@ export default function WorkshopTreePage() {
           <div className={`${imageSource ? 'hidden' : 'flex'} absolute inset-0 items-center justify-center`}>
             <ImageIcon className="h-16 w-16 text-orange-400" />
           </div>
-          {workshop.isVerified && (
+          {workshop.verified && (
             <div className="absolute top-3 right-3 bg-green-500 rounded-full p-1">
               <Shield className="h-4 w-4 text-white" />
             </div>
@@ -118,7 +125,7 @@ export default function WorkshopTreePage() {
         </div>
         <div className="p-4">
           <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2" data-testid={`text-workshop-name-${workshop.id}`}>
-            {workshop.name}
+            {workshop.displayName}
           </h3>
           
           {/* Website URL or Location Display */}
@@ -166,16 +173,16 @@ export default function WorkshopTreePage() {
               <span className="text-sm font-medium ml-1" data-testid={`text-workshop-rating-${workshop.id}`}>
                 {workshop.rating.toFixed(1)}
               </span>
-              <span className="text-xs text-gray-500 ml-1">({workshop.reviewCount})</span>
+              <span className="text-xs text-gray-500 ml-1">({workshop.servicesCount || 0} services)</span>
             </div>
-            {workshop.isVerified && (
+            {workshop.verified && (
               <Badge variant="secondary" className="text-xs bg-green-50 text-green-700">
                 Verified
               </Badge>
             )}
           </div>
           <div className="flex flex-wrap gap-1">
-            {(workshop.expertise || []).slice(0, 3).map((exp, index) => (
+            {(workshop.expertiseTags || []).slice(0, 3).map((exp, index) => (
               <Badge
                 key={index}
                 variant="outline"
@@ -185,9 +192,9 @@ export default function WorkshopTreePage() {
                 {exp}
               </Badge>
             ))}
-            {(workshop.expertise || []).length > 3 && (
+            {(workshop.expertiseTags || []).length > 3 && (
               <Badge variant="outline" className="text-xs bg-gray-50 border-gray-200 text-gray-600">
-                +{(workshop.expertise || []).length - 3} more
+                +{(workshop.expertiseTags || []).length - 3} more
               </Badge>
             )}
           </div>
