@@ -156,7 +156,9 @@ export default function Discover() {
       <div className="absolute top-20 sm:top-24 left-1/2 transform -translate-x-1/2 z-[1000] pointer-events-auto px-4 w-full max-w-[95vw] sm:max-w-none">
         <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 sm:p-6 border border-orange-200 w-full sm:min-w-[600px]">
           <div className="flex items-center justify-between mb-3 sm:mb-4">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-800 flex-1 text-center">Workshop Finder</h3>
+            <h3 className="text-base sm:text-lg font-semibold text-gray-800 flex-1 text-center" data-testid="text-workshop-count">
+              Our {workshopCountData?.count || 0}+ workshops will take it from here
+            </h3>
             <button
               onClick={() => setIsWorkshopFinderMinimized(!isWorkshopFinderMinimized)}
               className="p-1 rounded-full hover:bg-orange-100 transition-colors"
