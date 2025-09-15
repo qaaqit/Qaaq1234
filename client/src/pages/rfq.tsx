@@ -18,6 +18,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import UserDropdown from "@/components/user-dropdown";
 import { ObjectUploader } from "@/components/ObjectUploader";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { 
   ChevronDown, 
   Crown, 
@@ -81,6 +82,16 @@ export default function RFQPage({ user }: RFQPageProps) {
   const [attachments, setAttachments] = useState<string[]>([]);
   const [showAdditionalData, setShowAdditionalData] = useState(false);
   const [editingRFQ, setEditingRFQ] = useState<RFQRequest | null>(null);
+  const [showQuoteModal, setShowQuoteModal] = useState(false);
+  const [selectedRFQ, setSelectedRFQ] = useState<RFQRequest | null>(null);
+  const [quoteForm, setQuoteForm] = useState({
+    price: "",
+    currency: "USD",
+    readinessDate: "immediate",
+    customDate: "",
+    notes: ""
+  });
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
 
   // Upload handlers
   const handleGetUploadParameters = async () => {
@@ -406,6 +417,83 @@ export default function RFQPage({ user }: RFQPageProps) {
     window.open(whatsappShare.url, '_blank', 'noopener,noreferrer');
   };
 
+  // Open quote modal
+  const openQuoteModal = (rfq: RFQRequest) => {
+    setSelectedRFQ(rfq);
+    setShowQuoteModal(true);
+    setQuoteForm({
+      price: "",
+      currency: "USD",
+      readinessDate: "immediate",
+      customDate: "",
+      notes: ""
+    });
+    setShowAdvancedOptions(false);
+  };
+
+  // Close quote modal
+  const closeQuoteModal = () => {
+    setShowQuoteModal(false);
+    setSelectedRFQ(null);
+    setShowAdvancedOptions(false);
+  };
+
+  // Submit quote
+  const submitQuote = async () => {
+    if (!selectedRFQ || !quoteForm.price) {
+      toast({
+        title: "Missing Information",
+        description: "Please enter a price for your quote.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const quote = {
+        rfqId: selectedRFQ.id,
+        supplierId: user.id,
+        supplierName: `${user.maritimeRank} ${getInitials(user.fullName || '')}`,
+        price: parseFloat(quoteForm.price),
+        currency: quoteForm.currency,
+        readinessDate: quoteForm.readinessDate === 'immediate' ? 'Immediate' : quoteForm.customDate,
+        notes: quoteForm.notes,
+        submittedAt: new Date().toISOString()
+      };
+
+      // Mock API call - in production, this would save to database
+      console.log('Quote submitted:', quote);
+
+      // Send DM to RFQ poster (mock implementation)
+      const dmMessage = `💰 New Quote Received!
+
+RFQ: ${selectedRFQ.title}
+Supplier: ${quote.supplierName}
+Price: $${quoteForm.price} ${quoteForm.currency}
+Readiness: ${quote.readinessDate}
+${quoteForm.notes ? `\nNotes: ${quoteForm.notes}` : ''}
+
+View full quote details in your dashboard.`;
+      
+      // Mock DM functionality - in production, integrate with messaging system
+      console.log('DM sent to RFQ poster:', dmMessage);
+
+      toast({
+        title: "Quote Submitted Successfully!",
+        description: `Your quote of $${quoteForm.price} USD has been sent to the requester.`
+      });
+
+      closeQuoteModal();
+    } catch (error) {
+      console.error('Error submitting quote:', error);
+      toast({
+        title: "Submission Failed",
+        description: "Failed to submit quote. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const getUrgencyColor = (urgency: string) => {
     switch (urgency) {
       case 'critical': return 'bg-red-100 text-red-800 border-red-200';
@@ -712,8 +800,17 @@ export default function RFQPage({ user }: RFQPageProps) {
                             </div>
                           </div>
                           <div className="flex gap-2">
-                            <Button size="sm" variant="outline" className="border-orange-200 hover:bg-orange-50">
-                              View Details
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="border-orange-200 hover:bg-orange-50"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openQuoteModal(rfq);
+                              }}
+                              data-testid={`button-submit-quote-${rfq.id}`}
+                            >
+                              Submit Quote
                             </Button>
                             <Button 
                               size="sm" 
@@ -933,6 +1030,170 @@ export default function RFQPage({ user }: RFQPageProps) {
             </div>
           </TabsContent>
         </Tabs>
+        
+        {/* Quote Submission Modal */}
+        <Dialog open={showQuoteModal} onOpenChange={setShowQuoteModal}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Send className="w-5 h-5" />
+                Submit Quote
+              </DialogTitle>
+              <DialogDescription>
+                Review the RFQ details and submit your quote
+              </DialogDescription>
+            </DialogHeader>
+            
+            {selectedRFQ && (
+              <div className="space-y-6">
+                {/* RFQ Details Review */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-lg mb-3">{selectedRFQ.title}</h3>
+                  <div className="grid grid-cols-2 gap-4 text-sm mb-3">
+                    <div className="flex items-center gap-2">
+                      <Ship className="w-4 h-4 text-orange-600" />
+                      <span>{getVesselInitials(selectedRFQ.vesselName)}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-orange-600" />
+                      <span>{selectedRFQ.location}</span>
+                    </div>
+                  </div>
+                  <p className="text-gray-700 mb-3">{selectedRFQ.description}</p>
+                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      <span>Deadline: {selectedRFQ.deadline ? new Date(selectedRFQ.deadline).toLocaleDateString() : 'No deadline set'}</span>
+                    </div>
+                    <Badge className={getUrgencyColor(selectedRFQ.urgency)}>
+                      {selectedRFQ.urgency.toUpperCase()}
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Quote Form */}
+                <div className="space-y-4">
+                  <h4 className="font-semibold">Your Quote</h4>
+                  
+                  {/* Price Input */}
+                  <div>
+                    <Label htmlFor="quote-price">Price *</Label>
+                    <div className="flex gap-2">
+                      <Select value={quoteForm.currency} onValueChange={(value) => setQuoteForm(prev => ({...prev, currency: value}))}>
+                        <SelectTrigger className="w-24">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="USD">USD</SelectItem>
+                          <SelectItem value="EUR">EUR</SelectItem>
+                          <SelectItem value="GBP">GBP</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        id="quote-price"
+                        type="number"
+                        placeholder="Enter price"
+                        value={quoteForm.price}
+                        onChange={(e) => setQuoteForm(prev => ({...prev, price: e.target.value}))}
+                        className="flex-1"
+                        data-testid="input-quote-price"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Readiness Date */}
+                  <div>
+                    <Label>Readiness</Label>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          id="immediate"
+                          name="readiness"
+                          value="immediate"
+                          checked={quoteForm.readinessDate === 'immediate'}
+                          onChange={(e) => setQuoteForm(prev => ({...prev, readinessDate: e.target.value}))}
+                          className="text-orange-600"
+                        />
+                        <Label htmlFor="immediate">Immediate</Label>
+                      </div>
+                      
+                      <div className="border-t pt-2">
+                        <button
+                          type="button"
+                          onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
+                          className="flex items-center gap-2 text-sm text-orange-600 hover:text-orange-700"
+                        >
+                          <ChevronDown className={`w-3 h-3 transition-transform ${showAdvancedOptions ? 'rotate-180' : ''}`} />
+                          Advanced options (for items with lead time)
+                        </button>
+                      </div>
+                      
+                      {showAdvancedOptions && (
+                        <div className="space-y-2 bg-gray-50 p-3 rounded">
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="radio"
+                              id="custom-date"
+                              name="readiness"
+                              value="custom"
+                              checked={quoteForm.readinessDate === 'custom'}
+                              onChange={(e) => {
+                                setQuoteForm(prev => ({...prev, readinessDate: 'custom'}));
+                              }}
+                              className="text-orange-600"
+                            />
+                            <Label htmlFor="custom-date">Custom date:</Label>
+                          </div>
+                          <Input
+                            type="date"
+                            value={quoteForm.customDate}
+                            onChange={(e) => setQuoteForm(prev => ({...prev, customDate: e.target.value}))}
+                            className="ml-6"
+                            disabled={quoteForm.readinessDate !== 'custom'}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Additional Notes */}
+                  <div>
+                    <Label htmlFor="quote-notes">Additional Notes (Optional)</Label>
+                    <Textarea
+                      id="quote-notes"
+                      placeholder="Include any additional information about your quote..."
+                      value={quoteForm.notes}
+                      onChange={(e) => setQuoteForm(prev => ({...prev, notes: e.target.value}))}
+                      rows={3}
+                    />
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={closeQuoteModal}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={submitQuote}
+                    className="flex-1 bg-orange-600 hover:bg-orange-700"
+                    data-testid="button-submit-quote-final"
+                  >
+                    <Send className="w-4 h-4 mr-2" />
+                    Submit Quote
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
