@@ -84,20 +84,26 @@ export default function WorkshopTreePage() {
       }
     };
 
-    // Use websitePreviewImage first, then fallback to heroImageUrl
-    // Ensure we have a valid image URL (not null, undefined, or empty)
-    let imageSource = (workshop.websitePreviewImage && workshop.websitePreviewImage.trim()) || 
-                     (workshop.heroImageUrl && workshop.heroImageUrl.trim()) || null;
+    // Simple screenshot approach - generate direct screenshot URL for workshop websites
+    let imageSource = null;
     
-    // Fix protocol issue: if URL doesn't start with http/https, add https://
-    if (imageSource && !imageSource.startsWith('http')) {
-      imageSource = `https://${imageSource}`;
+    // If workshop has a website URL, create a simple screenshot URL
+    if (workshop.websiteUrl && workshop.websiteUrl.trim()) {
+      const websiteUrl = workshop.websiteUrl.startsWith('http') ? workshop.websiteUrl : `https://${workshop.websiteUrl}`;
+      // Use a simple screenshot service URL with basic parameters
+      imageSource = `https://api.screenshotone.com/take?access_key=iylJb375ZyVUhg&url=${encodeURIComponent(websiteUrl)}&viewport_width=1200&viewport_height=800&format=png&block_ads=true&cache=true`;
     }
-
-    // Get fallback image URL (heroImageUrl)
+    
+    // Fallback to heroImageUrl if no website or if screenshot fails
     let fallbackImageSource = workshop.heroImageUrl && workshop.heroImageUrl.trim() || null;
     if (fallbackImageSource && !fallbackImageSource.startsWith('http')) {
       fallbackImageSource = `https://${fallbackImageSource}`;
+    }
+    
+    // Use screenshot as primary, hero image as fallback
+    if (!imageSource) {
+      imageSource = fallbackImageSource;
+      fallbackImageSource = null; // No secondary fallback needed
     }
 
     // Image error tracking is handled at component level, no useEffect needed here
@@ -120,10 +126,11 @@ export default function WorkshopTreePage() {
                 const img = e.target as HTMLImageElement;
                 // If screenshot fails and we have a fallback image, use it
                 if (fallbackImageSource && img.src !== fallbackImageSource) {
-                  console.log(`Screenshot failed for ${workshop.displayName}, falling back to stored image`);
+                  console.log(`🔄 Screenshot failed for ${workshop.displayName}, using stored image`);
                   img.src = fallbackImageSource;
                 } else {
                   // No fallback available, show placeholder
+                  console.log(`📷 No image available for ${workshop.displayName}, showing placeholder`);
                   img.style.display = 'none';
                   const placeholder = img.parentElement?.querySelector('.placeholder-icon');
                   if (placeholder) placeholder.classList.remove('hidden');
