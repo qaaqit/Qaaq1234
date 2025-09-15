@@ -316,7 +316,16 @@ export function GlossaryPage() {
 
   const alphabetLetters = Object.keys(groupedEntries).sort();
 
-
+  // Generate full alphabet (A-Z) for navigation
+  const fullAlphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  
+  // Function to scroll to a specific letter section
+  const scrollToLetter = (letter: string) => {
+    const element = document.getElementById(`letter-${letter}`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-yellow-50">
@@ -364,6 +373,74 @@ export function GlossaryPage() {
           </div>
         </div>
 
+        {/* Alphabet Navigation */}
+        <div className="mb-6">
+          <div className="bg-white rounded-lg border border-orange-200 p-4 shadow-sm">
+            <h3 className="text-sm font-medium text-gray-700 mb-3">Jump to Letter:</h3>
+            <div className="space-y-2">
+              {/* First row: A-I */}
+              <div className="flex flex-wrap gap-2 justify-center">
+                {fullAlphabet.slice(0, 9).map(letter => (
+                  <button
+                    key={letter}
+                    onClick={() => scrollToLetter(letter)}
+                    data-testid={`alphabet-nav-${letter}`}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-200 ${
+                      alphabetLetters.includes(letter)
+                        ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white hover:from-red-600 hover:to-orange-600 shadow-md'
+                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    }`}
+                    disabled={!alphabetLetters.includes(letter)}
+                    title={alphabetLetters.includes(letter) ? `Jump to ${letter}` : `No terms starting with ${letter}`}
+                  >
+                    {letter}
+                  </button>
+                ))}
+              </div>
+              
+              {/* Second row: J-R */}
+              <div className="flex flex-wrap gap-2 justify-center">
+                {fullAlphabet.slice(9, 18).map(letter => (
+                  <button
+                    key={letter}
+                    onClick={() => scrollToLetter(letter)}
+                    data-testid={`alphabet-nav-${letter}`}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-200 ${
+                      alphabetLetters.includes(letter)
+                        ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white hover:from-red-600 hover:to-orange-600 shadow-md'
+                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    }`}
+                    disabled={!alphabetLetters.includes(letter)}
+                    title={alphabetLetters.includes(letter) ? `Jump to ${letter}` : `No terms starting with ${letter}`}
+                  >
+                    {letter}
+                  </button>
+                ))}
+              </div>
+              
+              {/* Third row: S-Z */}
+              <div className="flex flex-wrap gap-2 justify-center">
+                {fullAlphabet.slice(18, 26).map(letter => (
+                  <button
+                    key={letter}
+                    onClick={() => scrollToLetter(letter)}
+                    data-testid={`alphabet-nav-${letter}`}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-200 ${
+                      alphabetLetters.includes(letter)
+                        ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white hover:from-red-600 hover:to-orange-600 shadow-md'
+                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    }`}
+                    disabled={!alphabetLetters.includes(letter)}
+                    title={alphabetLetters.includes(letter) ? `Jump to ${letter}` : `No terms starting with ${letter}`}
+                  >
+                    {letter}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Statistics */}
         <div className="mb-6">
           <Badge variant="secondary" className="bg-orange-100 text-orange-800 px-3 py-1">
@@ -387,7 +464,7 @@ export function GlossaryPage() {
         {!loading && (
           <div className="space-y-4">
             {alphabetLetters.map(letter => (
-              <div key={letter}>
+              <div key={letter} id={`letter-${letter}`}>
                 {/* Letter Header */}
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center">
