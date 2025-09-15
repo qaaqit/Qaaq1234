@@ -206,27 +206,22 @@ export function WorkshopsDirectoryPage() {
           </div>
         </div>
 
-        {/* Port Navigation */}
+        {/* Port Navigation - Compact */}
         <div className="mb-6">
-          <div className="bg-white rounded-lg border border-orange-200 p-4 shadow-sm">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Jump to Port:</h3>
-            <div className="flex flex-wrap gap-2">
-              {ports.slice(0, 20).map(port => (
+          <div className="bg-white rounded-lg border border-orange-200 p-3 shadow-sm">
+            <h3 className="text-xs font-medium text-gray-700 mb-2">Jump to Port ({ports.length} total):</h3>
+            <div className="flex flex-wrap gap-1 leading-tight">
+              {ports.map(port => (
                 <button
                   key={port}
                   onClick={() => scrollToPort(port)}
                   data-testid={`port-nav-${port.replace(/[^a-zA-Z0-9]/g, '-')}`}
-                  className="px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-red-500 to-orange-500 text-white hover:from-red-600 hover:to-orange-600 shadow-md transition-all duration-200"
+                  className="px-2 py-0.5 rounded text-xs font-medium bg-gradient-to-r from-red-500 to-orange-500 text-white hover:from-red-600 hover:to-orange-600 transition-all duration-200 whitespace-nowrap"
                   title={`Jump to ${port}`}
                 >
                   {port}
                 </button>
               ))}
-              {ports.length > 20 && (
-                <Badge variant="secondary" className="bg-gray-100 text-gray-600">
-                  +{ports.length - 20} more ports
-                </Badge>
-              )}
             </div>
           </div>
         </div>
