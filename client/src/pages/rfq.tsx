@@ -70,8 +70,11 @@ export default function RFQPage({ user }: RFQPageProps) {
 
   // Form state for creating new RFQ
   const [formData, setFormData] = useState({
+    category: "",
     description: "",
+    vesselName: "",
     location: "",
+    urgency: "normal",
     deadline: ""
   });
   const [attachments, setAttachments] = useState<string[]>([]);
@@ -241,11 +244,11 @@ export default function RFQPage({ user }: RFQPageProps) {
       const newRFQ: RFQRequest = {
         id: Date.now().toString(),
         title: titleFromDescription,
-        category: "general", // Default category
+        category: formData.category,
         description: formData.description,
-        vesselName: "N/A", // No vessel name collected
+        vesselName: formData.vesselName,
         location: formData.location,
-        urgency: "normal", // Default urgency
+        urgency: formData.urgency as 'normal' | 'urgent' | 'critical',
         deadline: formData.deadline,
         postedBy: `${user.maritimeRank} ${getInitials(user.fullName || '')}`,
         postedAt: new Date(),
@@ -257,8 +260,11 @@ export default function RFQPage({ user }: RFQPageProps) {
       
       // Reset form
       setFormData({
+        category: "",
         description: "",
+        vesselName: "",
         location: "",
+        urgency: "normal",
         deadline: ""
       });
       setAttachments([]);
@@ -610,15 +616,70 @@ export default function RFQPage({ user }: RFQPageProps) {
                   <CardContent>
                     <form onSubmit={handleSubmitRFQ} className="space-y-4">
                       <div>
-                        <Label htmlFor="location">Current Location *</Label>
+                        <Label htmlFor="title">Request Title *</Label>
                         <Input
-                          id="location"
-                          placeholder="Port/Position"
-                          value={formData.location}
-                          onChange={(e) => setFormData(prev => ({...prev, location: e.target.value}))}
+                          id="title"
+                          placeholder="e.g., Main Engine Spare Parts Required"
+                          value={formData.title}
+                          onChange={(e) => setFormData(prev => ({...prev, title: e.target.value}))}
                           className="border-orange-200 focus:border-orange-500"
-                          data-testid="input-rfq-location"
+                          data-testid="input-rfq-title"
                         />
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="category">Category</Label>
+                          <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({...prev, category: value}))}>
+                            <SelectTrigger data-testid="select-rfq-category">
+                              <SelectValue placeholder="Select category" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="parts">Spare Parts</SelectItem>
+                              <SelectItem value="repair">Repair Workshop</SelectItem>
+                              <SelectItem value="supply">IMPA STORES</SelectItem>
+                              <SelectItem value="emergency">Emergency</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="urgency">Urgency Level</Label>
+                          <Select value={formData.urgency} onValueChange={(value) => setFormData(prev => ({...prev, urgency: value}))}>
+                            <SelectTrigger data-testid="select-rfq-urgency">
+                              <SelectValue placeholder="Select urgency" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="normal">Normal</SelectItem>
+                              <SelectItem value="urgent">Urgent</SelectItem>
+                              <SelectItem value="critical">Critical</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="vessel">Vessel Name</Label>
+                          <Input
+                            id="vessel"
+                            placeholder="M.V. Example"
+                            value={formData.vesselName}
+                            onChange={(e) => setFormData(prev => ({...prev, vesselName: e.target.value}))}
+                            className="border-orange-200 focus:border-orange-500"
+                            data-testid="input-rfq-vessel"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="location">Current Location *</Label>
+                          <Input
+                            id="location"
+                            placeholder="Port/Position"
+                            value={formData.location}
+                            onChange={(e) => setFormData(prev => ({...prev, location: e.target.value}))}
+                            className="border-orange-200 focus:border-orange-500"
+                            data-testid="input-rfq-location"
+                          />
+                        </div>
                       </div>
                       
                       <div>
