@@ -184,7 +184,7 @@ export default function RFQPage({ user }: RFQPageProps) {
         vesselName: "M.V. Atlantic Voyager",
         location: "Singapore",
         urgency: "urgent",
-        deadline: "2024-01-15",
+        deadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         postedBy: "Chief Engineer J.S.",
         postedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
         status: "active",
@@ -198,7 +198,7 @@ export default function RFQPage({ user }: RFQPageProps) {
         vesselName: "M.V. Ocean Pioneer",
         location: "Rotterdam",
         urgency: "normal",
-        deadline: "2024-01-20",
+        deadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         postedBy: "Captain M.R.",
         postedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
         status: "active",
@@ -212,7 +212,7 @@ export default function RFQPage({ user }: RFQPageProps) {
         vesselName: "M.V. Baltic Star",
         location: "Hamburg",
         urgency: "critical",
-        deadline: "2024-01-10",
+        deadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         postedBy: "Chief Engineer A.H.",
         postedAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
         status: "active",
@@ -260,7 +260,7 @@ export default function RFQPage({ user }: RFQPageProps) {
           vesselName: formData.vesselName,
           location: formData.location,
           urgency: formData.urgency as 'normal' | 'urgent' | 'critical',
-          deadline: formData.deadline,
+          deadline: formData.deadline || new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           attachments: attachments,
         };
 
@@ -284,7 +284,7 @@ export default function RFQPage({ user }: RFQPageProps) {
           vesselName: formData.vesselName,
           location: formData.location,
           urgency: formData.urgency as 'normal' | 'urgent' | 'critical',
-          deadline: formData.deadline,
+          deadline: formData.deadline || new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           postedBy: `${user.maritimeRank} ${getInitials(user.fullName || '')}`,
           postedAt: new Date(),
           status: "active",
@@ -651,7 +651,7 @@ export default function RFQPage({ user }: RFQPageProps) {
                             <div>By: {rfq.postedBy}</div>
                             <div className="flex items-center gap-1 mt-1">
                               <Clock className="w-3 h-3" />
-                              Deadline: {new Date(rfq.deadline).toLocaleDateString()}
+                              Deadline: {rfq.deadline ? new Date(rfq.deadline).toLocaleDateString() : 'No deadline set'}
                             </div>
                           </div>
                           <div className="flex gap-2">
