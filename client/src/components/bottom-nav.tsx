@@ -45,7 +45,7 @@ export default function BottomNav({ user, onLogout }: BottomNavProps) {
     { 
       path: "/discover", 
       icon: "fas fa-map-marked-alt", 
-      label: ["QRadar"],
+      label: ["Ship Manager"],
       active: location === "/discover" || location === "/users",
       onClick: () => setLocation("/discover")
     },
