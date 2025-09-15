@@ -402,13 +402,13 @@ export default function ChatPage() {
                   <div
                     className={`px-4 py-2.5 rounded-2xl shadow-lg ${
                       isMyMessage
-                        ? 'bg-orange-100 text-gray-900 rounded-br-md border-2 border-orange-300 ml-auto'
-                        : 'bg-white text-gray-900 border-2 border-gray-300 rounded-bl-md mr-auto'
+                        ? 'bg-orange-500 text-white rounded-br-md border-2 border-orange-600 ml-auto'
+                        : 'bg-gray-100 text-gray-900 border-2 border-gray-300 rounded-bl-md mr-auto'
                     }`}
                   >
                     <p className="text-sm leading-relaxed">{message.content || message.message}</p>
                     
-                    <div className={`flex items-center justify-between mt-1.5 ${isMyMessage ? 'text-gray-600' : 'text-gray-500'}`}>
+                    <div className={`flex items-center justify-between mt-1.5 ${isMyMessage ? 'text-orange-100' : 'text-gray-500'}`}>
                       <p className="text-xs">
                         {(() => {
                           try {
