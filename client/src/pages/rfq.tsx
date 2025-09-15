@@ -396,6 +396,7 @@ export default function RFQPage({ user }: RFQPageProps) {
                   <SelectContent>
                     <SelectItem value="all">All Categories</SelectItem>
                     <SelectItem value="parts">Spare Parts</SelectItem>
+                    <SelectItem value="repair">Repair Workshop</SelectItem>
                     <SelectItem value="emergency">Emergency</SelectItem>
                     <SelectItem value="supply">IMPA STORES</SelectItem>
                   </SelectContent>
