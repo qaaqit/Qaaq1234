@@ -3260,14 +3260,27 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         }
         
         if (responses.length > 0) {
-          // Display each AI model response as separate, distinct answers
+          // For single AI response: start directly from answer (no headers/icons)
+          if (responses.length === 1) {
+            const singleResponse = responses[0].content;
+            console.log(`🤖 Single AI Response: Generated response from ${responses[0].model}`);
+            
+            return {
+              content: singleResponse,
+              aiModel: responses[0].model,
+              responseTime: responses[0].responseTime,
+              tokens: responses[0].tokens
+            };
+          }
+          
+          // For multi-AI responses: use minimal labels (GPT:, DEEPSEEK:, etc.)
           const separateAnswers = responses.map((resp, index) => {
-            const modelName = resp.model === 'openai' ? 'ChatGPT' : 
-                            resp.model === 'gemini' ? 'Gemini' :
-                            resp.model === 'deepseek' ? 'Deepseek' :
-                            resp.model === 'mistral' ? 'Mistral' :
+            const modelName = resp.model === 'openai' ? 'GPT' : 
+                            resp.model === 'gemini' ? 'GEMINI' :
+                            resp.model === 'deepseek' ? 'DEEPSEEK' :
+                            resp.model === 'mistral' ? 'MISTRAL' :
                             resp.model.toUpperCase();
-            return `🤖 **${modelName} Response:**\n\n${resp.content}`;
+            return `${modelName}:\n\n${resp.content}`;
           }).join('\n\n' + '━'.repeat(40) + '\n\n');
           
           const totalResponseTime = responses.reduce((sum, resp) => sum + (resp.responseTime || 0), 0);
