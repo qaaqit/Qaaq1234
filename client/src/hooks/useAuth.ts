@@ -4,12 +4,21 @@ export function useAuth() {
   const { data: user, isLoading } = useQuery({
     queryKey: ["/api/auth/user"],
     queryFn: async () => {
-      // SIMPLIFIED: Only session-based auth (Google/Replit)
+      // Support both JWT and session-based auth
+      const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
+      
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      // Add JWT token if available
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await fetch('/api/auth/user', {
         credentials: 'include', // Include session cookies for Replit Auth
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
       });
       
       if (!response.ok) {

@@ -11604,10 +11604,11 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       const unifiedUser = (req as any).unifiedUser;
       
       if (unifiedUser) {
-        console.log(`📋 Profile found for user: ${unifiedUser.fullName}`);
+        console.log(`📋 Profile found for user: ${unifiedUser.fullName} (auth: ${unifiedUser.authMethod})`);
         return res.json(unifiedUser);
       }
       
+      console.log('❌ PROFILE: No unified user found, returning 401');
       return res.status(401).json({ error: 'Authentication required' });
     } catch (error) {
       console.error('Error fetching user profile:', error);
