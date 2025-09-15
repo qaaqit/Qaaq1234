@@ -30,7 +30,8 @@ import {
   Filter,
   Search,
   Paperclip,
-  X
+  X,
+  Share2
 } from "lucide-react";
 
 // Using public asset path for better reliability
@@ -349,6 +350,62 @@ export default function RFQPage({ user }: RFQPageProps) {
     setAttachments([]);
   };
 
+  // Share RFQ functionality
+  const shareRFQ = async (rfq: RFQRequest) => {
+    const shareText = `🚢 Maritime RFQ: ${rfq.title}\n\n📍 Location: ${rfq.location}\n⏰ Urgency: ${rfq.urgency.toUpperCase()}\n📝 Details: ${rfq.description.substring(0, 100)}${rfq.description.length > 100 ? '...' : ''}\n\n💼 Posted by: ${rfq.postedBy}\n📅 Deadline: ${rfq.deadline ? new Date(rfq.deadline).toLocaleDateString() : 'No deadline'}\n\n#MaritimeRFQ #Shipping #QuoteRequest`;
+    
+    const shareUrl = window.location.origin + `/rfq/${rfq.id}`;
+    
+    // Try using Web Share API if available
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Maritime RFQ: ${rfq.title}`,
+          text: shareText,
+          url: shareUrl,
+        });
+        return;
+      } catch (error) {
+        console.log('Web Share API failed, falling back to manual sharing');
+      }
+    }
+    
+    // Fallback: Create share options dropdown
+    const shareOptions = [
+      {
+        name: 'WhatsApp',
+        url: `https://wa.me/?text=${encodeURIComponent(shareText + '\n' + shareUrl)}`,
+        color: 'bg-green-500'
+      },
+      {
+        name: 'LinkedIn',
+        url: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(`Maritime RFQ: ${rfq.title}`)}&summary=${encodeURIComponent(shareText)}`,
+        color: 'bg-blue-600'
+      },
+      {
+        name: 'Twitter',
+        url: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`,
+        color: 'bg-sky-500'
+      },
+      {
+        name: 'Copy Link',
+        action: () => {
+          navigator.clipboard.writeText(shareUrl);
+          toast({
+            title: "Link Copied!",
+            description: "RFQ link has been copied to clipboard."
+          });
+        },
+        color: 'bg-gray-500'
+      }
+    ];
+    
+    // Show custom share modal (simplified - just open first option for now)
+    // In production, you might want a proper modal with all options
+    const whatsappShare = shareOptions[0];
+    window.open(whatsappShare.url, '_blank', 'noopener,noreferrer');
+  };
+
   const getUrgencyColor = (urgency: string) => {
     switch (urgency) {
       case 'critical': return 'bg-red-100 text-red-800 border-red-200';
@@ -657,6 +714,18 @@ export default function RFQPage({ user }: RFQPageProps) {
                           <div className="flex gap-2">
                             <Button size="sm" variant="outline" className="border-orange-200 hover:bg-orange-50">
                               View Details
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="border-green-200 hover:bg-green-50 text-green-600"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                shareRFQ(rfq);
+                              }}
+                              data-testid={`button-share-rfq-${rfq.id}`}
+                            >
+                              <Share2 className="w-4 h-4" />
                             </Button>
                             {canEditRFQ(rfq) && (
                               <Button 
