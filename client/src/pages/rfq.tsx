@@ -398,7 +398,7 @@ export default function RFQPage({ user }: RFQPageProps) {
                     <SelectItem value="parts">Spare Parts</SelectItem>
                     <SelectItem value="service">W/shop Services</SelectItem>
                     <SelectItem value="emergency">Emergency</SelectItem>
-                    <SelectItem value="supply">IMPAA Stores</SelectItem>
+                    <SelectItem value="supply">IMPA STORES</SelectItem>
                   </SelectContent>
                 </Select>
                 <Select value={filter.urgency} onValueChange={(value) => setFilter(prev => ({...prev, urgency: value}))}>
@@ -524,7 +524,7 @@ export default function RFQPage({ user }: RFQPageProps) {
                               <SelectItem value="parts">Spare Parts</SelectItem>
                               <SelectItem value="service">Technical Service</SelectItem>
                               <SelectItem value="repair">Repair Work</SelectItem>
-                              <SelectItem value="supply">IMPAA Stores</SelectItem>
+                              <SelectItem value="supply">IMPA STORES</SelectItem>
                               <SelectItem value="emergency">Emergency</SelectItem>
                             </SelectContent>
                           </Select>
