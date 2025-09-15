@@ -115,7 +115,7 @@ export default function ImageCarousel({ className = '' }: ImageCarouselProps) {
   return (
     <div className={`bg-gradient-to-r from-orange-50 to-yellow-50 border-t border-orange-200 relative ${className}`}>
       {/* Header */}
-      <div className="px-4 py-3 border-b border-orange-200">
+      <div className="px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Wrench className="h-5 w-5 text-orange-600" />
