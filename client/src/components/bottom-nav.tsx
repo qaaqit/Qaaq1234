@@ -36,11 +36,11 @@ export default function BottomNav({ user, onLogout }: BottomNavProps) {
       onClick: () => setLocation("/dm")
     },
     { 
-      path: "/rank-groups", 
+      path: "/rfq", 
       icon: "fas fa-users", 
       label: ["RFQ"],
-      active: location === "/rank-groups",
-      onClick: () => setLocation("/rank-groups")
+      active: location === "/rfq",
+      onClick: () => setLocation("/rfq")
     },
     { 
       path: "/discover", 
