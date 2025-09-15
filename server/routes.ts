@@ -4983,12 +4983,9 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       
       console.log(`🤖 QBOT Chat - User: ${message.substring(0, 50)}... | Response: ${aiResponse.content.substring(0, 50)}...`);
       
-      // Generate feedback message to append after the technical answer
-      const feedbackMessage = FeedbackService.generateCompactFeedbackMessage(language);
-      const responseWithFeedback = `${aiResponse.content}\n\n---\n${feedbackMessage}`;
-      
+      // Return clean AI response without feedback message
       res.json({ 
-        response: responseWithFeedback,
+        response: aiResponse.content,
         aiModel: aiResponse.aiModel,
         responseTime: aiResponse.responseTime,
         timestamp: new Date().toISOString(),

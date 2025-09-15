@@ -84,12 +84,15 @@ export class AIService {
         • [Regulation reference if applicable]
       
       Q2Q FOLLOW-UP REQUIREMENT:
-      - ALWAYS end your response with exactly TWO relevant follow-up questions
-      - Format: "Would you like to know [specific related topic]?" 
+      - ALWAYS end your response with exactly TWO relevant follow-up questions in selectable format
+      - Format: "Would u like to know\nq1) [specific related topic]\nor\nq2) [another specific related topic]" 
       - Questions should deepen understanding of the core topic
+      - Users can reply with just "1" or "2" to select their preferred question
       - Example: If asked about centrifugal pump, follow with:
-        "Would you like to know what is Lantern Ring in a Centrifugal pump?"
-        "Would you like to know the material by which impeller, casing & mouth ring are made?"`;
+        "Would u like to know
+        q1) what is Lantern Ring in a Centrifugal pump
+        or
+        q2) the material by which impeller, casing & mouth ring are made"`;
       
       if (activeRules) {
         systemPrompt += `\n\nActive bot documentation guidelines:\n${activeRules.substring(0, 800)}`;
@@ -191,12 +194,15 @@ export class AIService {
         • [Regulation reference if applicable]
       
       Q2Q FOLLOW-UP REQUIREMENT:
-      - ALWAYS end your response with exactly TWO relevant follow-up questions
-      - Format: "Would you like to know [specific related topic]?" 
+      - ALWAYS end your response with exactly TWO relevant follow-up questions in selectable format
+      - Format: "Would u like to know\nq1) [specific related topic]\nor\nq2) [another specific related topic]" 
       - Questions should deepen understanding of the core topic
+      - Users can reply with just "1" or "2" to select their preferred question
       - Example: If asked about centrifugal pump, follow with:
-        "Would you like to know what is Lantern Ring in a Centrifugal pump?"
-        "Would you like to know the material by which impeller, casing & mouth ring are made?"`;
+        "Would u like to know
+        q1) what is Lantern Ring in a Centrifugal pump
+        or
+        q2) the material by which impeller, casing & mouth ring are made"`;
       
       if (activeRules) {
         systemPrompt += `\n\nActive bot documentation guidelines:\n${activeRules.substring(0, 800)}`;
@@ -316,12 +322,15 @@ export class AIService {
         • [Regulation reference if applicable]
       
       Q2Q FOLLOW-UP REQUIREMENT:
-      - ALWAYS end your response with exactly TWO relevant follow-up questions
-      - Format: "Would you like to know [specific related topic]?" 
+      - ALWAYS end your response with exactly TWO relevant follow-up questions in selectable format
+      - Format: "Would u like to know\nq1) [specific related topic]\nor\nq2) [another specific related topic]" 
       - Questions should deepen understanding of the core topic
+      - Users can reply with just "1" or "2" to select their preferred question
       - Example: If asked about centrifugal pump, follow with:
-        "Would you like to know what is Lantern Ring in a Centrifugal pump?"
-        "Would you like to know the material by which impeller, casing & mouth ring are made?"`;
+        "Would u like to know
+        q1) what is Lantern Ring in a Centrifugal pump
+        or
+        q2) the material by which impeller, casing & mouth ring are made"`;
       
       if (activeRules) {
         systemPrompt += `\n\nActive bot documentation guidelines:\n${activeRules.substring(0, 800)}`;
@@ -401,12 +410,15 @@ export class AIService {
         • [Regulation reference if applicable]
       
       Q2Q FOLLOW-UP REQUIREMENT:
-      - ALWAYS end your response with exactly TWO relevant follow-up questions
-      - Format: "Would you like to know [specific related topic]?" 
+      - ALWAYS end your response with exactly TWO relevant follow-up questions in selectable format
+      - Format: "Would u like to know\nq1) [specific related topic]\nor\nq2) [another specific related topic]" 
       - Questions should deepen understanding of the core topic
+      - Users can reply with just "1" or "2" to select their preferred question
       - Example: If asked about centrifugal pump, follow with:
-        "Would you like to know what is Lantern Ring in a Centrifugal pump?"
-        "Would you like to know the material by which impeller, casing & mouth ring are made?"`;
+        "Would u like to know
+        q1) what is Lantern Ring in a Centrifugal pump
+        or
+        q2) the material by which impeller, casing & mouth ring are made"`;
       
       if (activeRules) {
         systemPrompt += `\n\nActive bot documentation guidelines:\n${activeRules.substring(0, 800)}`;
