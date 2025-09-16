@@ -130,7 +130,8 @@ export default function RFQPage({ user }: RFQPageProps) {
 
   const handleUploadComplete = (result: any) => {
     if (result.successful && result.successful.length > 0) {
-      const fileUrls = result.successful.map((file: any) => file.name);
+      // Store the full uploadURL instead of just the filename
+      const fileUrls = result.successful.map((file: any) => file.uploadURL || file.name);
       setAttachments(prev => [...prev, ...fileUrls]);
       
       toast({
@@ -198,6 +199,18 @@ export default function RFQPage({ user }: RFQPageProps) {
     // Format as "MV Axxx Vxxx" - first letter + xxx for each word
     const formattedWords = words.map(word => word.charAt(0).toUpperCase() + 'xxx');
     return `${prefix} ${formattedWords.join(' ')}`;
+  };
+
+  // Helper function to get proper image URL for attachments
+  const getAttachmentUrl = (attachment: string): string => {
+    // If it's already a full URL, return as-is
+    if (attachment.startsWith('http') || attachment.startsWith('/replit-objstore-')) {
+      return attachment;
+    }
+    
+    // If it's just a filename, construct the object storage URL
+    // Use the public directory from the object storage setup
+    return `/replit-objstore-b2ad59ef-ca8b-42b8-bc12-f53a0b9ec0ee/public/${attachment}`;
   };
 
   // Fetch RFQ requests from API
@@ -919,7 +932,7 @@ export default function RFQPage({ user }: RFQPageProps) {
                                   </div>
                                 ) : (
                                   <img 
-                                    src={attachment} 
+                                    src={getAttachmentUrl(attachment)} 
                                     alt={`RFQ attachment ${index + 1}`}
                                     className="w-full h-24 object-cover rounded border border-orange-200"
                                     data-testid={`img-rfq-attachment-${index}`}
