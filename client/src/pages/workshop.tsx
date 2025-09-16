@@ -169,11 +169,19 @@ export default function WorkshopPage() {
                           </div>
                         </div>
                       ) : workshop.business_card_photo || workshop.workshop_front_photo ? (
-                        <img 
-                          src={workshop.business_card_photo || workshop.workshop_front_photo} 
-                          alt={`${workshop.display_id} workshop`}
-                          className="w-full h-full object-cover"
-                        />
+                        <div className="w-full h-full relative">
+                          <img 
+                            src={workshop.business_card_photo || workshop.workshop_front_photo} 
+                            alt={`${workshop.display_id} workshop`}
+                            className="w-full h-full object-cover blur-md opacity-60"
+                          />
+                          <div className="absolute inset-0 bg-orange-50/5 flex items-center justify-center">
+                            <div className="text-orange-700 font-bold text-center">
+                              <Wrench className="w-8 h-8 mx-auto mb-2" />
+                              <span className="text-sm">WORKSHOP</span>
+                            </div>
+                          </div>
+                        </div>
                       ) : workshop.websitePreviewImage ? (
                         <div className="w-full h-full relative">
                           <img 
