@@ -321,7 +321,13 @@ export default function WorkshopDetailPage() {
                   <p className="text-gray-600 mb-4">
                     Contact this workshop through our secure messaging platform to maintain privacy and prevent spam.
                   </p>
-                  <Button className="bg-orange-600 hover:bg-orange-700 text-white px-8">
+                  <Button 
+                    className="bg-orange-600 hover:bg-orange-700 text-white px-8"
+                    onClick={() => {
+                      setLocation(`/rfq?tab=post&workshop=${workshop.display_id}&location=${encodeURIComponent(workshop.home_port)}`);
+                    }}
+                    data-testid="button-send-message"
+                  >
                     Send Message
                   </Button>
                   <p className="text-xs text-gray-500 mt-2">
