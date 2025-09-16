@@ -1339,6 +1339,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: 'Failed to generate upload URL' });
     }
   });
+
+  // Object storage download endpoint - proxy for private objects
+  app.get("/api/objects/:objectId", async (req, res) => {
+    try {
+      const { objectId } = req.params;
+      console.log(`📥 Object download request: ${objectId}`);
+      
+      const objectStorageService = new ObjectStorageService();
+      const privateObjectDir = objectStorageService.getPrivateObjectDir();
+      
+      // Construct the full path to the object
+      const fullPath = `${privateObjectDir}/uploads/${objectId}`;
+      
+      // Use the downloadObject method to serve the file
+      await objectStorageService.downloadObject(fullPath, res);
+    } catch (error) {
+      console.error('Error downloading object:', error);
+      res.status(500).json({ error: 'Failed to download object' });
+    }
+  });
   
   // Register new user with email verification
   app.post("/api/register", async (req, res) => {

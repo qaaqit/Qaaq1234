@@ -47,9 +47,60 @@ export class ObjectStorageService {
     return dir;
   }
 
-  // Simple download handler (placeholder for future implementation)
+  // Download handler for private objects
   async downloadObject(filePath: string, res: Response) {
-    res.status(404).json({ error: "File not found" });
+    try {
+      console.log(`🔗 Downloading object: ${filePath}`);
+      
+      // Generate signed URL for GET method to download the object
+      const { bucketName, objectName } = parseObjectPath(filePath);
+      
+      const signedUrl = await signObjectURL({
+        bucketName,
+        objectName,
+        method: "GET",
+        ttlSec: 3600, // 1 hour
+      });
+      
+      console.log(`🔗 Generated signed URL for: ${objectName}`);
+      
+      // Fetch the file from the signed URL and stream it to the client
+      const response = await fetch(signedUrl);
+      
+      if (!response.ok) {
+        console.error(`❌ Failed to fetch object: ${response.status} ${response.statusText}`);
+        return res.status(404).json({ error: "File not found" });
+      }
+      
+      // Set appropriate headers
+      const contentType = response.headers.get('content-type') || 'application/octet-stream';
+      const contentLength = response.headers.get('content-length');
+      
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      if (contentLength) {
+        res.setHeader('Content-Length', contentLength);
+      }
+      
+      // Stream the file content
+      if (response.body) {
+        const reader = response.body.getReader();
+        
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          res.write(value);
+        }
+        
+        res.end();
+      } else {
+        res.status(404).json({ error: "File content not available" });
+      }
+      
+    } catch (error) {
+      console.error('❌ Object download error:', error);
+      res.status(500).json({ error: "Download failed" });
+    }
   }
 
   // Gets the upload URL for an object entity.

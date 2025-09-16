@@ -213,7 +213,18 @@ export default function RFQPage({ user }: RFQPageProps) {
 
   // Helper function to get proper image URL for attachments
   const getAttachmentUrl = (attachment: string): string => {
-    // If it's already a full URL, return as-is
+    console.log(`🔗 Processing attachment URL: ${attachment}`);
+    
+    // If it's a full Google Cloud Storage URL for private objects, extract the object ID and use our proxy
+    if (attachment.startsWith('https://storage.googleapis.com/') && attachment.includes('/.private/uploads/')) {
+      const objectId = attachment.split('/').pop();
+      if (objectId) {
+        console.log(`📥 Using proxy for private object: ${objectId}`);
+        return `/api/objects/${objectId}`;
+      }
+    }
+    
+    // If it's already a full URL or replit object store URL, return as-is
     if (attachment.startsWith('http') || attachment.startsWith('/replit-objstore-')) {
       return attachment;
     }
