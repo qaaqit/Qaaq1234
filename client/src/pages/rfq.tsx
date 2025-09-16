@@ -32,7 +32,9 @@ import {
   Search,
   Paperclip,
   X,
-  Share2
+  Share2,
+  Pencil,
+  Trash2
 } from "lucide-react";
 
 // Using public asset path for better reliability
@@ -161,8 +163,13 @@ export default function RFQPage({ user }: RFQPageProps) {
   // Check if current user can edit an RFQ
   const canEditRFQ = (rfq: RFQRequest) => {
     if (!user) return false;
-    // User can edit their own posts (check by matching the formatted name)
-    const userFormattedName = `${user.maritimeRank} ${getInitials(user.fullName || '')}`;
+    // Check if user owns this RFQ by comparing user IDs
+    // Fallback to formatted name comparison if userId is not available
+    if (rfq.userId && user.id) {
+      return rfq.userId === user.id;
+    }
+    // Fallback: check by matching the formatted name
+    const userFormattedName = `${user.maritimeRank || ''} ${getInitials(user.fullName || '')}`;
     return rfq.postedBy === userFormattedName;
   };
 
@@ -206,7 +213,14 @@ export default function RFQPage({ user }: RFQPageProps) {
 
         if (response.ok) {
           const data = await response.json();
-          setRfqRequests(data.rfqs || []);
+          // Map the backend response to include postedBy field
+          const mappedRfqs = (data.rfqs || []).map((rfq: any) => ({
+            ...rfq,
+            postedBy: `${rfq.userRank || ''} ${getInitials(rfq.userFullName || '')}`,
+            postedAt: rfq.createdAt, // Add postedAt for consistency
+            category: rfq.category || 'parts' // Default category if missing
+          }));
+          setRfqRequests(mappedRfqs);
         } else {
           console.error('Failed to fetch RFQ requests:', response.status);
           // Show mock data as fallback for now
@@ -942,18 +956,6 @@ export default function RFQPage({ user }: RFQPageProps) {
                             >
                               Submit Quote
                             </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              className="border-green-200 hover:bg-green-50 text-green-600"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                shareRFQ(rfq);
-                              }}
-                              data-testid={`button-share-rfq-${rfq.id}`}
-                            >
-                              <Share2 className="w-4 h-4" />
-                            </Button>
                             {canEditRFQ(rfq) && (
                               <>
                                 <Button 
@@ -966,7 +968,7 @@ export default function RFQPage({ user }: RFQPageProps) {
                                   }}
                                   data-testid={`button-edit-rfq-${rfq.id}`}
                                 >
-                                  Edit
+                                  <Pencil className="w-4 h-4" />
                                 </Button>
                                 <Button 
                                   size="sm" 
@@ -978,10 +980,22 @@ export default function RFQPage({ user }: RFQPageProps) {
                                   }}
                                   data-testid={`button-delete-rfq-${rfq.id}`}
                                 >
-                                  Delete
+                                  <Trash2 className="w-4 h-4" />
                                 </Button>
                               </>
                             )}
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="border-green-200 hover:bg-green-50 text-green-600"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                shareRFQ(rfq);
+                              }}
+                              data-testid={`button-share-rfq-${rfq.id}`}
+                            >
+                              <Share2 className="w-4 h-4" />
+                            </Button>
                           </div>
                         </div>
                       </CardContent>
