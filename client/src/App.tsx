@@ -28,6 +28,7 @@ import QuestionPage from "@/pages/question";
 import QuestionBank from "@/pages/question-bank";
 import RankGroupsPage from "@/pages/rank-groups";
 import RFQPage from "@/pages/rfq";
+import RFQDetailPage from "@/pages/rfq-detail";
 import QBOTPage from "@/pages/qbot";
 import MergeAccountsPage from "@/pages/merge-accounts";
 import AuthTestPage from "@/pages/auth-test";
@@ -140,6 +141,9 @@ function Router() {
           <Route path="/questions/:id" component={() => <QuestionPage />} />
           <Route path="/rank-groups" component={() => <RankGroupsPage />} />
           <Route path="/rfq" component={() => <RFQPage user={currentUser} />} />
+          {/* Individual RFQ routes - slug-based (preferred) and UUID-based (legacy) */}
+          <Route path="/rfq/:port/:date/:userPublicId/:serial" component={() => <RFQDetailPage user={currentUser} />} />
+          <Route path="/rfq/:id" component={() => <RFQDetailPage user={currentUser} />} />
           <Route path="/admin" component={() => <Admin />} />
           <Route path="/admin/bot-rules" component={() => <BotRulesAdmin />} />
           <Route path="/admin/token-limits" component={() => <TokenLimitsAdmin />} />

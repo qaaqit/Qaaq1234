@@ -68,6 +68,11 @@ interface RFQRequest {
   postedBy: string;
   category: string;
   postedAt: string;
+  // Slug components for canonical URLs
+  port?: string;
+  date?: string;
+  userPublicId?: string;
+  serial?: string;
 }
 
 export default function RFQPage({ user }: RFQPageProps) {
@@ -258,7 +263,10 @@ export default function RFQPage({ user }: RFQPageProps) {
               userFullName: "John Smith",
               userRank: "Chief Engineer",
               userId: "sample-user-1",
-              attachments: []
+              attachments: [],
+              postedBy: "Chief Engineer J.S.",
+              category: "parts",
+              postedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
             },
             {
               id: "sample-2", 
@@ -276,7 +284,10 @@ export default function RFQPage({ user }: RFQPageProps) {
               userFullName: "Mark Roberts",
               userRank: "Captain",
               userId: "sample-user-2",
-              attachments: []
+              attachments: [],
+              postedBy: "Captain M.R.",
+              category: "services",
+              postedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
             },
             {
               id: "sample-3",
@@ -294,7 +305,10 @@ export default function RFQPage({ user }: RFQPageProps) {
               userFullName: "Alex Hansen",
               userRank: "Chief Engineer",
               userId: "sample-user-3",
-              attachments: []
+              attachments: [],
+              postedBy: "Chief Engineer A.H.",
+              category: "repairs",
+              postedAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString()
             }
           ];
           setRfqRequests(mockRFQs);
@@ -506,13 +520,23 @@ export default function RFQPage({ user }: RFQPageProps) {
     }
   };
 
-  // Share RFQ functionality with WhatsApp Open Graph support
+  // Share RFQ functionality with slug-based URLs
   const shareRFQ = async (rfq: RFQRequest) => {
     const shareText = `🚢 Maritime RFQ: ${rfq.title}\n\n📍 Location: ${rfq.location}\n⏰ Urgency: ${rfq.urgency.toUpperCase()}\n📝 Details: ${rfq.description.substring(0, 100)}${rfq.description.length > 100 ? '...' : ''}\n\n💼 Posted by: ${rfq.postedBy}\n📅 Deadline: ${rfq.deadline ? new Date(rfq.deadline).toLocaleDateString() : 'No deadline'}\n\n#MaritimeRFQ #Shipping #QuoteRequest`;
     
-    // Use the sharing route with Open Graph meta tags for better WhatsApp previews
-    const shareUrl = `${window.location.origin}/api/rfq/${rfq.id}/share`;
-    const directRfqUrl = `${window.location.origin}/rfq?rfq=${rfq.id}`;
+    // Use slug-based URLs if available, fallback to UUID for legacy support
+    let shareUrl: string;
+    let directRfqUrl: string;
+    
+    if (rfq.port && rfq.date && rfq.userPublicId && rfq.serial) {
+      // Use canonical slug URL for better SEO and user experience
+      directRfqUrl = `${window.location.origin}/rfq/${rfq.port}/${rfq.date}/${rfq.userPublicId}/${rfq.serial}`;
+      shareUrl = `${window.location.origin}/api/rfq/by-slug/${rfq.port}/${rfq.date}/${rfq.userPublicId}/${rfq.serial}/share`;
+    } else {
+      // Fallback to legacy UUID URLs for backward compatibility
+      shareUrl = `${window.location.origin}/api/rfq/${rfq.id}/share`;
+      directRfqUrl = `${window.location.origin}/rfq/${rfq.id}`;
+    }
     
     // Try using Web Share API if available
     if (navigator.share) {
@@ -1055,7 +1079,17 @@ export default function RFQPage({ user }: RFQPageProps) {
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   const shareText = `${rfq.description}`;
-                                  const shareUrl = `${window.location.origin}/api/rfq/${rfq.id}/share`;
+                                  
+                                  // Use slug-based URLs if available, fallback to UUID for legacy support
+                                  let shareUrl: string;
+                                  if (rfq.port && rfq.date && rfq.userPublicId && rfq.serial) {
+                                    // Use canonical slug URL for better SEO and user experience
+                                    shareUrl = `${window.location.origin}/rfq/${rfq.port}/${rfq.date}/${rfq.userPublicId}/${rfq.serial}`;
+                                  } else {
+                                    // Fallback to legacy UUID URL for backward compatibility
+                                    shareUrl = `${window.location.origin}/rfq/${rfq.id}`;
+                                  }
+                                  
                                   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText + '\n\n' + shareUrl)}`;
                                   window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
                                 }}
