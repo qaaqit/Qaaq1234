@@ -183,7 +183,7 @@ export default function WorkshopPage() {
                               alt={`${workshop.display_id} website screenshot`}
                               className="w-full h-full object-cover blur-md opacity-40"
                             />
-                            <div className="absolute inset-0 bg-orange-100/60 flex items-center justify-center">
+                            <div className="absolute inset-0 bg-orange-100/90 flex items-center justify-center">
                               <div className="text-orange-700 font-bold text-center">
                                 <Wrench className="w-6 h-6 mx-auto mb-1" />
                                 <span className="text-xs">WORKSHOP<br />FRONT</span>
@@ -227,7 +227,7 @@ export default function WorkshopPage() {
                               alt={`${workshop.display_id} website screenshot`}
                               className="w-full h-full object-cover blur-md opacity-30"
                             />
-                            <div className="absolute inset-0 bg-orange-50/70 flex items-center justify-center">
+                            <div className="absolute inset-0 bg-orange-50/90 flex items-center justify-center">
                               <div className="text-orange-700 font-bold text-center">
                                 <Wrench className="w-6 h-6 mx-auto mb-1" />
                                 <span className="text-xs">WORK</span>
