@@ -139,7 +139,7 @@ function Router() {
           <Route path="/share/question/:id" component={() => <QuestionPage />} />
           <Route path="/questions/:id" component={() => <QuestionPage />} />
           <Route path="/rank-groups" component={() => <RankGroupsPage />} />
-          <Route path="/rfq" component={() => currentUser ? <RFQPage user={currentUser} /> : <Login />} />
+          <Route path="/rfq" component={() => <RFQPage user={currentUser} />} />
           <Route path="/admin" component={() => <Admin />} />
           <Route path="/admin/bot-rules" component={() => <BotRulesAdmin />} />
           <Route path="/admin/token-limits" component={() => <TokenLimitsAdmin />} />

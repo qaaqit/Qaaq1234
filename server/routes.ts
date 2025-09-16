@@ -2333,6 +2333,274 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // RFQ sharing route with Open Graph meta tags for WhatsApp
+  app.get("/api/rfq/:id/share", async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      // Fetch RFQ with user details
+      const rfqResult = await db
+        .select({
+          id: rfqRequests.id,
+          title: rfqRequests.title,
+          description: rfqRequests.description,
+          location: rfqRequests.location,
+          vesselName: rfqRequests.vesselName,
+          vesselType: rfqRequests.vesselType,
+          urgency: rfqRequests.urgency,
+          budget: rfqRequests.budget,
+          deadline: rfqRequests.deadline,
+          attachments: rfqRequests.attachments,
+          status: rfqRequests.status,
+          viewCount: rfqRequests.viewCount,
+          quoteCount: rfqRequests.quoteCount,
+          createdAt: rfqRequests.createdAt,
+          userFullName: users.fullName,
+          userRank: users.rank,
+        })
+        .from(rfqRequests)
+        .innerJoin(users, eq(rfqRequests.userId, users.id))
+        .where(eq(rfqRequests.id, id))
+        .limit(1);
+
+      if (!rfqResult.length) {
+        return res.status(404).send(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>RFQ Not Found</title>
+          </head>
+          <body>
+            <h1>RFQ Not Found</h1>
+            <p>The requested RFQ could not be found.</p>
+          </body>
+          </html>
+        `);
+      }
+
+      const rfq = rfqResult[0];
+      
+      // Increment view count
+      await db
+        .update(rfqRequests)
+        .set({ viewCount: sql`${rfqRequests.viewCount} + 1` })
+        .where(eq(rfqRequests.id, id));
+
+      // Get privacy-protected names
+      const getInitials = (fullName: string): string => {
+        if (!fullName) return 'N/A';
+        return fullName
+          .split(' ')
+          .map(name => name.charAt(0).toUpperCase())
+          .join('.');
+      };
+
+      const getVesselInitials = (vesselName: string): string => {
+        if (!vesselName) return 'Vessel N/A';
+        const prefixMatch = vesselName.match(/^(M\.V\.|MV|MS|MT)\s+(.+)/i);
+        if (!prefixMatch) return vesselName;
+        
+        const prefix = prefixMatch[1].replace(/\./g, '').toUpperCase();
+        const namesPart = prefixMatch[2];
+        const words = namesPart.split(' ').filter(word => word.length > 0);
+        
+        if (words.length === 0) return `${prefix} N/A`;
+        
+        const formattedWords = words.map(word => word.charAt(0).toUpperCase() + 'xxx');
+        return `${prefix} ${formattedWords.join(' ')}`;
+      };
+
+      const postedBy = `${rfq.userRank || ''} ${getInitials(rfq.userFullName || '')}`;
+      const vesselDisplay = getVesselInitials(rfq.vesselName || '');
+      
+      // Get the first attachment as preview image, or use default
+      const previewImage = rfq.attachments && rfq.attachments.length > 0 
+        ? rfq.attachments[0] 
+        : '/qaaq-logo.png';
+        
+      // Convert attachment to proper URL if needed
+      const imageUrl = previewImage.startsWith('http') || previewImage.startsWith('/replit-objstore-') 
+        ? previewImage 
+        : `/replit-objstore-b2ad59ef-ca8b-42b8-bc12-f53a0b9ec0ee/public/${previewImage}`;
+      
+      // Create urgency display
+      const urgencyEmojis = {
+        low: '🟢',
+        medium: '🟡', 
+        high: '🟠',
+        urgent: '🔴'
+      };
+      const urgencyEmoji = urgencyEmojis[rfq.urgency as keyof typeof urgencyEmojis] || '🟡';
+      
+      // Format deadline
+      const deadlineText = rfq.deadline 
+        ? new Date(rfq.deadline).toLocaleDateString('en-US', { 
+            weekday: 'short', 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric' 
+          })
+        : 'No deadline specified';
+
+      // Create sharing URL
+      const shareUrl = `${req.protocol}://${req.get('host')}/rfq?rfq=${id}`;
+      const shareImageUrl = `${req.protocol}://${req.get('host')}${imageUrl}`;
+
+      // Generate HTML with Open Graph meta tags
+      const html = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          
+          <!-- Open Graph Meta Tags for WhatsApp sharing -->
+          <meta property="og:type" content="article">
+          <meta property="og:site_name" content="QAAQ Connect">
+          <meta property="og:title" content="${rfq.title}">
+          <meta property="og:description" content="${rfq.description.substring(0, 200)}...${rfq.location ? ' • Location: ' + rfq.location : ''}${rfq.budget ? ' • Budget: ' + rfq.budget : ''}">
+          <meta property="og:url" content="${shareUrl}">
+          <meta property="og:image" content="${shareImageUrl}">
+          <meta property="og:image:alt" content="RFQ: ${rfq.title}">
+          <meta property="og:image:width" content="1200">
+          <meta property="og:image:height" content="630">
+          
+          <!-- Twitter Card Meta Tags -->
+          <meta name="twitter:card" content="summary_large_image">
+          <meta name="twitter:title" content="${rfq.title}">
+          <meta name="twitter:description" content="${rfq.description.substring(0, 160)}...">
+          <meta name="twitter:image" content="${shareImageUrl}">
+          
+          <!-- Standard Meta Tags -->
+          <meta name="description" content="${rfq.description.substring(0, 160)}...">
+          <title>${rfq.title} - QAAQ Connect RFQ</title>
+          
+          <!-- Redirect to RFQ page -->
+          <script>
+            setTimeout(() => {
+              window.location.href = '${shareUrl}';
+            }, 1000);
+          </script>
+          
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              margin: 0;
+              padding: 20px;
+              min-height: 100vh;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: white;
+            }
+            .container {
+              background: rgba(255, 255, 255, 0.1);
+              backdrop-filter: blur(10px);
+              border-radius: 20px;
+              padding: 40px;
+              max-width: 600px;
+              text-align: center;
+              box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            }
+            .logo {
+              width: 80px;
+              height: 80px;
+              border-radius: 50%;
+              margin: 0 auto 20px;
+              background: white;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 24px;
+              font-weight: bold;
+              color: #667eea;
+            }
+            h1 {
+              margin: 0 0 10px;
+              font-size: 24px;
+              font-weight: 600;
+            }
+            .meta {
+              opacity: 0.9;
+              margin-bottom: 20px;
+              font-size: 14px;
+            }
+            .loading {
+              margin-top: 30px;
+              font-size: 16px;
+              opacity: 0.8;
+            }
+            .spinner {
+              width: 40px;
+              height: 40px;
+              border: 3px solid rgba(255, 255, 255, 0.3);
+              border-top: 3px solid white;
+              border-radius: 50%;
+              animation: spin 1s linear infinite;
+              margin: 20px auto;
+            }
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+            .manual-link {
+              margin-top: 20px;
+              padding: 12px 24px;
+              background: rgba(255, 255, 255, 0.2);
+              border: none;
+              border-radius: 10px;
+              color: white;
+              text-decoration: none;
+              display: inline-block;
+              font-weight: 500;
+              transition: all 0.3s ease;
+            }
+            .manual-link:hover {
+              background: rgba(255, 255, 255, 0.3);
+              transform: translateY(-2px);
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="logo">🚢</div>
+            <h1>${rfq.title}</h1>
+            <div class="meta">
+              ${urgencyEmoji} ${rfq.urgency.charAt(0).toUpperCase() + rfq.urgency.slice(1)} • 📍 ${rfq.location}<br>
+              👤 ${postedBy} • 🚢 ${vesselDisplay}<br>
+              📅 Deadline: ${deadlineText} • 💰 ${rfq.budget || 'Budget TBD'}
+            </div>
+            <div class="loading">
+              <div class="spinner"></div>
+              Redirecting to RFQ details...
+            </div>
+            <a href="${shareUrl}" class="manual-link">View RFQ Details</a>
+          </div>
+        </body>
+        </html>
+      `;
+
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.send(html);
+      
+    } catch (error) {
+      console.error('RFQ sharing error:', error);
+      res.status(500).send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Error Loading RFQ</title>
+        </head>
+        <body>
+          <h1>Error Loading RFQ</h1>
+          <p>There was an error loading the RFQ details.</p>
+        </body>
+        </html>
+      `);
+    }
+  });
+
   // Get users with location data for map
   app.get("/api/users/map", async (req, res) => {
     try {

@@ -41,7 +41,7 @@ import {
 const qaaqLogo = "/qaaq-logo.png";
 
 interface RFQPageProps {
-  user: User;
+  user: User | null;
 }
 
 interface RFQRequest {
@@ -64,6 +64,10 @@ interface RFQRequest {
   userFullName: string;
   userRank: string;
   userId: string;
+  // Additional computed properties
+  postedBy: string;
+  category: string;
+  postedAt: string;
 }
 
 export default function RFQPage({ user }: RFQPageProps) {
@@ -313,12 +317,14 @@ export default function RFQPage({ user }: RFQPageProps) {
   const handleSubmitRFQ = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!canPostRFQ) {
+    if (!user) {
       toast({
-        title: "Access Restricted",
-        description: "Only senior maritime professionals can post RFQs.",
+        title: "Login Required",
+        description: "Please log in to post RFQ requests.",
         variant: "destructive"
       });
+      // Redirect to login after a brief delay
+      setTimeout(() => setLocation('/login'), 1500);
       return;
     }
 
@@ -500,11 +506,13 @@ export default function RFQPage({ user }: RFQPageProps) {
     }
   };
 
-  // Share RFQ functionality
+  // Share RFQ functionality with WhatsApp Open Graph support
   const shareRFQ = async (rfq: RFQRequest) => {
     const shareText = `🚢 Maritime RFQ: ${rfq.title}\n\n📍 Location: ${rfq.location}\n⏰ Urgency: ${rfq.urgency.toUpperCase()}\n📝 Details: ${rfq.description.substring(0, 100)}${rfq.description.length > 100 ? '...' : ''}\n\n💼 Posted by: ${rfq.postedBy}\n📅 Deadline: ${rfq.deadline ? new Date(rfq.deadline).toLocaleDateString() : 'No deadline'}\n\n#MaritimeRFQ #Shipping #QuoteRequest`;
     
-    const shareUrl = window.location.origin + `/rfq/${rfq.id}`;
+    // Use the sharing route with Open Graph meta tags for better WhatsApp previews
+    const shareUrl = `${window.location.origin}/api/rfq/${rfq.id}/share`;
+    const directRfqUrl = `${window.location.origin}/rfq?rfq=${rfq.id}`;
     
     // Try using Web Share API if available
     if (navigator.share) {
@@ -558,6 +566,17 @@ export default function RFQPage({ user }: RFQPageProps) {
 
   // Open quote modal
   const openQuoteModal = (rfq: RFQRequest) => {
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to submit quotes for RFQ requests.",
+        variant: "destructive"
+      });
+      // Redirect to login after a brief delay
+      setTimeout(() => setLocation('/login'), 1500);
+      return;
+    }
+    
     setSelectedRFQ(rfq);
     setShowQuoteModal(true);
     setQuoteForm({
@@ -799,7 +818,19 @@ export default function RFQPage({ user }: RFQPageProps) {
               </div>
             </div>
             <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
-              <UserDropdown user={user} onLogout={() => window.location.reload()} />
+              {user ? (
+                <UserDropdown user={user} onLogout={() => window.location.reload()} />
+              ) : (
+                <Button 
+                  variant="default" 
+                  size="sm" 
+                  data-testid="button-login"
+                  onClick={() => setLocation('/login')}
+                  className="bg-navy hover:bg-navy/90"
+                >
+                  Login
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -835,7 +866,7 @@ export default function RFQPage({ user }: RFQPageProps) {
                   value="create" 
                   className="data-[state=active]:bg-white data-[state=active]:text-orange-600 text-gray-600 font-semibold transition-all duration-200 rounded-md py-2"
                   data-testid="tab-create-rfq"
-                  disabled={!canPostRFQ}
+                  disabled={!user}
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Post RFQ
@@ -1026,6 +1057,26 @@ export default function RFQPage({ user }: RFQPageProps) {
                             >
                               <Share2 className="w-4 h-4" />
                             </Button>
+                            
+                            {/* Dedicated WhatsApp share button */}
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="border-green-500 hover:bg-green-50 text-green-700 ml-1"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const shareText = `🚢 Maritime RFQ: ${rfq.title}\n\n📍 Location: ${rfq.location}\n⏰ Urgency: ${rfq.urgency.toUpperCase()}\n📝 Details: ${rfq.description.substring(0, 100)}${rfq.description.length > 100 ? '...' : ''}\n\n💼 Posted by: ${rfq.postedBy}\n📅 Deadline: ${rfq.deadline ? new Date(rfq.deadline).toLocaleDateString() : 'No deadline'}\n\n#MaritimeRFQ #Shipping #QuoteRequest`;
+                                const shareUrl = `${window.location.origin}/api/rfq/${rfq.id}/share`;
+                                const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText + '\n' + shareUrl)}`;
+                                window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+                              }}
+                              data-testid={`button-whatsapp-share-${rfq.id}`}
+                              title="Share on WhatsApp"
+                            >
+                              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.349"/>
+                              </svg>
+                            </Button>
                           </div>
                         </div>
                       </CardContent>
@@ -1039,7 +1090,7 @@ export default function RFQPage({ user }: RFQPageProps) {
           {/* Create RFQ Tab */}
           <TabsContent value="create" className="flex-1 overflow-auto m-0">
             <div className="p-6">
-              {canPostRFQ ? (
+              {user ? (
                 <Card className="max-w-2xl mx-auto">
                   <CardHeader>
                     <div className="flex items-center justify-between">
@@ -1197,21 +1248,19 @@ export default function RFQPage({ user }: RFQPageProps) {
               ) : (
                 <Card className="max-w-md mx-auto text-center">
                   <CardContent className="pt-6">
-                    <AlertTriangle className="w-16 h-16 text-orange-500 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-800 mb-2">Senior Role Required</h3>
-                    <p className="text-gray-600 mb-4">
-                      Only senior maritime professionals can post RFQ requests.
+                    <Ship className="w-16 h-16 text-orange-500 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-800 mb-2">Login Required</h3>
+                    <p className="text-gray-600 mb-6">
+                      Please log in to post RFQ requests on the maritime marketplace.
                     </p>
-                    <div className="text-sm text-gray-500">
-                      <p className="font-medium mb-2">Authorized roles:</p>
-                      <ul className="space-y-1">
-                        <li>• Ship Manager</li>
-                        <li>• Superintendent</li>
-                        <li>• Captain</li>
-                        <li>• Chief Engineer</li>
-                        <li>• Technical Manager</li>
-                      </ul>
-                    </div>
+                    <Button 
+                      className="bg-orange-600 hover:bg-orange-700 w-full"
+                      onClick={() => setLocation('/login')}
+                      data-testid="button-login-to-post-rfq"
+                    >
+                      <Send className="w-4 h-4 mr-2" />
+                      Login to Post RFQ
+                    </Button>
                   </CardContent>
                 </Card>
               )}
