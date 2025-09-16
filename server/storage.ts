@@ -1,4 +1,4 @@
-import { users, userIdentities, posts, likes, verificationCodes, chatConnections, chatMessages, whatsappMessages, userAnswers, answerLikes, workshopServiceTasks, workshopPricing, workshopBookings, type User, type InsertUser, type UserIdentity, type InsertUserIdentity, type Post, type InsertPost, type VerificationCode, type Like, type ChatConnection, type ChatMessage, type InsertChatConnection, type InsertChatMessage, type WhatsappMessage, type InsertWhatsappMessage, type UserAnswer, type InsertUserAnswer, type AnswerLike, type InsertAnswerLike, type WorkshopServiceTask, type InsertWorkshopServiceTask, type WorkshopPricing, type InsertWorkshopPricing, type WorkshopBooking, type InsertWorkshopBooking } from "@shared/schema";
+import { users, userIdentities, posts, likes, verificationCodes, chatConnections, chatMessages, whatsappMessages, userAnswers, answerLikes, workshopServiceTasks, workshopPricing, workshopBookings, workshopProfiles, type User, type InsertUser, type UserIdentity, type InsertUserIdentity, type Post, type InsertPost, type VerificationCode, type Like, type ChatConnection, type ChatMessage, type InsertChatConnection, type InsertChatMessage, type WhatsappMessage, type InsertWhatsappMessage, type UserAnswer, type InsertUserAnswer, type AnswerLike, type InsertAnswerLike, type WorkshopServiceTask, type InsertWorkshopServiceTask, type WorkshopPricing, type InsertWorkshopPricing, type WorkshopBooking, type InsertWorkshopBooking } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, desc, and, ilike, or, sql, isNotNull, not } from "drizzle-orm";
 
@@ -209,6 +209,11 @@ export interface IStorage {
   generateBookingNumber(): Promise<string>;
   cancelWorkshopBooking(bookingId: string, userId: string): Promise<WorkshopBooking | undefined>;
   completeWorkshopBooking(bookingId: string, actualHours: number, finalAmount?: number): Promise<WorkshopBooking | undefined>;
+
+  // CSV Import functionality
+  importWorkshopsFromCSV(workshopData: any[]): Promise<{ success: number; failed: number; errors: Array<{ email: string; error: string }> }>;
+  checkWorkshopEmailExists(email: string): Promise<boolean>;
+  createWorkshopFromCSV(workshopData: any): Promise<any>;
 
 }
 
@@ -617,10 +622,7 @@ export class DatabaseStorage implements IStorage {
       
       const [user] = await db
         .update(users)
-        .set({
-          ...safeUpdates,
-          updatedAt: new Date(),
-        })
+        .set(safeUpdates as any)
         .where(eq(users.id, userId))
         .returning();
       return user || undefined;
@@ -1731,11 +1733,9 @@ export class DatabaseStorage implements IStorage {
       const result = await pool.query(`
         INSERT INTO workshop_bookings (
           ship_manager_id, ship_name, imo_number, port, workshop_id,
-          service_type, estimated_hours, description, urgency_level,
-          preferred_date, expected_completion, status, budget_range,
-          contact_person, contact_phone, contact_email, special_requirements,
-          port_regulations, vessel_specifications, booking_notes
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+          service_type, estimated_hours, custom_description, priority,
+          scheduled_date, status, ship_manager_notes, quoted_amount
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         RETURNING *
       `, [
         booking.shipManagerId,
@@ -1745,19 +1745,12 @@ export class DatabaseStorage implements IStorage {
         booking.workshopId,
         booking.serviceType,
         booking.estimatedHours,
-        booking.description || null,
-        booking.urgencyLevel || 'medium',
-        booking.preferredDate || null,
-        booking.expectedCompletion || null,
+        (booking as any).customDescription || null,
+        (booking as any).priority || 'normal',
+        (booking as any).scheduledDate || null,
         booking.status || 'pending',
-        booking.budgetRange || null,
-        booking.contactPerson || null,
-        booking.contactPhone || null,
-        booking.contactEmail || null,
-        booking.specialRequirements || null,
-        booking.portRegulations || null,
-        booking.vesselSpecifications || null,
-        booking.bookingNotes || null
+        (booking as any).shipManagerNotes || null,
+        (booking as any).quotedAmount || null
       ]);
       
       const newBooking = result.rows[0];
@@ -1953,6 +1946,128 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error('Error completing workshop booking:', error);
       return undefined;
+    }
+  }
+
+  // CSV Import functionality implementation
+  async importWorkshopsFromCSV(workshopData: any[]): Promise<{ success: number; failed: number; errors: Array<{ email: string; error: string }> }> {
+    const results = { success: 0, failed: 0, errors: [] as Array<{ email: string; error: string }> };
+    
+    console.log(`📊 Starting CSV import for ${workshopData.length} workshops`);
+
+    for (const workshop of workshopData) {
+      try {
+        // Check if workshop with email already exists
+        const exists = await this.checkWorkshopEmailExists(workshop.email);
+        if (exists) {
+          results.failed++;
+          results.errors.push({
+            email: workshop.email,
+            error: 'Workshop with this email already exists'
+          });
+          continue;
+        }
+
+        // Create workshop record
+        await this.createWorkshopFromCSV(workshop);
+        results.success++;
+        console.log(`✅ Successfully imported workshop: ${workshop.email}`);
+
+      } catch (error: unknown) {
+        results.failed++;
+        results.errors.push({
+          email: workshop.email || 'unknown',
+          error: error instanceof Error ? error.message : 'Unknown error during import'
+        });
+        console.error(`❌ Failed to import workshop ${workshop.email}:`, error);
+      }
+    }
+
+    console.log(`📈 CSV Import completed: ${results.success} success, ${results.failed} failed`);
+    return results;
+  }
+
+  async checkWorkshopEmailExists(email: string): Promise<boolean> {
+    try {
+      const result = await db
+        .select({ id: workshopProfiles.id })
+        .from(workshopProfiles)
+        .where(eq(workshopProfiles.email, email.toLowerCase()))
+        .limit(1);
+      
+      return result.length > 0;
+    } catch (error) {
+      console.error('Error checking workshop email existence:', error);
+      return false;
+    }
+  }
+
+  async createWorkshopFromCSV(workshopData: any): Promise<any> {
+    try {
+      // Generate anonymous display ID
+      const displayId = await this.generateWorkshopDisplayId(workshopData.homePort);
+
+      // Build the insert data with only existing columns
+      const insertData = await ColumnGuard.pickExistingColumns({
+        fullName: workshopData.fullName,
+        email: workshopData.email.toLowerCase(),
+        services: workshopData.services || '',
+        maritimeExpertise: workshopData.maritimeExpertise || [],
+        description: workshopData.description,
+        whatsappNumber: workshopData.whatsappNumber,
+        homePort: workshopData.homePort,
+        visaStatus: workshopData.visaStatus,
+        companiesWorkedFor: workshopData.companiesWorkedFor,
+        workshopFrontPhoto: workshopData.workshopFrontPhoto,
+        workshopWorkPhoto: workshopData.workshopWorkPhoto,
+        quote8Hours: workshopData.quote8Hours,
+        perDayAttendanceRate: workshopData.perDayAttendanceRate,
+        officialWebsite: workshopData.officialWebsite,
+        remoteTroubleshootingRate: workshopData.remoteTroubleshootingRate,
+        bankDetails: workshopData.bankDetails,
+        businessCardPhoto: workshopData.businessCardPhoto,
+        displayId: displayId,
+        importSource: 'csv',
+        isActive: true,
+        anonymousMode: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }, 'workshop_profiles');
+
+      const [workshop] = await db
+        .insert(workshopProfiles)
+        .values(insertData as any)
+        .returning();
+
+      return workshop;
+    } catch (error) {
+      console.error('Error creating workshop from CSV:', error);
+      throw error;
+    }
+  }
+
+  private async generateWorkshopDisplayId(homePort: string): Promise<string> {
+    try {
+      // Clean and format port name for display ID
+      const cleanPort = homePort
+        .replace(/[^a-zA-Z0-9\s]/g, '')
+        .replace(/\s+/g, '')
+        .toLowerCase();
+
+      // Count existing workshops in this port
+      const [result] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(workshopProfiles)
+        .where(ilike(workshopProfiles.homePort, `%${homePort}%`));
+
+      const nextNumber = (result.count || 0) + 1;
+      const displayId = `w${cleanPort.charAt(0).toUpperCase()}${cleanPort.slice(1)}${nextNumber}`;
+      
+      return displayId;
+    } catch (error) {
+      console.error('Error generating workshop display ID:', error);
+      // Fallback to random ID
+      return `w${Math.random().toString(36).substr(2, 8)}`;
     }
   }
 }

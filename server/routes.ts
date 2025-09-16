@@ -71,6 +71,7 @@ import { smartAuthPriority } from "./auth-priority";
 import { authPool } from "./auth-pool";
 import { authMonitor } from "./auth-monitor";
 import businessCardRoutes from "./business-card-routes.js";
+import { WorkshopCSVParser } from "./workshop-csv-parser";
 
 // Extend Express Request type
 declare global {
@@ -108,8 +109,8 @@ const authenticateToken = async (req: Request, res: Response, next: NextFunction
     const decoded = jwt.verify(token, getJWT()) as { userId: string };
     req.userId = decoded.userId;
     next();
-  } catch (error) {
-    console.error('🔒 JWT Authentication failed:', error.message);
+  } catch (error: unknown) {
+    console.error('🔒 JWT Authentication failed:', error instanceof Error ? error.message : String(error));
     return res.status(403).json({ message: 'Invalid or expired token' });
   }
 };
@@ -482,11 +483,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           searchedFor: identifier
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('🚨 DEBUG: Identity check error:', error);
       res.status(500).json({ 
         success: false, 
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         searchedFor: req.query.identifier
       });
     }
@@ -3738,7 +3739,6 @@ Original prompt: "${originalPrompt}"
 Please provide only the improved prompt (15-20 words maximum) without any explanations or additional text:`;
 
       // Use OpenAI directly without token limits for prompt improvement
-      const { Configuration, OpenAIApi } = await import('openai');
       const { OpenAI } = await import('openai');
       
       const openai = new OpenAI({
@@ -7037,6 +7037,93 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       res.status(500).json({ 
         success: false, 
         error: 'Failed to process CSV upload',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Enhanced CSV import with proper column mapping - Admin only
+  app.post('/api/workshops/import-csv', authenticateToken, isAdminOrIntern, async (req: any, res) => {
+    try {
+      const { csvContent, fileName } = req.body;
+      
+      if (!csvContent) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'CSV content is required' 
+        });
+      }
+
+      const adminUserId = req.userId;
+      console.log(`📊 Starting enhanced CSV import by admin ${adminUserId}, file: ${fileName || 'unnamed'}`);
+      
+      // Parse CSV using our enhanced parser
+      const parseResult = WorkshopCSVParser.parseCSV(csvContent);
+      
+      if (!parseResult.success) {
+        return res.status(400).json({
+          success: false,
+          error: 'CSV parsing failed',
+          details: parseResult.errors,
+          summary: parseResult.summary
+        });
+      }
+
+      // Extract successful workshop data from parser
+      const workshopData: any[] = [];
+      const lines = csvContent.split('\n').filter(line => line.trim().length > 0);
+      if (lines.length > 1) {
+        const records = WorkshopCSVParser['parseSimpleCSV'](csvContent);
+        
+        for (let i = 0; i < records.length; i++) {
+          const row = records[i];
+          try {
+            const parsedData = WorkshopCSVParser['parseWorkshopRow'](row);
+            
+            // Skip rows without required data
+            if (!parsedData.email || !parsedData.fullName || !parsedData.homePort) {
+              continue;
+            }
+            
+            workshopData.push(parsedData);
+          } catch (error) {
+            console.error(`Error parsing row ${i + 2}:`, error);
+          }
+        }
+      }
+
+      // Import to database using storage service
+      const importResult = await storage.importWorkshopsFromCSV(workshopData);
+      
+      console.log(`📈 Enhanced CSV import completed by admin ${adminUserId}: ${importResult.success} success, ${importResult.failed} failed`);
+      
+      res.json({
+        success: importResult.success > 0,
+        result: {
+          totalRows: parseResult.summary.totalRows,
+          validRows: parseResult.summary.validRows,
+          invalidRows: parseResult.summary.invalidRows,
+          imported: importResult.success,
+          failed: importResult.failed,
+          errors: [
+            ...parseResult.errors,
+            ...importResult.errors.map(e => ({ row: 0, error: e.error, data: { email: e.email } }))
+          ],
+          duplicateEmails: parseResult.duplicateEmails
+        },
+        summary: {
+          message: `Import completed: ${importResult.success} workshops imported, ${importResult.failed} failed`,
+          successRate: parseResult.summary.totalRows > 0 ? 
+            ((importResult.success / parseResult.summary.totalRows) * 100).toFixed(1) + '%' : '0%',
+          fileName: fileName || 'unnamed.csv'
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ Error in enhanced workshop CSV import:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to import workshop CSV',
         details: error instanceof Error ? error.message : 'Unknown error'
       });
     }
