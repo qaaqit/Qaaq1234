@@ -95,7 +95,7 @@ export default function RFQPage({ user }: RFQPageProps) {
     description: "",
     vesselName: "",
     location: "",
-    urgency: "normal",
+    urgency: "medium",
     deadline: ""
   });
   const [attachments, setAttachments] = useState<string[]>([]);
@@ -431,7 +431,7 @@ export default function RFQPage({ user }: RFQPageProps) {
         description: "",
         vesselName: "",
         location: "",
-        urgency: "normal",
+        urgency: "medium",
         deadline: ""
       });
       setAttachments([]);
@@ -469,7 +469,7 @@ export default function RFQPage({ user }: RFQPageProps) {
       description: "",
       vesselName: "",
       location: "",
-      urgency: "normal",
+      urgency: "medium",
       deadline: ""
     });
     setAttachments([]);
@@ -927,9 +927,10 @@ export default function RFQPage({ user }: RFQPageProps) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Urgency</SelectItem>
-                    <SelectItem value="normal">Normal</SelectItem>
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
                     <SelectItem value="urgent">Urgent</SelectItem>
-                    <SelectItem value="critical">Critical</SelectItem>
                   </SelectContent>
                 </Select>
                 <Input
@@ -1224,9 +1225,10 @@ export default function RFQPage({ user }: RFQPageProps) {
                                   <SelectValue placeholder="Select urgency" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="normal">Normal</SelectItem>
+                                  <SelectItem value="low">Low</SelectItem>
+                                  <SelectItem value="medium">Medium</SelectItem>
+                                  <SelectItem value="high">High</SelectItem>
                                   <SelectItem value="urgent">Urgent</SelectItem>
-                                  <SelectItem value="critical">Critical</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>

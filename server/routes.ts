@@ -4,6 +4,7 @@ import ws from 'ws';
 import jwt from 'jsonwebtoken';
 import { storage } from "./storage";
 import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, insertChatConnectionSchema, insertChatMessageSchema, insertRankGroupSchema, insertRankGroupMemberSchema, insertRankGroupMessageSchema, insertRankChatMessageSchema, insertEmailVerificationTokenSchema, emailVerificationTokens, rankChatMessages, ipAnalytics, users, insertWorkshopServiceTaskSchema, insertWorkshopPricingSchema, insertWorkshopBookingSchema, updateWorkshopBookingStatusSchema, completeWorkshopBookingSchema, insertRfqRequestSchema, insertRfqQuoteSchema, rfqRequests, rfqQuotes } from "@shared/schema";
+import { z } from "zod";
 import { emailService } from "./email-service";
 import { randomBytes } from 'crypto';
 import { eq } from 'drizzle-orm';
@@ -2309,8 +2310,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Authentication required" });
       }
 
-      // Parse and prepare RFQ data with defaults
-      const rfqData = insertRfqRequestSchema.parse(req.body);
+      // Parse RFQ data with relaxed input schema (slug fields generated server-side)
+      const inputSchema = insertRfqRequestSchema.omit({
+        portSlug: true,
+        postedDate: true, 
+        userPublicId: true,
+        serial: true
+      }).extend({
+        attachments: z.array(z.string()).default([])
+      });
+      
+      const rfqData = inputSchema.parse(req.body);
       
       // Validate required location field for slug generation
       if (!rfqData.location?.trim()) {
@@ -2322,6 +2332,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const createdAt = new Date();
       
       // Set defaults for optional fields
+      // Generate slug components server-side
+      const slugComponents = await generateRfqSlugComponents(
+        userId,
+        rfqData.location,
+        createdAt
+      );
+      
       const baseRfqData = {
         ...rfqData,
         userId,
@@ -2330,7 +2347,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: 'active' as const,
         deadline: rfqData.deadline ? new Date(rfqData.deadline) : new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
         attachments: rfqData.attachments || [],
-        createdAt
+        createdAt,
+        // Add generated slug components
+        portSlug: slugComponents.portSlug,
+        postedDate: slugComponents.postedDate,
+        userPublicId: slugComponents.userPublicId,
+        serial: slugComponents.serial
       };
 
       // Use transaction to ensure atomic slug generation and insert
