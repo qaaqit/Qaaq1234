@@ -588,6 +588,17 @@ export default function RFQPage({ user }: RFQPageProps) {
       return;
     }
 
+    // Check if we have a valid token
+    const authToken = localStorage.getItem('auth_token');
+    if (!authToken) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to submit a quote.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       const quoteData = {
         price: parseFloat(quoteForm.price),
@@ -602,7 +613,7 @@ export default function RFQPage({ user }: RFQPageProps) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          'Authorization': `Bearer ${authToken}`
         },
         body: JSON.stringify(quoteData)
       });
@@ -622,7 +633,7 @@ export default function RFQPage({ user }: RFQPageProps) {
         try {
           const rfqResponse = await fetch('/api/rfq?page=1&limit=20', {
             headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
+              'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
             }
           });
           if (rfqResponse.ok) {
@@ -634,6 +645,12 @@ export default function RFQPage({ user }: RFQPageProps) {
         }
       } else {
         const errorData = await response.json().catch(() => ({ message: 'Quote submission failed' }));
+        
+        // Handle authentication errors specifically
+        if (response.status === 401 || response.status === 403) {
+          throw new Error('Your session has expired. Please log in again to submit your quote.');
+        }
+        
         throw new Error(errorData.message || 'Failed to submit quote');
       }
     } catch (error) {
