@@ -2248,6 +2248,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete RFQ request
+  app.delete("/api/rfq/:id", authenticateToken, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.userId!;
+
+      // Check if user owns the RFQ
+      const existingRfq = await db
+        .select()
+        .from(rfqRequests)
+        .where(eq(rfqRequests.id, id))
+        .limit(1);
+
+      if (!existingRfq.length) {
+        return res.status(404).json({ message: "RFQ not found" });
+      }
+
+      if (existingRfq[0].userId !== userId) {
+        return res.status(403).json({ message: "You can only delete your own RFQ requests" });
+      }
+
+      // Delete the RFQ
+      await db
+        .delete(rfqRequests)
+        .where(eq(rfqRequests.id, id));
+
+      console.log('✅ RFQ deleted successfully:', id);
+      res.json({ message: "RFQ deleted successfully" });
+    } catch (error: unknown) {
+      console.error('RFQ delete error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(400).json({ message: "Failed to delete RFQ", error: errorMessage });
+    }
+  });
+
   // Submit quote for RFQ
   app.post("/api/rfq/:id/quote", authenticateToken, async (req, res) => {
     try {

@@ -427,6 +427,52 @@ export default function RFQPage({ user }: RFQPageProps) {
     setAttachments([]);
   };
 
+  // Delete RFQ
+  const deleteRFQ = async (rfq: RFQRequest) => {
+    if (!canEditRFQ(rfq)) {
+      toast({
+        title: "Access Denied",
+        description: "You can only delete your own RFQ requests.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Confirm deletion
+    const confirmed = window.confirm(`Are you sure you want to delete this RFQ?\n\nTitle: ${rfq.title}\nLocation: ${rfq.location}\n\nThis action cannot be undone.`);
+    
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(`/api/rfq/${rfq.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.ok) {
+        // Remove from local state
+        setRfqRequests(prev => prev.filter(r => r.id !== rfq.id));
+        
+        toast({
+          title: "RFQ Deleted",
+          description: "Your RFQ request has been deleted successfully."
+        });
+      } else {
+        const errorData = await response.json().catch(() => ({ message: 'Delete failed' }));
+        throw new Error(errorData.message || 'Failed to delete RFQ');
+      }
+    } catch (error) {
+      console.error('Error deleting RFQ:', error);
+      toast({
+        title: "Failed to Delete RFQ",
+        description: "Please try again later.",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Share RFQ functionality
   const shareRFQ = async (rfq: RFQRequest) => {
     const shareText = `🚢 Maritime RFQ: ${rfq.title}\n\n📍 Location: ${rfq.location}\n⏰ Urgency: ${rfq.urgency.toUpperCase()}\n📝 Details: ${rfq.description.substring(0, 100)}${rfq.description.length > 100 ? '...' : ''}\n\n💼 Posted by: ${rfq.postedBy}\n📅 Deadline: ${rfq.deadline ? new Date(rfq.deadline).toLocaleDateString() : 'No deadline'}\n\n#MaritimeRFQ #Shipping #QuoteRequest`;
@@ -909,18 +955,32 @@ export default function RFQPage({ user }: RFQPageProps) {
                               <Share2 className="w-4 h-4" />
                             </Button>
                             {canEditRFQ(rfq) && (
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
-                                className="border-blue-200 hover:bg-blue-50 text-blue-600"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  startEditRFQ(rfq);
-                                }}
-                                data-testid={`button-edit-rfq-${rfq.id}`}
-                              >
-                                Edit
-                              </Button>
+                              <>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="border-blue-200 hover:bg-blue-50 text-blue-600"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    startEditRFQ(rfq);
+                                  }}
+                                  data-testid={`button-edit-rfq-${rfq.id}`}
+                                >
+                                  Edit
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="border-red-200 hover:bg-red-50 text-red-600"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    deleteRFQ(rfq);
+                                  }}
+                                  data-testid={`button-delete-rfq-${rfq.id}`}
+                                >
+                                  Delete
+                                </Button>
+                              </>
                             )}
                           </div>
                         </div>
