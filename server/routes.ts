@@ -7530,12 +7530,6 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
             COALESCE(booking_count.completed_bookings, 0) as completed_bookings_count
           FROM workshop_profiles wp
           LEFT JOIN (
-            SELECT workshop_id, COUNT(DISTINCT expertise_category) as pricing_categories
-            FROM workshop_pricing 
-            WHERE is_active = true 
-            GROUP BY workshop_id
-          ) pricing_count ON wp.id = pricing_count.workshop_id
-          LEFT JOIN (
             SELECT workshop_id, COUNT(*) as completed_bookings
             FROM workshop_bookings 
             WHERE status = 'completed'
@@ -9758,10 +9752,8 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
 
       // Get workshops in the specified port
       const workshopsQuery = `
-        SELECT wp.*, wpr.expertise_category, wpr.regular_shift_rate, wpr.overtime_rate, 
-               wpr.emergency_rate, wpr.specialist_rate
+        SELECT wp.*
         FROM workshop_profiles wp
-        LEFT JOIN workshop_pricing wpr ON wp.id = wpr.workshop_id
         WHERE wp.is_active = true 
         AND wp.home_port ILIKE $1
         ${expertiseCategory ? 'AND wpr.expertise_category = $2' : ''}
@@ -10486,19 +10478,16 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
           wp.whatsapp_number,
           wp.maritime_expertise,
           wp.classification_approvals,
-          wp.average_rating,
-          wp.total_reviews,
-          wpr.base_rate_8_hours,
-          wpr.overtime_multiplier,
-          wpr.minimum_hours,
-          wpr.currency
+          wp.description,
+          wp.official_website,
+          wp.per_day_attendance_rate,
+          wp.remote_troubleshooting_rate
         FROM workshop_profiles wp
-        LEFT JOIN workshop_pricing wpr ON wp.id = wpr.workshop_id AND wpr.expertise_category = $1
-        WHERE wp.home_port = $2
+        WHERE wp.home_port ILIKE $2
           AND wp.is_active = true
-          AND $1 = ANY(wp.maritime_expertise)
-        ORDER BY wp.average_rating DESC NULLS LAST, wp.workshop_number ASC
-      `, [expertiseId, port]);
+          AND wp.maritime_expertise @> $3
+        ORDER BY wp.workshop_number ASC
+      `, [expertiseId, `%${port}%`, JSON.stringify([expertiseId])]);
       
       const workshops = workshopsResult.rows.map(row => ({
         workshopId: row.id,
@@ -10509,14 +10498,10 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         whatsappNumber: row.whatsapp_number,
         maritimeExpertise: row.maritime_expertise || [],
         classificationApprovals: row.classification_approvals || {},
-        averageRating: row.average_rating ? parseFloat(row.average_rating) : null,
-        totalReviews: row.total_reviews || 0,
-        pricing: row.base_rate_8_hours ? {
-          baseRate8Hours: parseFloat(row.base_rate_8_hours),
-          overtimeMultiplier: parseFloat(row.overtime_multiplier),
-          minimumHours: parseFloat(row.minimum_hours),
-          currency: row.currency
-        } : null
+        description: row.description,
+        officialWebsite: row.official_website,
+        perDayAttendanceRate: row.per_day_attendance_rate,
+        remoteTroubleshootingRate: row.remote_troubleshooting_rate
       }));
       
       console.log(`✅ Found ${workshops.length} workshops in ${port} for expertise ${expertiseId}`);
@@ -10709,11 +10694,15 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
           home_port,
           maritime_expertise,
           classification_approvals,
-          operational_hours,
-          workforce_size,
-          facility_details,
-          average_rating,
-          total_reviews,
+          description,
+          official_website,
+          business_card_photo,
+          workshop_front_photo,
+          work_photo,
+          visa_status,
+          companies_worked_for,
+          per_day_attendance_rate,
+          remote_troubleshooting_rate,
           is_verified,
           created_at
         FROM workshop_profiles
@@ -10729,28 +10718,8 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       
       const workshop = workshopResult.rows[0];
       
-      // Get all pricing for this workshop
-      const pricingResult = await pool.query(`
-        SELECT 
-          expertise_category,
-          base_rate_8_hours,
-          overtime_multiplier,
-          minimum_hours,
-          currency,
-          notes
-        FROM workshop_pricing
-        WHERE workshop_id = $1 AND is_active = true
-        ORDER BY expertise_category ASC
-      `, [workshopId]);
-      
-      const pricing = pricingResult.rows.map(row => ({
-        expertiseCategory: row.expertise_category,
-        baseRate8Hours: parseFloat(row.base_rate_8_hours),
-        overtimeMultiplier: parseFloat(row.overtime_multiplier),
-        minimumHours: parseFloat(row.minimum_hours),
-        currency: row.currency,
-        notes: row.notes
-      }));
+      // Note: workshop_pricing table doesn't exist yet, so we'll return empty pricing
+      const pricing = [];
       
       console.log(`✅ Retrieved workshop details for ${workshop.display_id || workshop.workshop_number}`);
       res.json({
@@ -10765,11 +10734,15 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
           homePort: workshop.home_port,
           maritimeExpertise: workshop.maritime_expertise || [],
           classificationApprovals: workshop.classification_approvals || {},
-          operationalHours: workshop.operational_hours,
-          workforceSize: workshop.workforce_size,
-          facilityDetails: workshop.facility_details,
-          averageRating: workshop.average_rating ? parseFloat(workshop.average_rating) : null,
-          totalReviews: workshop.total_reviews || 0,
+          description: workshop.description,
+          officialWebsite: workshop.official_website,
+          businessCardPhoto: workshop.business_card_photo,
+          workshopFrontPhoto: workshop.workshop_front_photo,
+          workPhoto: workshop.work_photo,
+          visaStatus: workshop.visa_status,
+          companiesWorkedFor: workshop.companies_worked_for,
+          perDayAttendanceRate: workshop.per_day_attendance_rate,
+          remoteTroubleshootingRate: workshop.remote_troubleshooting_rate,
           isVerified: workshop.is_verified,
           createdAt: workshop.created_at,
           pricing
