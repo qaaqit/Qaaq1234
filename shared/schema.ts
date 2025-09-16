@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, integer, boolean, jsonb, real, uuid, serial, decimal } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, integer, boolean, jsonb, real, uuid, serial, decimal, smallint, date, uniqueIndex } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -49,6 +49,7 @@ export const userIdentities = pgTable("user_identities", {
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: text("user_id").unique(), // Human-readable user ID (e.g., QAAQ123, CAP456) - Legacy compatibility
+  publicId: text("public_id").unique(), // Stable public identifier for URLs (e.g., 'cap123', 'eng456')
   fullName: text("full_name").notNull(),
   email: text("email").unique(), // Primary email - may be null for WhatsApp-only users
   password: text("password"), // Password for QAAQ login
@@ -179,8 +180,21 @@ export const rfqRequests = pgTable("rfq_requests", {
   status: text("status").notNull().default("active"), // 'active', 'closed', 'fulfilled'
   viewCount: integer("view_count").default(0),
   quoteCount: integer("quote_count").default(0),
+  
+  // New slug-based URL fields
+  portSlug: text("port_slug").notNull(), // Normalized location slug (e.g., 'singapore', 'mumbai')
+  postedDate: date("posted_date").notNull(), // UTC date from createdAt (e.g., '2025-01-15')
+  userPublicId: text("user_public_id").notNull(), // Stable public user identifier
+  serial: integer("serial").notNull(), // Sequential number scoped to (portSlug, postedDate, userPublicId)
+  slugVersion: smallint("slug_version").notNull().default(1), // For future migrations
+  
   createdAt: timestamp("created_at").default(sql`now()`),
   updatedAt: timestamp("updated_at").default(sql`now()`),
+}, (table) => {
+  return {
+    // Unique constraint for slug components
+    uniqueSlugIndex: uniqueIndex('rfq_unique_slug_idx').on(table.portSlug, table.postedDate, table.userPublicId, table.serial),
+  }
 });
 
 // RFQ Quotes table
@@ -1295,7 +1309,20 @@ export type DatabaseBackupMetrics = typeof databaseBackupMetrics.$inferSelect;
 
 // Insert schemas for RFQ
 export const insertRfqRequestSchema = createInsertSchema(rfqRequests)
-  .omit({ id: true, createdAt: true, updatedAt: true, viewCount: true, quoteCount: true, userId: true });
+  .omit({ 
+    id: true, 
+    createdAt: true, 
+    updatedAt: true, 
+    viewCount: true, 
+    quoteCount: true, 
+    userId: true,
+    // New slug fields are auto-generated, not provided by user
+    portSlug: true,
+    postedDate: true,
+    userPublicId: true,
+    serial: true,
+    slugVersion: true
+  });
 
 export const insertRfqQuoteSchema = createInsertSchema(rfqQuotes)
   .omit({ id: true, createdAt: true, isNotified: true });
