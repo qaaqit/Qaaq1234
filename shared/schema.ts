@@ -1295,7 +1295,7 @@ export type DatabaseBackupMetrics = typeof databaseBackupMetrics.$inferSelect;
 
 // Insert schemas for RFQ
 export const insertRfqRequestSchema = createInsertSchema(rfqRequests)
-  .omit({ id: true, createdAt: true, updatedAt: true, viewCount: true, quoteCount: true });
+  .omit({ id: true, createdAt: true, updatedAt: true, viewCount: true, quoteCount: true, userId: true });
 
 export const insertRfqQuoteSchema = createInsertSchema(rfqQuotes)
   .omit({ id: true, createdAt: true, isNotified: true });
