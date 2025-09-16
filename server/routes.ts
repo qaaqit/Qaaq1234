@@ -7522,27 +7522,20 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       const client = await localPool.connect();
       
       try {
-        // Query for authentic workshops with filtering criteria
+        // Query for authentic workshops with filtering criteria - simplified for existing tables
         const query = `
           SELECT 
             wp.*,
-            COALESCE(pricing_count.pricing_categories, 0) as services_count,
-            COALESCE(booking_count.completed_bookings, 0) as completed_bookings_count
+            0 as services_count,
+            0 as completed_bookings_count
           FROM workshop_profiles wp
-          LEFT JOIN (
-            SELECT workshop_id, COUNT(*) as completed_bookings
-            FROM workshop_bookings 
-            WHERE status = 'completed'
-            GROUP BY workshop_id
-          ) booking_count ON wp.id = booking_count.workshop_id
           WHERE wp.is_active = true
           AND (
             wp.is_verified = true OR 
             wp.workshop_front_photo IS NOT NULL OR 
             wp.work_photo IS NOT NULL OR
-            pricing_count.pricing_categories > 0 OR
-            booking_count.completed_bookings > 0 OR
-            (wp.description IS NOT NULL AND LENGTH(wp.description) > 50)
+            (wp.description IS NOT NULL AND LENGTH(wp.description) > 50) OR
+            wp.official_website IS NOT NULL
           )
           ORDER BY RANDOM()
           LIMIT 100
