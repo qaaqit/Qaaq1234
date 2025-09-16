@@ -7495,18 +7495,21 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         });
       }
       
-      const limit = Math.min(parseInt(req.query.limit as string) || 12, 30); // Default 12, max 30
-      console.log(`🌟 Fetching featured workshops - Limit: ${limit}, IP: ${clientIP}`);
+      const limit = Math.min(parseInt(req.query.limit as string) || 12, 50); // Default 12, max 50 for infinite scroll
+      const offset = Math.max(parseInt(req.query.offset as string) || 0, 0); // Default 0
+      console.log(`🌟 Fetching featured workshops - Limit: ${limit}, Offset: ${offset}, IP: ${clientIP}`);
       
-      // Check cache validity
+      // Check cache validity - for infinite scroll, don't use cache for pagination
       const now = Date.now();
-      if (featuredWorkshopsCache && featuredWorkshopsCache.expiresAt > now) {
-        console.log('✅ Using cached featured workshops data');
+      if (offset === 0 && featuredWorkshopsCache && featuredWorkshopsCache.expiresAt > now) {
+        console.log('✅ Using cached featured workshops data (first page only)');
         const cachedResults = featuredWorkshopsCache.data.slice(0, limit);
         return res.json({
           success: true,
           workshops: cachedResults,
           total: cachedResults.length,
+          offset: offset,
+          hasMore: cachedResults.length === limit,
           cached: true,
           cacheValidUntil: new Date(featuredWorkshopsCache.expiresAt).toISOString()
         });
@@ -7522,7 +7525,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       const client = await localPool.connect();
       
       try {
-        // Query for authentic workshops with filtering criteria - simplified for existing tables
+        // Query for all active workshops with pagination support for infinite scroll
         const query = `
           SELECT 
             wp.*,
@@ -7530,19 +7533,12 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
             0 as completed_bookings_count
           FROM workshop_profiles wp
           WHERE wp.is_active = true
-          AND (
-            wp.is_verified = true OR 
-            wp.workshop_front_photo IS NOT NULL OR 
-            wp.work_photo IS NOT NULL OR
-            (wp.description IS NOT NULL AND LENGTH(wp.description) > 50) OR
-            wp.official_website IS NOT NULL
-          )
-          ORDER BY RANDOM()
-          LIMIT 100
+          ORDER BY wp.created_at DESC, wp.id DESC
+          LIMIT $1 OFFSET $2
         `;
         
-        console.log('🔧 Executing featured workshops query with authenticity filtering');
-        const result = await client.query(query);
+        console.log('🔧 Executing featured workshops query with pagination');
+        const result = await client.query(query, [limit, offset]);
         const rawWorkshops = result.rows;
         console.log(`✅ Found ${rawWorkshops.length} authentic workshops from database`);
         
@@ -7648,13 +7644,16 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         
         console.log(`✅ Cached ${featuredWorkshops.length} featured workshops for 15 minutes`);
         
-        // Return the requested number of workshops
-        const responseWorkshops = featuredWorkshops.slice(0, limit);
+        // For infinite scroll, return workshops based on offset and limit
+        const responseWorkshops = featuredWorkshops.slice(offset, offset + limit);
         
         res.json({
           success: true,
           workshops: responseWorkshops,
           total: responseWorkshops.length,
+          offset: offset,
+          limit: limit,
+          hasMore: (offset + limit) < featuredWorkshops.length,
           cached: false,
           cacheValidUntil: new Date(featuredWorkshopsCache.expiresAt).toISOString(),
           globalWorkshopsAvailable: featuredWorkshops.length

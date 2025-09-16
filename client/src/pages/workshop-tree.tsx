@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { ChevronRight, ChevronDown, Wrench, Home, Settings, Building, MapPin, Clock, Star, Shield, Image as ImageIcon, Globe, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface WorkshopSystem {
@@ -38,13 +37,47 @@ interface FeaturedWorkshop {
 export default function WorkshopTreePage() {
   const [expandedSystems, setExpandedSystems] = useState<Set<string>>(new Set());
   const [, setLocation] = useLocation();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Fetch featured workshops
-  const { data: featuredWorkshops, isLoading: workshopsLoading, error: workshopsError } = useQuery({
+  // Fetch featured workshops with infinite scroll
+  const {
+    data: featuredWorkshopsPages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: workshopsLoading,
+    error: workshopsError,
+  } = useInfiniteQuery({
     queryKey: ['/api/workshops/featured'],
-    staleTime: 15 * 60 * 1000, // 15 minutes
+    queryFn: async ({ pageParam = 0 }) => {
+      const response = await fetch(`/api/workshops/featured?limit=12&offset=${pageParam}`);
+      if (!response.ok) throw new Error('Failed to fetch workshops');
+      return response.json();
+    },
+    getNextPageParam: (lastPage) => {
+      if (lastPage.hasMore) {
+        return lastPage.offset + lastPage.limit;
+      }
+      return undefined;
+    },
+    initialPageParam: 0,
+    staleTime: 5 * 60 * 1000, // 5 minutes for infinite scroll
     retry: 3,
   });
+
+  // Flatten all workshops from pages for display
+  const workshops = featuredWorkshopsPages?.pages?.flatMap(page => page.workshops) || [];
+
+  // Infinite scroll handler
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const container = e.currentTarget;
+    const { scrollLeft, scrollWidth, clientWidth } = container;
+    
+    // Load more when user scrolls near the end (90% of scroll width)
+    if (scrollLeft + clientWidth >= scrollWidth * 0.9 && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   // Fetch workshop tree systems
   const { data: systems, isLoading: systemsLoading, error: systemsError } = useQuery({
@@ -265,7 +298,6 @@ export default function WorkshopTreePage() {
   }
 
   const workshopSystems = (systems as any)?.data || [];
-  const workshops = (featuredWorkshops as any)?.workshops || [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100">
@@ -335,24 +367,39 @@ export default function WorkshopTreePage() {
             </Card>
           ) : (
             <div className="relative">
-              <Carousel
-                opts={{
-                  align: "start",
-                  loop: false,
-                }}
-                className="w-full"
-                data-testid="carousel-featured-workshops"
+              {/* Infinite Horizontal Scroll Container */}
+              <div 
+                ref={scrollContainerRef}
+                className="flex overflow-x-auto scrollbar-hide space-x-4 px-2 py-2 scroll-smooth"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                onScroll={handleScroll}
+                data-testid="infinite-scroll-workshops"
               >
-                <CarouselContent className="-ml-2 md:-ml-4">
-                  {workshops.slice(0, 12).map((workshop: FeaturedWorkshop) => (
-                    <CarouselItem key={workshop.id} className="pl-2 md:pl-4 basis-auto">
-                      {renderWorkshopCard(workshop)}
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                <CarouselPrevious className="-left-4" data-testid="button-carousel-previous" />
-                <CarouselNext className="-right-4" data-testid="button-carousel-next" />
-              </Carousel>
+                {workshops.map((workshop: FeaturedWorkshop) => (
+                  <div key={workshop.id} className="flex-none">
+                    {renderWorkshopCard(workshop)}
+                  </div>
+                ))}
+                
+                {/* Loading indicator for infinite scroll */}
+                {isFetchingNextPage && (
+                  <div className="flex-none flex items-center justify-center min-w-[280px] max-w-[320px]">
+                    <div className="text-center p-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-2"></div>
+                      <p className="text-sm text-gray-600">Loading more workshops...</p>
+                    </div>
+                  </div>
+                )}
+                
+                {/* End indicator when no more workshops */}
+                {!hasNextPage && workshops.length > 12 && (
+                  <div className="flex-none flex items-center justify-center min-w-[200px]">
+                    <div className="text-center p-8">
+                      <p className="text-sm text-gray-500">🎉 You've seen all workshops!</p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
