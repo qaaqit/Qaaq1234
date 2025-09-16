@@ -89,6 +89,28 @@ export default function RFQPage({ user }: RFQPageProps) {
     location: ""
   });
 
+  // Check URL parameters for tab and workshop info
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    const workshopParam = urlParams.get('workshop');
+    const locationParam = urlParams.get('location');
+    
+    if (tabParam === 'post') {
+      setActiveTab('post');
+    }
+    
+    if (workshopParam || locationParam) {
+      setFormData(prev => ({
+        ...prev,
+        location: locationParam ? decodeURIComponent(locationParam) : prev.location,
+        description: workshopParam ? 
+          `Request for quotation for repair services.\n\nWorkshop: ${workshopParam}\n\n` + prev.description :
+          prev.description
+      }));
+    }
+  }, []);
+
   // Form state for creating new RFQ
   const [formData, setFormData] = useState({
     category: "",

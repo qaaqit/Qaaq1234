@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, MapPin, Wrench, Phone, Mail, Globe, Star } from 'lucide-react';
+import { ArrowLeft, MapPin, Wrench, Phone, Mail, Globe, Star, Send } from 'lucide-react';
 
 interface Workshop {
   id: string;
@@ -220,7 +220,7 @@ export default function WorkshopPage() {
                           </p>
                         </div>
                         
-                        {/* Status Badge and Arrow */}
+                        {/* Status Badge and Actions */}
                         <div className="flex items-center space-x-2 ml-4">
                           {workshop.is_verified && (
                             <Badge className="bg-green-100 text-green-800 text-xs px-2 py-1">
@@ -228,8 +228,38 @@ export default function WorkshopPage() {
                               Verified
                             </Badge>
                           )}
-                          <ArrowLeft className="w-5 h-5 text-gray-400 rotate-180" />
                         </div>
+                      </div>
+                      
+                      {/* Action Buttons */}
+                      <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setLocation(`/rfq?tab=post&workshop=${workshop.display_id}&location=${encodeURIComponent(workshop.home_port)}`);
+                          }}
+                          className="flex items-center space-x-2 text-orange-600 border-orange-300 hover:bg-orange-50"
+                          data-testid={`button-send-message-${workshop.id}`}
+                        >
+                          <Send className="w-4 h-4" />
+                          <span>Send Message</span>
+                        </Button>
+                        
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setLocation(`/workshop/${workshop.id}`);
+                          }}
+                          className="text-gray-500 hover:text-gray-700"
+                          data-testid={`button-view-details-${workshop.id}`}
+                        >
+                          View Details
+                          <ArrowLeft className="w-4 h-4 ml-1 rotate-180" />
+                        </Button>
                       </div>
                     </div>
                   </div>
