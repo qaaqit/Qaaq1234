@@ -152,95 +152,48 @@ export default function WorkshopPage() {
               >
                 <CardContent className="p-0">
                   <div className="flex flex-col">
-                    {/* Workshop Images Area - Two 16:9 images side by side */}
-                    <div className="w-full flex gap-0">
-                      {/* First Image */}
-                      <div className="w-1/2 aspect-video bg-orange-100 flex items-center justify-center overflow-hidden relative">
-                        {workshop.business_card_photo ? (
+                    {/* Workshop Image Area - Single 16:9 image */}
+                    <div className="w-full aspect-video bg-orange-50 flex items-center justify-center overflow-hidden relative">
+                      {workshop.official_website ? (
+                        <div className="w-full h-full relative">
                           <img 
-                            src={workshop.business_card_photo} 
-                            alt={`${workshop.display_id} business card`}
-                            className="w-full h-full object-cover"
+                            src={`https://image.thum.io/get/width/800/crop/450/allowJPG/wait/20/noanimate/${workshop.official_website}`}
+                            alt={`${workshop.display_id} website screenshot`}
+                            className="w-full h-full object-cover blur-md opacity-60"
                           />
-                        ) : workshop.websitePreviewImage ? (
-                          <div className="w-full h-full relative">
-                            <img 
-                              src={workshop.websitePreviewImage} 
-                              alt={`${workshop.display_id} website preview`}
-                              className="w-full h-full object-cover blur-md opacity-40"
-                            />
-                            <div className="absolute inset-0 bg-orange-100/60 flex items-center justify-center">
-                              <div className="text-orange-700 font-bold text-center">
-                                <Wrench className="w-6 h-6 mx-auto mb-1" />
-                                <span className="text-xs">WORKSHOP<br />FRONT</span>
-                              </div>
+                          <div className="absolute inset-0 bg-orange-50/5 flex items-center justify-center">
+                            <div className="text-orange-700 font-bold text-center">
+                              <Wrench className="w-8 h-8 mx-auto mb-2" />
+                              <span className="text-sm">WORKSHOP</span>
                             </div>
                           </div>
-                        ) : workshop.official_website ? (
-                          <div className="w-full h-full relative">
-                            <img 
-                              src={`https://image.thum.io/get/width/400/crop/400/allowJPG/wait/20/noanimate/${workshop.official_website}`}
-                              alt={`${workshop.display_id} website screenshot`}
-                              className="w-full h-full object-cover blur-md opacity-40"
-                            />
-                            <div className="absolute inset-0 bg-orange-100/5 flex items-center justify-center">
-                              <div className="text-orange-700 font-bold text-center">
-                                <Wrench className="w-6 h-6 mx-auto mb-1" />
-                                <span className="text-xs">WORKSHOP<br />FRONT</span>
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="text-orange-600 font-bold text-center">
-                            <Wrench className="w-6 h-6 mx-auto mb-1" />
-                            <span className="text-xs">WORKSHOP<br />FRONT</span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Second Image */}
-                      <div className="w-1/2 aspect-video bg-orange-50 flex items-center justify-center overflow-hidden relative">
-                        {workshop.workshop_front_photo ? (
+                        </div>
+                      ) : workshop.business_card_photo || workshop.workshop_front_photo ? (
+                        <img 
+                          src={workshop.business_card_photo || workshop.workshop_front_photo} 
+                          alt={`${workshop.display_id} workshop`}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : workshop.websitePreviewImage ? (
+                        <div className="w-full h-full relative">
                           <img 
-                            src={workshop.workshop_front_photo} 
-                            alt={`${workshop.display_id} workshop front`}
-                            className="w-full h-full object-cover"
+                            src={workshop.websitePreviewImage} 
+                            alt={`${workshop.display_id} website preview`}
+                            className="w-full h-full object-cover blur-md opacity-60"
                           />
-                        ) : workshop.websitePreviewImage ? (
-                          <div className="w-full h-full relative">
-                            <img 
-                              src={workshop.websitePreviewImage} 
-                              alt={`${workshop.display_id} website preview`}
-                              className="w-full h-full object-cover blur-md opacity-30"
-                            />
-                            <div className="absolute inset-0 bg-orange-50/70 flex items-center justify-center">
-                              <div className="text-orange-700 font-bold text-center">
-                                <Wrench className="w-6 h-6 mx-auto mb-1" />
-                                <span className="text-xs">WORK</span>
-                              </div>
+                          <div className="absolute inset-0 bg-orange-50/5 flex items-center justify-center">
+                            <div className="text-orange-700 font-bold text-center">
+                              <Wrench className="w-8 h-8 mx-auto mb-2" />
+                              <span className="text-sm">WORKSHOP</span>
                             </div>
                           </div>
-                        ) : workshop.official_website ? (
-                          <div className="w-full h-full relative">
-                            <img 
-                              src={`https://image.thum.io/get/width/400/crop/400/allowJPG/wait/20/noanimate/${workshop.official_website}`}
-                              alt={`${workshop.display_id} website screenshot`}
-                              className="w-full h-full object-cover blur-md opacity-30"
-                            />
-                            <div className="absolute inset-0 bg-orange-50/5 flex items-center justify-center">
-                              <div className="text-orange-700 font-bold text-center">
-                                <Wrench className="w-6 h-6 mx-auto mb-1" />
-                                <span className="text-xs">WORK</span>
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="text-orange-600 font-bold text-center">
-                            <Wrench className="w-6 h-6 mx-auto mb-1" />
-                            <span className="text-xs">WORK</span>
-                          </div>
-                        )}
-                      </div>
+                        </div>
+                      ) : (
+                        <div className="text-orange-600 font-bold text-center">
+                          <Wrench className="w-12 h-12 mx-auto mb-2" />
+                          <span className="text-lg">WORKSHOP</span>
+                        </div>
+                      )}
                     </div>
                     
                     {/* Workshop Details */}
@@ -251,9 +204,6 @@ export default function WorkshopPage() {
                           <div className="text-xs font-medium text-orange-600 mb-1">
                             {workshop.display_id}
                           </div>
-                          <h3 className="text-base font-semibold text-gray-900 truncate">
-                            Maritime Workshop
-                          </h3>
                           <p className="text-sm text-gray-600 mt-1">
                             {workshop.home_port}
                           </p>
