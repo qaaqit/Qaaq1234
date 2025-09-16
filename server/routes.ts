@@ -2321,14 +2321,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create new RFQ request with slug generation
-  app.post("/api/rfq", authenticateToken, async (req, res) => {
+  app.post("/api/rfq", async (req, res) => {
     try {
-      const userId = req.userId!;
-      
-      // Validation - check if user is authenticated
-      if (!userId) {
+      // Get user from session instead of JWT token
+      const user = await getUserFromSession(req);
+      if (!user) {
         return res.status(401).json({ message: "Authentication required" });
       }
+      const userId = user.id;
 
       // Parse RFQ data with relaxed input schema (slug fields generated server-side)
       const inputSchema = insertRfqRequestSchema.omit({
@@ -2520,10 +2520,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Submit quote for RFQ
-  app.post("/api/rfq/:id/quote", authenticateToken, async (req, res) => {
+  app.post("/api/rfq/:id/quote", async (req, res) => {
     try {
       const { id } = req.params;
-      const userId = req.userId!;
+      // Get user from session instead of JWT token
+      const user = await getUserFromSession(req);
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const userId = user.id;
       const quoteData = insertRfqQuoteSchema.parse(req.body);
 
       // Check if RFQ exists and is active

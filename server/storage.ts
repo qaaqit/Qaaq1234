@@ -977,12 +977,12 @@ export class DatabaseStorage implements IStorage {
         LEFT JOIN (
           SELECT 
             CASE 
-              WHEN from_user_id < to_user_id THEN from_user_id
-              ELSE to_user_id
+              WHEN sender_id < receiver_id THEN sender_id
+              ELSE receiver_id
             END as user1,
             CASE 
-              WHEN from_user_id < to_user_id THEN to_user_id
-              ELSE from_user_id
+              WHEN sender_id < receiver_id THEN receiver_id
+              ELSE sender_id
             END as user2,
             MAX(created_at) as latest_message_at
           FROM chat_messages 
