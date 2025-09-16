@@ -47,7 +47,7 @@ export class IdentityConsolidationService {
         metadata: {
           consolidatedAt: new Date().toISOString(),
           originalUserData: userData
-        }
+        } as Record<string, any>
       });
 
       // Update user data with any new information
@@ -103,20 +103,30 @@ export class IdentityConsolidationService {
 
   /**
    * Create new user with identity when no matches found
+   * Uses minimal, safe fields that exist in parent database
    */
   private async createNewUserWithIdentity(provider: string, identifier: string, userData: any): Promise<User> {
-    const userToCreate = {
+    console.log(`🔧 CONSOLIDATION: Creating minimal user for ${provider}:${identifier}`);
+    
+    // Only use fields that are guaranteed to exist in parent database
+    const minimalUserData = {
       fullName: userData.name || userData.displayName || userData.email || `User ${identifier.slice(-4)}`,
       email: userData.email || null,
       userType: 'sailor' as const,
-      isVerified: provider === 'replit' || provider === 'google'
+      // Add optional fields that commonly exist
+      ...(userData.phone && { whatsAppNumber: userData.phone }),
+      ...(userData.profileImageUrl && { profileImageUrl: userData.profileImageUrl })
     };
 
-    return await storage.createUserWithIdentity(userToCreate, {
+    return await storage.createUserWithIdentity(minimalUserData, {
       provider,
       providerId: identifier,
-      isVerified: true,
-      metadata: userData
+      isVerified: provider === 'replit' || provider === 'google',
+      metadata: {
+        originalProvider: provider,
+        consolidatedAt: new Date().toISOString(),
+        ...userData
+      }
     });
   }
 

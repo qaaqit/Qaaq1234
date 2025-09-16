@@ -49,7 +49,6 @@ export const userIdentities = pgTable("user_identities", {
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: text("user_id").unique(), // Human-readable user ID (e.g., QAAQ123, CAP456) - Legacy compatibility
-  publicId: text("public_id").unique(), // Stable public identifier for URLs (e.g., 'cap123', 'eng456')
   fullName: text("full_name").notNull(),
   email: text("email").unique(), // Primary email - may be null for WhatsApp-only users
   password: text("password"), // Password for QAAQ login

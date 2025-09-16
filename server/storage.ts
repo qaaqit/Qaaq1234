@@ -2,6 +2,121 @@ import { users, userIdentities, posts, likes, verificationCodes, chatConnections
 import { db, pool } from "./db";
 import { eq, desc, and, ilike, or, sql, isNotNull, not } from "drizzle-orm";
 
+/**
+ * COLUMN GUARD UTILITY
+ * Prevents database column errors by only inserting into columns that actually exist.
+ * Addresses the "100+ QAAQ columns vs minimal parent DB" mismatch.
+ */
+class ColumnGuard {
+  private static columnCache: Map<string, Set<string>> = new Map();
+
+  /**
+   * Get existing columns for a table from database schema
+   */
+  static async getExistingColumns(tableName: string): Promise<Set<string>> {
+    if (this.columnCache.has(tableName)) {
+      return this.columnCache.get(tableName)!;
+    }
+
+    try {
+      const result = await pool.query(`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = $1 
+        AND table_schema = 'public'
+      `, [tableName]);
+
+      const columns = new Set(result.rows.map(row => row.column_name));
+      this.columnCache.set(tableName, columns);
+      
+      console.log(`📋 COLUMN GUARD: Cached ${columns.size} columns for table '${tableName}'`);
+      return columns;
+    } catch (error) {
+      console.error(`🚨 COLUMN GUARD: Failed to get columns for ${tableName}:`, error);
+      return new Set();
+    }
+  }
+
+  /**
+   * Convert camelCase keys to snake_case for database compatibility
+   */
+  static camelToSnake(str: string): string {
+    return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+  }
+
+  /**
+   * Filter object to only include keys whose corresponding database columns exist
+   */
+  static async pickExistingColumns(data: Record<string, any>, tableName: string): Promise<Record<string, any>> {
+    const existingColumns = await this.getExistingColumns(tableName);
+    const filtered: Record<string, any> = {};
+    const skipped: string[] = [];
+
+    for (const [key, value] of Object.entries(data)) {
+      if (value === undefined || value === null) continue;
+
+      // Try exact match first, then snake_case version
+      const snakeKey = this.camelToSnake(key);
+      
+      if (existingColumns.has(key)) {
+        filtered[key] = value;
+      } else if (existingColumns.has(snakeKey)) {
+        filtered[snakeKey] = value;
+      } else {
+        skipped.push(key);
+      }
+    }
+
+    if (skipped.length > 0) {
+      console.log(`🛡️ COLUMN GUARD: Skipped ${skipped.length} non-existent columns: ${skipped.slice(0, 5).join(', ')}${skipped.length > 5 ? '...' : ''}`);
+    }
+
+    console.log(`✅ COLUMN GUARD: Filtered to ${Object.keys(filtered).length} valid columns for ${tableName}`);
+    return filtered;
+  }
+
+  /**
+   * Build SQL INSERT statement with only existing columns
+   */
+  static async buildSafeInsert(data: Record<string, any>, tableName: string): Promise<{ sql: string; values: any[] }> {
+    const safeData = await this.pickExistingColumns(data, tableName);
+    const columns = Object.keys(safeData);
+    const values = Object.values(safeData);
+
+    // Add default columns if they exist and aren't already set
+    const existingColumns = await this.getExistingColumns(tableName);
+    const defaultColumns: string[] = [];
+    const defaultValues: string[] = [];
+    
+    if (existingColumns.has('id') && !safeData.id) {
+      defaultColumns.push('id');
+      defaultValues.push('gen_random_uuid()');
+    }
+    if (existingColumns.has('created_at') && !safeData.created_at) {
+      defaultColumns.push('created_at');
+      defaultValues.push('now()');
+    }
+    if (existingColumns.has('updated_at') && !safeData.updated_at) {
+      defaultColumns.push('updated_at');
+      defaultValues.push('now()');
+    }
+
+    const allColumns = [...columns, ...defaultColumns];
+    const allPlaceholders = [
+      ...columns.map((_, i) => `$${i + 1}`),
+      ...defaultValues
+    ];
+
+    const sql = `
+      INSERT INTO ${tableName} (${allColumns.join(', ')}) 
+      VALUES (${allPlaceholders.join(', ')}) 
+      RETURNING *
+    `;
+
+    return { sql, values };
+  }
+}
+
 export interface IStorage {
   // Unified Identity Management
   findUserByAnyIdentity(identifier: string): Promise<User | undefined>;
@@ -173,19 +288,33 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log(`🆕 Creating user with identity: ${identity.provider}:${identity.providerId}`);
       
-      // Generate user data with defaults
-      const userToCreate = {
-        fullName: userData.fullName || 'Maritime User',
+      // Generate minimal user data that's guaranteed to work
+      const minimalUserData = {
+        full_name: userData.fullName || 'Maritime User',
         email: userData.email || null,
-        userType: userData.userType || 'sailor',
-        primaryAuthProvider: identity.provider,
-        authProviders: [identity.provider],
-        isVerified: identity.isVerified || false,
-        ...userData
-      } as InsertUser;
+        user_type: userData.userType || 'sailor',
+        primary_auth_provider: identity.provider,
+        auth_providers: JSON.stringify([identity.provider]),
+        is_verified: identity.isVerified || false,
+        // Add safe fields that commonly exist
+        ...(userData.whatsAppNumber && { whatsapp_number: userData.whatsAppNumber }),
+        ...(userData.whatsAppDisplayName && { whatsapp_display_name: userData.whatsAppDisplayName }),
+        ...(userData.rank && { rank: userData.rank }),
+        ...(userData.city && { city: userData.city }),
+        ...(userData.country && { country: userData.country })
+      };
       
-      // Create user
-      const [user] = await db.insert(users).values(userToCreate).returning();
+      // Use ColumnGuard to ensure we only insert into existing columns
+      const { sql: insertSql, values } = await ColumnGuard.buildSafeInsert(minimalUserData, 'users');
+      
+      console.log(`🛡️ COLUMN GUARD: Using safe insert with ${values.length} columns`);
+      const userResult = await pool.query(insertSql, values);
+      
+      if (userResult.rows.length === 0) {
+        throw new Error('Failed to create user - no rows returned');
+      }
+      
+      const rawUser = userResult.rows[0];
       
       // Create identity using direct SQL to avoid schema mismatch issues
       await pool.query(`
@@ -193,7 +322,7 @@ export class DatabaseStorage implements IStorage {
           user_id, provider, provider_id, is_primary, is_verified, metadata
         ) VALUES ($1, $2, $3, $4, $5, $6)
       `, [
-        user.id,
+        rawUser.id,
         identity.provider,
         identity.providerId,
         true,
@@ -201,10 +330,10 @@ export class DatabaseStorage implements IStorage {
         JSON.stringify(identity.metadata || {})
       ]);
       
-      console.log(`✅ Created user: ${user.fullName} (${user.id})`);
-      return this.convertDbUserToAppUser(user);
+      console.log(`✅ Created user: ${rawUser.full_name} (${rawUser.id})`);
+      return this.convertDbUserToAppUser(rawUser);
     } catch (error) {
-      console.error('Error creating user with identity:', error);
+      console.error('🚨 Error creating user with identity:', error);
       throw error;
     }
   }

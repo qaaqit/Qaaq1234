@@ -50,9 +50,9 @@ export function normalizePortSlug(location: string): string {
  */
 export async function ensureUserPublicId(userId: string): Promise<string> {
   try {
-    // First check if user already has a publicId
+    // Just verify the user exists and return their existing ID
     const existingUser = await pool.query(
-      'SELECT public_id, maritime_rank, rank, full_name FROM users WHERE id = $1',
+      'SELECT id, maritime_rank, rank, full_name FROM users WHERE id = $1',
       [userId]
     );
 
@@ -60,48 +60,12 @@ export async function ensureUserPublicId(userId: string): Promise<string> {
       throw new Error(`User ${userId} not found`);
     }
 
-    const user = existingUser.rows[0];
-    
-    if (user.public_id) {
-      return user.public_id;
-    }
-
-    // Generate a new publicId based on maritime rank and user ID
-    const rank = user.maritime_rank || user.rank;
-    let prefix = 'user';
-    
-    if (rank) {
-      const rankLower = rank.toLowerCase();
-      if (rankLower.includes('captain') || rankLower.includes('master')) {
-        prefix = 'cap';
-      } else if (rankLower.includes('chief engineer') || rankLower.includes('chief eng')) {
-        prefix = 'ceng';
-      } else if (rankLower.includes('engineer')) {
-        prefix = 'eng';
-      } else if (rankLower.includes('officer')) {
-        prefix = 'off';
-      } else if (rankLower.includes('crew') || rankLower.includes('sailor')) {
-        prefix = 'crew';
-      }
-    }
-
-    // Use last 6 characters of user ID for uniqueness
-    const userIdSuffix = userId.slice(-6);
-    const publicId = `${prefix}${userIdSuffix}`;
-
-    // Update the user with the new publicId
-    await pool.query(
-      'UPDATE users SET public_id = $1 WHERE id = $2',
-      [publicId, userId]
-    );
-
-    console.log(`✅ Generated publicId ${publicId} for user ${userId}`);
-    return publicId;
+    // Return the user's existing ID - no need for separate public_id column
+    return existingUser.rows[0].id;
 
   } catch (error) {
     console.error('Error ensuring user publicId:', error);
-    // Fallback to user ID suffix if generation fails
-    return `user${userId.slice(-6)}`;
+    throw error;
   }
 }
 
