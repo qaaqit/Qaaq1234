@@ -176,6 +176,20 @@ export default function WorkshopPage() {
                               </div>
                             </div>
                           </div>
+                        ) : workshop.official_website ? (
+                          <div className="w-full h-full relative">
+                            <img 
+                              src={`https://image.thum.io/get/width/400/crop/400/allowJPG/wait/20/noanimate/${workshop.official_website}`}
+                              alt={`${workshop.display_id} website screenshot`}
+                              className="w-full h-full object-cover blur-md opacity-40"
+                            />
+                            <div className="absolute inset-0 bg-orange-100/60 flex items-center justify-center">
+                              <div className="text-orange-700 font-bold text-center">
+                                <Wrench className="w-6 h-6 mx-auto mb-1" />
+                                <span className="text-xs">WORKSHOP<br />FRONT</span>
+                              </div>
+                            </div>
+                          </div>
                         ) : (
                           <div className="text-orange-600 font-bold text-center">
                             <Wrench className="w-6 h-6 mx-auto mb-1" />
@@ -197,6 +211,20 @@ export default function WorkshopPage() {
                             <img 
                               src={workshop.websitePreviewImage} 
                               alt={`${workshop.display_id} website preview`}
+                              className="w-full h-full object-cover blur-md opacity-30"
+                            />
+                            <div className="absolute inset-0 bg-orange-50/70 flex items-center justify-center">
+                              <div className="text-orange-700 font-bold text-center">
+                                <Wrench className="w-6 h-6 mx-auto mb-1" />
+                                <span className="text-xs">WORK</span>
+                              </div>
+                            </div>
+                          </div>
+                        ) : workshop.official_website ? (
+                          <div className="w-full h-full relative">
+                            <img 
+                              src={`https://image.thum.io/get/width/400/crop/400/allowJPG/wait/20/noanimate/${workshop.official_website}`}
+                              alt={`${workshop.display_id} website screenshot`}
                               className="w-full h-full object-cover blur-md opacity-30"
                             />
                             <div className="absolute inset-0 bg-orange-50/70 flex items-center justify-center">
