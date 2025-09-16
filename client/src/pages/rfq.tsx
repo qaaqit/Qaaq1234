@@ -1054,9 +1054,9 @@ export default function RFQPage({ user }: RFQPageProps) {
                                 className="border-green-500 hover:bg-green-50 text-green-700"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  const shareText = `🚢 Maritime RFQ: ${rfq.title}\n\n📍 Location: ${rfq.location}\n⏰ Urgency: ${rfq.urgency.toUpperCase()}\n📝 Details: ${rfq.description.substring(0, 100)}${rfq.description.length > 100 ? '...' : ''}\n\n💼 Posted by: ${rfq.postedBy}\n📅 Deadline: ${rfq.deadline ? new Date(rfq.deadline).toLocaleDateString() : 'No deadline'}\n\n#MaritimeRFQ #Shipping #QuoteRequest`;
+                                  const shareText = `${rfq.description}`;
                                   const shareUrl = `${window.location.origin}/api/rfq/${rfq.id}/share`;
-                                  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText + '\n' + shareUrl)}`;
+                                  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText + '\n\n' + shareUrl)}`;
                                   window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
                                 }}
                                 data-testid={`button-whatsapp-share-${rfq.id}`}
