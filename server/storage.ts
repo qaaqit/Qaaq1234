@@ -842,11 +842,21 @@ export class DatabaseStorage implements IStorage {
         FROM chat_connections cc
         LEFT JOIN (
           SELECT 
-            connection_id,
+            CASE 
+              WHEN from_user_id < to_user_id THEN from_user_id
+              ELSE to_user_id
+            END as user1,
+            CASE 
+              WHEN from_user_id < to_user_id THEN to_user_id
+              ELSE from_user_id
+            END as user2,
             MAX(created_at) as latest_message_at
           FROM chat_messages 
-          GROUP BY connection_id
-        ) latest_msg ON cc.id = latest_msg.connection_id
+          GROUP BY user1, user2
+        ) latest_msg ON (
+          (cc.sender_id = latest_msg.user1 AND cc.receiver_id = latest_msg.user2) OR
+          (cc.sender_id = latest_msg.user2 AND cc.receiver_id = latest_msg.user1)
+        )
         WHERE (cc.sender_id = $1 OR cc.receiver_id = $1)
         ORDER BY last_activity DESC
       `, [userId]);
