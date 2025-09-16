@@ -504,15 +504,14 @@ export default function QBOTInputArea({ onSendMessage, disabled = false, onClear
           )}
         </div>
 
-        {/* Archive button - positioned at bottom right with maximum z-index */}
+        {/* Archive button (moved from header) */}
         {onClear && (
           <button
             onClick={onClear}
-            className="fixed bottom-6 right-6 z-[9999] p-3 rounded-full bg-white hover:bg-red-50 transition-colors group shadow-xl border border-gray-300 hover:border-red-300"
+            className="p-3 rounded-lg hover:bg-red-100 transition-colors group flex-shrink-0 min-h-[55px] border border-gray-300"
             aria-label="Clear Chat"
             title="Archive and Clear Chat"
             data-testid="button-archive-chat"
-            style={{ zIndex: 9999 }}
           >
             <Trash2 size={20} className="text-gray-600 group-hover:text-red-500" />
           </button>
