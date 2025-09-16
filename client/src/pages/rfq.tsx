@@ -199,7 +199,7 @@ export default function RFQPage({ user }: RFQPageProps) {
         setIsLoading(true);
         const response = await fetch('/api/rfq?page=1&limit=20', {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
         });
 
@@ -328,7 +328,7 @@ export default function RFQPage({ user }: RFQPageProps) {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
           },
           body: JSON.stringify(requestData)
         });
@@ -356,7 +356,7 @@ export default function RFQPage({ user }: RFQPageProps) {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
           },
           body: JSON.stringify(requestData)
         });
@@ -548,7 +548,7 @@ export default function RFQPage({ user }: RFQPageProps) {
         try {
           const rfqResponse = await fetch('/api/rfq?page=1&limit=20', {
             headers: {
-              'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
           });
           if (rfqResponse.ok) {
