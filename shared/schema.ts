@@ -1315,13 +1315,8 @@ export const insertRfqRequestSchema = createInsertSchema(rfqRequests)
     updatedAt: true, 
     viewCount: true, 
     quoteCount: true, 
-    userId: true,
-    // New slug fields are auto-generated, not provided by user
-    portSlug: true,
-    postedDate: true,
-    userPublicId: true,
-    serial: true,
-    slugVersion: true
+    userId: true
+    // Keep slug fields (portSlug, postedDate, userPublicId, serial, slugVersion) for insertion
   });
 
 export const insertRfqQuoteSchema = createInsertSchema(rfqQuotes)

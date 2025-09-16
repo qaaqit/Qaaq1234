@@ -44,12 +44,20 @@ import { WorkshopMissingImportService } from "./workshop-missing-import";
 import { WorkshopPricingCalculator, PricingCalculationOptions } from "./pricing-calculator";
 import { screenshotService } from "./screenshot-service";
 
+// Import RFQ slug utilities
+import { 
+  generateRfqSlugComponents, 
+  resolveRfqBySlug, 
+  buildSlugUrl, 
+  validateSlugComponents 
+} from "./rfq-slug-utils";
+
 // Import new unified authentication system
 import { sessionBridge, bridgedAuth, requireBridgedAuth } from "./session-bridge";
 import { identityResolver } from "./identity-resolver";
 import { identityConsolidation } from "./identity-consolidation";
 import { unifiedIdentity } from "./unified-identity";
-import { unifiedAuthMiddleware, requireUnifiedAuth, optionalAuth } from "./unified-auth-middleware";
+import { unifiedAuthMiddleware, requireUnifiedAuth, optionalAuth as unifiedOptionalAuth } from "./unified-auth-middleware";
 
 // Import database management services
 import { databaseKeeper } from "./database-keeper";
@@ -2139,6 +2147,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           viewCount: rfqRequests.viewCount,
           quoteCount: rfqRequests.quoteCount,
           createdAt: rfqRequests.createdAt,
+          // Slug fields
+          portSlug: rfqRequests.portSlug,
+          postedDate: rfqRequests.postedDate,
+          userPublicId: rfqRequests.userPublicId,
+          serial: rfqRequests.serial,
+          slugVersion: rfqRequests.slugVersion,
           // User info
           userFullName: users.fullName,
           userRank: users.rank,
@@ -2159,8 +2173,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const total = Number(totalResult[0].count);
 
+      // Add canonical URLs to each RFQ
+      const rfqsWithUrls = rfqs.map(rfq => {
+        let canonicalUrl = null;
+        let slugPath = null;
+
+        // Only add canonical URL if slug fields are populated
+        if (rfq.portSlug && rfq.postedDate && rfq.userPublicId && rfq.serial) {
+          slugPath = buildSlugUrl(rfq.portSlug, rfq.postedDate, rfq.userPublicId, rfq.serial);
+          canonicalUrl = `${req.protocol}://${req.get('host')}${slugPath}`;
+        }
+
+        return {
+          ...rfq,
+          canonicalUrl,
+          slugPath,
+          hasSlug: !!canonicalUrl
+        };
+      });
+
       res.json({
-        rfqs,
+        rfqs: rfqsWithUrls,
         pagination: {
           currentPage: page,
           totalPages: Math.ceil(total / limit),
@@ -2176,12 +2209,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create new RFQ request - SIMPLIFIED VERSION
+  // Get individual RFQ by ID (backward compatibility)
+  app.get("/api/rfq/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      console.log(`🔍 Fetching RFQ by ID: ${id}`);
+
+      // Fetch RFQ with user details and slug fields
+      const rfqResult = await db
+        .select({
+          id: rfqRequests.id,
+          title: rfqRequests.title,
+          description: rfqRequests.description,
+          location: rfqRequests.location,
+          vesselName: rfqRequests.vesselName,
+          vesselType: rfqRequests.vesselType,
+          urgency: rfqRequests.urgency,
+          budget: rfqRequests.budget,
+          deadline: rfqRequests.deadline,
+          contactMethod: rfqRequests.contactMethod,
+          attachments: rfqRequests.attachments,
+          status: rfqRequests.status,
+          viewCount: rfqRequests.viewCount,
+          quoteCount: rfqRequests.quoteCount,
+          createdAt: rfqRequests.createdAt,
+          updatedAt: rfqRequests.updatedAt,
+          // Slug fields
+          portSlug: rfqRequests.portSlug,
+          postedDate: rfqRequests.postedDate,
+          userPublicId: rfqRequests.userPublicId,
+          serial: rfqRequests.serial,
+          slugVersion: rfqRequests.slugVersion,
+          // User info
+          userId: rfqRequests.userId,
+          userFullName: users.fullName,
+          userRank: users.rank
+        })
+        .from(rfqRequests)
+        .innerJoin(users, eq(rfqRequests.userId, users.id))
+        .where(eq(rfqRequests.id, id))
+        .limit(1);
+
+      if (!rfqResult.length) {
+        return res.status(404).json({ 
+          message: "RFQ not found",
+          rfqId: id
+        });
+      }
+
+      const rfq = rfqResult[0];
+
+      // Increment view count
+      await db
+        .update(rfqRequests)
+        .set({ viewCount: sql`${rfqRequests.viewCount} + 1` })
+        .where(eq(rfqRequests.id, id));
+
+      // Add canonical URL if slug fields are available
+      let canonicalUrl = null;
+      let slugPath = null;
+      let hasSlug = false;
+
+      if (rfq.portSlug && rfq.postedDate && rfq.userPublicId && rfq.serial) {
+        slugPath = buildSlugUrl(rfq.portSlug, rfq.postedDate, rfq.userPublicId, rfq.serial);
+        canonicalUrl = `${req.protocol}://${req.get('host')}${slugPath}`;
+        hasSlug = true;
+      }
+
+      console.log(`✅ RFQ fetched successfully: ${id} ${hasSlug ? 'with slug' : '(legacy)'}`);
+
+      res.json({
+        ...rfq,
+        canonicalUrl,
+        slugPath,
+        hasSlug,
+        // Add legacy URL for backward compatibility
+        legacyUrl: `${req.protocol}://${req.get('host')}/rfq?rfq=${id}`
+      });
+
+    } catch (error: unknown) {
+      console.error('RFQ fetch error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ 
+        message: "Failed to fetch RFQ", 
+        error: errorMessage 
+      });
+    }
+  });
+
+  // Create new RFQ request with slug generation
   app.post("/api/rfq", authenticateToken, async (req, res) => {
     try {
       const userId = req.userId!;
       
-      // Simple validation - just check if user is authenticated
+      // Validation - check if user is authenticated
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -2189,26 +2311,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Parse and prepare RFQ data with defaults
       const rfqData = insertRfqRequestSchema.parse(req.body);
       
+      // Validate required location field for slug generation
+      if (!rfqData.location?.trim()) {
+        return res.status(400).json({ 
+          message: "Location is required for RFQ creation" 
+        });
+      }
+
+      const createdAt = new Date();
+      
       // Set defaults for optional fields
-      const finalRfqData = {
+      const baseRfqData = {
         ...rfqData,
         userId,
         title: rfqData.title || rfqData.description.split('\n')[0].substring(0, 100),
         urgency: rfqData.urgency || 'medium',
         status: 'active' as const,
-        deadline: rfqData.deadline ? new Date(rfqData.deadline) : new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // Default 5 days as Date object
-        attachments: rfqData.attachments || []
+        deadline: rfqData.deadline ? new Date(rfqData.deadline) : new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+        attachments: rfqData.attachments || [],
+        createdAt
       };
 
-      // Simple insert - no user profile dependencies
-      const newRfq = await db.insert(rfqRequests).values(finalRfqData).returning();
+      // Use transaction to ensure atomic slug generation and insert
+      const newRfq = await db.transaction(async (tx) => {
+        // Generate slug components
+        const slugComponents = await generateRfqSlugComponents(
+          userId, 
+          rfqData.location, 
+          createdAt
+        );
 
-      console.log('✅ RFQ created successfully:', newRfq[0].id);
-      res.json(newRfq[0]);
+        console.log(`🔗 Generated slug components for RFQ:`, slugComponents);
+
+        // Prepare final data with slug fields
+        const finalRfqData = {
+          ...baseRfqData,
+          portSlug: slugComponents.portSlug,
+          postedDate: slugComponents.postedDate,
+          userPublicId: slugComponents.userPublicId,
+          serial: slugComponents.serial,
+          slugVersion: 1
+        };
+
+        // Insert RFQ with retry logic for serial conflicts
+        const result = await tx.insert(rfqRequests).values(finalRfqData).returning();
+        return result[0];
+      });
+
+      // Build canonical slug URL for response
+      const canonicalUrl = buildSlugUrl(
+        newRfq.portSlug,
+        newRfq.postedDate,
+        newRfq.userPublicId,
+        newRfq.serial,
+        `${req.protocol}://${req.get('host')}`
+      );
+
+      console.log(`✅ RFQ created successfully: ${newRfq.id} with slug: ${canonicalUrl}`);
+      
+      // Return RFQ with canonical URL
+      res.json({
+        ...newRfq,
+        canonicalUrl,
+        slugPath: buildSlugUrl(newRfq.portSlug, newRfq.postedDate, newRfq.userPublicId, newRfq.serial)
+      });
+
     } catch (error: unknown) {
       console.error('RFQ creation error:', error);
+      
+      // Handle specific error types
+      if (error instanceof Error) {
+        if (error.message.includes('duplicate key') || error.message.includes('unique constraint')) {
+          // Serial conflict - should be rare due to transaction handling
+          return res.status(409).json({ 
+            message: "Conflict during RFQ creation, please try again",
+            error: "Serial number conflict"
+          });
+        }
+        
+        if (error.message.includes('validation') || error.message.includes('parse')) {
+          return res.status(400).json({ 
+            message: "Invalid RFQ data", 
+            error: error.message 
+          });
+        }
+      }
+      
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      res.status(400).json({ message: "Failed to create RFQ", error: errorMessage });
+      res.status(500).json({ 
+        message: "Failed to create RFQ", 
+        error: errorMessage 
+      });
     }
   });
 
@@ -2330,6 +2523,146 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Quote submission error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       res.status(400).json({ message: "Failed to submit quote", error: errorMessage });
+    }
+  });
+
+  // SLUG-BASED RFQ RESOLUTION ENDPOINTS
+
+  // Get RFQ by slug components
+  app.get("/api/rfq/by-slug/:port/:date/:userPublicId/:serial", async (req, res) => {
+    try {
+      const { port, date, userPublicId, serial } = req.params;
+      
+      console.log(`🔗 Resolving RFQ by slug: ${port}/${date}/${userPublicId}/${serial}`);
+
+      // Validate slug components
+      const validation = validateSlugComponents(port, date, userPublicId, serial);
+      if (!validation.valid) {
+        return res.status(400).json({
+          message: "Invalid slug format",
+          errors: validation.errors
+        });
+      }
+
+      // Resolve RFQ by slug
+      const rfq = await resolveRfqBySlug(port, date, userPublicId, parseInt(serial));
+      
+      if (!rfq) {
+        return res.status(404).json({ 
+          message: "RFQ not found",
+          slug: `${port}/${date}/${userPublicId}/${serial}`
+        });
+      }
+
+      // Increment view count
+      await db
+        .update(rfqRequests)
+        .set({ viewCount: sql`${rfqRequests.viewCount} + 1` })
+        .where(eq(rfqRequests.id, rfq.id));
+
+      // Build canonical URLs for response
+      const canonicalUrl = buildSlugUrl(port, date, userPublicId, parseInt(serial), 
+        `${req.protocol}://${req.get('host')}`);
+
+      console.log(`✅ RFQ resolved successfully: ${rfq.id} via slug`);
+
+      res.json({
+        ...rfq,
+        canonicalUrl,
+        slugPath: buildSlugUrl(port, date, userPublicId, parseInt(serial)),
+        resolvedViaSlug: true
+      });
+
+    } catch (error: unknown) {
+      console.error('RFQ slug resolution error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ 
+        message: "Failed to resolve RFQ by slug", 
+        error: errorMessage 
+      });
+    }
+  });
+
+  // Resolve RFQ UUID to canonical slug URL (for redirects)
+  app.get("/api/rfq/resolve/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { redirect = 'false' } = req.query;
+
+      console.log(`🔄 Resolving UUID ${id} to canonical slug URL`);
+
+      // Find RFQ by UUID
+      const rfqResult = await db
+        .select({
+          id: rfqRequests.id,
+          portSlug: rfqRequests.portSlug,
+          postedDate: rfqRequests.postedDate,
+          userPublicId: rfqRequests.userPublicId,
+          serial: rfqRequests.serial,
+          title: rfqRequests.title,
+          status: rfqRequests.status
+        })
+        .from(rfqRequests)
+        .where(eq(rfqRequests.id, id))
+        .limit(1);
+
+      if (!rfqResult.length) {
+        return res.status(404).json({ 
+          message: "RFQ not found",
+          rfqId: id
+        });
+      }
+
+      const rfq = rfqResult[0];
+
+      // Check if slug fields are populated (they should be for new RFQs)
+      if (!rfq.portSlug || !rfq.postedDate || !rfq.userPublicId || !rfq.serial) {
+        console.warn(`⚠️ RFQ ${id} missing slug components - may be legacy RFQ`);
+        
+        // For legacy RFQs without slug data, return original UUID-based structure
+        return res.json({
+          id: rfq.id,
+          title: rfq.title,
+          status: rfq.status,
+          legacyRfq: true,
+          canonicalUrl: `${req.protocol}://${req.get('host')}/rfq?rfq=${id}`,
+          message: "Legacy RFQ - slug not available"
+        });
+      }
+
+      // Build canonical slug URL
+      const slugPath = buildSlugUrl(rfq.portSlug, rfq.postedDate, rfq.userPublicId, rfq.serial);
+      const canonicalUrl = `${req.protocol}://${req.get('host')}${slugPath}`;
+
+      console.log(`✅ UUID ${id} resolved to slug: ${slugPath}`);
+
+      // If redirect=true, perform HTTP redirect to canonical URL
+      if (redirect === 'true') {
+        return res.redirect(302, canonicalUrl);
+      }
+
+      // Otherwise return JSON with canonical URL information
+      res.json({
+        id: rfq.id,
+        title: rfq.title,
+        status: rfq.status,
+        canonicalUrl,
+        slugPath,
+        slug: {
+          port: rfq.portSlug,
+          date: rfq.postedDate,
+          userPublicId: rfq.userPublicId,
+          serial: rfq.serial
+        }
+      });
+
+    } catch (error: unknown) {
+      console.error('RFQ UUID resolution error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ 
+        message: "Failed to resolve RFQ by UUID", 
+        error: errorMessage 
+      });
     }
   });
 
@@ -8193,7 +8526,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       }
 
       // Update user's intern status in database
-      const db = await getDb();
+      // Use existing db import instead of getDb()
       const result = await db.update(users)
         .set({ isIntern: true })
         .where(eq(users.id, userId))
@@ -8235,7 +8568,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       }
 
       // Update user's intern status in database
-      const db = await getDb();
+      // Use existing db import instead of getDb()
       const result = await db.update(users)
         .set({ isIntern: false })
         .where(eq(users.id, userId))
