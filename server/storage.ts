@@ -573,7 +573,7 @@ export class DatabaseStorage implements IStorage {
         values.push(profileData.maritimeRank);
       }
       if (profileData.currentLastShip !== undefined) {
-        setClause.push(`current_lastShip = $${paramCount++}`);
+        setClause.push(`current_lastship = $${paramCount++}`);
         values.push(profileData.currentLastShip);
       }
 

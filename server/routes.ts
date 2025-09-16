@@ -11939,7 +11939,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         fullName: req.body.fullName,           // Maps to full_name
         email: req.body.email,                 // Maps to email
         maritimeRank: req.body.rank,           // Maps to maritime_rank
-        currentLastShip: req.body.shipName,    // Maps to current_lastShip
+        currentLastShip: req.body.shipName,    // Maps to current_lastship
         // currentShipIMO: req.body.imoNumber,    // Maps to current_ship_imo - temporarily disabled due to column issue
         city: req.body.city,                   // Maps to city
         country: req.body.country,             // Maps to country
