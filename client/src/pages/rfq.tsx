@@ -18,6 +18,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import UserDropdown from "@/components/user-dropdown";
 import { ObjectUploader } from "@/components/ObjectUploader";
+import { EnhancedFileUpload } from "@/components/EnhancedFileUpload";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { 
   ChevronDown, 
@@ -1167,19 +1168,23 @@ export default function RFQPage({ user }: RFQPageProps) {
                         />
                       </div>
                       
-                      {/* Requirements Field - Always Visible */}
-                      <div>
-                        <Label htmlFor="description">Requirement *</Label>
-                        <Textarea
-                          id="description"
-                          placeholder="What do you need? (First line will be used as title)"
-                          rows={5}
-                          value={formData.description}
-                          onChange={(e) => setFormData(prev => ({...prev, description: e.target.value}))}
-                          className="border-orange-200 focus:border-orange-500"
-                          data-testid="textarea-rfq-description"
-                        />
-                      </div>
+                      {/* Enhanced Requirements Field with File Upload */}
+                      <EnhancedFileUpload
+                        value={formData.description}
+                        onChange={(value) => setFormData(prev => ({...prev, description: value}))}
+                        attachments={attachments}
+                        onAttachmentsChange={setAttachments}
+                        onGetUploadParameters={handleGetUploadParameters}
+                        placeholder="What do you need? (First line will be used as title)
+• Drag and drop files here or use Ctrl+V to paste
+• Supported: Images, videos, PDF, Word, Excel documents"
+                        rows={5}
+                        maxFiles={5}
+                        maxFileSize={52428800}
+                        label="Requirement"
+                        required={true}
+                        className="space-y-3"
+                      />
                       
                       {/* Additional Data Toggle */}
                       <div className="border-t pt-4">
@@ -1253,24 +1258,6 @@ export default function RFQPage({ user }: RFQPageProps) {
                           </div>
                         </div>
                       )}
-                      
-                      {/* Upload Section - Clip Icon Only */}
-                      <div className="flex items-center gap-3">
-                        <ObjectUploader
-                          maxNumberOfFiles={5}
-                          maxFileSize={52428800} // 50MB
-                          onGetUploadParameters={handleGetUploadParameters}
-                          onComplete={handleUploadComplete}
-                          buttonClassName="p-2 border border-orange-300 hover:border-orange-500 bg-orange-50 hover:bg-orange-100 text-orange-700 rounded-lg transition-colors"
-                        >
-                          <Paperclip className="w-5 h-5" />
-                        </ObjectUploader>
-                        {attachments.length > 0 && (
-                          <span className="text-sm text-gray-600">
-                            {attachments.length} file{attachments.length !== 1 ? 's' : ''} uploaded
-                          </span>
-                        )}
-                      </div>
                       
                       <Button 
                         type="submit" 
