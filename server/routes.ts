@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import ws from 'ws';
 import jwt from 'jsonwebtoken';
 import { storage } from "./storage";
-import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, insertChatConnectionSchema, insertChatMessageSchema, insertRankGroupSchema, insertRankGroupMemberSchema, insertRankGroupMessageSchema, insertRankChatMessageSchema, insertEmailVerificationTokenSchema, emailVerificationTokens, rankChatMessages, ipAnalytics, users, insertWorkshopServiceTaskSchema, insertWorkshopPricingSchema, insertWorkshopBookingSchema, updateWorkshopBookingStatusSchema, completeWorkshopBookingSchema } from "@shared/schema";
+import { insertUserSchema, insertPostSchema, verifyCodeSchema, loginSchema, insertChatConnectionSchema, insertChatMessageSchema, insertRankGroupSchema, insertRankGroupMemberSchema, insertRankGroupMessageSchema, insertRankChatMessageSchema, insertEmailVerificationTokenSchema, emailVerificationTokens, rankChatMessages, ipAnalytics, users, insertWorkshopServiceTaskSchema, insertWorkshopPricingSchema, insertWorkshopBookingSchema, updateWorkshopBookingStatusSchema, completeWorkshopBookingSchema, insertRfqRequestSchema, insertRfqQuoteSchema, rfqRequests, rfqQuotes } from "@shared/schema";
 import { emailService } from "./email-service";
 import { randomBytes } from 'crypto';
 import { eq } from 'drizzle-orm';
@@ -2111,6 +2111,186 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Check like error:', error);
       res.status(500).json({ message: "Failed to check like status" });
+    }
+  });
+
+  // RFQ (Request for Quote) API Routes
+  
+  // Get all RFQ requests with pagination
+  app.get("/api/rfq", async (req, res) => {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const offset = (page - 1) * limit;
+
+      const rfqs = await db
+        .select({
+          id: rfqRequests.id,
+          title: rfqRequests.title,
+          description: rfqRequests.description,
+          location: rfqRequests.location,
+          vesselName: rfqRequests.vesselName,
+          vesselType: rfqRequests.vesselType,
+          urgency: rfqRequests.urgency,
+          budget: rfqRequests.budget,
+          deadline: rfqRequests.deadline,
+          attachments: rfqRequests.attachments,
+          status: rfqRequests.status,
+          viewCount: rfqRequests.viewCount,
+          quoteCount: rfqRequests.quoteCount,
+          createdAt: rfqRequests.createdAt,
+          // User info
+          userFullName: users.fullName,
+          userRank: users.rank,
+          userId: users.id
+        })
+        .from(rfqRequests)
+        .innerJoin(users, eq(rfqRequests.userId, users.id))
+        .where(eq(rfqRequests.status, 'active'))
+        .orderBy(rfqRequests.createdAt)
+        .limit(limit)
+        .offset(offset);
+
+      // Get total count for pagination
+      const totalResult = await db
+        .select({ count: sql`count(*)` })
+        .from(rfqRequests)
+        .where(eq(rfqRequests.status, 'active'));
+      
+      const total = Number(totalResult[0].count);
+
+      res.json({
+        rfqs,
+        pagination: {
+          currentPage: page,
+          totalPages: Math.ceil(total / limit),
+          total,
+          hasNext: page * limit < total,
+          hasPrev: page > 1
+        }
+      });
+    } catch (error: unknown) {
+      console.error('RFQ fetch error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ message: "Failed to fetch RFQs", error: errorMessage });
+    }
+  });
+
+  // Create new RFQ request
+  app.post("/api/rfq", authenticateToken, async (req, res) => {
+    try {
+      const rfqData = insertRfqRequestSchema.parse(req.body);
+      const userId = req.userId!;
+
+      // Check if user has senior role for RFQ posting
+      const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+      if (!user.length) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const userRank = user[0].rank?.toLowerCase();
+      const allowedRanks = ['ship manager', 'superintendent', 'captain', 'chief engineer', 'technical manager'];
+      
+      if (!userRank || !allowedRanks.some(rank => userRank.includes(rank))) {
+        return res.status(403).json({ message: "Only senior maritime professionals can post RFQ requests" });
+      }
+
+      const newRfq = await db.insert(rfqRequests).values({
+        ...rfqData,
+        userId
+      }).returning();
+
+      res.json(newRfq[0]);
+    } catch (error: unknown) {
+      console.error('RFQ creation error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(400).json({ message: "Failed to create RFQ", error: errorMessage });
+    }
+  });
+
+  // Update RFQ request (for editing)
+  app.put("/api/rfq/:id", authenticateToken, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.userId!;
+      const updateData = insertRfqRequestSchema.partial().parse(req.body);
+
+      // Check if user owns the RFQ
+      const existingRfq = await db
+        .select()
+        .from(rfqRequests)
+        .where(eq(rfqRequests.id, id))
+        .limit(1);
+
+      if (!existingRfq.length) {
+        return res.status(404).json({ message: "RFQ not found" });
+      }
+
+      if (existingRfq[0].userId !== userId) {
+        return res.status(403).json({ message: "You can only edit your own RFQ requests" });
+      }
+
+      const updatedRfq = await db
+        .update(rfqRequests)
+        .set({ ...updateData, updatedAt: sql`now()` })
+        .where(eq(rfqRequests.id, id))
+        .returning();
+
+      res.json(updatedRfq[0]);
+    } catch (error: unknown) {
+      console.error('RFQ update error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(400).json({ message: "Failed to update RFQ", error: errorMessage });
+    }
+  });
+
+  // Submit quote for RFQ
+  app.post("/api/rfq/:id/quote", authenticateToken, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.userId!;
+      const quoteData = insertRfqQuoteSchema.parse(req.body);
+
+      // Check if RFQ exists and is active
+      const rfq = await db
+        .select()
+        .from(rfqRequests)
+        .where(eq(rfqRequests.id, id))
+        .limit(1);
+
+      if (!rfq.length) {
+        return res.status(404).json({ message: "RFQ not found" });
+      }
+
+      if (rfq[0].status !== 'active') {
+        return res.status(400).json({ message: "Cannot quote on inactive RFQ" });
+      }
+
+      // Check if user is trying to quote their own RFQ
+      if (rfq[0].userId === userId) {
+        return res.status(400).json({ message: "Cannot quote on your own RFQ" });
+      }
+
+      // Create the quote
+      const newQuote = await db.insert(rfqQuotes).values({
+        ...quoteData,
+        rfqId: id,
+        quoterId: userId
+      }).returning();
+
+      // Increment quote count on RFQ
+      await db
+        .update(rfqRequests)
+        .set({ quoteCount: sql`${rfqRequests.quoteCount} + 1` })
+        .where(eq(rfqRequests.id, id));
+
+      // TODO: Send notification to RFQ poster (DM system)
+
+      res.json(newQuote[0]);
+    } catch (error: unknown) {
+      console.error('Quote submission error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(400).json({ message: "Failed to submit quote", error: errorMessage });
     }
   });
 

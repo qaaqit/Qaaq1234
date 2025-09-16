@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, integer, boolean, jsonb, real, uuid, serial } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, integer, boolean, jsonb, real, uuid, serial, decimal } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -159,6 +159,42 @@ export const posts = pgTable("posts", {
   authorName: text("author_name"), // display name based on authorType
   images: jsonb("images").$type<string[]>().default([]),
   likesCount: integer("likes_count").default(0),
+  createdAt: timestamp("created_at").default(sql`now()`),
+});
+
+// RFQ (Request for Quote) table
+export const rfqRequests = pgTable("rfq_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  location: text("location").notNull(),
+  vesselName: text("vessel_name"),
+  vesselType: text("vessel_type"),
+  urgency: text("urgency").notNull().default("medium"), // 'low', 'medium', 'high', 'urgent'
+  budget: text("budget"), // Budget range as text
+  deadline: timestamp("deadline"),
+  contactMethod: text("contact_method").default("dm"), // 'dm', 'email', 'whatsapp'
+  attachments: jsonb("attachments").$type<string[]>().default([]), // File paths
+  status: text("status").notNull().default("active"), // 'active', 'closed', 'fulfilled'
+  viewCount: integer("view_count").default(0),
+  quoteCount: integer("quote_count").default(0),
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`),
+});
+
+// RFQ Quotes table
+export const rfqQuotes = pgTable("rfq_quotes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  rfqId: varchar("rfq_id").notNull().references(() => rfqRequests.id, { onDelete: "cascade" }),
+  quoterId: varchar("quoter_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  currency: text("currency").notNull().default("USD"),
+  readinessDate: text("readiness_date").notNull().default("immediate"), // 'immediate' or 'custom'
+  customDate: timestamp("custom_date"), // Only for custom readiness
+  notes: text("notes"),
+  status: text("status").notNull().default("pending"), // 'pending', 'accepted', 'rejected'
+  isNotified: boolean("is_notified").default(false), // Whether RFQ poster was notified
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 
@@ -1256,6 +1292,19 @@ export const insertDatabaseBackupMetricsSchema = createInsertSchema(databaseBack
 // Types for backup metrics
 export type InsertDatabaseBackupMetrics = z.infer<typeof insertDatabaseBackupMetricsSchema>;
 export type DatabaseBackupMetrics = typeof databaseBackupMetrics.$inferSelect;
+
+// Insert schemas for RFQ
+export const insertRfqRequestSchema = createInsertSchema(rfqRequests)
+  .omit({ id: true, createdAt: true, updatedAt: true, viewCount: true, quoteCount: true });
+
+export const insertRfqQuoteSchema = createInsertSchema(rfqQuotes)
+  .omit({ id: true, createdAt: true, isNotified: true });
+
+// Types for RFQ
+export type InsertRfqRequest = z.infer<typeof insertRfqRequestSchema>;
+export type RfqRequest = typeof rfqRequests.$inferSelect;
+export type InsertRfqQuote = z.infer<typeof insertRfqQuoteSchema>;
+export type RfqQuote = typeof rfqQuotes.$inferSelect;
 
 // Workshop service tasks types
 export type InsertWorkshopServiceTask = z.infer<typeof insertWorkshopServiceTaskSchema>;

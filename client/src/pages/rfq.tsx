@@ -45,16 +45,23 @@ interface RFQPageProps {
 interface RFQRequest {
   id: string;
   title: string;
-  category: string;
   description: string;
   vesselName: string;
+  vesselType?: string;
   location: string;
-  urgency: 'normal' | 'urgent' | 'critical';
+  urgency: 'low' | 'medium' | 'high' | 'urgent';
+  budget?: string;
   deadline: string;
-  postedBy: string;
-  postedAt: Date;
-  status: 'active' | 'filled' | 'expired';
+  contactMethod: string;
   attachments?: string[];
+  status: 'active' | 'closed' | 'fulfilled';
+  viewCount: number;
+  quoteCount: number;
+  createdAt: string;
+  // User info from join
+  userFullName: string;
+  userRank: string;
+  userId: string;
 }
 
 export default function RFQPage({ user }: RFQPageProps) {
@@ -185,56 +192,95 @@ export default function RFQPage({ user }: RFQPageProps) {
     return `${prefix} ${formattedWords.join(' ')}`;
   };
 
-  // Mock data for demonstration
+  // Fetch RFQ requests from API
   useEffect(() => {
-    const mockRFQs: RFQRequest[] = [
-      {
-        id: "1",
-        title: "Main Engine Spare Parts Required",
-        category: "parts",
-        description: "Looking for MAN B&W 6S60MC main engine spare parts including fuel pump components and cylinder head gaskets. Urgent requirement due to upcoming dry dock.",
-        vesselName: "M.V. Atlantic Voyager",
-        location: "Singapore",
-        urgency: "urgent",
-        deadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        postedBy: "Chief Engineer J.S.",
-        postedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-        status: "active",
-        attachments: ["https://via.placeholder.com/300x200/f97316/ffffff?text=Engine+Part+1", "https://via.placeholder.com/300x200/f97316/ffffff?text=Engine+Part+2"]
-      },
-      {
-        id: "2", 
-        title: "Propeller Shaft Alignment Service",
-        category: "service",
-        description: "Need certified technicians for propeller shaft alignment and stern tube bearing inspection during port call.",
-        vesselName: "M.V. Ocean Pioneer",
-        location: "Rotterdam",
-        urgency: "normal",
-        deadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        postedBy: "Captain M.R.",
-        postedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-        status: "active",
-        attachments: []
-      },
-      {
-        id: "3",
-        title: "Emergency Generator Repair",
-        category: "emergency",
-        description: "Emergency generator failure, need immediate repair service. Vessel currently anchored awaiting assistance.",
-        vesselName: "M.V. Baltic Star",
-        location: "Hamburg",
-        urgency: "critical",
-        deadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        postedBy: "Chief Engineer A.H.",
-        postedAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
-        status: "active",
-        attachments: ["https://via.placeholder.com/400x300/dc2626/ffffff?text=Generator+Damage+Video"]
+    const fetchRFQs = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch('/api/rfq?page=1&limit=20', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setRfqRequests(data.rfqs || []);
+        } else {
+          console.error('Failed to fetch RFQ requests:', response.status);
+          // Show mock data as fallback for now
+          const mockRFQs: RFQRequest[] = [
+            {
+              id: "sample-1",
+              title: "Main Engine Spare Parts Required",
+              description: "Looking for MAN B&W 6S60MC main engine spare parts including fuel pump components and cylinder head gaskets. Urgent requirement due to upcoming dry dock.",
+              vesselName: "M.V. Atlantic Voyager",
+              location: "Singapore",
+              urgency: "high",
+              deadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+              contactMethod: "dm",
+              status: "active",
+              viewCount: 15,
+              quoteCount: 3,
+              createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+              userFullName: "John Smith",
+              userRank: "Chief Engineer",
+              userId: "sample-user-1",
+              attachments: []
+            },
+            {
+              id: "sample-2", 
+              title: "Propeller Shaft Alignment Service",
+              description: "Need certified technicians for propeller shaft alignment and stern tube bearing inspection during port call.",
+              vesselName: "M.V. Ocean Pioneer",
+              location: "Rotterdam",
+              urgency: "medium",
+              deadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+              contactMethod: "dm",
+              status: "active",
+              viewCount: 8,
+              quoteCount: 1,
+              createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+              userFullName: "Mark Roberts",
+              userRank: "Captain",
+              userId: "sample-user-2",
+              attachments: []
+            },
+            {
+              id: "sample-3",
+              title: "Emergency Generator Repair",
+              description: "Emergency generator failure, need immediate repair service. Vessel currently anchored awaiting assistance.",
+              vesselName: "M.V. Baltic Star",
+              location: "Hamburg",
+              urgency: "urgent",
+              deadline: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
+              contactMethod: "dm",
+              status: "active",
+              viewCount: 25,
+              quoteCount: 7,
+              createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+              userFullName: "Alex Hansen",
+              userRank: "Chief Engineer",
+              userId: "sample-user-3",
+              attachments: []
+            }
+          ];
+          setRfqRequests(mockRFQs);
+        }
+      } catch (error) {
+        console.error('Error fetching RFQ requests:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load RFQ requests",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
       }
-    ];
-    
-    setRfqRequests(mockRFQs);
-    setIsLoading(false);
-  }, []);
+    };
+
+    fetchRFQs();
+  }, [toast]);
 
   const handleSubmitRFQ = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -262,53 +308,72 @@ export default function RFQPage({ user }: RFQPageProps) {
     const titleFromDescription = formData.description.split('\n')[0].trim() || formData.description.substring(0, 50).trim();
 
     try {
+      // Prepare API request data
+      const requestData = {
+        title: titleFromDescription,
+        description: formData.description,
+        vesselName: formData.vesselName || '',
+        vesselType: formData.vesselName ? "General Cargo" : undefined,
+        location: formData.location,
+        urgency: formData.urgency as 'low' | 'medium' | 'high' | 'urgent',
+        budget: undefined, // Not captured in form yet
+        deadline: formData.deadline ? new Date(formData.deadline).toISOString() : undefined,
+        contactMethod: "dm",
+        attachments: attachments || []
+      };
+
       if (editingRFQ) {
-        // Update existing RFQ
-        const updatedRFQ: RFQRequest = {
-          ...editingRFQ,
-          title: titleFromDescription,
-          category: formData.category,
-          description: formData.description,
-          vesselName: formData.vesselName,
-          location: formData.location,
-          urgency: formData.urgency as 'normal' | 'urgent' | 'critical',
-          deadline: formData.deadline || new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          attachments: attachments,
-        };
-
-        setRfqRequests(prev => prev.map(rfq => rfq.id === editingRFQ.id ? updatedRFQ : rfq));
-        
-        // Reset editing state
-        setEditingRFQ(null);
-        setActiveTab('feed');
-        
-        toast({
-          title: "RFQ Updated Successfully",
-          description: "Your RFQ request has been updated."
+        // Update existing RFQ via API
+        const response = await fetch(`/api/rfq/${editingRFQ.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          },
+          body: JSON.stringify(requestData)
         });
+
+        if (response.ok) {
+          const updatedRFQ = await response.json();
+          // Update local state with API response
+          setRfqRequests(prev => prev.map(rfq => rfq.id === editingRFQ.id ? updatedRFQ : rfq));
+          
+          // Reset editing state
+          setEditingRFQ(null);
+          setActiveTab('feed');
+          
+          toast({
+            title: "RFQ Updated Successfully",
+            description: "Your RFQ request has been updated in the database."
+          });
+        } else {
+          const errorData = await response.json().catch(() => ({ message: 'Update failed' }));
+          throw new Error(errorData.message || 'Failed to update RFQ');
+        }
       } else {
-        // Create new RFQ
-        const newRFQ: RFQRequest = {
-          id: Date.now().toString(),
-          title: titleFromDescription,
-          category: formData.category,
-          description: formData.description,
-          vesselName: formData.vesselName,
-          location: formData.location,
-          urgency: formData.urgency as 'normal' | 'urgent' | 'critical',
-          deadline: formData.deadline || new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          postedBy: `${user.maritimeRank} ${getInitials(user.fullName || '')}`,
-          postedAt: new Date(),
-          status: "active",
-          attachments: attachments
-        };
-
-        setRfqRequests(prev => [newRFQ, ...prev]);
-        
-        toast({
-          title: "RFQ Posted Successfully",
-          description: "Your request has been posted to the maritime community."
+        // Create new RFQ via API
+        const response = await fetch('/api/rfq', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          },
+          body: JSON.stringify(requestData)
         });
+
+        if (response.ok) {
+          const newRFQ = await response.json();
+          // Add new RFQ to local state from API response
+          setRfqRequests(prev => [newRFQ, ...prev]);
+          
+          toast({
+            title: "RFQ Posted Successfully",
+            description: "Your RFQ has been saved to the database and is now visible to maritime suppliers."
+          });
+        } else {
+          const errorData = await response.json().catch(() => ({ message: 'Creation failed' }));
+          throw new Error(errorData.message || 'Failed to create RFQ');
+        }
       }
       
       // Reset form
@@ -450,45 +515,58 @@ export default function RFQPage({ user }: RFQPageProps) {
     }
 
     try {
-      const quote = {
-        rfqId: selectedRFQ.id,
-        supplierId: user.id,
-        supplierName: `${user.maritimeRank} ${getInitials(user.fullName || '')}`,
+      const quoteData = {
         price: parseFloat(quoteForm.price),
         currency: quoteForm.currency,
-        readinessDate: quoteForm.readinessDate === 'immediate' ? 'Immediate' : quoteForm.customDate,
-        notes: quoteForm.notes,
-        submittedAt: new Date().toISOString()
+        readinessDate: quoteForm.readinessDate,
+        customDate: quoteForm.readinessDate === 'custom' ? quoteForm.customDate : null,
+        notes: quoteForm.notes || null
       };
 
-      // Mock API call - in production, this would save to database
-      console.log('Quote submitted:', quote);
-
-      // Send DM to RFQ poster (mock implementation)
-      const dmMessage = `💰 New Quote Received!
-
-RFQ: ${selectedRFQ.title}
-Supplier: ${quote.supplierName}
-Price: $${quoteForm.price} ${quoteForm.currency}
-Readiness: ${quote.readinessDate}
-${quoteForm.notes ? `\nNotes: ${quoteForm.notes}` : ''}
-
-View full quote details in your dashboard.`;
-      
-      // Mock DM functionality - in production, integrate with messaging system
-      console.log('DM sent to RFQ poster:', dmMessage);
-
-      toast({
-        title: "Quote Submitted Successfully!",
-        description: `Your quote of $${quoteForm.price} USD has been sent to the requester.`
+      // Submit quote via API
+      const response = await fetch(`/api/rfq/${selectedRFQ.id}/quote`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        },
+        body: JSON.stringify(quoteData)
       });
 
-      closeQuoteModal();
+      if (response.ok) {
+        const submittedQuote = await response.json();
+        console.log('Quote submitted successfully:', submittedQuote);
+
+        toast({
+          title: "Quote Submitted Successfully!",
+          description: `Your quote of ${quoteData.currency} ${quoteForm.price} has been sent to the requester via DM.`
+        });
+
+        closeQuoteModal();
+
+        // Refresh RFQ list to update quote counts
+        try {
+          const rfqResponse = await fetch('/api/rfq?page=1&limit=20', {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+            }
+          });
+          if (rfqResponse.ok) {
+            const rfqData = await rfqResponse.json();
+            setRfqRequests(rfqData.rfqs || []);
+          }
+        } catch (refreshError) {
+          console.log('Could not refresh RFQ list:', refreshError);
+        }
+      } else {
+        const errorData = await response.json().catch(() => ({ message: 'Quote submission failed' }));
+        throw new Error(errorData.message || 'Failed to submit quote');
+      }
     } catch (error) {
       console.error('Error submitting quote:', error);
       toast({
         title: "Submission Failed",
-        description: "Failed to submit quote. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to submit quote. Please try again.",
         variant: "destructive"
       });
     }
