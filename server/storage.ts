@@ -445,13 +445,9 @@ export class DatabaseStorage implements IStorage {
 
   async getUserByGoogleId(googleId: string): Promise<User | undefined> {
     try {
-      const result = await pool.query('SELECT * FROM users WHERE google_id = $1 LIMIT 1', [googleId]);
-      if (result.rows.length === 0) {
-        return undefined;
-      }
-      
-      const user = result.rows[0];
-      return this.convertDbUserToAppUser(user);
+      // Use identity resolver system instead of direct google_id column lookup
+      console.log('🔍 getUserByGoogleId: Using identity system for:', googleId);
+      return await this.getUserByProviderId('google', googleId);
     } catch (error) {
       console.error('Error getting user by Google ID:', error);
       return undefined;
@@ -614,11 +610,16 @@ export class DatabaseStorage implements IStorage {
 
   async updateUser(userId: string, updates: Partial<User>): Promise<User | undefined> {
     try {
+      // Use ColumnGuard to filter updates to only existing columns
+      const safeUpdates = await ColumnGuard.pickExistingColumns(updates as any, 'users');
+      
+      console.log(`🛡️ COLUMN GUARD: Filtered ${Object.keys(updates).length} updates to ${Object.keys(safeUpdates).length} safe columns`);
+      
       const [user] = await db
         .update(users)
         .set({
-          ...updates,
-          lastUpdated: new Date(),
+          ...safeUpdates,
+          updatedAt: new Date(),
         })
         .where(eq(users.id, userId))
         .returning();
@@ -715,7 +716,9 @@ export class DatabaseStorage implements IStorage {
         values.push(profileData.country);
       }
       if (profileData.countryCode !== undefined) {
-        setClause.push(`country_code = $${paramCount++}`);
+        // Map countryCode to existing country column
+        console.log('🗺️ Mapping countryCode to country column:', profileData.countryCode);
+        setClause.push(`country = $${paramCount++}`);
         values.push(profileData.countryCode);
       }
       if (profileData.whatsAppNumber !== undefined) {
@@ -885,11 +888,11 @@ export class DatabaseStorage implements IStorage {
       dateOfBirth: dbUser.date_of_birth,
       gender: dbUser.gender,
       whatsAppNumber: dbUser.whatsapp_number || '',
-      countryCode: dbUser.country_code || '',
+      countryCode: dbUser.country || '',
       currentLastShip: dbUser.current_lastShip || '',
       whatsAppProfilePictureUrl: dbUser.whatsapp_profile_picture_url,
       whatsAppDisplayName: dbUser.whatsapp_display_name,
-      googleId: dbUser.google_id,
+      googleId: dbUser.id, // Use primary ID as fallback
       googleEmail: dbUser.google_email,
       googleProfilePictureUrl: dbUser.google_profile_picture_url,
       googleDisplayName: dbUser.google_display_name,
