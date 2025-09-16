@@ -2196,7 +2196,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         title: rfqData.title || rfqData.description.split('\n')[0].substring(0, 100),
         urgency: rfqData.urgency || 'medium',
         status: 'active' as const,
-        deadline: rfqData.deadline || new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), // Default 5 days
+        deadline: rfqData.deadline ? new Date(rfqData.deadline) : new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // Default 5 days as Date object
         attachments: rfqData.attachments || []
       };
 
