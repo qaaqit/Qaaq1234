@@ -155,7 +155,8 @@ export default function RFQPage({ user }: RFQPageProps) {
     'Fleet Manager', 'Marine Superintendent', 'Technical Superintendent'
   ];
 
-  const canPostRFQ = user?.isAdmin || seniorRoles.includes(user?.maritimeRank || '');
+  // Temporarily allow all authenticated users to post RFQs for testing
+  const canPostRFQ = !!user; // user?.isAdmin || seniorRoles.includes(user?.maritimeRank || '');
 
   // Check if current user can edit an RFQ
   const canEditRFQ = (rfq: RFQRequest) => {
