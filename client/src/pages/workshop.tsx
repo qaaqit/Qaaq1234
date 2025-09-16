@@ -159,7 +159,7 @@ export default function WorkshopPage() {
                           <img 
                             src={`https://image.thum.io/get/width/800/crop/450/allowJPG/wait/20/noanimate/${workshop.official_website}`}
                             alt={`${workshop.display_id} website screenshot`}
-                            className="w-full h-full object-cover blur-md opacity-60"
+                            className="w-full h-full object-cover blur-md opacity-2"
                           />
                           <div className="absolute inset-0 bg-orange-50/5 flex items-center justify-center">
                             <div className="text-orange-700 font-bold text-center">
@@ -173,7 +173,7 @@ export default function WorkshopPage() {
                           <img 
                             src={workshop.business_card_photo || workshop.workshop_front_photo} 
                             alt={`${workshop.display_id} workshop`}
-                            className="w-full h-full object-cover blur-md opacity-60"
+                            className="w-full h-full object-cover blur-md opacity-2"
                           />
                           <div className="absolute inset-0 bg-orange-50/5 flex items-center justify-center">
                             <div className="text-orange-700 font-bold text-center">
@@ -187,7 +187,7 @@ export default function WorkshopPage() {
                           <img 
                             src={workshop.websitePreviewImage} 
                             alt={`${workshop.display_id} website preview`}
-                            className="w-full h-full object-cover blur-md opacity-60"
+                            className="w-full h-full object-cover blur-md opacity-2"
                           />
                           <div className="absolute inset-0 bg-orange-50/5 flex items-center justify-center">
                             <div className="text-orange-700 font-bold text-center">
