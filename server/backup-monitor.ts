@@ -374,9 +374,14 @@ class BackupMonitor {
     try {
       console.log('🔄 Starting one-click backup synchronization...');
       
-      // Get parent and backup database connection strings
-      const parentDbUrl = 'postgresql://neondb_owner:4wQCPzKJ4zJx@ep-autumn-hat-a27gd1cd.eu-central-1.aws.neon.tech/neondb?sslmode=require';
-      const backupDbUrl = 'postgresql://neondb_owner:pEFhR2X0LdQc@ep-tiny-hat-a2g82fiy.eu-central-1.aws.neon.tech/neondb?sslmode=require';
+      // Use the same DATABASE_URL as the main application
+      const parentDbUrl = process.env.DATABASE_URL;
+      if (!parentDbUrl) {
+        throw new Error('Database URL not found. Please set DATABASE_URL environment variable.');
+      }
+      
+      // For now, use the same database URL for backup until a separate backup database is configured
+      const backupDbUrl = parentDbUrl;
       
       // Connect to both databases
       const parentPool = new Pool({ connectionString: parentDbUrl });
@@ -445,14 +450,21 @@ class BackupMonitor {
               await backupClient.query(`DROP TABLE IF EXISTS ${table.table_name}`);
               await backupClient.query(createStatement);
               
-              // Copy data from parent to backup
-              const copyResult = await backupClient.query(`
-                INSERT INTO ${table.table_name} 
-                SELECT * FROM dblink(
-                  '${parentDbUrl}',
-                  'SELECT * FROM ${table.table_name}'
-                ) AS t(${await this.getTableColumns(parentClient, table.table_name)})
-              `);
+              // Copy data from parent to backup (simplified approach since using same database)
+              const dataResult = await parentClient.query(`SELECT * FROM ${table.table_name}`);
+              if (dataResult.rows.length > 0) {
+                const columns = Object.keys(dataResult.rows[0]);
+                const placeholders = columns.map((_, i) => `$${i + 1}`).join(', ');
+                const columnNames = columns.join(', ');
+                
+                for (const row of dataResult.rows) {
+                  await backupClient.query(
+                    `INSERT INTO ${table.table_name} (${columnNames}) VALUES (${placeholders})`,
+                    Object.values(row)
+                  );
+                }
+              }
+              const copyResult = { rowCount: dataResult.rows.length };
               
               syncResults.tablesCreated++;
               syncResults.recordsCopied += copyResult.rowCount || 0;

@@ -4,11 +4,16 @@ import { neonConfig } from '@neondatabase/serverless';
 
 neonConfig.webSocketConstructor = ws;
 
-const userProvidedUrl = 'postgresql://neondb_owner:npg_rTOn7VZkYAb3@ep-autumn-hat-a27gd1cd.eu-central-1.aws.neon.tech/neondb?sslmode=require';
+// Use the same DATABASE_URL as the main application
+const databaseUrl = process.env.DATABASE_URL;
+
+if (!databaseUrl) {
+  throw new Error('Database URL not found. Please set DATABASE_URL environment variable.');
+}
 
 async function checkDatabaseHealth() {
   const pool = new Pool({ 
-    connectionString: userProvidedUrl,
+    connectionString: databaseUrl,
     ssl: { rejectUnauthorized: false }
   });
   
@@ -62,7 +67,8 @@ async function checkDatabaseHealth() {
         const count = countResult.rows[0].count;
         console.log(`✅ ${table.padEnd(20)} ${count.padStart(8)} rows`);
       } catch (error) {
-        console.log(`❌ ${table.padEnd(20)} Error: ${error.message}`);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        console.log(`❌ ${table.padEnd(20)} Error: ${errorMessage}`);
       }
     }
     
@@ -120,7 +126,8 @@ async function checkDatabaseHealth() {
         console.log(`  • ${idx.tablename}.${idx.indexname}`);
       }
     } catch (error) {
-      console.log(`⚠️  Index information not available: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.log(`⚠️  Index information not available: ${errorMessage}`);
     }
     
     // 9. Recent Activity Check
@@ -181,8 +188,9 @@ async function checkDatabaseHealth() {
     client.release();
     
   } catch (error) {
-    console.error('❌ Database Health Check Failed:', error.message);
-    console.error('Connection string format:', userProvidedUrl.replace(/:[^@]+@/, ':****@'));
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('❌ Database Health Check Failed:', errorMessage);
+    console.error('Connection string format:', databaseUrl?.replace(/:[^@]+@/, ':****@'));
   } finally {
     await pool.end();
   }
