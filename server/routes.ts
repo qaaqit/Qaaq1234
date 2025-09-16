@@ -2176,30 +2176,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create new RFQ request
+  // Create new RFQ request - SIMPLIFIED VERSION
   app.post("/api/rfq", authenticateToken, async (req, res) => {
     try {
-      const rfqData = insertRfqRequestSchema.parse(req.body);
       const userId = req.userId!;
-
-      // Check if user has senior role for RFQ posting
-      const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
-      if (!user.length) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      const userRank = user[0].rank?.toLowerCase();
-      const allowedRanks = ['ship manager', 'superintendent', 'captain', 'chief engineer', 'technical manager'];
       
-      if (!userRank || !allowedRanks.some(rank => userRank.includes(rank))) {
-        return res.status(403).json({ message: "Only senior maritime professionals can post RFQ requests" });
+      // Simple validation - just check if user is authenticated
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
       }
 
-      const newRfq = await db.insert(rfqRequests).values({
+      // Parse and prepare RFQ data with defaults
+      const rfqData = insertRfqRequestSchema.parse(req.body);
+      
+      // Set defaults for optional fields
+      const finalRfqData = {
         ...rfqData,
-        userId
-      }).returning();
+        userId,
+        title: rfqData.title || rfqData.description.split('\n')[0].substring(0, 100),
+        urgency: rfqData.urgency || 'medium',
+        status: 'active' as const,
+        deadline: rfqData.deadline || new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), // Default 5 days
+        attachments: rfqData.attachments || []
+      };
 
+      // Simple insert - no user profile dependencies
+      const newRfq = await db.insert(rfqRequests).values(finalRfqData).returning();
+
+      console.log('✅ RFQ created successfully:', newRfq[0].id);
       res.json(newRfq[0]);
     } catch (error: unknown) {
       console.error('RFQ creation error:', error);
