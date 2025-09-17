@@ -195,6 +195,8 @@ export const rfqRequests = pgTable("rfq_requests", {
   }>(),
   
   // New slug-based URL fields
+  port: text("port"), // Normalized port name (e.g., 'singapore', 'mumbai')
+  serialNumber: integer("serial_number"), // Sequential number per port
   portSlug: text("port_slug").notNull(), // Normalized location slug (e.g., 'singapore', 'mumbai')
   postedDate: date("posted_date").notNull(), // UTC date from createdAt (e.g., '2025-01-15')
   userPublicId: text("user_public_id").notNull(), // Stable public user identifier

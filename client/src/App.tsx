@@ -141,9 +141,10 @@ function Router() {
           <Route path="/questions/:id" component={() => <QuestionPage />} />
           <Route path="/rank-groups" component={() => <RankGroupsPage />} />
           <Route path="/rfq" component={() => <RFQPage user={currentUser} />} />
-          {/* Individual RFQ routes - slug-based (preferred) and UUID-based (legacy) */}
-          <Route path="/rfq/:port/:date/:userPublicId/:serial" component={() => <RFQDetailPage user={currentUser} />} />
-          <Route path="/rfq/:id" component={() => <RFQDetailPage user={currentUser} />} />
+          {/* RFQ Detail Page - supports multiple URL formats */}
+          <Route path="/rfq/:port/:serial" component={() => <RFQDetailPage user={currentUser} />} /> {/* New simple format */}
+          <Route path="/rfq/:port/:date/:userPublicId/:serial" component={() => <RFQDetailPage user={currentUser} />} /> {/* Legacy 4-part format */}
+          <Route path="/rfq/:id" component={() => <RFQDetailPage user={currentUser} />} /> {/* UUID format */}
           <Route path="/admin" component={() => <Admin />} />
           <Route path="/admin/bot-rules" component={() => <BotRulesAdmin />} />
           <Route path="/admin/token-limits" component={() => <TokenLimitsAdmin />} />

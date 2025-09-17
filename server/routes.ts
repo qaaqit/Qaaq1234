@@ -2350,8 +2350,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const createdAt = new Date();
       
-      // Set defaults for optional fields
-      // Generate slug components server-side
+      // Normalize port name from location
+      const normalizedPort = rfqData.location
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9 -]/g, '')
+        .replace(/\s+/g, '-');
+      
+      // Calculate next serial number for this port
+      const serialResult = await pool.query(`
+        SELECT COALESCE(MAX(serial_number), 0) + 1 as next_serial
+        FROM rfq_requests
+        WHERE port = $1
+      `, [normalizedPort]);
+      const nextSerial = parseInt(serialResult.rows[0]?.next_serial) || 1;
+      
+      // Generate legacy slug components for backward compatibility
       const slugComponents = await generateRfqSlugComponents(
         userId,
         rfqData.location,
@@ -2367,7 +2381,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         deadline: rfqData.deadline ? new Date(rfqData.deadline) : new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
         attachments: rfqData.attachments || [],
         createdAt,
-        // Add generated slug components
+        // Add new serial numbering fields
+        port: normalizedPort,
+        serialNumber: nextSerial,
+        // Add legacy slug components for backward compatibility
         portSlug: slugComponents.portSlug,
         postedDate: slugComponents.postedDate,
         userPublicId: slugComponents.userPublicId,
@@ -2385,13 +2402,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         console.log(`🔗 Generated slug components for RFQ:`, slugComponents);
 
-        // Prepare final data with slug fields
+        // Prepare final data with all fields
         const finalRfqData = {
           ...baseRfqData,
-          portSlug: slugComponents.portSlug,
-          postedDate: slugComponents.postedDate,
-          userPublicId: slugComponents.userPublicId,
-          serial: slugComponents.serial,
           slugVersion: 1
         };
 
@@ -2400,22 +2413,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return result[0];
       });
 
-      // Build canonical slug URL for response
-      const canonicalUrl = buildSlugUrl(
-        newRfq.portSlug,
-        newRfq.postedDate,
-        newRfq.userPublicId,
-        newRfq.serial,
-        `${req.protocol}://${req.get('host')}`
-      );
+      // Build canonical URL using simple port/serial format
+      const canonicalUrl = `${req.protocol}://${req.get('host')}/rfq/${newRfq.port}/${newRfq.serialNumber}`;
 
-      console.log(`✅ RFQ created successfully: ${newRfq.id} with slug: ${canonicalUrl}`);
+      console.log(`✅ RFQ created successfully: ${newRfq.id} with URL: ${canonicalUrl}`);
       
       // Return RFQ with canonical URL
       res.json({
         ...newRfq,
         canonicalUrl,
-        slugPath: buildSlugUrl(newRfq.portSlug, newRfq.postedDate, newRfq.userPublicId, newRfq.serial)
+        slugPath: `/rfq/${newRfq.port}/${newRfq.serialNumber}`
       });
 
     } catch (error: unknown) {
@@ -2583,7 +2590,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // SLUG-BASED RFQ RESOLUTION ENDPOINTS
 
-  // Get RFQ by slug components
+  // Get RFQ by simple port and serial number
+  app.get("/api/rfq/:port([a-z-]+)/:serial(\\d+)", async (req, res) => {
+    try {
+      const { port, serial } = req.params;
+      
+      console.log(`🔗 Fetching RFQ: ${port}/${serial}`);
+
+      // Import the new function from rfq-slug-utils
+      const { resolveRfqByPortSerial } = await import("./rfq-slug-utils");
+
+      // Resolve RFQ by port and serial
+      const rfq = await resolveRfqByPortSerial(port, parseInt(serial));
+      
+      if (!rfq) {
+        return res.status(404).json({ 
+          message: "RFQ not found",
+          slug: `${port}/${serial}`
+        });
+      }
+
+      // Increment view count
+      await db
+        .update(rfqRequests)
+        .set({ viewCount: sql`${rfqRequests.viewCount} + 1` })
+        .where(eq(rfqRequests.id, rfq.id));
+
+      console.log(`✅ RFQ fetched successfully: ${rfq.id} via port/serial`);
+
+      res.json({
+        ...rfq,
+        port: rfq.port_slug,
+        serialNumber: rfq.serial,
+        resolvedViaSlug: true
+      });
+
+    } catch (error: unknown) {
+      console.error('RFQ port/serial fetch error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ 
+        message: "Failed to fetch RFQ", 
+        error: errorMessage 
+      });
+    }
+  });
+
+  // Get RFQ by legacy slug components (for backward compatibility)
   app.get("/api/rfq/by-slug/:port/:date/:userPublicId/:serial", async (req, res) => {
     try {
       const { port, date, userPublicId, serial } = req.params;

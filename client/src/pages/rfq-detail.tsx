@@ -160,9 +160,10 @@ export default function RFQDetailPage({ user }: RFQDetailPageProps) {
     return `${prefix} ${formattedWords.join(' ')}`;
   };
 
-  // Determine if this is a slug-based or UUID-based URL
-  const isSlugUrl = params.port && params.date && params.userPublicId && params.serial;
-  const isUuidUrl = params.id && !isSlugUrl;
+  // Determine URL format: simple (port/serial), legacy slug (4 parts), or UUID
+  const isSimpleSlugUrl = params.port && params.serial && !params.date && !params.userPublicId;
+  const isLegacySlugUrl = params.port && params.date && params.userPublicId && params.serial;
+  const isUuidUrl = params.id && !isSimpleSlugUrl && !isLegacySlugUrl;
 
   // Fetch RFQ data based on URL format
   useEffect(() => {
@@ -174,8 +175,11 @@ export default function RFQDetailPage({ user }: RFQDetailPageProps) {
         let response;
         let apiUrl;
 
-        if (isSlugUrl) {
-          // Fetch via slug endpoint
+        if (isSimpleSlugUrl) {
+          // Fetch via simple port/serial endpoint
+          apiUrl = `/api/rfq/${params.port}/${params.serial}`;
+        } else if (isLegacySlugUrl) {
+          // Fetch via legacy 4-part slug endpoint
           apiUrl = `/api/rfq/by-slug/${params.port}/${params.date}/${params.userPublicId}/${params.serial}`;
         } else if (isUuidUrl) {
           // First try to resolve UUID to slug for redirect
@@ -218,7 +222,7 @@ export default function RFQDetailPage({ user }: RFQDetailPageProps) {
           setRfqData(mappedRfq);
           
           // Update view count if we have a valid RFQ
-          if (mappedRfq.id && isSlugUrl) {
+          if (mappedRfq.id && (isSimpleSlugUrl || isLegacySlugUrl)) {
             // Track view for slug URLs only to avoid double counting
             fetch(`/api/rfq/${mappedRfq.id}/view`, {
               method: 'POST',
@@ -240,13 +244,13 @@ export default function RFQDetailPage({ user }: RFQDetailPageProps) {
       }
     };
 
-    if (isSlugUrl || isUuidUrl) {
+    if (isSimpleSlugUrl || isLegacySlugUrl || isUuidUrl) {
       fetchRFQData();
     } else {
       setError('Invalid URL format');
       setIsLoading(false);
     }
-  }, [params, isSlugUrl, isUuidUrl, setLocation]);
+  }, [params, isSimpleSlugUrl, isLegacySlugUrl, isUuidUrl, setLocation]);
 
   // Handle quote submission
   const handleSubmitQuote = async (e: React.FormEvent) => {
@@ -318,10 +322,10 @@ export default function RFQDetailPage({ user }: RFQDetailPageProps) {
   const handleShare = async (method: 'whatsapp' | 'copy' | 'general') => {
     if (!rfqData) return;
 
-    // Use slug URL if available, otherwise construct from current URL
+    // Use simple slug URL if available
     let shareUrl;
-    if (rfqData.port && rfqData.date && rfqData.userPublicId && rfqData.serial) {
-      shareUrl = `${window.location.origin}/rfq/${rfqData.port}/${rfqData.date}/${rfqData.userPublicId}/${rfqData.serial}`;
+    if (rfqData.port_slug && rfqData.serial) {
+      shareUrl = `${window.location.origin}/rfq/${rfqData.port_slug}/${rfqData.serial}`;
     } else {
       shareUrl = window.location.href; // Fallback to current URL
     }

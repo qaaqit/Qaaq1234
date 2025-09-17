@@ -70,14 +70,12 @@ export async function ensureUserPublicId(userId: string): Promise<string> {
 }
 
 /**
- * Generates the next available serial number for a given scope
- * Scope: (portSlug, postedDate, userPublicId)
+ * Generates the next available serial number for a given port
+ * Scope: (portSlug)
  * Returns the next sequential integer starting from 1
  */
 export async function generateSerial(
-  portSlug: string, 
-  postedDate: string, 
-  userPublicId: string,
+  portSlug: string,
   maxRetries: number = 3
 ): Promise<number> {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -85,11 +83,11 @@ export async function generateSerial(
       const result = await pool.query(`
         SELECT COALESCE(MAX(serial), 0) + 1 as next_serial
         FROM rfq_requests 
-        WHERE port_slug = $1 AND posted_date = $2 AND user_public_id = $3
-      `, [portSlug, postedDate, userPublicId]);
+        WHERE port_slug = $1
+      `, [portSlug]);
 
       const nextSerial = parseInt(result.rows[0]?.next_serial) || 1;
-      console.log(`🔢 Generated serial ${nextSerial} for ${portSlug}/${postedDate}/${userPublicId} (attempt ${attempt})`);
+      console.log(`🔢 Generated serial ${nextSerial} for ${portSlug} (attempt ${attempt})`);
       
       return nextSerial;
 
@@ -131,7 +129,7 @@ export async function generateRfqSlugComponents(
   const portSlug = normalizePortSlug(location);
   const postedDate = createdAt.toISOString().split('T')[0]; // YYYY-MM-DD format
   const userPublicId = await ensureUserPublicId(userId);
-  const serial = await generateSerial(portSlug, postedDate, userPublicId);
+  const serial = await generateSerial(portSlug); // Simplified: only use port for serial generation
 
   return {
     portSlug,
@@ -166,6 +164,30 @@ export async function resolveRfqBySlug(
 
   } catch (error) {
     console.error('Error resolving RFQ by slug:', error);
+    return null;
+  }
+}
+
+/**
+ * Resolves RFQ by simple port and serial
+ * Returns the RFQ record or null if not found
+ */
+export async function resolveRfqByPortSerial(
+  portSlug: string,
+  serial: number
+): Promise<any | null> {
+  try {
+    const result = await pool.query(`
+      SELECT r.*, u.full_name as user_full_name, u.maritime_rank as user_rank
+      FROM rfq_requests r
+      LEFT JOIN users u ON r.user_id = u.id
+      WHERE r.port_slug = $1 AND r.serial = $2
+    `, [portSlug, serial]);
+
+    return result.rows[0] || null;
+
+  } catch (error) {
+    console.error('Error resolving RFQ by port/serial:', error);
     return null;
   }
 }
