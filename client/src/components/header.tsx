@@ -124,7 +124,7 @@ export default function Header({ user }: HeaderProps) {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <span className="font-bold text-navy text-lg ml-3">QaaqConnect</span>
+          <span className="font-bold text-navy text-lg ml-3">Qaaqit (Quickly Repair It)</span>
         </div>
 
         {/* User Profile Dropdown */}
