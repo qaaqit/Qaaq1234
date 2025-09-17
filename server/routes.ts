@@ -3001,7 +3001,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           fullName: users.fullName,
           email: users.email,
           maritimeRank: users.maritimeRank,
-          shipName: users.shipName,
+          shipName: users.currentShipName,
         })
         .from(users)
         .where(eq(users.id, userId))
@@ -3080,7 +3080,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           fullName: users.fullName,
           email: users.email,
           maritimeRank: users.maritimeRank,
-          shipName: users.shipName,
+          shipName: users.currentShipName,
         })
         .from(users)
         .where(eq(users.id, userId))
