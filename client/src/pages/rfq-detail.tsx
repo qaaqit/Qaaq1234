@@ -13,9 +13,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import UserDropdown from "@/components/user-dropdown";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import LEDIndicator from "@/components/LEDIndicator";
 import { 
   ArrowLeft,
   Clock, 
@@ -35,7 +37,8 @@ import {
   FileText,
   Image as ImageIcon,
   Video,
-  User as UserIcon
+  User as UserIcon,
+  DollarSign
 } from "lucide-react";
 
 // Using public asset path for better reliability
@@ -85,6 +88,19 @@ interface RFQRequest {
   date?: string;
   userPublicId?: string;
   serial?: string;
+  port_slug?: string;
+}
+
+interface Quote {
+  id: string;
+  supplierName: string;
+  supplierCompany: string;
+  price: number;
+  currency: string;
+  deliveryTime: string;
+  specifications: Record<string, string>; // key-value pairs of spec matches
+  notes?: string;
+  createdAt: string;
 }
 
 export default function RFQDetailPage({ user }: RFQDetailPageProps) {
@@ -97,6 +113,7 @@ export default function RFQDetailPage({ user }: RFQDetailPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [quotes, setQuotes] = useState<Quote[]>([]); // Mock quotes for now
   const [quoteForm, setQuoteForm] = useState({
     price: "",
     currency: "USD",
@@ -183,16 +200,33 @@ export default function RFQDetailPage({ user }: RFQDetailPageProps) {
           apiUrl = `/api/rfq/by-slug/${params.port}/${params.date}/${params.userPublicId}/${params.serial}`;
         } else if (isUuidUrl) {
           // First try to resolve UUID to slug for redirect
+          const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
           const resolveResponse = await fetch(`/api/rfq/resolve/${params.id}`, {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
+            headers: token ? {
+              'Authorization': `Bearer ${token}`
+            } : {}
           });
           
           if (resolveResponse.ok) {
-            const { canonical } = await resolveResponse.json();
-            // Redirect to canonical slug URL
-            setLocation(canonical);
+            const data = await resolveResponse.json();
+            // If canonical URL provided, redirect
+            if (data.canonical) {
+              setLocation(data.canonical);
+              return;
+            }
+            // Otherwise use the RFQ data directly from the resolve endpoint
+            const mappedRfq = {
+              ...data,
+              postedBy: `${data.userRank || ''} ${getInitials(data.userFullName || '')}`,
+              postedAt: data.createdAt,
+              category: data.category || 'parts'
+            };
+            
+            setRfqData(mappedRfq);
+            setIsLoading(false);
+            
+            // Load mock quotes for testing
+            loadMockQuotes();
             return;
           }
           
@@ -202,10 +236,11 @@ export default function RFQDetailPage({ user }: RFQDetailPageProps) {
           throw new Error('Invalid URL format');
         }
 
+        const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
         response = await fetch(apiUrl, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
+          headers: token ? {
+            'Authorization': `Bearer ${token}`
+          } : {}
         });
 
         if (response.ok) {
@@ -220,6 +255,9 @@ export default function RFQDetailPage({ user }: RFQDetailPageProps) {
           };
           
           setRfqData(mappedRfq);
+          
+          // Load mock quotes for testing
+          loadMockQuotes();
           
           // Update view count if we have a valid RFQ
           if (mappedRfq.id && (isSimpleSlugUrl || isLegacySlugUrl)) {
@@ -251,6 +289,92 @@ export default function RFQDetailPage({ user }: RFQDetailPageProps) {
       setIsLoading(false);
     }
   }, [params, isSimpleSlugUrl, isLegacySlugUrl, isUuidUrl, setLocation]);
+
+  // Load mock quotes for testing
+  const loadMockQuotes = () => {
+    const mockQuotes: Quote[] = [
+      {
+        id: "q1",
+        supplierName: "Marine Parts Co.",
+        supplierCompany: "Singapore Marine Supplies",
+        price: 45000,
+        currency: "USD",
+        deliveryTime: "3-5 days",
+        specifications: {
+          "Dynamic Load Test": "upto satisfaction of class NKK",
+          "Material": "Steel",
+          "Warranty": "2 years",
+          "Pump Capacity": "50L",
+          "Certification": "DNV GL approved"
+        },
+        notes: "Ready stock available. Includes installation support.",
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: "q2",
+        supplierName: "Global Ship Supplies",
+        supplierCompany: "Global Marine Solutions",
+        price: 42000,
+        currency: "USD",
+        deliveryTime: "7-10 days",
+        specifications: {
+          "Dynamic Load Test": "class approved",
+          "Material": "Steel",
+          "Warranty": "1 year",
+          "Pump Capacity": "45L",
+          "Certification": "ABS certified"
+        },
+        notes: "Bulk discount available for multiple units.",
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: "q3",
+        supplierName: "Maritime Express",
+        supplierCompany: "Express Maritime Trading",
+        price: 48000,
+        currency: "USD",
+        deliveryTime: "2-3 days",
+        specifications: {
+          "Dynamic Load Test": "upto satisfaction of class NKK",
+          "Material": "Stainless Steel",
+          "Warranty": "3 years",
+          "Pump Capacity": "50L",
+          "Certification": "DNV GL approved"
+        },
+        notes: "Premium quality with extended warranty. Express delivery available.",
+        createdAt: new Date().toISOString()
+      }
+    ];
+    
+    setQuotes(mockQuotes);
+  };
+
+  // Check if a quote specification matches the RFQ specification
+  const checkSpecMatch = (rfqValue: string, quoteValue: string): boolean => {
+    if (!rfqValue || !quoteValue) return false;
+    
+    // Normalize values for comparison
+    const normalizedRfq = rfqValue.toLowerCase().trim();
+    const normalizedQuote = quoteValue.toLowerCase().trim();
+    
+    // Check for exact match or contains
+    return normalizedRfq === normalizedQuote || normalizedQuote.includes(normalizedRfq);
+  };
+
+  // Get all specifications from RFQ
+  const getAllSpecifications = () => {
+    const specs: Array<{ key: string; value: string }> = [];
+    
+    if (rfqData?.extractedSpecifications?.categories) {
+      rfqData.extractedSpecifications.categories.forEach(category => {
+        category.specifications.forEach(spec => {
+          specs.push(spec);
+        });
+      });
+    }
+    
+    return specs;
+  };
 
   // Handle quote submission
   const handleSubmitQuote = async (e: React.FormEvent) => {
@@ -676,6 +800,143 @@ export default function RFQDetailPage({ user }: RFQDetailPageProps) {
                           </Card>
                         );
                       })}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Quote Comparison Table Section */}
+                {quotes.length > 0 && (
+                  <div>
+                    <Separator className="my-6" />
+                    <div>
+                      <div className="flex items-center gap-2 mb-4">
+                        <DollarSign className="h-5 w-5 text-green-600" />
+                        <h3 className="font-semibold text-lg">Quote Comparison ({quotes.length} Quotes)</h3>
+                      </div>
+                      
+                      {/* Legend */}
+                      <div className="flex gap-4 mb-4 text-sm">
+                        <div className="flex items-center gap-2">
+                          <LEDIndicator matched={true} size="sm" />
+                          <span className="text-gray-600">Specification Met</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <LEDIndicator matched={false} size="sm" />
+                          <span className="text-gray-600">Not Met / Not Specified</span>
+                        </div>
+                      </div>
+                      
+                      {/* Comparison Table */}
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="w-[200px] sticky left-0 bg-white">Specification</TableHead>
+                              {quotes.map(quote => (
+                                <TableHead key={quote.id} className="text-center min-w-[150px]">
+                                  <div className="space-y-1">
+                                    <div className="font-semibold text-xs">{quote.supplierCompany}</div>
+                                    <div className="text-xs text-gray-600">{quote.price.toLocaleString()} {quote.currency}</div>
+                                    <div className="text-xs text-gray-500">{quote.deliveryTime}</div>
+                                  </div>
+                                </TableHead>
+                              ))}
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {getAllSpecifications().map((spec, idx) => (
+                              <TableRow key={idx}>
+                                <TableCell className="font-medium sticky left-0 bg-white">
+                                  <div className="space-y-1">
+                                    <div className="text-sm font-medium">{spec.key}</div>
+                                    <div className="text-xs text-gray-600">{spec.value}</div>
+                                  </div>
+                                </TableCell>
+                                {quotes.map(quote => {
+                                  const quoteValue = quote.specifications[spec.key];
+                                  const isMatch = checkSpecMatch(spec.value, quoteValue || '');
+                                  
+                                  return (
+                                    <TableCell key={quote.id} className="text-center">
+                                      <LEDIndicator 
+                                        matched={isMatch}
+                                        actualValue={quoteValue}
+                                        expectedValue={spec.value}
+                                      />
+                                    </TableCell>
+                                  );
+                                })}
+                              </TableRow>
+                            ))}
+                            
+                            {/* Additional specs from quotes not in RFQ */}
+                            {(() => {
+                              const rfqSpecKeys = getAllSpecifications().map(s => s.key);
+                              const additionalSpecs = new Set<string>();
+                              
+                              quotes.forEach(quote => {
+                                Object.keys(quote.specifications).forEach(key => {
+                                  if (!rfqSpecKeys.includes(key)) {
+                                    additionalSpecs.add(key);
+                                  }
+                                });
+                              });
+                              
+                              return Array.from(additionalSpecs).map(key => (
+                                <TableRow key={key} className="bg-gray-50">
+                                  <TableCell className="font-medium sticky left-0 bg-gray-50">
+                                    <div className="space-y-1">
+                                      <div className="text-sm font-medium">{key}</div>
+                                      <div className="text-xs text-gray-500 italic">Not in original RFQ</div>
+                                    </div>
+                                  </TableCell>
+                                  {quotes.map(quote => {
+                                    const quoteValue = quote.specifications[key];
+                                    
+                                    return (
+                                      <TableCell key={quote.id} className="text-center">
+                                        {quoteValue ? (
+                                          <div className="text-xs text-gray-600">{quoteValue}</div>
+                                        ) : (
+                                          <span className="text-gray-400">-</span>
+                                        )}
+                                      </TableCell>
+                                    );
+                                  })}
+                                </TableRow>
+                              ));
+                            })()}
+                            
+                            {/* Notes Row */}
+                            <TableRow className="border-t-2">
+                              <TableCell className="font-medium sticky left-0 bg-white">
+                                <div className="text-sm font-medium">Supplier Notes</div>
+                              </TableCell>
+                              {quotes.map(quote => (
+                                <TableCell key={quote.id} className="text-center">
+                                  {quote.notes && (
+                                    <div className="text-xs text-gray-600 max-w-[150px] mx-auto">{quote.notes}</div>
+                                  )}
+                                </TableCell>
+                              ))}
+                            </TableRow>
+                          </TableBody>
+                        </Table>
+                      </div>
+                      
+                      {/* Quote Summary */}
+                      <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                        <div className="flex items-start gap-2">
+                          <Lightbulb className="h-5 w-5 text-blue-600 mt-0.5" />
+                          <div className="flex-1">
+                            <h4 className="font-medium text-sm text-blue-900 mb-1">Quick Analysis</h4>
+                            <p className="text-xs text-blue-700">
+                              Based on specifications match, Quote #3 from {quotes[2]?.supplierCompany || 'Maritime Express'} appears to best match your requirements
+                              with the highest specification compliance rate.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
