@@ -184,10 +184,13 @@ export const rfqRequests = pgTable("rfq_requests", {
   extractedSpecs: jsonb("extracted_specs").$type<{
     categories: Array<{
       name: string;
+      color?: string;
       specifications: Array<{
+        id?: string;
         key: string;
         value: string;
         unit?: string;
+        type?: string;
       }>;
     }>;
     extractedAt?: string;
@@ -222,6 +225,10 @@ export const rfqQuotes = pgTable("rfq_quotes", {
   readinessDate: text("readiness_date").notNull().default("immediate"), // 'immediate' or 'custom'
   customDate: timestamp("custom_date"), // Only for custom readiness
   notes: text("notes"),
+  customText: text("custom_text"), // Vendor's custom specification text for AI matching
+  checkedSpecs: jsonb("checked_specs").$type<string[]>().default([]), // Manually checked specification IDs
+  aiMatchedSpecs: jsonb("ai_matched_specs").$type<{ specId: string, confidence: number, matchedText?: string }[]>().default([]), // AI-matched specifications with confidence scores
+  overallMatchScore: integer("overall_match_score").default(0), // Percentage of specs matched (0-100)
   status: text("status").notNull().default("pending"), // 'pending', 'accepted', 'rejected'
   isNotified: boolean("is_notified").default(false), // Whether RFQ poster was notified
   createdAt: timestamp("created_at").default(sql`now()`),

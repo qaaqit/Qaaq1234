@@ -12,6 +12,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
@@ -38,7 +41,9 @@ import {
   Image as ImageIcon,
   Video,
   User as UserIcon,
-  DollarSign
+  DollarSign,
+  Loader2,
+  Brain
 } from "lucide-react";
 
 // Using public asset path for better reliability
@@ -46,6 +51,14 @@ const qaaqLogo = "/qaaq-logo.png";
 
 interface RFQDetailPageProps {
   user: User | null;
+}
+
+interface SpecificationMatch {
+  specId: string;
+  matched: boolean;
+  confidence: number;
+  matchedText?: string;
+  reason?: string;
 }
 
 interface RFQRequest {
@@ -119,8 +132,13 @@ export default function RFQDetailPage({ user }: RFQDetailPageProps) {
     currency: "USD",
     readinessDate: "immediate",
     customDate: "",
-    notes: ""
+    notes: "",
+    customText: "",
+    checkedSpecs: [] as string[],
+    aiMatchedSpecs: [] as SpecificationMatch[],
+    overallMatchScore: 0
   });
+  const [isAnalyzingSpecs, setIsAnalyzingSpecs] = useState(false);
 
   // Helper function to get proper image URL for attachments
   const getAttachmentUrl = (attachment: string): string => {
@@ -374,6 +392,86 @@ export default function RFQDetailPage({ user }: RFQDetailPageProps) {
     }
     
     return specs;
+  };
+
+  // Handle AI specification matching
+  const handleAIMatching = async () => {
+    if (!quoteForm.customText || !rfqData?.extractedSpecifications) {
+      toast({
+        title: "Please enter custom text",
+        description: "Enter your product details to match against requirements.",
+        variant: "default"
+      });
+      return;
+    }
+
+    setIsAnalyzingSpecs(true);
+    
+    try {
+      const response = await fetch('/api/rfq/match-specs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token') || localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          vendorText: quoteForm.customText,
+          specifications: rfqData.extractedSpecifications.categories || [],
+          rfqId: rfqData.id
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to analyze specifications');
+
+      const result = await response.json();
+      
+      if (result.success && result.matchResults) {
+        const matches = result.matchResults.matches || [];
+        setQuoteForm(prev => ({
+          ...prev,
+          aiMatchedSpecs: matches,
+          overallMatchScore: result.matchResults.overallScore || 0
+        }));
+
+        toast({
+          title: "AI Analysis Complete",
+          description: `Matched ${matches.filter((m: any) => m.matched).length} out of ${matches.length} specifications (${result.matchResults.overallScore}% match)`,
+        });
+      }
+    } catch (error) {
+      console.error('AI matching error:', error);
+      toast({
+        title: "Analysis Failed",
+        description: "Could not analyze specifications. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsAnalyzingSpecs(false);
+    }
+  };
+
+  // Handle specification checkbox toggle
+  const handleSpecCheckboxToggle = (specId: string) => {
+    setQuoteForm(prev => ({
+      ...prev,
+      checkedSpecs: prev.checkedSpecs.includes(specId)
+        ? prev.checkedSpecs.filter(id => id !== specId)
+        : [...prev.checkedSpecs, specId]
+    }));
+  };
+
+  // Check if a specification is matched (manually or by AI)
+  const isSpecMatched = (specId: string): { matched: boolean; confidence: number } => {
+    if (quoteForm.checkedSpecs.includes(specId)) {
+      return { matched: true, confidence: 100 };
+    }
+    
+    const aiMatch = quoteForm.aiMatchedSpecs.find((m: SpecificationMatch) => m.specId === specId);
+    if (aiMatch && aiMatch.matched) {
+      return { matched: true, confidence: aiMatch.confidence };
+    }
+    
+    return { matched: false, confidence: 0 };
   };
 
   // Handle quote submission
@@ -1024,14 +1122,42 @@ export default function RFQDetailPage({ user }: RFQDetailPageProps) {
                         Submit Quote
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-md">
+                    <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
                       <DialogHeader>
                         <DialogTitle>Submit Quote</DialogTitle>
                         <DialogDescription>
-                          Provide your quote for this RFQ request.
+                          Provide your quote and match specifications for this RFQ.
                         </DialogDescription>
                       </DialogHeader>
-                      <form onSubmit={handleSubmitQuote} className="space-y-4">
+                      
+                      {/* Overall Match Score if AI analysis has been run */}
+                      {quoteForm.overallMatchScore > 0 && (
+                        <div className="mb-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-medium">Overall Specification Match</span>
+                            <span className="text-sm font-bold">{quoteForm.overallMatchScore}%</span>
+                          </div>
+                          <Progress value={quoteForm.overallMatchScore} className="h-2" />
+                        </div>
+                      )}
+                      
+                      <Tabs defaultValue="details" className="w-full">
+                        <TabsList className="grid w-full grid-cols-2">
+                          <TabsTrigger value="details">Quote Details</TabsTrigger>
+                          <TabsTrigger value="specifications" className="flex items-center gap-2">
+                            Specifications 
+                            {rfqData?.extractedSpecifications && (
+                              <Badge variant="outline" className="ml-1">
+                                {rfqData.extractedSpecifications.categories.reduce(
+                                  (acc, cat) => acc + cat.specifications.length, 0
+                                )}
+                              </Badge>
+                            )}
+                          </TabsTrigger>
+                        </TabsList>
+                        
+                        <TabsContent value="details">
+                          <form onSubmit={handleSubmitQuote} className="space-y-4">
                         <div>
                           <Label htmlFor="price">Price *</Label>
                           <div className="flex space-x-2">
@@ -1123,7 +1249,122 @@ export default function RFQDetailPage({ user }: RFQDetailPageProps) {
                           </Button>
                         </div>
                       </form>
-                    </DialogContent>
+                    </TabsContent>
+                    
+                    <TabsContent value="specifications" className="space-y-4">
+                      {/* Custom Vendor Text for AI Matching */}
+                      <div className="space-y-2">
+                        <Label htmlFor="customText">Your Product Specifications</Label>
+                        <Textarea
+                          id="customText"
+                          placeholder="Describe your product specifications, materials, certifications, and capabilities. Include any relevant links or documentation..."
+                          value={quoteForm.customText}
+                          onChange={(e) => setQuoteForm(prev => ({ ...prev, customText: e.target.value }))}
+                          rows={4}
+                          className="w-full"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleAIMatching}
+                          disabled={!quoteForm.customText || isAnalyzingSpecs}
+                          className="w-full"
+                          data-testid="button-ai-match"
+                        >
+                          {isAnalyzingSpecs ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Analyzing Specifications...
+                            </>
+                          ) : (
+                            <>
+                              <Brain className="mr-2 h-4 w-4" />
+                              Match Specs with AI
+                            </>
+                          )}
+                        </Button>
+                      </div>
+
+                      <Separator />
+
+                      {/* Specifications Checklist */}
+                      {rfqData?.extractedSpecifications && (
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-semibold">Required Specifications</h4>
+                            {quoteForm.checkedSpecs.length > 0 || quoteForm.aiMatchedSpecs.length > 0 ? (
+                              <Badge variant="secondary">
+                                {quoteForm.checkedSpecs.length + quoteForm.aiMatchedSpecs.filter(s => s.matched).length} matched
+                              </Badge>
+                            ) : null}
+                          </div>
+                          
+                          {rfqData.extractedSpecifications.categories.map((category, idx) => (
+                            <Card key={idx} className="border-l-4" style={{ borderLeftColor: category.color || '#9333ea' }}>
+                              <CardHeader className="pb-3" style={{ backgroundColor: `${category.color}10` || '#9333ea10' }}>
+                                <h4 className="font-semibold text-sm" style={{ color: category.color || '#9333ea' }}>
+                                  {category.name}
+                                </h4>
+                              </CardHeader>
+                              <CardContent className="pt-3">
+                                <div className="space-y-3">
+                                  {category.specifications.map((spec, specIdx) => {
+                                    const specId = spec.id || `${category.name}-${spec.key}`;
+                                    const matchInfo = isSpecMatched(specId);
+                                    
+                                    return (
+                                      <div key={specIdx} className="flex items-start gap-3">
+                                        <Checkbox
+                                          id={specId}
+                                          checked={quoteForm.checkedSpecs.includes(specId)}
+                                          onCheckedChange={() => handleSpecCheckboxToggle(specId)}
+                                          data-testid={`checkbox-spec-${specId}`}
+                                        />
+                                        <div className="flex-1">
+                                          <label
+                                            htmlFor={specId}
+                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                          >
+                                            <span className="font-semibold">{spec.key}:</span>{' '}
+                                            <span className="text-gray-600">{spec.value}</span>
+                                            {spec.unit && <span className="text-gray-500 ml-1">({spec.unit})</span>}
+                                          </label>
+                                        </div>
+                                        {/* LED Indicator for AI Matching */}
+                                        {matchInfo.matched && (
+                                          <div className="flex items-center gap-1">
+                                            <LEDIndicator
+                                              matched={matchInfo.matched}
+                                              size="sm"
+                                            />
+                                            {matchInfo.confidence < 100 && (
+                                              <span className="text-xs text-gray-500">
+                                                {matchInfo.confidence}%
+                                              </span>
+                                            )}
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* No Specifications Message */}
+                      {!rfqData?.extractedSpecifications && (
+                        <Alert>
+                          <AlertDescription>
+                            No specifications have been extracted for this RFQ. You can still submit your quote with the details provided in the description.
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                    </TabsContent>
+                  </Tabs>
+                </DialogContent>
                   </Dialog>
                   
                   <Button

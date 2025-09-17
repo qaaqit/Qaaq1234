@@ -2534,6 +2534,112 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // AI-powered specification matching endpoint
+  app.post("/api/rfq/match-specs", async (req, res) => {
+    try {
+      const { vendorText, specifications } = req.body;
+      
+      if (!vendorText || !specifications) {
+        return res.status(400).json({ 
+          message: "Vendor text and specifications are required" 
+        });
+      }
+
+      // Prepare specs for AI analysis
+      const specsToMatch = specifications.flatMap((category: any) =>
+        category.specifications.map((spec: any) => ({
+          id: spec.id || `${category.name}-${spec.key}`,
+          category: category.name,
+          key: spec.key,
+          value: spec.value,
+          unit: spec.unit || '',
+          type: spec.type
+        }))
+      );
+
+      // Construct AI prompt for specification matching
+      const systemPrompt = `You are a technical specification analyzer for marine equipment RFQs. 
+      Your task is to analyze vendor text and match it against required specifications.
+      
+      For each specification, determine if the vendor's text confirms they can meet it.
+      Consider synonyms, technical equivalents, and industry standards.
+      
+      Return a JSON array with each specification's match status and confidence score (0-100).
+      
+      Response format:
+      {
+        "matches": [
+          {
+            "specId": "string",
+            "matched": boolean,
+            "confidence": number (0-100),
+            "matchedText": "relevant text from vendor input if matched",
+            "reason": "brief explanation"
+          }
+        ],
+        "overallScore": number (0-100)
+      }`;
+
+      const userPrompt = `Analyze this vendor text against specifications:
+      
+      VENDOR TEXT:
+      "${vendorText}"
+      
+      REQUIRED SPECIFICATIONS:
+      ${JSON.stringify(specsToMatch, null, 2)}
+      
+      Match each specification and return confidence scores.`;
+
+      // Call AI service for matching
+      const aiResponse = await aiService.generateOpenAIResponse(
+        userPrompt,
+        'technical',
+        null,
+        systemPrompt,
+        'en',
+        []
+      );
+
+      // Parse AI response
+      let matchResults;
+      try {
+        // Extract JSON from AI response
+        const jsonMatch = aiResponse.content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          matchResults = JSON.parse(jsonMatch[0]);
+        } else {
+          throw new Error('No JSON found in AI response');
+        }
+      } catch (parseError) {
+        console.error('Error parsing AI response:', parseError);
+        // Fallback to basic matching
+        matchResults = {
+          matches: specsToMatch.map((spec: any) => ({
+            specId: spec.id,
+            matched: vendorText.toLowerCase().includes(spec.key.toLowerCase()),
+            confidence: vendorText.toLowerCase().includes(spec.key.toLowerCase()) ? 70 : 30,
+            matchedText: '',
+            reason: 'Basic keyword matching'
+          })),
+          overallScore: 50
+        };
+      }
+
+      res.json({
+        success: true,
+        matchResults,
+        model: 'openai'
+      });
+
+    } catch (error) {
+      console.error('Specification matching error:', error);
+      res.status(500).json({ 
+        message: "Failed to match specifications",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Submit quote for RFQ
   app.post("/api/rfq/:id/quote", async (req, res) => {
     try {
