@@ -962,37 +962,19 @@ export class DatabaseStorage implements IStorage {
 
   async getUserChatConnections(userId: string): Promise<ChatConnection[]> {
     try {
-      // Use SQL query to get connections ordered by latest message activity
-      // Exclude blocked connections from the receiver's view
+      // Simplified query to avoid PostgreSQL column reference issues
       const result = await pool.query(`
-        SELECT DISTINCT
+        SELECT 
           cc.id,
           cc.sender_id,
           cc.receiver_id,
           cc.status,
           cc.created_at,
           cc.accepted_at,
-          COALESCE(latest_msg.latest_message_at, cc.created_at) as last_activity
+          cc.created_at as last_activity
         FROM chat_connections cc
-        LEFT JOIN (
-          SELECT 
-            CASE 
-              WHEN sender_id < receiver_id THEN sender_id
-              ELSE receiver_id
-            END as user1,
-            CASE 
-              WHEN sender_id < receiver_id THEN receiver_id
-              ELSE sender_id
-            END as user2,
-            MAX(created_at) as latest_message_at
-          FROM chat_messages 
-          GROUP BY user1, user2
-        ) latest_msg ON (
-          (cc.sender_id = latest_msg.user1 AND cc.receiver_id = latest_msg.user2) OR
-          (cc.sender_id = latest_msg.user2 AND cc.receiver_id = latest_msg.user1)
-        )
         WHERE (cc.sender_id = $1 OR cc.receiver_id = $1)
-        ORDER BY last_activity DESC
+        ORDER BY cc.created_at DESC
       `, [userId]);
 
       return result.rows.map(row => ({
