@@ -1215,6 +1215,52 @@ export default function RFQPage({ user }: RFQPageProps) {
                         
                         <p className="text-gray-700 line-clamp-3">{rfq.description}</p>
                         
+                        {/* Extracted Specifications Preview */}
+                        {rfq.extractedSpecs && rfq.extractedSpecs.categories && (
+                          <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 space-y-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Lightbulb className="w-4 h-4 text-purple-600" />
+                              <span className="text-sm font-medium text-purple-900">Key Specifications:</span>
+                            </div>
+                            <div className="text-sm text-gray-700 space-y-1">
+                              {(() => {
+                                const specs: { key: string; value: string; unit?: string }[] = [];
+                                // Collect all specs into a flat array
+                                rfq.extractedSpecs.categories.forEach((category: any) => {
+                                  category.specifications?.forEach((spec: any) => {
+                                    specs.push(spec);
+                                  });
+                                });
+                                // Show only first 2 specs
+                                return specs.slice(0, 2).map((spec, index) => (
+                                  <div key={index} className="flex items-center gap-1">
+                                    <span className="text-purple-600">•</span>
+                                    <span>
+                                      <strong>{spec.key}:</strong> {spec.value}
+                                      {spec.unit && ` ${spec.unit}`}
+                                    </span>
+                                  </div>
+                                ));
+                              })()}
+                              {/* Show how many more specs are available */}
+                              {(() => {
+                                let totalSpecs = 0;
+                                rfq.extractedSpecs.categories.forEach((category: any) => {
+                                  totalSpecs += category.specifications?.length || 0;
+                                });
+                                if (totalSpecs > 2) {
+                                  return (
+                                    <div className="text-xs text-purple-600 mt-1">
+                                      ...and {totalSpecs - 2} more specifications
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              })()}
+                            </div>
+                          </div>
+                        )}
+                        
                         {/* Attachments Display - Horizontal Carousel */}
                         {rfq.attachments && rfq.attachments.length > 0 && (
                           <div className="-mx-6 px-6">
