@@ -37,6 +37,7 @@ import {
   Pencil,
   Trash2
 } from "lucide-react";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 // Using public asset path for better reliability
 const qaaqLogo = "/qaaq-logo.png";
@@ -1021,37 +1022,56 @@ export default function RFQPage({ user }: RFQPageProps) {
                         
                         <p className="text-gray-700 line-clamp-3">{rfq.description}</p>
                         
-                        {/* Attachments Display - flush with left edge */}
+                        {/* Attachments Display - Horizontal Carousel */}
                         {rfq.attachments && rfq.attachments.length > 0 && (
-                          <div className="grid grid-cols-2 gap-2 -mx-6 px-6">
-                            {rfq.attachments.slice(0, 4).map((attachment, index) => (
-                              <div key={index} className="relative">
-                                {attachment.includes('video') || attachment.includes('.mp4') || attachment.includes('.mov') ? (
-                                  <div className="relative bg-gray-100 rounded aspect-video flex items-center justify-center">
-                                    <div className="text-center">
-                                      <div className="w-8 h-8 mx-auto mb-1 bg-orange-600 rounded-full flex items-center justify-center">
-                                        <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-                                          <path d="M8 5v14l11-7z"/>
-                                        </svg>
-                                      </div>
-                                      <p className="text-xs text-gray-600">Video</p>
+                          <div className="-mx-6 px-6">
+                            <Carousel
+                              opts={{
+                                align: "start",
+                                loop: false,
+                              }}
+                              className="w-full"
+                              data-testid={`carousel-rfq-attachments-${rfq.id}`}
+                            >
+                              <CarouselContent className="-ml-2">
+                                {rfq.attachments.map((attachment, index) => (
+                                  <CarouselItem key={index} className="pl-2 basis-auto">
+                                    <div className="relative w-48">
+                                      {attachment.includes('video') || attachment.includes('.mp4') || attachment.includes('.mov') ? (
+                                        <div className="relative bg-gray-100 rounded aspect-video flex items-center justify-center h-32">
+                                          <div className="text-center">
+                                            <div className="w-8 h-8 mx-auto mb-1 bg-orange-600 rounded-full flex items-center justify-center">
+                                              <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                                <path d="M8 5v14l11-7z"/>
+                                              </svg>
+                                            </div>
+                                            <p className="text-xs text-gray-600">Video</p>
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        <img 
+                                          src={getAttachmentUrl(attachment)} 
+                                          alt={`RFQ attachment ${index + 1}`}
+                                          className="w-full h-32 object-cover rounded border border-orange-200"
+                                          data-testid={`img-rfq-attachment-${index}`}
+                                        />
+                                      )}
                                     </div>
-                                  </div>
-                                ) : (
-                                  <img 
-                                    src={getAttachmentUrl(attachment)} 
-                                    alt={`RFQ attachment ${index + 1}`}
-                                    className="w-full h-24 object-cover rounded border border-orange-200"
-                                    data-testid={`img-rfq-attachment-${index}`}
-                                  />
-                                )}
-                                {rfq.attachments && rfq.attachments.length > 4 && index === 3 && (
-                                  <div className="absolute inset-0 bg-black bg-opacity-50 rounded flex items-center justify-center">
-                                    <span className="text-white font-semibold">+{rfq.attachments.length - 4} more</span>
-                                  </div>
-                                )}
+                                  </CarouselItem>
+                                ))}
+                              </CarouselContent>
+                              {rfq.attachments.length > 1 && (
+                                <>
+                                  <CarouselPrevious className="-left-4" data-testid={`button-carousel-previous-${rfq.id}`} />
+                                  <CarouselNext className="-right-4" data-testid={`button-carousel-next-${rfq.id}`} />
+                                </>
+                              )}
+                            </Carousel>
+                            {rfq.attachments.length > 1 && (
+                              <div className="text-center text-xs text-gray-500 mt-2">
+                                {rfq.attachments.length} attachment{rfq.attachments.length !== 1 ? 's' : ''}
                               </div>
-                            ))}
+                            )}
                           </div>
                         )}
                         
