@@ -2321,7 +2321,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create new RFQ request with slug generation
-  app.post("/api/rfq", async (req, res) => {
+  app.post("/api/rfq", authenticateToken, async (req, res) => {
     try {
       // Get user from session or authentication
       const userId = req.currentUser?.id || req.userId;
