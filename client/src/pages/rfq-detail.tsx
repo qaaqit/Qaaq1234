@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
 import { useLocation, useParams } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import type { User } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import UserDropdown from "@/components/user-dropdown";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { 
   ArrowLeft,
   Clock, 
@@ -23,8 +27,15 @@ import {
   Eye,
   MessageSquare,
   Paperclip,
-  ChevronDown,
-  ExternalLink
+  ExternalLink,
+  Lightbulb,
+  CheckCircle,
+  Calendar,
+  Download,
+  FileText,
+  Image as ImageIcon,
+  Video,
+  User as UserIcon
 } from "lucide-react";
 
 // Using public asset path for better reliability
@@ -46,6 +57,17 @@ interface RFQRequest {
   deadline: string;
   contactMethod: string;
   attachments?: string[];
+  extractedSpecifications?: {
+    categories: Array<{
+      name: string;
+      color: string;
+      specifications: Array<{
+        key: string;
+        value: string;
+        type?: string;
+      }>;
+    }>;
+  };
   status: 'active' | 'closed' | 'fulfilled';
   viewCount: number;
   quoteCount: number;
@@ -74,6 +96,7 @@ export default function RFQDetailPage({ user }: RFQDetailPageProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showQuoteModal, setShowQuoteModal] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [quoteForm, setQuoteForm] = useState({
     price: "",
     currency: "USD",
@@ -84,13 +107,32 @@ export default function RFQDetailPage({ user }: RFQDetailPageProps) {
 
   // Helper function to get proper image URL for attachments
   const getAttachmentUrl = (attachment: string): string => {
-    // If it's already a full URL, return as-is
+    // If it's a full Google Cloud Storage URL for private objects, extract the object ID and use our proxy
+    if (attachment.startsWith('https://storage.googleapis.com/') && attachment.includes('/.private/uploads/')) {
+      const objectId = attachment.split('/').pop();
+      if (objectId) {
+        return `/api/objects/${objectId}`;
+      }
+    }
+    
+    // If it's already a full URL or replit object store URL, return as-is
     if (attachment.startsWith('http') || attachment.startsWith('/replit-objstore-')) {
       return attachment;
     }
     
     // If it's just a filename, construct the object storage URL
     return `/replit-objstore-b2ad59ef-ca8b-42b8-bc12-f53a0b9ec0ee/public/${attachment}`;
+  };
+  
+  // Get attachment type
+  const getAttachmentType = (url: string): 'image' | 'video' | 'document' => {
+    const extension = url.split('.').pop()?.toLowerCase();
+    const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
+    const videoExtensions = ['mp4', 'webm', 'avi', 'mov'];
+    
+    if (imageExtensions.includes(extension || '')) return 'image';
+    if (videoExtensions.includes(extension || '')) return 'video';
+    return 'document';
   };
 
   // Helper function to get initials for privacy
@@ -511,51 +553,140 @@ export default function RFQDetailPage({ user }: RFQDetailPageProps) {
             </div>
           </CardHeader>
           
-          <CardContent>
+          <CardContent className="space-y-6">
+            {/* Main content grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="md:col-span-2 space-y-4">
+              <div className="md:col-span-2 space-y-6">
+                {/* Description Section */}
                 <div>
-                  <h3 className="font-semibold mb-2">Description</h3>
+                  <h3 className="font-semibold mb-2 text-lg">Description</h3>
                   <p className="text-gray-700 whitespace-pre-wrap" data-testid="text-rfq-description">
                     {rfqData.description}
                   </p>
                 </div>
 
+                <Separator />
+
+                {/* Extracted Specifications Section */}
+                {rfqData.extractedSpecifications && rfqData.extractedSpecifications.categories.length > 0 && (
+                  <>
+                    <div>
+                      <div className="flex items-center gap-2 mb-4">
+                        <Lightbulb className="h-5 w-5 text-purple-600" />
+                        <h3 className="font-semibold text-lg">Extracted Specifications</h3>
+                      </div>
+                      <div className="space-y-4">
+                        {rfqData.extractedSpecifications.categories.map((category, idx) => (
+                          <Card 
+                            key={idx} 
+                            className="border-l-4 overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+                            style={{ borderLeftColor: category.color || '#9333ea' }}
+                          >
+                            <CardHeader className="pb-3" style={{ backgroundColor: `${category.color}10` || '#9333ea10' }}>
+                              <h4 className="font-semibold text-sm flex items-center gap-2" style={{ color: category.color || '#9333ea' }}>
+                                <CheckCircle className="h-4 w-4" />
+                                {category.name}
+                              </h4>
+                            </CardHeader>
+                            <CardContent className="pt-3">
+                              <ul className="space-y-2">
+                                {category.specifications.map((spec, specIdx) => (
+                                  <li key={specIdx} className="flex items-start gap-2 text-sm">
+                                    <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
+                                    <div className="flex-1">
+                                      <span className="font-medium text-gray-700">{spec.key}:</span>{' '}
+                                      <span className="text-gray-600">{spec.value}</span>
+                                    </div>
+                                  </li>
+                                ))}
+                              </ul>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                    <Separator />
+                  </>
+                )}
+
+                {/* Attachments Gallery Section */}
                 {rfqData.attachments && rfqData.attachments.length > 0 && (
                   <div>
-                    <h3 className="font-semibold mb-2 flex items-center">
-                      <Paperclip className="w-4 h-4 mr-2" />
-                      Attachments ({rfqData.attachments.length})
-                    </h3>
-                    <div className="space-y-2">
-                      {rfqData.attachments.map((attachment, index) => (
-                        <div key={index} className="flex items-center space-x-2 p-2 border rounded">
-                          <Paperclip className="w-4 h-4 text-gray-500" />
-                          <a
-                            href={getAttachmentUrl(attachment)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 flex-1"
-                            data-testid={`link-attachment-${index}`}
+                    <div className="flex items-center gap-2 mb-4">
+                      <Paperclip className="h-5 w-5 text-gray-600" />
+                      <h3 className="font-semibold text-lg">Attachments ({rfqData.attachments.length})</h3>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {rfqData.attachments.map((attachment, idx) => {
+                        const type = getAttachmentType(attachment);
+                        const url = getAttachmentUrl(attachment);
+                        const fileName = attachment.split('/').pop() || `File ${idx + 1}`;
+                        
+                        return (
+                          <Card 
+                            key={idx} 
+                            className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow group"
+                            onClick={() => type === 'image' && setSelectedImage(url)}
                           >
-                            {attachment.split('/').pop() || attachment}
-                          </a>
-                          <ExternalLink className="w-4 h-4 text-gray-400" />
-                        </div>
-                      ))}
+                            {type === 'image' ? (
+                              <div className="aspect-square relative bg-gray-100">
+                                <img 
+                                  src={url} 
+                                  alt={fileName}
+                                  className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                                  <ImageIcon className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </div>
+                              </div>
+                            ) : type === 'video' ? (
+                              <div className="aspect-square relative bg-gray-100 flex flex-col items-center justify-center">
+                                <Video className="h-12 w-12 text-gray-400 mb-2" />
+                                <span className="text-xs text-center px-2 truncate w-full">
+                                  {fileName}
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="aspect-square relative bg-gray-50 flex flex-col items-center justify-center p-4">
+                                <FileText className="h-12 w-12 text-gray-400 mb-2" />
+                                <span className="text-xs text-center truncate w-full px-2">
+                                  {fileName}
+                                </span>
+                              </div>
+                            )}
+                            <div className="p-2 border-t bg-white">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="w-full"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  window.open(url, '_blank');
+                                }}
+                                data-testid={`button-download-${idx}`}
+                              >
+                                <Download className="h-4 w-4 mr-1" />
+                                View
+                              </Button>
+                            </div>
+                          </Card>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
               </div>
 
+              {/* Right Sidebar */}
               <div className="space-y-4">
+                {/* RFQ Details Card */}
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h3 className="font-semibold mb-3">RFQ Details</h3>
                   <div className="space-y-3">
                     {rfqData.vesselName && (
-                      <div className="flex items-center space-x-2">
-                        <Ship className="w-4 h-4 text-gray-500" />
-                        <div>
+                      <div className="flex items-start gap-2">
+                        <Ship className="w-4 h-4 text-gray-500 mt-0.5" />
+                        <div className="flex-1">
                           <p className="text-sm text-gray-600">Vessel</p>
                           <p className="font-medium" data-testid="text-vessel-name">
                             {getVesselInitials(rfqData.vesselName)}
@@ -564,34 +695,58 @@ export default function RFQDetailPage({ user }: RFQDetailPageProps) {
                       </div>
                     )}
                     
-                    <div className="flex items-center space-x-2">
-                      <MapPin className="w-4 h-4 text-gray-500" />
-                      <div>
+                    <div className="flex items-start gap-2">
+                      <MapPin className="w-4 h-4 text-gray-500 mt-0.5" />
+                      <div className="flex-1">
                         <p className="text-sm text-gray-600">Location</p>
                         <p className="font-medium" data-testid="text-location">{rfqData.location}</p>
                       </div>
                     </div>
 
                     {rfqData.deadline && (
-                      <div className="flex items-center space-x-2">
-                        <Clock className="w-4 h-4 text-gray-500" />
-                        <div>
+                      <div className="flex items-start gap-2">
+                        <Calendar className="w-4 h-4 text-gray-500 mt-0.5" />
+                        <div className="flex-1">
                           <p className="text-sm text-gray-600">Deadline</p>
-                          <p className="font-medium" data-testid="text-deadline">
-                            {new Date(rfqData.deadline).toLocaleDateString()}
+                          <p className="font-medium text-orange-600" data-testid="text-deadline">
+                            {new Date(rfqData.deadline).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric'
+                            })}
                           </p>
                         </div>
                       </div>
                     )}
 
                     {rfqData.budget && (
-                      <div className="flex items-center space-x-2">
-                        <div>
+                      <div className="flex items-start gap-2">
+                        <div className="flex-1">
                           <p className="text-sm text-gray-600">Budget</p>
                           <p className="font-medium" data-testid="text-budget">{rfqData.budget}</p>
                         </div>
                       </div>
                     )}
+                    
+                    {/* Posted By Info */}
+                    <Separator className="my-2" />
+                    <div className="flex items-start gap-2">
+                      <UserIcon className="w-4 h-4 text-gray-500 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-600">Posted by</p>
+                        <p className="font-medium" data-testid="text-posted-by">
+                          {rfqData.userRank} {getInitials(rfqData.userFullName)}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {new Date(rfqData.createdAt).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -719,7 +874,68 @@ export default function RFQDetailPage({ user }: RFQDetailPageProps) {
             </div>
           </CardContent>
         </Card>
+        
+        {/* Bottom Action Buttons */}
+        <div className="flex gap-3 justify-center mb-8">
+          {rfqData.status === 'active' && (
+            <Dialog open={showQuoteModal} onOpenChange={setShowQuoteModal}>
+              <DialogTrigger asChild>
+                <Button 
+                  className="bg-orange-600 hover:bg-orange-700" 
+                  size="lg"
+                  data-testid="button-submit-quote-bottom"
+                >
+                  <Send className="mr-2 h-4 w-4" />
+                  Submit Quote
+                </Button>
+              </DialogTrigger>
+            </Dialog>
+          )}
+          
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => setLocation('/rfq')}
+            data-testid="button-back-bottom"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to RFQ Feed
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => handleShare('general')}
+            data-testid="button-share-bottom"
+          >
+            <Share2 className="mr-2 h-4 w-4" />
+            Share RFQ
+          </Button>
+        </div>
       </div>
+      
+      {/* Image Modal */}
+      {selectedImage && (
+        <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+          <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+            <div className="relative w-full h-full flex items-center justify-center bg-black">
+              <img 
+                src={selectedImage} 
+                alt="Attachment" 
+                className="max-w-full max-h-[90vh] object-contain"
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-4 right-4 text-white hover:bg-white/20"
+                onClick={() => setSelectedImage(null)}
+              >
+                <ExternalLink className="h-5 w-5" />
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
