@@ -2980,6 +2980,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // RFQ Specification Extraction from Text - Extract specs from raw text during form creation
+  app.post("/api/rfq/extract-specs-from-text", authenticateToken, async (req, res) => {
+    try {
+      const { description, title } = req.body;
+      const userId = req.userId;
+
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      if (!description) {
+        return res.status(400).json({ message: "Description text is required" });
+      }
+
+      // Get user data for AI context
+      const userResult = await db
+        .select({
+          id: users.id,
+          fullName: users.fullName,
+          email: users.email,
+          maritimeRank: users.maritimeRank,
+          shipName: users.shipName,
+        })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+
+      if (!userResult.length) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const user = userResult[0];
+
+      // Combine title and description for specification extraction
+      const rfqText = title ? `${title}\n\n${description}` : description;
+
+      console.log(`🔧 Extracting specifications from text for user: ${userId}`);
+
+      // Use AI service to extract specifications
+      const extractedSpecs = await aiService.extractSpecifications(rfqText, user);
+
+      console.log('✅ Specifications extracted successfully');
+
+      res.json({
+        success: true,
+        specifications: extractedSpecs,
+        message: "Specifications extracted successfully"
+      });
+
+    } catch (error: unknown) {
+      console.error('❌ Specification extraction error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to extract specifications", 
+        error: errorMessage 
+      });
+    }
+  });
+
   // RFQ Specification Extraction - Extract specs from RFQ text using AI
   app.post("/api/rfq/:id/extract-specs", authenticateToken, async (req, res) => {
     try {

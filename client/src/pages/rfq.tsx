@@ -35,7 +35,10 @@ import {
   X,
   Share2,
   Pencil,
-  Trash2
+  Trash2,
+  Lightbulb,
+  CheckSquare,
+  Square
 } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
@@ -135,11 +138,10 @@ export default function RFQPage({ user }: RFQPageProps) {
   });
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
 
-  // Specification extraction state
-  const [extractedSpecs, setExtractedSpecs] = useState<Record<string, any>>({});
-  const [isExtracting, setIsExtracting] = useState<Record<string, boolean>>({});
-  const [showSpecModal, setShowSpecModal] = useState(false);
-  const [selectedRFQForSpecs, setSelectedRFQForSpecs] = useState<RFQRequest | null>(null);
+  // Specification extraction state for form creation
+  const [formExtractedSpecs, setFormExtractedSpecs] = useState<any>(null);
+  const [isExtractingSpecs, setIsExtractingSpecs] = useState(false);
+  const [selectedSpecs, setSelectedSpecs] = useState<Record<string, boolean>>({});
 
   // Upload handlers
   const handleGetUploadParameters = async () => {
@@ -397,6 +399,22 @@ export default function RFQPage({ user }: RFQPageProps) {
     const titleFromDescription = formData.description.split('\n')[0].trim() || formData.description.substring(0, 50).trim();
 
     try {
+      // Prepare extracted specifications if available
+      let extractedSpecsToSend = null;
+      if (formExtractedSpecs && selectedSpecs) {
+        // Filter specifications to only include selected ones
+        extractedSpecsToSend = {
+          ...formExtractedSpecs,
+          categories: formExtractedSpecs.categories.map((category: any) => ({
+            ...category,
+            specifications: category.specifications?.filter((spec: any) => {
+              const key = `${category.name}_${spec.key}`;
+              return selectedSpecs[key] === true;
+            })
+          })).filter((category: any) => category.specifications?.length > 0)
+        };
+      }
+
       // Prepare API request data
       const requestData = {
         title: titleFromDescription,
@@ -408,7 +426,8 @@ export default function RFQPage({ user }: RFQPageProps) {
         budget: undefined, // Not captured in form yet
         deadline: formData.deadline ? new Date(formData.deadline).toISOString() : undefined,
         contactMethod: "dm",
-        attachments: attachments || []
+        attachments: attachments || [],
+        extractedSpecs: extractedSpecsToSend // Include extracted specifications
       };
 
       if (editingRFQ) {
@@ -475,6 +494,8 @@ export default function RFQPage({ user }: RFQPageProps) {
         deadline: ""
       });
       setAttachments([]);
+      setFormExtractedSpecs(null);
+      setSelectedSpecs({});
       
     } catch (error) {
       console.error('Error posting RFQ:', error);
@@ -513,6 +534,8 @@ export default function RFQPage({ user }: RFQPageProps) {
       deadline: ""
     });
     setAttachments([]);
+    setFormExtractedSpecs(null);
+    setSelectedSpecs({});
   };
 
   // Delete RFQ
@@ -661,7 +684,78 @@ export default function RFQPage({ user }: RFQPageProps) {
     setShowAdvancedOptions(false);
   };
 
-  // Extract specifications from RFQ using AI
+  // Extract specifications from form description using AI
+  const extractSpecificationsFromForm = async () => {
+    if (!user || !formData.description) {
+      toast({
+        title: "Missing Information",
+        description: "Please add a description before extracting specifications.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsExtractingSpecs(true);
+
+    try {
+      toast({
+        title: "🔧 Extracting Specifications",
+        description: "AI is analyzing your description to extract technical specifications...",
+      });
+
+      // Call the API to extract specifications from text
+      const response = await fetch('/api/rfq/extract-specs-from-text', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          description: formData.description,
+          title: formData.category ? `${formData.category} - ${formData.vesselName || 'Vessel'}` : undefined
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Extraction failed' }));
+        throw new Error(errorData.message || 'Failed to extract specifications');
+      }
+
+      const result = await response.json();
+
+      // Store extracted specifications and initialize all as selected
+      setFormExtractedSpecs(result.specifications);
+      
+      // Initialize all specs as selected by default
+      const initialSelection: Record<string, boolean> = {};
+      if (result.specifications?.categories) {
+        result.specifications.categories.forEach((category: any) => {
+          category.specifications?.forEach((spec: any) => {
+            const key = `${category.name}_${spec.key}`;
+            initialSelection[key] = true;
+          });
+        });
+      }
+      setSelectedSpecs(initialSelection);
+
+      toast({
+        title: "✅ Specifications Extracted",
+        description: `Found ${Object.keys(initialSelection).length} specifications. Review them below.`,
+      });
+
+    } catch (error: unknown) {
+      console.error('Specification extraction error:', error);
+      toast({
+        title: "Extraction Failed",
+        description: error instanceof Error ? error.message : "Could not extract specifications. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsExtractingSpecs(false);
+    }
+  };
+
+  // Extract specifications from RFQ using AI (for feed - to be removed)
   const extractSpecifications = async (rfq: RFQRequest) => {
     if (!user || !rfq) return;
 
@@ -1200,19 +1294,6 @@ export default function RFQPage({ user }: RFQPageProps) {
                                 <Button 
                                   size="sm" 
                                   variant="outline" 
-                                  className="border-yellow-200 hover:bg-yellow-50 text-yellow-600"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    extractSpecifications(rfq);
-                                  }}
-                                  data-testid={`button-extract-specs-${rfq.id}`}
-                                  title="Extract specifications with AI"
-                                >
-                                  💡
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline" 
                                   className="border-blue-200 hover:bg-blue-50 text-blue-600"
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -1334,23 +1415,113 @@ export default function RFQPage({ user }: RFQPageProps) {
                         />
                       </div>
                       
-                      {/* Enhanced Requirements Field with File Upload */}
-                      <EnhancedFileUpload
-                        value={formData.description}
-                        onChange={(value) => setFormData(prev => ({...prev, description: value}))}
-                        attachments={attachments}
-                        onAttachmentsChange={setAttachments}
-                        onGetUploadParameters={handleGetUploadParameters}
-                        placeholder="What do you need? (First line will be used as title)
+                      {/* Enhanced Requirements Field with File Upload and AI Extraction */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="description">Requirement *</Label>
+                          {formData.description && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={extractSpecificationsFromForm}
+                              disabled={isExtractingSpecs || !formData.description}
+                              className="border-purple-200 hover:bg-purple-50 text-purple-600"
+                              data-testid="button-extract-specs"
+                            >
+                              {isExtractingSpecs ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-purple-600 mr-2" />
+                                  Extracting...
+                                </>
+                              ) : (
+                                <>
+                                  <Lightbulb className="w-4 h-4 mr-1" />
+                                  Extract Specs
+                                </>
+                              )}
+                            </Button>
+                          )}
+                        </div>
+                        <EnhancedFileUpload
+                          value={formData.description}
+                          onChange={(value) => setFormData(prev => ({...prev, description: value}))}
+                          attachments={attachments}
+                          onAttachmentsChange={setAttachments}
+                          onGetUploadParameters={handleGetUploadParameters}
+                          placeholder="What do you need? (First line will be used as title)
 • Drag and drop files here or use Ctrl+V to paste
 • Supported: Images, videos, PDF, Word, Excel documents"
-                        rows={5}
-                        maxFiles={5}
-                        maxFileSize={52428800}
-                        label="Requirement"
-                        required={true}
-                        className="space-y-3"
-                      />
+                          rows={5}
+                          maxFiles={5}
+                          maxFileSize={52428800}
+                          label=""
+                          required={true}
+                          className="space-y-3"
+                        />
+                      </div>
+                      
+                      {/* Extracted Specifications Display */}
+                      {formExtractedSpecs && formExtractedSpecs.categories && (
+                        <div className="border border-purple-200 bg-purple-50/50 rounded-lg p-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-medium text-purple-900 flex items-center gap-2">
+                              <Lightbulb className="w-4 h-4" />
+                              Extracted Specifications
+                            </h4>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setFormExtractedSpecs(null);
+                                setSelectedSpecs({});
+                              }}
+                              className="text-purple-600 hover:text-purple-800"
+                              data-testid="button-clear-specs"
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                          
+                          <div className="space-y-3 text-sm">
+                            {formExtractedSpecs.categories.map((category: any) => (
+                              <div key={category.name} className="space-y-2">
+                                <h5 className="font-medium text-gray-700">{category.name}</h5>
+                                <div className="grid grid-cols-1 gap-2 pl-4">
+                                  {category.specifications?.map((spec: any) => {
+                                    const key = `${category.name}_${spec.key}`;
+                                    return (
+                                      <label key={key} className="flex items-center space-x-2 cursor-pointer hover:bg-white/50 p-1 rounded">
+                                        <input
+                                          type="checkbox"
+                                          checked={selectedSpecs[key] || false}
+                                          onChange={(e) => {
+                                            setSelectedSpecs(prev => ({
+                                              ...prev,
+                                              [key]: e.target.checked
+                                            }));
+                                          }}
+                                          className="w-4 h-4 text-purple-600 border-purple-300 rounded focus:ring-purple-500"
+                                          data-testid={`checkbox-spec-${key}`}
+                                        />
+                                        <span className="text-gray-700">
+                                          <strong>{spec.key}:</strong> {spec.value}
+                                          {spec.unit && ` ${spec.unit}`}
+                                        </span>
+                                      </label>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          
+                          <div className="text-xs text-purple-700 mt-2">
+                            {Object.values(selectedSpecs).filter(Boolean).length} of {Object.keys(selectedSpecs).length} specifications selected
+                          </div>
+                        </div>
+                      )}
                       
                       {/* Additional Data Toggle */}
                       <div className="border-t pt-4">
