@@ -353,7 +353,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
               </DropdownMenu>
               <div className="min-w-0 flex items-center space-x-2">
                 <h1 className="text-base sm:text-xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent whitespace-nowrap">
-                  {isPremium ? "Premium Qaaqit (Quickly Explain It)" : "QaaqConnect"}
+                  Qaaqit (Quickly Explain It)
                 </h1>
                 {isPremium && (
                   <Crown className="w-5 h-5 text-yellow-500 animate-pulse" />
