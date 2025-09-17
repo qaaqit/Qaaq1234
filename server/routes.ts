@@ -2452,7 +2452,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const userId = req.userId!;
-      const updateData = insertRfqRequestSchema.partial().parse(req.body);
+      
+      // Parse update data with relaxed deadline validation
+      const updateSchema = insertRfqRequestSchema.partial().extend({
+        deadline: z.union([
+          z.string().transform(val => val ? new Date(val) : undefined),
+          z.date(),
+          z.undefined()
+        ]).optional()
+      });
+      const updateData = updateSchema.parse(req.body);
 
       // Check if user owns the RFQ
       const existingRfq = await db
