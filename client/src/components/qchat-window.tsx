@@ -344,6 +344,13 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
               ) : (
                 messages.map((msg: ChatMessage) => {
                   const isOwn = msg.senderId === user?.id;
+                  console.log('🎨 Message styling debug:', { 
+                    messageId: msg.id, 
+                    senderId: msg.senderId, 
+                    userId: user?.id, 
+                    isOwn,
+                    message: msg.message.substring(0, 30) + '...'
+                  });
                   return (
                     <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
                       <div

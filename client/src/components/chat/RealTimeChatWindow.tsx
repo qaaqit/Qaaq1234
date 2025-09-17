@@ -223,8 +223,8 @@ export default function RealTimeChatWindow({
               <div
                 className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                   isMyMessage
-                    ? 'bg-orange-500 text-white'
-                    : 'bg-gray-100 text-gray-900'
+                    ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-md'
+                    : 'bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 text-gray-800 shadow-sm'
                 }`}
               >
                 <p className="text-sm">{message.message}</p>
