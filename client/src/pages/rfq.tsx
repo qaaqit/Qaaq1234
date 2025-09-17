@@ -1061,9 +1061,7 @@ export default function RFQPage({ user }: RFQPageProps) {
                 </DropdownMenuContent>
               </DropdownMenu>
               <div className="min-w-0 flex items-center space-x-2">
-                <h1 className="text-base sm:text-xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent whitespace-nowrap">
-                  Qaaqit Premium
-                </h1>
+                <h1 className="text-base sm:text-xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent whitespace-nowrap">Qaaqit (Quickly Supply It)</h1>
                 {isPremium && (
                   <Crown className="w-5 h-5 text-yellow-500 animate-pulse" />
                 )}
@@ -1087,7 +1085,6 @@ export default function RFQPage({ user }: RFQPageProps) {
           </div>
         </div>
       </header>
-
       {/* RFQ Header Section */}
       <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-4">
         <div className="flex items-center gap-3">
@@ -1098,7 +1095,6 @@ export default function RFQPage({ user }: RFQPageProps) {
           </div>
         </div>
       </div>
-
       {/* Main Content */}
       <div className="flex-1 overflow-hidden">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col h-full">
