@@ -1183,7 +1183,11 @@ export default function RFQPage({ user }: RFQPageProps) {
                   </div>
                 ) : (
                   rfqRequests.map((rfq) => (
-                    <Card key={rfq.id} className="border border-orange-200 hover:shadow-lg transition-all cursor-pointer">
+                    <Card 
+                      key={rfq.id} 
+                      className="border border-orange-200 hover:shadow-lg transition-all cursor-pointer"
+                      onClick={() => setLocation(`/rfq/${rfq.location.toLowerCase().replace(/\s+/g, '-')}/${rfq.id}`)}
+                    >
                       <CardHeader className="pb-3">
                         <div className="flex justify-between items-start">
                           <div className="space-y-2">
