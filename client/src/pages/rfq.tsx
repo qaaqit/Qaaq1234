@@ -1437,7 +1437,7 @@ export default function RFQPage({ user }: RFQPageProps) {
                               ) : (
                                 <>
                                   <Lightbulb className="w-4 h-4 mr-1" />
-                                  Extract Specs
+                                  List Specs
                                 </>
                               )}
                             </Button>
