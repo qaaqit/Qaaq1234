@@ -462,6 +462,156 @@ export class AIService {
     }
   }
 
+  async extractSpecifications(rfqText: string, user: any): Promise<{
+    categories: Array<{
+      name: string;
+      specifications: Array<{
+        key: string;
+        value: string;
+        unit?: string;
+      }>;
+    }>;
+    extractedAt: string;
+    model: string;
+  }> {
+    const startTime = Date.now();
+    
+    try {
+      if (!this.openai) {
+        await this.initOpenAI();
+      }
+
+      const systemPrompt = `You are an AI assistant specialized in extracting technical specifications from maritime equipment and service requirements. Your task is to analyze RFQ (Request for Quote) text and extract structured specifications in a standardized format.
+
+CRITICAL INSTRUCTIONS:
+- Extract ALL technical specifications, measurements, requirements, and features mentioned
+- Group related specifications into logical categories
+- Return ONLY a valid JSON object - no additional text or markdown
+- Use consistent category names (e.g., "Physical Specifications", "Technical Features", "Performance", "Materials", "Power Requirements", "Safety Features", "Compliance & Standards")
+- Include units when specified (e.g., "kg", "mm", "V", "A", "bar", "°C")
+- If a value has a range, keep it as written (e.g., "2-3", "5 or 15")
+
+RESPONSE FORMAT - Return only this JSON structure:
+{
+  "categories": [
+    {
+      "name": "Physical Specifications",
+      "specifications": [
+        {"key": "Weight", "value": "6.5", "unit": "kg"},
+        {"key": "Length", "value": "550", "unit": "mm"}
+      ]
+    },
+    {
+      "name": "Technical Features", 
+      "specifications": [
+        {"key": "Light Type", "value": "LED Xenon lamp"},
+        {"key": "Light Intensity", "value": "5 or 15", "unit": "Candela"}
+      ]
+    }
+  ]
+}
+
+EXAMPLE INPUT: "Emergency Towing System Buoy with a flashing light: Weight & Dimensions: 6.5 kg, 550 mm length. Lighting System: LED Xenon lamp, yellow housing of ABS, clear Lexan lens, 5 or 15 Candela light intensity, 2 or 3 Nautical Miles surface range, 6 km radiation distance. Material & Features: E.V.A buoy material, waterproof down to 200 meters, on/off daylight sensor with magnet/reed contact, 25 flashes per minute. Power Source: Requires 3 D-cell batteries."
+
+EXAMPLE OUTPUT:
+{
+  "categories": [
+    {
+      "name": "Physical Specifications",
+      "specifications": [
+        {"key": "Weight", "value": "6.5", "unit": "kg"},
+        {"key": "Length", "value": "550", "unit": "mm"}
+      ]
+    },
+    {
+      "name": "Lighting System",
+      "specifications": [
+        {"key": "Light Type", "value": "LED Xenon lamp"},
+        {"key": "Housing Color", "value": "yellow"},
+        {"key": "Housing Material", "value": "ABS"},
+        {"key": "Lens Material", "value": "clear Lexan"},
+        {"key": "Light Intensity", "value": "5 or 15", "unit": "Candela"},
+        {"key": "Surface Range", "value": "2 or 3", "unit": "Nautical Miles"},
+        {"key": "Radiation Distance", "value": "6", "unit": "km"},
+        {"key": "Flash Rate", "value": "25", "unit": "flashes per minute"}
+      ]
+    },
+    {
+      "name": "Materials & Features",
+      "specifications": [
+        {"key": "Buoy Material", "value": "E.V.A"},
+        {"key": "Waterproof Rating", "value": "200", "unit": "meters"},
+        {"key": "Daylight Sensor", "value": "on/off with magnet/reed contact"}
+      ]
+    },
+    {
+      "name": "Power Requirements",
+      "specifications": [
+        {"key": "Battery Type", "value": "3 D-cell batteries"}
+      ]
+    }
+  ]
+}`;
+
+      console.log('🔧 Extracting specifications from RFQ text...');
+      
+      // Use premium model for specification extraction for accuracy
+      const isPremium = this.isPremiumUser(user);
+      const model = "gpt-4o"; // Always use the best model for spec extraction
+      const maxTokens = 1500; // Need more tokens for structured output
+      
+      console.log(`🚀 Using ${model} model for specification extraction`);
+
+      const response = await this.openai.chat.completions.create({
+        model,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: `Extract specifications from this RFQ text:\n\n${rfqText}` }
+        ],
+        max_tokens: maxTokens,
+        temperature: 0.1, // Low temperature for consistent structured output
+        response_format: { type: "json_object" } // Ensure JSON response
+      });
+
+      let content = response.choices[0]?.message?.content;
+      
+      if (!content) {
+        console.warn('⚠️ No content in specification extraction response');
+        throw new Error('No content received from AI');
+      }
+
+      console.log('🔧 Raw specification extraction response:', content);
+
+      // Parse the JSON response
+      let extractedData;
+      try {
+        extractedData = JSON.parse(content);
+      } catch (parseError) {
+        console.error('❌ Failed to parse JSON response:', parseError);
+        throw new Error('Invalid JSON response from AI');
+      }
+
+      // Validate the structure
+      if (!extractedData.categories || !Array.isArray(extractedData.categories)) {
+        console.error('❌ Invalid response structure:', extractedData);
+        throw new Error('Invalid specification structure returned');
+      }
+
+      const responseTime = Date.now() - startTime;
+      console.log(`✅ Specifications extracted successfully in ${responseTime}ms`);
+
+      return {
+        categories: extractedData.categories,
+        extractedAt: new Date().toISOString(),
+        model: model
+      };
+
+    } catch (error) {
+      console.error('❌ Specification extraction failed:', error);
+      throw new Error(`Specification extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
 
   async generateDualResponse(message: string, category: string, user: any, activeRules?: string, preferredModel?: 'openai' | 'gemini' | 'deepseek' | 'mistral', language = 'en', conversationHistory?: any[]): Promise<AIResponse> {
     // 4-model system: OpenAI, Gemini, Deepseek, Mistral

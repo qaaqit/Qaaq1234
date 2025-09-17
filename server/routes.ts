@@ -2982,6 +2982,155 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // RFQ Specification Extraction - Extract specs from RFQ text using AI
+  app.post("/api/rfq/:id/extract-specs", authenticateToken, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.userId;
+
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      // Check if RFQ exists and user owns it
+      const rfqResult = await db
+        .select({
+          id: rfqRequests.id,
+          userId: rfqRequests.userId,
+          title: rfqRequests.title,
+          description: rfqRequests.description,
+        })
+        .from(rfqRequests)
+        .where(eq(rfqRequests.id, id))
+        .limit(1);
+
+      if (!rfqResult.length) {
+        return res.status(404).json({ message: "RFQ not found" });
+      }
+
+      const rfq = rfqResult[0];
+
+      // Check ownership
+      if (rfq.userId !== userId) {
+        return res.status(403).json({ message: "You can only extract specifications from your own RFQs" });
+      }
+
+      // Get user data for AI context
+      const userResult = await db
+        .select({
+          id: users.id,
+          fullName: users.fullName,
+          email: users.email,
+          maritimeRank: users.maritimeRank,
+          shipName: users.shipName,
+        })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+
+      if (!userResult.length) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const user = userResult[0];
+
+      // Combine title and description for specification extraction
+      const rfqText = `${rfq.title}\n\n${rfq.description}`;
+
+      console.log(`🔧 Extracting specifications for RFQ: ${id}`);
+
+      // Use AI service to extract specifications
+      const extractedSpecs = await aiService.extractSpecifications(rfqText, user);
+
+      console.log('✅ Specifications extracted successfully');
+
+      res.json({
+        success: true,
+        specifications: extractedSpecs,
+        rfqId: id,
+        message: "Specifications extracted successfully"
+      });
+
+    } catch (error: unknown) {
+      console.error('❌ Specification extraction error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to extract specifications", 
+        error: errorMessage 
+      });
+    }
+  });
+
+  // RFQ Specification Saving - Save extracted specs to database
+  app.put("/api/rfq/:id/specs", authenticateToken, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { specifications } = req.body;
+      const userId = req.userId;
+
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      // Validate specifications data structure
+      if (!specifications || !specifications.categories || !Array.isArray(specifications.categories)) {
+        return res.status(400).json({ 
+          message: "Invalid specifications format" 
+        });
+      }
+
+      // Check if RFQ exists and user owns it
+      const rfqResult = await db
+        .select({
+          id: rfqRequests.id,
+          userId: rfqRequests.userId,
+        })
+        .from(rfqRequests)
+        .where(eq(rfqRequests.id, id))
+        .limit(1);
+
+      if (!rfqResult.length) {
+        return res.status(404).json({ message: "RFQ not found" });
+      }
+
+      const rfq = rfqResult[0];
+
+      // Check ownership
+      if (rfq.userId !== userId) {
+        return res.status(403).json({ message: "You can only update specifications for your own RFQs" });
+      }
+
+      console.log(`💾 Saving specifications for RFQ: ${id}`);
+
+      // Update RFQ with extracted specifications
+      await db
+        .update(rfqRequests)
+        .set({ 
+          extractedSpecs: specifications,
+          updatedAt: sql`now()`
+        })
+        .where(eq(rfqRequests.id, id));
+
+      console.log('✅ Specifications saved successfully');
+
+      res.json({
+        success: true,
+        message: "Specifications saved successfully",
+        rfqId: id
+      });
+
+    } catch (error: unknown) {
+      console.error('❌ Error saving specifications:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to save specifications", 
+        error: errorMessage 
+      });
+    }
+  });
+
   // Get users with location data for map
   app.get("/api/users/map", async (req, res) => {
     try {

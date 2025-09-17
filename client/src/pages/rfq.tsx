@@ -135,6 +135,12 @@ export default function RFQPage({ user }: RFQPageProps) {
   });
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
 
+  // Specification extraction state
+  const [extractedSpecs, setExtractedSpecs] = useState<Record<string, any>>({});
+  const [isExtracting, setIsExtracting] = useState<Record<string, boolean>>({});
+  const [showSpecModal, setShowSpecModal] = useState(false);
+  const [selectedRFQForSpecs, setSelectedRFQForSpecs] = useState<RFQRequest | null>(null);
+
   // Upload handlers
   const handleGetUploadParameters = async () => {
     try {
@@ -655,6 +661,99 @@ export default function RFQPage({ user }: RFQPageProps) {
     setShowAdvancedOptions(false);
   };
 
+  // Extract specifications from RFQ using AI
+  const extractSpecifications = async (rfq: RFQRequest) => {
+    if (!user || !rfq) return;
+
+    // Set loading state for this specific RFQ
+    setIsExtracting(prev => ({ ...prev, [rfq.id]: true }));
+
+    try {
+      toast({
+        title: "🔧 Extracting Specifications",
+        description: "AI is analyzing your RFQ to extract technical specifications...",
+      });
+
+      // Call the API to extract specifications
+      const response = await fetch(`/api/rfq/${rfq.id}/extract-specs`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Extraction failed' }));
+        throw new Error(errorData.message || 'Failed to extract specifications');
+      }
+
+      const result = await response.json();
+
+      // Store extracted specifications in local state
+      setExtractedSpecs(prev => ({
+        ...prev,
+        [rfq.id]: result.specifications
+      }));
+
+      // Open the specifications modal
+      setSelectedRFQForSpecs(rfq);
+      setShowSpecModal(true);
+
+      toast({
+        title: "✅ Specifications Extracted",
+        description: "AI has successfully analyzed your RFQ and extracted technical specifications.",
+      });
+
+    } catch (error) {
+      console.error('Error extracting specifications:', error);
+      toast({
+        title: "Failed to Extract Specifications",
+        description: error instanceof Error ? error.message : "Please try again later.",
+        variant: "destructive"
+      });
+    } finally {
+      // Clear loading state
+      setIsExtracting(prev => ({ ...prev, [rfq.id]: false }));
+    }
+  };
+
+  // Save extracted specifications to database
+  const saveSpecifications = async (rfqId: string, specifications: any) => {
+    try {
+      const response = await fetch(`/api/rfq/${rfqId}/specs`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ specifications })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Save failed' }));
+        throw new Error(errorData.message || 'Failed to save specifications');
+      }
+
+      toast({
+        title: "💾 Specifications Saved",
+        description: "Your extracted specifications have been saved to the RFQ.",
+      });
+
+      // Close the modal after saving
+      setShowSpecModal(false);
+      setSelectedRFQForSpecs(null);
+
+    } catch (error) {
+      console.error('Error saving specifications:', error);
+      toast({
+        title: "Failed to Save Specifications",
+        description: error instanceof Error ? error.message : "Please try again later.",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Submit quote
   const submitQuote = async () => {
     if (!selectedRFQ || !quoteForm.price) {
@@ -1101,6 +1200,19 @@ export default function RFQPage({ user }: RFQPageProps) {
                                 <Button 
                                   size="sm" 
                                   variant="outline" 
+                                  className="border-yellow-200 hover:bg-yellow-50 text-yellow-600"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    extractSpecifications(rfq);
+                                  }}
+                                  data-testid={`button-extract-specs-${rfq.id}`}
+                                  title="Extract specifications with AI"
+                                >
+                                  💡
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
                                   className="border-blue-200 hover:bg-blue-50 text-blue-600"
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -1507,6 +1619,128 @@ export default function RFQPage({ user }: RFQPageProps) {
                     Submit Quote
                   </Button>
                 </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Specifications Extraction Modal */}
+        <Dialog open={showSpecModal} onOpenChange={setShowSpecModal}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                💡
+                AI-Extracted Specifications
+              </DialogTitle>
+              <DialogDescription>
+                Review and save the specifications extracted from your RFQ
+              </DialogDescription>
+            </DialogHeader>
+            
+            {selectedRFQForSpecs && extractedSpecs[selectedRFQForSpecs.id] && (
+              <div className="space-y-6">
+                {/* RFQ Overview */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-lg mb-2">{selectedRFQForSpecs.title}</h3>
+                  <p className="text-gray-700 text-sm">{selectedRFQForSpecs.description}</p>
+                </div>
+
+                {/* Extracted Specifications by Category */}
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-lg">Extracted Specifications</h4>
+                  
+                  {extractedSpecs[selectedRFQForSpecs.id].categories?.map((category: any, categoryIndex: number) => (
+                    <Card key={categoryIndex} className="border border-yellow-200">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <span className="bg-yellow-100 px-2 py-1 rounded-full text-sm font-medium text-yellow-800">
+                            {category.name}
+                          </span>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {category.specifications?.map((spec: any, specIndex: number) => (
+                            <div key={specIndex} className="flex items-start gap-3 p-2 bg-gray-50 rounded">
+                              <input
+                                type="checkbox"
+                                id={`spec-${categoryIndex}-${specIndex}`}
+                                defaultChecked={true}
+                                className="mt-0.5 h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded"
+                                data-testid={`checkbox-spec-${categoryIndex}-${specIndex}`}
+                              />
+                              <label 
+                                htmlFor={`spec-${categoryIndex}-${specIndex}`}
+                                className="flex-1 text-sm cursor-pointer"
+                              >
+                                <span className="font-medium text-gray-900">{spec.key}:</span>
+                                <span className="text-gray-700 ml-2">
+                                  {spec.value}
+                                  {spec.unit && <span className="text-gray-500 ml-1">{spec.unit}</span>}
+                                </span>
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+
+                  {/* Extraction Metadata */}
+                  <div className="bg-blue-50 p-3 rounded-lg">
+                    <div className="flex items-center gap-2 text-sm text-blue-700">
+                      <span>🤖</span>
+                      <span>
+                        Extracted using {extractedSpecs[selectedRFQForSpecs.id].model || 'AI'} 
+                        {extractedSpecs[selectedRFQForSpecs.id].extractedAt && 
+                          ` on ${new Date(extractedSpecs[selectedRFQForSpecs.id].extractedAt).toLocaleString()}`
+                        }
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 pt-4 border-t">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowSpecModal(false)}
+                    className="flex-1"
+                  >
+                    Close Without Saving
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => saveSpecifications(selectedRFQForSpecs.id, extractedSpecs[selectedRFQForSpecs.id])}
+                    className="flex-1 bg-yellow-600 hover:bg-yellow-700"
+                    data-testid="button-save-specifications"
+                  >
+                    💾 Save Specifications
+                  </Button>
+                </div>
+              </div>
+            )}
+            
+            {/* Loading State */}
+            {selectedRFQForSpecs && isExtracting[selectedRFQForSpecs.id] && (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-600 mx-auto mb-4"></div>
+                <p className="text-gray-600">🔧 AI is extracting specifications...</p>
+              </div>
+            )}
+            
+            {/* Empty State */}
+            {selectedRFQForSpecs && !extractedSpecs[selectedRFQForSpecs.id] && !isExtracting[selectedRFQForSpecs.id] && (
+              <div className="text-center py-8">
+                <div className="text-6xl mb-4">💡</div>
+                <p className="text-gray-600">No specifications extracted yet.</p>
+                <Button
+                  onClick={() => extractSpecifications(selectedRFQForSpecs)}
+                  className="mt-4 bg-yellow-600 hover:bg-yellow-700"
+                >
+                  Extract Specifications
+                </Button>
               </div>
             )}
           </DialogContent>

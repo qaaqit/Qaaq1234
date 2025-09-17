@@ -180,6 +180,20 @@ export const rfqRequests = pgTable("rfq_requests", {
   viewCount: integer("view_count").default(0),
   quoteCount: integer("quote_count").default(0),
   
+  // AI-extracted specifications storage
+  extractedSpecs: jsonb("extracted_specs").$type<{
+    categories: Array<{
+      name: string;
+      specifications: Array<{
+        key: string;
+        value: string;
+        unit?: string;
+      }>;
+    }>;
+    extractedAt?: string;
+    model?: string;
+  }>(),
+  
   // New slug-based URL fields
   portSlug: text("port_slug").notNull(), // Normalized location slug (e.g., 'singapore', 'mumbai')
   postedDate: date("posted_date").notNull(), // UTC date from createdAt (e.g., '2025-01-15')
