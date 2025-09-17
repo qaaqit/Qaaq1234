@@ -106,12 +106,12 @@ async function upsertUser(
           providerId: claims["sub"],
           isVerified: true,
           metadata: {
-            consolidatedAt: new Date().toISOString(),
+            consolidatedAt: [new Date().toISOString()],
             replitClaims: claims
           }
         });
         console.log(`✅ REPLIT AUTH: Linked Replit identity to existing user ${existingUser.id}`);
-      } catch (linkError) {
+      } catch (linkError: any) {
         console.log(`ℹ️ REPLIT AUTH: Identity already linked or table missing:`, linkError.message);
       }
       
@@ -252,7 +252,7 @@ export async function setupAuth(app: Express) {
     console.log('🔄 Replit Auth: Callback received for hostname:', req.hostname);
     console.log('🔄 Replit Auth: Callback query params:', req.query);
     
-    passport.authenticate(`replitauth:${req.hostname}`, (err, user, info) => {
+    passport.authenticate(`replitauth:${req.hostname}`, (err: any, user: any, info: any) => {
       if (err) {
         console.error('❌ Replit Auth: Authentication error:', err);
         return res.redirect('/login?error=auth_failed');
