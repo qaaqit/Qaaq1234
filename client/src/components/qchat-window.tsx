@@ -349,8 +349,8 @@ export default function QChatWindow({ isOpen, onClose, connection }: QChatWindow
                       <div
                         className={`max-w-[70%] p-3 rounded-2xl shadow-sm ${
                           isOwn 
-                            ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-br-md' 
-                            : 'bg-white border border-gray-200 text-gray-800 rounded-bl-md'
+                            ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-br-md shadow-md' 
+                            : 'bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 text-gray-800 rounded-bl-md shadow-sm'
                         }`}
                       >
                         <p className="text-sm leading-relaxed">{msg.message}</p>
