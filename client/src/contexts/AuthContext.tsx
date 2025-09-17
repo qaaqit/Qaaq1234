@@ -50,8 +50,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       setIsLoading(true);
 
-      // Check JWT token first (fastest)
-      const jwtToken = localStorage.getItem('token');
+      // Check JWT token first (fastest) - check both possible storage keys
+      const jwtToken = localStorage.getItem('token') || localStorage.getItem('auth_token');
       if (jwtToken) {
         try {
           const response = await fetch('/api/auth/verify-token', {
