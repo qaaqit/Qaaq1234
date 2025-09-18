@@ -6110,7 +6110,9 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   // QBOT chat endpoint - responds to user messages with AI
   app.post('/api/qbot/chat', optionalAuth, async (req, res) => {
     try {
-      console.log(`🤖 QBOT API Request received: Message="${req.body.message}", User ID: ${req.userId}`);
+      console.log(`🤖 QBOT API Request received: Raw body keys: ${Object.keys(req.body || {}).join(', ')}, User ID: ${req.userId}`);
+      console.log(`🤖 QBOT Request body preview: ${JSON.stringify(req.body).substring(0, 200)}...`);
+      
       const { message, attachments, isPrivate, aiModels, language = 'en', conversationHistory } = req.body;
       const userId = req.userId;
       
