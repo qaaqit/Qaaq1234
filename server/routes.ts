@@ -6122,6 +6122,17 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         return res.status(400).json({ message: 'Message is required' });
       }
 
+      // Get user info if authenticated (moved here to be available for Q2Q processing)
+      let user = null;
+      if (userId) {
+        try {
+          const userResult = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
+          user = userResult.rows[0];
+        } catch (error) {
+          console.log('User not found or not authenticated, proceeding without user context');
+        }
+      }
+
       // CHECK IF MESSAGE IS Q2Q SELECTION FIRST (before feedback check)
       const isQ2QSelection = (message.trim() === '1' || message.trim() === '2') && 
         conversationHistory && conversationHistory.length > 0;
@@ -6222,38 +6233,6 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
         });
       }
 
-      // Get user info if authenticated
-      let user = null;
-      if (userId) {
-        try {
-          const userResult = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
-          user = userResult.rows[0];
-          
-          // CRITICAL FIX: Use frontend-provided premium status instead of database
-          if (isPremium !== undefined) {
-            user.isPremium = isPremium;
-            user.id = userId; // Ensure user ID is set for AI service
-            user.userId = userId; // Backup field for AI service
-            console.log(`🔧 Using frontend premium status for user ${userId}: ${isPremium ? 'PREMIUM' : 'FREE'}`);
-          }
-        } catch (error) {
-          console.log('User not found or not authenticated, proceeding without user context');
-        }
-      } else if (isPremium === true) {
-        // FALLBACK: Create minimal user object when premium status is explicitly provided
-        // This handles cases where JWT extraction fails but frontend confirms premium status
-        user = {
-          id: 'premium-fallback',
-          userId: 'premium-fallback',
-          isPremium: true,
-          isAdmin: false,
-          fullName: 'Premium User',
-          email: 'premium@qaaqconnect.com',
-          maritimeRank: 'Maritime Professional',
-          userType: 'sailor'
-        };
-        console.log(`🎯 FALLBACK: Created premium user object for authenticated premium user without JWT extraction`);
-      }
 
       // CHECK 20 FREE QUESTIONS LIMIT FOR AUTHENTICATED USERS
       if (user) {
