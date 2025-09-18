@@ -534,7 +534,7 @@ export default function DMPage() {
                   />
                 </div>
                 <div className="min-w-0">
-                  <h1 className="text-base sm:text-xl font-bold text-gray-800 whitespace-nowrap">QaaqConnect</h1>
+                  <h1 className="text-base sm:text-xl font-bold text-gray-800 whitespace-nowrap">Qaaqit (Quickly DM it)</h1>
                   <p className="text-xs sm:text-sm text-orange-600 italic font-medium whitespace-nowrap">Sailor Search</p>
                 </div>
               </button>
