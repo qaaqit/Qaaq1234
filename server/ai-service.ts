@@ -1,3 +1,5 @@
+import { nanoid } from 'nanoid';
+
 export interface AIResponse {
   content: string;
   model: 'openai' | 'gemini' | 'deepseek' | 'mistral';
@@ -9,6 +11,7 @@ export class AIService {
   private openai: any;
   private deepseek: any;
   private mistral: any;
+  private userThreads: Map<string, string> = new Map(); // Store thread IDs per user
 
   constructor() {
     // Initialize OpenAI
@@ -48,6 +51,38 @@ export class AIService {
     });
   }
 
+  // Helper method to get or create a thread for a user
+  private async getOrCreateThread(userId: string): Promise<string> {
+    if (!this.openai) {
+      await this.initOpenAI();
+    }
+
+    // Check if we have an existing thread for this user
+    const existingThreadId = this.userThreads.get(userId);
+    if (existingThreadId) {
+      try {
+        // Verify the thread still exists
+        await this.openai.beta.threads.retrieve(existingThreadId);
+        console.log(`🧵 Using existing thread ${existingThreadId} for user ${userId}`);
+        return existingThreadId;
+      } catch (error) {
+        console.log(`⚠️ Thread ${existingThreadId} no longer exists for user ${userId}, creating new one`);
+        this.userThreads.delete(userId);
+      }
+    }
+
+    // Create a new thread
+    try {
+      const thread = await this.openai.beta.threads.create();
+      this.userThreads.set(userId, thread.id);
+      console.log(`🧵 Created new thread ${thread.id} for user ${userId}`);
+      return thread.id;
+    } catch (error) {
+      console.error('❌ Failed to create thread:', error);
+      throw new Error(`Failed to create conversation thread: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
   async generateOpenAIResponse(message: string, category: string, user: any, activeRules?: string, language = 'en', conversationHistory?: any[]): Promise<AIResponse> {
     const startTime = Date.now();
     
@@ -56,90 +91,158 @@ export class AIService {
         await this.initOpenAI();
       }
 
+      const assistantId = "asst_a3lKuy0P0mr9g5MJ0vKkkMbM";
+      const userId = user?.id || user?.userId || `session_${nanoid(16)}`;  // Unique per-session ID to prevent cross-user mixing
+      
+      // Get user context details
       const userRank = user?.maritimeRank || 'Maritime Professional';
       const userShip = user?.shipName ? `aboard ${user.shipName}` : 'shore-based';
-      
-      let systemPrompt = `You are QBOT, an advanced maritime AI assistant and the primary chat interface for QaaqConnect. 
-      You specialize in ${category} and serve the global maritime community with expert knowledge on:
-      - Maritime engineering, maintenance, and troubleshooting
-      - Navigation, regulations, and safety procedures  
-      - Ship operations, cargo handling, and port procedures
-      - Career guidance for maritime professionals
-      - Technical specifications for maritime equipment
-      
-      User context: ${userRank} ${userShip}
-      
-      LANGUAGE: ${language === 'tr' ? 'Respond in Turkish language only' : 'Respond in English language only'}
-      
-      CRITICAL RESPONSE FORMAT:
-      - ALWAYS respond in bullet point format with exactly 3-5 bullet points
-      - Keep total response between 30-50 words maximum
-      - Each bullet point should be 6-12 words maximum
-      - Use concise, technical language
-      - Prioritize safety and maritime regulations (SOLAS, MARPOL, STCW)
-      - Example format:
-        • [Action/Solution in 6-12 words]
-        • [Technical detail in 6-12 words]  
-        • [Safety consideration in 6-12 words]
-        • [Regulation reference if applicable]
-      
-      Q2Q FOLLOW-UP REQUIREMENT:
-      - ALWAYS end your response with exactly TWO relevant follow-up questions in selectable format
-      - Format: "Would u 'also' like to know\na) [specific related topic]\nor\nb) [another specific related topic] Reply a or b to confirm." 
-      - Questions should deepen understanding of the core topic
-      - Users can reply with just "a" or "b" to select their preferred question
-      - Example: If asked about centrifugal pump, follow with:
-        "Would u 'also' like to know
-        a) what is Lantern Ring in a Centrifugal pump
-        or
-        b) the material by which impeller, casing & mouth ring are made Reply a or b to confirm."`;
-      
-      if (activeRules) {
-        systemPrompt += `\n\nActive bot documentation guidelines:\n${activeRules.substring(0, 800)}`;
-      }
-
-      console.log('🤖 OpenAI: Making API request...');
-      
-      // Use GPT-5 for premium users, GPT-4o-mini for free users
       const isPremium = this.isPremiumUser(user);
-      const model = isPremium ? "gpt-4o" : "gpt-4o-mini";  // Using gpt-4o as premium model
-      const maxTokens = isPremium ? 450 : 250;  // More tokens for premium users (increased for Q2Q questions)
       
-      console.log(`🚀 Using ${model} model for ${isPremium ? 'PREMIUM' : 'FREE'} user`);
+      console.log('🤖 OpenAI Assistant: Making API request...');
+      console.log(`🚀 Using assistant ${assistantId} for ${isPremium ? 'PREMIUM' : 'FREE'} user`);
       
-      // Build conversation messages including history
-      const messages: any[] = [{ role: "system", content: systemPrompt }];
+      // Get or create a thread for this user
+      const threadId = await this.getOrCreateThread(userId);
       
-      // Add conversation history if provided (last 5 exchanges to stay within token limits)
+      // Add conversation history if provided (for new threads)
       if (conversationHistory && conversationHistory.length > 0) {
-        const recentHistory = conversationHistory.slice(-10); // Last 10 messages
-        recentHistory.forEach(msg => {
-          if (msg.sender === 'user') {
-            messages.push({ role: "user", content: msg.text });
-          } else if (msg.sender === 'bot') {
-            messages.push({ role: "assistant", content: msg.text });
+        console.log(`📚 Adding ${conversationHistory.length} messages from conversation history`);
+        
+        for (const historyMessage of conversationHistory) {
+          try {
+            await this.openai.beta.threads.messages.create(threadId, {
+              role: historyMessage.role === 'user' ? 'user' : 'assistant',
+              content: historyMessage.content
+            });
+          } catch (error) {
+            console.warn('⚠️ Failed to add history message:', error);
           }
-        });
+        }
       }
       
-      // Add current message
-      messages.push({ role: "user", content: message });
-
-      const response = await this.openai.chat.completions.create({
-        model,
-        messages,
-        max_tokens: maxTokens,
-        temperature: 0.7,
+      // Build contextual message that includes user info, language, and rules
+      let contextualMessage = message;
+      
+      // Add user context to the message
+      if (userRank !== 'Maritime Professional' || user?.shipName) {
+        contextualMessage = `[USER CONTEXT: ${userRank} ${userShip}]\n\n${message}`;
+      }
+      
+      // Add language preference
+      if (language === 'tr') {
+        contextualMessage = `[LANGUAGE: Please respond in Turkish language only]\n\n${contextualMessage}`;
+      } else {
+        contextualMessage = `[LANGUAGE: Please respond in English language only]\n\n${contextualMessage}`;
+      }
+      
+      // Add category specialization
+      if (category) {
+        contextualMessage = `[SPECIALIZATION: Focus on ${category}]\n\n${contextualMessage}`;
+      }
+      
+      // Add active rules if provided
+      if (activeRules) {
+        contextualMessage = `[ADDITIONAL GUIDELINES: ${activeRules.substring(0, 800)}]\n\n${contextualMessage}`;
+      }
+      
+      // Add message to thread
+      await this.openai.beta.threads.messages.create(threadId, {
+        role: "user",
+        content: contextualMessage
       });
+      
+      // Build additional instructions to preserve output format
+      const additionalInstructions = `CRITICAL RESPONSE FORMAT:
+- ALWAYS respond in bullet point format with exactly 3-5 bullet points
+- Keep total response between 30-50 words maximum
+- Each bullet point should be 6-12 words maximum
+- Use concise, technical language
+- Prioritize safety and maritime regulations (SOLAS, MARPOL, STCW)
+- Example format:
+  • [Action/Solution in 6-12 words]
+  • [Technical detail in 6-12 words]
+  • [Safety consideration in 6-12 words]
+  • [Regulation reference if applicable]
 
-      let content = response.choices[0]?.message?.content;
+Q2Q FOLLOW-UP REQUIREMENT:
+- ALWAYS end your response with exactly TWO relevant follow-up questions in selectable format
+- Format: "Would u 'also' like to know\na) [specific related topic]\nor\nb) [another specific related topic] Reply a or b to confirm."
+- Questions should deepen understanding of the core topic
+- Users can reply with just "a" or "b" to select their preferred question
+- Example: If asked about centrifugal pump, follow with:
+  "Would u 'also' like to know
+  a) what is Lantern Ring in a Centrifugal pump
+  or
+  b) the material by which impeller, casing & mouth ring are made Reply a or b to confirm."`;
+      
+      // Run the assistant with additional instructions
+      const run = await this.openai.beta.threads.runs.create(threadId, {
+        assistant_id: assistantId,
+        additional_instructions: additionalInstructions
+      });
+      
+      // Wait for completion with timeout
+      let runStatus = run;
+      const maxWaitTime = 60000; // 60 seconds timeout
+      const pollInterval = 1000; // Check every second
+      let waitedTime = 0;
+      
+      console.log(`🏃 Running assistant ${assistantId} on thread ${threadId}...`);
+      
+      while (runStatus.status === 'queued' || runStatus.status === 'in_progress') {
+        if (waitedTime >= maxWaitTime) {
+          console.error('❌ Assistant run timeout');
+          throw new Error('Assistant response timeout');
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, pollInterval));
+        waitedTime += pollInterval;
+        
+        runStatus = await this.openai.beta.threads.runs.retrieve(threadId, run.id);
+        console.log(`⏳ Assistant status: ${runStatus.status} (${waitedTime}ms)`);
+      }
+      
+      if (runStatus.status !== 'completed') {
+        console.error(`❌ Assistant run failed with status: ${runStatus.status}`);
+        if (runStatus.last_error) {
+          console.error('Last error:', runStatus.last_error);
+        }
+        throw new Error(`Assistant run failed: ${runStatus.status}`);
+      }
+      
+      // Retrieve messages from the thread, filtering by run_id to get the correct response
+      const messages = await this.openai.beta.threads.messages.list(threadId, {
+        order: 'desc',
+        limit: 20  // Get more messages to ensure we find the correct run response
+      });
+      
+      // Filter messages by run_id and role to get the specific assistant response for this run
+      const assistantMessage = messages.data.find((message: any) => 
+        message.role === 'assistant' && message.run_id === run.id
+      );
+      
+      if (!assistantMessage) {
+        console.error(`❌ No assistant message found for run ${run.id} in thread ${threadId}`);
+        console.log('Available messages:', messages.data.map((m: any) => ({ role: m.role, run_id: m.run_id, created_at: m.created_at })));
+        throw new Error(`No response from assistant for run ${run.id}`);
+      }
+      
+      // Extract text content from the message
+      let content = '';
+      if (assistantMessage.content && assistantMessage.content.length > 0) {
+        const textContent = assistantMessage.content.find((content: any) => content.type === 'text');
+        if (textContent && textContent.text) {
+          content = textContent.text.value;
+        }
+      }
       
       if (!content) {
-        console.warn('⚠️ OpenAI: No content in response, using fallback');
+        console.warn('⚠️ OpenAI Assistant: No content in response, using fallback');
         content = 'Unable to generate response at this time.';
       }
       
-      console.log('🤖 OpenAI: Response generated successfully:', content.substring(0, 100) + '...');
+      console.log('🤖 OpenAI Assistant: Response generated successfully:', content.substring(0, 100) + '...');
       const responseTime = Date.now() - startTime;
 
       // Apply free user limits if user is not premium
@@ -148,13 +251,13 @@ export class AIService {
       return {
         content: finalContent,
         model: 'openai',
-        tokens: response.usage?.total_tokens,
+        tokens: runStatus.usage?.total_tokens,
         responseTime
       };
 
     } catch (error) {
-      console.error('OpenAI API error:', error);
-      throw new Error(`OpenAI generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('OpenAI Assistant API error:', error);
+      throw new Error(`OpenAI Assistant generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
