@@ -759,10 +759,10 @@ export default function RFQDetailPage({ user }: RFQDetailPageProps) {
                     data-testid={`badge-urgency-${rfqData.urgency}`}
                   >
                     {getUrgencyIcon(rfqData.urgency)}
-                    <span>{rfqData.urgency.toUpperCase()}</span>
+                    <span>{rfqData.urgency?.toUpperCase() || 'STANDARD'}</span>
                   </Badge>
                   <Badge variant="outline" data-testid={`badge-status-${rfqData.status}`}>
-                    {rfqData.status.toUpperCase()}
+                    {rfqData.status?.toUpperCase() || 'PENDING'}
                   </Badge>
                 </div>
               </div>
