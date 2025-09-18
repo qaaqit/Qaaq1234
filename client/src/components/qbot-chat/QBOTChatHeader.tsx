@@ -1,4 +1,4 @@
-import { Trash2, Upload, Edit3, Crown, Archive } from 'lucide-react';
+import { Trash2, Upload, Edit3, Crown, Archive, Share2 } from 'lucide-react';
 import { useState } from 'react';
 import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -11,6 +11,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 interface QBOTChatHeaderProps {
   onClear?: () => void;
   onArchive?: () => void;
+  onShare?: () => void;
   isAdmin?: boolean;
 }
 
@@ -47,7 +48,7 @@ const DEFAULT_CHATBOT_INVITES = [
   "Expert advice?"
 ];
 
-export default function QBOTChatHeader({ onClear, onArchive, isAdmin = false }: QBOTChatHeaderProps) {
+export default function QBOTChatHeader({ onClear, onArchive, onShare, isAdmin = false }: QBOTChatHeaderProps) {
   const { t } = useLanguage();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [chatbotInvites, setChatbotInvites] = useState(() => {
@@ -110,6 +111,18 @@ export default function QBOTChatHeader({ onClear, onArchive, isAdmin = false }: 
       
       {/* Right: Archive, Language Switcher & Admin Tools */}
       <div className="flex items-center space-x-1">
+        {/* Share Chat Button */}
+        {onShare && (
+          <button
+            onClick={onShare}
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors group"
+            aria-label="Share conversation"
+            title="Share this conversation"
+          >
+            <Share2 size={16} className="text-gray-600 group-hover:text-orange-500" />
+          </button>
+        )}
+        
         {/* Archive Chat Button */}
         {onArchive && (
           <button

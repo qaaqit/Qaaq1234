@@ -213,6 +213,69 @@ export default function QBOTPage({ user }: QBOTPageProps) {
     });
   };
 
+  // Share conversation functionality
+  const handleShareConversation = async () => {
+    if (qBotMessages.length === 0) {
+      toast({
+        title: "No Conversation to Share",
+        description: "Start a conversation with QBOT first before sharing.",
+        duration: 3000,
+      });
+      return;
+    }
+
+    // Format conversation for sharing
+    const conversationText = qBotMessages.map((message) => {
+      const timestamp = message.timestamp.toLocaleString();
+      const sender = message.sender === 'user' ? 'You' : 'QBOT';
+      return `${sender} (${timestamp}):\n${message.text}\n`;
+    }).join('\n');
+
+    const shareText = `My conversation with QBOT - Maritime AI Assistant\n\n${conversationText}\n\nShared from QaaqConnect - Your Maritime Community`;
+    const shareUrl = `${window.location.origin}/qbot`;
+    
+    const shareData = {
+      title: 'My QBOT Conversation - QaaqConnect',
+      text: shareText,
+      url: shareUrl,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+        toast({
+          title: "Conversation Shared",
+          description: "Your QBOT conversation has been shared successfully.",
+          duration: 3000,
+        });
+      } catch (err) {
+        console.log('Error sharing:', err);
+        fallbackShare(shareText);
+      }
+    } else {
+      fallbackShare(shareText);
+    }
+  };
+
+  const fallbackShare = (text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      toast({
+        title: "Copied to Clipboard",
+        description: "Conversation copied to clipboard. You can now paste it anywhere.",
+        duration: 3000,
+      });
+    }).catch(() => {
+      // If clipboard fails, try to open WhatsApp
+      const encodedText = encodeURIComponent(text);
+      window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+      toast({
+        title: "Opening WhatsApp",
+        description: "WhatsApp opened with your conversation ready to share.",
+        duration: 3000,
+      });
+    });
+  };
+
   const handleClearQBotChat = async () => {
     if (qBotMessages.length === 0) {
       return;
@@ -396,6 +459,7 @@ export default function QBOTPage({ user }: QBOTPageProps) {
                   <QBOTChatHeader 
                     onClear={handleClearQBotChat}
                     onArchive={() => setShowClearConfirm(true)}
+                    onShare={handleShareConversation}
                     isAdmin={user?.isAdmin}
                   />
                   
