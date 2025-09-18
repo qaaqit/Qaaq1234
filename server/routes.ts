@@ -3004,7 +3004,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           <meta property="og:type" content="article">
           <meta property="og:site_name" content="QAAQ Connect">
           <meta property="og:title" content="${rfq.title}">
-          <meta property="og:description" content="${rfq.description.substring(0, 200)}...${rfq.location ? ' • Location: ' + rfq.location : ''}${rfq.budget ? ' • Budget: ' + rfq.budget : ''}">
+          <meta property="og:description" content="${rfq.description}. Location: ${rfq.location}">
           <meta property="og:url" content="${shareUrl}">
           <meta property="og:image" content="${shareImageUrl}">
           <meta property="og:image:alt" content="RFQ: ${rfq.title}">
@@ -3014,11 +3014,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           <!-- Twitter Card Meta Tags -->
           <meta name="twitter:card" content="summary_large_image">
           <meta name="twitter:title" content="${rfq.title}">
-          <meta name="twitter:description" content="${rfq.description.substring(0, 160)}...">
+          <meta name="twitter:description" content="${rfq.description}. Location: ${rfq.location}">
           <meta name="twitter:image" content="${shareImageUrl}">
           
           <!-- Standard Meta Tags -->
-          <meta name="description" content="${rfq.description.substring(0, 160)}...">
+          <meta name="description" content="${rfq.description}. Location: ${rfq.location}">
           <title>${rfq.title} - QAAQ Connect RFQ</title>
           
           <!-- Redirect to RFQ page -->
