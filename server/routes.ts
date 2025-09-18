@@ -2321,7 +2321,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create new RFQ request with slug generation
-  app.post("/api/rfq", authenticateToken, async (req, res) => {
+  app.post("/api/rfq", requireBridgedAuth, async (req, res) => {
     try {
       // Get user from session or authentication
       const userId = req.currentUser?.id || req.userId;
@@ -2455,7 +2455,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update RFQ request (for editing)
-  app.put("/api/rfq/:id", authenticateToken, async (req, res) => {
+  app.put("/api/rfq/:id", requireBridgedAuth, async (req, res) => {
     try {
       const { id } = req.params;
       const userId = req.userId!;
@@ -2500,7 +2500,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete RFQ request
-  app.delete("/api/rfq/:id", authenticateToken, async (req, res) => {
+  app.delete("/api/rfq/:id", requireBridgedAuth, async (req, res) => {
     try {
       const { id } = req.params;
       const userId = req.userId!;
@@ -3148,7 +3148,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // RFQ Specification Extraction from Text - Extract specs from raw text during form creation
-  app.post("/api/rfq/extract-specs-from-text", authenticateToken, async (req, res) => {
+  app.post("/api/rfq/extract-specs-from-text", requireBridgedAuth, async (req, res) => {
     try {
       const { description, title } = req.body;
       const userId = req.userId;
@@ -3208,7 +3208,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // RFQ Specification Extraction - Extract specs from RFQ text using AI
-  app.post("/api/rfq/:id/extract-specs", authenticateToken, async (req, res) => {
+  app.post("/api/rfq/:id/extract-specs", requireBridgedAuth, async (req, res) => {
     try {
       const { id } = req.params;
       const userId = req.userId;
@@ -3288,7 +3288,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // RFQ Specification Saving - Save extracted specs to database
-  app.put("/api/rfq/:id/specs", authenticateToken, async (req, res) => {
+  app.put("/api/rfq/:id/specs", requireBridgedAuth, async (req, res) => {
     try {
       const { id } = req.params;
       const { specifications } = req.body;
