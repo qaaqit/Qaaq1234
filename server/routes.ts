@@ -6110,7 +6110,8 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
   // QBOT chat endpoint - responds to user messages with AI
   app.post('/api/qbot/chat', optionalAuth, async (req, res) => {
     try {
-      const { message, attachments, isPrivate, aiModels, language = 'en', isPremium, conversationHistory } = req.body;
+      console.log(`🤖 QBOT API Request received: Message="${req.body.message}", User ID: ${req.userId}`);
+      const { message, attachments, isPrivate, aiModels, language = 'en', conversationHistory } = req.body;
       const userId = req.userId;
       
       // Log AI models selection for debugging
@@ -6151,7 +6152,7 @@ Please provide only the improved prompt (15-20 words maximum) without any explan
       const hasQ2QOptions = lastBotMessage.includes('Would u \'also\' like to know') && 
                            lastBotMessage.includes('Reply 1 or 2 to confirm');
       
-      console.log(`🔍 Q2Q Check: Message="${message.trim()}", Has Q2Q Options: ${hasQ2QOptions}, Last bot message length: ${lastBotMessage.length}`);
+      console.log(`🔍 Q2Q Check: Message="${message.trim()}", Is Q2Q Selection: ${isQ2QSelection}, Has Q2Q Options: ${hasQ2QOptions}, Last bot message length: ${lastBotMessage.length}`);
       
       // If this is a Q2Q selection (1 or 2) and previous bot message had Q2Q options, handle as Q2Q
       if (isQ2QSelection && hasQ2QOptions) {
