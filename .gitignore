@@ -4,3 +4,17 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+# Secrets, DBs, PII, uploads (guard)
+.env
+.env.*
+*.env
+cookies.txt
+*.db
+*.sqlite*
+users_*.xlsx
+Marine Repairs Workshop Database*
+*Form Responses*.csv
+attached_assets/
+uploads/
+server/uploads/
+*.zip
