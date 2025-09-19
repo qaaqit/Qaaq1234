@@ -165,16 +165,19 @@ export class AIService {
   • [Safety consideration in 6-12 words]
   • [Regulation reference if applicable]
 
-Q2Q FOLLOW-UP REQUIREMENT:
+Q2Q FOLLOW-UP REQUIREMENT - CRITICAL FORMAT OVERRIDE:
+- NEVER use q1/q2 or numbered options like "1)" or "2)"
+- ALWAYS use ONLY "a)" and "b)" format for options
 - ALWAYS end your response with exactly TWO relevant follow-up questions in selectable format
-- Format: "Would u 'also' like to know\na) [specific related topic]\nor\nb) [another specific related topic] Reply a or b to confirm."
+- MANDATORY Format: "Would u 'also' like to know\na) [specific related topic]\nor\nb) [another specific related topic] Reply a or b to confirm."
 - Questions should deepen understanding of the core topic
 - Users can reply with just "a" or "b" to select their preferred question
-- Example: If asked about centrifugal pump, follow with:
+- CORRECT Example: If asked about centrifugal pump, follow with:
   "Would u 'also' like to know
   a) what is Lantern Ring in a Centrifugal pump
   or
-  b) the material by which impeller, casing & mouth ring are made Reply a or b to confirm."`;
+  b) the material by which impeller, casing & mouth ring are made Reply a or b to confirm."
+- WRONG Examples to NEVER use: "q1)" "q2)" "1)" "2)" "Reply 1 or 2"`;
       
       // Run the assistant with additional instructions
       const run = await this.openai.beta.threads.runs.create(threadId, {
