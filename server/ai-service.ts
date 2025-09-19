@@ -51,6 +51,89 @@ export class AIService {
     });
   }
 
+  // Q2Q Output Sanitization Function - Enforces proper "a)" and "b)" format
+  private sanitizeQ2QFormat(content: string): string {
+    if (!content || typeof content !== 'string') {
+      return content;
+    }
+
+    console.log('🔧 Sanitizing Q2Q format in response...');
+
+    // Patterns to detect various numeric Q2Q formats
+    const numericPatterns = [
+      // Pattern for q1/q2 or Q1/Q2
+      /\b[qQ][12]\)/g,
+      // Pattern for 1) 2) or (1) (2)
+      /(?:\()?[12][\)\.](?:\s*\))?/g,
+      // Pattern for standalone numbers followed by content
+      /\b[12]\s*[\)\.]?\s*(?=[a-zA-Z])/g
+    ];
+
+    let sanitized = content;
+
+    // Replace numeric patterns in the Q2Q section only
+    // Look for "Would u" or "Would you" patterns that indicate Q2Q start
+    const q2qStartPattern = /Would\s+u\s+'?also'?\s+like\s+to\s+know/i;
+    const q2qMatch = sanitized.match(q2qStartPattern);
+
+    if (q2qMatch) {
+      const q2qStart = q2qMatch.index!;
+      const beforeQ2Q = sanitized.substring(0, q2qStart);
+      const q2qSection = sanitized.substring(q2qStart);
+
+      // Apply sanitization to the Q2Q section only
+      let sanitizedQ2Q = q2qSection;
+
+      // Replace q1) or Q1) with a)
+      sanitizedQ2Q = sanitizedQ2Q.replace(/\b[qQ]1\)/g, 'a)');
+      // Replace q2) or Q2) with b)
+      sanitizedQ2Q = sanitizedQ2Q.replace(/\b[qQ]2\)/g, 'b)');
+
+      // Replace 1) or (1) with a) - be more specific to avoid false matches
+      sanitizedQ2Q = sanitizedQ2Q.replace(/(?:^|\n|\s)(?:\()?1[\)\.]?\s*/g, (match) => {
+        return match.replace(/(?:\()?1[\)\.]?\s*/, 'a) ');
+      });
+
+      // Replace 2) or (2) with b) - be more specific to avoid false matches
+      sanitizedQ2Q = sanitizedQ2Q.replace(/(?:^|\n|\s)(?:\()?2[\)\.]?\s*/g, (match) => {
+        return match.replace(/(?:\()?2[\)\.]?\s*/, 'b) ');
+      });
+
+      // Ensure proper Q2Q format ending
+      if (!sanitizedQ2Q.includes('Reply a or b to confirm')) {
+        // Look for variations and replace them
+        const replyPatterns = [
+          /Reply\s+[12]\s+or\s+[12]\s+to\s+confirm/gi,
+          /Reply\s+with\s+[12]\s+or\s+[12]/gi,
+          /Choose\s+[12]\s+or\s+[12]/gi,
+          /Select\s+[12]\s+or\s+[12]/gi
+        ];
+
+        for (const pattern of replyPatterns) {
+          sanitizedQ2Q = sanitizedQ2Q.replace(pattern, 'Reply a or b to confirm');
+        }
+
+        // If still no proper ending, add it
+        if (!sanitizedQ2Q.includes('Reply a or b to confirm')) {
+          if (!sanitizedQ2Q.endsWith('.')) {
+            sanitizedQ2Q += ' Reply a or b to confirm.';
+          } else {
+            sanitizedQ2Q = sanitizedQ2Q.replace(/\.$/, ' Reply a or b to confirm.');
+          }
+        }
+      }
+
+      sanitized = beforeQ2Q + sanitizedQ2Q;
+    }
+
+    // Log if changes were made
+    if (sanitized !== content) {
+      console.log('✅ Q2Q format sanitized - numeric patterns converted to a)/b) format');
+    }
+
+    return sanitized;
+  }
+
   // Helper method to get or create a thread for a user
   private async getOrCreateThread(userId: string): Promise<string> {
     if (!this.openai) {
@@ -248,8 +331,11 @@ Q2Q FOLLOW-UP REQUIREMENT - CRITICAL FORMAT OVERRIDE:
       console.log('🤖 OpenAI Assistant: Response generated successfully:', content.substring(0, 100) + '...');
       const responseTime = Date.now() - startTime;
 
+      // Apply Q2Q sanitization to ensure proper format
+      const sanitizedContent = this.sanitizeQ2QFormat(content);
+      
       // Apply free user limits if user is not premium
-      const finalContent = this.isPremiumUser(user) ? content : await this.applyFreeUserLimits(content, user);
+      const finalContent = this.isPremiumUser(user) ? sanitizedContent : await this.applyFreeUserLimits(sanitizedContent, user);
 
       return {
         content: finalContent,
@@ -299,16 +385,19 @@ Q2Q FOLLOW-UP REQUIREMENT - CRITICAL FORMAT OVERRIDE:
         • [Safety consideration in 6-12 words]
         • [Regulation reference if applicable]
       
-      Q2Q FOLLOW-UP REQUIREMENT:
+      Q2Q FOLLOW-UP REQUIREMENT - CRITICAL FORMAT OVERRIDE:
+      - NEVER use q1/q2 or numbered options like "1)" or "2)"
+      - ALWAYS use ONLY "a)" and "b)" format for options
       - ALWAYS end your response with exactly TWO relevant follow-up questions in selectable format
-      - Format: "Would u 'also' like to know\na) [specific related topic]\nor\nb) [another specific related topic] Reply a or b to confirm." 
+      - MANDATORY Format: "Would u 'also' like to know\na) [specific related topic]\nor\nb) [another specific related topic] Reply a or b to confirm."
       - Questions should deepen understanding of the core topic
       - Users can reply with just "a" or "b" to select their preferred question
-      - Example: If asked about centrifugal pump, follow with:
+      - CORRECT Example: If asked about centrifugal pump, follow with:
         "Would u 'also' like to know
         a) what is Lantern Ring in a Centrifugal pump
         or
-        b) the material by which impeller, casing & mouth ring are made Reply a or b to confirm."`;
+        b) the material by which impeller, casing & mouth ring are made Reply a or b to confirm."
+      - WRONG Examples to NEVER use: "q1)" "q2)" "1)" "2)" "Reply 1 or 2"`;
       
       if (activeRules) {
         systemPrompt += `\n\nActive bot documentation guidelines:\n${activeRules.substring(0, 800)}`;
@@ -377,8 +466,11 @@ Q2Q FOLLOW-UP REQUIREMENT - CRITICAL FORMAT OVERRIDE:
       }
       const responseTime = Date.now() - startTime;
 
+      // Apply Q2Q sanitization to ensure proper format
+      const sanitizedContent = this.sanitizeQ2QFormat(content);
+      
       // Apply free user limits if user is not premium
-      const finalContent = this.isPremiumUser(user) ? content : await this.applyFreeUserLimits(content, user);
+      const finalContent = this.isPremiumUser(user) ? sanitizedContent : await this.applyFreeUserLimits(sanitizedContent, user);
 
       return {
         content: finalContent,
@@ -427,16 +519,19 @@ Q2Q FOLLOW-UP REQUIREMENT - CRITICAL FORMAT OVERRIDE:
         • [Safety consideration in 6-12 words]
         • [Regulation reference if applicable]
       
-      Q2Q FOLLOW-UP REQUIREMENT:
+      Q2Q FOLLOW-UP REQUIREMENT - CRITICAL FORMAT OVERRIDE:
+      - NEVER use q1/q2 or numbered options like "1)" or "2)"
+      - ALWAYS use ONLY "a)" and "b)" format for options
       - ALWAYS end your response with exactly TWO relevant follow-up questions in selectable format
-      - Format: "Would u 'also' like to know\na) [specific related topic]\nor\nb) [another specific related topic] Reply a or b to confirm." 
+      - MANDATORY Format: "Would u 'also' like to know\na) [specific related topic]\nor\nb) [another specific related topic] Reply a or b to confirm."
       - Questions should deepen understanding of the core topic
       - Users can reply with just "a" or "b" to select their preferred question
-      - Example: If asked about centrifugal pump, follow with:
+      - CORRECT Example: If asked about centrifugal pump, follow with:
         "Would u 'also' like to know
         a) what is Lantern Ring in a Centrifugal pump
         or
-        b) the material by which impeller, casing & mouth ring are made Reply a or b to confirm."`;
+        b) the material by which impeller, casing & mouth ring are made Reply a or b to confirm."
+      - WRONG Examples to NEVER use: "q1)" "q2)" "1)" "2)" "Reply 1 or 2"`;
       
       if (activeRules) {
         systemPrompt += `\n\nActive bot documentation guidelines:\n${activeRules.substring(0, 800)}`;
@@ -464,8 +559,11 @@ Q2Q FOLLOW-UP REQUIREMENT - CRITICAL FORMAT OVERRIDE:
       console.log('🤖 Deepseek: Response generated successfully:', content.substring(0, 100) + '...');
       const responseTime = Date.now() - startTime;
 
+      // Apply Q2Q sanitization to ensure proper format
+      const sanitizedContent = this.sanitizeQ2QFormat(content);
+      
       // Apply free user limits if user is not premium
-      const finalContent = this.isPremiumUser(user) ? content : await this.applyFreeUserLimits(content, user);
+      const finalContent = this.isPremiumUser(user) ? sanitizedContent : await this.applyFreeUserLimits(sanitizedContent, user);
 
       return {
         content: finalContent,
@@ -515,16 +613,19 @@ Q2Q FOLLOW-UP REQUIREMENT - CRITICAL FORMAT OVERRIDE:
         • [Safety consideration in 6-12 words]
         • [Regulation reference if applicable]
       
-      Q2Q FOLLOW-UP REQUIREMENT:
+      Q2Q FOLLOW-UP REQUIREMENT - CRITICAL FORMAT OVERRIDE:
+      - NEVER use q1/q2 or numbered options like "1)" or "2)"
+      - ALWAYS use ONLY "a)" and "b)" format for options
       - ALWAYS end your response with exactly TWO relevant follow-up questions in selectable format
-      - Format: "Would u 'also' like to know\na) [specific related topic]\nor\nb) [another specific related topic] Reply a or b to confirm." 
+      - MANDATORY Format: "Would u 'also' like to know\na) [specific related topic]\nor\nb) [another specific related topic] Reply a or b to confirm."
       - Questions should deepen understanding of the core topic
       - Users can reply with just "a" or "b" to select their preferred question
-      - Example: If asked about centrifugal pump, follow with:
+      - CORRECT Example: If asked about centrifugal pump, follow with:
         "Would u 'also' like to know
         a) what is Lantern Ring in a Centrifugal pump
         or
-        b) the material by which impeller, casing & mouth ring are made Reply a or b to confirm."`;
+        b) the material by which impeller, casing & mouth ring are made Reply a or b to confirm."
+      - WRONG Examples to NEVER use: "q1)" "q2)" "1)" "2)" "Reply 1 or 2"`;
       
       if (activeRules) {
         systemPrompt += `\n\nActive bot documentation guidelines:\n${activeRules.substring(0, 800)}`;
@@ -552,8 +653,11 @@ Q2Q FOLLOW-UP REQUIREMENT - CRITICAL FORMAT OVERRIDE:
       console.log('🤖 Mistral: Response generated successfully:', content.substring(0, 100) + '...');
       const responseTime = Date.now() - startTime;
 
+      // Apply Q2Q sanitization to ensure proper format
+      const sanitizedContent = this.sanitizeQ2QFormat(content);
+      
       // Apply free user limits if user is not premium
-      const finalContent = this.isPremiumUser(user) ? content : await this.applyFreeUserLimits(content, user);
+      const finalContent = this.isPremiumUser(user) ? sanitizedContent : await this.applyFreeUserLimits(sanitizedContent, user);
 
       return {
         content: finalContent,
@@ -900,7 +1004,46 @@ EXAMPLE OUTPUT:
       return content;
     }
     
-    // If content exceeds limits, truncate but ensure it ends properly
+    // Check if content contains Q2Q section that should be preserved
+    const q2qPattern = /Would\s+u\s+'?also'?\s+like\s+to\s+know[\s\S]*Reply\s+a\s+or\s+b\s+to\s+confirm/i;
+    const q2qMatch = content.match(q2qPattern);
+    
+    if (q2qMatch) {
+      // Calculate the main content before Q2Q
+      const q2qStart = q2qMatch.index!;
+      const mainContent = content.substring(0, q2qStart).trim();
+      const q2qSection = content.substring(q2qStart);
+      
+      const mainWords = mainContent.split(' ');
+      const q2qWords = q2qSection.split(' ');
+      
+      console.log(`📊 Q2Q detected: Main content (${mainWords.length} words) + Q2Q (${q2qWords.length} words)`);
+      
+      // If main content + Q2Q fits within limits, keep everything
+      if (wordCount <= maxWordCount) {
+        return content;
+      }
+      
+      // If content exceeds limits, preserve Q2Q and truncate main content only
+      const availableWordsForMain = Math.max(maxWordCount - q2qWords.length, Math.floor(maxWordCount * 0.7));
+      
+      if (mainWords.length > availableWordsForMain) {
+        const truncatedMainContent = mainWords.slice(0, availableWordsForMain).join(' ');
+        
+        // Ensure professional ending
+        let finalMainContent = truncatedMainContent;
+        if (!finalMainContent.endsWith('.') && !finalMainContent.endsWith('!') && !finalMainContent.endsWith('?')) {
+          finalMainContent += '.';
+        }
+        
+        console.log(`✂️ Truncated main content to preserve Q2Q (${availableWordsForMain} words for main + ${q2qWords.length} for Q2Q)`);
+        return `${finalMainContent}\n\n${q2qSection}`;
+      }
+      
+      return content; // Should fit within limits
+    }
+    
+    // If no Q2Q section, use standard truncation
     const limitedWords = words.slice(0, maxWordCount);
     let limitedContent = limitedWords.join(' ');
     
