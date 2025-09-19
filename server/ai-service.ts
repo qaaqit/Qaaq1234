@@ -59,21 +59,10 @@ export class AIService {
 
     console.log('🔧 Sanitizing Q2Q format in response...');
 
-    // Patterns to detect various numeric Q2Q formats
-    const numericPatterns = [
-      // Pattern for q1/q2 or Q1/Q2
-      /\b[qQ][12]\)/g,
-      // Pattern for 1) 2) or (1) (2)
-      /(?:\()?[12][\)\.](?:\s*\))?/g,
-      // Pattern for standalone numbers followed by content
-      /\b[12]\s*[\)\.]?\s*(?=[a-zA-Z])/g
-    ];
-
     let sanitized = content;
 
-    // Replace numeric patterns in the Q2Q section only
-    // Look for "Would u" or "Would you" patterns that indicate Q2Q start
-    const q2qStartPattern = /Would\s+u\s+'?also'?\s+like\s+to\s+know/i;
+    // Broadened Q2Q detection to handle variants like "Would you", with/without quotes around 'also'
+    const q2qStartPattern = /Would\s+(?:u|you)\s+['""]?also['""]?\s+like\s+to\s+know/i;
     const q2qMatch = sanitized.match(q2qStartPattern);
 
     if (q2qMatch) {
@@ -83,6 +72,9 @@ export class AIService {
 
       // Apply sanitization to the Q2Q section only
       let sanitizedQ2Q = q2qSection;
+
+      // Remove markdown bold formatting (**text**)
+      sanitizedQ2Q = sanitizedQ2Q.replace(/\*\*(.*?)\*\*/g, '$1');
 
       // Replace q1) or Q1) with a)
       sanitizedQ2Q = sanitizedQ2Q.replace(/\b[qQ]1\)/g, 'a)');
@@ -99,7 +91,54 @@ export class AIService {
         return match.replace(/(?:\()?2[\)\.]?\s*/, 'b) ');
       });
 
-      // Ensure proper Q2Q format ending
+      // Process options line-by-line to handle proper capitalization of first alphabetical character
+      const lines = sanitizedQ2Q.split('\n');
+      const processedLines = lines.map(line => {
+        // Handle a) options - capitalize first alphabetical character
+        if (/^\s*a\)\s/.test(line)) {
+          return line.replace(/^(\s*a\)\s*)([^\w]*)?([a-z])/i, (match, prefix, punct, firstChar) => {
+            return prefix + (punct || '') + firstChar.toUpperCase();
+          });
+        }
+        // Handle b) options - capitalize first alphabetical character  
+        if (/^\s*b\)\s/.test(line)) {
+          return line.replace(/^(\s*b\)\s*)([^\w]*)?([a-z])/i, (match, prefix, punct, firstChar) => {
+            return prefix + (punct || '') + firstChar.toUpperCase();
+          });
+        }
+        return line;
+      });
+      sanitizedQ2Q = processedLines.join('\n');
+
+      // Strip trailing punctuation before adding question marks to avoid ".?" artifacts
+      // Handle a) options with improved punctuation handling
+      sanitizedQ2Q = sanitizedQ2Q.replace(/a\)\s*([^?\n]+?)(?=\s*(?:\n\s*or\s*\n|\n\s*b\)|\n\s*Reply|$))/gi, (match, content) => {
+        const trimmedContent = content.trim();
+        // Remove trailing punctuation except for already existing question marks
+        const cleanContent = trimmedContent.replace(/[.!,;:]+$/, '');
+        if (!trimmedContent.endsWith('?')) {
+          return `a) ${cleanContent}?`;
+        }
+        return match;
+      });
+
+      // Handle b) options with improved punctuation handling
+      sanitizedQ2Q = sanitizedQ2Q.replace(/b\)\s*([^?\n]+?)(?=\s*(?:\n\s*Reply|$))/gi, (match, content) => {
+        const trimmedContent = content.trim();
+        // Remove trailing punctuation except for already existing question marks
+        const cleanContent = trimmedContent.replace(/[.!,;:]+$/, '');
+        if (!trimmedContent.endsWith('?')) {
+          return `b) ${cleanContent}?`;
+        }
+        return match;
+      });
+
+      // Handle "or" as standalone separator to avoid truncation when "or" appears in content
+      // Ensure "or" is on its own line between options
+      sanitizedQ2Q = sanitizedQ2Q.replace(/(\?\s*)\s+or\s+(?=\s*b\))/gi, '$1\nor\n');
+      sanitizedQ2Q = sanitizedQ2Q.replace(/(\?\s*)or\s*\n/gi, '$1\nor\n');
+
+      // Enforce reply line on its own separate line: "\nReply a or b to confirm."
       if (!sanitizedQ2Q.includes('Reply a or b to confirm')) {
         // Look for variations and replace them
         const replyPatterns = [
@@ -110,17 +149,18 @@ export class AIService {
         ];
 
         for (const pattern of replyPatterns) {
-          sanitizedQ2Q = sanitizedQ2Q.replace(pattern, 'Reply a or b to confirm');
+          sanitizedQ2Q = sanitizedQ2Q.replace(pattern, '\nReply a or b to confirm');
         }
 
-        // If still no proper ending, add it
+        // If still no proper ending, add it on separate line
         if (!sanitizedQ2Q.includes('Reply a or b to confirm')) {
-          if (!sanitizedQ2Q.endsWith('.')) {
-            sanitizedQ2Q += ' Reply a or b to confirm.';
-          } else {
-            sanitizedQ2Q = sanitizedQ2Q.replace(/\.$/, ' Reply a or b to confirm.');
-          }
+          // Remove any trailing periods before adding reply line
+          sanitizedQ2Q = sanitizedQ2Q.replace(/\.\s*$/, '');
+          sanitizedQ2Q += '\nReply a or b to confirm.';
         }
+      } else {
+        // Ensure existing reply line is on separate line
+        sanitizedQ2Q = sanitizedQ2Q.replace(/(\?)\s*(Reply\s+a\s+or\s+b\s+to\s+confirm)/gi, '$1\n$2');
       }
 
       sanitized = beforeQ2Q + sanitizedQ2Q;
@@ -252,14 +292,15 @@ Q2Q FOLLOW-UP REQUIREMENT - CRITICAL FORMAT OVERRIDE:
 - NEVER use q1/q2 or numbered options like "1)" or "2)"
 - ALWAYS use ONLY "a)" and "b)" format for options
 - ALWAYS end your response with exactly TWO relevant follow-up questions in selectable format
-- MANDATORY Format: "Would u 'also' like to know\na) [specific related topic]\nor\nb) [another specific related topic] Reply a or b to confirm."
+- MANDATORY Format: "Would u 'also' like to know\na) [Specific related topic]?\nor\nb) [Another specific related topic]?\nReply a or b to confirm."
 - Questions should deepen understanding of the core topic
 - Users can reply with just "a" or "b" to select their preferred question
 - CORRECT Example: If asked about centrifugal pump, follow with:
   "Would u 'also' like to know
-  a) what is Lantern Ring in a Centrifugal pump
+  a) What is Lantern Ring in a Centrifugal pump?
   or
-  b) the material by which impeller, casing & mouth ring are made Reply a or b to confirm."
+  b) The material by which impeller, casing & mouth ring are made?
+  Reply a or b to confirm."
 - WRONG Examples to NEVER use: "q1)" "q2)" "1)" "2)" "Reply 1 or 2"`;
       
       // Run the assistant with additional instructions
@@ -389,14 +430,16 @@ Q2Q FOLLOW-UP REQUIREMENT - CRITICAL FORMAT OVERRIDE:
       - NEVER use q1/q2 or numbered options like "1)" or "2)"
       - ALWAYS use ONLY "a)" and "b)" format for options
       - ALWAYS end your response with exactly TWO relevant follow-up questions in selectable format
-      - MANDATORY Format: "Would u 'also' like to know\na) [specific related topic]\nor\nb) [another specific related topic] Reply a or b to confirm."
+      - MANDATORY Format: "Would u 'also' like to know\na) [Specific related topic]?\nor\nb) [Another specific related topic]?\nReply a or b to confirm."
       - Questions should deepen understanding of the core topic
       - Users can reply with just "a" or "b" to select their preferred question
+      - NEVER use markdown formatting (no **bold** text) in Q2Q sections
       - CORRECT Example: If asked about centrifugal pump, follow with:
         "Would u 'also' like to know
-        a) what is Lantern Ring in a Centrifugal pump
+        a) What is Lantern Ring in a Centrifugal pump?
         or
-        b) the material by which impeller, casing & mouth ring are made Reply a or b to confirm."
+        b) The material by which impeller, casing & mouth ring are made?
+        Reply a or b to confirm."
       - WRONG Examples to NEVER use: "q1)" "q2)" "1)" "2)" "Reply 1 or 2"`;
       
       if (activeRules) {
@@ -523,14 +566,16 @@ Q2Q FOLLOW-UP REQUIREMENT - CRITICAL FORMAT OVERRIDE:
       - NEVER use q1/q2 or numbered options like "1)" or "2)"
       - ALWAYS use ONLY "a)" and "b)" format for options
       - ALWAYS end your response with exactly TWO relevant follow-up questions in selectable format
-      - MANDATORY Format: "Would u 'also' like to know\na) [specific related topic]\nor\nb) [another specific related topic] Reply a or b to confirm."
+      - MANDATORY Format: "Would u 'also' like to know\na) [Specific related topic]?\nor\nb) [Another specific related topic]?\nReply a or b to confirm."
       - Questions should deepen understanding of the core topic
       - Users can reply with just "a" or "b" to select their preferred question
+      - NEVER use markdown formatting (no **bold** text) in Q2Q sections
       - CORRECT Example: If asked about centrifugal pump, follow with:
         "Would u 'also' like to know
-        a) what is Lantern Ring in a Centrifugal pump
+        a) What is Lantern Ring in a Centrifugal pump?
         or
-        b) the material by which impeller, casing & mouth ring are made Reply a or b to confirm."
+        b) The material by which impeller, casing & mouth ring are made?
+        Reply a or b to confirm."
       - WRONG Examples to NEVER use: "q1)" "q2)" "1)" "2)" "Reply 1 or 2"`;
       
       if (activeRules) {
@@ -617,14 +662,16 @@ Q2Q FOLLOW-UP REQUIREMENT - CRITICAL FORMAT OVERRIDE:
       - NEVER use q1/q2 or numbered options like "1)" or "2)"
       - ALWAYS use ONLY "a)" and "b)" format for options
       - ALWAYS end your response with exactly TWO relevant follow-up questions in selectable format
-      - MANDATORY Format: "Would u 'also' like to know\na) [specific related topic]\nor\nb) [another specific related topic] Reply a or b to confirm."
+      - MANDATORY Format: "Would u 'also' like to know\na) [Specific related topic]?\nor\nb) [Another specific related topic]?\nReply a or b to confirm."
       - Questions should deepen understanding of the core topic
       - Users can reply with just "a" or "b" to select their preferred question
+      - NEVER use markdown formatting (no **bold** text) in Q2Q sections
       - CORRECT Example: If asked about centrifugal pump, follow with:
         "Would u 'also' like to know
-        a) what is Lantern Ring in a Centrifugal pump
+        a) What is Lantern Ring in a Centrifugal pump?
         or
-        b) the material by which impeller, casing & mouth ring are made Reply a or b to confirm."
+        b) The material by which impeller, casing & mouth ring are made?
+        Reply a or b to confirm."
       - WRONG Examples to NEVER use: "q1)" "q2)" "1)" "2)" "Reply 1 or 2"`;
       
       if (activeRules) {
