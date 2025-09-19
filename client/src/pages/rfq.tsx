@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import UserDropdown from "@/components/user-dropdown";
+import Header from "@/components/header";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { EnhancedFileUpload } from "@/components/EnhancedFileUpload";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -83,7 +84,6 @@ interface RFQRequest {
 export default function RFQPage({ user }: RFQPageProps) {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("feed");
   const [rfqRequests, setRfqRequests] = useState<RFQRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -970,121 +970,8 @@ export default function RFQPage({ user }: RFQPageProps) {
 
   return (
     <div className="h-[90vh] bg-gradient-to-br from-orange-50 via-white to-yellow-50 flex flex-col">
-      {/* Header - Maritime Theme */}
-      <header className="bg-white text-black shadow-md relative overflow-hidden flex-shrink-0 z-[1002] border-b-2 border-orange-400">
-        <div className="absolute inset-0 bg-gradient-to-r from-red-50 via-orange-50 to-yellow-50 opacity-50"></div>
-        
-        <div className="relative z-10 px-2 py-2 sm:px-4 sm:py-3">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-shrink-0">
-              <DropdownMenu onOpenChange={setIsMenuOpen}>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="p-1 h-auto w-auto rounded-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200"
-                    data-testid="button-main-menu"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <ChevronDown className={`w-4 h-4 text-white transition-transform duration-200 ${isMenuOpen ? 'rotate-180' : ''}`} />
-                      <div className="w-10 h-10 rounded-full bg-white border-2 border-white shadow-lg flex items-center justify-center">
-                        <img 
-                          src={qaaqLogo} 
-                          alt="QAAQ Logo" 
-                          className="w-full h-full rounded-full object-cover"
-                        />
-                      </div>
-                    </div>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-48 bg-white border border-gray-200 shadow-lg rounded-lg">
-                  <DropdownMenuItem 
-                    onClick={() => setLocation("/")}
-                    className="cursor-pointer flex items-center space-x-3 px-4 py-3 hover:bg-orange-50 transition-colors"
-                    data-testid="menu-item-home"
-                  >
-                    <i className="fas fa-home text-orange-600 w-4"></i>
-                    <span className="text-gray-700 font-medium">Home</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => setLocation("/glossary")}
-                    className="cursor-pointer flex items-center space-x-3 px-4 py-3 hover:bg-orange-50 transition-colors"
-                    data-testid="menu-item-dictionary"
-                  >
-                    <i className="fas fa-ship text-orange-600 w-4"></i>
-                    <span className="text-gray-700 font-medium">Shipping Dictionary</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => setLocation("/question-bank")}
-                    className="cursor-pointer flex items-center space-x-3 px-4 py-3 hover:bg-orange-50 transition-colors"
-                    data-testid="menu-item-questions"
-                  >
-                    <i className="fas fa-question-circle text-orange-600 w-4"></i>
-                    <span className="text-gray-700 font-medium">QuestionBank</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => setLocation("/machine-tree")}
-                    className="cursor-pointer flex items-center space-x-3 px-4 py-3 hover:bg-orange-50 transition-colors"
-                    data-testid="menu-item-machine-tree"
-                  >
-                    <i className="fas fa-sitemap text-orange-600 w-4"></i>
-                    <span className="text-gray-700 font-medium">Machine Tree</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => setLocation("/workshop-tree")}
-                    className="cursor-pointer flex flex-col items-start space-y-1 px-4 py-3 hover:bg-orange-50 transition-colors"
-                    data-testid="menu-item-workshop-tree"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <i className="fas fa-network-wired text-orange-600 w-4"></i>
-                      <span className="text-gray-700 font-medium">Workshop Tree</span>
-                    </div>
-                    <div className="text-xs text-gray-500 pl-6 leading-tight">
-                      System → Equipment → Task → Expertise → Port → Workshop
-                    </div>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => setLocation("/premium")}
-                    className="cursor-pointer flex items-center space-x-3 px-4 py-3 hover:bg-orange-50 transition-colors"
-                    data-testid="menu-item-premium"
-                  >
-                    <i className="fas fa-crown text-orange-600 w-4"></i>
-                    <span className="text-gray-700 font-medium">Premium Subscription</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => setLocation("/readme")}
-                    className="cursor-pointer flex items-center space-x-3 px-4 py-3 hover:bg-orange-50 transition-colors"
-                    data-testid="menu-item-readme"
-                  >
-                    <i className="fas fa-info-circle text-orange-600 w-4"></i>
-                    <span className="text-gray-700 font-medium">ReadMe</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <div className="min-w-0 flex items-center space-x-2">
-                <h1 className="text-base sm:text-xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent whitespace-nowrap">Qaaqit (Quickly Supply It)</h1>
-                {isPremium && (
-                  <Crown className="w-5 h-5 text-yellow-500 animate-pulse" />
-                )}
-              </div>
-            </div>
-            <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
-              {user ? (
-                <UserDropdown user={user} onLogout={() => window.location.reload()} />
-              ) : (
-                <Button 
-                  variant="default" 
-                  size="sm" 
-                  data-testid="button-login"
-                  onClick={() => setLocation('/login')}
-                  className="bg-navy hover:bg-navy/90"
-                >
-                  Login
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* Header - Using Common Component */}
+      {user && <Header user={user} />}
       {/* RFQ Header Section */}
       <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-4">
         <div className="flex items-center gap-3">
